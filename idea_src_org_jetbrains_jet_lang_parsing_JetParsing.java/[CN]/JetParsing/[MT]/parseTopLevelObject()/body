@@ -1,0 +1,34 @@
+{
+  PsiBuilder.Marker decl=mark();
+  if (!parseModifierList()) {
+    decl.drop();
+    return;
+  }
+  JetToken keywordToken=tt();
+  JetNodeType declType=null;
+  if (keywordToken == CLASS_KEYWORD) {
+    declType=parseClass();
+  }
+ else   if (keywordToken == EXTENSION_KEYWORD) {
+    declType=parseExtension();
+  }
+ else   if (keywordToken == FUN_KEYWORD) {
+    declType=parseFunction();
+  }
+ else   if (keywordToken == VAL_KEYWORD || keywordToken == VAR_KEYWORD) {
+    declType=parseProperty();
+  }
+ else   if (keywordToken == NAMESPACE_KEYWORD) {
+    declType=parseBlockNamespace();
+  }
+ else   if (keywordToken == TYPE_KEYWORD) {
+    declType=parseTypedef();
+  }
+  if (declType == null) {
+    errorAndAdvance("Expecting namespace or top level declaration");
+    decl.drop();
+  }
+ else {
+    decl.done(declType);
+  }
+}
