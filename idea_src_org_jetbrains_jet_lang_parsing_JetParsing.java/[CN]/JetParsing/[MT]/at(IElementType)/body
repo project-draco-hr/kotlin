@@ -1,16 +1,13 @@
 {
   JetToken token=tt();
   if (token == expectation)   return true;
+  if (expectation == EOL_OR_SEMICOLON) {
+    if (token == SEMICOLON)     return true;
+    if (myEOLInLastWhitespace)     return true;
+  }
   if (token == IDENTIFIER && expectation instanceof JetSoftKeywordToken) {
     if (((JetSoftKeywordToken)expectation).getValue().equals(myBuilder.getTokenText())) {
-      myBuilder.setTokenTypeRemapper(new ITokenTypeRemapper(){
-        public IElementType filter(        IElementType source,        int start,        int end,        CharSequence text){
-          return expectation;
-        }
-      }
-);
-      tt();
-      myBuilder.setTokenTypeRemapper(null);
+      myBuilder.remapCurrentToken(expectation);
       return true;
     }
   }
