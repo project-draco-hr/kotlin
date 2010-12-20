@@ -1,0 +1,41 @@
+{
+  PsiBuilder.Marker currentPosition=mark();
+  int lastDot=-1;
+  int openAngleBrackets=0;
+  int openBraces=0;
+  int openParentheses=0;
+  int openBrackets=0;
+  while (!eof()) {
+    if (at(LPAR)) {
+      if (openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0)       break;
+      openParentheses++;
+    }
+ else     if (at(LT)) {
+      openAngleBrackets++;
+    }
+ else     if (at(LBRACE)) {
+      openBraces++;
+    }
+ else     if (at(LBRACKET)) {
+      openBrackets++;
+    }
+ else     if (at(RPAR)) {
+      openParentheses--;
+    }
+ else     if (at(GT)) {
+      openAngleBrackets--;
+    }
+ else     if (at(RBRACE)) {
+      openBraces--;
+    }
+ else     if (at(RBRACKET)) {
+      openBrackets--;
+    }
+ else     if (at(DOT) && openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0) {
+      lastDot=myBuilder.getCurrentOffset();
+    }
+    advance();
+  }
+  currentPosition.rollbackTo();
+  return lastDot;
+}
