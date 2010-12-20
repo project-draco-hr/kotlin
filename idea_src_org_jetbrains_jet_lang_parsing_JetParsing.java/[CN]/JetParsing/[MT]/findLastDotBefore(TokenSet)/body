@@ -5,9 +5,12 @@
   int openBraces=0;
   int openParentheses=0;
   int openBrackets=0;
+  IElementType previousToken=null;
   while (!eof()) {
+    if (atSet(stopSet)) {
+      if (openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0 && previousToken != DOT)       break;
+    }
     if (at(LPAR)) {
-      if (openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0)       break;
       openParentheses++;
     }
  else     if (at(LT)) {
@@ -34,6 +37,7 @@
  else     if (at(DOT) && openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0) {
       lastDot=myBuilder.getCurrentOffset();
     }
+    previousToken=tt();
     advance();
   }
   currentPosition.rollbackTo();
