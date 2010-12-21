@@ -1,14 +1,14 @@
 {
   PsiBuilder.Marker currentPosition=mark();
-  int lastDot=-1;
+  int lastOccurrence=-1;
   int openAngleBrackets=0;
   int openBraces=0;
   int openParentheses=0;
   int openBrackets=0;
   IElementType previousToken=null;
   while (!eof()) {
-    if (atSet(stopSet)) {
-      if (openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0 && previousToken != DOT)       break;
+    if (atSet(stopAt)) {
+      if (openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0 && (!dontStopRightAfterOccurrence || !lookFor.contains(previousToken)))       break;
     }
     if (at(LPAR)) {
       openParentheses++;
@@ -34,12 +34,12 @@
  else     if (at(RBRACKET)) {
       openBrackets--;
     }
- else     if (at(DOT) && openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0) {
-      lastDot=myBuilder.getCurrentOffset();
+ else     if (atSet(lookFor) && openAngleBrackets == 0 && openBrackets == 0 && openBraces == 0 && openParentheses == 0) {
+      lastOccurrence=myBuilder.getCurrentOffset();
     }
     previousToken=tt();
     advance();
   }
   currentPosition.rollbackTo();
-  return lastDot;
+  return lastOccurrence;
 }
