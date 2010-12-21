@@ -2,6 +2,10 @@
   PsiBuilder.Marker parameter=mark();
   int lastId=findLastBefore(TokenSet.create(IDENTIFIER),TokenSet.create(COMMA,RPAR,COLON),false);
   createTruncatedBuilder(lastId).parseModifierList();
-  parseFunctionParameterRest();
+  if (!parseFunctionParameterRest()) {
+    parameter.rollbackTo();
+    return false;
+  }
   parameter.done(VALUE_PARAMETER);
+  return true;
 }
