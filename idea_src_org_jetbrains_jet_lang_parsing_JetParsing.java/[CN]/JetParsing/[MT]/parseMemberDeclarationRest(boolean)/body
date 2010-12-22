@@ -1,14 +1,13 @@
 {
-  PsiBuilder.Marker decl=mark();
-  EnumDetector detector=new EnumDetector();
-  parseModifierList(detector);
   IElementType keywordToken=tt();
   JetNodeType declType=null;
-  if (keywordToken == NAMESPACE_KEYWORD) {
-    declType=parseNamespaceBlock();
-  }
- else   if (keywordToken == CLASS_KEYWORD) {
-    declType=parseClass(detector.isEnum());
+  if (keywordToken == CLASS_KEYWORD) {
+    if (lookahead(1) == OBJECT_KEYWORD) {
+      declType=parseClassObject();
+    }
+ else {
+      declType=parseClass(isEnum);
+    }
   }
  else   if (keywordToken == EXTENSION_KEYWORD) {
     declType=parseExtension();
@@ -25,11 +24,8 @@
  else   if (keywordToken == DECOMPOSER_KEYWORD) {
     declType=parseDecomposer();
   }
-  if (declType == null) {
-    errorAndAdvance("Expecting namespace or top level declaration");
-    decl.drop();
+ else   if (keywordToken == THIS_KEYWORD) {
+    declType=parseConstructor();
   }
- else {
-    decl.done(declType);
-  }
+  return declType;
 }

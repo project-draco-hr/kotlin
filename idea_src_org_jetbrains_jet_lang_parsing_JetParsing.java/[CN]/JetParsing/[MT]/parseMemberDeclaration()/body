@@ -1,34 +1,8 @@
 {
   PsiBuilder.Marker decl=mark();
-  parseModifierList();
-  IElementType keywordToken=tt();
-  JetNodeType declType=null;
-  if (keywordToken == CLASS_KEYWORD) {
-    if (lookahead(1) == OBJECT_KEYWORD) {
-      declType=parseClassObject();
-    }
- else {
-      declType=parseClass();
-    }
-  }
- else   if (keywordToken == EXTENSION_KEYWORD) {
-    declType=parseExtension();
-  }
- else   if (keywordToken == FUN_KEYWORD) {
-    declType=parseFunction();
-  }
- else   if (keywordToken == VAL_KEYWORD || keywordToken == VAR_KEYWORD) {
-    declType=parseProperty();
-  }
- else   if (keywordToken == TYPE_KEYWORD) {
-    declType=parseTypeDef();
-  }
- else   if (keywordToken == DECOMPOSER_KEYWORD) {
-    declType=parseDecomposer();
-  }
- else   if (keywordToken == THIS_KEYWORD) {
-    declType=parseConstructor();
-  }
+  EnumDetector enumDetector=new EnumDetector();
+  parseModifierList(enumDetector);
+  JetNodeType declType=parseMemberDeclarationRest(enumDetector.isEnum());
   if (declType == null) {
     errorAndAdvance("Expecting member declaration");
     decl.drop();

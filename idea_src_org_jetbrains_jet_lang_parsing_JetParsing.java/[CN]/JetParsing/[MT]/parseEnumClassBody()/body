@@ -1,0 +1,29 @@
+{
+  if (!at(LBRACE))   return;
+  PsiBuilder.Marker classBody=mark();
+  advance();
+  while (!eof() && !at(RBRACE)) {
+    PsiBuilder.Marker entryOrMember=mark();
+    TokenSet constructorNameFollow=TokenSet.create(SEMICOLON,COLON,LPAR,LT,LBRACE);
+    int lastId=findLastBefore(ENUM_MEMBER_FIRST,constructorNameFollow,false);
+    EnumDetector enumDetector=new EnumDetector();
+    createTruncatedBuilder(lastId).parseModifierList(enumDetector);
+    IElementType type;
+    if (at(IDENTIFIER)) {
+      parseEnumEntry();
+      type=ENUM_ENTRY;
+    }
+ else {
+      type=parseMemberDeclarationRest(enumDetector.isEnum());
+    }
+    if (type == null) {
+      errorAndAdvance("Expecting an enum entry or member declaration");
+      entryOrMember.drop();
+    }
+ else {
+      entryOrMember.done(type);
+    }
+  }
+  expect(RBRACE,"Expecting '}' to close enum class body");
+  classBody.done(CLASS_BODY);
+}
