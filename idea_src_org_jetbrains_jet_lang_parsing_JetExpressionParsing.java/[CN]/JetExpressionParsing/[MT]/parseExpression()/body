@@ -65,10 +65,20 @@
  else   if (at(NULL_KEYWORD)) {
     parseOneTokenExpression(NULL);
   }
- else   if (atSet(TokenSet.create(CLASS_KEYWORD,EXTENSION_KEYWORD,FUN_KEYWORD,VAL_KEYWORD,VAR_KEYWORD,TYPE_KEYWORD))) {
+ else   if (atSet(CLASS_KEYWORD,EXTENSION_KEYWORD,FUN_KEYWORD,VAL_KEYWORD,VAR_KEYWORD,TYPE_KEYWORD,DECOMPOSER_KEYWORD)) {
+    parseLocalDeclaration();
+  }
+ else   if (at(LBRACKET)) {
+    if (!parseLocalDeclaration()) {
+      PsiBuilder.Marker attributes=mark();
+      myJetParsing.parseAttributeList();
+      attributes.error("Attributes are only allowed on declarations");
+    }
   }
  else   if (at(IDENTIFIER)) {
-    advance();
+    if (!parseLocalDeclaration()) {
+      expect(IDENTIFIER,"[Internal error: should never occur]");
+    }
   }
  else   if (at(LBRACE)) {
     myJetParsing.parseBlock();
