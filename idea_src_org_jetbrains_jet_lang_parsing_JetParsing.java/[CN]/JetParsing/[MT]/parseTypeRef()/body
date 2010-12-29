@@ -1,24 +1,17 @@
 {
   PsiBuilder.Marker type=mark();
   parseAttributeList();
-  TokenSet simpleTypeFirst=TokenSet.create(IDENTIFIER,LBRACE,LPAR);
-  while (true) {
-    if (at(IDENTIFIER)) {
-      parseSimpleUserType();
-    }
- else     if (at(LBRACE)) {
-      parseSimpleFunctionType();
-    }
- else     if (at(LPAR)) {
-      parseTupleType();
-    }
+  if (at(IDENTIFIER)) {
+    parseUserType();
+  }
+ else   if (at(LBRACE)) {
+    parseFunctionType();
+  }
+ else   if (at(LPAR)) {
+    parseTupleType();
+  }
  else {
-      errorWithRecovery("Type expected",TokenSet.orSet(TOPLEVEL_OBJECT_FIRST,TokenSet.create(EQ,COMMA,GT,RBRACKET,DOT,RPAR,RBRACE,LBRACE,SEMICOLON)));
-      break;
-    }
-    if (!at(DOT))     break;
-    if (!simpleTypeFirst.contains(lookahead(1)))     break;
-    advance();
+    errorWithRecovery("Type expected",TokenSet.orSet(TOPLEVEL_OBJECT_FIRST,TokenSet.create(EQ,COMMA,GT,RBRACKET,DOT,RPAR,RBRACE,LBRACE,SEMICOLON)));
   }
   type.done(TYPE_REFERENCE);
 }
