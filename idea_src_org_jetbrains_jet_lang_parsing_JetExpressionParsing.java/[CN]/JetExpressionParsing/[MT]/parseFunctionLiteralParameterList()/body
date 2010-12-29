@@ -1,0 +1,26 @@
+{
+  PsiBuilder.Marker list=mark();
+  expect(LPAR,"Expecting a parameter list in parentheses (...)",TokenSet.create(DOUBLE_ARROW,COLON));
+  if (!at(RPAR)) {
+    while (true) {
+      if (at(COMMA))       errorAndAdvance("Expecting a parameter declaration");
+      PsiBuilder.Marker parameter=mark();
+      int parameterNamePos=matchTokenStreamPredicate(new LastBefore(new At(IDENTIFIER),new AtSet(COMMA,RPAR,COLON,DOUBLE_ARROW)));
+      createTruncatedBuilder(parameterNamePos).parseModifierList();
+      expect(IDENTIFIER,"Expecting parameter declaration");
+      if (at(COLON)) {
+        advance();
+        myJetParsing.parseTypeRef();
+      }
+      parameter.done(VALUE_PARAMETER);
+      if (!at(COMMA))       break;
+      advance();
+      if (at(RPAR)) {
+        error("Expecting a parameter declaration");
+        break;
+      }
+    }
+  }
+  expect(RPAR,"Expecting ')",TokenSet.create(DOUBLE_ARROW,COLON));
+  list.done(VALUE_PARAMETER_LIST);
+}

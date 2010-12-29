@@ -1,0 +1,22 @@
+{
+  PsiBuilder.Marker expression=mark();
+  parseBinaryExpression(Priority.MEMBER_ACCESS);
+  if (myBuilder.eolInLastWhitespace()) {
+    expression.drop();
+  }
+ else   if (at(LBRACKET)) {
+    parseArrayAccess();
+    expression.done(ARRAY_ACCESS_EXPRESSION);
+  }
+ else   if (atSet(Priority.POSTFIX.getOperations())) {
+    advance();
+    expression.done(POSTFIX_EXPRESSION);
+  }
+ else   if (at(LPAR)) {
+    parseValueArgumentList();
+    expression.done(CALL_EXPRESSION);
+  }
+ else {
+    expression.drop();
+  }
+}
