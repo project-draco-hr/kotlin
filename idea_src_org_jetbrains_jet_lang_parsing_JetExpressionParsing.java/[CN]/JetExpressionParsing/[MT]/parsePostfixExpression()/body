@@ -1,38 +1,57 @@
 {
   PsiBuilder.Marker expression=mark();
-  parseBinaryExpression(Precedence.MEMBER_ACCESS);
-  if (myBuilder.eolInLastWhitespace()) {
-    expression.drop();
-  }
- else   if (at(LBRACKET)) {
-    parseArrayAccess();
-    expression.done(ARRAY_ACCESS_EXPRESSION);
-  }
- else   if (atSet(Precedence.POSTFIX.getOperations())) {
-    advance();
-    expression.done(POSTFIX_EXPRESSION);
-  }
- else   if (at(LPAR)) {
-    parseValueArgumentList();
-    expression.done(CALL_EXPRESSION);
-  }
- else   if (at(LT)) {
-    int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,false)){
-      @Override public boolean isTopLevel(      int openAngleBrackets,      int openBrackets,      int openBraces,      int openParentheses){
-        return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
-      }
+  parseAtomicExpression();
+  while (true) {
+    if (myBuilder.eolInLastWhitespace()) {
+      break;
     }
-);
-    if (gtPos >= 0) {
-      myJetParsing.parseTypeArgumentList();
+ else     if (at(LBRACKET)) {
+      parseArrayAccess();
+      expression.done(ARRAY_ACCESS_EXPRESSION);
+    }
+ else     if (atSet(Precedence.POSTFIX.getOperations())) {
+      advance();
+      expression.done(POSTFIX_EXPRESSION);
+    }
+ else     if (at(LPAR)) {
       parseValueArgumentList();
       expression.done(CALL_EXPRESSION);
     }
+ else     if (at(LT)) {
+      int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,false)){
+        @Override public boolean isTopLevel(        int openAngleBrackets,        int openBrackets,        int openBraces,        int openParentheses){
+          return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
+        }
+      }
+);
+      if (gtPos >= 0) {
+        myJetParsing.parseTypeArgumentList();
+        if (at(LPAR))         parseValueArgumentList();
+        expression.done(CALL_EXPRESSION);
+      }
  else {
-      expression.drop();
+        break;
+      }
     }
-  }
+ else     if (at(DOT)) {
+      advance();
+      parseAtomicExpression();
+      expression.done(DOT_QIALIFIED_EXPRESSION);
+    }
+ else     if (at(SAFE_ACCESS)) {
+      advance();
+      parseAtomicExpression();
+      expression.done(SAFE_ACCESS_EXPRESSION);
+    }
+ else     if (at(HASH)) {
+      advance();
+      expect(IDENTIFIER,"Expecting property or function name");
+      expression.done(HASH_QIALIFIED_EXPRESSION);
+    }
  else {
-    expression.drop();
+      break;
+    }
+    expression=expression.precede();
   }
+  expression.drop();
 }
