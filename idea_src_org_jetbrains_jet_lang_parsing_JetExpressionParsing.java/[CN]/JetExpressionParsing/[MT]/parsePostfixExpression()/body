@@ -16,6 +16,22 @@
     parseValueArgumentList();
     expression.done(CALL_EXPRESSION);
   }
+ else   if (at(LT)) {
+    int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,false)){
+      @Override public boolean isTopLevel(      int openAngleBrackets,      int openBrackets,      int openBraces,      int openParentheses){
+        return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
+      }
+    }
+);
+    if (gtPos >= 0) {
+      myJetParsing.parseTypeArgumentList();
+      parseValueArgumentList();
+      expression.done(CALL_EXPRESSION);
+    }
+ else {
+      expression.drop();
+    }
+  }
  else {
     expression.drop();
   }
