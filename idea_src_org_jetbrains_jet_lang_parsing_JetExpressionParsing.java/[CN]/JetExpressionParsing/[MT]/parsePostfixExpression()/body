@@ -13,8 +13,12 @@
       advance();
       expression.done(POSTFIX_EXPRESSION);
     }
+ else     if (parseCallWithClosure()) {
+      expression.done(CALL_EXPRESSION);
+    }
  else     if (at(LPAR)) {
       parseValueArgumentList();
+      parseCallWithClosure();
       expression.done(CALL_EXPRESSION);
     }
  else     if (at(LT)) {
@@ -26,7 +30,8 @@
 );
       if (gtPos >= 0) {
         myJetParsing.parseTypeArgumentList();
-        if (at(LPAR))         parseValueArgumentList();
+        if (!myBuilder.eolInLastWhitespace() && at(LPAR))         parseValueArgumentList();
+        parseCallWithClosure();
         expression.done(CALL_EXPRESSION);
       }
  else {
