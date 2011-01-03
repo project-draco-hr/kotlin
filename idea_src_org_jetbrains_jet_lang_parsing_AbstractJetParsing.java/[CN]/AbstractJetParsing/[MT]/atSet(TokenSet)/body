@@ -6,15 +6,11 @@
     if (token == SEMICOLON)     return true;
     if (myBuilder.eolInLastWhitespace())     return true;
   }
-  if (token == IDENTIFIER && SOFT_KEYWORD_TEXTS.contains(myBuilder.getTokenText())) {
-    for (    IElementType type : set.getTypes()) {
-      if (type instanceof JetKeywordToken) {
-        JetKeywordToken expectedKeyword=(JetKeywordToken)type;
-        if (expectedKeyword.isSoft() && expectedKeyword.getValue().equals(myBuilder.getTokenText())) {
-          myBuilder.remapCurrentToken(type);
-          return true;
-        }
-      }
+  if (token == IDENTIFIER) {
+    JetKeywordToken keywordToken=SOFT_KEYWORD_TEXTS.get(myBuilder.getTokenText());
+    if (keywordToken != null && set.contains(keywordToken)) {
+      myBuilder.remapCurrentToken(keywordToken);
+      return true;
     }
   }
   return false;
