@@ -1,2 +1,50 @@
 {
+  if (at(VAL_KEYWORD) || at(VAR_KEYWORD)) {
+    advance();
+  }
+ else {
+    errorAndAdvance("Expecting 'val' or 'var'");
+  }
+  TokenSet propertyNameFollow=TokenSet.create(COLON,EQ,LBRACE,SEMICOLON);
+  int lastDot=matchTokenStreamPredicate(new FirstBefore(new TokenStreamPredicate(){
+    @Override public boolean matching(    boolean topLevel){
+      return topLevel && at(DOT);
+    }
+  }
+,new TokenStreamPredicate(){
+    @Override public boolean matching(    boolean topLevel){
+      if (topLevel && (at(EQ) || at(COLON)))       return true;
+      if (topLevel && at(IDENTIFIER)) {
+        IElementType lookahead=lookahead(1);
+        return lookahead != LT && lookahead != DOT;
+      }
+      return false;
+    }
+  }
+));
+  if (lastDot == -1) {
+    parseAttributeList();
+    expect(IDENTIFIER,"Expecting property name or receiver type",propertyNameFollow);
+  }
+ else {
+    createTruncatedBuilder(lastDot).parseTypeRef();
+    expect(DOT,"Expecting '.' before a property name",propertyNameFollow);
+    expect(IDENTIFIER,"Expecting property name",propertyNameFollow);
+  }
+  if (at(COLON)) {
+    advance();
+    parseTypeRef();
+  }
+  if (at(EQ)) {
+    advance();
+    myExpressionParsing.parseExpression();
+    consumeIf(SEMICOLON);
+  }
+  if (!local) {
+    if (parsePropertyGetterOrSetter()) {
+      parsePropertyGetterOrSetter();
+    }
+    consumeIf(SEMICOLON);
+  }
+  return PROPERTY;
 }

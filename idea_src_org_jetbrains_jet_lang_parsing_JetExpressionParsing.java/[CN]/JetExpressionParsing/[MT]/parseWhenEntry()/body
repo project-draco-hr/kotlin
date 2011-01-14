@@ -1,0 +1,29 @@
+{
+  PsiBuilder.Marker entry=mark();
+  if (at(ELSE_KEYWORD)) {
+    advance();
+    if (!at(CONTINUE_KEYWORD) && !at(DOUBLE_ARROW)) {
+      errorUntil("Expecting 'continue' or '=> expression'",TokenSet.create(CONTINUE_KEYWORD,DOUBLE_ARROW,RBRACE,EOL_OR_SEMICOLON));
+    }
+    if (at(DOUBLE_ARROW)) {
+      advance();
+      if (atSet(WHEN_CONDITION_RECOVERY_SET)) {
+        error("Expecting an expression");
+      }
+ else {
+        parseExpression();
+      }
+    }
+ else     if (at(CONTINUE_KEYWORD)) {
+      advance();
+    }
+ else     if (!atSet(WHEN_CONDITION_RECOVERY_SET)) {
+      errorAndAdvance("Expecting 'continue' or '=> expression'");
+    }
+  }
+ else {
+    parseWhenEntryNotElse();
+  }
+  entry.done(WHEN_ENTRY);
+  consumeIf(SEMICOLON);
+}
