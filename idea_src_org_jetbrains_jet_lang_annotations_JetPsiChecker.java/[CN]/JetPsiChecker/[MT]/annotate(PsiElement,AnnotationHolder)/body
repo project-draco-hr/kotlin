@@ -1,6 +1,30 @@
 {
-  if (element instanceof JetProperty) {
-    JetProperty property=(JetProperty)element;
-    holder.createErrorAnnotation(property.getNameIdentifier(),"Specify either type or value");
+  if (element instanceof JetFile) {
+    JetFile file=(JetFile)element;
+    String path=file.getProject().getBaseDir().getPath();
+    System.out.println("Path: " + path);
+    JetNamespace rootNamespace=file.getRootNamespace();
+    List<JetDeclaration> declarations=rootNamespace.getDeclarations();
+    for (    JetDeclaration declaration : declarations) {
+      declaration.accept(new JetVisitor(){
+        @Override public void visitClass(        JetClass klass){
+          print("class ");
+          print(klass.getName());
+          println("{");
+          for (          JetDeclaration decl : klass.getDeclarations()) {
+            decl.accept(this);
+          }
+          print("}");
+        }
+        @Override public void visitProperty(        JetProperty property){
+          JetTypeReference propertyTypeRef=property.getPropertyTypeRef();
+          String name=property.getName();
+        }
+        @Override public void visitFunction(        JetFunction fun){
+          super.visitFunction(fun);
+        }
+      }
+);
+    }
   }
 }
