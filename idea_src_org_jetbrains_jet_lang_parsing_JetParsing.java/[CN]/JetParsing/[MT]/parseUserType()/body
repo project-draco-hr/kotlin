@@ -1,16 +1,25 @@
 {
   PsiBuilder.Marker type=mark();
+  boolean typeClosed=false;
   if (at(NAMESPACE_KEYWORD)) {
     advance();
     expect(DOT,"Expecting '.'",TokenSet.create(IDENTIFIER));
   }
   while (true) {
     expect(IDENTIFIER,"Type name expected",TokenSet.create(LT));
-    parseTypeArgumentList();
-    if (!at(DOT))     break;
+    PsiBuilder.Marker argsMarker=parseTypeArgumentList();
+    if (!at(DOT)) {
+      if (argsMarker != null) {
+        type.doneBefore(REFERENCE_EXPRESSION,argsMarker);
+        typeClosed=true;
+      }
+      break;
+    }
     type.done(REFERENCE_EXPRESSION);
     type=type.precede();
     advance();
   }
-  type.done(REFERENCE_EXPRESSION);
+  if (!typeClosed) {
+    type.done(REFERENCE_EXPRESSION);
+  }
 }
