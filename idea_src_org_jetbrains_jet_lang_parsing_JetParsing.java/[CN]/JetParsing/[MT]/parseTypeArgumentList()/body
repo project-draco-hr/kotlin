@@ -4,8 +4,21 @@
   myBuilder.disableNewlines();
   advance();
   while (true) {
-    parseModifierList();
-    parseTypeRef();
+    PsiBuilder.Marker projection=mark();
+    TokenDetector projectionDetector=new TokenDetector(TokenSet.create(IN_KEYWORD,OUT_KEYWORD));
+    parseModifierList(projectionDetector);
+    if (at(MUL)) {
+      if (projectionDetector.isDetected()) {
+        errorAndAdvance("The '*' projection cannot be marked 'in' or 'out'");
+      }
+ else {
+        advance();
+      }
+    }
+ else {
+      parseTypeRef();
+    }
+    projection.done(TYPE_PROJECTION);
     if (!at(COMMA))     break;
     advance();
   }
