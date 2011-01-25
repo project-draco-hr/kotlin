@@ -1,14 +1,21 @@
 {
   List<JetAttribute> attributes=typeNode.getAttributes();
   JetTypeElement typeElement=typeNode.getTypeElement();
-  List<JetTypeReference> typeArguments=typeNode.getTypeArguments();
+  List<JetTypeReference> argumentElements=typeNode.getTypeArguments();
+  final List<Type> arguments=new ArrayList<Type>();
+  for (  JetTypeReference argumentElement : argumentElements) {
+    arguments.add(toType(argumentElement));
+  }
   final Type[] result=new Type[1];
   typeElement.accept(new JetVisitor(){
     @Override public void visitUserType(    JetUserType type){
       result[0]=new ClassType(TypeResolver.INSTANCE.resolveClass(BASIC_SCOPE,type));
     }
+    @Override public void visitTupleType(    JetTupleType type){
+      result[0]=TupleType.getTupleType(arguments);
+    }
     @Override public void visitJetElement(    JetElement elem){
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("Unsupported type: " + elem);
     }
   }
 );
