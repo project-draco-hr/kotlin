@@ -1,12 +1,13 @@
 {
-  List<JetAttribute> attributes=typeNode.getAttributes();
+  List<JetAttribute> attributeElements=typeNode.getAttributes();
+  final List<Annotation> attributes=toAttributes(attributeElements);
   JetTypeElement typeElement=typeNode.getTypeElement();
-  List<JetTypeReference> argumentElements=typeNode.getTypeArguments();
-  final List<Type> arguments=toTypes(argumentElements);
   final Type[] result=new Type[1];
   typeElement.accept(new JetVisitor(){
     @Override public void visitUserType(    JetUserType type){
-      result[0]=new ClassType(TypeResolver.INSTANCE.resolveClass(BASIC_SCOPE,type));
+      List<JetTypeProjection> argumentElements=type.getTypeArguments();
+      final List<TypeProjection> arguments=toTypeProjections(argumentElements);
+      result[0]=new ClassType(attributes,TypeResolver.INSTANCE.resolveClass(BASIC_SCOPE,type),arguments);
     }
     @Override public void visitTupleType(    JetTupleType type){
       result[0]=TupleType.getTupleType(toTypes(type.getComponentTypeRefs()));
