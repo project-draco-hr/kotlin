@@ -1,0 +1,29 @@
+{
+  final List<Attribute> attributes=AttributeResolver.INSTANCE.resolveAttributes(typeReference.getAttributes());
+  final Type[] result=new Type[1];
+  typeReference.getTypeElement().accept(new JetVisitor(){
+    @Override public void visitUserType(    JetUserType type){
+      ClassDescriptor classDescriptor=resolveClass(scope,type);
+      if (classDescriptor != null) {
+        result[0]=new ClassType(attributes,classDescriptor,resolveTypeProjections(scope,type.getTypeArguments()));
+      }
+ else       if (type.getTypeArguments().isEmpty()) {
+        TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameterDescriptor(type.getReferencedName());
+        if (typeParameterDescriptor != null) {
+          result[0]=new TypeVariable(attributes,typeParameterDescriptor);
+        }
+      }
+    }
+    @Override public void visitTupleType(    JetTupleType type){
+      result[0]=TupleType.getTupleType(resolveTypes(scope,type.getComponentTypeRefs()));
+    }
+    @Override public void visitJetElement(    JetElement elem){
+      throw new IllegalArgumentException("Unsupported type: " + elem);
+    }
+  }
+);
+  if (result[0] == null) {
+    return new ErrorType(typeReference);
+  }
+  return result[0];
+}
