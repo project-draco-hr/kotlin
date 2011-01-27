@@ -1,0 +1,31 @@
+{
+  final Type[] result=new Type[1];
+  typeElement.accept(new JetVisitor(){
+    @Override public void visitUserType(    JetUserType type){
+      ClassDescriptor classDescriptor=resolveClass(scope,type);
+      if (classDescriptor != null) {
+        result[0]=new TypeImpl(attributes,classDescriptor.getTypeConstructor(),nullable,resolveTypeProjections(scope,type.getTypeArguments()),JetStandardClasses.STUB);
+      }
+ else       if (type.getTypeArguments().isEmpty()) {
+        TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameterDescriptor(type.getReferencedName());
+        if (typeParameterDescriptor != null) {
+          result[0]=new TypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
+        }
+      }
+    }
+    @Override public void visitNullableType(    JetNullableType nullableType){
+      result[0]=resolveTypeElement(scope,attributes,nullableType.getInnerType(),true);
+    }
+    @Override public void visitTupleType(    JetTupleType type){
+      result[0]=JetStandardClasses.getTupleType(resolveTypes(scope,type.getComponentTypeRefs()));
+    }
+    @Override public void visitJetElement(    JetElement elem){
+      throw new IllegalArgumentException("Unsupported type: " + elem);
+    }
+  }
+);
+  if (result[0] == null) {
+    return ErrorType.createErrorType(typeElement.getText());
+  }
+  return result[0];
+}
