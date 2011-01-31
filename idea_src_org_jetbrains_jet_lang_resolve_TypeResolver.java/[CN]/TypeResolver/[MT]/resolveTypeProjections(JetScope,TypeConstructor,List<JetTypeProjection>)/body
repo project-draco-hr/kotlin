@@ -1,0 +1,17 @@
+{
+  final List<TypeProjection> arguments=new ArrayList<TypeProjection>();
+  for (int i=0, argumentElementsSize=argumentElements.size(); i < argumentElementsSize; i++) {
+    JetTypeProjection argumentElement=argumentElements.get(i);
+    ProjectionKind projectionKind=argumentElement.getProjectionKind();
+    Type type;
+    if (projectionKind == ProjectionKind.NEITHER_OUT_NOR_IN) {
+      Set<Type> upperBounds=constructor.getParameters().get(i).getUpperBounds();
+      arguments.add(new TypeProjection(ProjectionKind.OUT_ONLY,TypeUtils.intersect(upperBounds)));
+    }
+ else {
+      type=resolveType(scope,argumentElement.getTypeReference());
+      arguments.add(new TypeProjection(projectionKind,type));
+    }
+  }
+  return arguments;
+}
