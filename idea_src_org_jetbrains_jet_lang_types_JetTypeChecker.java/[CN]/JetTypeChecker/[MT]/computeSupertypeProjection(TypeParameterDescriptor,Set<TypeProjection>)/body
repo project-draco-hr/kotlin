@@ -16,8 +16,8 @@ ins=null;
 break;
 }
 for (TypeProjection projection : typeProjections) {
-ProjectionKind projectionKind=projection.getProjectionKind();
-if (projectionKind.allowsInCalls()) {
+Variance projectionKind=projection.getProjectionKind();
+if (projectionKind.allowsInPosition()) {
 if (ins != null) {
 ins.add(projection.getType());
 }
@@ -25,7 +25,7 @@ ins.add(projection.getType());
  else {
 ins=null;
 }
-if (projectionKind.allowsOutCalls()) {
+if (projectionKind.allowsOutPosition()) {
 if (outs != null) {
 outs.add(projection.getType());
 }
@@ -35,15 +35,19 @@ outs=null;
 }
 }
 if (ins != null) {
-ProjectionKind projectionKind=variance == Variance.IN_VARIANCE ? ProjectionKind.NO_PROJECTION : ProjectionKind.IN_ONLY;
-return new TypeProjection(projectionKind,TypeUtils.intersect(ins));
+Variance projectionKind=variance == Variance.IN_VARIANCE ? Variance.INVARIANT : Variance.IN_VARIANCE;
+Type intersection=TypeUtils.intersect(ins);
+if (intersection == null) {
+return new TypeProjection(Variance.OUT_VARIANCE,commonSupertype(parameterDescriptor.getUpperBounds()));
+}
+return new TypeProjection(projectionKind,intersection);
 }
  else if (outs != null) {
-ProjectionKind projectionKind=variance == Variance.OUT_VARIANCE ? ProjectionKind.NO_PROJECTION : ProjectionKind.OUT_ONLY;
+Variance projectionKind=variance == Variance.OUT_VARIANCE ? Variance.INVARIANT : Variance.OUT_VARIANCE;
 return new TypeProjection(projectionKind,commonSupertype(outs));
 }
  else {
-ProjectionKind projectionKind=variance == Variance.OUT_VARIANCE ? ProjectionKind.NO_PROJECTION : ProjectionKind.OUT_ONLY;
+Variance projectionKind=variance == Variance.OUT_VARIANCE ? Variance.INVARIANT : Variance.OUT_VARIANCE;
 return new TypeProjection(projectionKind,commonSupertype(parameterDescriptor.getUpperBounds()));
 }
 }
