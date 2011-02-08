@@ -1,8 +1,8 @@
 {
-  TypeParameterExtensibleScope extensibleScope=new TypeParameterExtensibleScope(scope);
-  List<TypeParameterDescriptor> typeParameters=resolveTypeParameters(extensibleScope,classElement.getTypeParameters());
+  TypeParameterExtensibleScope typeParameterScope=new TypeParameterExtensibleScope(scope);
+  List<TypeParameterDescriptor> typeParameters=resolveTypeParameters(typeParameterScope,classElement.getTypeParameters());
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
-  Collection<? extends Type> superclasses=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveTypes(extensibleScope,delegationSpecifiers);
-  boolean open=classElement.getModifierList().hasModifier(JetTokens.OPEN_KEYWORD);
-  return new ClassDescriptor(AttributeResolver.INSTANCE.resolveAttributes(classElement.getModifierList()),!open,classElement.getName(),typeParameters,superclasses);
+  Collection<? extends Type> superclasses=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveTypes(typeParameterScope,delegationSpecifiers);
+  boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
+  return new ClassDescriptor(AttributeResolver.INSTANCE.resolveAttributes(classElement.getModifierList()),!open,classElement.getName(),typeParameters,superclasses,resolveMemberDomain(classElement,scope,typeParameterScope,superclasses));
 }

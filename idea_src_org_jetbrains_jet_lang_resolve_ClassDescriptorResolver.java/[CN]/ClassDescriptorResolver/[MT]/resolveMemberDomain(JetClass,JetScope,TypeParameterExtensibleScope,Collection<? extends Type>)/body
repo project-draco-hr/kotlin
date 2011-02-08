@@ -1,0 +1,38 @@
+{
+  return new TypeMemberDomain(){
+    @Override public PropertyDescriptor getProperty(    Type receiverType,    @NotNull String name){
+      List<JetDeclaration> declarations=classElement.getDeclarations();
+      for (      JetDeclaration declaration : declarations) {
+        if (!name.equals(declaration.getName())) {
+          continue;
+        }
+        if (declaration instanceof JetProperty) {
+          JetProperty property=(JetProperty)declaration;
+          if (property.getPropertyTypeRef() != null) {
+            return resolvePropertyDescriptor(JetScope.EMPTY,property);
+          }
+ else {
+            throw new UnsupportedOperationException();
+          }
+        }
+      }
+      for (      Type supertype : supertypes) {
+        PropertyDescriptor property=supertype.getMemberDomain().getProperty(JetTypeChecker.INSTANCE.substitute(receiverType,supertype),name);
+        if (property != null) {
+          return property;
+        }
+      }
+      return null;
+    }
+    @Override public ClassDescriptor getClassDescriptor(    @NotNull Type type,    String name){
+      throw new UnsupportedOperationException();
+    }
+    @NotNull @Override public Collection<MethodDescriptor> getMethods(    Type receiverType,    String name){
+      throw new UnsupportedOperationException();
+    }
+    @Override public ExtensionDescriptor getExtension(    Type receiverType,    String name){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+}
