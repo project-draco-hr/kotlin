@@ -1,6 +1,6 @@
 {
   return new TypeMemberDomain(){
-    @Override public PropertyDescriptor getProperty(    Type receiverType,    @NotNull String name){
+    @Override public PropertyDescriptor getProperty(    Type contextType,    @NotNull String name){
       List<JetDeclaration> declarations=classElement.getDeclarations();
       for (      JetDeclaration declaration : declarations) {
         if (!name.equals(declaration.getName())) {
@@ -9,7 +9,7 @@
         if (declaration instanceof JetProperty) {
           JetProperty property=(JetProperty)declaration;
           if (property.getPropertyTypeRef() != null) {
-            return resolvePropertyDescriptor(outerScope,property);
+            return substituteInPropertyDescriptor(contextType,resolvePropertyDescriptor(typeParameterScope,property));
           }
  else {
             throw new UnsupportedOperationException();
@@ -17,20 +17,20 @@
         }
       }
       for (      Type supertype : supertypes) {
-        PropertyDescriptor property=supertype.getMemberDomain().getProperty(JetTypeChecker.INSTANCE.substitute(receiverType,supertype),name);
+        PropertyDescriptor property=supertype.getMemberDomain().getProperty(JetTypeChecker.INSTANCE.substitute(contextType,supertype,Variance.INVARIANT),name);
         if (property != null) {
           return property;
         }
       }
       return null;
     }
-    @Override public ClassDescriptor getClassDescriptor(    @NotNull Type type,    String name){
+    @Override public ClassDescriptor getClassDescriptor(    @NotNull Type contextType,    String name){
       throw new UnsupportedOperationException();
     }
-    @NotNull @Override public Collection<MethodDescriptor> getMethods(    Type receiverType,    String name){
+    @NotNull @Override public Collection<MethodDescriptor> getMethods(    Type contextType,    String name){
       throw new UnsupportedOperationException();
     }
-    @Override public ExtensionDescriptor getExtension(    Type receiverType,    String name){
+    @Override public ExtensionDescriptor getExtension(    Type contextType,    String name){
       throw new UnsupportedOperationException();
     }
   }
