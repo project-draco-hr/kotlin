@@ -1,0 +1,33 @@
+{
+  final OverloadDomain[] result=new OverloadDomain[1];
+  calleeExpression.accept(new JetVisitor(){
+    @Override public void visitHashQualifiedExpression(    JetHashQualifiedExpression expression){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void visitPredicateExpression(    JetPredicateExpression expression){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void visitQualifiedExpression(    JetQualifiedExpression expression){
+      JetExpression selectorExpression=expression.getSelectorExpression();
+      if (selectorExpression instanceof JetReferenceExpression) {
+        JetReferenceExpression referenceExpression=(JetReferenceExpression)selectorExpression;
+        Type receiverType=getType(scope,expression.getReceiverExpression(),false);
+        result[0]=scope.getOverloadDomain(receiverType,referenceExpression.getReferencedName());
+      }
+ else {
+        throw new UnsupportedOperationException();
+      }
+    }
+    @Override public void visitReferenceExpression(    JetReferenceExpression expression){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void visitExpression(    JetExpression expression){
+      throw new UnsupportedOperationException();
+    }
+    @Override public void visitJetElement(    JetElement elem){
+      throw new IllegalArgumentException("Unsupported element: " + elem);
+    }
+  }
+);
+  return result[0];
+}
