@@ -1,0 +1,25 @@
+{
+  gen(expression.getCondition());
+  unboxBoolean();
+  JetExpression thenExpression=expression.getThen();
+  JetExpression elseExpression=expression.getElse();
+  if (thenExpression == null && elseExpression == null) {
+    throw new CompilationException();
+  }
+  if (thenExpression == null) {
+    generateSingleBranchIf(elseExpression,false);
+    return;
+  }
+  if (elseExpression == null) {
+    generateSingleBranchIf(thenExpression,true);
+    return;
+  }
+  Label elseLabel=new Label();
+  v.ifeq(elseLabel);
+  gen(thenExpression);
+  Label endLabel=new Label();
+  v.goTo(endLabel);
+  v.mark(elseLabel);
+  gen(elseExpression);
+  v.mark(endLabel);
+}
