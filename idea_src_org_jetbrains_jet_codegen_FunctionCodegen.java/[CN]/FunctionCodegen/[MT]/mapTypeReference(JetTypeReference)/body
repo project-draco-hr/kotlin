@@ -4,22 +4,8 @@
   }
   final JetTypeElement typeElement=typeRef.getTypeElement();
   if (typeElement instanceof JetUserType) {
-    final String referencedName=((JetUserType)typeElement).getReferencedName();
-    if ("Array".equals(referencedName)) {
-      final List<JetTypeProjection> typeArguments=((JetUserType)typeElement).getTypeArguments();
-      if (typeArguments.size() != 1) {
-        throw new UnsupportedOperationException("arrays must have one type argument");
-      }
-      final JetTypeReference elementTypeRef=typeArguments.get(0).getTypeReference();
-      Type elementType=mapTypeReference(elementTypeRef);
-      return Type.getType("[" + elementType.getDescriptor());
-    }
-    if ("String".equals(referencedName)) {
-      return Type.getType(String.class);
-    }
-    if ("Int".equals(referencedName)) {
-      return Type.getType(Integer.class);
-    }
+    final JetUserType userType=(JetUserType)typeElement;
+    return mapType(userType.getReferencedName(),userType.getTypeArguments());
   }
   throw new UnsupportedOperationException("Unknown type " + typeRef);
 }

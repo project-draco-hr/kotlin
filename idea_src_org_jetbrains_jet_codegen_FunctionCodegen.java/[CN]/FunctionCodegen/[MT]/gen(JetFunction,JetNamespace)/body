@@ -5,15 +5,29 @@
     parameterTypes[i]=mapTypeReference(parameters.get(i).getTypeReference());
   }
   final JetTypeReference returnTypeRef=f.getReturnTypeRef();
-  Type returnType=returnTypeRef == null ? Type.VOID_TYPE : mapTypeReference(returnTypeRef);
+  Type returnType;
+  if (returnTypeRef == null) {
+    final FunctionDescriptor functionDescriptor=bindingContext.getFunctionDescriptor(f);
+    final org.jetbrains.jet.lang.types.Type type=functionDescriptor.getUnsubstitutedReturnType();
+    if (type.equals(JetStandardClasses.getUnitType())) {
+      returnType=Type.VOID_TYPE;
+    }
+ else     if (type.equals(JetStandardClasses.getIntType())) {
+      returnType=Type.getType(Integer.class);
+    }
+ else {
+      throw new UnsupportedOperationException("don't know how to map type " + type);
+    }
+  }
+ else {
+    returnType=mapTypeReference(returnTypeRef);
+  }
   Method method=new Method(f.getName(),returnType,parameterTypes);
   final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,method.getName(),method.getDescriptor(),null,null);
   mv.visitCode();
   final JetExpression bodyExpression=f.getBodyExpression();
-  bodyExpression.accept(new ExpressionCodegen(mv));
-  if (needReturn(bodyExpression)) {
-    mv.visitInsn(Opcodes.RETURN);
-  }
+  bodyExpression.accept(new ExpressionCodegen(mv,bindingContext));
+  generateReturn(mv,bodyExpression);
   mv.visitMaxs(0,0);
   mv.visitEnd();
 }
