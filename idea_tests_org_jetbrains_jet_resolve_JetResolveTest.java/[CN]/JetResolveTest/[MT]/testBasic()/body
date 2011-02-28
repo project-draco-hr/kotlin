@@ -1,23 +1,27 @@
 {
   JetFile jetFile=JetChangeUtil.createFile(getProject(),FileUtil.loadTextAndClose(new FileReader(getTestDataPath() + "/resolve/Basic.jet")));
   List<JetDeclaration> declarations=jetFile.getRootNamespace().getDeclarations();
-  BindingContext bindingContext=new TopDownAnalyzer().process(JetStandardClasses.STANDARD_CLASSES,declarations);
+  BindingContext bindingContext=new TopDownAnalyzer(new JetSemanticServices(library)).process(library.getLibraryScope(),declarations);
   JetClass classADecl=(JetClass)declarations.get(0);
   ClassDescriptor classA=bindingContext.getClassDescriptor(classADecl);
   assertNotNull(classA);
   JetScope membersOfA=classA.getMemberScope(Collections.<TypeProjection>emptyList());
   ClassDescriptor classB=membersOfA.getClass("B");
   assertNotNull(classB);
-  FunctionGroup fooFG=membersOfA.getFunctionGroup("foo");
-  assertFalse(fooFG.isEmpty());
-  assertReturnType(membersOfA,"foo",JetStandardClasses.getIntType());
+{
+    FunctionGroup fooFG=membersOfA.getFunctionGroup("foo");
+    assertFalse(fooFG.isEmpty());
+  }
+  assertReturnType(membersOfA,"foo",library.getIntType());
   assertReturnType(membersOfA,"foo1",new TypeImpl(classB));
-  assertReturnType(membersOfA,"fooB",JetStandardClasses.getIntType());
+  assertReturnType(membersOfA,"fooB",library.getIntType());
   JetFunction fooDecl=(JetFunction)classADecl.getDeclarations().get(1);
   Type expressionType=bindingContext.getExpressionType(fooDecl.getBodyExpression());
-  assertEquals(JetStandardClasses.getIntType(),expressionType);
-  DeclarationDescriptor resolve=bindingContext.resolve((JetReferenceExpression)fooDecl.getBodyExpression());
-  assertSame(bindingContext.getFunctionDescriptor(fooDecl).getUnsubstitutedValueParameters().get(0),resolve);
+  assertEquals(library.getIntType(),expressionType);
+{
+    DeclarationDescriptor resolve=bindingContext.resolve((JetReferenceExpression)fooDecl.getBodyExpression());
+    assertSame(bindingContext.getFunctionDescriptor(fooDecl).getUnsubstitutedValueParameters().get(0),resolve);
+  }
 {
     JetFunction fooBDecl=(JetFunction)classADecl.getDeclarations().get(2);
     JetCallExpression fooBBody=(JetCallExpression)fooBDecl.getBodyExpression();
@@ -31,8 +35,8 @@
     JetDotQualifiedExpression qualifiedPlus=(JetDotQualifiedExpression)fooIntBody.getCalleeExpression();
     JetReferenceExpression refToPlus=(JetReferenceExpression)qualifiedPlus.getSelectorExpression();
     FunctionDescriptor mustBePlus=(FunctionDescriptor)bindingContext.resolve(refToPlus);
-    FunctionGroup plusGroup=JetStandardClasses.getInt().getMemberScope(Collections.<TypeProjection>emptyList()).getFunctionGroup("plus");
-    Collection<FunctionDescriptor> pluses=plusGroup.getPossiblyApplicableFunctions(Collections.<Type>emptyList(),Collections.singletonList(JetStandardClasses.getIntType()));
+    FunctionGroup plusGroup=library.getInt().getMemberScope(Collections.<TypeProjection>emptyList()).getFunctionGroup("plus");
+    Collection<FunctionDescriptor> pluses=plusGroup.getPossiblyApplicableFunctions(Collections.<Type>emptyList(),Collections.singletonList(library.getIntType()));
     FunctionDescriptor intPlus=null;
     for (    FunctionDescriptor plus : pluses) {
       intPlus=plus;

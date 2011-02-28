@@ -1,0 +1,20 @@
+{
+  if (block.isEmpty()) {
+    return JetStandardClasses.getUnitType();
+  }
+ else {
+    WritableScope scope=new WritableScope(outerScope);
+    for (    JetElement statement : block) {
+      if (statement instanceof JetProperty) {
+        JetProperty property=(JetProperty)statement;
+        scope.addPropertyDescriptor(semanticServices.getClassDescriptorResolver().resolvePropertyDescriptor(scope,property));
+      }
+    }
+    JetElement lastElement=block.get(block.size() - 1);
+    if (lastElement instanceof JetExpression) {
+      JetExpression expression=(JetExpression)lastElement;
+      return getType(scope,expression,true);
+    }
+    throw new IllegalArgumentException("Last item in the block must be an expression");
+  }
+}
