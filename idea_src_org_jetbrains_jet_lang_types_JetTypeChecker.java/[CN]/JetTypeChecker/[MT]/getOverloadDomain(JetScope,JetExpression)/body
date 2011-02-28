@@ -1,5 +1,6 @@
 {
   final OverloadDomain[] result=new OverloadDomain[1];
+  final JetReferenceExpression[] reference=new JetReferenceExpression[1];
   calleeExpression.accept(new JetVisitor(){
     @Override public void visitHashQualifiedExpression(    JetHashQualifiedExpression expression){
       throw new UnsupportedOperationException();
@@ -13,6 +14,7 @@
         JetReferenceExpression referenceExpression=(JetReferenceExpression)selectorExpression;
         Type receiverType=getType(scope,expression.getReceiverExpression(),false);
         result[0]=OverloadResolver.INSTANCE.getOverloadDomain(receiverType,scope,referenceExpression.getReferencedName());
+        reference[0]=referenceExpression;
       }
  else {
         throw new UnsupportedOperationException();
@@ -20,6 +22,7 @@
     }
     @Override public void visitReferenceExpression(    JetReferenceExpression expression){
       result[0]=OverloadResolver.INSTANCE.getOverloadDomain(null,scope,expression.getReferencedName());
+      reference[0]=expression;
     }
     @Override public void visitExpression(    JetExpression expression){
       throw new UnsupportedOperationException();
@@ -29,5 +32,17 @@
     }
   }
 );
-  return result[0];
+  return new OverloadDomain(){
+    @Override public FunctionDescriptor getFunctionDescriptorForNamedArguments(    @NotNull List<Type> typeArguments,    @NotNull Map<String,Type> valueArgumentTypes,    @Nullable Type functionLiteralArgumentType){
+      FunctionDescriptor descriptor=result[0].getFunctionDescriptorForNamedArguments(typeArguments,valueArgumentTypes,functionLiteralArgumentType);
+      trace.recordResolutionResult(reference[0],descriptor);
+      return descriptor;
+    }
+    @Override public FunctionDescriptor getFunctionDescriptorForPositionedArguments(    @NotNull List<Type> typeArguments,    @NotNull List<Type> positionedValueArgumentTypes){
+      FunctionDescriptor descriptor=result[0].getFunctionDescriptorForPositionedArguments(typeArguments,positionedValueArgumentTypes);
+      trace.recordResolutionResult(reference[0],descriptor);
+      return descriptor;
+    }
+  }
+;
 }
