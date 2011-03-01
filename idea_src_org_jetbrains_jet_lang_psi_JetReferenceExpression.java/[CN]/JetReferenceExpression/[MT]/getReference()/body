@@ -1,0 +1,39 @@
+{
+  return new PsiReference(){
+    @Override public PsiElement getElement(){
+      return findChildByType(REFERENCE_TOKENS);
+    }
+    @Override public TextRange getRangeInElement(){
+      return new TextRange(0,getElement().getTextLength());
+    }
+    @Override public PsiElement resolve(){
+      PsiElement element=getElement();
+      while (element != null && false == element instanceof JetFile) {
+        element=element.getParent();
+      }
+      JetFile file=(JetFile)element;
+      JetSemanticServices semanticServices=new JetSemanticServices(element.getProject());
+      BindingContext bindingContext=new TopDownAnalyzer(semanticServices).process(semanticServices.getStandardLibrary().getLibraryScope(),file.getRootNamespace().getDeclarations());
+      return bindingContext.resolveToDeclarationPsiElement(JetReferenceExpression.this);
+    }
+    @NotNull @Override public String getCanonicalText(){
+      throw new UnsupportedOperationException();
+    }
+    @Override public PsiElement handleElementRename(    String newElementName) throws IncorrectOperationException {
+      throw new UnsupportedOperationException();
+    }
+    @Override public PsiElement bindToElement(    @NotNull PsiElement element) throws IncorrectOperationException {
+      throw new UnsupportedOperationException();
+    }
+    @Override public boolean isReferenceTo(    PsiElement element){
+      throw new UnsupportedOperationException();
+    }
+    @NotNull @Override public Object[] getVariants(){
+      throw new UnsupportedOperationException();
+    }
+    @Override public boolean isSoft(){
+      throw new UnsupportedOperationException();
+    }
+  }
+;
+}
