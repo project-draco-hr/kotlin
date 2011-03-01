@@ -6,18 +6,24 @@
     if (!matcher.find())     break;
     String group=matcher.group();
     String name=group.substring(1,group.length() - 1);
+    int start=matcher.start();
     if (group.startsWith("~")) {
-      if (declarationToPosition.put(name,matcher.start()) != null) {
+      if (declarationToPosition.put(name,start) != null) {
         throw new IllegalArgumentException("Redeclaration: " + name);
       }
     }
  else     if (group.startsWith("`")) {
-      positionToReference.put(matcher.start(),name);
+      if (name.startsWith(":")) {
+        positionToType.put(start - 1,name.substring(1));
+      }
+ else {
+        positionToReference.put(start,name);
+      }
     }
  else {
       throw new IllegalStateException();
     }
-    document.replaceString(matcher.start(),matcher.end(),"");
+    document.replaceString(start,matcher.end(),"");
     text=document.getText();
   }
 }
