@@ -1,5 +1,17 @@
 {
   if (element instanceof JetFile) {
     JetFile file=(JetFile)element;
+    JetSemanticServices semanticServices=new JetSemanticServices(element.getProject());
+    final BindingContext bindingContext=new TopDownAnalyzer(semanticServices).process(semanticServices.getStandardLibrary().getLibraryScope(),file.getRootNamespace().getDeclarations());
+    file.getRootNamespace().accept(new JetVisitor(){
+      @Override public void visitClass(      JetClass klass){
+        for (        JetDelegationSpecifier specifier : klass.getDelegationSpecifiers()) {
+          JetTypeReference typeReference=specifier.getTypeReference();
+          Type type=bindingContext.resolveTypeReference(typeReference);
+          holder.createInfoAnnotation(typeReference,type.toString());
+        }
+      }
+    }
+);
   }
 }
