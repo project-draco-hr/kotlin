@@ -1,5 +1,6 @@
 {
   if (element instanceof JetFile) {
+    Project project=element.getProject();
     JetFile file=(JetFile)element;
     JetSemanticServices semanticServices=JetSemanticServices.createSemanticServices(element.getProject(),new ErrorHandler(){
       @Override public void unresolvedReference(      JetReferenceExpression referenceExpression){
@@ -8,7 +9,11 @@
     }
 );
     try {
-      final BindingContext bindingContext=new TopDownAnalyzer(semanticServices).process(semanticServices.getStandardLibrary().getLibraryScope(),file.getRootNamespace().getDeclarations());
+      ScopeWithImports scope=new ScopeWithImports(semanticServices.getStandardLibrary().getLibraryScope());
+      BindingTraceContext bindingTraceContext=new BindingTraceContext();
+      scope.addImport(new JavaLangScope(new JavaSemanticServices(project,semanticServices,bindingTraceContext)));
+      new TopDownAnalyzer(semanticServices,bindingTraceContext).process(scope,file.getRootNamespace().getDeclarations());
+      final BindingContext bindingContext=bindingTraceContext;
       file.getRootNamespace().accept(new JetVisitor(){
         @Override public void visitClass(        JetClass klass){
           for (          JetDelegationSpecifier specifier : klass.getDelegationSpecifiers()) {

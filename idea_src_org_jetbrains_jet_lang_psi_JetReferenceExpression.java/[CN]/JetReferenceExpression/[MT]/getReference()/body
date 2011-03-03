@@ -13,7 +13,11 @@
       }
       JetFile file=(JetFile)element;
       JetSemanticServices semanticServices=JetSemanticServices.createSemanticServices(element.getProject(),ErrorHandler.DO_NOTHING);
-      BindingContext bindingContext=new TopDownAnalyzer(semanticServices).process(semanticServices.getStandardLibrary().getLibraryScope(),file.getRootNamespace().getDeclarations());
+      ScopeWithImports scope=new ScopeWithImports(semanticServices.getStandardLibrary().getLibraryScope());
+      BindingTraceContext bindingTraceContext=new BindingTraceContext();
+      scope.addImport(new JavaLangScope(new JavaSemanticServices(element.getProject(),semanticServices,bindingTraceContext)));
+      new TopDownAnalyzer(semanticServices,bindingTraceContext).process(scope,file.getRootNamespace().getDeclarations());
+      BindingContext bindingContext=bindingTraceContext;
       return bindingContext.resolveToDeclarationPsiElement(JetReferenceExpression.this);
     }
     @NotNull @Override public String getCanonicalText(){
