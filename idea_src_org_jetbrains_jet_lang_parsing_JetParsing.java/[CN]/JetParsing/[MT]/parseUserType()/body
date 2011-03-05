@@ -1,5 +1,22 @@
 {
   PsiBuilder.Marker userType=mark();
-  parseUserTypeOrQualifiedName();
+  if (at(NAMESPACE_KEYWORD)) {
+    advance();
+    expect(DOT,"Expecting '.'",TokenSet.create(IDENTIFIER));
+  }
+  PsiBuilder.Marker reference=mark();
+  while (true) {
+    expect(IDENTIFIER,"Type name expected",TokenSet.create(LT));
+    reference.done(REFERENCE_EXPRESSION);
+    parseTypeArgumentList();
+    if (!at(DOT)) {
+      break;
+    }
+    PsiBuilder.Marker precede=userType.precede();
+    userType.done(USER_TYPE);
+    userType=precede;
+    advance();
+    reference=mark();
+  }
   userType.done(USER_TYPE);
 }

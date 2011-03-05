@@ -9,6 +9,19 @@
         List<JetImportDirective> importDirectives=namespace.getImportDirectives();
         ScopeWithImports scopeWithImports=new ScopeWithImports(declaringScope);
         for (        JetImportDirective importDirective : importDirectives) {
+          if (importDirective.isAbsoluteInRootNamespace()) {
+            throw new UnsupportedOperationException();
+          }
+          if (importDirective.isAllUnder()) {
+            JetExpression importedReference=importDirective.getImportedReference();
+            Type type=semanticServices.getTypeInferrer(trace).getType(scopeWithImports,importedReference,false);
+            if (type != null) {
+              scopeWithImports.importScope(type.getMemberScope());
+            }
+          }
+ else {
+            throw new UnsupportedOperationException();
+          }
         }
         WritableScope namespaceScope=new WritableScope(scopeWithImports);
         collectTypeDeclarators(namespaceScope,namespace.getDeclarations());

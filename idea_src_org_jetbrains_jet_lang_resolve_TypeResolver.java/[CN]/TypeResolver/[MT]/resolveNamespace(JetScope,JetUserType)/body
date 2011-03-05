@@ -1,0 +1,16 @@
+{
+  if (userType.isAbsoluteInRootNamespace()) {
+    return resolveNamespace(JetModuleUtil.getRootNamespaceScope(userType),userType);
+  }
+  JetUserType qualifier=userType.getQualifier();
+  if (qualifier != null) {
+    NamespaceDescriptor domain=resolveNamespace(scope,qualifier);
+    if (domain == null) {
+      return null;
+    }
+    return domain.getMemberScope().getNamespace(userType.getReferencedName());
+  }
+  NamespaceDescriptor namespace=scope.getNamespace(userType.getReferencedName());
+  trace.recordReferenceResolution(userType.getReferenceExpression(),namespace);
+  return namespace;
+}

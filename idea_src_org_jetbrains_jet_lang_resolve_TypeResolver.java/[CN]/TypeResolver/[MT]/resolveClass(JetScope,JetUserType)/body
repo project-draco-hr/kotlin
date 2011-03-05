@@ -1,3 +1,11 @@
 {
-  return resolveClass(scope,userType.getReferenceExpression());
+  JetReferenceExpression expression=userType.getReferenceExpression();
+  if (userType.isAbsoluteInRootNamespace()) {
+    return JetModuleUtil.getRootNamespaceScope(userType).getClass(expression.getReferencedName());
+  }
+  JetUserType qualifier=userType.getQualifier();
+  if (qualifier != null) {
+    scope=resolveClassLookupScope(scope,qualifier);
+  }
+  return scope.getClass(expression.getReferencedName());
 }
