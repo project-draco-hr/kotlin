@@ -1,29 +1,8 @@
 {
-  String text=document.getText();
-  Pattern pattern=Pattern.compile("(~[^~]+~)|(`[^`]+`)");
-  while (true) {
-    Matcher matcher=pattern.matcher(text);
-    if (!matcher.find())     break;
-    String group=matcher.group();
-    String name=group.substring(1,group.length() - 1);
-    int start=matcher.start();
-    if (group.startsWith("~")) {
-      if (declarationToPosition.put(name,start) != null) {
-        throw new IllegalArgumentException("Redeclaration: " + name);
-      }
+  new WriteCommandAction.Simple(null){
+    public void run(){
+      doExtractData(document);
     }
- else     if (group.startsWith("`")) {
-      if (name.startsWith(":")) {
-        positionToType.put(start - 1,name.substring(1));
-      }
- else {
-        positionToReference.put(start,name);
-      }
-    }
- else {
-      throw new IllegalStateException();
-    }
-    document.replaceString(start,matcher.end(),"");
-    text=document.getText();
   }
+.execute().throwException();
 }

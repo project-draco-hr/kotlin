@@ -7,23 +7,23 @@
       }
       @Override public void visitNamespace(      JetNamespace namespace){
         List<JetImportDirective> importDirectives=namespace.getImportDirectives();
-        ScopeWithImports scopeWithImports=new ScopeWithImports(declaringScope);
+        WritableScope namespaceScope=new WritableScope(declaringScope);
+        namespaceScopes.put(namespace,namespaceScope);
         for (        JetImportDirective importDirective : importDirectives) {
           if (importDirective.isAbsoluteInRootNamespace()) {
             throw new UnsupportedOperationException();
           }
           if (importDirective.isAllUnder()) {
             JetExpression importedReference=importDirective.getImportedReference();
-            Type type=semanticServices.getTypeInferrer(trace).getType(scopeWithImports,importedReference,false);
+            Type type=semanticServices.getTypeInferrer(trace).getType(namespaceScope,importedReference,false);
             if (type != null) {
-              scopeWithImports.importScope(type.getMemberScope());
+              namespaceScope.importScope(type.getMemberScope());
             }
           }
  else {
             throw new UnsupportedOperationException();
           }
         }
-        WritableScope namespaceScope=new WritableScope(scopeWithImports);
         collectTypeDeclarators(namespaceScope,namespace.getDeclarations());
       }
       @Override public void visitTypedef(      JetTypedef typedef){
