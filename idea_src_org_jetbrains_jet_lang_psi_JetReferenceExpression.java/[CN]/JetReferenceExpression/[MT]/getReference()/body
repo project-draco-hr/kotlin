@@ -9,12 +9,10 @@
     }
     @Override public PsiElement resolve(){
       PsiElement element=getElement();
-      while (element != null && false == element instanceof JetFile) {
-        element=element.getParent();
-      }
-      JetFile file=(JetFile)element;
+      JetFile file=PsiTreeUtil.getParentOfType(element,JetFile.class);
       BindingContext bindingContext=AnalyzingUtils.analyzeFile(file,ErrorHandler.DO_NOTHING);
-      return bindingContext.resolveToDeclarationPsiElement(JetReferenceExpression.this);
+      PsiElement psiElement=bindingContext.resolveToDeclarationPsiElement(JetReferenceExpression.this);
+      return psiElement == null ? file : psiElement;
     }
     @NotNull @Override public String getCanonicalText(){
       return getReferencedName();
@@ -26,7 +24,7 @@
       throw new IncorrectOperationException();
     }
     @Override public boolean isReferenceTo(    PsiElement element){
-      return false;
+      return resolve() == element;
     }
     @NotNull @Override public Object[] getVariants(){
       return EMPTY_ARRAY;
