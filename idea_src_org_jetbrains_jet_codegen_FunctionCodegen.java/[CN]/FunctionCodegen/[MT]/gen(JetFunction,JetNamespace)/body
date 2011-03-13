@@ -26,7 +26,12 @@
   final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,method.getName(),method.getDescriptor(),null,null);
   mv.visitCode();
   final JetExpression bodyExpression=f.getBodyExpression();
-  bodyExpression.accept(new ExpressionCodegen(mv,bindingContext));
+  FrameMap frameMap=new FrameMap();
+  List<ValueParameterDescriptor> parameDescrs=bindingContext.getFunctionDescriptor(f).getUnsubstitutedValueParameters();
+  for (  ValueParameterDescriptor parameter : parameDescrs) {
+    frameMap.enter(parameter);
+  }
+  bodyExpression.accept(new ExpressionCodegen(mv,bindingContext,frameMap));
   generateReturn(mv,bodyExpression);
   mv.visitMaxs(0,0);
   mv.visitEnd();

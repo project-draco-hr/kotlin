@@ -4,7 +4,7 @@
   List<JetElement> statements=expression.getStatements();
   for (  JetElement statement : statements) {
     if (statement instanceof JetProperty) {
-      myVarIndex.put((JetProperty)statement,myMaxVarIndex++);
+      myMap.enter(bindingContext.getPropertyDescriptor((JetProperty)statement));
     }
   }
   for (  JetElement statement : statements) {
@@ -15,9 +15,8 @@
   for (  JetElement statement : statements) {
     if (statement instanceof JetProperty) {
       JetProperty var=(JetProperty)statement;
-      int index=myVarIndex.remove(var);
+      int index=myMap.leave(bindingContext.getPropertyDescriptor(var));
       v.visitLocalVariable(var.getName(),getType(var).getDescriptor(),null,blockStart,blockEnd,index);
-      myMaxVarIndex--;
     }
   }
 }
