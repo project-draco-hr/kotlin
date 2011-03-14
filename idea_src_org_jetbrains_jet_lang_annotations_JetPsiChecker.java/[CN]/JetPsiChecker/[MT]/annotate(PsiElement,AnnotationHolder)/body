@@ -5,7 +5,16 @@
     try {
       final BindingContext bindingContext=AnalyzingUtils.analyzeFile(file,new ErrorHandler(){
         @Override public void unresolvedReference(        JetReferenceExpression referenceExpression){
-          holder.createErrorAnnotation(referenceExpression,"Unresolved").setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          PsiReference reference=referenceExpression.getReference();
+          if (reference instanceof MultiRangeReference) {
+            MultiRangeReference mrr=(MultiRangeReference)reference;
+            for (            TextRange range : mrr.getRanges()) {
+              holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),"Unresolved").setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+            }
+          }
+ else {
+            holder.createErrorAnnotation(referenceExpression,"Unresolved").setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          }
         }
         @Override public void structuralError(        ASTNode node,        String errorMessage){
           holder.createErrorAnnotation(node,errorMessage);
