@@ -1,2 +1,27 @@
 {
+  FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(containingDescriptor,AttributeResolver.INSTANCE.resolveAttributes(function.getModifierList()),function.getName());
+  WritableScope parameterScope=new WritableScope(scope,functionDescriptor);
+  List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,parameterScope,function.getTypeParameters());
+  List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,parameterScope,function.getValueParameters());
+  Type returnType;
+  JetTypeReference returnTypeRef=function.getReturnTypeRef();
+  JetExpression bodyExpression=function.getBodyExpression();
+  if (returnTypeRef != null) {
+    returnType=typeResolver.resolveType(parameterScope,returnTypeRef);
+    if (bodyExpression != null) {
+      semanticServices.getTypeInferrer(trace).getType(parameterScope,bodyExpression,function.hasBlockBody());
+    }
+  }
+ else {
+    if (bodyExpression == null) {
+      semanticServices.getErrorHandler().structuralError(function.getNode(),"This function must either declare a return type or have a body expression");
+      returnType=ErrorType.createErrorType("No type, no body");
+    }
+ else {
+      returnType=semanticServices.getTypeInferrer(trace).safeGetType(parameterScope,bodyExpression,function.hasBlockBody());
+    }
+  }
+  functionDescriptor.initialize(typeParameterDescriptors,valueParameterDescriptors,returnType);
+  trace.recordDeclarationResolution(function,functionDescriptor);
+  return functionDescriptor;
 }
