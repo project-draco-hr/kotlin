@@ -7,7 +7,14 @@
       }
       @Override public void visitNamespace(      JetNamespace namespace){
         List<JetImportDirective> importDirectives=namespace.getImportDirectives();
-        WritableScope namespaceScope=new WritableScope(declaringScope);
+        String name=namespace.getName();
+        NamespaceDescriptor namespaceDescriptor=declaringScope.getNamespace(name);
+        if (namespaceDescriptor == null) {
+          namespaceDescriptor=new NamespaceDescriptor(declaringScope.getContainingDeclaration(),Collections.<Attribute>emptyList(),name);
+          declaringScope.addNamespace(namespaceDescriptor);
+          trace.recordDeclarationResolution(namespace,namespaceDescriptor);
+        }
+        WritableScope namespaceScope=new WritableScope(declaringScope,namespaceDescriptor);
         namespaceScopes.put(namespace,namespaceScope);
         for (        JetImportDirective importDirective : importDirectives) {
           if (importDirective.isAbsoluteInRootNamespace()) {

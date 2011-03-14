@@ -1,0 +1,29 @@
+{
+  final WritableScope memberDeclarations=new WritableScope(typeParameterScope,classDescriptor);
+  List<JetDeclaration> declarations=classElement.getDeclarations();
+  for (  JetDeclaration declaration : declarations) {
+    declaration.accept(new JetVisitor(){
+      @Override public void visitProperty(      JetProperty property){
+        if (property.getPropertyTypeRef() != null) {
+          memberDeclarations.addPropertyDescriptor(resolvePropertyDescriptor(classDescriptor,typeParameterScope,property));
+        }
+ else {
+          throw new UnsupportedOperationException();
+        }
+      }
+      @Override public void visitFunction(      JetFunction function){
+        if (function.getReturnTypeRef() != null) {
+          memberDeclarations.addFunctionDescriptor(resolveFunctionDescriptor(classDescriptor,typeParameterScope,function));
+        }
+ else {
+          throw new UnsupportedOperationException();
+        }
+      }
+      @Override public void visitJetElement(      JetElement elem){
+        throw new UnsupportedOperationException(elem.toString());
+      }
+    }
+);
+  }
+  return memberDeclarations;
+}
