@@ -49,16 +49,19 @@
     }
   }
  else   if (equalsOperations.contains(operationType)) {
-    JetType equalsType=getTypeForBinaryCall(expression,"equals",scope,true);
-    if (equalsType != null) {
-      TypeConstructor booleanTypeConstructor=semanticServices.getStandardLibrary().getBoolean().getTypeConstructor();
-      if (!equalsType.getConstructor().equals(booleanTypeConstructor)) {
-        semanticServices.getErrorHandler().structuralError(operationSign.getNode(),"'equals' must return Boolean but returns " + equalsType);
-      }
- else {
-        result=equalsType;
-      }
+    String name="equals";
+    JetType equalsType=getTypeForBinaryCall(expression,name,scope,true);
+    assureBooleanResult(operationSign,name,equalsType);
+  }
+ else   if (inOperations.contains(operationType)) {
+    JetExpression right=expression.getRight();
+    if (right == null) {
+      result=ErrorType.createErrorType("No right argument");
+      return;
     }
+    String name="contains";
+    JetType containsType=getTypeForBinaryCall(scope,right,expression.getOperationReference(),expression.getLeft(),name,true);
+    result=assureBooleanResult(operationSign,name,containsType);
   }
  else {
     semanticServices.getErrorHandler().structuralError(operationSign.getNode(),"Unknown operation");
