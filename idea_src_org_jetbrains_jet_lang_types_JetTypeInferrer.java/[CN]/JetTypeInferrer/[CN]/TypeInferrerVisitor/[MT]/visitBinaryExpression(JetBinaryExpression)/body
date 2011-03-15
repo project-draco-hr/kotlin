@@ -1,0 +1,37 @@
+{
+  JetSimpleNameExpression operationSign=expression.getOperationReference();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  if (operationType == JetTokens.IDENTIFIER) {
+    result=getTypeForBinaryCall(expression,operationSign.getReferencedName(),scope);
+  }
+ else   if (operationType == JetTokens.PLUS) {
+    result=getTypeForBinaryCall(expression,"plus",scope);
+  }
+ else   if (operationType == JetTokens.EQ) {
+    JetExpression left=expression.getLeft();
+    JetExpression deparenthesized=deparenthesize(left);
+    if (deparenthesized instanceof JetArrayAccessExpression) {
+      JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)deparenthesized;
+      resolveArrayAccessToLValue(arrayAccessExpression,expression.getRight(),expression.getOperationReference());
+    }
+ else {
+      getType(scope,expression.getRight(),false);
+    }
+    result=null;
+  }
+ else   if (operationType == JetTokens.LT) {
+    JetExpression left=expression.getLeft();
+    JetExpression deparenthesized=deparenthesize(left);
+    if (deparenthesized instanceof JetArrayAccessExpression) {
+      JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)deparenthesized;
+      resolveArrayAccessToLValue(arrayAccessExpression,expression.getRight(),expression.getOperationReference());
+    }
+ else {
+      getType(scope,expression.getRight(),false);
+    }
+    result=null;
+  }
+ else {
+    throw new UnsupportedOperationException();
+  }
+}
