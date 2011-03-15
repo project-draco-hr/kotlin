@@ -2,10 +2,10 @@
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   IElementType operationType=operationSign.getReferencedNameElementType();
   if (operationType == JetTokens.IDENTIFIER) {
-    result=getTypeForBinaryCall(expression,operationSign.getReferencedName(),scope);
+    result=getTypeForBinaryCall(expression,operationSign.getReferencedName(),scope,true);
   }
  else   if (binaryOperationNames.containsKey(operationType)) {
-    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),scope);
+    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),scope,true);
   }
  else   if (operationType == JetTokens.EQ) {
     JetExpression left=expression.getLeft();
@@ -20,7 +20,7 @@
     result=null;
   }
  else   if (comparisonOperations.contains(operationType)) {
-    JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",scope);
+    JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",scope,true);
     if (compareToReturnType != null) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
       JetStandardLibrary standardLibrary=semanticServices.getStandardLibrary();
@@ -30,6 +30,29 @@
       }
  else {
         semanticServices.getErrorHandler().structuralError(operationSign.getNode(),"compareTo must return Int, but returns " + compareToReturnType);
+      }
+    }
+  }
+ else   if (assignmentOperationNames.containsKey(operationType)) {
+    String name=assignmentOperationNames.get(operationType);
+    JetType assignmentOperationType=getTypeForBinaryCall(expression,name,scope,false);
+    String counterpartName=binaryOperationNames.get(assignmentOperationCounterparts.get(operationType));
+    JetType counterpartType=getTypeForBinaryCall(expression,counterpartName,scope,false);
+    if (assignmentOperationType != null) {
+      if (counterpartType != null) {
+        semanticServices.getErrorHandler().structuralError(operationSign.getNode(),"Ambiguity: both '" + name + "' and '"+ counterpartName+ "' are defined");
+        trace.removeReferenceResolution(operationSign);
+      }
+ else {
+        result=assignmentOperationType;
+      }
+    }
+ else {
+      if (counterpartType == null) {
+        semanticServices.getErrorHandler().unresolvedReference(operationSign);
+      }
+ else {
+        result=counterpartType;
       }
     }
   }
