@@ -4,8 +4,8 @@
   if (operationType == JetTokens.IDENTIFIER) {
     result=getTypeForBinaryCall(expression,operationSign.getReferencedName(),scope);
   }
- else   if (operationType == JetTokens.PLUS) {
-    result=getTypeForBinaryCall(expression,"plus",scope);
+ else   if (binaryOperationNames.containsKey(operationType)) {
+    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),scope);
   }
  else   if (operationType == JetTokens.EQ) {
     JetExpression left=expression.getLeft();
@@ -19,7 +19,7 @@
     }
     result=null;
   }
- else   if (operationType == JetTokens.LT) {
+ else   if (comparisonOperations.contains(operationType)) {
     JetExpression left=expression.getLeft();
     JetExpression deparenthesized=deparenthesize(left);
     if (deparenthesized instanceof JetArrayAccessExpression) {
@@ -32,6 +32,6 @@
     result=null;
   }
  else {
-    throw new UnsupportedOperationException();
+    semanticServices.getErrorHandler().structuralError(operationSign.getNode(),"Unknown operation");
   }
 }
