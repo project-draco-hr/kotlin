@@ -1,5 +1,5 @@
 {
-  final Type[] result=new Type[1];
+  final JetType[] result=new JetType[1];
   if (typeElement != null) {
     typeElement.accept(new JetVisitor(){
       @Override public void visitUserType(      JetUserType type){
@@ -8,13 +8,13 @@
           trace.recordReferenceResolution(type.getReferenceExpression(),classDescriptor);
           TypeConstructor typeConstructor=classDescriptor.getTypeConstructor();
           List<TypeProjection> arguments=resolveTypeProjections(scope,typeConstructor,type.getTypeArguments());
-          result[0]=new TypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+          result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
         }
  else         if (type.getTypeArguments().isEmpty()) {
           TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameter(type.getReferencedName());
           if (typeParameterDescriptor != null) {
             trace.recordReferenceResolution(type.getReferenceExpression(),typeParameterDescriptor);
-            result[0]=new TypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
+            result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
           }
  else {
             semanticServices.getErrorHandler().unresolvedReference(type.getReferenceExpression());
@@ -32,12 +32,12 @@
       }
       @Override public void visitFunctionType(      JetFunctionType type){
         JetTypeReference receiverTypeRef=type.getReceiverTypeRef();
-        Type receiverType=receiverTypeRef == null ? null : resolveType(scope,receiverTypeRef);
-        List<Type> parameterTypes=new ArrayList<Type>();
+        JetType receiverType=receiverTypeRef == null ? null : resolveType(scope,receiverTypeRef);
+        List<JetType> parameterTypes=new ArrayList<JetType>();
         for (        JetParameter parameter : type.getParameters()) {
           parameterTypes.add(resolveType(scope,parameter.getTypeReference()));
         }
-        Type returnType=resolveType(scope,type.getReturnTypeRef());
+        JetType returnType=resolveType(scope,type.getReturnTypeRef());
         result[0]=JetStandardClasses.getFunctionType(attributes,receiverType,parameterTypes,returnType);
       }
       @Override public void visitJetElement(      JetElement elem){
