@@ -3,6 +3,7 @@
     Project project=element.getProject();
     JetFile file=(JetFile)element;
     try {
+      final Collection<DeclarationDescriptor> redeclarations=new HashSet<DeclarationDescriptor>();
       final BindingContext bindingContext=AnalyzingUtils.analyzeFile(file,new ErrorHandler(){
         @Override public void unresolvedReference(        JetReferenceExpression referenceExpression){
           PsiReference reference=referenceExpression.getReference();
@@ -22,23 +23,18 @@
         @Override public void typeMismatch(        JetExpression expression,        JetType expectedType,        JetType actualType){
           holder.createErrorAnnotation(expression,"Type mismatch: inferred type is " + actualType + " but "+ expectedType+ " was expected");
         }
-      }
-);
-      file.getRootNamespace().accept(new JetVisitor(){
-        @Override public void visitClass(        JetClass klass){
-          for (          JetDelegationSpecifier specifier : klass.getDelegationSpecifiers()) {
-            JetTypeReference typeReference=specifier.getTypeReference();
-            JetType type=bindingContext.resolveTypeReference(typeReference);
-            holder.createWeakWarningAnnotation(typeReference,type.toString());
-          }
-        }
-        @Override public void visitNamespace(        JetNamespace namespace){
-          for (          JetDeclaration declaration : namespace.getDeclarations()) {
-            declaration.accept(this);
-          }
+        @Override public void redeclaration(        DeclarationDescriptor existingDescriptor,        DeclarationDescriptor redeclaredDescriptor){
+          redeclarations.add(existingDescriptor);
+          redeclarations.add(redeclaredDescriptor);
         }
       }
 );
+      for (      DeclarationDescriptor redeclaration : redeclarations) {
+        PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(redeclaration);
+        if (declarationPsiElement != null) {
+          holder.createErrorAnnotation(declarationPsiElement,"Redeclaration");
+        }
+      }
     }
  catch (    ProcessCanceledException e) {
       throw e;
