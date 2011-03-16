@@ -9,10 +9,11 @@
       throw new UnsupportedOperationException();
     }
     @Override public void visitQualifiedExpression(    JetQualifiedExpression expression){
+      JetType receiverType=getType(scope,expression.getReceiverExpression(),false);
+      checkNullSafety(receiverType,expression);
       JetExpression selectorExpression=expression.getSelectorExpression();
       if (selectorExpression instanceof JetSimpleNameExpression) {
         JetSimpleNameExpression referenceExpression=(JetSimpleNameExpression)selectorExpression;
-        JetType receiverType=getType(scope,expression.getReceiverExpression(),false);
         if (receiverType != null) {
           result[0]=semanticServices.getOverloadResolver().getOverloadDomain(receiverType,scope,referenceExpression.getReferencedName());
           reference[0]=referenceExpression;
