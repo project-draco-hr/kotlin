@@ -9,55 +9,32 @@
       parseArrayAccess();
       expression.done(ARRAY_ACCESS_EXPRESSION);
     }
- else     if (atSet(Precedence.POSTFIX.getOperations())) {
-      parseOperationReference();
-      expression.done(POSTFIX_EXPRESSION);
-    }
- else     if (parseCallWithClosure()) {
-      parseCallWithClosure();
+ else     if (parseCallSuffix()) {
       expression.done(CALL_EXPRESSION);
-    }
- else     if (at(LPAR)) {
-      parseValueArgumentList();
-      parseCallWithClosure();
-      expression.done(CALL_EXPRESSION);
-    }
- else     if (at(LT)) {
-      int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,false)){
-        @Override public boolean isTopLevel(        int openAngleBrackets,        int openBrackets,        int openBraces,        int openParentheses){
-          return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
-        }
-      }
-);
-      if (gtPos >= 0) {
-        myJetParsing.parseTypeArgumentList();
-        if (!myBuilder.newlineBeforeCurrentToken() && at(LPAR))         parseValueArgumentList();
-        parseCallWithClosure();
-        expression.done(CALL_EXPRESSION);
-      }
- else {
-        break;
-      }
     }
  else     if (at(DOT)) {
       advance();
-      parseAtomicExpression();
+      parseCallExpression();
       expression.done(DOT_QIALIFIED_EXPRESSION);
     }
  else     if (at(SAFE_ACCESS)) {
       advance();
-      parseAtomicExpression();
+      parseCallExpression();
       expression.done(SAFE_ACCESS_EXPRESSION);
     }
  else     if (at(QUEST)) {
       advance();
-      parseAtomicExpression();
+      parseCallExpression();
       expression.done(PREDICATE_EXPRESSION);
     }
  else     if (at(HASH)) {
       advance();
       expect(IDENTIFIER,"Expecting property or function name");
       expression.done(HASH_QIALIFIED_EXPRESSION);
+    }
+ else     if (atSet(Precedence.POSTFIX.getOperations())) {
+      parseOperationReference();
+      expression.done(POSTFIX_EXPRESSION);
     }
  else {
       break;

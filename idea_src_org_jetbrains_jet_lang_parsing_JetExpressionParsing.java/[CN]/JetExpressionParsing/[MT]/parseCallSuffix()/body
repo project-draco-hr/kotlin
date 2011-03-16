@@ -1,0 +1,25 @@
+{
+  if (parseCallWithClosure()) {
+    parseCallWithClosure();
+  }
+ else   if (at(LPAR)) {
+    parseValueArgumentList();
+    parseCallWithClosure();
+  }
+ else   if (at(LT)) {
+    int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,false)){
+      @Override public boolean isTopLevel(      int openAngleBrackets,      int openBrackets,      int openBraces,      int openParentheses){
+        return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
+      }
+    }
+);
+    if (gtPos >= 0) {
+      myJetParsing.parseTypeArgumentList();
+      if (!myBuilder.newlineBeforeCurrentToken() && at(LPAR))       parseValueArgumentList();
+      parseCallWithClosure();
+    }
+ else     return false;
+  }
+ else   return false;
+  return true;
+}

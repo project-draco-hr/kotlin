@@ -1,11 +1,16 @@
 {
-  JetExpression receiverExpression=expression.getReceiverExpression();
   JetExpression selectorExpression=expression.getSelectorExpression();
+  JetExpression receiverExpression=expression.getReceiverExpression();
   JetType receiverType=getType(scope,receiverExpression,false);
   if (receiverType != null) {
     checkNullSafety(receiverType,expression);
-    if (selectorExpression instanceof JetSimpleNameExpression) {
-      JetScope compositeScope=new ScopeWithReceiver(scope,receiverType);
+    JetScope compositeScope=new ScopeWithReceiver(scope,receiverType);
+    if (selectorExpression instanceof JetCallExpression) {
+      JetCallExpression callExpression=(JetCallExpression)selectorExpression;
+      OverloadDomain overloadDomain=getOverloadDomain(compositeScope,callExpression.getCalleeExpression());
+      resolveOverloads(scope,callExpression,overloadDomain);
+    }
+ else     if (selectorExpression instanceof JetSimpleNameExpression) {
       result=getType(compositeScope,selectorExpression,false);
     }
  else     if (selectorExpression != null) {
