@@ -4,17 +4,15 @@
   JetType receiverType=getType(scope,receiverExpression,false);
   if (receiverType != null) {
     checkNullSafety(receiverType,expression);
-    JetScope compositeScope=new ScopeWithReceiver(scope,receiverType);
-    if (selectorExpression instanceof JetCallExpression) {
-      JetCallExpression callExpression=(JetCallExpression)selectorExpression;
-      OverloadDomain overloadDomain=getOverloadDomain(compositeScope,callExpression.getCalleeExpression());
-      resolveOverloads(scope,callExpression,overloadDomain);
+    JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression);
+    if (expression.getOperationSign() == JetTokens.QUEST) {
+      if (selectorReturnType != null && !isBoolean(selectorReturnType)) {
+        semanticServices.getErrorHandler().typeMismatch(selectorExpression,semanticServices.getStandardLibrary().getBooleanType(),selectorReturnType);
+      }
+      result=TypeUtils.makeNullable(receiverType);
     }
- else     if (selectorExpression instanceof JetSimpleNameExpression) {
-      result=getType(compositeScope,selectorExpression,false);
-    }
- else     if (selectorExpression != null) {
-      throw new UnsupportedOperationException();
+ else {
+      result=selectorReturnType;
     }
   }
 }
