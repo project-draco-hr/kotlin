@@ -1,12 +1,19 @@
 {
-  if (expression.getOperationReference().getReferencedNameElementType() == JetTokens.COLON) {
-    JetType actualType=getType(scope,expression.getLeft(),false);
-    JetType expectedType=typeResolver.resolveType(scope,expression.getRight());
-    if (actualType != null && !semanticServices.getTypeChecker().isSubtypeOf(actualType,expectedType)) {
-      semanticServices.getErrorHandler().typeMismatch(expression.getLeft(),expectedType,actualType);
+  IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
+  JetType actualType=getType(scope,expression.getLeft(),false);
+  JetTypeReference right=expression.getRight();
+  if (right != null) {
+    JetType targetType=typeResolver.resolveType(scope,right);
+    if (operationType == JetTokens.COLON) {
+      if (actualType != null && !semanticServices.getTypeChecker().isSubtypeOf(actualType,targetType)) {
+        semanticServices.getErrorHandler().typeMismatch(expression.getLeft(),targetType,actualType);
+      }
     }
-    result=expectedType;
-    return;
+ else     if (operationType == JetTokens.AS_KEYWORD) {
+    }
+ else {
+      semanticServices.getErrorHandler().structuralError(expression.getOperationSign().getNode(),"Unsupported binary operation");
+    }
+    result=targetType;
   }
-  throw new UnsupportedOperationException();
 }
