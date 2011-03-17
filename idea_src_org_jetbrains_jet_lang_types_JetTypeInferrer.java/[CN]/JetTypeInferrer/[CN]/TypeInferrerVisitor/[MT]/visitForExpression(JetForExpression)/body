@@ -1,0 +1,43 @@
+{
+  JetParameter loopParameter=expression.getLoopParameter();
+  JetExpression loopRange=expression.getLoopRange();
+  JetType loopRangeType=getType(scope,loopRange,false);
+  JetType expectedParameterType=null;
+  if (loopRangeType != null) {
+    if (!semanticServices.getTypeChecker().isSubtypeOf(loopRangeType,semanticServices.getStandardLibrary().getIterableType(JetStandardClasses.getNullableAnyType()))) {
+      semanticServices.getErrorHandler().genericError(loopRange.getNode(),"Expecting an Iterable, but found " + loopRangeType);
+    }
+ else {
+      TypeProjection typeProjection=loopRangeType.getArguments().get(0);
+      if (!typeProjection.getProjectionKind().allowsOutPosition()) {
+        expectedParameterType=JetStandardClasses.getDefaultBound();
+      }
+ else {
+        expectedParameterType=typeProjection.getType();
+      }
+    }
+  }
+  WritableScope loopScope=semanticServices.createWritableScope(scope,scope.getContainingDeclaration());
+  JetTypeReference typeReference=loopParameter.getTypeReference();
+  PropertyDescriptor propertyDescriptor;
+  if (typeReference != null) {
+    propertyDescriptor=semanticServices.getClassDescriptorResolver(trace).resolvePropertyDescriptor(scope.getContainingDeclaration(),scope,loopParameter);
+    JetType actualParameterType=propertyDescriptor.getType();
+    if (expectedParameterType != null && !semanticServices.getTypeChecker().isSubtypeOf(expectedParameterType,actualParameterType)) {
+      semanticServices.getErrorHandler().genericError(typeReference.getNode(),"The loop iterates over values of type " + expectedParameterType + " but the parameter is declared to be "+ actualParameterType);
+    }
+  }
+ else {
+    if (expectedParameterType == null) {
+      expectedParameterType=ErrorType.createErrorType("Error");
+    }
+    propertyDescriptor=semanticServices.getClassDescriptorResolver(trace).resolvePropertyDescriptor(scope.getContainingDeclaration(),loopParameter,expectedParameterType);
+  }
+  loopScope.addPropertyDescriptor(propertyDescriptor);
+  trace.recordDeclarationResolution(loopParameter,propertyDescriptor);
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    getType(loopScope,body,true);
+  }
+  result=JetStandardClasses.getUnitType();
+}
