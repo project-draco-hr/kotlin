@@ -5,25 +5,6 @@
  else {
     DeclarationDescriptor containingDescriptor=outerScope.getContainingDeclaration();
     WritableScope scope=semanticServices.createWritableScope(outerScope,containingDescriptor);
-    for (    JetElement statement : block) {
-      if (statement instanceof JetProperty) {
-        JetProperty property=(JetProperty)statement;
-        PropertyDescriptor propertyDescriptor=classDescriptorResolver.resolvePropertyDescriptor(containingDescriptor,scope,property);
-        scope.addPropertyDescriptor(propertyDescriptor);
-        trace.recordDeclarationResolution(property,propertyDescriptor);
-      }
- else       if (statement instanceof JetExpression) {
-        getType(scope,(JetExpression)statement,true);
-      }
- else {
-        throw new UnsupportedOperationException(statement.getClass().getCanonicalName());
-      }
-    }
-    JetElement lastElement=block.get(block.size() - 1);
-    if (lastElement instanceof JetExpression) {
-      JetExpression expression=(JetExpression)lastElement;
-      return getType(scope,expression,true);
-    }
-    throw new IllegalArgumentException("Last item in the block must be an expression, but was " + lastElement.getClass().getCanonicalName());
+    return getBlockReturnedTypeWithWritableScope(scope,block);
   }
 }

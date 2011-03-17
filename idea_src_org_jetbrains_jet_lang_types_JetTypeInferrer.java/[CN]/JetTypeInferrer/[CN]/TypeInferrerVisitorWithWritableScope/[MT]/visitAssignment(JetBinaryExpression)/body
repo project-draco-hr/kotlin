@@ -1,0 +1,19 @@
+{
+  JetExpression left=expression.getLeft();
+  JetExpression deparenthesized=deparenthesize(left);
+  JetExpression right=expression.getRight();
+  if (deparenthesized instanceof JetArrayAccessExpression) {
+    JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)deparenthesized;
+    resolveArrayAccessToLValue(arrayAccessExpression,right,expression.getOperationReference());
+  }
+ else {
+    JetType leftType=getType(scope,left,false);
+    if (right != null) {
+      JetType rightType=getType(scope,right,false);
+      if (rightType != null && leftType != null && !semanticServices.getTypeChecker().isConvertibleTo(rightType,leftType)) {
+        semanticServices.getErrorHandler().typeMismatch(right,leftType,rightType);
+      }
+    }
+  }
+  result=null;
+}

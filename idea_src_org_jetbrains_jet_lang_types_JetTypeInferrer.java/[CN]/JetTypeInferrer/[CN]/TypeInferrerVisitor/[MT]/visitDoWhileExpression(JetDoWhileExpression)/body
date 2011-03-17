@@ -1,8 +1,21 @@
 {
   JetExpression body=expression.getBody();
   JetScope conditionScope=scope;
-  if (body != null) {
-    getType(scope,body,true);
+  if (body instanceof JetFunctionLiteralExpression) {
+    JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
+    if (!function.hasParameterSpecification()) {
+      WritableScope writableScope=semanticServices.createWritableScope(scope,scope.getContainingDeclaration());
+      conditionScope=writableScope;
+      getBlockReturnedTypeWithWritableScope(writableScope,function.getBody());
+    }
+ else {
+      getType(scope,body,true);
+    }
+  }
+ else   if (body != null) {
+    WritableScope writableScope=semanticServices.createWritableScope(scope,scope.getContainingDeclaration());
+    conditionScope=writableScope;
+    getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body));
   }
   checkCondition(conditionScope,expression.getCondition());
   result=JetStandardClasses.getUnitType();

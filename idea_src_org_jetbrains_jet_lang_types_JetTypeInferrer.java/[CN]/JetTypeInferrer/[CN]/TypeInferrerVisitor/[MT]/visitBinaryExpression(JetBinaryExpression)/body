@@ -10,15 +10,10 @@
     result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),scope,true);
   }
  else   if (operationType == JetTokens.EQ) {
-    JetExpression deparenthesized=deparenthesize(left);
-    if (deparenthesized instanceof JetArrayAccessExpression) {
-      JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)deparenthesized;
-      resolveArrayAccessToLValue(arrayAccessExpression,expression.getRight(),expression.getOperationReference());
-    }
- else {
-      getType(scope,expression.getRight(),false);
-    }
-    result=null;
+    visitAssignment(expression);
+  }
+ else   if (assignmentOperationNames.containsKey(operationType)) {
+    visitAssignmentOperation(expression);
   }
  else   if (comparisonOperations.contains(operationType)) {
     JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",scope,true);
@@ -33,15 +28,6 @@
         semanticServices.getErrorHandler().genericError(operationSign.getNode(),"compareTo must return Int, but returns " + compareToReturnType);
       }
     }
-  }
- else   if (assignmentOperationNames.containsKey(operationType)) {
-    String name=assignmentOperationNames.get(operationType);
-    JetType assignmentOperationType=getTypeForBinaryCall(expression,name,scope,false);
-    if (assignmentOperationType == null) {
-      String counterpartName=binaryOperationNames.get(assignmentOperationCounterparts.get(operationType));
-      getTypeForBinaryCall(expression,counterpartName,scope,true);
-    }
-    result=null;
   }
  else   if (equalsOperations.contains(operationType)) {
     String name="equals";
