@@ -12,7 +12,15 @@
         if (referenceExpression != null) {
           FunctionGroup constructors=classDescriptor.getConstructors(receiverType.getArguments());
           OverloadDomain constructorsOverloadDomain=semanticServices.getOverloadResolver().getOverloadDomain(constructors);
-          result=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,true),Collections.<JetTypeProjection>emptyList(),expression.getArguments(),expression.getFunctionLiteralArguments());
+          result=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,expression.getArgumentList(),false),Collections.<JetTypeProjection>emptyList(),expression.getArguments(),expression.getFunctionLiteralArguments());
+          if (result == null && !ErrorType.isErrorType(receiverType)) {
+            trace.recordReferenceResolution(referenceExpression,receiverType.getConstructor().getDeclarationDescriptor());
+            JetArgumentList argumentList=expression.getArgumentList();
+            if (argumentList != null) {
+              semanticServices.getErrorHandler().genericError(argumentList.getNode(),"Cannot find an overload for these arguments");
+            }
+            result=receiverType;
+          }
         }
       }
  else {

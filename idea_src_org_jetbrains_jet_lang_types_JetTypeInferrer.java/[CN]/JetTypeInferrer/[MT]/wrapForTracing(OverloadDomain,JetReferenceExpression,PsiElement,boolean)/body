@@ -7,9 +7,7 @@
         trace.recordReferenceResolution(referenceExpression,descriptor);
       }
  else {
-        if (reportUnresolved) {
-          semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
-        }
+        reportError();
       }
       return descriptor;
     }
@@ -19,11 +17,22 @@
         trace.recordReferenceResolution(referenceExpression,descriptor);
       }
  else {
-        if (reportUnresolved) {
-          semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
-        }
+        reportError();
       }
       return descriptor;
+    }
+    private void reportError(){
+      if (reportUnresolved) {
+        if (overloadDomain.isEmpty() || argumentList == null) {
+          semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
+        }
+ else {
+          semanticServices.getErrorHandler().genericError(argumentList.getNode(),"No overload found for these arguments");
+        }
+      }
+    }
+    @Override public boolean isEmpty(){
+      return overloadDomain.isEmpty();
     }
   }
 ;
