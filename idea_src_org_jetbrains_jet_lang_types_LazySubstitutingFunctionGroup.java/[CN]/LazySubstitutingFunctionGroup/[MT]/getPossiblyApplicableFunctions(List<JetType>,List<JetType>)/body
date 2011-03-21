@@ -1,7 +1,8 @@
 {
-  Collection<FunctionDescriptor> possiblyApplicableFunctions=functionGroup.getPossiblyApplicableFunctions(typeArguments,positionedValueArgumentTypes);
+  OverloadResolutionResult resolutionResult=functionGroup.getPossiblyApplicableFunctions(typeArguments,positionedValueArgumentTypes);
+  if (resolutionResult.isNothing())   return resolutionResult;
   Collection<FunctionDescriptor> result=new ArrayList<FunctionDescriptor>();
-  for (  FunctionDescriptor function : possiblyApplicableFunctions) {
+  for (  FunctionDescriptor function : resolutionResult.getFunctionDescriptors()) {
     if (substitutionContext.isEmpty()) {
       result.add(function);
     }
@@ -9,5 +10,5 @@
       result.add(new LazySubstitutingFunctionDescriptor(substitutionContext,function));
     }
   }
-  return result;
+  return resolutionResult.newContents(result);
 }
