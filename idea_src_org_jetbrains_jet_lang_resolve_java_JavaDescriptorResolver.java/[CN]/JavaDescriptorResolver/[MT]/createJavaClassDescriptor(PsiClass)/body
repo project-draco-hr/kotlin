@@ -2,18 +2,15 @@
   String name=psiClass.getName();
   PsiModifierList modifierList=psiClass.getModifierList();
   ClassDescriptorImpl classDescriptor=new ClassDescriptorImpl(JAVA_ROOT,Collections.<Attribute>emptyList(),name);
-  classDescriptor.initialize(modifierList == null ? false : modifierList.hasModifierProperty(PsiModifier.FINAL),Collections.<TypeParameterDescriptor>emptyList(),getSupertypes(psiClass),new JavaClassMembersScope(classDescriptor,psiClass,semanticServices,false),new FunctionGroup(){
-    @NotNull @Override public String getName(){
-      throw new UnsupportedOperationException();
-    }
-    @NotNull @Override public Collection<FunctionDescriptor> getPossiblyApplicableFunctions(    @NotNull List<JetType> typeArguments,    @NotNull List<JetType> positionedValueArgumentTypes){
-      throw new UnsupportedOperationException();
-    }
-    @Override public boolean isEmpty(){
-      throw new UnsupportedOperationException();
-    }
+  WritableFunctionGroup constructors=new WritableFunctionGroup("<init>");
+  classDescriptor.initialize(modifierList == null ? false : modifierList.hasModifierProperty(PsiModifier.FINAL),Collections.<TypeParameterDescriptor>emptyList(),getSupertypes(psiClass),new JavaClassMembersScope(classDescriptor,psiClass,semanticServices,false),constructors);
+  classDescriptorCache.put(psiClass.getQualifiedName(),classDescriptor);
+  PsiMethod[] psiConstructors=psiClass.getConstructors();
+  for (  PsiMethod constructor : psiConstructors) {
+    ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<Attribute>emptyList(),false);
+    constructorDescriptor.initialize(resolveParameterDescriptors(constructorDescriptor,constructor.getParameterList().getParameters()));
+    constructors.addFunction(constructorDescriptor);
   }
-);
   semanticServices.getTrace().recordDeclarationResolution(psiClass,classDescriptor);
   return classDescriptor;
 }
