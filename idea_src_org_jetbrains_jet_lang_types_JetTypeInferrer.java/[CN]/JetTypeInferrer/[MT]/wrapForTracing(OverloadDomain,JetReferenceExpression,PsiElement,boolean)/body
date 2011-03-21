@@ -1,39 +1,48 @@
 {
   if (overloadDomain == null)   return OverloadDomain.EMPTY;
   return new OverloadDomain(){
-    @Override public FunctionDescriptor getFunctionDescriptorForNamedArguments(    @NotNull List<JetType> typeArguments,    @NotNull Map<String,JetType> valueArgumentTypes,    @Nullable JetType functionLiteralArgumentType){
-      FunctionDescriptor descriptor=overloadDomain.getFunctionDescriptorForNamedArguments(typeArguments,valueArgumentTypes,functionLiteralArgumentType);
-      if (descriptor != null) {
-        trace.recordReferenceResolution(referenceExpression,descriptor);
-      }
- else {
-        reportError();
-      }
-      return descriptor;
+    @NotNull @Override public OverloadResolutionResult getFunctionDescriptorForNamedArguments(    @NotNull List<JetType> typeArguments,    @NotNull Map<String,JetType> valueArgumentTypes,    @Nullable JetType functionLiteralArgumentType){
+      OverloadResolutionResult resolutionResult=overloadDomain.getFunctionDescriptorForNamedArguments(typeArguments,valueArgumentTypes,functionLiteralArgumentType);
+      report(resolutionResult);
+      return resolutionResult;
     }
-    @Override public FunctionDescriptor getFunctionDescriptorForPositionedArguments(    @NotNull List<JetType> typeArguments,    @NotNull List<JetType> positionedValueArgumentTypes){
-      FunctionDescriptor descriptor=overloadDomain.getFunctionDescriptorForPositionedArguments(typeArguments,positionedValueArgumentTypes);
-      if (descriptor != null) {
-        trace.recordReferenceResolution(referenceExpression,descriptor);
-      }
- else {
-        reportError();
-      }
-      return descriptor;
+    @NotNull @Override public OverloadResolutionResult getFunctionDescriptorForPositionedArguments(    @NotNull List<JetType> typeArguments,    @NotNull List<JetType> positionedValueArgumentTypes){
+      OverloadResolutionResult resolutionResult=overloadDomain.getFunctionDescriptorForPositionedArguments(typeArguments,positionedValueArgumentTypes);
+      report(resolutionResult);
+      return resolutionResult;
     }
-    private void reportError(){
-      if (reportUnresolved) {
-        if (overloadDomain.isEmpty() || argumentList == null) {
+    private void report(    OverloadResolutionResult resolutionResult){
+      if (resolutionResult.isSuccess() || resolutionResult.singleFunction()) {
+        trace.recordReferenceResolution(referenceExpression,resolutionResult.getFunctionDescriptor());
+      }
+      if (reportErrors) {
+switch (resolutionResult.getResultCode()) {
+case NAME_NOT_FOUND:
           semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
-        }
- else {
-          semanticServices.getErrorHandler().genericError(argumentList.getNode(),"No overload found for these arguments");
-        }
+        break;
+case SINGLE_FUNCTION_ARGUMENT_MISMATCH:
+      if (argumentList != null) {
+        semanticServices.getErrorHandler().genericError(argumentList.getNode(),"Arguments do not match " + resolutionResult.getFunctionDescriptor());
       }
-    }
-    @Override public boolean isEmpty(){
-      return overloadDomain.isEmpty();
-    }
+ else {
+        semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
+      }
+    break;
+case AMBIGUITY:
+  if (argumentList != null) {
+    semanticServices.getErrorHandler().genericError(argumentList.getNode(),"Overload ambiguity [TODO : more helpful message]");
   }
+ else {
+    semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
+  }
+break;
+default :
+}
+}
+}
+@Override public boolean isEmpty(){
+return overloadDomain.isEmpty();
+}
+}
 ;
 }
