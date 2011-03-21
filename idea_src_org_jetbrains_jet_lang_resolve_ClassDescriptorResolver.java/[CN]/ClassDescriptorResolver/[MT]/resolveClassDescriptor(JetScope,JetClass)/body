@@ -6,5 +6,13 @@
   Collection<? extends JetType> superclasses=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveTypes(parameterScope,delegationSpecifiers);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
   WritableScope members=resolveMembers(classDescriptor,classElement,typeParameters,scope,parameterScope,superclasses);
-  return classDescriptor.initialize(!open,typeParameters,superclasses,members);
+  WritableFunctionGroup constructors=new WritableFunctionGroup("<init>");
+  for (  JetConstructor constructor : classElement.getSecondaryConstructors()) {
+    constructors.addFunction(resolveConstructorDescriptor(members,classDescriptor,constructor,false));
+  }
+  ConstructorDescriptor primaryConstructorDescriptor=resolvePrimaryConstructor(scope,classDescriptor,classElement);
+  if (primaryConstructorDescriptor != null) {
+    constructors.addFunction(primaryConstructorDescriptor);
+  }
+  return classDescriptor.initialize(!open,typeParameters,superclasses,members,constructors);
 }

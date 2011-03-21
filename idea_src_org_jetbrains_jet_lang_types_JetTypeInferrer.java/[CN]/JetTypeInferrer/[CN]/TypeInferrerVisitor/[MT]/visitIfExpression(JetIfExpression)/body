@@ -1,12 +1,24 @@
 {
   checkCondition(scope,expression.getCondition());
   JetExpression elseBranch=expression.getElse();
-  if (elseBranch == null) {
-    result=JetStandardClasses.getUnitType();
+  JetExpression thenBranch=expression.getThen();
+  JetType thenType=null;
+  if (thenBranch != null) {
+    thenType=getType(scope,thenBranch,true);
+  }
+  if (elseBranch != null) {
+    JetType elseType=getType(scope,elseBranch,true);
+    if (thenType == null) {
+      result=elseType;
+    }
+ else     if (elseType == null) {
+      result=thenType;
+    }
+ else {
+      result=semanticServices.getTypeChecker().commonSupertype(Arrays.asList(thenType,elseType));
+    }
   }
  else {
-    JetType thenType=getType(scope,expression.getThen(),true);
-    JetType elseType=getType(scope,elseBranch,true);
-    result=semanticServices.getTypeChecker().commonSupertype(Arrays.asList(thenType,elseType));
+    result=JetStandardClasses.getUnitType();
   }
 }

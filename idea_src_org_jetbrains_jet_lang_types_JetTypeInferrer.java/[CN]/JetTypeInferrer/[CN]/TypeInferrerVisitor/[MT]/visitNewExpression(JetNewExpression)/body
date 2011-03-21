@@ -1,6 +1,26 @@
 {
   JetTypeReference typeReference=expression.getTypeReference();
   if (typeReference != null) {
-    result=typeResolver.resolveType(scope,typeReference);
+    JetTypeElement typeElement=typeReference.getTypeElement();
+    if (typeElement instanceof JetUserType) {
+      JetUserType userType=(JetUserType)typeElement;
+      JetType receiverType=typeResolver.resolveType(scope,typeReference);
+      DeclarationDescriptor declarationDescriptor=receiverType.getConstructor().getDeclarationDescriptor();
+      if (declarationDescriptor instanceof ClassDescriptor) {
+        ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
+        JetSimpleNameExpression referenceExpression=userType.getReferenceExpression();
+        if (referenceExpression != null) {
+          FunctionGroup constructors=classDescriptor.getConstructors(receiverType.getArguments());
+          OverloadDomain constructorsOverloadDomain=semanticServices.getOverloadResolver().getOverloadDomain(constructors);
+          result=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,true),Collections.<JetTypeProjection>emptyList(),expression.getArguments(),expression.getFunctionLiteralArguments());
+        }
+      }
+ else {
+        semanticServices.getErrorHandler().genericError(expression.getNode(),"Calling a constructor is only supported for ordinary classes");
+      }
+    }
+ else {
+      semanticServices.getErrorHandler().genericError(typeElement.getNode(),"Calling a constructor is only supported for ordinary classes");
+    }
   }
 }
