@@ -1,0 +1,32 @@
+{
+  Variance projectionKindValue=value.getProjectionKind();
+  JetType typeValue=value.getType();
+  Variance effectiveProjectionKindValue=asymmetricOr(passedProjectionKind,projectionKindValue);
+  JetType effectiveTypeValue;
+switch (effectiveContextVariance) {
+case INVARIANT:
+    effectiveProjectionKindValue=projectionKindValue;
+  effectiveTypeValue=typeValue;
+break;
+case IN_VARIANCE:
+if (projectionKindValue == Variance.OUT_VARIANCE) {
+throw new SubstitutionException("");
+}
+ else {
+effectiveTypeValue=typeValue;
+}
+break;
+case OUT_VARIANCE:
+if (projectionKindValue == Variance.IN_VARIANCE) {
+effectiveProjectionKindValue=Variance.INVARIANT;
+effectiveTypeValue=correspondingTypeParameter.getBoundsAsType();
+}
+ else {
+effectiveTypeValue=typeValue;
+}
+break;
+default :
+throw new IllegalStateException(effectiveContextVariance.toString());
+}
+return new TypeProjection(effectiveProjectionKindValue,specializeType(effectiveTypeValue,substitutionContext,effectiveContextVariance));
+}
