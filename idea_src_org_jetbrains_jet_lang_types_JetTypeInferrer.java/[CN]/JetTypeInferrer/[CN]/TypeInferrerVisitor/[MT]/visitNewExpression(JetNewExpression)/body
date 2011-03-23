@@ -10,17 +10,29 @@
         ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
         JetSimpleNameExpression referenceExpression=userType.getReferenceExpression();
         if (referenceExpression != null) {
-          FunctionGroup constructors=classDescriptor.getConstructors(receiverType.getArguments());
+          List<TypeProjection> typeArguments=receiverType.getArguments();
+          System.out.println("typeArguments = " + typeArguments);
+          List<TypeProjection> projectionsStripped=new ArrayList<TypeProjection>();
+          for (          TypeProjection typeArgument : typeArguments) {
+            if (typeArgument.getProjectionKind() != Variance.INVARIANT) {
+              projectionsStripped.add(new TypeProjection(typeArgument.getType()));
+            }
+ else             projectionsStripped.add(typeArgument);
+          }
+          System.out.println("projectionsStripped = " + projectionsStripped);
+          FunctionGroup constructors=classDescriptor.getConstructors(projectionsStripped);
           OverloadDomain constructorsOverloadDomain=semanticServices.getOverloadResolver().getOverloadDomain(constructors);
-          result=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,expression.getArgumentList(),false),Collections.<JetTypeProjection>emptyList(),expression.getArguments(),expression.getFunctionLiteralArguments());
-          if (result == null && !ErrorType.isErrorType(receiverType)) {
+          JetType constructorReturnedType=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,expression.getArgumentList(),false),Collections.<JetTypeProjection>emptyList(),expression.getArguments(),expression.getFunctionLiteralArguments());
+          if (constructorReturnedType == null && !ErrorType.isErrorType(receiverType)) {
             trace.recordReferenceResolution(referenceExpression,receiverType.getConstructor().getDeclarationDescriptor());
             JetArgumentList argumentList=expression.getArgumentList();
             if (argumentList != null) {
               semanticServices.getErrorHandler().genericError(argumentList.getNode(),"Cannot find an overload for these arguments");
             }
-            result=receiverType;
+            constructorReturnedType=receiverType;
           }
+          result=constructorReturnedType;
+          result=receiverType;
         }
       }
  else {
