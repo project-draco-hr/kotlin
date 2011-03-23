@@ -3,15 +3,16 @@
   for (int i=0, valueParametersSize=valueParameters.size(); i < valueParametersSize; i++) {
     JetParameter valueParameter=valueParameters.get(i);
     JetTypeReference typeReference=valueParameter.getTypeReference();
+    String name=valueParameter.getName();
     JetType type;
     if (typeReference == null) {
-      semanticServices.getErrorHandler().genericError(valueParameter.getNode(),"A type annotation is required on a value parameter " + valueParameter.getName());
+      semanticServices.getErrorHandler().genericError(valueParameter.getNode(),"A type annotation is required on a value parameter");
       type=ErrorType.createErrorType("Type annotation was missing");
     }
  else {
       type=typeResolver.resolveType(parameterScope,typeReference);
     }
-    ValueParameterDescriptor valueParameterDescriptor=new ValueParameterDescriptorImpl(functionDescriptor,i,AttributeResolver.INSTANCE.resolveAttributes(valueParameter.getModifierList()),valueParameter.getName(),type,valueParameter.getDefaultValue() != null,false);
+    ValueParameterDescriptor valueParameterDescriptor=new ValueParameterDescriptorImpl(functionDescriptor,i,AttributeResolver.INSTANCE.resolveAttributes(valueParameter.getModifierList()),name == null ? "<no name provided>" : name,type,valueParameter.getDefaultValue() != null,false);
     result.add(valueParameterDescriptor);
     trace.recordDeclarationResolution(valueParameter,valueParameterDescriptor);
     parameterScope.addPropertyDescriptor(valueParameterDescriptor);
