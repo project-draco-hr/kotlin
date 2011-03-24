@@ -1,0 +1,19 @@
+{
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      PsiFile psiFile=PsiManager.getInstance(module.getProject()).findFile(virtualFile);
+      if (psiFile instanceof JetFile) {
+        final JetNamespace namespace=((JetFile)psiFile).getRootNamespace();
+        String fqName=namespace.getFQName();
+        NamespaceCodegen codegen=ns2codegen.get(fqName);
+        if (codegen == null) {
+          ClassWriter writer=new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+          codegen=new NamespaceCodegen(compileContext.getProject(),writer,fqName);
+          ns2codegen.put(fqName,codegen);
+        }
+        codegen.generate(namespace);
+      }
+    }
+  }
+);
+}

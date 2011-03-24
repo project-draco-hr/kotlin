@@ -2,9 +2,10 @@
   JetFile jetFile=(JetFile)myFixture.getFile();
   ClassWriter writer=new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
   final JetNamespace namespace=jetFile.getRootNamespace();
-  codegen.generate(namespace,writer,getProject());
+  NamespaceCodegen codegen=new NamespaceCodegen(getProject(),writer,namespace.getFQName());
+  codegen.generate(namespace);
   final byte[] data=writer.toByteArray();
   MyClassLoader classLoader=new MyClassLoader(NamespaceGenTest.class.getClassLoader());
-  final Class aClass=classLoader.doDefineClass(NamespaceCodegen.getJVMClassName(namespace).replace("/","."),data);
+  final Class aClass=classLoader.doDefineClass(NamespaceCodegen.getJVMClassName(namespace.getFQName()).replace("/","."),data);
   return aClass;
 }

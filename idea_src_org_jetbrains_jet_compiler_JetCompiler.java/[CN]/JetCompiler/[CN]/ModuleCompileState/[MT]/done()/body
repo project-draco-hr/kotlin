@@ -1,0 +1,16 @@
+{
+  VirtualFile outputDir=compileContext.getModuleOutputDirectory(module);
+  for (  Map.Entry<String,NamespaceCodegen> entry : ns2codegen.entrySet()) {
+    NamespaceCodegen codegen=entry.getValue();
+    codegen.done();
+    try {
+      File nsOutputDir=dirForPackage(outputDir,entry.getKey());
+      ClassWriter writer=(ClassWriter)codegen.getVisitor();
+      File output=new File(nsOutputDir,"namespace.class");
+      FileUtil.writeToFile(output,writer.toByteArray());
+    }
+ catch (    IOException e) {
+      compileContext.addMessage(CompilerMessageCategory.ERROR,e.getMessage(),null,0,0);
+    }
+  }
+}
