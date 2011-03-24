@@ -2,25 +2,17 @@
   final List<JetParameter> parameters=f.getValueParameters();
   Type[] parameterTypes=new Type[parameters.size()];
   for (int i=0; i < parameters.size(); i++) {
-    parameterTypes[i]=mapTypeReference(parameters.get(i).getTypeReference());
+    parameterTypes[i]=typeMapper.mapType(bindingContext.resolveTypeReference(parameters.get(i).getTypeReference()));
   }
   final JetTypeReference returnTypeRef=f.getReturnTypeRef();
   Type returnType;
   if (returnTypeRef == null) {
     final FunctionDescriptor functionDescriptor=bindingContext.getFunctionDescriptor(f);
     final JetType type=functionDescriptor.getUnsubstitutedReturnType();
-    if (type.equals(JetStandardClasses.getUnitType())) {
-      returnType=Type.VOID_TYPE;
-    }
- else     if (type.equals(standardLibrary.getIntType())) {
-      returnType=Type.getType(Integer.class);
-    }
- else {
-      throw new UnsupportedOperationException("don't know how to map type " + type);
-    }
+    returnType=typeMapper.mapType(type);
   }
  else {
-    returnType=mapTypeReference(returnTypeRef);
+    returnType=typeMapper.mapType(bindingContext.resolveTypeReference(returnTypeRef));
   }
   Method method=new Method(f.getName(),returnType,parameterTypes);
   final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,method.getName(),method.getDescriptor(),null,null);
