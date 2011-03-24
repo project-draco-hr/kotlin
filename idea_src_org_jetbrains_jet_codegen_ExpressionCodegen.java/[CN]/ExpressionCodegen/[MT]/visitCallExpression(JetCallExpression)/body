@@ -1,0 +1,31 @@
+{
+  List<JetArgument> args=expression.getValueArguments();
+  for (  JetArgument arg : args) {
+    gen(arg.getArgumentExpression());
+  }
+  JetExpression callee=expression.getCalleeExpression();
+  if (callee instanceof JetSimpleNameExpression) {
+    DeclarationDescriptor funDescriptor=bindingContext.resolveReferenceExpression((JetSimpleNameExpression)callee);
+    if (funDescriptor instanceof FunctionDescriptor) {
+      PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(funDescriptor);
+      if (declarationPsiElement instanceof PsiMethod) {
+        PsiMethod method=(PsiMethod)declarationPsiElement;
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass=method.getContainingClass();
+          String owner=containingClass.getQualifiedName().replace(".","/");
+          v.visitMethodInsn(Opcodes.INVOKESTATIC,owner,method.getName(),getMethodDescriptor(method));
+          boxIfNeeded(method.getReturnType());
+        }
+ else {
+          throw new UnsupportedOperationException("don't know how to generate instance method calls");
+        }
+      }
+    }
+ else {
+      throw new CompilationException();
+    }
+  }
+ else {
+    throw new UnsupportedOperationException("Don't know how to generate a call");
+  }
+}
