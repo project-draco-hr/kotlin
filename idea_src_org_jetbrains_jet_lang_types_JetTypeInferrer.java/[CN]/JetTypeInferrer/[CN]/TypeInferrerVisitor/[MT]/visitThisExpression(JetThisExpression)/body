@@ -1,2 +1,27 @@
 {
+  JetType thisType=scope.getThisType();
+  JetTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
+  if (superTypeQualifier != null) {
+    JetTypeElement superTypeElement=superTypeQualifier.getTypeElement();
+    if (superTypeElement instanceof JetUserType) {
+      JetUserType typeElement=(JetUserType)superTypeElement;
+      ClassDescriptor superclass=typeResolver.resolveClassByUserType(scope,typeElement);
+      if (superclass != null) {
+        Collection<? extends JetType> supertypes=thisType.getConstructor().getSupertypes();
+        Map<TypeConstructor,TypeProjection> substitutionContext=TypeUtils.buildSubstitutionContext(thisType);
+        for (        JetType declaredSupertype : supertypes) {
+          if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
+            result=TypeSubstitutor.INSTANCE.safeSubstitute(substitutionContext,declaredSupertype,Variance.INVARIANT);
+            break;
+          }
+        }
+        if (result == null) {
+          semanticServices.getErrorHandler().genericError(superTypeElement.getNode(),"Not a superclass");
+        }
+      }
+    }
+  }
+ else {
+    result=thisType;
+  }
 }

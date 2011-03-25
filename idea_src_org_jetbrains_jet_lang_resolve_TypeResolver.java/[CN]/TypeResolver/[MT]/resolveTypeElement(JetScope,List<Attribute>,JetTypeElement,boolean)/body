@@ -8,6 +8,14 @@
         if (referenceExpression == null || referencedName == null) {
           return;
         }
+        if (type.getTypeArguments().isEmpty() && type.getQualifier() == null) {
+          TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameter(referencedName);
+          if (typeParameterDescriptor != null) {
+            trace.recordReferenceResolution(referenceExpression,typeParameterDescriptor);
+            result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
+            return;
+          }
+        }
         ClassDescriptor classDescriptor=resolveClass(scope,type);
         if (classDescriptor != null) {
           trace.recordReferenceResolution(referenceExpression,classDescriptor);
@@ -19,19 +27,6 @@
  else {
             result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
           }
-        }
- else         if (type.getTypeArguments().isEmpty()) {
-          TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameter(referencedName);
-          if (typeParameterDescriptor != null) {
-            trace.recordReferenceResolution(referenceExpression,typeParameterDescriptor);
-            result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
-          }
- else {
-            semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
-          }
-        }
- else {
-          semanticServices.getErrorHandler().unresolvedReference(referenceExpression);
         }
       }
       @Override public void visitNullableType(      JetNullableType nullableType){

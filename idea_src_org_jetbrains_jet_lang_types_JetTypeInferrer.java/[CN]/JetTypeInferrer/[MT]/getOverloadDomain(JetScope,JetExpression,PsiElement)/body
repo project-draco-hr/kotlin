@@ -14,8 +14,9 @@
       JetExpression selectorExpression=expression.getSelectorExpression();
       if (selectorExpression instanceof JetSimpleNameExpression) {
         JetSimpleNameExpression referenceExpression=(JetSimpleNameExpression)selectorExpression;
-        if (receiverType != null) {
-          result[0]=semanticServices.getOverloadResolver().getOverloadDomain(receiverType,scope,referenceExpression.getReferencedName());
+        String referencedName=referenceExpression.getReferencedName();
+        if (receiverType != null && referencedName != null) {
+          result[0]=semanticServices.getOverloadResolver().getOverloadDomain(receiverType,scope,referencedName);
           reference[0]=referenceExpression;
         }
       }
@@ -24,8 +25,11 @@
       }
     }
     @Override public void visitSimpleNameExpression(    JetSimpleNameExpression expression){
-      result[0]=semanticServices.getOverloadResolver().getOverloadDomain(null,scope,expression.getReferencedName());
-      reference[0]=expression;
+      String referencedName=expression.getReferencedName();
+      if (referencedName != null) {
+        result[0]=semanticServices.getOverloadResolver().getOverloadDomain(null,scope,referencedName);
+        reference[0]=expression;
+      }
     }
     @Override public void visitExpression(    JetExpression expression){
       throw new UnsupportedOperationException(expression.getText());

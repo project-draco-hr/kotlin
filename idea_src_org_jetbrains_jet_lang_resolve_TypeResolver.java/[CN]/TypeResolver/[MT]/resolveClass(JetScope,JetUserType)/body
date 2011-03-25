@@ -7,12 +7,22 @@
   if (referencedName == null) {
     return null;
   }
+  ClassDescriptor classDescriptor=null;
   if (userType.isAbsoluteInRootNamespace()) {
-    return JetModuleUtil.getRootNamespaceScope(userType).getClass(referencedName);
+    classDescriptor=JetModuleUtil.getRootNamespaceScope(userType).getClass(referencedName);
   }
-  JetUserType qualifier=userType.getQualifier();
-  if (qualifier != null) {
-    scope=resolveClassLookupScope(scope,qualifier);
+ else {
+    JetUserType qualifier=userType.getQualifier();
+    if (qualifier != null) {
+      scope=resolveClassLookupScope(scope,qualifier);
+    }
+    if (scope == null) {
+      return null;
+    }
+    classDescriptor=scope.getClass(referencedName);
   }
-  return scope.getClass(referencedName);
+  if (classDescriptor == null) {
+    semanticServices.getErrorHandler().unresolvedReference(expression);
+  }
+  return classDescriptor;
 }
