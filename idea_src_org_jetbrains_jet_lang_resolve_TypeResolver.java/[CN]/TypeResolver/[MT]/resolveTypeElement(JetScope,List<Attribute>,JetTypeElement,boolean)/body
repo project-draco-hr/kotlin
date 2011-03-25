@@ -8,24 +8,24 @@
         if (referenceExpression == null || referencedName == null) {
           return;
         }
-        if (type.getTypeArguments().isEmpty() && type.getQualifier() == null) {
-          TypeParameterDescriptor typeParameterDescriptor=scope.getTypeParameter(referencedName);
-          if (typeParameterDescriptor != null) {
+        ClassifierDescriptor classifierDescriptor=resolveClass(scope,type);
+        if (classifierDescriptor != null) {
+          if (classifierDescriptor instanceof TypeParameterDescriptor) {
+            TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)classifierDescriptor;
             trace.recordReferenceResolution(referenceExpression,typeParameterDescriptor);
             result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
-            return;
           }
-        }
-        ClassDescriptor classDescriptor=resolveClass(scope,type);
-        if (classDescriptor != null) {
-          trace.recordReferenceResolution(referenceExpression,classDescriptor);
-          TypeConstructor typeConstructor=classDescriptor.getTypeConstructor();
-          List<TypeProjection> arguments=resolveTypeProjections(scope,typeConstructor,type.getTypeArguments());
-          if (arguments.size() != typeConstructor.getParameters().size()) {
-            semanticServices.getErrorHandler().genericError(type.getNode(),typeConstructor.getParameters().size() + " type parameters expected");
-          }
+ else           if (classifierDescriptor instanceof ClassDescriptor) {
+            ClassDescriptor classDescriptor=(ClassDescriptor)classifierDescriptor;
+            trace.recordReferenceResolution(referenceExpression,classifierDescriptor);
+            TypeConstructor typeConstructor=classifierDescriptor.getTypeConstructor();
+            List<TypeProjection> arguments=resolveTypeProjections(scope,typeConstructor,type.getTypeArguments());
+            if (arguments.size() != typeConstructor.getParameters().size()) {
+              semanticServices.getErrorHandler().genericError(type.getNode(),typeConstructor.getParameters().size() + " type parameters expected");
+            }
  else {
-            result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+              result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+            }
           }
         }
       }
