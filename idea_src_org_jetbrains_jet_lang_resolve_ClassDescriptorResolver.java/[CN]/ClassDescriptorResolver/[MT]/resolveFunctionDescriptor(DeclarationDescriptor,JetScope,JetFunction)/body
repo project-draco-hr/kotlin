@@ -1,15 +1,16 @@
 {
   FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(containingDescriptor,AttributeResolver.INSTANCE.resolveAttributes(function.getModifierList()),safeName(function.getName()));
-  WritableScope parameterScope=semanticServices.createWritableScope(scope,functionDescriptor);
-  List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,parameterScope,function.getTypeParameters());
-  List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,parameterScope,function.getValueParameters());
+  WritableScope innerScope=semanticServices.createWritableScope(scope,functionDescriptor);
+  innerScope.addLabeledDeclaration(functionDescriptor);
+  List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,innerScope,function.getTypeParameters());
+  List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,innerScope,function.getValueParameters());
   JetType returnType;
   JetTypeReference returnTypeRef=function.getReturnTypeRef();
   JetExpression bodyExpression=function.getBodyExpression();
   if (returnTypeRef != null) {
-    returnType=typeResolver.resolveType(parameterScope,returnTypeRef);
+    returnType=typeResolver.resolveType(innerScope,returnTypeRef);
     if (bodyExpression != null) {
-      semanticServices.getTypeInferrer(trace).getType(parameterScope,bodyExpression,function.hasBlockBody());
+      semanticServices.getTypeInferrer(trace).getType(innerScope,bodyExpression,function.hasBlockBody());
     }
   }
  else {
@@ -18,7 +19,7 @@
       returnType=ErrorUtils.createErrorType("No type, no body");
     }
  else {
-      returnType=semanticServices.getTypeInferrer(trace).safeGetType(parameterScope,bodyExpression,function.hasBlockBody());
+      returnType=semanticServices.getTypeInferrer(trace).safeGetType(innerScope,bodyExpression,function.hasBlockBody());
     }
   }
   functionDescriptor.initialize(typeParameterDescriptors,valueParameterDescriptors,returnType);
