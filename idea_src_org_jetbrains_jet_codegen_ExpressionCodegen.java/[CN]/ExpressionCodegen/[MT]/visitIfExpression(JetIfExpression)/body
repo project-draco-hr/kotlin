@@ -1,6 +1,7 @@
 {
-  gen(expression.getCondition());
-  unboxBoolean();
+  JetType expressionType=bindingContext.getExpressionType(expression);
+  Type asmType=typeMapper.mapType(expressionType);
+  gen(expression.getCondition(),Type.BOOLEAN_TYPE);
   JetExpression thenExpression=expression.getThen();
   JetExpression elseExpression=expression.getElse();
   if (thenExpression == null && elseExpression == null) {
@@ -16,10 +17,10 @@
   }
   Label elseLabel=new Label();
   v.ifeq(elseLabel);
-  gen(thenExpression);
+  gen(thenExpression,asmType);
   Label endLabel=new Label();
   v.goTo(endLabel);
   v.mark(elseLabel);
-  gen(elseExpression);
+  gen(elseExpression,asmType);
   v.mark(endLabel);
 }
