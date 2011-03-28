@@ -34,9 +34,24 @@
   }
  else   if (equalsOperations.contains(operationType)) {
     String name="equals";
-    JetType equalsType=getTypeForBinaryCall(expression,name,scope,true);
-    result=assureBooleanResult(operationSign,name,equalsType);
-    ensureNonemptyIntersectionOfOperandTypes(expression);
+    if (right != null) {
+      JetType leftType=getType(scope,left,false);
+      if (leftType != null) {
+        JetType rightType=getType(scope,right,false);
+        if (rightType != null) {
+          FunctionDescriptor equals=lookupFunction(scope,operationSign,"equals",leftType,Collections.singletonList(JetStandardClasses.getNullableAnyType()),false);
+          if (equals != null) {
+            if (ensureBooleanResult(operationSign,name,equals.getUnsubstitutedReturnType())) {
+              ensureNonemptyIntersectionOfOperandTypes(expression);
+            }
+          }
+ else {
+            semanticServices.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
+          }
+        }
+      }
+    }
+    result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.EQEQEQ || operationType == JetTokens.EXCLEQEQEQ) {
     ensureNonemptyIntersectionOfOperandTypes(expression);
@@ -49,7 +64,8 @@
     }
     String name="contains";
     JetType containsType=getTypeForBinaryCall(scope,right,expression.getOperationReference(),expression.getLeft(),name,true);
-    result=assureBooleanResult(operationSign,name,containsType);
+    ensureBooleanResult(operationSign,name,containsType);
+    result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
     JetType leftType=getType(scope,left,false);
@@ -58,7 +74,6 @@
       semanticServices.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
     }
     if (rightType != null && !isBoolean(rightType)) {
-      semanticServices.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),rightType);
       semanticServices.getErrorHandler().typeMismatch(right,semanticServices.getStandardLibrary().getBooleanType(),rightType);
     }
     result=semanticServices.getStandardLibrary().getBooleanType();

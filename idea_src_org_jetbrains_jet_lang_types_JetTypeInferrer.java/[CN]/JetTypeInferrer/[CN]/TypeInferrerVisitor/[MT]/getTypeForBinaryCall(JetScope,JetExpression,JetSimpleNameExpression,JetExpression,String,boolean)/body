@@ -1,11 +1,14 @@
 {
-  JetType leftType=safeGetType(scope,left,false);
-  JetType rightType=safeGetType(scope,right,false);
-  if (ErrorUtils.isErrorType(leftType)) {
+  JetType leftType=getType(scope,left,false);
+  JetType rightType=getType(scope,right,false);
+  if (leftType == null || rightType == null) {
     return null;
   }
   FunctionDescriptor functionDescriptor=lookupFunction(scope,operationSign,name,leftType,Collections.singletonList(rightType),reportUnresolved);
   if (functionDescriptor != null) {
+    if (leftType.isNullable()) {
+      semanticServices.getErrorHandler().genericError(operationSign.getNode(),"Infix call corresponds to a dot-qualified call '" + left.getText() + "."+ name+ "("+ right.getText()+ ")'"+ " which is not allowed on a nullable receiver '"+ right.getText()+ "'."+ " Use '?.'-qualified call instead");
+    }
     return functionDescriptor.getUnsubstitutedReturnType();
   }
   return null;
