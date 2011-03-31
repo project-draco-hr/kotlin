@@ -1,0 +1,26 @@
+{
+  JetFinallySection finallyBlock=expression.getFinallyBlock();
+  if (finallyBlock != null) {
+    builder.pushFinally(finallyBlock.getFinalExpression());
+  }
+  List<JetCatchClause> catchClauses=expression.getCatchClauses();
+  if (catchClauses.isEmpty()) {
+    value(expression.getTryBlock(),true);
+  }
+ else {
+    Label catchBlock=builder.createUnboundLabel();
+    builder.nondeterministicJump(catchBlock);
+    value(expression.getTryBlock(),true);
+    Label afterCatches=builder.createUnboundLabel();
+    builder.jump(afterCatches);
+    builder.bindLabel(catchBlock);
+    for (    JetCatchClause catchClause : catchClauses) {
+      value(catchClause.getCatchBody(),true);
+      builder.nondeterministicJump(afterCatches);
+    }
+    builder.bindLabel(afterCatches);
+  }
+  if (finallyBlock != null) {
+    builder.popFinally();
+  }
+}

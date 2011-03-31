@@ -3,4 +3,20 @@
   FunctionDescriptor descriptor=classDescriptorResolver.resolveFunctionDescriptor(declaringScope.getContainingDeclaration(),declaringScope,function);
   declaringScope.addFunctionDescriptor(descriptor);
   functions.put(function,descriptor);
+  JetExpression bodyExpression=function.getBodyExpression();
+  if (bodyExpression != null) {
+    System.out.println("-------------");
+    JetControlFlowInstructionsGenerator instructionsGenerator=new JetControlFlowInstructionsGenerator();
+    new JetControlFlowProcessor(instructionsGenerator).generate(function,bodyExpression);
+    Pseudocode pseudocode=instructionsGenerator.getPseudocode();
+    pseudocode.postProcess();
+    pseudocode.dumpInstructions(System.out);
+    System.out.println("-------------");
+    try {
+      pseudocode.dumpGraph(new PrintStream("/Users/abreslav/work/cfg.dot"));
+    }
+ catch (    FileNotFoundException e) {
+      e.printStackTrace();
+    }
+  }
 }

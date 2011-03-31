@@ -1,0 +1,50 @@
+{
+  out.println("digraph g {");
+  final Map<Instruction,String> nodeToName=new HashMap<Instruction,String>();
+  int count=0;
+  for (  Instruction node : instructions) {
+    if (node instanceof UnconditionalJumpInstruction) {
+      continue;
+    }
+    String name="n" + count++;
+    nodeToName.put(node,name);
+    String text=node.toString();
+    int newline=text.indexOf("\n");
+    if (newline >= 0) {
+      text=text.substring(0,newline);
+    }
+    String shape=node instanceof ConditionalJumpInstruction ? "diamond" : "box";
+    out.println(name + "[label=\"" + text+ "\", shape="+ shape+ "];");
+  }
+  for (  final Instruction fromInst : instructions) {
+    fromInst.accept(new InstructionVisitor(){
+      @Override public void visitUnconditionalJump(      UnconditionalJumpInstruction instruction){
+      }
+      @Override public void visitJump(      AbstractJumpInstruction instruction){
+        writeEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getResolvedTarget()),null);
+      }
+      @Override public void visitReturnValue(      ReturnValueInstruction instruction){
+        super.visitReturnValue(instruction);
+      }
+      @Override public void visitReturnNoValue(      ReturnNoValueInstruction instruction){
+        super.visitReturnNoValue(instruction);
+      }
+      @Override public void visitConditionalJump(      ConditionalJumpInstruction instruction){
+        String from=nodeToName.get(instruction);
+        writeEdge(out,from,nodeToName.get(instruction.getNextOnFalse()),"no");
+        writeEdge(out,from,nodeToName.get(instruction.getNextOnTrue()),"yes");
+      }
+      @Override public void visitRead(      ValueInstruction instruction){
+        writeEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getNext()),null);
+      }
+      @Override public void visitSubroutineExit(      SubroutineExitInstruction instruction){
+      }
+      @Override public void visitInstruction(      Instruction instruction){
+        throw new UnsupportedOperationException(instruction.toString());
+      }
+    }
+);
+  }
+  out.println("}");
+  out.close();
+}
