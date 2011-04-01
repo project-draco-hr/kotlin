@@ -1,0 +1,40 @@
+{
+  for (  final Instruction fromInst : instructions) {
+    fromInst.accept(new InstructionVisitor(){
+      @Override public void visitFunctionLiteralValue(      FunctionLiteralValueInstruction instruction){
+        int index=count[0];
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getBody().instructions.get(0)),null);
+        visitInstructionWithNext(instruction);
+      }
+      @Override public void visitUnconditionalJump(      UnconditionalJumpInstruction instruction){
+      }
+      @Override public void visitJump(      AbstractJumpInstruction instruction){
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getResolvedTarget()),null);
+      }
+      @Override public void visitNondeterministicJump(      NondeterministicJumpInstruction instruction){
+        visitJump(instruction);
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getNext()),null);
+      }
+      @Override public void visitReturnValue(      ReturnValueInstruction instruction){
+        super.visitReturnValue(instruction);
+      }
+      @Override public void visitReturnNoValue(      ReturnNoValueInstruction instruction){
+        super.visitReturnNoValue(instruction);
+      }
+      @Override public void visitConditionalJump(      ConditionalJumpInstruction instruction){
+        String from=nodeToName.get(instruction);
+        printEdge(out,from,nodeToName.get(instruction.getNextOnFalse()),"no");
+        printEdge(out,from,nodeToName.get(instruction.getNextOnTrue()),"yes");
+      }
+      @Override public void visitInstructionWithNext(      InstructionWithNext instruction){
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getNext()),null);
+      }
+      @Override public void visitSubroutineExit(      SubroutineExitInstruction instruction){
+      }
+      @Override public void visitInstruction(      Instruction instruction){
+        throw new UnsupportedOperationException(instruction.toString());
+      }
+    }
+);
+  }
+}
