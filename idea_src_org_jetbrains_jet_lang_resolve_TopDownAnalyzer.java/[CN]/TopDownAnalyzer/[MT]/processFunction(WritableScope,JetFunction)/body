@@ -5,18 +5,20 @@
   functions.put(function,descriptor);
   JetExpression bodyExpression=function.getBodyExpression();
   if (bodyExpression != null) {
-    System.out.println("-------------");
     JetControlFlowInstructionsGenerator instructionsGenerator=new JetControlFlowInstructionsGenerator(function);
     new JetControlFlowProcessor(semanticServices,trace,instructionsGenerator).generate(function,bodyExpression);
     Pseudocode pseudocode=instructionsGenerator.getPseudocode();
     pseudocode.postProcess();
-    pseudocode.dumpInstructions(System.out);
-    System.out.println("-------------");
-    try {
-      pseudocode.dumpGraph(new PrintStream("/Users/abreslav/work/cfg.dot"));
-    }
- catch (    FileNotFoundException e) {
-      e.printStackTrace();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("-------------");
+      pseudocode.dumpInstructions(System.out);
+      System.out.println("-------------");
+      try {
+        pseudocode.dumpGraph(new PrintStream("/Users/abreslav/work/cfg.dot"));
+      }
+ catch (      FileNotFoundException e) {
+        e.printStackTrace();
+      }
     }
   }
 }
