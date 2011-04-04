@@ -1,0 +1,29 @@
+{
+  String graphFileName=getTestDataPath() + "/" + getTestFilePath().replace(".jet",".dot");
+  File target=new File(graphFileName);
+  PrintStream out=new PrintStream(target);
+  out.println("digraph " + name + " {");
+  int[] count=new int[1];
+  Map<Instruction,String> nodeToName=new HashMap<Instruction,String>();
+  for (  Pseudocode pseudocode : pseudocodes) {
+    pseudocode.dumpNodes(out,count,nodeToName);
+  }
+  int i=0;
+  for (  Pseudocode pseudocode : pseudocodes) {
+    String label;
+    JetElement correspondingElement=pseudocode.getCorrespondingElement();
+    if (correspondingElement instanceof JetNamedDeclaration) {
+      JetNamedDeclaration namedDeclaration=(JetNamedDeclaration)correspondingElement;
+      label=namedDeclaration.getName();
+    }
+ else {
+      label="anonymous_" + i;
+    }
+    out.println("subgraph cluster_" + i + " {\n"+ "label=\""+ label+ "\";\n"+ "color=blue;\n");
+    pseudocode.dumpEdges(out,count,nodeToName);
+    out.println("}");
+    i++;
+  }
+  out.println("}");
+  out.close();
+}

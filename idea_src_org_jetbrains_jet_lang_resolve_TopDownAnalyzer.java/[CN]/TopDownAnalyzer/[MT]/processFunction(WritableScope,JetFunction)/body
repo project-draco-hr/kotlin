@@ -3,41 +3,4 @@
   FunctionDescriptor descriptor=classDescriptorResolver.resolveFunctionDescriptor(declaringScope.getContainingDeclaration(),declaringScope,function);
   declaringScope.addFunctionDescriptor(descriptor);
   functions.put(function,descriptor);
-  JetExpression bodyExpression=function.getBodyExpression();
-  if (bodyExpression != null) {
-    JetControlFlowDataTrace controlFlowDataTrace=new JetControlFlowDataTrace();
-    JetControlFlowInstructionsGenerator instructionsGenerator=new JetControlFlowInstructionsGenerator(controlFlowDataTrace);
-    new JetControlFlowProcessor(semanticServices,trace,instructionsGenerator).generate(function,bodyExpression);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      try {
-        File workDirectory=new File(System.getProperty("user.home") + "/work/");
-        workDirectory.mkdirs();
-        File target=new File(workDirectory,"cfg.dot");
-        PrintStream out=new PrintStream(target);
-        out.println("digraph " + function.getName() + " {");
-        Collection<Pseudocode> pseudocodes=controlFlowDataTrace.getAllData();
-        int[] count=new int[1];
-        Map<Instruction,String> nodeToName=new HashMap<Instruction,String>();
-        for (        Pseudocode pseudocode : pseudocodes) {
-          pseudocode.postProcess();
-          System.out.println("-------------");
-          pseudocode.dumpInstructions(System.out);
-          System.out.println("-------------");
-          pseudocode.dumpNodes(out,count,nodeToName);
-        }
-        int i=0;
-        for (        Pseudocode pseudocode : pseudocodes) {
-          out.println("subgraph cluster_" + i + " {\n"+ "label=\"f"+ i+ "\";\n"+ "color=blue;\n");
-          pseudocode.dumpEdges(out,count,nodeToName);
-          out.println("}");
-          i++;
-        }
-        out.println("}");
-        out.close();
-      }
- catch (      FileNotFoundException e) {
-        e.printStackTrace();
-      }
-    }
-  }
 }
