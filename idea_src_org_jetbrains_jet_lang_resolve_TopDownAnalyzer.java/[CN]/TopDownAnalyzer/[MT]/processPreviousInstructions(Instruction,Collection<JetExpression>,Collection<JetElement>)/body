@@ -1,0 +1,39 @@
+{
+  Collection<Instruction> previousInstructions=previousFor.getPreviousInstructions();
+  InstructionVisitor visitor=new InstructionVisitor(){
+    @Override public void visitReadValue(    ReadValueInstruction instruction){
+      returnedExpressions.add((JetExpression)instruction.getElement());
+    }
+    @Override public void visitReturnValue(    ReturnValueInstruction instruction){
+      processPreviousInstructions(instruction,returnedExpressions,elementsReturningUnit);
+    }
+    @Override public void visitReturnNoValue(    ReturnNoValueInstruction instruction){
+      elementsReturningUnit.add(instruction.getElement());
+    }
+    @Override public void visitSubroutineEnter(    SubroutineEnterInstruction instruction){
+      elementsReturningUnit.add(instruction.getSubroutine());
+    }
+    @Override public void visitUnsupportedElementInstruction(    UnsupportedElementInstruction instruction){
+      semanticServices.getErrorHandler().genericError(instruction.getElement().getNode(),"Unsupported by control-flow builder");
+    }
+    @Override public void visitWriteValue(    WriteValueInstruction writeValueInstruction){
+      elementsReturningUnit.add(writeValueInstruction.getElement());
+    }
+    @Override public void visitJump(    AbstractJumpInstruction instruction){
+      processPreviousInstructions(instruction,returnedExpressions,elementsReturningUnit);
+    }
+    @Override public void visitInstruction(    Instruction instruction){
+      if (instruction instanceof JetElementInstruction) {
+        JetElementInstruction elementInstruction=(JetElementInstruction)instruction;
+        semanticServices.getErrorHandler().genericError(elementInstruction.getElement().getNode(),"Unsupported by control-flow builder " + elementInstruction.getElement());
+      }
+ else {
+        throw new UnsupportedOperationException(instruction.toString());
+      }
+    }
+  }
+;
+  for (  Instruction previousInstruction : previousInstructions) {
+    previousInstruction.accept(visitor);
+  }
+}

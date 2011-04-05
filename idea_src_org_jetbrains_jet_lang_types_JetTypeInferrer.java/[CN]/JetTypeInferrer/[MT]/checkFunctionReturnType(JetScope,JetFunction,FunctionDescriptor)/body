@@ -1,0 +1,20 @@
+{
+  Map<JetElement,JetType> typeMap=getReturnedExpressions(outerScope,function,functionDescriptor);
+  if (typeMap.isEmpty()) {
+    return;
+  }
+  JetType expectedReturnType=functionDescriptor.getUnsubstitutedReturnType();
+  for (  Map.Entry<JetElement,JetType> entry : typeMap.entrySet()) {
+    JetType actualType=entry.getValue();
+    JetElement element=entry.getKey();
+    if (!semanticServices.getTypeChecker().isConvertibleTo(actualType,expectedReturnType)) {
+      if (element instanceof JetExpression) {
+        JetExpression expression=(JetExpression)element;
+        semanticServices.getErrorHandler().typeMismatch(expression,expectedReturnType,actualType);
+      }
+ else {
+        semanticServices.getErrorHandler().genericError(element.getNode(),"This function must return a value of type " + expectedReturnType);
+      }
+    }
+  }
+}
