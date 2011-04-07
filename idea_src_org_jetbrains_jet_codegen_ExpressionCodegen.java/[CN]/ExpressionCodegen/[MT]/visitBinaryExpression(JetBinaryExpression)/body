@@ -6,12 +6,14 @@
   }
   DeclarationDescriptor op=bindingContext.resolveReferenceExpression(expression.getOperationReference());
   if (op instanceof FunctionDescriptor) {
+    JetType returnType=bindingContext.getExpressionType(expression);
+    final Type asmType=typeMapper.mapType(returnType);
     DeclarationDescriptor cls=op.getContainingDeclaration();
     if (cls instanceof ClassDescriptor) {
       final String className=cls.getName();
-      if (className.equals("Int") || className.equals("Long") || className.equals("Short")|| className.equals("Byte")|| className.equals("Char")) {
+      if (isNumberPrimitive(className)) {
         if (op.getName().equals("compareTo")) {
-          generateCompareOp(expression,opToken);
+          generateCompareOp(expression,opToken,asmType);
         }
  else {
           int opcode=opcodeForMethod(op.getName());
@@ -23,10 +25,8 @@
         if (op.getName().equals("equals")) {
           final Type leftType=typeMapper.mapType(bindingContext.getExpressionType(expression.getLeft()));
           final Type rightType=typeMapper.mapType(bindingContext.getExpressionType(expression.getRight()));
-          if (isIntLikePrimitive(leftType) && isIntLikePrimitive(rightType)) {
-            gen(expression.getLeft(),Type.INT_TYPE);
-            gen(expression.getRight(),Type.INT_TYPE);
-            myStack.push(StackValue.icmp(opToken));
+          if (isNumberPrimitive(leftType) && leftType == rightType) {
+            generateCompareOp(expression,opToken,leftType);
             return;
           }
  else {
