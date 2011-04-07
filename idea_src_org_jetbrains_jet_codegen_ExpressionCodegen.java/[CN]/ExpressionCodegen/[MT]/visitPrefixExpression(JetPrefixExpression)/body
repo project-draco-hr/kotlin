@@ -1,0 +1,15 @@
+{
+  DeclarationDescriptor op=bindingContext.resolveReferenceExpression(expression.getOperationSign());
+  if (op instanceof FunctionDescriptor) {
+    JetType returnType=bindingContext.getExpressionType(expression);
+    final Type asmType=typeMapper.mapType(returnType);
+    DeclarationDescriptor cls=op.getContainingDeclaration();
+    if (isNumberPrimitive(cls) && op.getName().equals("minus")) {
+      gen(expression.getBaseExpression(),asmType);
+      v.neg(asmType);
+      myStack.push(StackValue.onStack(asmType));
+      return;
+    }
+  }
+  throw new UnsupportedOperationException("Don't know how to generate this prefix expression");
+}
