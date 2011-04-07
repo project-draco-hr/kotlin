@@ -1,5 +1,17 @@
 {
   final DeclarationDescriptor descriptor=bindingContext.resolveReferenceExpression(expression);
+  if (descriptor instanceof PropertyDescriptor) {
+    final DeclarationDescriptor container=descriptor.getContainingDeclaration();
+    if (isClass(container,"Number")) {
+      Type castType=getCastType(expression.getReferencedName());
+      if (castType != null) {
+        final StackValue value=myStack.pop();
+        value.put(castType,v);
+        myStack.push(StackValue.onStack(castType));
+        return;
+      }
+    }
+  }
   PsiElement declaration=bindingContext.getDeclarationPsiElement(descriptor);
   if (declaration instanceof PsiField) {
     PsiField psiField=(PsiField)declaration;
