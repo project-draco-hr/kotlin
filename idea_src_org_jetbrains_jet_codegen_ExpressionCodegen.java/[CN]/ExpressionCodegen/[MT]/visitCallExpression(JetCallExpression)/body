@@ -3,6 +3,15 @@
   if (callee instanceof JetSimpleNameExpression) {
     DeclarationDescriptor funDescriptor=bindingContext.resolveReferenceExpression((JetSimpleNameExpression)callee);
     if (funDescriptor instanceof FunctionDescriptor) {
+      if (isNumberPrimitive(funDescriptor.getContainingDeclaration())) {
+        if (funDescriptor.getName().equals("inv")) {
+          final StackValue value=myStack.pop();
+          final Type asmType=expressionType(expression);
+          value.put(asmType,v);
+          generateInv(asmType);
+          return;
+        }
+      }
       PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(funDescriptor);
       if (declarationPsiElement instanceof PsiMethod) {
         PsiMethod method=(PsiMethod)declarationPsiElement;
@@ -22,6 +31,9 @@
         if (type != Type.VOID_TYPE) {
           myStack.push(StackValue.onStack(type));
         }
+      }
+ else {
+        throw new UnsupportedOperationException("don't know how to generate call to " + declarationPsiElement);
       }
     }
  else {
