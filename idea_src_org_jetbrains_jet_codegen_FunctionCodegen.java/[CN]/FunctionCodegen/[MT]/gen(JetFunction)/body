@@ -1,0 +1,32 @@
+{
+  final List<JetParameter> parameters=f.getValueParameters();
+  Type[] parameterTypes=new Type[parameters.size()];
+  for (int i=0; i < parameters.size(); i++) {
+    parameterTypes[i]=typeMapper.mapType(bindingContext.resolveTypeReference(parameters.get(i).getTypeReference()));
+  }
+  final JetTypeReference returnTypeRef=f.getReturnTypeRef();
+  Type returnType;
+  if (returnTypeRef == null) {
+    final FunctionDescriptor functionDescriptor=bindingContext.getFunctionDescriptor(f);
+    final JetType type=functionDescriptor.getUnsubstitutedReturnType();
+    returnType=typeMapper.mapType(type);
+  }
+ else {
+    returnType=typeMapper.mapType(bindingContext.resolveTypeReference(returnTypeRef));
+  }
+  Method method=new Method(f.getName(),returnType,parameterTypes);
+  final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,method.getName(),method.getDescriptor(),null,null);
+  mv.visitCode();
+  final JetExpression bodyExpression=f.getBodyExpression();
+  FrameMap frameMap=new FrameMap();
+  List<ValueParameterDescriptor> parameDescrs=bindingContext.getFunctionDescriptor(f).getUnsubstitutedValueParameters();
+  for (int i=0; i < parameDescrs.size(); i++) {
+    ValueParameterDescriptor parameter=parameDescrs.get(i);
+    frameMap.enter(parameter,parameterTypes[i].getSize());
+  }
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,standardLibrary,frameMap,typeMapper,returnType);
+  bodyExpression.accept(codegen);
+  generateReturn(mv,bodyExpression,codegen);
+  mv.visitMaxs(0,0);
+  mv.visitEnd();
+}

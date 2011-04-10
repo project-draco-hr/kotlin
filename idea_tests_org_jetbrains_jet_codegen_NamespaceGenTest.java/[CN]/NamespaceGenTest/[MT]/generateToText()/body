@@ -1,9 +1,10 @@
 {
-  StringWriter writer=new StringWriter();
+  Codegens state=new Codegens(getProject(),true);
   JetFile jetFile=(JetFile)myFixture.getFile();
   JetNamespace namespace=jetFile.getRootNamespace();
-  NamespaceCodegen codegen=new NamespaceCodegen(getProject(),new TraceClassVisitor(new PrintWriter(writer)),namespace.getFQName());
+  NamespaceCodegen codegen=state.forNamespace(namespace);
   codegen.generate(namespace);
-  codegen.done();
-  return writer.toString();
+  List<String> files=state.files();
+  assertEquals("This test only supposed to generate single class file",1,files.size());
+  return state.asText(files.get(0));
 }
