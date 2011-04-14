@@ -1,0 +1,17 @@
+{
+  final JetUserType constructorType=(JetUserType)expression.getTypeReference().getTypeElement();
+  final JetSimpleNameExpression constructorReference=constructorType.getReferenceExpression();
+  final PsiElement declaration=bindingContext.getDeclarationPsiElement(bindingContext.resolveReferenceExpression(constructorReference));
+  if (declaration instanceof PsiMethod) {
+    final PsiMethod constructor=(PsiMethod)declaration;
+    PsiClass javaClass=constructor.getContainingClass();
+    Type type=JetTypeMapper.psiClassType(javaClass);
+    v.anew(type);
+    v.dup();
+    pushMethodArguments(expression,constructor);
+    v.invokespecial(JetTypeMapper.jvmName(javaClass),"<init>",getMethodDescriptor(constructor));
+    myStack.push(StackValue.onStack(type));
+    return;
+  }
+  throw new UnsupportedOperationException("don't know how to generate this new expression");
+}
