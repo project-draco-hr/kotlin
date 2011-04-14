@@ -12,6 +12,9 @@
  else   if (opToken == JetTokens.OROR) {
     generateBooleanOr(expression);
   }
+ else   if (opToken == JetTokens.EQEQ || opToken == JetTokens.EXCLEQ) {
+    generateEquals(expression,opToken);
+  }
  else {
     DeclarationDescriptor op=bindingContext.resolveReferenceExpression(expression.getOperationReference());
     if (op instanceof FunctionDescriptor) {
@@ -27,19 +30,6 @@
           generateBinaryOp(expression,(FunctionDescriptor)op,opcode);
         }
         return;
-      }
- else       if (isClass(cls,"Hashable")) {
-        if (op.getName().equals("equals")) {
-          final Type leftType=typeMapper.mapType(bindingContext.getExpressionType(expression.getLeft()));
-          final Type rightType=typeMapper.mapType(bindingContext.getExpressionType(expression.getRight()));
-          if (isNumberPrimitive(leftType) && leftType == rightType) {
-            generateCompareOp(expression,opToken,leftType);
-            return;
-          }
- else {
-            throw new UnsupportedOperationException("Don't know how to generate equality for these types");
-          }
-        }
       }
     }
     throw new UnsupportedOperationException("Don't know how to generate binary op " + expression);
