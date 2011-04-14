@@ -10,7 +10,7 @@
     }
     builder.bindLabel(resultLabel);
     if (!inCondition) {
-      builder.readNode(expression);
+      builder.read(expression);
     }
   }
  else   if (operationType == JetTokens.OROR) {
@@ -22,16 +22,25 @@
     }
     builder.bindLabel(resultLabel);
     if (!inCondition) {
-      builder.readNode(expression);
+      builder.read(expression);
     }
   }
  else   if (operationType == JetTokens.EQ) {
-    JetExpression left=expression.getLeft();
+    JetExpression left=JetPsiUtil.deparenthesize(expression.getLeft());
     if (right != null) {
       value(right,false,false);
     }
     if (left instanceof JetSimpleNameExpression) {
-      builder.writeNode(expression,left);
+      builder.write(expression,left);
+    }
+ else     if (left instanceof JetArrayAccessExpression) {
+      JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
+      for (      JetExpression index : arrayAccessExpression.getIndexExpressions()) {
+        value(index,false,false);
+      }
+      value(arrayAccessExpression.getArrayExpression(),false,false);
+      value(expression.getOperationReference(),false,false);
+      builder.write(expression,left);
     }
  else {
       builder.unsupported(expression);
@@ -44,7 +53,7 @@
       value(right,false,false);
     }
     if (left instanceof JetSimpleNameExpression) {
-      builder.writeNode(expression,left);
+      builder.write(expression,left);
     }
  else {
       builder.unsupported(expression);
@@ -56,6 +65,6 @@
       value(right,false,false);
     }
     value(expression.getOperationReference(),false,false);
-    builder.readNode(expression);
+    builder.read(expression);
   }
 }
