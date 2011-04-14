@@ -1,0 +1,18 @@
+{
+  final List<JetParameter> parameters=f.getValueParameters();
+  Type[] parameterTypes=new Type[parameters.size()];
+  for (int i=0; i < parameters.size(); i++) {
+    parameterTypes[i]=mapType(bindingContext.resolveTypeReference(parameters.get(i).getTypeReference()));
+  }
+  final JetTypeReference returnTypeRef=f.getReturnTypeRef();
+  Type returnType;
+  if (returnTypeRef == null) {
+    final FunctionDescriptor functionDescriptor=bindingContext.getFunctionDescriptor(f);
+    final JetType type=functionDescriptor.getUnsubstitutedReturnType();
+    returnType=mapType(type);
+  }
+ else {
+    returnType=mapType(bindingContext.resolveTypeReference(returnTypeRef));
+  }
+  return new Method(f.getName(),returnType,parameterTypes);
+}
