@@ -1,0 +1,20 @@
+{
+  final Codegens state=new Codegens(getProject(),false);
+  JetFile jetFile=(JetFile)myFixture.getFile();
+  final Ref<Class> result=new Ref<Class>();
+  jetFile.acceptChildren(new JetVisitor(){
+    @Override public void visitJetElement(    JetElement elem){
+      elem.acceptChildren(this);
+    }
+    @Override public void visitClass(    JetClass klass){
+      final ClassCodegen codegen=state.forClassImplementation(klass);
+      codegen.generate(klass);
+      result.set(getJVMClass(state,klass.getName()));
+    }
+  }
+);
+  if (result.isNull()) {
+    throw new IllegalArgumentException("found no classes in the file to generate");
+  }
+  return result.get();
+}
