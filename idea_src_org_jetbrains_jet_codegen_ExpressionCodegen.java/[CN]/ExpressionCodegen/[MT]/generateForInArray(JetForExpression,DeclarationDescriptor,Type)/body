@@ -1,0 +1,26 @@
+{
+  JetType paramType=bindingContext.getExpressionType(expression.getLoopParameter());
+  Type asmParamType=typeMapper.mapType(paramType);
+  int indexVar=myMap.enterTemp();
+  v.aconst(0);
+  v.store(indexVar,Type.INT_TYPE);
+  int paramVar=myMap.getIndex(descriptor);
+  Label condition=new Label();
+  Label end=new Label();
+  v.mark(condition);
+  myLoopStarts.push(condition);
+  v.load(indexVar,Type.INT_TYPE);
+  gen(expression.getLoopRange(),loopRangeType);
+  v.dup2();
+  v.arraylength();
+  v.ifge(end);
+  v.swap();
+  v.aload(loopRangeType.getElementType());
+  StackValue.onStack(loopRangeType.getElementType()).put(asmParamType,v);
+  v.store(paramVar,asmParamType);
+  gen(expression.getBody(),Type.VOID_TYPE);
+  v.goTo(condition);
+  myLoopEnds.push(end);
+  myMap.leave(descriptor);
+  myMap.leaveTemp();
+}
