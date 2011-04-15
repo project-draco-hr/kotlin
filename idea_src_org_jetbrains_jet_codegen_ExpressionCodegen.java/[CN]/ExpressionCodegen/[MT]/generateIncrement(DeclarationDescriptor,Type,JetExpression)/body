@@ -1,31 +1,31 @@
 {
-  if (!(operand instanceof JetReferenceExpression)) {
-    throw new UnsupportedOperationException("cannot increment or decrement a non-lvalue");
-  }
   int increment=op.getName().equals("inc") ? 1 : -1;
-  final int index=indexOfLocal((JetReferenceExpression)operand);
-  if (index < 0) {
-    throw new UnsupportedOperationException("don't know how to increment or decrement something which is not a local var");
+  if (operand instanceof JetReferenceExpression) {
+    final int index=indexOfLocal((JetReferenceExpression)operand);
+    if (index < 0) {
+      throw new UnsupportedOperationException("don't know how to increment or decrement something which is not a local var");
+    }
+    if (isIntPrimitive(asmType)) {
+      v.iinc(index,increment);
+      return StackValue.local(index,asmType);
+    }
   }
-  if (isIntPrimitive(asmType)) {
-    v.iinc(index,increment);
+  StackValue value=generateIntermediateValue(operand);
+  value.put(asmType,v);
+  if (asmType == Type.LONG_TYPE) {
+    v.aconst(Long.valueOf(increment));
+  }
+ else   if (asmType == Type.FLOAT_TYPE) {
+    v.aconst(Float.valueOf(increment));
+  }
+ else   if (asmType == Type.DOUBLE_TYPE) {
+    v.aconst(Double.valueOf(increment));
   }
  else {
-    gen(operand,asmType);
-    if (asmType == Type.LONG_TYPE) {
-      v.aconst(Long.valueOf(increment));
-    }
- else     if (asmType == Type.FLOAT_TYPE) {
-      v.aconst(Float.valueOf(increment));
-    }
- else     if (asmType == Type.DOUBLE_TYPE) {
-      v.aconst(Double.valueOf(increment));
-    }
- else {
-      throw new UnsupportedOperationException("unknown type in increment: " + asmType);
-    }
-    v.add(asmType);
-    v.store(index,asmType);
+    v.aconst(increment);
   }
-  return index;
+  v.add(asmType);
+  value=generateIntermediateValue(operand);
+  value.store(v,true);
+  return value;
 }
