@@ -1,0 +1,32 @@
+{
+  OverloadResolutionResult iteratorResolutionResult=resolveNoParametersFunction(type,scope,"iterator");
+  if (iteratorResolutionResult.isSuccess()) {
+    JetType iteratorType=iteratorResolutionResult.getFunctionDescriptor().getUnsubstitutedReturnType();
+    boolean hasNextFunctionSupported=checkHasNextFunctionSupport(reportErrorsOn,iteratorType);
+    boolean hasNextPropertySupported=checkHasNextPropertySupport(reportErrorsOn,iteratorType);
+    if (hasNextFunctionSupported && hasNextPropertySupported) {
+      semanticServices.getErrorHandler().genericError(reportErrorsOn,"An ambiguity between 'iterator().hasNext()' function and 'iterator().hasNext()' property");
+    }
+ else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
+      semanticServices.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().hasNext()' function or an 'iterator().hasNext' property");
+    }
+    OverloadResolutionResult nextResolutionResult=resolveNoParametersFunction(iteratorType,scope,"next");
+    if (nextResolutionResult.isAmbiguity()) {
+      semanticServices.getErrorHandler().genericError(reportErrorsOn,"Method 'iterator().next()' is ambiguous for this expression");
+    }
+ else     if (nextResolutionResult.isNothing()) {
+      semanticServices.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
+    }
+ else {
+      return nextResolutionResult.getFunctionDescriptor().getUnsubstitutedReturnType();
+    }
+  }
+ else {
+    String errorMessage="For-loop range must have an iterator() method";
+    if (iteratorResolutionResult.isAmbiguity()) {
+      errorMessage="Method 'iterator()' is ambiguous for this expression";
+    }
+    semanticServices.getErrorHandler().genericError(reportErrorsOn,errorMessage);
+  }
+  return null;
+}
