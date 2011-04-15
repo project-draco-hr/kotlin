@@ -17,14 +17,11 @@
     PsiField psiField=(PsiField)declaration;
     final String owner=JetTypeMapper.jvmName(psiField.getContainingClass());
     final Type fieldType=psiTypeToAsm(psiField.getType());
-    if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      v.visitFieldInsn(Opcodes.GETSTATIC,owner,psiField.getName(),fieldType.getDescriptor());
-    }
- else {
+    final boolean isStatic=psiField.hasModifierProperty(PsiModifier.STATIC);
+    if (!isStatic) {
       ensureReceiverOnStack(expression);
-      v.visitFieldInsn(Opcodes.GETFIELD,owner,psiField.getName(),fieldType.getDescriptor());
     }
-    myStack.push(StackValue.onStack(fieldType));
+    myStack.push(StackValue.field(fieldType,owner,psiField.getName(),isStatic));
   }
  else {
     int index=myMap.getIndex(descriptor);
