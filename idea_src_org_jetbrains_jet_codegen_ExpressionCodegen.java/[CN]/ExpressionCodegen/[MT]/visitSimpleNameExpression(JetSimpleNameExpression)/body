@@ -15,12 +15,16 @@
   PsiElement declaration=bindingContext.getDeclarationPsiElement(descriptor);
   if (declaration instanceof PsiField) {
     PsiField psiField=(PsiField)declaration;
+    final String owner=JetTypeMapper.jvmName(psiField.getContainingClass());
+    final Type fieldType=psiTypeToAsm(psiField.getType());
     if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-      v.visitFieldInsn(Opcodes.GETSTATIC,JetTypeMapper.jvmName(psiField.getContainingClass()),psiField.getName(),psiTypeToAsm(psiField.getType()).getDescriptor());
+      v.visitFieldInsn(Opcodes.GETSTATIC,owner,psiField.getName(),fieldType.getDescriptor());
     }
  else {
-      throw new UnsupportedOperationException("don't know how to generate field reference " + descriptor);
+      ensureReceiverOnStack(expression);
+      v.visitFieldInsn(Opcodes.GETFIELD,owner,psiField.getName(),fieldType.getDescriptor());
     }
+    myStack.push(StackValue.onStack(fieldType));
   }
  else {
     int index=myMap.getIndex(descriptor);
