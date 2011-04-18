@@ -15,16 +15,16 @@
     receiverType=scope.getThisType();
   }
   List<JetElement> body=expression.getBody();
-  final Map<String,PropertyDescriptor> parameterDescriptors=new HashMap<String,PropertyDescriptor>();
+  final Map<String,VariableDescriptor> parameterDescriptors=new HashMap<String,VariableDescriptor>();
   List<JetType> parameterTypes=new ArrayList<JetType>();
   for (  JetParameter parameter : expression.getParameters()) {
     JetTypeReference typeReference=parameter.getTypeReference();
     if (typeReference == null) {
       throw new UnsupportedOperationException("Type inference for parameters is not implemented yet");
     }
-    PropertyDescriptor propertyDescriptor=classDescriptorResolver.resolveValueParameterDescriptor(functionDescriptor,scope,parameter);
-    parameterDescriptors.put(parameter.getName(),propertyDescriptor);
-    parameterTypes.add(propertyDescriptor.getOutType());
+    VariableDescriptor variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptor(functionDescriptor,scope,parameter);
+    parameterDescriptors.put(parameter.getName(),variableDescriptor);
+    parameterTypes.add(variableDescriptor.getOutType());
   }
   JetType returnType;
   if (returnTypeRef != null) {
@@ -32,8 +32,8 @@
   }
  else {
     WritableScope writableScope=semanticServices.createWritableScope(scope,functionDescriptor);
-    for (    PropertyDescriptor propertyDescriptor : parameterDescriptors.values()) {
-      writableScope.addPropertyDescriptor(propertyDescriptor);
+    for (    VariableDescriptor variableDescriptor : parameterDescriptors.values()) {
+      writableScope.addVariableDescriptor(variableDescriptor);
     }
     writableScope.setThisType(receiverType);
     returnType=getBlockReturnedType(writableScope,body);
