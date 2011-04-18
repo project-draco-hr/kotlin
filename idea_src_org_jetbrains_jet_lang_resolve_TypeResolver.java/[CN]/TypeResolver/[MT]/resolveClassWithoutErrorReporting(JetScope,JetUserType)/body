@@ -1,0 +1,25 @@
+{
+  JetSimpleNameExpression expression=userType.getReferenceExpression();
+  if (expression == null) {
+    return null;
+  }
+  String referencedName=expression.getReferencedName();
+  if (referencedName == null) {
+    return null;
+  }
+  ClassifierDescriptor classifierDescriptor=null;
+  if (userType.isAbsoluteInRootNamespace()) {
+    classifierDescriptor=JetModuleUtil.getRootNamespaceScope(userType).getClassifier(referencedName);
+  }
+ else {
+    JetUserType qualifier=userType.getQualifier();
+    if (qualifier != null) {
+      scope=resolveClassLookupScope(scope,qualifier);
+    }
+    if (scope == null) {
+      return ErrorUtils.getErrorClass();
+    }
+    classifierDescriptor=scope.getClassifier(referencedName);
+  }
+  return classifierDescriptor;
+}
