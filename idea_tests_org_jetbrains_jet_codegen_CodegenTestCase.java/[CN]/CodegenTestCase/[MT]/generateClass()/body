@@ -2,14 +2,14 @@
   final Codegens state=new Codegens(getProject(),false);
   JetFile jetFile=(JetFile)myFixture.getFile();
   final Ref<Class> result=new Ref<Class>();
+  final ClassCodegen codegen=state.forClass(AnalyzingUtils.analyzeFile(jetFile,ErrorHandler.THROW_EXCEPTION));
   jetFile.acceptChildren(new JetVisitor(){
     @Override public void visitJetElement(    JetElement elem){
       elem.acceptChildren(this);
     }
     @Override public void visitClass(    JetClass klass){
-      final ClassCodegen codegen=state.forClassImplementation(klass);
       codegen.generate(klass);
-      result.set(getJVMClass(state,klass.getName()));
+      result.set(getJVMClass(state,klass.getName() + "$$Impl"));
     }
   }
 );
