@@ -1,22 +1,3 @@
 {
-  ClassDescriptor descriptor=bindingContext.getClassDescriptor(aClass);
-  String fqName=CodeGenUtil.getInternalImplementationName(descriptor);
-  List<JetDelegationSpecifier> delegationSpecifiers=aClass.getDelegationSpecifiers();
-  for (  JetDelegationSpecifier specifier : delegationSpecifiers) {
-    JetType superType=bindingContext.resolveTypeReference(specifier.getTypeReference());
-    String superClassFQN=CodeGenUtil.getInternalInterfaceName((ClassDescriptor)superType.getConstructor().getDeclarationDescriptor());
-  }
-  ClassVisitor v=factory.forClassImplementation(descriptor);
-  v.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC,fqName.replace('.','/'),null,"java/lang/Object",new String[0]);
-  final PropertyCodegen propertyCodegen=new PropertyCodegen(v);
-  final FunctionCodegen functionCodegen=new FunctionCodegen(v,JetStandardLibrary.getJetStandardLibrary(project),bindingContext);
-  for (  JetDeclaration declaration : aClass.getDeclarations()) {
-    if (declaration instanceof JetProperty) {
-      propertyCodegen.genInInterface((JetProperty)declaration);
-    }
- else     if (declaration instanceof JetFunction) {
-      functionCodegen.genInInterface((JetFunction)declaration);
-    }
-  }
-  v.visitEnd();
+  generateInterface(aClass);
 }
