@@ -1,0 +1,42 @@
+{
+  JetPropertyAccessor setter=property.getSetter();
+  if (setter != null && !property.isVar()) {
+    semanticServices.getErrorHandler().genericError(setter.asElement().getNode(),"A 'val'-property cannot have a setter");
+    return null;
+  }
+  PropertySetterDescriptor setterDescriptor=null;
+  if (setter != null) {
+    List<Attribute> attributes=AttributeResolver.INSTANCE.resolveAttributes(setter.getModifierList());
+    JetParameter parameter=setter.getParameter();
+    setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,attributes,setter.getBodyExpression() != null);
+    if (parameter != null) {
+      if (parameter.isRef()) {
+        semanticServices.getErrorHandler().genericError(parameter.getRefNode(),"Setter parameters can not be 'ref'");
+      }
+      JetExpression defaultValue=parameter.getDefaultValue();
+      if (defaultValue != null) {
+        semanticServices.getErrorHandler().genericError(defaultValue.getNode(),"Setter parameters can not have default values");
+      }
+      JetType type;
+      JetTypeReference typeReference=parameter.getTypeReference();
+      if (typeReference == null) {
+        type=propertyDescriptor.getInType();
+      }
+ else {
+        type=typeResolver.resolveType(scope,typeReference);
+        JetType inType=propertyDescriptor.getInType();
+        if (inType != null) {
+          if (!semanticServices.getTypeChecker().isSubtypeOf(type,inType)) {
+            semanticServices.getErrorHandler().genericError(typeReference.getNode(),"Setter parameter type must be a subtype of the type of the property, i.e. " + inType);
+          }
+        }
+ else {
+        }
+      }
+      MutableValueParameterDescriptor valueParameterDescriptor=resolveValueParameterDescriptor(setterDescriptor,parameter,0,type);
+      setterDescriptor.initialize(valueParameterDescriptor);
+    }
+    trace.recordDeclarationResolution(setter,setterDescriptor);
+  }
+  return setterDescriptor;
+}
