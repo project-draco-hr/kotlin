@@ -1,28 +1,5 @@
 {
-  int flags=Opcodes.ACC_PUBLIC;
-  boolean isStatic=kind == OwnerKind.NAMESPACE;
-  if (isStatic)   flags|=Opcodes.ACC_STATIC;
-  final JetExpression bodyExpression=f.getBodyExpression();
-  boolean isAbstract=kind == OwnerKind.INTERFACE || bodyExpression == null;
-  if (isAbstract)   flags|=Opcodes.ACC_ABSTRACT;
   Method method=typeMapper.mapSignature(f);
-  final MethodVisitor mv=v.visitMethod(flags,method.getName(),method.getDescriptor(),null,null);
-  if (kind != OwnerKind.INTERFACE) {
-    mv.visitCode();
-    FrameMap frameMap=new FrameMap();
-    if (kind != OwnerKind.NAMESPACE) {
-      frameMap.enterTemp();
-    }
-    List<ValueParameterDescriptor> parameDescrs=bindingContext.getFunctionDescriptor(f).getUnsubstitutedValueParameters();
-    Type[] argTypes=method.getArgumentTypes();
-    for (int i=0; i < parameDescrs.size(); i++) {
-      ValueParameterDescriptor parameter=parameDescrs.get(i);
-      frameMap.enter(parameter,argTypes[i].getSize());
-    }
-    ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,method.getReturnType());
-    bodyExpression.accept(codegen);
-    generateReturn(mv,bodyExpression,codegen);
-    mv.visitMaxs(0,0);
-    mv.visitEnd();
-  }
+  List<ValueParameterDescriptor> paramDescrs=bindingContext.getFunctionDescriptor(f).getUnsubstitutedValueParameters();
+  generateMethod(f,kind,method,paramDescrs);
 }
