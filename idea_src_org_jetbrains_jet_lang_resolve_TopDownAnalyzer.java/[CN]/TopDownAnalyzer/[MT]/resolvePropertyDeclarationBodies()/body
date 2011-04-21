@@ -1,0 +1,39 @@
+{
+  for (  Map.Entry<JetProperty,PropertyDescriptor> entry : properties.entrySet()) {
+    JetProperty declaration=entry.getKey();
+    final PropertyDescriptor propertyDescriptor=entry.getValue();
+    WritableScope declaringScope=declaringScopes.get(declaration);
+    JetExpression initializer=declaration.getInitializer();
+    if (initializer != null) {
+      JetFlowInformationProvider flowInformationProvider=computeFlowData(declaration,initializer);
+      JetTypeInferrer typeInferrer=semanticServices.getTypeInferrer(trace,flowInformationProvider);
+      JetType type=typeInferrer.getType(declaringScope,initializer,false);
+    }
+    BindingTraceAdapter fieldAccessTrackingTrace=new BindingTraceAdapter(trace){
+      @Override public void recordReferenceResolution(      @NotNull JetReferenceExpression expression,      @NotNull DeclarationDescriptor descriptor){
+        super.recordReferenceResolution(expression,descriptor);
+        if (expression instanceof JetSimpleNameExpression) {
+          JetSimpleNameExpression simpleNameExpression=(JetSimpleNameExpression)expression;
+          if (simpleNameExpression.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER) {
+            if (descriptor == propertyDescriptor) {
+              recordFieldAccessFromAccessor(propertyDescriptor);
+            }
+          }
+        }
+      }
+    }
+;
+    WritableScope accessorScope=semanticServices.createWritableScope(declaringScope,declaringScope.getContainingDeclaration());
+    accessorScope.addPropertyDescriptorByFieldName("$" + propertyDescriptor.getName(),propertyDescriptor);
+    JetPropertyAccessor getter=declaration.getGetter();
+    PropertyGetterDescriptor getterDescriptor=propertyDescriptor.getGetter();
+    if (getter != null && getterDescriptor != null) {
+      resolveFunctionBody(fieldAccessTrackingTrace,getter,getterDescriptor,accessorScope);
+    }
+    JetPropertyAccessor setter=declaration.getSetter();
+    PropertySetterDescriptor setterDescriptor=propertyDescriptor.getSetter();
+    if (setter != null && setterDescriptor != null) {
+      resolveFunctionBody(fieldAccessTrackingTrace,setter,setterDescriptor,accessorScope);
+    }
+  }
+}

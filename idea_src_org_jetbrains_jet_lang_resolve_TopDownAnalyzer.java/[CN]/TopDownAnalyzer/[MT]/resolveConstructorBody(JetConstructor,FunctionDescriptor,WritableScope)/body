@@ -1,0 +1,13 @@
+{
+  JetExpression bodyExpression=declaration.getBodyExpression();
+  if (bodyExpression != null) {
+    computeFlowData(declaration,bodyExpression);
+    JetFlowInformationProvider flowInformationProvider=computeFlowData(declaration,bodyExpression);
+    JetTypeInferrer typeInferrer=semanticServices.getTypeInferrer(traceForConstructors,flowInformationProvider);
+    WritableScope constructorScope=semanticServices.createWritableScope(declaringScope,declaringScope.getContainingDeclaration());
+    for (    PropertyDescriptor propertyDescriptor : declaringScopesToProperties.get(descriptor.getContainingDeclaration())) {
+      constructorScope.addPropertyDescriptorByFieldName("$" + propertyDescriptor.getName(),propertyDescriptor);
+    }
+    typeInferrer.getType(FunctionDescriptorUtil.getFunctionInnerScope(constructorScope,descriptor,semanticServices),bodyExpression,true);
+  }
+}

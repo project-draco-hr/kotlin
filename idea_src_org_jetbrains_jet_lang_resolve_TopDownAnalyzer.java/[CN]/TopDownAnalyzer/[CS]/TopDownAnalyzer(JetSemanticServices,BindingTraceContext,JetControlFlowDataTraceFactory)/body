@@ -1,0 +1,20 @@
+{
+  this.semanticServices=semanticServices;
+  this.classDescriptorResolver=new ClassDescriptorResolver(semanticServices,bindingTrace);
+  this.trace=bindingTrace;
+  this.flowDataTraceFactory=flowDataTraceFactory;
+  this.traceForConstructors=new BindingTraceAdapter(trace){
+    @Override public void recordReferenceResolution(    @NotNull JetReferenceExpression expression,    @NotNull DeclarationDescriptor descriptor){
+      super.recordReferenceResolution(expression,descriptor);
+      if (expression instanceof JetSimpleNameExpression) {
+        JetSimpleNameExpression simpleNameExpression=(JetSimpleNameExpression)expression;
+        if (simpleNameExpression.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER) {
+          if (!trace.hasBackingField((PropertyDescriptor)descriptor)) {
+            TopDownAnalyzer.this.semanticServices.getErrorHandler().genericError(expression.getNode(),"This property does not have a backing field");
+          }
+        }
+      }
+    }
+  }
+;
+}
