@@ -1,0 +1,33 @@
+{
+  List<JetDelegationSpecifier> delegationSpecifiers=aClass.getDelegationSpecifiers();
+  String superClassName=null;
+  Set<ClassDescriptor> superInterfaces=new LinkedHashSet<ClassDescriptor>();
+  for (  JetDelegationSpecifier specifier : delegationSpecifiers) {
+    JetType superType=bindingContext.resolveTypeReference(specifier.getTypeReference());
+    ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+    PsiElement superPsi=bindingContext.getDeclarationPsiElement(superClassDescriptor);
+    if (superPsi instanceof PsiClass) {
+      PsiClass psiClass=(PsiClass)superPsi;
+      String fqn=psiClass.getQualifiedName();
+      if (!psiClass.isInterface()) {
+        if (superClassName == null) {
+          superClassName=fqn.replace('.','/');
+        }
+ else {
+          throw new RuntimeException("Cannot determine single class to inherit from");
+        }
+      }
+    }
+ else {
+      superInterfaces.add(superClassDescriptor);
+    }
+  }
+  if (superClassName != null) {
+    return superClassName;
+  }
+  if (superInterfaces.size() > 0) {
+    ClassDescriptor first=superInterfaces.iterator().next();
+    return kind == OwnerKind.IMPLEMENTATION ? CodeGenUtil.getInternalImplementationName(first) : CodeGenUtil.getInternalDelegatingImplementationName(first);
+  }
+  return "java/lang/Object";
+}
