@@ -3,10 +3,16 @@
   Method method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
+  FrameMap frameMap=new FrameMap();
+  frameMap.enterTemp();
   final InstructionAdapter iv=new InstructionAdapter(mv);
   String superClass=getSuperClass(aClass,kind);
   iv.load(0,Type.getType("L" + superClass + ";"));
   iv.invokespecial(superClass,"<init>",method.getDescriptor());
+  final JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
+  final JetTypeMapper typeMapper=new JetTypeMapper(standardLibrary,bindingContext);
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE);
+  generateInitializers(aClass,kind,codegen,iv,typeMapper);
   iv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);
   mv.visitEnd();
