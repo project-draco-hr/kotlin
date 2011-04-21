@@ -1,56 +1,6 @@
 {
   JetTypeReference typeReference=expression.getTypeReference();
   if (typeReference != null) {
-    JetTypeElement typeElement=typeReference.getTypeElement();
-    if (typeElement instanceof JetUserType) {
-      JetUserType userType=(JetUserType)typeElement;
-      JetType receiverType=typeResolver.resolveType(scope,typeReference);
-      DeclarationDescriptor declarationDescriptor=receiverType.getConstructor().getDeclarationDescriptor();
-      if (declarationDescriptor instanceof ClassDescriptor) {
-        ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
-        for (        JetTypeProjection typeProjection : userType.getTypeArguments()) {
-switch (typeProjection.getProjectionKind()) {
-case IN:
-case OUT:
-case STAR:
-            semanticServices.getErrorHandler().genericError(typeProjection.getProjectionNode(),"Projections are not allowed in constructor type arguments");
-          break;
-case NONE:
-        break;
-    }
+    result=getTypeForConstructorCall(scope,typeReference,expression);
   }
-  JetSimpleNameExpression referenceExpression=userType.getReferenceExpression();
-  if (referenceExpression != null) {
-    List<TypeProjection> typeArguments=receiverType.getArguments();
-    List<TypeProjection> projectionsStripped=new ArrayList<TypeProjection>();
-    for (    TypeProjection typeArgument : typeArguments) {
-      if (typeArgument.getProjectionKind() != Variance.INVARIANT) {
-        projectionsStripped.add(new TypeProjection(typeArgument.getType()));
-      }
- else       projectionsStripped.add(typeArgument);
-    }
-    FunctionGroup constructors=classDescriptor.getConstructors(projectionsStripped);
-    OverloadDomain constructorsOverloadDomain=semanticServices.getOverloadResolver().getOverloadDomain(constructors);
-    JetType constructorReturnedType=resolveOverloads(scope,wrapForTracing(constructorsOverloadDomain,referenceExpression,expression.getValueArgumentList(),false),Collections.<JetTypeProjection>emptyList(),expression.getValueArguments(),expression.getFunctionLiteralArguments());
-    if (constructorReturnedType == null && !ErrorUtils.isErrorType(receiverType)) {
-      trace.recordReferenceResolution(referenceExpression,receiverType.getConstructor().getDeclarationDescriptor());
-      JetArgumentList argumentList=expression.getValueArgumentList();
-      if (argumentList != null) {
-        semanticServices.getErrorHandler().genericError(argumentList.getNode(),"Cannot find an overload for these arguments");
-      }
-      constructorReturnedType=receiverType;
-    }
-    result=constructorReturnedType;
-  }
-}
- else {
-  semanticServices.getErrorHandler().genericError(expression.getNode(),"Calling a constructor is only supported for ordinary classes");
-}
-}
- else {
-if (typeElement != null) {
-  semanticServices.getErrorHandler().genericError(typeElement.getNode(),"Calling a constructor is only supported for ordinary classes");
-}
-}
-}
 }
