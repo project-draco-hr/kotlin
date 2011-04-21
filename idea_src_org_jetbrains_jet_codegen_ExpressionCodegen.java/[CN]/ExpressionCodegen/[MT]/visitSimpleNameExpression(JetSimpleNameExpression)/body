@@ -31,21 +31,8 @@
     }
  else     if (descriptor instanceof PropertyDescriptor) {
       final PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
-      String owner;
-      boolean isStatic;
-      if (descriptor.getContainingDeclaration() instanceof NamespaceDescriptor) {
-        JetNamespace ns=(JetNamespace)bindingContext.getDeclarationPsiElement(descriptor.getContainingDeclaration());
-        owner=JetTypeMapper.jvmName(ns);
-        isStatic=true;
-      }
- else       if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
-        ClassDescriptor classDescriptor=(ClassDescriptor)descriptor.getContainingDeclaration();
-        owner=JetTypeMapper.jvmNameForImplementation(classDescriptor);
-        isStatic=false;
-      }
- else {
-        throw new UnsupportedOperationException("don't know how to generate property reference with parent " + descriptor.getContainingDeclaration());
-      }
+      boolean isStatic=descriptor.getContainingDeclaration() instanceof NamespaceDescriptor;
+      String owner=JetTypeMapper.getOwner(descriptor);
       final JetType outType=((VariableDescriptor)descriptor).getOutType();
       Method getter;
       Method setter;
@@ -54,8 +41,8 @@
         setter=null;
       }
  else {
-        getter=typeMapper.mapGetterSignature(propertyDescriptor);
-        setter=typeMapper.mapSetterSignature(propertyDescriptor);
+        getter=propertyDescriptor.getGetter() == null ? null : typeMapper.mapGetterSignature(propertyDescriptor);
+        setter=propertyDescriptor.getSetter() == null ? null : typeMapper.mapSetterSignature(propertyDescriptor);
       }
       if (!isStatic) {
         ensureReceiverOnStack(expression);
