@@ -8,6 +8,20 @@
       JetFlowInformationProvider flowInformationProvider=computeFlowData(declaration,initializer);
       JetTypeInferrer typeInferrer=semanticServices.getTypeInferrer(trace,flowInformationProvider);
       JetType type=typeInferrer.getType(declaringScope,initializer,false);
+      JetType expectedType;
+      PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+      if (setter != null) {
+        expectedType=setter.getUnsubstitutedReturnType();
+      }
+ else {
+        expectedType=propertyDescriptor.getInType();
+        if (expectedType == null) {
+          expectedType=propertyDescriptor.getOutType();
+        }
+      }
+      if (type != null && expectedType != null && !semanticServices.getTypeChecker().isConvertibleTo(type,expectedType)) {
+        semanticServices.getErrorHandler().typeMismatch(initializer,expectedType,type);
+      }
     }
     BindingTraceAdapter fieldAccessTrackingTrace=new BindingTraceAdapter(trace){
       @Override public void recordReferenceResolution(      @NotNull JetReferenceExpression expression,      @NotNull DeclarationDescriptor descriptor){

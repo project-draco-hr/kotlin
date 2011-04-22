@@ -13,7 +13,7 @@
           if (classifierDescriptor instanceof TypeParameterDescriptor) {
             TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)classifierDescriptor;
             trace.recordReferenceResolution(referenceExpression,typeParameterDescriptor);
-            result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
+            result[0]=new JetTypeImpl(attributes,typeParameterDescriptor.getTypeConstructor(),nullable || TypeUtils.hasNullableBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),JetStandardClasses.STUB);
           }
  else           if (classifierDescriptor instanceof ClassDescriptor) {
             ClassDescriptor classDescriptor=(ClassDescriptor)classifierDescriptor;
@@ -22,17 +22,22 @@
             List<TypeProjection> arguments=resolveTypeProjections(scope,typeConstructor,type.getTypeArguments());
             int expectedArgumentCount=typeConstructor.getParameters().size();
             int actualArgumentCount=arguments.size();
-            if (actualArgumentCount != expectedArgumentCount) {
-              String errorMessage=(expectedArgumentCount == 0 ? "No" : expectedArgumentCount) + " type arguments expected";
-              if (actualArgumentCount == 0) {
-                semanticServices.getErrorHandler().genericError(type.getNode(),errorMessage);
-              }
- else               if (expectedArgumentCount == 0) {
-                semanticServices.getErrorHandler().genericError(type.getTypeArgumentList().getNode(),errorMessage);
-              }
+            if (ErrorUtils.isError(typeConstructor)) {
+              result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(Collections.<TypeProjection>emptyList()));
             }
  else {
-              result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+              if (actualArgumentCount != expectedArgumentCount) {
+                String errorMessage=(expectedArgumentCount == 0 ? "No" : expectedArgumentCount) + " type arguments expected";
+                if (actualArgumentCount == 0) {
+                  semanticServices.getErrorHandler().genericError(type.getNode(),errorMessage);
+                }
+ else                 if (expectedArgumentCount == 0) {
+                  semanticServices.getErrorHandler().genericError(type.getTypeArgumentList().getNode(),errorMessage);
+                }
+              }
+ else {
+                result[0]=new JetTypeImpl(attributes,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+              }
             }
           }
         }

@@ -4,9 +4,9 @@
   WritableScope parameterScope=semanticServices.createWritableScope(scope,classDescriptor);
   List<TypeParameterDescriptor> typeParameters=resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters());
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
-  Collection<? extends JetType> superclasses=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveDelegationSpecifiers(parameterScope,delegationSpecifiers);
+  Collection<? extends JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveDelegationSpecifiers(parameterScope,delegationSpecifiers);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
-  WritableScope members=resolveMembers(classDescriptor,classElement,typeParameters,scope,parameterScope,superclasses);
+  WritableScope members=resolveMembers(classDescriptor,classElement,typeParameters,scope,parameterScope,supertypes);
   WritableFunctionGroup constructors=new WritableFunctionGroup("<init>");
   for (  JetConstructor constructor : classElement.getSecondaryConstructors()) {
     constructors.addFunction(resolveConstructorDescriptor(members,classDescriptor,constructor,false));
@@ -15,5 +15,5 @@
   if (primaryConstructorDescriptor != null) {
     constructors.addFunction(primaryConstructorDescriptor);
   }
-  return classDescriptor.initialize(!open,typeParameters,superclasses,members,constructors);
+  return classDescriptor.initialize(!open,typeParameters,supertypes,members,constructors);
 }

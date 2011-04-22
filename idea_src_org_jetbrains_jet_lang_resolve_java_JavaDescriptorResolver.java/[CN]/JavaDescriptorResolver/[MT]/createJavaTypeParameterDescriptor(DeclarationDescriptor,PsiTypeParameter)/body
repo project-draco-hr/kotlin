@@ -1,0 +1,21 @@
+{
+  PsiClassType[] referencedTypes=typeParameter.getExtendsList().getReferencedTypes();
+  Set<JetType> upperBounds;
+  JetType boundsAsType;
+  if (referencedTypes.length == 0) {
+    boundsAsType=JetStandardClasses.getNullableAnyType();
+    upperBounds=Collections.singleton(boundsAsType);
+  }
+ else   if (referencedTypes.length == 1) {
+    boundsAsType=semanticServices.getTypeTransformer().transformToType(referencedTypes[0]);
+    upperBounds=Collections.singleton(boundsAsType);
+  }
+ else {
+    upperBounds=Sets.newLinkedHashSet();
+    for (    PsiClassType referencedType : referencedTypes) {
+      upperBounds.add(semanticServices.getTypeTransformer().transformToType(referencedType));
+    }
+    boundsAsType=TypeUtils.safeIntersect(semanticServices.getJetSemanticServices().getTypeChecker(),upperBounds);
+  }
+  return new TypeParameterDescriptor(owner,Collections.<Attribute>emptyList(),Variance.INVARIANT,typeParameter.getName(),upperBounds,boundsAsType);
+}
