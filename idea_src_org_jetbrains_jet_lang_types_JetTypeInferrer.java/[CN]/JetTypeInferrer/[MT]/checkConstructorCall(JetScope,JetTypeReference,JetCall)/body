@@ -1,0 +1,35 @@
+{
+  JetTypeElement typeElement=typeReference.getTypeElement();
+  if (typeElement instanceof JetUserType) {
+    JetUserType userType=(JetUserType)typeElement;
+    JetType receiverType=typeResolver.resolveType(scope,typeReference);
+    DeclarationDescriptor declarationDescriptor=receiverType.getConstructor().getDeclarationDescriptor();
+    if (declarationDescriptor instanceof ClassDescriptor) {
+      ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
+      for (      JetTypeProjection typeProjection : userType.getTypeArguments()) {
+switch (typeProjection.getProjectionKind()) {
+case IN:
+case OUT:
+case STAR:
+          semanticServices.getErrorHandler().genericError(typeProjection.getProjectionNode(),"Projections are not allowed in constructor type arguments");
+        break;
+case NONE:
+      break;
+  }
+}
+JetSimpleNameExpression referenceExpression=userType.getReferenceExpression();
+if (referenceExpression != null) {
+  return checkClassConstructorCall(scope,referenceExpression,classDescriptor,receiverType,call);
+}
+}
+ else {
+semanticServices.getErrorHandler().genericError(((JetElement)call).getNode(),"Calling a constructor is only supported for ordinary classes");
+}
+}
+ else {
+if (typeElement != null) {
+semanticServices.getErrorHandler().genericError(typeElement.getNode(),"Calling a constructor is only supported for ordinary classes");
+}
+}
+return null;
+}

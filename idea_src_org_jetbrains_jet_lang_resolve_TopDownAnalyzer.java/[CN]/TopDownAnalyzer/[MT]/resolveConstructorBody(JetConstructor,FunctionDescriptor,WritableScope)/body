@@ -10,14 +10,12 @@
       @Override public void visitDelegationToSuperCallSpecifier(      JetDelegatorToSuperCall call){
         JetTypeReference typeReference=call.getTypeReference();
         if (typeReference != null) {
-          typeInferrerForInitializers.getTypeForConstructorCall(functionInnerScope,typeReference,call);
+          typeInferrerForInitializers.checkConstructorCall(functionInnerScope,typeReference,call);
         }
       }
       @Override public void visitDelegationToThisCall(      JetDelegatorToThisCall call){
-        JetTypeReference typeReference=call.getTypeReference();
-        if (typeReference != null) {
-          typeInferrerForInitializers.getTypeForConstructorCall(functionInnerScope,typeReference,call);
-        }
+        ClassDescriptor classDescriptor=(ClassDescriptor)descriptor.getContainingDeclaration();
+        typeInferrerForInitializers.checkClassConstructorCall(functionInnerScope,call.getThisReference(),classDescriptor,classDescriptor.getDefaultType(),call);
       }
       @Override public void visitDelegationByExpressionSpecifier(      JetDelegatorByExpressionSpecifier specifier){
         semanticServices.getErrorHandler().genericError(specifier.getNode(),"'by'-clause is only supported for primary constructors");

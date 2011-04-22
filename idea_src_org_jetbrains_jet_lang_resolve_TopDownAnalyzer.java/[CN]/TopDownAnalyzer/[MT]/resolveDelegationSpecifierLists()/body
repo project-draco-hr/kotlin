@@ -1,0 +1,39 @@
+{
+  final JetTypeInferrer typeInferrer=semanticServices.getTypeInferrer(trace,JetFlowInformationProvider.NONE);
+  for (  Map.Entry<JetClass,MutableClassDescriptor> entry : classes.entrySet()) {
+    final JetClass declaration=entry.getKey();
+    final MutableClassDescriptor descriptor=entry.getValue();
+    for (    JetDelegationSpecifier delegationSpecifier : declaration.getDelegationSpecifiers()) {
+      delegationSpecifier.accept(new JetVisitor(){
+        @Override public void visitDelegationByExpressionSpecifier(        JetDelegatorByExpressionSpecifier specifier){
+          JetExpression delegateExpression=specifier.getDelegateExpression();
+          if (delegateExpression != null) {
+            JetType type=typeInferrer.getType(descriptor.getWritableUnsubstitutedMemberScope(),delegateExpression,false);
+            JetType supertype=trace.resolveTypeReference(specifier.getTypeReference());
+            if (type != null && !semanticServices.getTypeChecker().isSubtypeOf(type,supertype)) {
+              semanticServices.getErrorHandler().typeMismatch(delegateExpression,supertype,type);
+            }
+          }
+        }
+        @Override public void visitDelegationToSuperCallSpecifier(        JetDelegatorToSuperCall call){
+          JetTypeReference typeReference=call.getTypeReference();
+          if (typeReference != null) {
+            typeInferrer.checkConstructorCall(descriptor.getWritableUnsubstitutedMemberScope(),typeReference,call);
+          }
+        }
+        @Override public void visitDelegationToSuperClassSpecifier(        JetDelegatorToSuperClass specifier){
+          if (declaration.getPrimaryConstructorParameterList() != null) {
+            semanticServices.getErrorHandler().genericError(specifier.getNode(),"Constructor parameters required in initializer");
+          }
+        }
+        @Override public void visitDelegationToThisCall(        JetDelegatorToThisCall thisCall){
+          throw new IllegalStateException("This-calls should be prohibitied by the parser");
+        }
+        @Override public void visitJetElement(        JetElement elem){
+          throw new UnsupportedOperationException(elem.getText() + " : " + elem);
+        }
+      }
+);
+    }
+  }
+}
