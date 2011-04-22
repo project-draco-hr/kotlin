@@ -1,18 +1,8 @@
 {
-  WritableFunctionGroup writableFunctionGroup=new WritableFunctionGroup(name);
-  PsiMethod[] allMethods=psiClass.getMethods();
-  for (  PsiMethod method : allMethods) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) != staticMembers) {
-      continue;
-    }
-    if (!name.equals(method.getName())) {
-      continue;
-    }
-    final PsiParameter[] parameters=method.getParameterList().getParameters();
-    FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(JavaDescriptorResolver.JAVA_ROOT,Collections.<Attribute>emptyList(),name);
-    functionDescriptor.initialize(Collections.<TypeParameterDescriptor>emptyList(),semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptor,parameters),semanticServices.getTypeTransformer().transformToType(method.getReturnType()));
-    semanticServices.getTrace().recordDeclarationResolution(method,functionDescriptor);
-    writableFunctionGroup.addFunction(functionDescriptor);
+  FunctionGroup functionGroup=functionGroups.get(name);
+  if (functionGroup == null) {
+    functionGroup=semanticServices.getDescriptorResolver().resolveFunctionGroup(psiClass,name,staticMembers);
+    functionGroups.put(name,functionGroup);
   }
-  return writableFunctionGroup;
+  return functionGroup;
 }
