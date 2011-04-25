@@ -1,16 +1,28 @@
 {
   final JetUserType constructorType=(JetUserType)expression.getTypeReference().getTypeElement();
   final JetSimpleNameExpression constructorReference=constructorType.getReferenceExpression();
-  final PsiElement declaration=bindingContext.getDeclarationPsiElement(bindingContext.resolveReferenceExpression(constructorReference));
+  DeclarationDescriptor constructorDescriptor=bindingContext.resolveReferenceExpression(constructorReference);
+  final PsiElement declaration=bindingContext.getDeclarationPsiElement(constructorDescriptor);
   if (declaration instanceof PsiMethod) {
     final PsiMethod constructor=(PsiMethod)declaration;
     PsiClass javaClass=constructor.getContainingClass();
     Type type=JetTypeMapper.psiClassType(javaClass);
     v.anew(type);
     v.dup();
-    final Method constructorDescriptor=getMethodDescriptor(constructor);
-    pushMethodArguments(expression,constructorDescriptor);
-    v.invokespecial(JetTypeMapper.jvmName(javaClass),"<init>",constructorDescriptor.getDescriptor());
+    final Method jvmConstructor=getMethodDescriptor(constructor);
+    pushMethodArguments(expression,jvmConstructor);
+    v.invokespecial(JetTypeMapper.jvmName(javaClass),"<init>",jvmConstructor.getDescriptor());
+    myStack.push(StackValue.onStack(type));
+    return;
+  }
+ else   if (constructorDescriptor instanceof ConstructorDescriptor) {
+    ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
+    Type type=JetTypeMapper.jetImplementationType(classDecl);
+    v.anew(type);
+    v.dup();
+    Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor);
+    pushMethodArguments(expression,method);
+    v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
     myStack.push(StackValue.onStack(type));
     return;
   }

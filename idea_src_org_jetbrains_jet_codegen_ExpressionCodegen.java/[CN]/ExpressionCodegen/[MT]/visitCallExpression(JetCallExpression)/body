@@ -24,11 +24,15 @@
         v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKEVIRTUAL,JetTypeMapper.jvmName(psiMethod.getContainingClass()),methodDescriptor.getName(),methodDescriptor.getDescriptor());
       }
  else {
+        methodDescriptor=typeMapper.mapSignature((JetFunction)declarationPsiElement);
+        pushMethodArguments(expression,methodDescriptor);
         if (functionParent instanceof NamespaceDescriptor && declarationPsiElement instanceof JetFunction) {
-          methodDescriptor=typeMapper.mapSignature((JetFunction)declarationPsiElement);
-          pushMethodArguments(expression,methodDescriptor);
           final String owner=NamespaceCodegen.getJVMClassName(DescriptorUtil.getFQName(functionParent));
           v.invokestatic(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
+        }
+ else         if (functionParent instanceof ClassDescriptor && declarationPsiElement instanceof JetFunction) {
+          final String owner=JetTypeMapper.jvmNameForInterface((ClassDescriptor)functionParent);
+          v.invokeinterface(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
         }
  else {
           throw new UnsupportedOperationException("don't know how to generate call to " + declarationPsiElement);
