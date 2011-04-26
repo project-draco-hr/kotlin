@@ -3,7 +3,7 @@
   this.classDescriptorResolver=new ClassDescriptorResolver(semanticServices,bindingTrace);
   this.trace=bindingTrace;
   this.flowDataTraceFactory=flowDataTraceFactory;
-  this.traceForConstructors=new BindingTraceAdapter(trace){
+  this.traceForConstructors=new BindingTraceAdapter(bindingTrace){
     @Override public void recordReferenceResolution(    @NotNull JetReferenceExpression expression,    @NotNull DeclarationDescriptor descriptor){
       super.recordReferenceResolution(expression,descriptor);
       if (expression instanceof JetSimpleNameExpression) {
@@ -12,6 +12,18 @@
           if (!trace.hasBackingField((PropertyDescriptor)descriptor)) {
             TopDownAnalyzer.this.semanticServices.getErrorHandler().genericError(expression.getNode(),"This property does not have a backing field");
           }
+        }
+      }
+    }
+  }
+;
+  this.traceForMembers=new BindingTraceAdapter(bindingTrace){
+    @Override public void recordReferenceResolution(    @NotNull JetReferenceExpression expression,    @NotNull DeclarationDescriptor descriptor){
+      super.recordReferenceResolution(expression,descriptor);
+      if (descriptor instanceof PropertyDescriptor) {
+        PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+        if (primaryConstructorParameterProperties.contains(propertyDescriptor)) {
+          requireBackingField(propertyDescriptor);
         }
       }
     }

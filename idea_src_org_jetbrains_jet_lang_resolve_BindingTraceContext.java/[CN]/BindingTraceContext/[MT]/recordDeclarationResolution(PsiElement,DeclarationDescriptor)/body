@@ -1,9 +1,14 @@
 {
   safePut(descriptorToDeclarations,descriptor.getOriginal(),declaration);
-  if (descriptor instanceof ConstructorDescriptor) {
-    safePut(constructorDeclarationsToDescriptors,declaration,(ConstructorDescriptor)descriptor);
+  descriptor.accept(new DeclarationDescriptorVisitor<Void,PsiElement>(){
+    @Override public Void visitConstructorDescriptor(    ConstructorDescriptor constructorDescriptor,    PsiElement declaration){
+      safePut(constructorDeclarationsToDescriptors,declaration,constructorDescriptor);
+      return null;
+    }
+    @Override public Void visitDeclarationDescriptor(    DeclarationDescriptor descriptor,    PsiElement declaration){
+      safePut(declarationsToDescriptors,declaration,descriptor.getOriginal());
+      return null;
+    }
   }
- else {
-    safePut(declarationsToDescriptors,declaration,descriptor.getOriginal());
-  }
+,declaration);
 }
