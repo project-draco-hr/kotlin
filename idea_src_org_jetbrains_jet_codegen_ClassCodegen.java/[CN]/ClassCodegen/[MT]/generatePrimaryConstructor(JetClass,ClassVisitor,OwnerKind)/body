@@ -1,18 +1,42 @@
 {
+  ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor(aClass);
+  if (constructorDescriptor == null)   return;
+  ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(aClass);
+  Method method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
   int flags=Opcodes.ACC_PUBLIC;
-  Method method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
+  Type[] argTypes=method.getArgumentTypes();
+  List<ValueParameterDescriptor> paramDescrs=constructorDescriptor.getUnsubstitutedValueParameters();
   FrameMap frameMap=new FrameMap();
   frameMap.enterTemp();
   final InstructionAdapter iv=new InstructionAdapter(mv);
-  String superClass=getSuperClass(aClass,kind);
-  iv.load(0,Type.getType("L" + superClass + ";"));
-  iv.invokespecial(superClass,"<init>",method.getDescriptor());
-  final JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
-  final JetTypeMapper typeMapper=new JetTypeMapper(standardLibrary,bindingContext);
-  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE);
-  generateInitializers(aClass,kind,codegen,iv,typeMapper);
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,classDescriptor,kind);
+  String classname=JetTypeMapper.jvmName(classDescriptor,kind);
+  if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
+    String interfaceDesc=JetTypeMapper.jetInterfaceType(classDescriptor).getDescriptor();
+    v.visitField(Opcodes.ACC_PRIVATE,"$this",interfaceDesc,null,null);
+    iv.load(1,argTypes[0]);
+    iv.putfield(classname,"$this",interfaceDesc);
+    frameMap.enterTemp();
+  }
+  for (int i=0; i < paramDescrs.size(); i++) {
+    ValueParameterDescriptor parameter=paramDescrs.get(i);
+    frameMap.enter(parameter,argTypes[i].getSize());
+  }
+  int n=0;
+  for (  JetDelegationSpecifier specifier : aClass.getDelegationSpecifiers()) {
+    boolean instanceOnStack=pushDelegateInstance(specifier,kind,codegen,iv,n);
+    if (instanceOnStack) {
+      JetType superType=bindingContext.resolveTypeReference(specifier.getTypeReference());
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      String delegateField="$delegate_" + n;
+      v.visitField(Opcodes.ACC_PRIVATE,delegateField,JetTypeMapper.jvmNameForInterface(superClassDescriptor),null,null);
+      iv.putfield(classname,delegateField,JetTypeMapper.jetInterfaceType(superClassDescriptor).getDescriptor());
+    }
+    n++;
+  }
+  generateInitializers(aClass,kind,codegen,iv);
   iv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);
   mv.visitEnd();

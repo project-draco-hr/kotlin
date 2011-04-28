@@ -1,0 +1,36 @@
+{
+  boolean instanceOnStack=false;
+  if (specifier instanceof JetDelegatorToSuperCall) {
+    JetDelegatorToSuperCall superCall=(JetDelegatorToSuperCall)specifier;
+    ConstructorDescriptor constructorDescriptor=bindingContext.resolveSuperConstructor(superCall,this);
+    ClassDescriptor classDecl=constructorDescriptor.getContainingDeclaration();
+    boolean isDelegating=kind == OwnerKind.DELEGATING_IMPLEMENTATION;
+    Type type=isDelegating ? JetTypeMapper.jetDelegatingImplementationType(classDecl) : JetTypeMapper.jetImplementationType(classDecl);
+    if (pos > 0) {
+      if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
+        codegen.thisToStack();
+      }
+    }
+    Method method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+    final Type[] argTypes=method.getArgumentTypes();
+    List<JetArgument> args=superCall.getValueArguments();
+    for (int i=0, argsSize=args.size(); i < argsSize; i++) {
+      JetArgument arg=args.get(i);
+      codegen.gen(arg.getArgumentExpression(),argTypes[i]);
+    }
+    if (pos == 0) {
+      v.load(0,type);
+    }
+ else {
+      v.anew(type);
+      v.dup();
+      instanceOnStack=true;
+    }
+    v.invokespecial(type.getClassName(),"<init>",method.getDescriptor());
+  }
+ else   if (specifier instanceof JetDelegatorByExpressionSpecifier) {
+    codegen.genToJVMStack(((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression());
+    instanceOnStack=true;
+  }
+  return instanceOnStack;
+}
