@@ -1,6 +1,6 @@
 {
   final JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
-  final FunctionCodegen functionCodegen=new FunctionCodegen(v,standardLibrary,bindingContext);
+  final FunctionCodegen functionCodegen=new FunctionCodegen(aClass,v,standardLibrary,bindingContext);
   final PropertyCodegen propertyCodegen=new PropertyCodegen(v,standardLibrary,bindingContext,functionCodegen);
   for (  JetDeclaration declaration : aClass.getDeclarations()) {
     if (declaration instanceof JetProperty) {
@@ -8,6 +8,21 @@
     }
  else     if (declaration instanceof JetFunction) {
       functionCodegen.gen((JetFunction)declaration,kind);
+    }
+  }
+  for (  JetParameter p : aClass.getPrimaryConstructorParameters()) {
+    if (p.getValOrVarNode() != null) {
+      VariableDescriptor descriptor=bindingContext.getParameterDescriptor(p);
+      if (descriptor instanceof PropertyDescriptor) {
+        PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+        propertyCodegen.generateDefaultGetter(propertyDescriptor,Opcodes.ACC_PUBLIC,kind);
+        if (propertyDescriptor.isVar()) {
+          propertyCodegen.generateDefaultSetter(propertyDescriptor,Opcodes.ACC_PUBLIC,kind);
+        }
+        if (!(kind instanceof OwnerKind.DelegateKind) && kind != OwnerKind.INTERFACE && bindingContext.hasBackingField(propertyDescriptor)) {
+          v.visitField(Opcodes.ACC_PRIVATE,p.getName(),typeMapper.mapType(propertyDescriptor.getOutType()).getDescriptor(),null,null);
+        }
+      }
     }
   }
 }

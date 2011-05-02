@@ -1,10 +1,21 @@
 {
   final JetExpression loopRange=expression.getLoopRange();
-  Type loopRangeType=expressionType(loopRange);
+  final JetType expressionType=bindingContext.getExpressionType(loopRange);
+  Type loopRangeType=typeMapper.mapType(expressionType);
   if (loopRangeType.getSort() == Type.ARRAY) {
     generateForInArray(expression,loopRangeType);
   }
  else {
-    throw new UnsupportedOperationException("for/in loop currently only supported for arrays");
+    final DeclarationDescriptor descriptor=expressionType.getConstructor().getDeclarationDescriptor();
+    final PsiElement declaration=bindingContext.getDeclarationPsiElement(descriptor);
+    if (declaration instanceof PsiClass) {
+      final Project project=declaration.getProject();
+      final PsiClass iterable=JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable",ProjectScope.getAllScope(project));
+      if (((PsiClass)declaration).isInheritor(iterable,true)) {
+        generateForInIterable(expression,loopRangeType);
+        return;
+      }
+    }
+    throw new UnsupportedOperationException("for/in loop currently only supported for arrays and Iterable instances");
   }
 }
