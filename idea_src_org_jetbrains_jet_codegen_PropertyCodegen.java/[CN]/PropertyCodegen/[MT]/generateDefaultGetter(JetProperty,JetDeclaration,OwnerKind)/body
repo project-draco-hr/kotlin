@@ -1,19 +1,5 @@
 {
   final PropertyDescriptor propertyDescriptor=(PropertyDescriptor)context.getVariableDescriptor(p);
   int flags=JetTypeMapper.getAccessModifiers(declaration,Opcodes.ACC_PUBLIC);
-  if (kind == OwnerKind.NAMESPACE) {
-    flags|=Opcodes.ACC_STATIC;
-  }
-  final String signature=mapper.mapGetterSignature(propertyDescriptor).getDescriptor();
-  MethodVisitor mv=v.visitMethod(flags,getterName(p.getName()),signature,null,null);
-  mv.visitCode();
-  InstructionAdapter iv=new InstructionAdapter(mv);
-  if (kind != OwnerKind.NAMESPACE) {
-    iv.load(0,JetTypeMapper.TYPE_OBJECT);
-  }
-  final Type type=mapper.mapType(propertyDescriptor.getOutType());
-  iv.visitFieldInsn(kind == OwnerKind.NAMESPACE ? Opcodes.GETSTATIC : Opcodes.GETFIELD,JetTypeMapper.getOwner(propertyDescriptor),propertyDescriptor.getName(),type.getDescriptor());
-  iv.areturn(type);
-  mv.visitMaxs(0,0);
-  mv.visitEnd();
+  generateDefaultGetter(propertyDescriptor,flags,kind);
 }

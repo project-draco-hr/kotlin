@@ -13,6 +13,7 @@
   final InstructionAdapter iv=new InstructionAdapter(mv);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,classDescriptor,kind);
   String classname=JetTypeMapper.jvmName(classDescriptor,kind);
+  final Type classType=Type.getType("L" + classname + ";");
   if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
     String interfaceDesc=JetTypeMapper.jetInterfaceType(classDescriptor).getDescriptor();
     v.visitField(Opcodes.ACC_PRIVATE,"$this",interfaceDesc,null,null);
@@ -32,18 +33,66 @@
   }
   int n=0;
   for (  JetDelegationSpecifier specifier : specifiers) {
-    boolean instanceOnStack=pushDelegateInstance(specifier,kind,codegen,iv,n);
-    if (instanceOnStack) {
+    boolean delegateOnStack=specifier instanceof JetDelegatorToSuperCall && n > 0 || specifier instanceof JetDelegatorByExpressionSpecifier;
+    if (delegateOnStack) {
+      iv.load(0,classType);
+    }
+    if (specifier instanceof JetDelegatorToSuperCall) {
+      JetDelegatorToSuperCall superCall=(JetDelegatorToSuperCall)specifier;
+      ConstructorDescriptor constructorDescriptor1=bindingContext.resolveSuperConstructor(superCall,this);
+      ClassDescriptor classDecl=constructorDescriptor1.getContainingDeclaration();
+      boolean isDelegating=kind == OwnerKind.DELEGATING_IMPLEMENTATION;
+      Type type=isDelegating ? JetTypeMapper.jetDelegatingImplementationType(classDecl) : JetTypeMapper.jetImplementationType(classDecl);
+      if (n > 0) {
+        if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
+          codegen.thisToStack();
+        }
+      }
+      if (n == 0) {
+        iv.load(0,type);
+      }
+ else {
+        iv.anew(type);
+        iv.dup();
+      }
+      Method method1=typeMapper.mapConstructorSignature(constructorDescriptor1,kind);
+      final Type[] argTypes1=method1.getArgumentTypes();
+      List<JetArgument> args=superCall.getValueArguments();
+      for (int i=0, argsSize=args.size(); i < argsSize; i++) {
+        JetArgument arg=args.get(i);
+        codegen.gen(arg.getArgumentExpression(),argTypes1[i]);
+      }
+      iv.invokespecial(type.getClassName(),"<init>",method1.getDescriptor());
+    }
+ else     if (specifier instanceof JetDelegatorByExpressionSpecifier) {
+      codegen.genToJVMStack(((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression());
+    }
+    if (delegateOnStack) {
       JetType superType=bindingContext.resolveTypeReference(specifier.getTypeReference());
       ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
       String delegateField="$delegate_" + n;
-      String fieldDesc=JetTypeMapper.jetInterfaceType(superClassDescriptor).getDescriptor();
+      Type fieldType=JetTypeMapper.jetInterfaceType(superClassDescriptor);
+      String fieldDesc=fieldType.getDescriptor();
       v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
+      JetClass superClass=(JetClass)bindingContext.getDeclarationPsiElement(superClassDescriptor);
+      generateDelegates(aClass,superClass,v,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
     }
     n++;
   }
   generateInitializers(aClass,kind,codegen,iv);
+  int curParam=0;
+  List<JetParameter> constructorParameters=aClass.getPrimaryConstructorParameters();
+  for (  JetParameter parameter : constructorParameters) {
+    if (parameter.getValOrVarNode() != null) {
+      VariableDescriptor descriptor=paramDescrs.get(curParam);
+      Type type=typeMapper.mapType(descriptor.getOutType());
+      iv.load(0,classType);
+      iv.load(frameMap.getIndex(descriptor),type);
+      iv.putfield(classname,descriptor.getName(),type.getDescriptor());
+    }
+    curParam++;
+  }
   iv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);
   mv.visitEnd();

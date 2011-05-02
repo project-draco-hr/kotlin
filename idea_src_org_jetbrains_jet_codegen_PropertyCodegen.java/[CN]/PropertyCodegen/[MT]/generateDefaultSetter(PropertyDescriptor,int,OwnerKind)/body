@@ -1,0 +1,26 @@
+{
+  if (kind == OwnerKind.NAMESPACE) {
+    flags|=Opcodes.ACC_STATIC;
+  }
+ else   if (kind == OwnerKind.INTERFACE) {
+    flags|=Opcodes.ACC_ABSTRACT;
+  }
+  final String signature=mapper.mapSetterSignature(propertyDescriptor).getDescriptor();
+  MethodVisitor mv=v.visitMethod(flags,setterName(propertyDescriptor.getName()),signature,null,null);
+  if (kind != OwnerKind.INTERFACE) {
+    mv.visitCode();
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    final Type type=mapper.mapType(propertyDescriptor.getOutType());
+    if (kind != OwnerKind.NAMESPACE) {
+      iv.load(0,JetTypeMapper.TYPE_OBJECT);
+      iv.load(1,type);
+    }
+ else {
+      iv.load(0,type);
+    }
+    iv.visitFieldInsn(kind == OwnerKind.NAMESPACE ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,JetTypeMapper.getOwner(propertyDescriptor),propertyDescriptor.getName(),type.getDescriptor());
+    iv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(0,0);
+    mv.visitEnd();
+  }
+}
