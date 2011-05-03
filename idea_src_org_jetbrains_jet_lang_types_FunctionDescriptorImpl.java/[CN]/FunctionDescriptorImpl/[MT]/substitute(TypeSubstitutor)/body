@@ -1,3 +1,17 @@
 {
-  return FunctionDescriptorUtil.substituteFunctionDescriptor(this,substitutor);
+  if (substitutor.isEmpty()) {
+    return this;
+  }
+  FunctionDescriptorImpl substitutedDescriptor;
+  substitutedDescriptor=createSubstitutedCopy();
+  List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
+  if (substitutedValueParameters == null) {
+    return null;
+  }
+  JetType substitutedReturnType=FunctionDescriptorUtil.getSubstitutedReturnType(this,substitutor);
+  if (substitutedReturnType == null) {
+    return null;
+  }
+  substitutedDescriptor.initialize(Collections.<TypeParameterDescriptor>emptyList(),substitutedValueParameters,substitutedReturnType);
+  return substitutedDescriptor;
 }
