@@ -1,12 +1,8 @@
 {
-  PsiField field=psiClass.findFieldByName(name,true);
-  if (field == null)   return null;
-  if (field.hasModifierProperty(PsiModifier.STATIC) != staticMembers) {
-    return null;
+  VariableDescriptor variableDescriptor=variables.get(name);
+  if (variableDescriptor == null) {
+    variableDescriptor=doGetVariable(name);
+    variables.put(name,variableDescriptor);
   }
-  JetType type=semanticServices.getTypeTransformer().transformToType(field.getType());
-  boolean isFinal=field.hasModifierProperty(PsiModifier.FINAL);
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,Collections.<Attribute>emptyList(),new MemberModifiers(false,false,false),!isFinal,field.getName(),isFinal ? null : type,type);
-  semanticServices.getTrace().recordDeclarationResolution(field,propertyDescriptor);
-  return propertyDescriptor;
+  return variableDescriptor;
 }
