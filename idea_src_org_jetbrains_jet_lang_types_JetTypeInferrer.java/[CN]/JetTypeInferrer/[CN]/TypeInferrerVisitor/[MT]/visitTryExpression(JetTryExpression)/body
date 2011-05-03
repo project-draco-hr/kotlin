@@ -3,17 +3,36 @@
   List<JetCatchClause> catchClauses=expression.getCatchClauses();
   JetFinallySection finallyBlock=expression.getFinallyBlock();
   List<JetType> types=new ArrayList<JetType>();
-  if (finallyBlock == null) {
-    for (    JetCatchClause catchClause : catchClauses) {
-      JetExpression catchBody=catchClause.getCatchBody();
+  for (  JetCatchClause catchClause : catchClauses) {
+    JetParameter catchParameter=catchClause.getCatchParameter();
+    JetExpression catchBody=catchClause.getCatchBody();
+    if (catchParameter != null) {
+      VariableDescriptor variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptor(scope.getContainingDeclaration(),scope,catchParameter);
       if (catchBody != null) {
-        types.add(getType(scope,catchBody,true));
+        WritableScope catchScope=semanticServices.createWritableScope(scope,scope.getContainingDeclaration());
+        catchScope.addVariableDescriptor(variableDescriptor);
+        JetType type=getType(catchScope,catchBody,true);
+        if (type != null) {
+          types.add(type);
+        }
       }
     }
   }
- else {
-    types.add(getType(scope,finallyBlock.getFinalExpression(),true));
+  if (finallyBlock != null) {
+    types.clear();
+    JetType type=getType(scope,finallyBlock.getFinalExpression(),true);
+    if (type != null) {
+      types.add(type);
+    }
   }
-  types.add(getType(scope,tryBlock,true));
-  result=semanticServices.getTypeChecker().commonSupertype(types);
+  JetType type=getType(scope,tryBlock,true);
+  if (type != null) {
+    types.add(type);
+  }
+  if (types.isEmpty()) {
+    result=null;
+  }
+ else {
+    result=semanticServices.getTypeChecker().commonSupertype(types);
+  }
 }
