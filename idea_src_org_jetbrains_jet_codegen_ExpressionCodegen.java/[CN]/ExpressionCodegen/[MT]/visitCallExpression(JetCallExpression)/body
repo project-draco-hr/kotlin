@@ -13,7 +13,6 @@
           return;
         }
       }
-      ensureReceiverOnStack(expression);
       PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(funDescriptor);
       Method methodDescriptor;
       if (declarationPsiElement instanceof PsiMethod) {
@@ -21,6 +20,9 @@
         methodDescriptor=getMethodDescriptor(psiMethod);
         pushMethodArguments(expression,methodDescriptor);
         final boolean isStatic=psiMethod.hasModifierProperty(PsiModifier.STATIC);
+        if (!isStatic) {
+          ensureReceiverOnStack(expression);
+        }
         v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKEVIRTUAL,JetTypeMapper.jvmName(psiMethod.getContainingClass()),methodDescriptor.getName(),methodDescriptor.getDescriptor());
       }
  else {
@@ -31,6 +33,7 @@
           v.invokestatic(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
         }
  else         if (functionParent instanceof ClassDescriptor && declarationPsiElement instanceof JetFunction) {
+          ensureReceiverOnStack(expression);
           final String owner=JetTypeMapper.jvmNameForInterface((ClassDescriptor)functionParent);
           v.invokeinterface(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
         }
