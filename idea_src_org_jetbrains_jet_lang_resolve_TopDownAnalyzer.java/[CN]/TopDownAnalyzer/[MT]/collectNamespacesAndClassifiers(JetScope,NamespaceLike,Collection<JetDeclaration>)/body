@@ -7,14 +7,14 @@
         if (name == null) {
           name="<no name provided>";
         }
-        NamespaceDescriptor namespaceDescriptor=declaringScope.getDeclaredNamespace(name);
+        NamespaceDescriptor namespaceDescriptor=owner.getNamespace(name);
         if (namespaceDescriptor == null) {
-          namespaceDescriptor=new NamespaceDescriptor(declaringScope.getContainingDeclaration(),Collections.<Annotation>emptyList(),name);
+          namespaceDescriptor=new NamespaceDescriptor(owner,Collections.<Annotation>emptyList(),name);
           namespaceDescriptor.initialize(new WritableScopeImpl(JetScope.EMPTY,namespaceDescriptor,trace.getErrorHandler(),null));
-          declaringScope.addNamespace(namespaceDescriptor);
+          owner.addNamespace(namespaceDescriptor);
           trace.recordDeclarationResolution(namespace,namespaceDescriptor);
         }
-        WritableScope namespaceScope=new WriteThroughScope(declaringScope,(WritableScope)namespaceDescriptor.getMemberScope());
+        WritableScope namespaceScope=new WritableScopeImpl(outerScope,owner,trace.getErrorHandler(),null);
         namespaceScopes.put(namespace,namespaceScope);
         for (        JetImportDirective importDirective : importDirectives) {
           if (importDirective.isAbsoluteInRootNamespace()) {
@@ -33,14 +33,13 @@
             throw new UnsupportedOperationException();
           }
         }
-        collectTypeDeclarators(namespaceScope,namespace.getDeclarations());
       }
       @Override public void visitClass(      JetClass klass){
-        MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,declaringScope.getContainingDeclaration(),declaringScope);
+        MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope);
         mutableClassDescriptor.setName(JetPsiUtil.safeName(klass.getName()));
-        declaringScope.addClassifierDescriptor(mutableClassDescriptor);
+        owner.addClassifierDescriptor(mutableClassDescriptor);
         classes.put(klass,mutableClassDescriptor);
-        declaringScopes.put(klass,declaringScope);
+        declaringScopes.put(klass,outerScope);
         WritableScope classScope=mutableClassDescriptor.getWritableUnsubstitutedMemberScope();
         collectTypeDeclarators(classScope,klass.getDeclarations());
       }
@@ -49,8 +48,6 @@
       }
       @Override public void visitExtension(      JetExtension extension){
         trace.getErrorHandler().genericError(extension.getNode(),"Unsupported [TopDownAnalyzer]");
-      }
-      @Override public void visitDeclaration(      JetDeclaration dcl){
       }
     }
 );
