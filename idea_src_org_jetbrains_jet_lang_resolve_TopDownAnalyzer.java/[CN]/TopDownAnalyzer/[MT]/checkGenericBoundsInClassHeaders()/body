@@ -1,3 +1,16 @@
 {
-  throw new UnsupportedOperationException();
+  for (  Map.Entry<JetClass,MutableClassDescriptor> entry : classes.entrySet()) {
+    JetClass jetClass=entry.getKey();
+    for (    JetDelegationSpecifier delegationSpecifier : jetClass.getDelegationSpecifiers()) {
+      JetType type=trace.resolveTypeReference(delegationSpecifier.getTypeReference());
+      classDescriptorResolver.checkBounds(delegationSpecifier.getTypeReference(),type);
+    }
+    for (    JetTypeParameter jetTypeParameter : jetClass.getTypeParameters()) {
+      JetTypeReference extendsBound=jetTypeParameter.getExtendsBound();
+      if (extendsBound != null) {
+        JetType type=trace.resolveTypeReference(extendsBound);
+        classDescriptorResolver.checkBounds(extendsBound,type);
+      }
+    }
+  }
 }

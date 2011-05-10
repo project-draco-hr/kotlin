@@ -33,6 +33,19 @@
             throw new UnsupportedOperationException();
           }
         }
+        final NamespaceDescriptor finalNamespaceDescriptor=namespaceDescriptor;
+        collectNamespacesAndClassifiers(namespaceScope,new NamespaceLike.Adapter(finalNamespaceDescriptor){
+          @Override public NamespaceDescriptor getNamespace(          String name){
+            return ((WritableScope)finalNamespaceDescriptor.getMemberScope()).getDeclaredNamespace(name);
+          }
+          @Override public void addNamespace(          @NotNull NamespaceDescriptor namespaceDescriptor){
+            ((WritableScope)namespaceDescriptor.getMemberScope()).addNamespace(namespaceDescriptor);
+          }
+          @Override public void addClassifierDescriptor(          MutableClassDescriptor classDescriptor){
+            ((WritableScope)finalNamespaceDescriptor.getMemberScope()).addClassifierDescriptor(classDescriptor);
+          }
+        }
+,namespace.getDeclarations());
       }
       @Override public void visitClass(      JetClass klass){
         MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope);
