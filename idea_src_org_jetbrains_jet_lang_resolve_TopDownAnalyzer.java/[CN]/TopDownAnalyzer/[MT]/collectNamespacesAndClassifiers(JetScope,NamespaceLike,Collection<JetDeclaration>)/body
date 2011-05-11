@@ -7,14 +7,15 @@
         if (name == null) {
           name="<no name provided>";
         }
-        NamespaceDescriptor namespaceDescriptor=owner.getNamespace(name);
+        NamespaceDescriptorImpl namespaceDescriptor=owner.getNamespace(name);
         if (namespaceDescriptor == null) {
-          namespaceDescriptor=new NamespaceDescriptor(owner,Collections.<Annotation>emptyList(),name);
+          namespaceDescriptor=new NamespaceDescriptorImpl(owner.getOriginal(),Collections.<Annotation>emptyList(),name);
           namespaceDescriptor.initialize(new WritableScopeImpl(JetScope.EMPTY,namespaceDescriptor,trace.getErrorHandler(),null));
           owner.addNamespace(namespaceDescriptor);
           trace.recordDeclarationResolution(namespace,namespaceDescriptor);
         }
-        WritableScope namespaceScope=new WritableScopeImpl(outerScope,owner,trace.getErrorHandler(),null);
+        namespaceDescriptors.put(namespace,namespaceDescriptor);
+        WritableScope namespaceScope=new WriteThroughScope(outerScope,(WritableScope)namespaceDescriptor.getMemberScope());
         namespaceScopes.put(namespace,namespaceScope);
         for (        JetImportDirective importDirective : importDirectives) {
           if (importDirective.isAbsoluteInRootNamespace()) {
@@ -33,19 +34,7 @@
             throw new UnsupportedOperationException();
           }
         }
-        final NamespaceDescriptor finalNamespaceDescriptor=namespaceDescriptor;
-        collectNamespacesAndClassifiers(namespaceScope,new NamespaceLike.Adapter(finalNamespaceDescriptor){
-          @Override public NamespaceDescriptor getNamespace(          String name){
-            return ((WritableScope)finalNamespaceDescriptor.getMemberScope()).getDeclaredNamespace(name);
-          }
-          @Override public void addNamespace(          @NotNull NamespaceDescriptor namespaceDescriptor){
-            ((WritableScope)namespaceDescriptor.getMemberScope()).addNamespace(namespaceDescriptor);
-          }
-          @Override public void addClassifierDescriptor(          MutableClassDescriptor classDescriptor){
-            ((WritableScope)finalNamespaceDescriptor.getMemberScope()).addClassifierDescriptor(classDescriptor);
-          }
-        }
-,namespace.getDeclarations());
+        collectNamespacesAndClassifiers(namespaceScope,namespaceDescriptor,namespace.getDeclarations());
       }
       @Override public void visitClass(      JetClass klass){
         MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope);
