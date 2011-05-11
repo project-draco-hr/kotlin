@@ -1,11 +1,11 @@
 {
   descriptor.setName(JetPsiUtil.safeName(classElement.getName()));
-  descriptor.getClassHeaderScope().addLabeledDeclaration(descriptor);
-  WritableScope parameterScope=descriptor.getClassHeaderScope();
+  descriptor.getScopeForMemberResolution().addLabeledDeclaration(descriptor);
+  WritableScope scopeForMemberResolution=descriptor.getScopeForMemberResolution();
   List<TypeParameterDescriptor> typeParameters=Lists.newArrayList();
   for (  JetTypeParameter typeParameter : classElement.getTypeParameters()) {
     TypeParameterDescriptor typeParameterDescriptor=TypeParameterDescriptor.createForFurtherModification(descriptor,AnnotationResolver.INSTANCE.resolveAnnotations(typeParameter.getModifierList()),typeParameter.getVariance(),JetPsiUtil.safeName(typeParameter.getName()));
-    parameterScope.addTypeParameterDescriptor(typeParameterDescriptor);
+    scopeForMemberResolution.addTypeParameterDescriptor(typeParameterDescriptor);
     trace.recordDeclarationResolution(typeParameter,typeParameterDescriptor);
     typeParameters.add(typeParameterDescriptor);
   }
@@ -13,6 +13,6 @@
   List<JetType> supertypes=new ArrayList<JetType>();
   TypeConstructorImpl typeConstructor=new TypeConstructorImpl(descriptor,AnnotationResolver.INSTANCE.resolveAnnotations(classElement.getModifierList()),!open,JetPsiUtil.safeName(classElement.getName()),typeParameters,supertypes);
   descriptor.setTypeConstructor(typeConstructor);
-  descriptor.getClassHeaderScope().setThisType(descriptor.getDefaultType());
+  descriptor.getScopeForMemberResolution().setThisType(descriptor.getDefaultType());
   trace.recordDeclarationResolution(classElement,descriptor);
 }

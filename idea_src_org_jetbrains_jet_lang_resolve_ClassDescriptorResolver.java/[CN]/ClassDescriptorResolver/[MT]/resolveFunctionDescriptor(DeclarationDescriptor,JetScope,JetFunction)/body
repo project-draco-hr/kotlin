@@ -1,5 +1,5 @@
 {
-  FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(containingDescriptor,AnnotationResolver.INSTANCE.resolveAnnotations(function.getModifierList()),JetPsiUtil.safeName(function.getName()));
+  final FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(containingDescriptor,AnnotationResolver.INSTANCE.resolveAnnotations(function.getModifierList()),JetPsiUtil.safeName(function.getName()));
   WritableScope innerScope=new WritableScopeImpl(scope,functionDescriptor,trace.getErrorHandler(),null);
   innerScope.addLabeledDeclaration(functionDescriptor);
   List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,innerScope,function.getTypeParameters());
@@ -8,6 +8,18 @@
   JetType returnType=null;
   if (returnTypeRef != null) {
     returnType=typeResolver.resolveType(innerScope,returnTypeRef);
+  }
+ else {
+    final JetExpression bodyExpression=function.getBodyExpression();
+    if (bodyExpression != null) {
+      returnType=new DeferredType(new LazyValue<JetType>(){
+        @Override protected JetType compute(){
+          JetFlowInformationProvider flowInformationProvider=computeFlowData(function.asElement(),bodyExpression);
+          return semanticServices.getTypeInferrer(trace,flowInformationProvider).getFunctionReturnType(scope,function,functionDescriptor);
+        }
+      }
+);
+    }
   }
   functionDescriptor.initialize(typeParameterDescriptors,valueParameterDescriptors,returnType);
   trace.recordDeclarationResolution(function,functionDescriptor);
