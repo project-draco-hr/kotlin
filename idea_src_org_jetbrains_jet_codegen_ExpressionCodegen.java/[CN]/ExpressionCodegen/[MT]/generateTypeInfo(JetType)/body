@@ -1,0 +1,33 @@
+{
+  DeclarationDescriptor declarationDescriptor=jetType.getConstructor().getDeclarationDescriptor();
+  if (declarationDescriptor instanceof TypeParameterDescriptor) {
+    DeclarationDescriptor containingDeclaration=declarationDescriptor.getContainingDeclaration();
+    if (containingDeclaration == contextType && contextType instanceof ClassDescriptor) {
+      int index=indexOfTypeParameter((ClassDescriptor)contextType,(TypeParameterDescriptor)declarationDescriptor);
+      loadTypeInfo((ClassDescriptor)contextType,v);
+      v.iconst(index);
+      v.invokevirtual("jet/typeinfo/TypeInfo","getTypeParameter","(I)Ljet/typeinfo/TypeInfo;");
+      return;
+    }
+    throw new UnsupportedOperationException("don't know what this type parameter resolves to");
+  }
+  v.anew(JetTypeMapper.TYPE_TYPEINFO);
+  v.dup();
+  v.aconst(typeMapper.jvmType((ClassDescriptor)declarationDescriptor,OwnerKind.INTERFACE));
+  List<TypeProjection> arguments=jetType.getArguments();
+  if (arguments.size() > 0) {
+    v.iconst(arguments.size());
+    v.newarray(JetTypeMapper.TYPE_TYPEINFO);
+    for (int i=0, argumentsSize=arguments.size(); i < argumentsSize; i++) {
+      TypeProjection argument=arguments.get(i);
+      v.dup();
+      v.iconst(i);
+      generateTypeInfo(argument.getType());
+      v.astore(JetTypeMapper.TYPE_OBJECT);
+    }
+    v.invokespecial("jet/typeinfo/TypeInfo","<init>","(Ljava/lang/Class;[Ljet/typeinfo/TypeInfo;)V");
+  }
+ else {
+    v.invokespecial("jet/typeinfo/TypeInfo","<init>","(Ljava/lang/Class;)V");
+  }
+}
