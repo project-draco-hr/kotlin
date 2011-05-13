@@ -22,6 +22,10 @@
     v.dup();
     Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
     pushMethodArguments(expression,method);
+    for (    JetTypeReference typeArgumentReference : constructorType.getTypeArgumentsAsTypes()) {
+      JetType typeArgument=bindingContext.resolveTypeReference(typeArgumentReference);
+      ClassCodegen.newTypeInfo(v,typeMapper.mapType(TypeUtils.makeNullable(typeArgument)));
+    }
     v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
     myStack.push(StackValue.onStack(type));
     return;

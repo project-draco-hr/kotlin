@@ -12,7 +12,7 @@
   frameMap.enterTemp();
   final InstructionAdapter iv=new InstructionAdapter(mv);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,classDescriptor,kind);
-  String classname=JetTypeMapper.jvmName(classDescriptor,kind);
+  String classname=typeMapper.jvmName(classDescriptor,kind);
   final Type classType=Type.getType("L" + classname + ";");
   if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
     String interfaceDesc=JetTypeMapper.jetInterfaceType(classDescriptor).getDescriptor();
@@ -24,6 +24,16 @@
   for (int i=0; i < paramDescrs.size(); i++) {
     ValueParameterDescriptor parameter=paramDescrs.get(i);
     frameMap.enter(parameter,argTypes[i].getSize());
+  }
+  int firstTypeParameter=-1;
+  int typeParamCount=classDescriptor.getTypeConstructor().getParameters().size();
+  if (kind == OwnerKind.IMPLEMENTATION) {
+    if (typeParamCount > 0) {
+      firstTypeParameter=frameMap.enterTemp();
+      for (int i=1; i < typeParamCount; i++) {
+        frameMap.enterTemp();
+      }
+    }
   }
   List<JetDelegationSpecifier> specifiers=aClass.getDelegationSpecifiers();
   if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
@@ -79,6 +89,9 @@
       generateDelegates(aClass,superClass,v,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
     }
     n++;
+  }
+  if (firstTypeParameter > 0 && kind == OwnerKind.IMPLEMENTATION) {
+    generateTypeInfoInitializer(classDescriptor,firstTypeParameter,typeParamCount,iv);
   }
   generateInitializers(aClass,kind,codegen,iv);
   int curParam=0;

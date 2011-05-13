@@ -1,0 +1,21 @@
+{
+  v.anew(JetTypeMapper.TYPE_TYPEINFO);
+  v.dup();
+  v.aconst(typeMapper.jvmType((ClassDescriptor)jetType.getConstructor().getDeclarationDescriptor(),OwnerKind.INTERFACE));
+  List<TypeProjection> arguments=jetType.getArguments();
+  if (arguments.size() > 0) {
+    v.iconst(arguments.size());
+    v.newarray(JetTypeMapper.TYPE_TYPEINFO);
+    for (int i=0, argumentsSize=arguments.size(); i < argumentsSize; i++) {
+      TypeProjection argument=arguments.get(i);
+      v.dup();
+      v.iconst(i);
+      newTypeInfo(argument.getType());
+      v.astore(JetTypeMapper.TYPE_OBJECT);
+    }
+    v.invokespecial("jet/typeinfo/TypeInfo","<init>","(Ljava/lang/Class;[Ljet/typeinfo/TypeInfo;)V");
+  }
+ else {
+    v.invokespecial("jet/typeinfo/TypeInfo","<init>","(Ljava/lang/Class;)V");
+  }
+}

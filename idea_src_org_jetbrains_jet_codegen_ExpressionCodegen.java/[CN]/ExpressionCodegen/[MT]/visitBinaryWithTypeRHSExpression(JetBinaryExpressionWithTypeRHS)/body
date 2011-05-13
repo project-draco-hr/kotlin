@@ -1,9 +1,33 @@
 {
   JetSimpleNameExpression operationSign=expression.getOperationSign();
-  if (operationSign.getReferencedNameElementType() == JetTokens.COLON) {
+  IElementType opToken=operationSign.getReferencedNameElementType();
+  if (opToken == JetTokens.COLON) {
     gen(expression.getLeft());
   }
  else {
-    throw new UnsupportedOperationException("should generate a cast, but don't know how");
+    JetTypeReference typeReference=expression.getRight();
+    JetType jetType=bindingContext.resolveTypeReference(typeReference);
+    if (jetType.getArguments().size() > 0) {
+      throw new UnsupportedOperationException("don't know how to handle type arguments in as/as?");
+    }
+    DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
+    if (!(descriptor instanceof ClassDescriptor)) {
+      throw new UnsupportedOperationException("don't know how to handle non-class types in as/as?");
+    }
+    Type type=typeMapper.jvmType((ClassDescriptor)descriptor,OwnerKind.INTERFACE);
+    gen(expression.getLeft(),OBJECT_TYPE);
+    if (opToken == JetTokens.AS_SAFE) {
+      v.dup();
+      v.instanceOf(type);
+      Label isInstance=new Label();
+      v.ifne(isInstance);
+      v.pop();
+      v.aconst(null);
+      v.mark(isInstance);
+      myStack.push(StackValue.onStack(type));
+    }
+ else {
+      throw new UnsupportedOperationException("as not yet implemented");
+    }
   }
 }
