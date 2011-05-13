@@ -5,20 +5,7 @@
   }
   JetTypeReference typeReference=((JetTypePattern)pattern).getTypeReference();
   JetType jetType=bindingContext.resolveTypeReference(typeReference);
-  DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (!(descriptor instanceof ClassDescriptor)) {
-    throw new UnsupportedOperationException("don't know how to handle non-class types in is");
-  }
-  if (jetType.getArguments().size() > 0) {
-    generateTypeInfo(jetType);
-    gen(expression.getLeftHandSide(),OBJECT_TYPE);
-    v.invokevirtual("jet/typeinfo/TypeInfo","isInstance","(Ljava/lang/Object;)Z");
-  }
- else {
-    gen(expression.getLeftHandSide(),OBJECT_TYPE);
-    Type type=typeMapper.jvmType((ClassDescriptor)descriptor,OwnerKind.INTERFACE);
-    v.instanceOf(type);
-  }
+  generateInstanceOf(expression.getLeftHandSide(),jetType,false);
   StackValue value=StackValue.onStack(Type.BOOLEAN_TYPE);
   myStack.push(expression.isNot() ? StackValue.not(value) : value);
 }
