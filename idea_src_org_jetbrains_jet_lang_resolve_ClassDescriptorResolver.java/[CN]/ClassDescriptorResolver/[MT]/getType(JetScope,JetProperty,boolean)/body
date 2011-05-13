@@ -8,12 +8,18 @@
       type=ErrorUtils.createErrorType("No type, no body");
     }
  else {
-      type=new DeferredType(new LazyValue<JetType>(){
+      LazyValue<JetType> lazyValue=new LazyValue<JetType>(){
         @Override protected JetType compute(){
           return semanticServices.getTypeInferrer(trace,JetFlowInformationProvider.THROW_EXCEPTION).safeGetType(scope,initializer,false);
         }
       }
-);
+;
+      if (allowDeferred) {
+        type=new DeferredType(lazyValue);
+      }
+ else {
+        type=lazyValue.get();
+      }
     }
   }
  else {
