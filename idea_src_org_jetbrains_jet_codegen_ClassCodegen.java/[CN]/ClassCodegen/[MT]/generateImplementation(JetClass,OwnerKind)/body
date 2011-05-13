@@ -3,10 +3,11 @@
   String superClass=getSuperClass(aClass,kind);
   ClassVisitor v=kind == OwnerKind.IMPLEMENTATION ? factory.forClassImplementation(descriptor) : factory.forClassDelegatingImplementation(descriptor);
   v.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC,JetTypeMapper.jetJvmName(descriptor,kind),null,superClass,new String[]{"jet/JetObject",JetTypeMapper.jvmNameForInterface(descriptor)});
-  v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
+  int typeinfoStatic=descriptor.getTypeConstructor().getParameters().size() > 0 ? 0 : Opcodes.ACC_STATIC;
+  v.visitField(Opcodes.ACC_PRIVATE | typeinfoStatic,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
   generateStaticInitializer(descriptor,v);
   generatePrimaryConstructor(aClass,v,kind);
-  generateGetTypeInfo(aClass,v);
+  generateGetTypeInfo(descriptor,v);
   generateClassBody(aClass,v,kind);
   v.visitEnd();
 }

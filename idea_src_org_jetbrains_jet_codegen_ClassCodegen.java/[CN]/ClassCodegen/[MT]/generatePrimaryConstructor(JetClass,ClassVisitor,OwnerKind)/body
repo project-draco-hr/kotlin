@@ -25,6 +25,16 @@
     ValueParameterDescriptor parameter=paramDescrs.get(i);
     frameMap.enter(parameter,argTypes[i].getSize());
   }
+  int firstTypeParameter=-1;
+  int typeParamCount=classDescriptor.getTypeConstructor().getParameters().size();
+  if (kind == OwnerKind.IMPLEMENTATION) {
+    if (typeParamCount > 0) {
+      firstTypeParameter=frameMap.enterTemp();
+      for (int i=1; i < typeParamCount; i++) {
+        frameMap.enterTemp();
+      }
+    }
+  }
   List<JetDelegationSpecifier> specifiers=aClass.getDelegationSpecifiers();
   if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
     String superClass=getSuperClass(aClass,kind);
@@ -79,6 +89,9 @@
       generateDelegates(aClass,superClass,v,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
     }
     n++;
+  }
+  if (firstTypeParameter > 0 && kind == OwnerKind.IMPLEMENTATION) {
+    generateTypeInfoInitializer(classDescriptor,firstTypeParameter,typeParamCount,iv);
   }
   generateInitializers(aClass,kind,codegen,iv);
   int curParam=0;

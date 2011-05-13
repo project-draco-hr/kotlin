@@ -1,14 +1,17 @@
 {
   boolean delegate=kind == OwnerKind.DELEGATING_IMPLEMENTATION;
   List<ValueParameterDescriptor> parameters=descriptor.getUnsubstitutedValueParameters();
-  int count=parameters.size();
-  int first=delegate ? 1 : 0;
-  Type[] parameterTypes=new Type[count + first];
+  List<Type> parameterTypes=new ArrayList<Type>();
+  ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
   if (delegate) {
-    parameterTypes[0]=jetInterfaceType(descriptor.getContainingDeclaration());
+    parameterTypes.add(jetInterfaceType(classDescriptor));
   }
-  for (int i=0; i < count; i++) {
-    parameterTypes[i + first]=mapType(parameters.get(i).getOutType());
+  for (  ValueParameterDescriptor parameter : parameters) {
+    parameterTypes.add(mapType(parameter.getOutType()));
   }
-  return new Method("<init>",Type.VOID_TYPE,parameterTypes);
+  List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
+  for (  TypeParameterDescriptor typeParameter : typeParameters) {
+    parameterTypes.add(TYPE_TYPEINFO);
+  }
+  return new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
 }
