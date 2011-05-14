@@ -41,6 +41,12 @@
     iv.load(0,Type.getType("L" + superClass + ";"));
     iv.invokespecial(superClass,"<init>","()V");
   }
+  HashSet<FunctionDescriptor> overriden=new HashSet<FunctionDescriptor>();
+  for (  JetDeclaration declaration : aClass.getDeclarations()) {
+    if (declaration instanceof JetFunction) {
+      overriden.addAll(bindingContext.getFunctionDescriptor((JetFunction)declaration).getOverriddenFunctions());
+    }
+  }
   int n=0;
   for (  JetDelegationSpecifier specifier : specifiers) {
     boolean delegateOnStack=specifier instanceof JetDelegatorToSuperCall && n > 0 || specifier instanceof JetDelegatorByExpressionSpecifier;
@@ -86,7 +92,7 @@
       v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
       JetClass superClass=(JetClass)bindingContext.getDeclarationPsiElement(superClassDescriptor);
-      generateDelegates(aClass,superClass,v,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
+      generateDelegates(aClass,superClass,v,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)),overriden);
     }
     n++;
   }
