@@ -1,19 +1,44 @@
 {
-  ClassDescriptorImpl classDescriptor=new ClassDescriptorImpl(scope.getContainingDeclaration(),AnnotationResolver.INSTANCE.resolveAnnotations(classElement.getModifierList()),JetPsiUtil.safeName(classElement.getName()));
+  final ClassDescriptorImpl classDescriptor=new ClassDescriptorImpl(scope.getContainingDeclaration(),AnnotationResolver.INSTANCE.resolveAnnotations(classElement.getModifierList()),JetPsiUtil.safeName(classElement.getName()));
   trace.recordDeclarationResolution(classElement,classDescriptor);
-  WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,trace.getErrorHandler(),null);
+  final WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,trace.getErrorHandler());
   List<TypeParameterDescriptor> typeParameters=resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters());
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
   Collection<JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : resolveDelegationSpecifiers(parameterScope,delegationSpecifiers,typeResolver);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
-  WritableScope members=resolveMembers(classDescriptor,classElement,typeParameters,scope,parameterScope,supertypes);
+  final WritableScope memberDeclarations=new WritableScopeImpl(parameterScope,classDescriptor,trace.getErrorHandler());
+  List<JetDeclaration> declarations=classElement.getDeclarations();
+  for (  JetDeclaration declaration : declarations) {
+    declaration.accept(new JetVisitor(){
+      @Override public void visitProperty(      JetProperty property){
+        if (property.getPropertyTypeRef() != null) {
+          memberDeclarations.addVariableDescriptor(resolvePropertyDescriptor(classDescriptor,parameterScope,property));
+        }
+ else {
+          throw new UnsupportedOperationException();
+        }
+      }
+      @Override public void visitFunction(      JetFunction function){
+        if (function.getReturnTypeRef() != null) {
+          memberDeclarations.addFunctionDescriptor(resolveFunctionDescriptor(classDescriptor,parameterScope,function));
+        }
+ else {
+          throw new UnsupportedOperationException();
+        }
+      }
+      @Override public void visitJetElement(      JetElement elem){
+        throw new UnsupportedOperationException(elem.toString());
+      }
+    }
+);
+  }
   WritableFunctionGroup constructors=new WritableFunctionGroup("<init>");
   for (  JetConstructor constructor : classElement.getSecondaryConstructors()) {
-    constructors.addFunction(resolveSecondaryConstructorDescriptor(members,classDescriptor,constructor));
+    constructors.addFunction(resolveSecondaryConstructorDescriptor(memberDeclarations,classDescriptor,constructor));
   }
   ConstructorDescriptor primaryConstructorDescriptor=resolvePrimaryConstructorDescriptor(scope,classDescriptor,classElement);
   if (primaryConstructorDescriptor != null) {
     constructors.addFunction(primaryConstructorDescriptor);
   }
-  return classDescriptor.initialize(!open,typeParameters,supertypes,members,constructors,primaryConstructorDescriptor);
+  return classDescriptor.initialize(!open,typeParameters,supertypes,memberDeclarations,constructors,primaryConstructorDescriptor);
 }
