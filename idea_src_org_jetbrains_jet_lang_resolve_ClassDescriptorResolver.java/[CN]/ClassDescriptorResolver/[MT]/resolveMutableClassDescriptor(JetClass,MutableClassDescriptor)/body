@@ -1,20 +1,13 @@
 {
-  descriptor.setName(JetPsiUtil.safeName(classElement.getName()));
-  descriptor.getScopeForMemberResolution().addLabeledDeclaration(descriptor);
-  WritableScope scopeForMemberResolution=descriptor.getScopeForSupertypeResolution();
   List<TypeParameterDescriptor> typeParameters=Lists.newArrayList();
   int index=0;
   for (  JetTypeParameter typeParameter : classElement.getTypeParameters()) {
     TypeParameterDescriptor typeParameterDescriptor=TypeParameterDescriptor.createForFurtherModification(descriptor,AnnotationResolver.INSTANCE.resolveAnnotations(typeParameter.getModifierList()),typeParameter.getVariance(),JetPsiUtil.safeName(typeParameter.getName()),index);
-    scopeForMemberResolution.addTypeParameterDescriptor(typeParameterDescriptor);
     trace.recordDeclarationResolution(typeParameter,typeParameterDescriptor);
     typeParameters.add(typeParameterDescriptor);
     index++;
   }
-  boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
-  List<JetType> supertypes=new ArrayList<JetType>();
-  TypeConstructorImpl typeConstructor=new TypeConstructorImpl(descriptor,AnnotationResolver.INSTANCE.resolveAnnotations(classElement.getModifierList()),!open,JetPsiUtil.safeName(classElement.getName()),typeParameters,supertypes);
-  descriptor.setTypeConstructor(typeConstructor);
-  descriptor.getScopeForMemberResolution().setThisType(descriptor.getDefaultType());
+  descriptor.setTypeParameterDescriptors(typeParameters);
+  descriptor.setOpen(classElement.hasModifier(JetTokens.OPEN_KEYWORD));
   trace.recordDeclarationResolution(classElement,descriptor);
 }
