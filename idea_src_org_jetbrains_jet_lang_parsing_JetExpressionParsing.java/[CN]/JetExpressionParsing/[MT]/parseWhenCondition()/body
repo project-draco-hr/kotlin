@@ -2,7 +2,9 @@
   PsiBuilder.Marker condition=mark();
   myBuilder.disableNewlines();
   if (at(IN_KEYWORD) || at(NOT_IN)) {
+    PsiBuilder.Marker mark=mark();
     advance();
+    mark.done(OPERATION_REFERENCE);
     if (atSet(WHEN_CONDITION_RECOVERY_SET_WITH_DOUBLE_ARROW)) {
       error("Expecting an element");
     }
@@ -21,12 +23,15 @@
     }
     condition.done(WHEN_CONDITION_IS_PATTERN);
   }
- else   if (at(DOT)) {
+ else   if (at(DOT) || at(SAFE_ACCESS)) {
     advance();
+    PsiBuilder.Marker mark=mark();
     parsePostfixExpression();
-    myJetParsing.parseTypeArgumentList();
-    if (at(LPAR)) {
-      parseValueArgumentList();
+    if (parseCallSuffix()) {
+      mark.done(CALL_EXPRESSION);
+    }
+ else {
+      mark.drop();
     }
     condition.done(WHEN_CONDITION_CALL);
   }

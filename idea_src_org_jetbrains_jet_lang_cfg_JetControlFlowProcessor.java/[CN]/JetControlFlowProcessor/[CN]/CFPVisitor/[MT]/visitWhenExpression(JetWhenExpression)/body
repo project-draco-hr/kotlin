@@ -1,0 +1,37 @@
+{
+  JetExpression subjectExpression=expression.getSubjectExpression();
+  if (subjectExpression != null) {
+    value(subjectExpression,false,inCondition);
+  }
+  Label nextLabel=builder.createUnboundLabel();
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    if (whenEntry.getSubWhen() != null)     throw new UnsupportedOperationException();
+    if (whenEntry.isElseContinue())     throw new UnsupportedOperationException();
+    JetWhenCondition condition=whenEntry.getCondition();
+    if (condition != null) {
+      condition.accept(new JetVisitor(){
+        @Override public void visitWhenConditionWithExpression(        JetWhenConditionWithExpression condition){
+          value(condition.getExpression(),false,inCondition);
+        }
+        @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
+          value(condition.getCallSuffixExpression(),false,inCondition);
+        }
+        @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
+          value(condition.getRangeExpression(),false,inCondition);
+          value(condition.getOperationReference(),false,inCondition);
+        }
+        @Override public void visitWhenConditionIsPattern(        JetWhenConditionIsPattern condition){
+          super.visitWhenConditionIsPattern(condition);
+        }
+        @Override public void visitJetElement(        JetElement elem){
+          throw new UnsupportedOperationException();
+        }
+      }
+);
+    }
+    builder.nondeterministicJump(nextLabel);
+    value(whenEntry.getExpression(),true,inCondition);
+    builder.bindLabel(nextLabel);
+    nextLabel=builder.createUnboundLabel();
+  }
+}

@@ -1,5 +1,56 @@
 {
-  List<JetType> expressions=new ArrayList<JetType>();
-  collectAllReturnTypes(expression,scope,expressions);
-  result=semanticServices.getTypeChecker().commonSupertype(expressions);
+  final JetExpression subjectExpression=expression.getSubjectExpression();
+  JetType subjectType=null;
+  if (subjectExpression != null) {
+    subjectType=getType(scope,subjectExpression,false);
+  }
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    final JetType finalSubjectType=subjectType;
+    JetWhenCondition condition=whenEntry.getCondition();
+    if (condition != null) {
+      condition.accept(new JetVisitor(){
+        @Override public void visitWhenConditionWithExpression(        JetWhenConditionWithExpression condition){
+          JetExpression conditionExpression=condition.getExpression();
+          if (conditionExpression != null) {
+            JetType type=getType(scope,conditionExpression,false);
+            if (type != null && finalSubjectType != null) {
+              if (TypeUtils.intersect(semanticServices.getTypeChecker(),Sets.newHashSet(finalSubjectType,type)) == null) {
+                trace.getErrorHandler().genericError(conditionExpression.getNode(),"This condition can never hold");
+              }
+            }
+          }
+        }
+        @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
+          checkNullSafety(finalSubjectType,condition.getOperationTokenNode());
+          JetExpression callSuffixExpression=condition.getCallSuffixExpression();
+          JetScope compositeScope=new ScopeWithReceiver(scope,finalSubjectType);
+          if (callSuffixExpression != null) {
+            JetType selectorReturnType=getType(compositeScope,callSuffixExpression,false);
+            ensureBooleanResultWithCustomSubject(callSuffixExpression,selectorReturnType,"This expression");
+          }
+        }
+        @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
+          JetExpression rangeExpression=condition.getRangeExpression();
+          if (rangeExpression != null) {
+            checkInExpression(condition.getOperationReference(),subjectExpression,rangeExpression);
+          }
+        }
+        @Override public void visitWhenConditionIsPattern(        JetWhenConditionIsPattern condition){
+          super.visitWhenConditionIsPattern(condition);
+        }
+        @Override public void visitJetElement(        JetElement elem){
+          trace.getErrorHandler().genericError(elem.getNode(),"Unsupported [JetTypeInferrer] : " + elem);
+        }
+      }
+);
+    }
+  }
+  List<JetType> expressionTypes=new ArrayList<JetType>();
+  collectAllReturnTypes(expression,scope,expressionTypes);
+  if (!expressionTypes.isEmpty()) {
+    result=semanticServices.getTypeChecker().commonSupertype(expressionTypes);
+  }
+ else {
+    trace.getErrorHandler().genericError(expression.getNode(),"Entries required for when-expression");
+  }
 }

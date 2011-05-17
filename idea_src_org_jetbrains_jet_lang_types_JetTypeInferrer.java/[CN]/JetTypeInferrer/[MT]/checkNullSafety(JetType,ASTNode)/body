@@ -1,0 +1,18 @@
+{
+  if (receiverType != null) {
+    boolean namespaceType=receiverType instanceof NamespaceType;
+    boolean nullable=!namespaceType && receiverType.isNullable();
+    IElementType operationSign=operationTokenNode.getElementType();
+    if (nullable && operationSign == JetTokens.DOT) {
+      trace.getErrorHandler().genericError(operationTokenNode,"Only safe calls (?.) are allowed on a nullable receiver of type " + receiverType);
+    }
+ else     if (!nullable && operationSign == JetTokens.SAFE_ACCESS) {
+      if (namespaceType) {
+        trace.getErrorHandler().genericError(operationTokenNode,"Safe calls are not allowed on namespaces");
+      }
+ else {
+        trace.getErrorHandler().genericWarning(operationTokenNode,"Unnecessary safe call on a non-null receiver of type  " + receiverType);
+      }
+    }
+  }
+}
