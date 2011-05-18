@@ -5,7 +5,7 @@
   List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,innerScope,function.getTypeParameters());
   List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,innerScope,function.getValueParameters());
   JetTypeReference returnTypeRef=function.getReturnTypeRef();
-  JetType returnType=null;
+  JetType returnType;
   if (returnTypeRef != null) {
     returnType=typeResolver.resolveType(innerScope,returnTypeRef);
   }
@@ -19,6 +19,10 @@
         }
       }
 );
+    }
+ else {
+      trace.getErrorHandler().genericError(function.asElement().getNode(),"This function must either declare a return type or have a body element");
+      returnType=ErrorUtils.createErrorType("No type, no body");
     }
   }
   functionDescriptor.initialize(typeParameterDescriptors,valueParameterDescriptors,returnType);
