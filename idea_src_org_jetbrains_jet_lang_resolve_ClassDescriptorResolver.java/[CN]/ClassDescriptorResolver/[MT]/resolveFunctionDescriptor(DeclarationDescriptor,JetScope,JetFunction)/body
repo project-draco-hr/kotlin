@@ -3,6 +3,12 @@
   WritableScope innerScope=new WritableScopeImpl(scope,functionDescriptor,trace.getErrorHandler());
   innerScope.addLabeledDeclaration(functionDescriptor);
   List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,innerScope,function.getTypeParameters());
+  JetType receiverType=null;
+  JetTypeReference receiverTypeRef=function.getReceiverTypeRef();
+  if (receiverTypeRef != null) {
+    JetScope scopeForReceiver=function.hasTypeParameterListBeforeFunctionName() ? innerScope : scope;
+    receiverType=typeResolver.resolveType(scopeForReceiver,receiverTypeRef);
+  }
   List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,innerScope,function.getValueParameters());
   JetTypeReference returnTypeRef=function.getReturnTypeRef();
   JetType returnType;
@@ -25,7 +31,7 @@
       returnType=ErrorUtils.createErrorType("No type, no body");
     }
   }
-  functionDescriptor.initialize(typeParameterDescriptors,valueParameterDescriptors,returnType);
+  functionDescriptor.initialize(receiverType,typeParameterDescriptors,valueParameterDescriptors,returnType);
   trace.recordDeclarationResolution(function,functionDescriptor);
   return functionDescriptor;
 }

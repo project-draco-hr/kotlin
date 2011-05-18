@@ -4,6 +4,14 @@
   }
   FunctionDescriptorImpl substitutedDescriptor;
   substitutedDescriptor=createSubstitutedCopy();
+  JetType receiverType=getReceiverType();
+  JetType substitutedReceiverType=null;
+  if (receiverType != null) {
+    substitutedReceiverType=substitutor.substitute(receiverType,Variance.IN_VARIANCE);
+    if (substitutedReceiverType == null) {
+      return null;
+    }
+  }
   List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
   if (substitutedValueParameters == null) {
     return null;
@@ -12,6 +20,6 @@
   if (substitutedReturnType == null) {
     return null;
   }
-  substitutedDescriptor.initialize(Collections.<TypeParameterDescriptor>emptyList(),substitutedValueParameters,substitutedReturnType);
+  substitutedDescriptor.initialize(substitutedReceiverType,Collections.<TypeParameterDescriptor>emptyList(),substitutedValueParameters,substitutedReturnType);
   return substitutedDescriptor;
 }
