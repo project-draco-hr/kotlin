@@ -1,7 +1,7 @@
 {
   JetExpression expr=expression.getSubjectExpression();
-  Type subjectType=expressionType(expr);
-  int subjectLocal=myMap.enterTemp(subjectType.getSize());
+  final Type subjectType=expressionType(expr);
+  final int subjectLocal=myMap.enterTemp(subjectType.getSize());
   gen(expr,subjectType);
   v.store(subjectLocal,subjectType);
   Label end=new Label();
@@ -20,18 +20,28 @@
         Type condType=expressionType(condExpression);
         gen(condExpression,condType);
         generateEqualsForExpressionsOnStack(JetTokens.EQEQ,subjectType,condType);
-        myStack.pop().condJump(nextEntry,true,v);
       }
  else       if (condition instanceof JetWhenConditionInRange) {
         JetExpression range=((JetWhenConditionInRange)condition).getRangeExpression();
         gen(range,RANGE_TYPE);
         new StackValue.Local(subjectLocal,subjectType).put(OBJECT_TYPE,v);
         v.invokeinterface(CLASS_RANGE,"contains","(Ljava/lang/Comparable;)Z");
-        new StackValue.OnStack(Type.BOOLEAN_TYPE).condJump(nextEntry,true,v);
+        myStack.push(new StackValue.OnStack(Type.BOOLEAN_TYPE));
+      }
+ else       if (condition instanceof JetWhenConditionIsPattern) {
+        JetWhenConditionIsPattern patternCondition=(JetWhenConditionIsPattern)condition;
+        JetPattern pattern=patternCondition.getPattern();
+        generatePatternMatch(pattern,patternCondition.isNegated(),new Runnable(){
+          @Override public void run(){
+            new StackValue.Local(subjectLocal,subjectType).put(OBJECT_TYPE,v);
+          }
+        }
+);
       }
  else {
         throw new UnsupportedOperationException("unsupported kind of when condition");
       }
+      myStack.pop().condJump(nextEntry,true,v);
     }
  else {
       hasElse=true;
