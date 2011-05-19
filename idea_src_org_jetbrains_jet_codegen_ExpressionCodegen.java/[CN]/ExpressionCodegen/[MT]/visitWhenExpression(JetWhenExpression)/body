@@ -1,0 +1,45 @@
+{
+  JetExpression expr=expression.getSubjectExpression();
+  Type subjectType=expressionType(expr);
+  int subjectLocal=myMap.enterTemp(subjectType.getSize());
+  gen(expr,subjectType);
+  v.store(subjectLocal,subjectType);
+  Label end=new Label();
+  Label nextEntry=null;
+  boolean hasElse=false;
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    if (nextEntry != null) {
+      v.mark(nextEntry);
+    }
+    nextEntry=new Label();
+    if (!whenEntry.isElse()) {
+      JetWhenCondition condition=whenEntry.getCondition();
+      if (condition instanceof JetWhenConditionWithExpression) {
+        v.load(subjectLocal,subjectType);
+        JetExpression condExpression=((JetWhenConditionWithExpression)condition).getExpression();
+        Type condType=expressionType(condExpression);
+        gen(condExpression,condType);
+        generateEqualsForExpressionsOnStack(JetTokens.EQEQ,subjectType,condType);
+        myStack.pop().condJump(nextEntry,true,v);
+      }
+ else {
+        throw new UnsupportedOperationException("unsupported kind of when condition");
+      }
+    }
+ else {
+      hasElse=true;
+    }
+    genToJVMStack(whenEntry.getExpression());
+    v.goTo(end);
+  }
+  if (!hasElse && nextEntry != null) {
+    v.mark(nextEntry);
+    v.anew(NO_PATTERN_MATCHED_EXCEPTION_TYPE);
+    v.dup();
+    v.invokespecial(CLASS_NO_PATTERN_MATCHED_EXCEPTION,"<init>","()V");
+    v.athrow();
+  }
+  v.mark(end);
+  myStack.push(StackValue.onStack(expressionType(expression)));
+  myMap.leaveTemp(subjectType.getSize());
+}
