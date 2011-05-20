@@ -3,7 +3,7 @@
   final JetType expressionType=bindingContext.getExpressionType(loopRange);
   Type loopRangeType=typeMapper.mapType(expressionType);
   if (loopRangeType.getSort() == Type.ARRAY) {
-    generateForInArray(expression,loopRangeType);
+    new ForInArrayLoopGenerator(expression,loopRangeType).invoke();
   }
  else {
     final DeclarationDescriptor descriptor=expressionType.getConstructor().getDeclarationDescriptor();
@@ -15,6 +15,10 @@
         generateForInIterable(expression,loopRangeType);
         return;
       }
+    }
+    if (isClass(descriptor,"IntRange")) {
+      new ForInRangeLoopGenerator(expression,loopRangeType).invoke();
+      return;
     }
     throw new UnsupportedOperationException("for/in loop currently only supported for arrays and Iterable instances");
   }
