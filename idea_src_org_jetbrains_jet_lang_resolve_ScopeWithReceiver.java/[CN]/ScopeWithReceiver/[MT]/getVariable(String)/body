@@ -1,3 +1,15 @@
 {
-  return receiverTypeScope.getVariable(name);
+  VariableDescriptor variable=receiverTypeScope.getVariable(name);
+  if (variable != null) {
+    return variable;
+  }
+  variable=outerScope.getVariable(name);
+  if (variable instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)variable;
+    JetType receiverType=propertyDescriptor.getReceiverType();
+    if (receiverType != null && typeChecker.isSubtypeOf(receiverTypeScope.getThisType(),receiverType)) {
+      return variable;
+    }
+  }
+  return null;
 }
