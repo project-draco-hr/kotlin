@@ -1,5 +1,6 @@
 {
   PsiBuilder.Marker currentPosition=mark();
+  Stack<IElementType> opens=new Stack<IElementType>();
   int openAngleBrackets=0;
   int openBraces=0;
   int openParentheses=0;
@@ -10,18 +11,27 @@
     }
     if (at(LPAR)) {
       openParentheses++;
+      opens.push(LPAR);
     }
  else     if (at(LT)) {
       openAngleBrackets++;
+      opens.push(LT);
     }
  else     if (at(LBRACE)) {
       openBraces++;
+      opens.push(LBRACE);
     }
  else     if (at(LBRACKET)) {
       openBrackets++;
+      opens.push(LBRACKET);
     }
  else     if (at(RPAR)) {
       openParentheses--;
+      if (opens.isEmpty() || opens.pop() != LPAR) {
+        if (pattern.handleUnmatchedClosing(RPAR)) {
+          break;
+        }
+      }
     }
  else     if (at(GT)) {
       openAngleBrackets--;
