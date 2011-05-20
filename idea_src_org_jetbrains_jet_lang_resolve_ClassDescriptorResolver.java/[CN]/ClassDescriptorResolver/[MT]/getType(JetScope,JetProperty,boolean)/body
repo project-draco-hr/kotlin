@@ -1,11 +1,10 @@
 {
   JetTypeReference propertyTypeRef=property.getPropertyTypeRef();
-  JetType type;
   if (propertyTypeRef == null) {
     final JetExpression initializer=property.getInitializer();
     if (initializer == null) {
       trace.getErrorHandler().genericError(property.getNode(),"This property must either have a type annotation or be initialized");
-      type=ErrorUtils.createErrorType("No type, no body");
+      return ErrorUtils.createErrorType("No type, no body");
     }
  else {
       LazyValue<JetType> lazyValue=new LazyValue<JetType>(){
@@ -15,15 +14,14 @@
       }
 ;
       if (allowDeferred) {
-        type=new DeferredType(lazyValue);
+        return new DeferredType(lazyValue);
       }
  else {
-        type=lazyValue.get();
+        return lazyValue.get();
       }
     }
   }
  else {
-    type=typeResolver.resolveType(scope,propertyTypeRef);
+    return typeResolver.resolveType(scope,propertyTypeRef);
   }
-  return type;
 }
