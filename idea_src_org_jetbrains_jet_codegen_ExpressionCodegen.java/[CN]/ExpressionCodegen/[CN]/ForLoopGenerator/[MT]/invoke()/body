@@ -1,0 +1,23 @@
+{
+  JetType paramType=parameterDescriptor.getOutType();
+  Type asmParamType=typeMapper.mapType(paramType);
+  myMap.enter(parameterDescriptor,asmParamType.getSize());
+  generatePrologue();
+  Label condition=new Label();
+  Label increment=new Label();
+  Label end=new Label();
+  v.mark(condition);
+  myContinueTargets.push(increment);
+  myBreakTargets.push(end);
+  generateCondition(asmParamType,end);
+  gen(expression.getBody(),Type.VOID_TYPE);
+  v.mark(increment);
+  generateIncrement();
+  v.goTo(condition);
+  v.mark(end);
+  cleanupTemp();
+  final int paramIndex=myMap.leave(parameterDescriptor);
+  v.visitLocalVariable(expression.getLoopParameter().getName(),asmParamType.getDescriptor(),null,condition,end,paramIndex);
+  myBreakTargets.pop();
+  myContinueTargets.pop();
+}
