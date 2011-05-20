@@ -1,34 +1,33 @@
 {
-  final JetUserType constructorType=(JetUserType)expression.getTypeReference().getTypeElement();
+  JetTypeReference typeReference=expression.getTypeReference();
+  final JetUserType constructorType=(JetUserType)typeReference.getTypeElement();
   final JetSimpleNameExpression constructorReference=constructorType.getReferenceExpression();
   DeclarationDescriptor constructorDescriptor=bindingContext.resolveReferenceExpression(constructorReference);
   final PsiElement declaration=bindingContext.getDeclarationPsiElement(constructorDescriptor);
+  Type type;
   if (declaration instanceof PsiMethod) {
-    final PsiMethod constructor=(PsiMethod)declaration;
-    PsiClass javaClass=constructor.getContainingClass();
-    Type type=JetTypeMapper.psiClassType(javaClass);
-    v.anew(type);
-    v.dup();
-    final Method jvmConstructor=getMethodDescriptor(constructor);
-    pushMethodArguments(expression,jvmConstructor);
-    v.invokespecial(JetTypeMapper.jvmName(javaClass),"<init>",jvmConstructor.getDescriptor());
-    myStack.push(StackValue.onStack(type));
-    return;
+    type=generateJavaConstructorCall(expression,(PsiMethod)declaration);
   }
  else   if (constructorDescriptor instanceof ConstructorDescriptor) {
-    ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
-    Type type=JetTypeMapper.jetImplementationType(classDecl);
-    v.anew(type);
-    v.dup();
-    Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
-    pushMethodArguments(expression,method);
-    for (    JetTypeReference typeArgumentReference : constructorType.getTypeArgumentsAsTypes()) {
-      JetType typeArgument=bindingContext.resolveTypeReference(typeArgumentReference);
-      ClassCodegen.newTypeInfo(v,typeMapper.mapType(TypeUtils.makeNullable(typeArgument)));
+    type=typeMapper.mapType(bindingContext.resolveTypeReference(typeReference),OwnerKind.IMPLEMENTATION);
+    if (type.getSort() == Type.ARRAY) {
+      generateNewArray(expression,type);
     }
-    v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
-    myStack.push(StackValue.onStack(type));
-    return;
+ else {
+      v.anew(type);
+      v.dup();
+      Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
+      pushMethodArguments(expression,method);
+      for (      JetTypeReference typeArgumentReference : constructorType.getTypeArgumentsAsTypes()) {
+        JetType typeArgument=bindingContext.resolveTypeReference(typeArgumentReference);
+        ClassCodegen.newTypeInfo(v,typeMapper.mapType(TypeUtils.makeNullable(typeArgument)));
+      }
+      ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
+      v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
+    }
   }
-  throw new UnsupportedOperationException("don't know how to generate this new expression");
+ else {
+    throw new UnsupportedOperationException("don't know how to generate this new expression");
+  }
+  myStack.push(StackValue.onStack(type));
 }
