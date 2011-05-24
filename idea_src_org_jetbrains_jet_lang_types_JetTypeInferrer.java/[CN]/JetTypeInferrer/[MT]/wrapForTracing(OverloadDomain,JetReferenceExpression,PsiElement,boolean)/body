@@ -1,2 +1,47 @@
 {
+  return new OverloadDomain(){
+    @NotNull @Override public OverloadResolutionResult getFunctionDescriptorForNamedArguments(    @NotNull List<JetType> typeArguments,    @NotNull Map<String,JetType> valueArgumentTypes,    @Nullable JetType functionLiteralArgumentType){
+      OverloadResolutionResult resolutionResult=overloadDomain.getFunctionDescriptorForNamedArguments(typeArguments,valueArgumentTypes,functionLiteralArgumentType);
+      report(resolutionResult);
+      return resolutionResult;
+    }
+    @NotNull @Override public OverloadResolutionResult getFunctionDescriptorForPositionedArguments(    @NotNull List<JetType> typeArguments,    @NotNull List<JetType> positionedValueArgumentTypes){
+      OverloadResolutionResult resolutionResult=overloadDomain.getFunctionDescriptorForPositionedArguments(typeArguments,positionedValueArgumentTypes);
+      report(resolutionResult);
+      return resolutionResult;
+    }
+    private void report(    OverloadResolutionResult resolutionResult){
+      if (resolutionResult.isSuccess() || resolutionResult.singleFunction()) {
+        trace.recordReferenceResolution(referenceExpression,resolutionResult.getFunctionDescriptor());
+      }
+      if (reportErrors) {
+switch (resolutionResult.getResultCode()) {
+case NAME_NOT_FOUND:
+          trace.getErrorHandler().unresolvedReference(referenceExpression);
+        break;
+case SINGLE_FUNCTION_ARGUMENT_MISMATCH:
+      if (argumentList != null) {
+        trace.getErrorHandler().genericError(argumentList.getNode(),"Arguments do not match " + DescriptorRenderer.TEXT.render(resolutionResult.getFunctionDescriptor()));
+      }
+ else {
+        trace.getErrorHandler().unresolvedReference(referenceExpression);
+      }
+    break;
+case AMBIGUITY:
+  if (argumentList != null) {
+    trace.getErrorHandler().genericError(argumentList.getNode(),"Overload ambiguity [TODO : more helpful message]");
+  }
+ else {
+    trace.getErrorHandler().unresolvedReference(referenceExpression);
+  }
+break;
+default :
+}
+}
+}
+@Override public boolean isEmpty(){
+return overloadDomain.isEmpty();
+}
+}
+;
 }
