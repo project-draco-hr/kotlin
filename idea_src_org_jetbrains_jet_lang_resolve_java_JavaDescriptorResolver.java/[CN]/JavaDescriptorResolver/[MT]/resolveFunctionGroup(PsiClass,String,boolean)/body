@@ -2,18 +2,24 @@
   WritableFunctionGroup writableFunctionGroup=new WritableFunctionGroup(methodName);
   final Collection<HierarchicalMethodSignature> signatures=psiClass.getVisibleSignatures();
   for (  HierarchicalMethodSignature signature : signatures) {
-    final PsiMethod method=signature.getMethod();
+    PsiMethod method=signature.getMethod();
     if (method.hasModifierProperty(PsiModifier.STATIC) != staticMembers) {
       continue;
     }
     if (!methodName.equals(method.getName())) {
       continue;
     }
-    final PsiParameter[] parameters=method.getParameterList().getParameters();
-    FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(JavaDescriptorResolver.JAVA_ROOT,Collections.<Annotation>emptyList(),methodName);
-    functionDescriptor.initialize(null,resolveTypeParameters(method.getTypeParameters()),semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptor,parameters),semanticServices.getTypeTransformer().transformToType(method.getReturnType()));
-    semanticServices.getTrace().recordDeclarationResolution(method,functionDescriptor);
-    writableFunctionGroup.addFunction(functionDescriptor);
+    FunctionDescriptor functionDescriptor=methodDescriptorCache.get(method);
+    if (functionDescriptor != null) {
+      writableFunctionGroup.addFunction(functionDescriptor);
+      continue;
+    }
+    PsiParameter[] parameters=method.getParameterList().getParameters();
+    FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(JavaDescriptorResolver.JAVA_ROOT,Collections.<Annotation>emptyList(),methodName);
+    functionDescriptorImpl.initialize(null,resolveTypeParameters(method.getTypeParameters()),semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptorImpl,parameters),semanticServices.getTypeTransformer().transformToType(method.getReturnType()));
+    semanticServices.getTrace().recordDeclarationResolution(method,functionDescriptorImpl);
+    writableFunctionGroup.addFunction(functionDescriptorImpl);
+    methodDescriptorCache.put(method,functionDescriptorImpl);
   }
   return writableFunctionGroup;
 }
