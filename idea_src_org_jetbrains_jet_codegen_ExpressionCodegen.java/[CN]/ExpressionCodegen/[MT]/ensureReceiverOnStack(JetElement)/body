@@ -1,7 +1,10 @@
 {
-  if (expression.getParent() instanceof JetDotQualifiedExpression) {
+  if (expression.getParent() instanceof JetDotQualifiedExpression && !isReceiver(expression)) {
     final JetDotQualifiedExpression parent=(JetDotQualifiedExpression)expression.getParent();
     if (!resolvesToClassOrPackage(parent.getReceiverExpression())) {
+      if (myStack.isEmpty()) {
+        throw new IllegalStateException("expected receiver on stack but it's not there: " + parent.getReceiverExpression().getText());
+      }
       myStack.pop().put(JetTypeMapper.TYPE_OBJECT,v);
     }
   }
