@@ -14,15 +14,16 @@
       generateNewArray(expression,type);
     }
  else {
+      ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
       v.anew(type);
       v.dup();
+      pushOuterClassArguments(classDecl);
       Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
       pushMethodArguments(expression,method);
       for (      JetTypeReference typeArgumentReference : constructorType.getTypeArgumentsAsTypes()) {
         JetType typeArgument=bindingContext.resolveTypeReference(typeArgumentReference);
         ClassCodegen.newTypeInfo(v,typeMapper.mapType(TypeUtils.makeNullable(typeArgument)));
       }
-      ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
       v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
     }
   }

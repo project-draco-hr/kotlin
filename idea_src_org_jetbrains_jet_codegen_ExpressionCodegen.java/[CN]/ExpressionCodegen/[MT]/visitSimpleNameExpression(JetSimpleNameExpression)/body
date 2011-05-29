@@ -19,7 +19,7 @@
     final Type fieldType=psiTypeToAsm(psiField.getType());
     final boolean isStatic=psiField.hasModifierProperty(PsiModifier.STATIC);
     if (!isStatic) {
-      ensureReceiverOnStack(expression);
+      ensureReceiverOnStack(expression,null);
     }
     myStack.push(StackValue.field(fieldType,owner,psiField.getName(),isStatic));
   }
@@ -46,7 +46,7 @@
         }
       }
       if (isClass(container,"Array") && propertyDescriptor.getName().equals("size")) {
-        ensureReceiverOnStack(expression);
+        ensureReceiverOnStack(expression,null);
         v.arraylength();
         myStack.push(StackValue.onStack(Type.INT_TYPE));
       }
@@ -55,7 +55,7 @@
         final boolean directToField=expression.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER;
         final StackValue iValue=intermediateValueForProperty(propertyDescriptor,directToField);
         if (!isStatic) {
-          ensureReceiverOnStack(expression);
+          ensureReceiverOnStack(expression,container instanceof ClassDescriptor ? (ClassDescriptor)container : null);
         }
         myStack.push(iValue);
       }

@@ -14,9 +14,26 @@
   ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,null,Type.VOID_TYPE,classDescriptor,kind);
   String classname=typeMapper.jvmName(classDescriptor,kind);
   final Type classType=Type.getType("L" + classname + ";");
+  List<JetDelegationSpecifier> specifiers=aClass.getDelegationSpecifiers();
+  if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
+    String superClass=getSuperClass(aClass,kind);
+    iv.load(0,Type.getType("L" + superClass + ";"));
+    iv.invokespecial(superClass,"<init>","()V");
+  }
+  int index=0;
+  for (  ClassDescriptor outerClassDescriptor : JetTypeMapper.getOuterClassDescriptors(classDescriptor)) {
+    final Type type=JetTypeMapper.jetInterfaceType(outerClassDescriptor);
+    String interfaceDesc=type.getDescriptor();
+    final String fieldName="this$" + index;
+    v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
+    iv.load(0,classType);
+    iv.load(index + 1,type);
+    iv.putfield(classname,fieldName,interfaceDesc);
+    frameMap.enterTemp();
+  }
   if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
     String interfaceDesc=JetTypeMapper.jetInterfaceType(classDescriptor).getDescriptor();
-    v.visitField(Opcodes.ACC_PRIVATE,"$this",interfaceDesc,null,null);
+    v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,"$this",interfaceDesc,null,null);
     iv.load(1,argTypes[0]);
     iv.putfield(classname,"$this",interfaceDesc);
     frameMap.enterTemp();
@@ -34,12 +51,6 @@
         frameMap.enterTemp();
       }
     }
-  }
-  List<JetDelegationSpecifier> specifiers=aClass.getDelegationSpecifiers();
-  if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
-    String superClass=getSuperClass(aClass,kind);
-    iv.load(0,Type.getType("L" + superClass + ";"));
-    iv.invokespecial(superClass,"<init>","()V");
   }
   HashSet<FunctionDescriptor> overriden=new HashSet<FunctionDescriptor>();
   for (  JetDeclaration declaration : aClass.getDeclarations()) {
