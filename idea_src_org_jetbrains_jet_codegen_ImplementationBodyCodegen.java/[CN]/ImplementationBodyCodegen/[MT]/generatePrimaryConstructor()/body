@@ -15,7 +15,14 @@
   final Type classType=Type.getType("L" + classname + ";");
   List<JetDelegationSpecifier> specifiers=myClass.getDelegationSpecifiers();
   if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
-    String superClass=getSuperClass();
+    String superClass="java/lang/Object";
+    if (!specifiers.isEmpty()) {
+      final JetType superType=bindingContext.resolveTypeReference(specifiers.get(0).getTypeReference());
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      if (superClassDescriptor.hasConstructors()) {
+        superClass=getSuperClass();
+      }
+    }
     iv.load(0,Type.getType("L" + superClass + ";"));
     iv.invokespecial(superClass,"<init>","()V");
   }
