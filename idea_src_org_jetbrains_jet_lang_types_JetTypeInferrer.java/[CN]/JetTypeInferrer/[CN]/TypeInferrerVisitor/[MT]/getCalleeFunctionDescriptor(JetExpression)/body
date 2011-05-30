@@ -1,0 +1,31 @@
+{
+  final FunctionDescriptor[] result=new FunctionDescriptor[1];
+  selectorExpression.accept(new JetVisitor(){
+    @Override public void visitCallExpression(    JetCallExpression callExpression){
+      callExpression.getCalleeExpression().accept(this);
+    }
+    @Override public void visitReferenceExpression(    JetReferenceExpression referenceExpression){
+      DeclarationDescriptor declarationDescriptor=trace.getBindingContext().resolveReferenceExpression(referenceExpression);
+      if (declarationDescriptor instanceof FunctionDescriptor) {
+        result[0]=(FunctionDescriptor)declarationDescriptor;
+      }
+    }
+    @Override public void visitArrayAccessExpression(    JetArrayAccessExpression expression){
+      expression.getArrayExpression().accept(this);
+    }
+    @Override public void visitBinaryExpression(    JetBinaryExpression expression){
+      expression.getLeft().accept(this);
+    }
+    @Override public void visitQualifiedExpression(    JetQualifiedExpression expression){
+      expression.getReceiverExpression().accept(this);
+    }
+    @Override public void visitJetElement(    JetElement element){
+      trace.getErrorHandler().genericError(element.getNode(),"Unsupported [getCalleeFunctionDescriptor]: " + element);
+    }
+  }
+);
+  if (result[0] == null) {
+    result[0]=ErrorUtils.createErrorFunction(0,Collections.<JetType>emptyList());
+  }
+  return result[0];
+}

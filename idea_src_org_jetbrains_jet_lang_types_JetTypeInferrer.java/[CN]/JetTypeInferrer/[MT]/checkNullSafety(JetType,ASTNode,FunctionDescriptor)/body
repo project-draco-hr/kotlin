@@ -1,12 +1,14 @@
 {
-  if (receiverType != null) {
+  if (receiverType != null && callee != null) {
     boolean namespaceType=receiverType instanceof NamespaceType;
-    boolean nullable=!namespaceType && receiverType.isNullable();
+    JetType calleeReceiverType=callee.getReceiverType();
+    boolean nullableReceiver=!namespaceType && receiverType.isNullable();
+    boolean calleeForbidsNullableReceiver=calleeReceiverType == null || !calleeReceiverType.isNullable();
     IElementType operationSign=operationTokenNode.getElementType();
-    if (nullable && operationSign == JetTokens.DOT) {
+    if (nullableReceiver && calleeForbidsNullableReceiver && operationSign == JetTokens.DOT) {
       trace.getErrorHandler().genericError(operationTokenNode,"Only safe calls (?.) are allowed on a nullable receiver of type " + receiverType);
     }
- else     if (!nullable && operationSign == JetTokens.SAFE_ACCESS) {
+ else     if ((!nullableReceiver || !calleeForbidsNullableReceiver) && operationSign == JetTokens.SAFE_ACCESS) {
       if (namespaceType) {
         trace.getErrorHandler().genericError(operationTokenNode,"Safe calls are not allowed on namespaces");
       }
