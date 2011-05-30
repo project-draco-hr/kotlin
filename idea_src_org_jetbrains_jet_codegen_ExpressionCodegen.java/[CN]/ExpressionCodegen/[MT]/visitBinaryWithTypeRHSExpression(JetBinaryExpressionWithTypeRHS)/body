@@ -13,22 +13,22 @@
     }
     Type type=typeMapper.mapType(jetType,OwnerKind.INTERFACE);
     gen(expression.getLeft(),OBJECT_TYPE);
-    if (opToken == JetTokens.AS_SAFE) {
-      generateInstanceOf(new Runnable(){
-        @Override public void run(){
-          gen(expression.getLeft(),OBJECT_TYPE);
-        }
+    generateInstanceOf(new Runnable(){
+      @Override public void run(){
+        gen(expression.getLeft(),OBJECT_TYPE);
       }
+    }
 ,jetType,true);
-      Label isInstance=new Label();
-      v.ifne(isInstance);
-      v.pop();
+    Label isInstance=new Label();
+    v.ifne(isInstance);
+    v.pop();
+    if (opToken == JetTokens.AS_SAFE) {
       v.aconst(null);
-      v.mark(isInstance);
-      myStack.push(StackValue.onStack(type));
     }
  else {
-      throw new UnsupportedOperationException("'as' not yet implemented");
+      throwNewException(CLASS_TYPE_CAST_EXCEPTION);
     }
+    v.mark(isInstance);
+    myStack.push(StackValue.onStack(type));
   }
 }
