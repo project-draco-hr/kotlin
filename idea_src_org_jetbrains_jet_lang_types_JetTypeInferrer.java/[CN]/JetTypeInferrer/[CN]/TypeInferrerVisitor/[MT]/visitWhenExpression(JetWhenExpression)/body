@@ -5,7 +5,7 @@
     subjectType=getType(scope,subjectExpression,false);
   }
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
-    final JetType finalSubjectType=subjectType;
+    final JetType finalSubjectType=subjectType != null ? subjectType : ErrorUtils.createErrorType("Unknown type");
     JetWhenCondition condition=whenEntry.getCondition();
     if (condition != null) {
       condition.accept(new JetVisitor(){
@@ -21,12 +21,12 @@
           }
         }
         @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
-          checkNullSafety(finalSubjectType,condition.getOperationTokenNode());
           JetExpression callSuffixExpression=condition.getCallSuffixExpression();
           JetScope compositeScope=new ScopeWithReceiver(scope,finalSubjectType,semanticServices.getTypeChecker());
           if (callSuffixExpression != null) {
             JetType selectorReturnType=getType(compositeScope,callSuffixExpression,false);
             ensureBooleanResultWithCustomSubject(callSuffixExpression,selectorReturnType,"This expression");
+            checkNullSafety(finalSubjectType,condition.getOperationTokenNode(),getCalleeFunctionDescriptor(callSuffixExpression));
           }
         }
         @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
@@ -41,8 +41,8 @@
             checkPatternType(pattern,finalSubjectType);
           }
         }
-        @Override public void visitJetElement(        JetElement elem){
-          trace.getErrorHandler().genericError(elem.getNode(),"Unsupported [JetTypeInferrer] : " + elem);
+        @Override public void visitJetElement(        JetElement element){
+          trace.getErrorHandler().genericError(element.getNode(),"Unsupported [JetTypeInferrer] : " + element);
         }
       }
 );

@@ -10,20 +10,6 @@
     }
     @Override public void visitQualifiedExpression(    JetQualifiedExpression expression){
       trace.getErrorHandler().genericError(expression.getNode(),"Unsupported [JetTypeInferrer]");
-      JetType receiverType=getType(scope,expression.getReceiverExpression(),false);
-      checkNullSafety(receiverType,expression.getOperationTokenNode());
-      JetExpression selectorExpression=expression.getSelectorExpression();
-      if (selectorExpression instanceof JetSimpleNameExpression) {
-        JetSimpleNameExpression referenceExpression=(JetSimpleNameExpression)selectorExpression;
-        String referencedName=referenceExpression.getReferencedName();
-        if (receiverType != null && referencedName != null) {
-          result[0]=semanticServices.getOverloadResolver().getOverloadDomain(receiverType,scope,referencedName);
-          reference[0]=referenceExpression;
-        }
-      }
- else {
-        throw new UnsupportedOperationException();
-      }
     }
     @Override public void visitSimpleNameExpression(    JetSimpleNameExpression expression){
       String referencedName=expression.getReferencedName();
@@ -35,8 +21,8 @@
     @Override public void visitExpression(    JetExpression expression){
       throw new UnsupportedOperationException(expression.getText());
     }
-    @Override public void visitJetElement(    JetElement elem){
-      trace.getErrorHandler().genericError(elem.getNode(),"Unsupported in call element");
+    @Override public void visitJetElement(    JetElement element){
+      trace.getErrorHandler().genericError(element.getNode(),"Unsupported in call element");
     }
   }
 );
