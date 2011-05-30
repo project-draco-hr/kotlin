@@ -1,12 +1,15 @@
 {
   final StackValue value=outerThisExpressions.get(calleeContainingClass);
   if (value != null) {
-    value.put(value.type,v);
+    return value;
   }
  else {
-    v.load(0,JetTypeMapper.TYPE_OBJECT);
     if (calleeContainingClass != null && contextType instanceof ClassDescriptor && calleeContainingClass == contextType.getContainingDeclaration()) {
-      v.getfield(typeMapper.jvmName((ClassDescriptor)contextType,OwnerKind.IMPLEMENTATION),"this$0",typeMapper.jvmType(calleeContainingClass,OwnerKind.IMPLEMENTATION).getDescriptor());
+      v.load(0,JetTypeMapper.TYPE_OBJECT);
+      return StackValue.field(typeMapper.jvmType(calleeContainingClass,OwnerKind.IMPLEMENTATION),typeMapper.jvmName((ClassDescriptor)contextType,OwnerKind.IMPLEMENTATION),"this$0",false);
+    }
+ else {
+      return StackValue.local(0,JetTypeMapper.TYPE_OBJECT);
     }
   }
 }
