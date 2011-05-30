@@ -5,6 +5,9 @@
   final JetExpression bodyExpression=f.getBodyExpression();
   boolean isAbstract=kind == OwnerKind.INTERFACE || bodyExpression == null;
   if (isAbstract)   flags|=Opcodes.ACC_ABSTRACT;
+  if (isAbstract && (kind == OwnerKind.IMPLEMENTATION || kind == OwnerKind.DELEGATING_IMPLEMENTATION)) {
+    return;
+  }
   DeclarationDescriptor contextDescriptor=owner instanceof JetClass ? bindingContext.getClassDescriptor((JetClass)owner) : bindingContext.getNamespaceDescriptor((JetNamespace)owner);
   final MethodVisitor mv=v.visitMethod(flags,jvmSignature.getName(),jvmSignature.getDescriptor(),null,null);
   if (kind != OwnerKind.INTERFACE) {
@@ -31,7 +34,7 @@
       iv.invokeinterface(dk.getOwnerClass(),jvmSignature.getName(),jvmSignature.getDescriptor());
       iv.areturn(jvmSignature.getReturnType());
     }
- else {
+ else     if (!isAbstract) {
       bodyExpression.accept(codegen);
       generateReturn(mv,bodyExpression,codegen,jvmSignature);
     }
