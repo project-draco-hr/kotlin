@@ -6,6 +6,25 @@
     @Override public TextRange getRangeInElement(){
       return new TextRange(0,getElement().getTextLength());
     }
+    @NotNull @Override public Object[] getVariants(){
+      PsiElement parent=getParent();
+      if (parent instanceof JetQualifiedExpression) {
+        JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)parent;
+        JetExpression receiverExpression=qualifiedExpression.getReceiverExpression();
+        JetFile file=(JetFile)getContainingFile();
+        BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
+        final JetType expressionType=bindingContext.getExpressionType(receiverExpression);
+        if (expressionType != null) {
+          return new Object[]{new LookupElement(){
+            @NotNull @Override public String getLookupString(){
+              return expressionType.toString();
+            }
+          }
+};
+        }
+      }
+      return EMPTY_ARRAY;
+    }
   }
 ;
 }
