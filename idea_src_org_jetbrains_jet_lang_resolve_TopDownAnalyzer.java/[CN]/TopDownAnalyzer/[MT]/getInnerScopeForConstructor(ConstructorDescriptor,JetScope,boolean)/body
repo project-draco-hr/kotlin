@@ -1,0 +1,15 @@
+{
+  WritableScope constructorScope=new WritableScopeImpl(declaringScope,declaringScope.getContainingDeclaration(),trace.getErrorHandler());
+  for (  PropertyDescriptor propertyDescriptor : ((MutableClassDescriptor)descriptor.getContainingDeclaration()).getProperties()) {
+    constructorScope.addPropertyDescriptorByFieldName("$" + propertyDescriptor.getName(),propertyDescriptor);
+  }
+  constructorScope.setThisType(descriptor.getContainingDeclaration().getDefaultType());
+  for (  ValueParameterDescriptor valueParameterDescriptor : descriptor.getUnsubstitutedValueParameters()) {
+    JetParameter parameter=(JetParameter)trace.getDeclarationPsiElement(valueParameterDescriptor);
+    if (parameter.getValOrVarNode() == null || !primary) {
+      constructorScope.addVariableDescriptor(valueParameterDescriptor);
+    }
+  }
+  constructorScope.addLabeledDeclaration(descriptor);
+  return constructorScope;
+}
