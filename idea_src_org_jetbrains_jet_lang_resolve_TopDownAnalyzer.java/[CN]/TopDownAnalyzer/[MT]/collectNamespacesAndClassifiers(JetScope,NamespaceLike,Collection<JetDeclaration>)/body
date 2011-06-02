@@ -20,13 +20,24 @@
         collectNamespacesAndClassifiers(namespaceScope,namespaceDescriptor,namespace.getDeclarations());
       }
       @Override public void visitClass(      JetClass klass){
+        visitClassOrObject(klass,(Map)classes,owner,outerScope);
+      }
+      @Override public void visitObjectDeclaration(      JetObjectDeclaration declaration){
+        MutableClassDescriptor mutableClassDescriptor=visitClassOrObject(declaration,(Map)objects,owner,outerScope);
+        ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(mutableClassDescriptor,Collections.<Annotation>emptyList(),true);
+        constructorDescriptor.initialize(Collections.<ValueParameterDescriptor>emptyList());
+        mutableClassDescriptor.setPrimaryConstructor(constructorDescriptor);
+        trace.recordDeclarationResolution(declaration,mutableClassDescriptor);
+      }
+      private MutableClassDescriptor visitClassOrObject(      JetClassOrObject declaration,      Map<JetClassOrObject,MutableClassDescriptor> map,      NamespaceLike owner,      JetScope outerScope){
         MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope);
-        mutableClassDescriptor.setName(JetPsiUtil.safeName(klass.getName()));
+        mutableClassDescriptor.setName(JetPsiUtil.safeName(declaration.getName()));
         owner.addClassifierDescriptor(mutableClassDescriptor);
-        classes.put(klass,mutableClassDescriptor);
-        declaringScopes.put(klass,outerScope);
+        map.put(declaration,mutableClassDescriptor);
+        declaringScopes.put((JetDeclaration)declaration,outerScope);
         JetScope classScope=mutableClassDescriptor.getScopeForMemberResolution();
-        collectNamespacesAndClassifiers(classScope,mutableClassDescriptor,klass.getDeclarations());
+        collectNamespacesAndClassifiers(classScope,mutableClassDescriptor,declaration.getDeclarations());
+        return mutableClassDescriptor;
       }
       @Override public void visitTypedef(      JetTypedef typedef){
         trace.getErrorHandler().genericError(typedef.getNode(),"Unsupported [TopDownAnalyzer]");
