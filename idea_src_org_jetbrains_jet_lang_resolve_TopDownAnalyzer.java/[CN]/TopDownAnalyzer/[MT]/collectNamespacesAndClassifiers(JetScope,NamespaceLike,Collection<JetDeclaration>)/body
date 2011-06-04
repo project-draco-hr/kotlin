@@ -20,21 +20,26 @@
         collectNamespacesAndClassifiers(namespaceScope,namespaceDescriptor,namespace.getDeclarations());
       }
       @Override public void visitClass(      JetClass klass){
-        visitClassOrObject(klass,(Map)classes,owner,outerScope);
+        visitClassOrObject(klass,(Map)classes,owner,outerScope,new MutableClassDescriptor(trace,owner,outerScope));
       }
       @Override public void visitObjectDeclaration(      JetObjectDeclaration declaration){
         createClassDescriptorForObject(declaration);
       }
       private MutableClassDescriptor createClassDescriptorForObject(      @NotNull JetObjectDeclaration declaration){
-        MutableClassDescriptor mutableClassDescriptor=visitClassOrObject(declaration,(Map)objects,owner,outerScope);
+        MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope){
+          @Override public ClassObjectStatus setClassObjectDescriptor(          @NotNull MutableClassDescriptor classObjectDescriptor){
+            return ClassObjectStatus.NOT_ALLOWED;
+          }
+        }
+;
+        visitClassOrObject(declaration,(Map)objects,owner,outerScope,mutableClassDescriptor);
         ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(mutableClassDescriptor,Collections.<Annotation>emptyList(),true);
         constructorDescriptor.initialize(Collections.<ValueParameterDescriptor>emptyList());
         mutableClassDescriptor.setPrimaryConstructor(constructorDescriptor);
         trace.recordDeclarationResolution(declaration,mutableClassDescriptor);
         return mutableClassDescriptor;
       }
-      private MutableClassDescriptor visitClassOrObject(      @NotNull JetClassOrObject declaration,      Map<JetClassOrObject,MutableClassDescriptor> map,      NamespaceLike owner,      JetScope outerScope){
-        MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(trace,owner,outerScope);
+      private void visitClassOrObject(      @NotNull JetClassOrObject declaration,      Map<JetClassOrObject,MutableClassDescriptor> map,      NamespaceLike owner,      JetScope outerScope,      MutableClassDescriptor mutableClassDescriptor){
         mutableClassDescriptor.setName(JetPsiUtil.safeName(declaration.getName()));
         if (declaration instanceof JetClass) {
           owner.addClassifierDescriptor(mutableClassDescriptor);
@@ -43,7 +48,6 @@
         declaringScopes.put((JetDeclaration)declaration,outerScope);
         JetScope classScope=mutableClassDescriptor.getScopeForMemberResolution();
         collectNamespacesAndClassifiers(classScope,mutableClassDescriptor,declaration.getDeclarations());
-        return mutableClassDescriptor;
       }
       @Override public void visitTypedef(      JetTypedef typedef){
         trace.getErrorHandler().genericError(typedef.getNode(),"Unsupported [TopDownAnalyzer]");
@@ -52,9 +56,20 @@
         trace.getErrorHandler().genericError(extension.getNode(),"Unsupported [TopDownAnalyzer]");
       }
       @Override public void visitClassObject(      JetClassObject classObject){
-        owner.setClassObjectDescriptor(createClassDescriptorForObject(classObject.getObjectDeclaration()));
-      }
-    }
-);
+        JetObjectDeclaration objectDeclaration=classObject.getObjectDeclaration();
+        if (objectDeclaration != null) {
+          NamespaceLike.ClassObjectStatus status=owner.setClassObjectDescriptor(createClassDescriptorForObject(objectDeclaration));
+switch (status) {
+case DUPLICATE:
+            trace.getErrorHandler().genericError(classObject.getNode(),"Only one class object is allowed per class");
+          break;
+case NOT_ALLOWED:
+        trace.getErrorHandler().genericError(classObject.getNode(),"A class object is not allowed here");
+      break;
   }
+}
+}
+}
+);
+}
 }
