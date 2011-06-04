@@ -1,8 +1,13 @@
 {
   TopDownAnalyzer topDownAnalyzer=new TopDownAnalyzer(semanticServices,new BindingTraceAdapter(trace){
-    @Override public void recordDeclarationResolution(    @NotNull PsiElement declaration,    @NotNull DeclarationDescriptor descriptor){
+    @Override public void recordDeclarationResolution(    @NotNull PsiElement declaration,    @NotNull final DeclarationDescriptor descriptor){
       if (declaration == expression.getObjectDeclaration()) {
-        JetType defaultType=((ClassDescriptor)descriptor).getDefaultType();
+        JetType defaultType=new DeferredType(new LazyValue<JetType>(){
+          @Override protected JetType compute(){
+            return ((ClassDescriptor)descriptor).getDefaultType();
+          }
+        }
+);
         result=defaultType;
         if (!trace.isProcessed(expression)) {
           recordExpressionType(expression,defaultType);

@@ -1,15 +1,58 @@
 {
   List<JetTypeParameter> typeParameters=jetClass.getTypeParameters();
   List<TypeParameterDescriptor> parameters=classDescriptor.getTypeConstructor().getParameters();
+  Map<String,TypeParameterDescriptor> parameterByName=Maps.newHashMap();
   for (int i=0, typeParametersSize=typeParameters.size(); i < typeParametersSize; i++) {
     JetTypeParameter jetTypeParameter=typeParameters.get(i);
     TypeParameterDescriptor typeParameterDescriptor=parameters.get(i);
+    parameterByName.put(typeParameterDescriptor.getName(),typeParameterDescriptor);
     JetTypeReference extendsBound=jetTypeParameter.getExtendsBound();
     if (extendsBound != null) {
       typeParameterDescriptor.addUpperBound(typeResolverNotCheckingBounds.resolveType(classDescriptor.getScopeForSupertypeResolution(),extendsBound));
     }
  else {
       typeParameterDescriptor.addUpperBound(JetStandardClasses.getDefaultBound());
+    }
+  }
+  for (  JetTypeConstraint constraint : jetClass.getTypeConstaints()) {
+    JetSimpleNameExpression subjectTypeParameterName=constraint.getSubjectTypeParameterName();
+    if (subjectTypeParameterName == null) {
+      continue;
+    }
+    String referencedName=subjectTypeParameterName.getReferencedName();
+    if (referencedName == null) {
+      continue;
+    }
+    TypeParameterDescriptor typeParameterDescriptor=parameterByName.get(referencedName);
+    if (typeParameterDescriptor == null) {
+      ClassifierDescriptor classifier=classDescriptor.getScopeForSupertypeResolution().getClassifier(referencedName);
+      if (classifier != null) {
+        trace.getErrorHandler().genericError(subjectTypeParameterName.getNode(),referencedName + " does not refer to a type parameter of class " + classDescriptor.getName());
+        trace.recordReferenceResolution(subjectTypeParameterName,classifier);
+      }
+ else {
+        trace.getErrorHandler().unresolvedReference(subjectTypeParameterName);
+      }
+    }
+ else {
+      JetTypeReference boundTypeReference=constraint.getBoundTypeReference();
+      if (boundTypeReference != null) {
+        JetType bound=typeResolverNotCheckingBounds.resolveType(classDescriptor.getScopeForSupertypeResolution(),boundTypeReference);
+        if (constraint.isClassObjectContraint()) {
+          typeParameterDescriptor.addClassObjectBound(bound);
+        }
+ else {
+          typeParameterDescriptor.addUpperBound(bound);
+        }
+      }
+    }
+  }
+  for (  TypeParameterDescriptor parameter : parameters) {
+    if (JetStandardClasses.isNothing(parameter.getBoundsAsType())) {
+      PsiElement nameIdentifier=typeParameters.get(parameter.getIndex()).getNameIdentifier();
+      if (nameIdentifier != null) {
+        trace.getErrorHandler().genericError(nameIdentifier.getNode(),"Upper bounds of " + parameter.getName() + " have empty intersection");
+      }
     }
   }
 }
