@@ -1,20 +1,23 @@
 {
-  checkCondition(scope,expression.getCondition());
+  JetExpression condition=expression.getCondition();
+  checkCondition(scope,condition);
   JetExpression elseBranch=expression.getElse();
   JetExpression thenBranch=expression.getThen();
+  DataFlowInfo thenInfo=extractDataFlowInfoFromCondition(condition,true);
+  DataFlowInfo elseInfo=extractDataFlowInfoFromCondition(condition,false);
   if (elseBranch == null) {
     if (thenBranch != null) {
-      getType(scope,thenBranch,true);
+      getType(scope,thenBranch,true,thenInfo);
       result=JetStandardClasses.getUnitType();
     }
   }
  else   if (thenBranch == null) {
-    getType(scope,elseBranch,true);
+    getType(scope,elseBranch,true,elseInfo);
     result=JetStandardClasses.getUnitType();
   }
  else {
-    JetType thenType=getType(scope,thenBranch,true);
-    JetType elseType=getType(scope,elseBranch,true);
+    JetType thenType=getType(scope,thenBranch,true,thenInfo);
+    JetType elseType=getType(scope,elseBranch,true,elseInfo);
     if (thenType == null) {
       result=elseType;
     }
