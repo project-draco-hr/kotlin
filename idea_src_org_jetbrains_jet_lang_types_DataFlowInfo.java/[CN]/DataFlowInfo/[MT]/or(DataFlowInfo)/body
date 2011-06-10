@@ -8,5 +8,15 @@
     assert(otherFlags != null);
     builder.put(variableDescriptor,thisFlags.or(otherFlags));
   }
-  return new DataFlowInfo(ImmutableMap.copyOf(builder));
+  Multimap<VariableDescriptor,JetType> newTypeInfo=copyTypeInfo();
+  Set<VariableDescriptor> keys=newTypeInfo.keySet();
+  keys.retainAll(other.typeInfo.keySet());
+  for (  VariableDescriptor variableDescriptor : keys) {
+    Collection<JetType> thisTypes=typeInfo.get(variableDescriptor);
+    Collection<JetType> otherTypes=other.typeInfo.get(variableDescriptor);
+    Collection<JetType> newTypes=Sets.newHashSet(thisTypes);
+    newTypes.retainAll(otherTypes);
+    newTypeInfo.putAll(variableDescriptor,newTypes);
+  }
+  return new DataFlowInfo(ImmutableMap.copyOf(builder),newTypeInfo);
 }

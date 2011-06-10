@@ -4,6 +4,18 @@
   JetType receiverType=new TypeInferrerVisitorWithNamespaces(scope,false,dataFlowInfo).getType(receiverExpression);
   if (receiverType != null) {
     JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression);
+    if (selectorReturnType == null) {
+      VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(receiverExpression);
+      if (variableDescriptor != null) {
+        Collection<JetType> possibleTypes=dataFlowInfo.getPossibleTypes(variableDescriptor);
+        for (        JetType possibleType : possibleTypes) {
+          selectorReturnType=getSelectorReturnType(possibleType,selectorExpression);
+          if (selectorReturnType != null) {
+            break;
+          }
+        }
+      }
+    }
     if (expression.getOperationSign() == JetTokens.QUEST) {
       if (selectorReturnType != null && !isBoolean(selectorReturnType) && selectorExpression != null) {
         trace.getErrorHandler().typeMismatch(selectorExpression,semanticServices.getStandardLibrary().getBooleanType(),selectorReturnType);

@@ -2,6 +2,16 @@
   if (condition == null)   return dataFlowInfo;
   final DataFlowInfo[] result=new DataFlowInfo[]{dataFlowInfo};
   condition.accept(new JetVisitor(){
+    @Override public void visitIsExpression(    JetIsExpression expression){
+      VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(expression.getLeftHandSide());
+      if (variableDescriptor != null) {
+        JetPattern pattern=expression.getPattern();
+        if (pattern instanceof JetTypePattern) {
+          JetTypePattern jetTypePattern=(JetTypePattern)pattern;
+          result[0]=dataFlowInfo.isInstanceOf(variableDescriptor,trace.getBindingContext().resolveTypeReference(jetTypePattern.getTypeReference()));
+        }
+      }
+    }
     @Override public void visitBinaryExpression(    JetBinaryExpression expression){
       IElementType operationToken=expression.getOperationToken();
       if (operationToken == JetTokens.ANDAND || operationToken == JetTokens.OROR) {

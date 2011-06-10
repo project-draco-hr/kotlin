@@ -1,16 +1,18 @@
 {
-  Map<VariableDescriptor,NullabilityFlags> builder=Maps.newHashMap();
-  builder.putAll(nullabilityInfo);
+  Map<VariableDescriptor,NullabilityFlags> nullabilityMapBuilder=Maps.newHashMap();
+  nullabilityMapBuilder.putAll(nullabilityInfo);
   for (  Map.Entry<VariableDescriptor,NullabilityFlags> entry : other.nullabilityInfo.entrySet()) {
     VariableDescriptor variableDescriptor=entry.getKey();
     NullabilityFlags otherFlags=entry.getValue();
     NullabilityFlags thisFlags=nullabilityInfo.get(variableDescriptor);
     if (thisFlags != null) {
-      builder.put(variableDescriptor,thisFlags.and(otherFlags));
+      nullabilityMapBuilder.put(variableDescriptor,thisFlags.and(otherFlags));
     }
  else {
-      builder.put(variableDescriptor,otherFlags);
+      nullabilityMapBuilder.put(variableDescriptor,otherFlags);
     }
   }
-  return new DataFlowInfo(ImmutableMap.copyOf(builder));
+  Multimap<VariableDescriptor,JetType> newTypeInfo=copyTypeInfo();
+  newTypeInfo.putAll(other.typeInfo);
+  return new DataFlowInfo(ImmutableMap.copyOf(nullabilityMapBuilder),newTypeInfo);
 }
