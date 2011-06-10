@@ -15,7 +15,10 @@
     }
   }
  else   if (thenBranch == null) {
-    getType(scope,elseBranch,true,elseInfo);
+    JetType type=getType(scope,elseBranch,true,elseInfo);
+    if (type != null && JetStandardClasses.isNothing(type)) {
+      resultDataFlowInfo=thenInfo;
+    }
     result=JetStandardClasses.getUnitType();
   }
  else {
@@ -29,6 +32,14 @@
     }
  else {
       result=semanticServices.getTypeChecker().commonSupertype(Arrays.asList(thenType,elseType));
+    }
+    boolean jumpInThen=thenType != null && JetStandardClasses.isNothing(thenType);
+    boolean jumpInElse=elseType != null && JetStandardClasses.isNothing(elseType);
+    if (jumpInThen && !jumpInElse) {
+      resultDataFlowInfo=elseInfo;
+    }
+ else     if (jumpInElse && !jumpInThen) {
+      resultDataFlowInfo=thenInfo;
     }
   }
 }

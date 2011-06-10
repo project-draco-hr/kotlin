@@ -4,13 +4,16 @@
     value(loopRange,false,false);
   }
   Label loopExitPoint=builder.createUnboundLabel();
+  Label conditionEntryPoint=builder.createUnboundLabel();
+  builder.bindLabel(conditionEntryPoint);
   builder.nondeterministicJump(loopExitPoint);
-  Label loopEntryPoint=builder.enterLoop(expression,loopExitPoint);
+  LoopInfo loopInfo=builder.enterLoop(expression,loopExitPoint,conditionEntryPoint);
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
   JetExpression body=expression.getBody();
   if (body != null) {
     value(body,true,false);
   }
-  builder.nondeterministicJump(loopEntryPoint);
+  builder.nondeterministicJump(loopInfo.getEntryPoint());
   builder.exitLoop(expression);
   builder.readUnit(expression);
 }
