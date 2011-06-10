@@ -3,37 +3,52 @@
   condition.accept(new JetVisitor(){
     @Override public void visitBinaryExpression(    JetBinaryExpression expression){
       IElementType operationToken=expression.getOperationToken();
-      if (operationToken != JetTokens.EQEQ && operationToken != JetTokens.EXCLEQ && operationToken != JetTokens.EQEQEQ && operationToken != JetTokens.EXCLEQEQEQ) {
-        return;
+      if (operationToken == JetTokens.ANDAND || operationToken == JetTokens.OROR) {
+        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue);
+        JetExpression expressionRight=expression.getRight();
+        if (expressionRight != null) {
+          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue);
+          DataFlowInfo.CompositionOperator operator;
+          if (operationToken == JetTokens.ANDAND) {
+            operator=conditionValue ? DataFlowInfo.AND : DataFlowInfo.OR;
+          }
+ else {
+            operator=conditionValue ? DataFlowInfo.OR : DataFlowInfo.AND;
+          }
+          dataFlowInfo=operator.compose(dataFlowInfo,rightInfo);
+        }
+        result[0]=dataFlowInfo;
       }
-      JetExpression left=expression.getLeft();
-      JetExpression right=expression.getRight();
-      if (left instanceof JetConstantExpression) {
-        JetExpression tmp=left;
-        left=right;
-        right=tmp;
-      }
-      if (!(left instanceof JetSimpleNameExpression)) {
-        return;
-      }
-      JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)left;
-      DeclarationDescriptor declarationDescriptor=trace.getBindingContext().resolveReferenceExpression(nameExpression);
-      if (!(declarationDescriptor instanceof VariableDescriptor)) {
-        return;
-      }
-      VariableDescriptor variableDescriptor=(VariableDescriptor)declarationDescriptor;
-      if (!(right instanceof JetConstantExpression)) {
-        return;
-      }
-      JetConstantExpression constantExpression=(JetConstantExpression)right;
-      if (constantExpression.getNode().getElementType() != JetNodeTypes.NULL) {
-        return;
-      }
-      if (operationToken == JetTokens.EQEQ || operationToken == JetTokens.EQEQEQ) {
-        result[0]=dataFlowInfo.equalsToNull(variableDescriptor,!conditionValue);
-      }
- else       if (operationToken == JetTokens.EXCLEQ || operationToken == JetTokens.EXCLEQEQEQ) {
-        result[0]=dataFlowInfo.equalsToNull(variableDescriptor,conditionValue);
+ else       if (operationToken == JetTokens.EQEQ || operationToken == JetTokens.EXCLEQ || operationToken == JetTokens.EQEQEQ || operationToken == JetTokens.EXCLEQEQEQ) {
+        JetExpression left=expression.getLeft();
+        JetExpression right=expression.getRight();
+        if (left instanceof JetConstantExpression) {
+          JetExpression tmp=left;
+          left=right;
+          right=tmp;
+        }
+        if (!(left instanceof JetSimpleNameExpression)) {
+          return;
+        }
+        JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)left;
+        DeclarationDescriptor declarationDescriptor=trace.getBindingContext().resolveReferenceExpression(nameExpression);
+        if (!(declarationDescriptor instanceof VariableDescriptor)) {
+          return;
+        }
+        VariableDescriptor variableDescriptor=(VariableDescriptor)declarationDescriptor;
+        if (!(right instanceof JetConstantExpression)) {
+          return;
+        }
+        JetConstantExpression constantExpression=(JetConstantExpression)right;
+        if (constantExpression.getNode().getElementType() != JetNodeTypes.NULL) {
+          return;
+        }
+        if (operationToken == JetTokens.EQEQ || operationToken == JetTokens.EQEQEQ) {
+          result[0]=dataFlowInfo.equalsToNull(variableDescriptor,!conditionValue);
+        }
+ else         if (operationToken == JetTokens.EXCLEQ || operationToken == JetTokens.EXCLEQEQEQ) {
+          result[0]=dataFlowInfo.equalsToNull(variableDescriptor,conditionValue);
+        }
       }
     }
   }
