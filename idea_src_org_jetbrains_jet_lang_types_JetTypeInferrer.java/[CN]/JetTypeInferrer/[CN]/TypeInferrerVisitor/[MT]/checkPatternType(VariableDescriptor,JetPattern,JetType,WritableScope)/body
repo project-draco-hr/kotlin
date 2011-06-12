@@ -1,17 +1,15 @@
 {
+  final DataFlowInfo[] result=new DataFlowInfo[]{dataFlowInfo};
   pattern.accept(new JetVisitor(){
     @Override public void visitTypePattern(    JetTypePattern typePattern){
       JetTypeReference typeReference=typePattern.getTypeReference();
       if (typeReference != null) {
         JetType type=typeResolver.resolveType(scope,typeReference);
         checkTypeCompatibility(type,subjectType,typePattern);
+        if (subjectVariable != null) {
+          result[0]=dataFlowInfo.isInstanceOf(subjectVariable,type);
+        }
       }
-    }
-    @Override public void visitWildcardPattern(    JetWildcardPattern pattern){
-    }
-    @Override public void visitExpressionPattern(    JetExpressionPattern pattern){
-      JetType type=getType(scope,pattern.getExpression(),false);
-      checkTypeCompatibility(type,subjectType,pattern);
     }
     @Override public void visitTuplePattern(    JetTuplePattern pattern){
       List<JetTuplePatternEntry> entries=pattern.getEntries();
@@ -29,14 +27,36 @@
           }
           JetPattern entryPattern=entry.getPattern();
           if (entryPattern != null) {
-            checkPatternType(entryPattern,type);
+            result[0]=checkPatternType(null,entryPattern,type,scopeToExtend);
           }
         }
       }
     }
     @Override public void visitDecomposerPattern(    JetDecomposerPattern pattern){
       JetType selectorReturnType=getSelectorReturnType(subjectType,pattern.getDecomposerExpression());
-      checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType);
+      result[0]=checkPatternType(null,pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,scopeToExtend);
+    }
+    @Override public void visitWildcardPattern(    JetWildcardPattern pattern){
+    }
+    @Override public void visitExpressionPattern(    JetExpressionPattern pattern){
+      JetType type=getType(scope,pattern.getExpression(),false);
+      checkTypeCompatibility(type,subjectType,pattern);
+    }
+    @Override public void visitBindingPattern(    JetBindingPattern pattern){
+      JetProperty variableDeclaration=pattern.getVariableDeclaration();
+      JetTypeReference propertyTypeRef=variableDeclaration.getPropertyTypeRef();
+      JetType type=propertyTypeRef == null ? subjectType : typeResolver.resolveType(scope,propertyTypeRef);
+      VariableDescriptor variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptorWithType(scope.getContainingDeclaration(),variableDeclaration,type);
+      scopeToExtend.addVariableDescriptor(variableDescriptor);
+      if (propertyTypeRef != null) {
+        if (!semanticServices.getTypeChecker().isSubtypeOf(subjectType,type)) {
+          trace.getErrorHandler().genericError(propertyTypeRef.getNode(),type + " must be a supertype of " + subjectType+ ". Use 'is' to match against "+ type);
+        }
+      }
+      JetWhenCondition condition=pattern.getCondition();
+      if (condition != null) {
+        result[0]=checkWhenCondition(null,subjectType,variableDescriptor,condition,scopeToExtend);
+      }
     }
     private void checkTypeCompatibility(    @Nullable JetType type,    @NotNull JetType subjectType,    @NotNull JetElement reportErrorOn){
       if (type == null) {
@@ -51,4 +71,5 @@
     }
   }
 );
+  return result[0];
 }

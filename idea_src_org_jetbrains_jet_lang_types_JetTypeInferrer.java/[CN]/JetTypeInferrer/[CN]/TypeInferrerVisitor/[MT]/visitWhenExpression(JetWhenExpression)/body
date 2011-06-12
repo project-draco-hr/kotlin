@@ -1,59 +1,28 @@
 {
   final JetExpression subjectExpression=expression.getSubjectExpression();
-  JetType subjectType=null;
-  if (subjectExpression != null) {
-    subjectType=getType(scope,subjectExpression,false);
-  }
+  final JetType subjectType=subjectExpression != null ? safeGetType(scope,subjectExpression,false) : ErrorUtils.createErrorType("Unknown type");
+  final VariableDescriptor variableDescriptor=subjectExpression != null ? getVariableDescriptorFromSimpleName(subjectExpression) : null;
+  Set<JetType> expressionTypes=Sets.newHashSet();
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
-    final JetType finalSubjectType=subjectType != null ? subjectType : ErrorUtils.createErrorType("Unknown type");
     JetWhenCondition condition=whenEntry.getCondition();
+    WritableScope scopeToExtend=new WritableScopeImpl(scope,scope.getContainingDeclaration(),trace.getErrorHandler());
+    DataFlowInfo newDataFlowInfo=dataFlowInfo;
     if (condition != null) {
-      condition.accept(new JetVisitor(){
-        @Override public void visitWhenConditionWithExpression(        JetWhenConditionWithExpression condition){
-          JetExpression conditionExpression=condition.getExpression();
-          if (conditionExpression != null) {
-            JetType type=getType(scope,conditionExpression,false);
-            if (type != null && finalSubjectType != null) {
-              if (TypeUtils.intersect(semanticServices.getTypeChecker(),Sets.newHashSet(finalSubjectType,type)) == null) {
-                trace.getErrorHandler().genericError(conditionExpression.getNode(),"This condition can never hold");
-              }
-            }
-          }
-        }
-        @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
-          JetExpression callSuffixExpression=condition.getCallSuffixExpression();
-          JetScope compositeScope=new ScopeWithReceiver(scope,finalSubjectType,semanticServices.getTypeChecker());
-          if (callSuffixExpression != null) {
-            JetType selectorReturnType=getType(compositeScope,callSuffixExpression,false);
-            ensureBooleanResultWithCustomSubject(callSuffixExpression,selectorReturnType,"This expression");
-            checkNullSafety(finalSubjectType,condition.getOperationTokenNode(),getCalleeFunctionDescriptor(callSuffixExpression));
-          }
-        }
-        @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
-          JetExpression rangeExpression=condition.getRangeExpression();
-          if (rangeExpression != null) {
-            checkInExpression(condition.getOperationReference(),subjectExpression,rangeExpression);
-          }
-        }
-        @Override public void visitWhenConditionIsPattern(        JetWhenConditionIsPattern condition){
-          JetPattern pattern=condition.getPattern();
-          if (pattern != null) {
-            checkPatternType(pattern,finalSubjectType);
-          }
-        }
-        @Override public void visitJetElement(        JetElement element){
-          trace.getErrorHandler().genericError(element.getNode(),"Unsupported [JetTypeInferrer] : " + element);
-        }
+      newDataFlowInfo=checkWhenCondition(subjectExpression,subjectType,variableDescriptor,condition,scopeToExtend);
+    }
+    JetWhenExpression subWhen=whenEntry.getSubWhen();
+    JetExpression bodyExpression=subWhen == null ? whenEntry.getExpression() : subWhen;
+    if (bodyExpression != null) {
+      JetType type=getType(scopeToExtend,bodyExpression,false,newDataFlowInfo);
+      if (type != null) {
+        expressionTypes.add(type);
       }
-);
     }
   }
-  List<JetType> expressionTypes=new ArrayList<JetType>();
-  collectAllReturnTypes(expression,scope,expressionTypes);
   if (!expressionTypes.isEmpty()) {
     result=semanticServices.getTypeChecker().commonSupertype(expressionTypes);
   }
- else {
+ else   if (expression.getEntries().isEmpty()) {
     trace.getErrorHandler().genericError(expression.getNode(),"Entries required for when-expression");
   }
 }
