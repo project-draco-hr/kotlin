@@ -3,11 +3,13 @@
   checkCondition(scope,condition);
   JetExpression body=expression.getBody();
   if (body != null) {
-    DataFlowInfo conditionInfo=condition == null ? dataFlowInfo : extractDataFlowInfoFromCondition(condition,true);
-    getType(scope,body,true,conditionInfo);
+    WritableScopeImpl scopeToExtend=newWritableScopeImpl();
+    DataFlowInfo conditionInfo=condition == null ? dataFlowInfo : extractDataFlowInfoFromCondition(condition,true,scopeToExtend);
+    getType(scopeToExtend,body,true,conditionInfo);
   }
   if (!flowInformationProvider.isBreakable(expression)) {
-    resultDataFlowInfo=extractDataFlowInfoFromCondition(condition,false);
+    resultScope=newWritableScopeImpl();
+    resultDataFlowInfo=extractDataFlowInfoFromCondition(condition,false,resultScope);
   }
   result=JetStandardClasses.getUnitType();
 }

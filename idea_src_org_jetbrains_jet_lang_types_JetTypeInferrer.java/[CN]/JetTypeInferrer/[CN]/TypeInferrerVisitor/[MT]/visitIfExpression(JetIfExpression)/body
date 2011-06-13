@@ -3,11 +3,13 @@
   checkCondition(scope,condition);
   JetExpression elseBranch=expression.getElse();
   JetExpression thenBranch=expression.getThen();
-  DataFlowInfo thenInfo=extractDataFlowInfoFromCondition(condition,true);
-  DataFlowInfo elseInfo=extractDataFlowInfoFromCondition(condition,false);
+  WritableScopeImpl thenScope=newWritableScopeImpl();
+  DataFlowInfo thenInfo=extractDataFlowInfoFromCondition(condition,true,thenScope);
+  WritableScopeImpl elseScope=newWritableScopeImpl();
+  DataFlowInfo elseInfo=extractDataFlowInfoFromCondition(condition,false,elseScope);
   if (elseBranch == null) {
     if (thenBranch != null) {
-      JetType type=getType(scope,thenBranch,true,thenInfo);
+      JetType type=getType(thenScope,thenBranch,true,thenInfo);
       if (type != null && JetStandardClasses.isNothing(type)) {
         resultDataFlowInfo=elseInfo;
       }
@@ -15,15 +17,15 @@
     }
   }
  else   if (thenBranch == null) {
-    JetType type=getType(scope,elseBranch,true,elseInfo);
+    JetType type=getType(elseScope,elseBranch,true,elseInfo);
     if (type != null && JetStandardClasses.isNothing(type)) {
       resultDataFlowInfo=thenInfo;
     }
     result=JetStandardClasses.getUnitType();
   }
  else {
-    JetType thenType=getType(scope,thenBranch,true,thenInfo);
-    JetType elseType=getType(scope,elseBranch,true,elseInfo);
+    JetType thenType=getType(thenScope,thenBranch,true,thenInfo);
+    JetType elseType=getType(elseScope,elseBranch,true,elseInfo);
     if (thenType == null) {
       result=elseType;
     }

@@ -4,23 +4,20 @@
   condition.accept(new JetVisitor(){
     @Override public void visitIsExpression(    JetIsExpression expression){
       if (conditionValue) {
-        VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(expression.getLeftHandSide());
-        if (variableDescriptor != null) {
-          JetPattern pattern=expression.getPattern();
-          if (pattern instanceof JetTypePattern) {
-            JetTypePattern jetTypePattern=(JetTypePattern)pattern;
-            result[0]=dataFlowInfo.isInstanceOf(variableDescriptor,trace.getBindingContext().resolveTypeReference(jetTypePattern.getTypeReference()));
-          }
+        JetPattern pattern=expression.getPattern();
+        for (        VariableDescriptor variableDescriptor : patternsToBoundVariableLists.get(pattern)) {
+          scopeToExtend.addVariableDescriptor(variableDescriptor);
         }
+        result[0]=patternsToDataFlowInfo.get(pattern);
       }
     }
     @Override public void visitBinaryExpression(    JetBinaryExpression expression){
       IElementType operationToken=expression.getOperationToken();
       if (operationToken == JetTokens.ANDAND || operationToken == JetTokens.OROR) {
-        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue);
+        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue,scopeToExtend);
         JetExpression expressionRight=expression.getRight();
         if (expressionRight != null) {
-          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue);
+          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue,scopeToExtend);
           DataFlowInfo.CompositionOperator operator;
           if (operationToken == JetTokens.ANDAND) {
             operator=conditionValue ? DataFlowInfo.AND : DataFlowInfo.OR;
@@ -81,7 +78,7 @@
       if (operationTokenType == JetTokens.EXCL) {
         JetExpression baseExpression=expression.getBaseExpression();
         if (baseExpression != null) {
-          result[0]=extractDataFlowInfoFromCondition(baseExpression,!conditionValue);
+          result[0]=extractDataFlowInfoFromCondition(baseExpression,!conditionValue,scopeToExtend);
         }
       }
     }

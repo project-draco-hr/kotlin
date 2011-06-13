@@ -2,7 +2,10 @@
   JetType knownType=getType(scope,expression.getLeftHandSide(),false);
   JetPattern pattern=expression.getPattern();
   if (pattern != null && knownType != null) {
-    checkPatternType(pattern,knownType,new WritableScopeImpl(scope,scope.getContainingDeclaration(),trace.getErrorHandler()));
+    WritableScopeImpl scopeToExtend=newWritableScopeImpl();
+    DataFlowInfo newDataFlowInfo=checkPatternType(pattern,knownType,scopeToExtend,getVariableDescriptorFromSimpleName(expression.getLeftHandSide()));
+    patternsToDataFlowInfo.put(pattern,newDataFlowInfo);
+    patternsToBoundVariableLists.put(pattern,scopeToExtend.getDeclaredVariables());
   }
   result=semanticServices.getStandardLibrary().getBooleanType();
 }

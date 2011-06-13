@@ -4,7 +4,7 @@
   if (body instanceof JetFunctionLiteralExpression) {
     JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
     if (!function.hasParameterSpecification()) {
-      WritableScope writableScope=new WritableScopeImpl(scope,scope.getContainingDeclaration(),trace.getErrorHandler());
+      WritableScope writableScope=newWritableScopeImpl();
       conditionScope=writableScope;
       getBlockReturnedTypeWithWritableScope(writableScope,function.getBody(),dataFlowInfo);
       trace.recordBlock(function);
@@ -14,14 +14,15 @@
     }
   }
  else   if (body != null) {
-    WritableScope writableScope=new WritableScopeImpl(scope,scope.getContainingDeclaration(),trace.getErrorHandler());
+    WritableScope writableScope=newWritableScopeImpl();
     conditionScope=writableScope;
     getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body),dataFlowInfo);
   }
   JetExpression condition=expression.getCondition();
   checkCondition(conditionScope,condition);
   if (!flowInformationProvider.isBreakable(expression)) {
-    resultDataFlowInfo=extractDataFlowInfoFromCondition(condition,false);
+    resultScope=newWritableScopeImpl();
+    resultDataFlowInfo=extractDataFlowInfoFromCondition(condition,false,resultScope);
   }
   result=JetStandardClasses.getUnitType();
 }
