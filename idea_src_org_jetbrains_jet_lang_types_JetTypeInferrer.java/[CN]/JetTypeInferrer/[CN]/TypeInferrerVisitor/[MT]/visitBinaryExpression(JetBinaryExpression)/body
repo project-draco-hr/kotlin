@@ -67,8 +67,10 @@
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
     JetType leftType=getType(scope,left,false);
-    DataFlowInfo flowInfoLeft=extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,newWritableScopeImpl());
-    JetType rightType=right == null ? null : getType(scope,right,false,flowInfoLeft);
+    WritableScopeImpl leftScope=newWritableScopeImpl();
+    DataFlowInfo flowInfoLeft=extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope);
+    WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl();
+    JetType rightType=right == null ? null : getType(rightScope,right,false,flowInfoLeft);
     if (leftType != null && !isBoolean(leftType)) {
       trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
     }
