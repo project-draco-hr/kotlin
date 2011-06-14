@@ -4,7 +4,14 @@
   final BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
   if (element instanceof JetClass) {
     JetClass jetClass=(JetClass)element;
-    return new LineMarkerInfo<JetClass>(jetClass,jetClass.getTextOffset(),Icons.CLASS_ICON,Pass.UPDATE_ALL,new Function<JetClass,String>(){
+    Icon icon=jetClass.hasModifier(JetTokens.ENUM_KEYWORD) ? Icons.ENUM_ICON : Icons.CLASS_ICON;
+    if (jetClass instanceof JetEnumEntry) {
+      JetEnumEntry enumEntry=(JetEnumEntry)jetClass;
+      if (enumEntry.getPrimaryConstructorParameterList() == null) {
+        icon=ICON_FOR_OBJECT;
+      }
+    }
+    return new LineMarkerInfo<JetClass>(jetClass,jetClass.getTextOffset(),icon,Pass.UPDATE_ALL,new Function<JetClass,String>(){
       @Override public String fun(      JetClass jetClass){
         ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(jetClass);
         if (classDescriptor == null) {
