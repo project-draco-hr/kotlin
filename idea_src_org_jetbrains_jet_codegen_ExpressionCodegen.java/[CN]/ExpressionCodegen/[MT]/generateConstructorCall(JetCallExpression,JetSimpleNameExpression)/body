@@ -1,0 +1,31 @@
+{
+  DeclarationDescriptor constructorDescriptor=bindingContext.resolveReferenceExpression(constructorReference);
+  final PsiElement declaration=bindingContext.getDeclarationPsiElement(constructorDescriptor);
+  Type type;
+  if (declaration instanceof PsiMethod) {
+    type=generateJavaConstructorCall(expression,(PsiMethod)declaration);
+  }
+ else   if (constructorDescriptor instanceof ConstructorDescriptor) {
+    type=typeMapper.mapType(bindingContext.getExpressionType(expression),OwnerKind.IMPLEMENTATION);
+    if (type.getSort() == Type.ARRAY) {
+      generateNewArray(expression,type);
+    }
+ else {
+      ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
+      v.anew(type);
+      v.dup();
+      pushOuterClassArguments(classDecl);
+      Method method=typeMapper.mapConstructorSignature((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
+      pushMethodArguments(expression,method);
+      for (      JetTypeProjection jetTypeArgument : expression.getTypeArguments()) {
+        JetType typeArgument=bindingContext.resolveTypeReference(jetTypeArgument.getTypeReference());
+        ClassCodegen.newTypeInfo(v,typeMapper.mapType(TypeUtils.makeNullable(typeArgument)));
+      }
+      v.invokespecial(JetTypeMapper.jvmNameForImplementation(classDecl),"<init>",method.getDescriptor());
+    }
+  }
+ else {
+    throw new UnsupportedOperationException("don't know how to generate this new expression");
+  }
+  myStack.push(StackValue.onStack(type));
+}

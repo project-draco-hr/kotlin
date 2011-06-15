@@ -34,12 +34,17 @@
 );
   }
   WritableFunctionGroup constructors=new WritableFunctionGroup("<init>");
+  classDescriptor.initialize(!open,typeParameters,supertypes,memberDeclarations,constructors,null);
   for (  JetConstructor constructor : classElement.getSecondaryConstructors()) {
-    constructors.addFunction(resolveSecondaryConstructorDescriptor(memberDeclarations,classDescriptor,constructor));
+    ConstructorDescriptorImpl functionDescriptor=resolveSecondaryConstructorDescriptor(memberDeclarations,classDescriptor,constructor);
+    functionDescriptor.setReturnType(classDescriptor.getDefaultType());
+    constructors.addFunction(functionDescriptor);
   }
-  ConstructorDescriptor primaryConstructorDescriptor=resolvePrimaryConstructorDescriptor(scope,classDescriptor,classElement);
+  ConstructorDescriptorImpl primaryConstructorDescriptor=resolvePrimaryConstructorDescriptor(scope,classDescriptor,classElement);
   if (primaryConstructorDescriptor != null) {
+    primaryConstructorDescriptor.setReturnType(classDescriptor.getDefaultType());
     constructors.addFunction(primaryConstructorDescriptor);
+    classDescriptor.setPrimaryConstructor(primaryConstructorDescriptor);
   }
-  return classDescriptor.initialize(!open,typeParameters,supertypes,memberDeclarations,constructors,primaryConstructorDescriptor);
+  return classDescriptor;
 }
