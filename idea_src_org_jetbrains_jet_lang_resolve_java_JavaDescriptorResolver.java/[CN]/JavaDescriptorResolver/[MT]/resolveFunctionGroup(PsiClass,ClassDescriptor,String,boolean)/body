@@ -1,13 +1,7 @@
 {
   WritableFunctionGroup writableFunctionGroup=new WritableFunctionGroup(methodName);
   final Collection<HierarchicalMethodSignature> signatures=psiClass.getVisibleSignatures();
-  TypeSubstitutor typeSubstitutor;
-  if (classDescriptor != null) {
-    typeSubstitutor=TypeUtils.buildDeepSubstitutor(classDescriptor.getDefaultType());
-  }
- else {
-    typeSubstitutor=TypeSubstitutor.EMPTY;
-  }
+  TypeSubstitutor typeSubstitutor=createSubstitutorForGenericSupertypes(classDescriptor);
   for (  HierarchicalMethodSignature signature : signatures) {
     PsiMethod method=signature.getMethod();
     if (method.hasModifierProperty(PsiModifier.STATIC) != staticMembers) {
@@ -16,26 +10,10 @@
     if (!methodName.equals(method.getName())) {
       continue;
     }
-    FunctionDescriptor functionDescriptor=methodDescriptorCache.get(method);
-    if (functionDescriptor != null) {
-      if (method.getContainingClass() != psiClass) {
-        functionDescriptor=functionDescriptor.substitute(typeSubstitutor);
-      }
-      writableFunctionGroup.addFunction(functionDescriptor);
-      continue;
-    }
-    PsiParameter[] parameters=method.getParameterList().getParameters();
-    FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(JavaDescriptorResolver.JAVA_ROOT,Collections.<Annotation>emptyList(),methodName);
-    functionDescriptorImpl.initialize(null,resolveTypeParameters(functionDescriptorImpl,method.getTypeParameters()),semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptorImpl,parameters),semanticServices.getTypeTransformer().transformToType(method.getReturnType()));
-    semanticServices.getTrace().recordDeclarationResolution(method,functionDescriptorImpl);
-    FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
-    if (method.getContainingClass() != psiClass) {
-      substitutedFunctionDescriptor=functionDescriptorImpl.substitute(typeSubstitutor);
-    }
+    FunctionDescriptor substitutedFunctionDescriptor=resolveMethodToFunctionDescriptor(psiClass,typeSubstitutor,method);
     if (substitutedFunctionDescriptor != null) {
       writableFunctionGroup.addFunction(substitutedFunctionDescriptor);
     }
-    methodDescriptorCache.put(method,functionDescriptorImpl);
   }
   return writableFunctionGroup;
 }

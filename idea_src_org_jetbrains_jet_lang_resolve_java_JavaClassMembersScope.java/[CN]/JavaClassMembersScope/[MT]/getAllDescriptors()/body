@@ -1,0 +1,27 @@
+{
+  if (allDescriptors == null) {
+    allDescriptors=Sets.newHashSet();
+    TypeSubstitutor substitutorForGenericSupertypes;
+    if (containingDeclaration instanceof ClassDescriptor) {
+      substitutorForGenericSupertypes=semanticServices.getDescriptorResolver().createSubstitutorForGenericSupertypes((ClassDescriptor)containingDeclaration);
+    }
+ else {
+      substitutorForGenericSupertypes=TypeSubstitutor.EMPTY;
+    }
+    for (    HierarchicalMethodSignature signature : psiClass.getVisibleSignatures()) {
+      PsiMethod method=signature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.STATIC) != staticMembers) {
+        continue;
+      }
+      FunctionDescriptor functionDescriptor=semanticServices.getDescriptorResolver().resolveMethodToFunctionDescriptor(psiClass,substitutorForGenericSupertypes,method);
+      if (functionDescriptor != null) {
+        allDescriptors.add(functionDescriptor);
+      }
+    }
+    for (    PsiField field : psiClass.getAllFields()) {
+      VariableDescriptor variableDescriptor=semanticServices.getDescriptorResolver().resolveFieldToVariableDescriptor(containingDeclaration,field);
+      allDescriptors.add(variableDescriptor);
+    }
+  }
+  return allDescriptors;
+}
