@@ -4,42 +4,15 @@
   final BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
   if (element instanceof JetClass) {
     JetClass jetClass=(JetClass)element;
-    Icon icon=jetClass.hasModifier(JetTokens.ENUM_KEYWORD) ? Icons.ENUM_ICON : Icons.CLASS_ICON;
-    if (jetClass instanceof JetEnumEntry) {
-      JetEnumEntry enumEntry=(JetEnumEntry)jetClass;
-      if (enumEntry.getPrimaryConstructorParameterList() == null) {
-        icon=ICON_FOR_OBJECT;
-      }
-    }
-    return new LineMarkerInfo<JetClass>(jetClass,jetClass.getTextOffset(),icon,Pass.UPDATE_ALL,new Function<JetClass,String>(){
-      @Override public String fun(      JetClass jetClass){
-        ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(jetClass);
-        if (classDescriptor == null) {
-          return "<it>Unresolved</it>";
-        }
-        return DescriptorRenderer.HTML.render(classDescriptor);
-      }
-    }
-,new GutterIconNavigationHandler<JetClass>(){
-      @Override public void navigate(      MouseEvent e,      JetClass elt){
-      }
-    }
-);
+    ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(jetClass);
+    String text=classDescriptor == null ? "<i>Unresolved</i>" : DescriptorRenderer.HTML.render(classDescriptor);
+    return createLineMarkerInfo(jetClass,text);
   }
   if (element instanceof JetProperty) {
     JetProperty jetProperty=(JetProperty)element;
     final VariableDescriptor variableDescriptor=bindingContext.getVariableDescriptor(jetProperty);
     if (variableDescriptor instanceof PropertyDescriptor) {
-      return new LineMarkerInfo<JetProperty>(jetProperty,jetProperty.getTextOffset(),Icons.PROPERTY_ICON,Pass.UPDATE_ALL,new Function<JetProperty,String>(){
-        @Override public String fun(        JetProperty property){
-          return DescriptorRenderer.HTML.render(variableDescriptor);
-        }
-      }
-,new GutterIconNavigationHandler<JetProperty>(){
-        @Override public void navigate(        MouseEvent e,        JetProperty elt){
-        }
-      }
-);
+      return createLineMarkerInfo(element,DescriptorRenderer.HTML.render(variableDescriptor));
     }
   }
   if (element instanceof JetFunction) {
@@ -106,18 +79,7 @@
 );
   }
   if (element instanceof JetNamespace) {
-    JetNamespace jetNamespace=(JetNamespace)element;
-    return new LineMarkerInfo<JetNamespace>(jetNamespace,jetNamespace.getTextOffset(),Icons.PACKAGE_ICON,Pass.UPDATE_ALL,new Function<JetNamespace,String>(){
-      @Override public String fun(      JetNamespace jetNamespace){
-        NamespaceDescriptor namespaceDescriptor=bindingContext.getNamespaceDescriptor(jetNamespace);
-        return DescriptorRenderer.HTML.render(namespaceDescriptor);
-      }
-    }
-,new GutterIconNavigationHandler<JetNamespace>(){
-      @Override public void navigate(      MouseEvent e,      JetNamespace elt){
-      }
-    }
-);
+    return createLineMarkerInfo((JetNamespace)element,DescriptorRenderer.HTML.render(bindingContext.getNamespaceDescriptor((JetNamespace)element)));
   }
   if (element instanceof JetObjectDeclaration && !(element.getParent() instanceof JetExpression)) {
     JetObjectDeclaration jetObjectDeclaration=(JetObjectDeclaration)element;

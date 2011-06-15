@@ -1,3 +1,24 @@
 {
+  if (myElement instanceof JetFile) {
+    JetNamespace rootNamespace=((JetFile)myElement).getRootNamespace();
+    return new TreeElement[]{new JetStructureViewElement((rootNamespace))};
+  }
+ else   if (myElement instanceof JetNamespace) {
+    return wrapDeclarations(((JetNamespace)myElement).getDeclarations());
+  }
+ else   if (myElement instanceof JetClass) {
+    JetClass jetClass=(JetClass)myElement;
+    List<JetDeclaration> declarations=new ArrayList<JetDeclaration>();
+    for (    JetParameter parameter : jetClass.getPrimaryConstructorParameters()) {
+      if (parameter.getValOrVarNode() != null) {
+        declarations.add(parameter);
+      }
+    }
+    declarations.addAll(jetClass.getDeclarations());
+    return wrapDeclarations(declarations);
+  }
+ else   if (myElement instanceof JetClassOrObject) {
+    return wrapDeclarations(((JetClassOrObject)myElement).getDeclarations());
+  }
   return new TreeElement[0];
 }
