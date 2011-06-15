@@ -15,20 +15,15 @@
         BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
         final JetType expressionType=bindingContext.getExpressionType(receiverExpression);
         if (expressionType != null) {
-          List<LookupElement> result=Lists.newArrayList();
-          for (          final DeclarationDescriptor descriptor : expressionType.getMemberScope().getAllDescriptors()) {
-            result.add(new LookupElement(){
-              @NotNull @Override public String getLookupString(){
-                return descriptor.getName();
-              }
-              @Override public void renderElement(              LookupElementPresentation presentation){
-                presentation.setItemText(descriptor.getName());
-                presentation.setTypeText(DescriptorRenderer.TEXT.render(descriptor));
-              }
-            }
-);
-          }
-          return result.toArray();
+          return collectLookupElements(expressionType.getMemberScope());
+        }
+      }
+ else {
+        JetFile file=(JetFile)getContainingFile();
+        BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
+        JetScope resolutionScope=bindingContext.getResolutionScope(JetSimpleNameExpression.this);
+        if (resolutionScope != null) {
+          return collectLookupElements(resolutionScope);
         }
       }
       return EMPTY_ARRAY;
