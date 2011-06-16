@@ -1,7 +1,6 @@
 {
-  BindingContext bindingContext1=AnalyzingUtils.analyzeNamespace(namespace,JetControlFlowDataTraceFactory.EMPTY);
-  AnalyzingUtils.applyHandler(ErrorHandler.THROW_EXCEPTION,bindingContext1);
-  BindingContext bindingContext=bindingContext1;
+  BindingContext bindingContext=AnalyzingUtils.analyzeNamespace(namespace,JetControlFlowDataTraceFactory.EMPTY);
+  AnalyzingUtils.applyHandler(ErrorHandler.THROW_EXCEPTION,bindingContext);
   final JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
   final FunctionCodegen functionCodegen=new FunctionCodegen(namespace,v,standardLibrary,bindingContext);
   final PropertyCodegen propertyCodegen=new PropertyCodegen(v,standardLibrary,bindingContext,functionCodegen);
@@ -23,6 +22,10 @@
     }
  else     if (declaration instanceof JetClassOrObject) {
       classCodegen.generate((JetClassOrObject)declaration);
+    }
+ else     if (declaration instanceof JetNamespace) {
+      JetNamespace childNamespace=(JetNamespace)declaration;
+      codegens.forNamespace(childNamespace).generate(childNamespace);
     }
   }
 }
