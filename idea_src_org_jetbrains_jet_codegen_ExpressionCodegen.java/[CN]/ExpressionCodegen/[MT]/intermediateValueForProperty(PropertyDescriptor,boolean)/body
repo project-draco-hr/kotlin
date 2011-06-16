@@ -1,7 +1,8 @@
 {
-  boolean isStatic=propertyDescriptor.getContainingDeclaration() instanceof NamespaceDescriptorImpl;
+  DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+  boolean isStatic=containingDeclaration instanceof NamespaceDescriptorImpl;
   final JetType outType=propertyDescriptor.getOutType();
-  boolean isInsideClass=propertyDescriptor.getContainingDeclaration() == contextType;
+  boolean isInsideClass=containingDeclaration == contextType;
   Method getter;
   Method setter;
   if (directToField) {
@@ -12,14 +13,15 @@
     getter=isInsideClass && propertyDescriptor.getGetter() == null ? null : typeMapper.mapGetterSignature(propertyDescriptor);
     setter=isInsideClass && propertyDescriptor.getSetter() == null ? null : typeMapper.mapSetterSignature(propertyDescriptor);
   }
-  String fieldOwner;
-  String interfaceOwner;
+  String owner;
+  boolean isInterface;
   if (isInsideClass || isStatic) {
-    fieldOwner=interfaceOwner=typeMapper.getOwner(propertyDescriptor,contextKind);
+    owner=typeMapper.getOwner(propertyDescriptor,contextKind);
+    isInterface=false;
   }
  else {
-    fieldOwner=null;
-    interfaceOwner=typeMapper.getOwner(propertyDescriptor,OwnerKind.INTERFACE);
+    owner=typeMapper.getOwner(propertyDescriptor,OwnerKind.INTERFACE);
+    isInterface=!(containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).isObject());
   }
-  return StackValue.property(propertyDescriptor.getName(),fieldOwner,interfaceOwner,typeMapper.mapType(outType),isStatic,getter,setter);
+  return StackValue.property(propertyDescriptor.getName(),owner,typeMapper.mapType(outType),isStatic,isInterface,getter,setter);
 }

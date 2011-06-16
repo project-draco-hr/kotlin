@@ -1,12 +1,18 @@
 {
-  ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor(myClass);
-  if (constructorDescriptor == null)   return;
-  Method method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+  ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor((JetElement)myClass);
+  if (constructorDescriptor == null && !(myClass instanceof JetObjectDeclaration))   return;
+  Method method;
+  if (myClass instanceof JetObjectDeclaration) {
+    method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
+  }
+ else {
+    method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+  }
   int flags=Opcodes.ACC_PUBLIC;
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
   Type[] argTypes=method.getArgumentTypes();
-  List<ValueParameterDescriptor> paramDescrs=constructorDescriptor.getUnsubstitutedValueParameters();
+  List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getUnsubstitutedValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
   FrameMap frameMap=new FrameMap();
   frameMap.enterTemp();
   final InstructionAdapter iv=new InstructionAdapter(mv);
@@ -126,7 +132,7 @@
   }
   generateInitializers(codegen,iv);
   int curParam=0;
-  List<JetParameter> constructorParameters=myClass.getPrimaryConstructorParameters();
+  List<JetParameter> constructorParameters=getPrimaryConstructorParameters();
   for (  JetParameter parameter : constructorParameters) {
     if (parameter.getValOrVarNode() != null) {
       VariableDescriptor descriptor=paramDescrs.get(curParam);
