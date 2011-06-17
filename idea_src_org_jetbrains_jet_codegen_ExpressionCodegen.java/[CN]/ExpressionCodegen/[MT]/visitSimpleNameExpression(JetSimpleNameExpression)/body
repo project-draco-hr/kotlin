@@ -50,6 +50,11 @@
         v.arraylength();
         myStack.push(StackValue.onStack(Type.INT_TYPE));
       }
+ else       if (declaration instanceof JetObjectDeclarationName) {
+        JetObjectDeclaration objectDeclaration=PsiTreeUtil.getParentOfType(declaration,JetObjectDeclaration.class);
+        ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(objectDeclaration);
+        myStack.push(StackValue.field(typeMapper.jvmType(classDescriptor,OwnerKind.IMPLEMENTATION),typeMapper.jvmName(classDescriptor,OwnerKind.IMPLEMENTATION),"$instance",true));
+      }
  else {
         boolean isStatic=container instanceof NamespaceDescriptorImpl;
         final boolean directToField=expression.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER;
@@ -60,7 +65,7 @@
         myStack.push(iValue);
       }
     }
- else {
+ else     if (!(descriptor instanceof NamespaceDescriptor)) {
       throw new UnsupportedOperationException("don't know how to generate reference " + descriptor);
     }
   }

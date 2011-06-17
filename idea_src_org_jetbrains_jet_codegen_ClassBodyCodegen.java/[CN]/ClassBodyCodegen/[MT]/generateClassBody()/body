@@ -1,5 +1,5 @@
 {
-  final FunctionCodegen functionCodegen=new FunctionCodegen(myClass,v,stdlib,bindingContext);
+  final FunctionCodegen functionCodegen=new FunctionCodegen((JetDeclaration)myClass,v,stdlib,bindingContext);
   final PropertyCodegen propertyCodegen=new PropertyCodegen(v,stdlib,bindingContext,functionCodegen);
   for (  JetDeclaration declaration : myClass.getDeclarations()) {
     if (declaration instanceof JetProperty) {
@@ -14,18 +14,5 @@
       }
     }
   }
-  for (  JetParameter p : myClass.getPrimaryConstructorParameters()) {
-    if (p.getValOrVarNode() != null) {
-      PropertyDescriptor propertyDescriptor=bindingContext.getPropertyDescriptor(p);
-      if (propertyDescriptor != null) {
-        propertyCodegen.generateDefaultGetter(propertyDescriptor,Opcodes.ACC_PUBLIC,kind);
-        if (propertyDescriptor.isVar()) {
-          propertyCodegen.generateDefaultSetter(propertyDescriptor,Opcodes.ACC_PUBLIC,kind);
-        }
-        if (!(kind instanceof OwnerKind.DelegateKind) && kind != OwnerKind.INTERFACE && bindingContext.hasBackingField(propertyDescriptor)) {
-          v.visitField(Opcodes.ACC_PRIVATE,p.getName(),typeMapper.mapType(propertyDescriptor.getOutType()).getDescriptor(),null,null);
-        }
-      }
-    }
-  }
+  generatePrimaryConstructorProperties(propertyCodegen);
 }

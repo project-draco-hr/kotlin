@@ -1,12 +1,23 @@
 {
-  if (descriptor.getTypeConstructor().getParameters().size() > 0) {
+  boolean needTypeInfo=descriptor.getTypeConstructor().getParameters().size() == 0;
+  boolean needInstance=myClass instanceof JetObjectDeclaration;
+  if (!needTypeInfo && !needInstance) {
     return;
   }
   final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,"<clinit>","()V",null,null);
   mv.visitCode();
   InstructionAdapter v=new InstructionAdapter(mv);
-  ClassCodegen.newTypeInfo(v,Type.getObjectType(JetTypeMapper.jvmNameForInterface(descriptor)));
-  v.putstatic(JetTypeMapper.jvmNameForImplementation(descriptor),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+  if (needTypeInfo) {
+    ClassCodegen.newTypeInfo(v,typeMapper.jvmType(descriptor,OwnerKind.INTERFACE));
+    v.putstatic(JetTypeMapper.jvmNameForImplementation(descriptor),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+  }
+  if (needInstance) {
+    String name=jvmName();
+    v.anew(Type.getObjectType(name));
+    v.dup();
+    v.invokespecial(name,"<init>","()V");
+    v.putstatic(name,"$instance",JetTypeMapper.jetImplementationType(descriptor).getDescriptor());
+  }
   mv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);
   mv.visitEnd();
