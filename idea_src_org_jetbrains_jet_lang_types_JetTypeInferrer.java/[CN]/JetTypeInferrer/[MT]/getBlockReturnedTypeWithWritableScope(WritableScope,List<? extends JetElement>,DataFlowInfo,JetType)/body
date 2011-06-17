@@ -1,0 +1,23 @@
+{
+  if (block.isEmpty()) {
+    return JetStandardClasses.getUnitType();
+  }
+  TypeInferrerVisitorWithWritableScope blockLevelVisitor=new TypeInferrerVisitorWithWritableScope(scope,true,dataFlowInfo,null,extectedReturnType);
+  JetType result=null;
+  for (  JetElement statement : block) {
+    trace.recordStatement(statement);
+    JetExpression statementExpression=(JetExpression)statement;
+    result=blockLevelVisitor.getType(statementExpression);
+    DataFlowInfo newDataFlowInfo=blockLevelVisitor.getResultingDataFlowInfo();
+    if (newDataFlowInfo == null) {
+      newDataFlowInfo=dataFlowInfo;
+    }
+    if (newDataFlowInfo != dataFlowInfo) {
+      blockLevelVisitor=new TypeInferrerVisitorWithWritableScope(scope,true,newDataFlowInfo,null,extectedReturnType);
+    }
+ else {
+      blockLevelVisitor.resetResult();
+    }
+  }
+  return result;
+}
