@@ -25,20 +25,33 @@
     advance();
     parseTypeRef();
   }
-  if (at(EQ)) {
-    advance();
-    myExpressionParsing.parseExpression();
-    if (!local) {
-      consumeIf(SEMICOLON);
-    }
- else {
+  if (local) {
+    if (at(EQ)) {
+      advance();
+      myExpressionParsing.parseExpression();
     }
   }
-  if (!local) {
+ else {
+    if (at(EQ)) {
+      advance();
+      myExpressionParsing.parseExpression();
+      consumeIf(SEMICOLON);
+    }
     if (parsePropertyGetterOrSetter()) {
       parsePropertyGetterOrSetter();
     }
-    consumeIf(SEMICOLON);
+    if (!atSet(EOL_OR_SEMICOLON,RBRACE)) {
+      int i=-1;
+      while (-i < myBuilder.getCurrentOffset() && WHITE_SPACE_OR_COMMENT_BIT_SET.contains(myBuilder.rawLookup(i))) {
+        i--;
+      }
+      if (myBuilder.rawLookup(i) != SEMICOLON) {
+        errorUntil("Property getter or setter expected",TokenSet.create(EOL_OR_SEMICOLON));
+      }
+    }
+ else {
+      consumeIf(SEMICOLON);
+    }
   }
   return PROPERTY;
 }
