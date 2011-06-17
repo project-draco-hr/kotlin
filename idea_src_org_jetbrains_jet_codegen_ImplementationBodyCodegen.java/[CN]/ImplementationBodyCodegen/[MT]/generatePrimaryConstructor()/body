@@ -13,8 +13,7 @@
   mv.visitCode();
   Type[] argTypes=method.getArgumentTypes();
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getUnsubstitutedValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
-  FrameMap frameMap=new FrameMap();
-  frameMap.enterTemp();
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(typeMapper,constructorDescriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,typeMapper.jvmType(descriptor,kind)));
   String classname=typeMapper.jvmName(descriptor,kind);
@@ -32,47 +31,29 @@
     iv.load(0,Type.getType("L" + superClass + ";"));
     iv.invokespecial(superClass,"<init>","()V");
   }
-  int index=1;
   final DeclarationDescriptor outerDescriptor=descriptor.getContainingDeclaration();
   if (outerDescriptor instanceof ClassDescriptor) {
     final ClassDescriptor outerClassDescriptor=(ClassDescriptor)outerDescriptor;
     final Type type=JetTypeMapper.jetImplementationType(outerClassDescriptor);
-    codegen.addOuterThis(outerClassDescriptor,StackValue.local(1,type));
+    codegen.addOuterThis(outerClassDescriptor,StackValue.local(frameMap.getOuterThisIndex(),type));
     String interfaceDesc=type.getDescriptor();
     final String fieldName="this$0";
     v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
     iv.load(0,classType);
-    iv.load(index,type);
+    iv.load(frameMap.getOuterThisIndex(),type);
     iv.putfield(classname,fieldName,interfaceDesc);
-    frameMap.enterTemp();
-    index++;
   }
   if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
     String interfaceDesc=JetTypeMapper.jetInterfaceType(descriptor).getDescriptor();
     v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,"$this",interfaceDesc,null,null);
     iv.load(0,classType);
-    iv.load(index,argTypes[0]);
+    iv.load(frameMap.getDelegateThisIndex(),argTypes[0]);
     iv.putfield(classname,"$this",interfaceDesc);
-    frameMap.enterTemp();
   }
-  for (int i=0; i < paramDescrs.size(); i++) {
-    ValueParameterDescriptor parameter=paramDescrs.get(i);
-    frameMap.enter(parameter,argTypes[i].getSize());
-  }
-  int firstTypeParameter=-1;
-  int typeParamCount=descriptor.getTypeConstructor().getParameters().size();
-  if (kind == OwnerKind.IMPLEMENTATION) {
-    if (typeParamCount > 0) {
-      firstTypeParameter=frameMap.enterTemp();
-      for (int i=1; i < typeParamCount; i++) {
-        frameMap.enterTemp();
-      }
-    }
-  }
-  HashSet<FunctionDescriptor> overriden=new HashSet<FunctionDescriptor>();
+  HashSet<FunctionDescriptor> overridden=new HashSet<FunctionDescriptor>();
   for (  JetDeclaration declaration : myClass.getDeclarations()) {
     if (declaration instanceof JetFunction) {
-      overriden.addAll(bindingContext.getFunctionDescriptor((JetFunction)declaration).getOverriddenFunctions());
+      overridden.addAll(bindingContext.getFunctionDescriptor((JetFunction)declaration).getOverriddenFunctions());
     }
   }
   int n=0;
@@ -82,34 +63,8 @@
       iv.load(0,classType);
     }
     if (specifier instanceof JetDelegatorToSuperCall) {
-      JetDelegatorToSuperCall superCall=(JetDelegatorToSuperCall)specifier;
-      ConstructorDescriptor constructorDescriptor1=bindingContext.resolveSuperConstructor(superCall);
-      ClassDescriptor classDecl=constructorDescriptor1.getContainingDeclaration();
-      boolean isDelegating=kind == OwnerKind.DELEGATING_IMPLEMENTATION;
-      Type type=isDelegating ? JetTypeMapper.jetDelegatingImplementationType(classDecl) : JetTypeMapper.jetImplementationType(classDecl);
-      if (n > 0) {
-        if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
-          codegen.thisToStack();
-        }
-      }
-      if (n == 0) {
-        iv.load(0,type);
-      }
- else {
-        iv.anew(type);
-        iv.dup();
-      }
-      if (classDecl.getContainingDeclaration() instanceof ClassDescriptor) {
-        iv.load(1,typeMapper.jvmType((ClassDescriptor)descriptor.getContainingDeclaration(),OwnerKind.IMPLEMENTATION));
-      }
-      Method method1=typeMapper.mapConstructorSignature(constructorDescriptor1,kind);
-      final Type[] argTypes1=method1.getArgumentTypes();
-      List<JetArgument> args=superCall.getValueArguments();
-      for (int i=0, argsSize=args.size(); i < argsSize; i++) {
-        JetArgument arg=args.get(i);
-        codegen.gen(arg.getArgumentExpression(),argTypes1[i]);
-      }
-      iv.invokespecial(type.getInternalName(),"<init>",method1.getDescriptor());
+      ConstructorDescriptor constructorDescriptor1=bindingContext.resolveSuperConstructor((JetDelegatorToSuperCall)specifier);
+      generateDelegatorToConstructorCall(iv,codegen,(JetDelegatorToSuperCall)specifier,constructorDescriptor1,n == 0,frameMap);
     }
  else     if (specifier instanceof JetDelegatorByExpressionSpecifier) {
       codegen.genToJVMStack(((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression());
@@ -123,12 +78,12 @@
       v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
       JetClass superClass=(JetClass)bindingContext.getDeclarationPsiElement(superClassDescriptor);
-      generateDelegates(myClass,superClass,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)),overriden);
+      generateDelegates(myClass,superClass,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)),overridden);
     }
     n++;
   }
-  if (firstTypeParameter > 0 && kind == OwnerKind.IMPLEMENTATION) {
-    generateTypeInfoInitializer(firstTypeParameter,typeParamCount,iv);
+  if (frameMap.getFirstTypeParameter() > 0 && kind == OwnerKind.IMPLEMENTATION) {
+    generateTypeInfoInitializer(frameMap.getFirstTypeParameter(),frameMap.getTypeParameterCount(),iv);
   }
   generateInitializers(codegen,iv);
   int curParam=0;
@@ -143,7 +98,7 @@
     }
     curParam++;
   }
-  iv.visitInsn(Opcodes.RETURN);
+  mv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);
   mv.visitEnd();
 }

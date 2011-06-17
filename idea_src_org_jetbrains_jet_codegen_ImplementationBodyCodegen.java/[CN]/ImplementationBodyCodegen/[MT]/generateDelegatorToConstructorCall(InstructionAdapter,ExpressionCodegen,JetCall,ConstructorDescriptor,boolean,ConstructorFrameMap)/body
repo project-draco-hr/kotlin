@@ -1,0 +1,31 @@
+{
+  ClassDescriptor classDecl=constructorDescriptor.getContainingDeclaration();
+  boolean isDelegating=kind == OwnerKind.DELEGATING_IMPLEMENTATION;
+  Type type=isDelegating ? JetTypeMapper.jetDelegatingImplementationType(classDecl) : JetTypeMapper.jetImplementationType(classDecl);
+  if (!isJavaSuperclass) {
+    if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
+      codegen.thisToStack();
+    }
+  }
+  if (isJavaSuperclass) {
+    iv.load(0,type);
+  }
+ else {
+    iv.anew(type);
+    iv.dup();
+  }
+  if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
+    iv.load(frameMap.getDelegateThisIndex(),typeMapper.jvmType(classDecl,OwnerKind.INTERFACE));
+  }
+  if (classDecl.getContainingDeclaration() instanceof ClassDescriptor) {
+    iv.load(frameMap.getOuterThisIndex(),typeMapper.jvmType((ClassDescriptor)descriptor.getContainingDeclaration(),OwnerKind.IMPLEMENTATION));
+  }
+  Method method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+  List<ValueParameterDescriptor> valueParameters=constructorDescriptor.getUnsubstitutedValueParameters();
+  List<JetArgument> args=constructorCall.getValueArguments();
+  for (int i=0, argsSize=args.size(); i < argsSize; i++) {
+    JetArgument arg=args.get(i);
+    codegen.gen(arg.getArgumentExpression(),typeMapper.mapType(valueParameters.get(i).getOutType()));
+  }
+  iv.invokespecial(type.getInternalName(),"<init>",method.getDescriptor());
+}
