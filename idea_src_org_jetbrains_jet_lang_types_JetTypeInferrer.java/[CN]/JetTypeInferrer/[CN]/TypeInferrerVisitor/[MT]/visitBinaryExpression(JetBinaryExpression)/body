@@ -67,10 +67,10 @@
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
     JetType leftType=getType(scope,left,false);
-    WritableScopeImpl leftScope=newWritableScopeImpl();
+    WritableScopeImpl leftScope=newWritableScopeImpl().setDebugName("Left scope of && or ||");
     DataFlowInfo flowInfoLeft=extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope);
-    WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl();
-    JetType rightType=right == null ? null : getType(rightScope,right,false,flowInfoLeft);
+    WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl().setDebugName("Right scope of && or ||");
+    JetType rightType=right == null ? null : getTypeWithNewDataFlowInfo(rightScope,right,false,flowInfoLeft);
     if (leftType != null && !isBoolean(leftType)) {
       trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
     }

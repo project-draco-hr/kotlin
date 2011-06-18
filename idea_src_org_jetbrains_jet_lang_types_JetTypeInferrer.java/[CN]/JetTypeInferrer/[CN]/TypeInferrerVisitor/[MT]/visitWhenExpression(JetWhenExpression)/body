@@ -1,11 +1,11 @@
 {
   final JetExpression subjectExpression=expression.getSubjectExpression();
-  final JetType subjectType=subjectExpression != null ? safeGetType(scope,subjectExpression,false,null) : ErrorUtils.createErrorType("Unknown type");
+  final JetType subjectType=subjectExpression != null ? safeGetType(scope,subjectExpression,false,NO_EXPECTED_TYPE) : ErrorUtils.createErrorType("Unknown type");
   final VariableDescriptor variableDescriptor=subjectExpression != null ? getVariableDescriptorFromSimpleName(subjectExpression) : null;
   Set<JetType> expressionTypes=Sets.newHashSet();
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
     JetWhenCondition condition=whenEntry.getCondition();
-    WritableScope scopeToExtend=newWritableScopeImpl();
+    WritableScope scopeToExtend=newWritableScopeImpl().setDebugName("Scope extended in when entry");
     DataFlowInfo newDataFlowInfo=dataFlowInfo;
     if (condition != null) {
       newDataFlowInfo=checkWhenCondition(subjectExpression,subjectType,condition,scopeToExtend,variableDescriptor);
@@ -13,7 +13,7 @@
     JetWhenExpression subWhen=whenEntry.getSubWhen();
     JetExpression bodyExpression=subWhen == null ? whenEntry.getExpression() : subWhen;
     if (bodyExpression != null) {
-      JetType type=getType(scopeToExtend,bodyExpression,true,newDataFlowInfo);
+      JetType type=getTypeWithNewDataFlowInfo(scopeToExtend,bodyExpression,true,newDataFlowInfo);
       if (type != null) {
         expressionTypes.add(type);
       }

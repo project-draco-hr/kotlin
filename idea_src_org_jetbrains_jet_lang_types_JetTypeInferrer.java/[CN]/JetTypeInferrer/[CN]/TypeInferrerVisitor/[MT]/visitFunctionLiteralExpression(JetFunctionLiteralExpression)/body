@@ -1,7 +1,7 @@
 {
   if (preferBlock && !expression.hasParameterSpecification()) {
     trace.recordBlock(expression);
-    result=getBlockReturnedType(scope,expression.getBody(),dataFlowInfo,extectedReturnType);
+    result=getBlockReturnedType(scope,expression.getBody(),dataFlowInfo,expectedReturnType);
     return;
   }
   JetTypeReference receiverTypeRef=expression.getReceiverTypeRef();
@@ -40,12 +40,12 @@
     returnType=typeResolver.resolveType(scope,returnTypeRef);
   }
  else {
-    WritableScope writableScope=new WritableScopeImpl(scope,functionDescriptor,trace.getErrorHandler());
+    WritableScope writableScope=new WritableScopeImpl(scope,functionDescriptor,trace.getErrorHandler()).setDebugName("Inner scope of a function literal");
     for (    VariableDescriptor variableDescriptor : valueParameterDescriptors) {
       writableScope.addVariableDescriptor(variableDescriptor);
     }
     writableScope.setThisType(receiverType);
-    returnType=getBlockReturnedType(writableScope,expression.getBody(),dataFlowInfo,extectedReturnType);
+    returnType=getBlockReturnedType(writableScope,expression.getBody(),dataFlowInfo,expectedReturnType);
   }
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
