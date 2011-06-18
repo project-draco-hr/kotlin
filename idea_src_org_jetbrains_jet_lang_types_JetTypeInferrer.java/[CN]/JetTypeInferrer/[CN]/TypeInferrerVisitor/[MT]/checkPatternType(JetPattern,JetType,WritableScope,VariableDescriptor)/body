@@ -1,19 +1,19 @@
 {
-  final DataFlowInfo[] result=new DataFlowInfo[]{dataFlowInfo};
+  final DataFlowInfo[] result=new DataFlowInfo[]{context.dataFlowInfo};
   pattern.accept(new JetVisitor(){
     @Override public void visitTypePattern(    JetTypePattern typePattern){
       JetTypeReference typeReference=typePattern.getTypeReference();
       if (typeReference != null) {
-        JetType type=typeResolver.resolveType(scope,typeReference);
+        JetType type=context.typeResolver.resolveType(context.scope,typeReference);
         checkTypeCompatibility(type,subjectType,typePattern);
-        result[0]=dataFlowInfo.isInstanceOf(subjectVariables,type);
+        result[0]=context.dataFlowInfo.isInstanceOf(subjectVariables,type);
       }
     }
     @Override public void visitTuplePattern(    JetTuplePattern pattern){
       List<JetTuplePatternEntry> entries=pattern.getEntries();
       TypeConstructor typeConstructor=subjectType.getConstructor();
       if (!JetStandardClasses.getTuple(entries.size()).getTypeConstructor().equals(typeConstructor) || typeConstructor.getParameters().size() != entries.size()) {
-        trace.getErrorHandler().genericError(pattern.getNode(),"Type mismatch: subject is of type " + subjectType + " but the pattern is of type Tuple"+ entries.size());
+        context.trace.getErrorHandler().genericError(pattern.getNode(),"Type mismatch: subject is of type " + subjectType + " but the pattern is of type Tuple"+ entries.size());
       }
  else {
         for (int i=0, entriesSize=entries.size(); i < entriesSize; i++) {
@@ -21,7 +21,7 @@
           JetType type=subjectType.getArguments().get(i).getType();
           ASTNode nameLabelNode=entry.getNameLabelNode();
           if (nameLabelNode != null) {
-            trace.getErrorHandler().genericError(nameLabelNode,"Unsupported [JetTypeInferrer]");
+            context.trace.getErrorHandler().genericError(nameLabelNode,"Unsupported [JetTypeInferrer]");
           }
           JetPattern entryPattern=entry.getPattern();
           if (entryPattern != null) {
@@ -43,12 +43,12 @@
     @Override public void visitBindingPattern(    JetBindingPattern pattern){
       JetProperty variableDeclaration=pattern.getVariableDeclaration();
       JetTypeReference propertyTypeRef=variableDeclaration.getPropertyTypeRef();
-      JetType type=propertyTypeRef == null ? subjectType : typeResolver.resolveType(scope,propertyTypeRef);
-      VariableDescriptor variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptorWithType(scope.getContainingDeclaration(),variableDeclaration,type);
+      JetType type=propertyTypeRef == null ? subjectType : context.typeResolver.resolveType(context.scope,propertyTypeRef);
+      VariableDescriptor variableDescriptor=context.classDescriptorResolver.resolveLocalVariableDescriptorWithType(context.scope.getContainingDeclaration(),variableDeclaration,type);
       scopeToExtend.addVariableDescriptor(variableDescriptor);
       if (propertyTypeRef != null) {
         if (!semanticServices.getTypeChecker().isSubtypeOf(subjectType,type)) {
-          trace.getErrorHandler().genericError(propertyTypeRef.getNode(),type + " must be a supertype of " + subjectType+ ". Use 'is' to match against "+ type);
+          context.trace.getErrorHandler().genericError(propertyTypeRef.getNode(),type + " must be a supertype of " + subjectType+ ". Use 'is' to match against "+ type);
         }
       }
       JetWhenCondition condition=pattern.getCondition();
@@ -65,11 +65,11 @@
         return;
       }
       if (TypeUtils.intersect(semanticServices.getTypeChecker(),Sets.newHashSet(type,subjectType)) == null) {
-        trace.getErrorHandler().genericError(reportErrorOn.getNode(),"Incompatible types: " + type + " and "+ subjectType);
+        context.trace.getErrorHandler().genericError(reportErrorOn.getNode(),"Incompatible types: " + type + " and "+ subjectType);
       }
     }
     @Override public void visitJetElement(    JetElement element){
-      trace.getErrorHandler().genericError(element.getNode(),"Unsupported [JetTypeInferrer]");
+      context.trace.getErrorHandler().genericError(element.getNode(),"Unsupported [JetTypeInferrer]");
     }
   }
 );

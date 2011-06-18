@@ -1,21 +1,21 @@
 {
-  OverloadResolutionResult iteratorResolutionResult=resolveNoParametersFunction(type,scope,"iterator");
+  OverloadResolutionResult iteratorResolutionResult=services.resolveNoParametersFunction(type,context.scope,"iterator");
   if (iteratorResolutionResult.isSuccess()) {
     JetType iteratorType=iteratorResolutionResult.getFunctionDescriptor().getUnsubstitutedReturnType();
     boolean hasNextFunctionSupported=checkHasNextFunctionSupport(reportErrorsOn,iteratorType);
     boolean hasNextPropertySupported=checkHasNextPropertySupport(reportErrorsOn,iteratorType);
     if (hasNextFunctionSupported && hasNextPropertySupported && !ErrorUtils.isErrorType(iteratorType)) {
-      trace.getErrorHandler().genericError(reportErrorsOn,"An ambiguity between 'iterator().hasNext()' function and 'iterator().hasNext()' property");
+      context.trace.getErrorHandler().genericError(reportErrorsOn,"An ambiguity between 'iterator().hasNext()' function and 'iterator().hasNext()' property");
     }
  else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
-      trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().hasNext()' function or an 'iterator().hasNext' property");
+      context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().hasNext()' function or an 'iterator().hasNext' property");
     }
-    OverloadResolutionResult nextResolutionResult=resolveNoParametersFunction(iteratorType,scope,"next");
+    OverloadResolutionResult nextResolutionResult=services.resolveNoParametersFunction(iteratorType,context.scope,"next");
     if (nextResolutionResult.isAmbiguity()) {
-      trace.getErrorHandler().genericError(reportErrorsOn,"Method 'iterator().next()' is ambiguous for this expression");
+      context.trace.getErrorHandler().genericError(reportErrorsOn,"Method 'iterator().next()' is ambiguous for this expression");
     }
  else     if (nextResolutionResult.isNothing()) {
-      trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
+      context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
     }
  else {
       return nextResolutionResult.getFunctionDescriptor().getUnsubstitutedReturnType();
@@ -26,7 +26,7 @@
     if (iteratorResolutionResult.isAmbiguity()) {
       errorMessage="Method 'iterator()' is ambiguous for this expression";
     }
-    trace.getErrorHandler().genericError(reportErrorsOn,errorMessage);
+    context.trace.getErrorHandler().genericError(reportErrorsOn,errorMessage);
   }
   return null;
 }

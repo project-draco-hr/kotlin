@@ -3,7 +3,7 @@
   JetExpression loopRange=expression.getLoopRange();
   JetType loopRangeType=null;
   if (loopRange != null) {
-    loopRangeType=getType(scope,loopRange,false);
+    loopRangeType=getType(context.scope,loopRange,false);
   }
   JetType expectedParameterType=null;
   if (loopRangeType != null) {
@@ -14,17 +14,17 @@
     JetTypeReference typeReference=loopParameter.getTypeReference();
     VariableDescriptor variableDescriptor;
     if (typeReference != null) {
-      variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptor(scope.getContainingDeclaration(),scope,loopParameter);
+      variableDescriptor=context.classDescriptorResolver.resolveLocalVariableDescriptor(context.scope.getContainingDeclaration(),context.scope,loopParameter);
       JetType actualParameterType=variableDescriptor.getOutType();
       if (expectedParameterType != null && actualParameterType != null && !semanticServices.getTypeChecker().isSubtypeOf(expectedParameterType,actualParameterType)) {
-        trace.getErrorHandler().genericError(typeReference.getNode(),"The loop iterates over values of type " + expectedParameterType + " but the parameter is declared to be "+ actualParameterType);
+        context.trace.getErrorHandler().genericError(typeReference.getNode(),"The loop iterates over values of type " + expectedParameterType + " but the parameter is declared to be "+ actualParameterType);
       }
     }
  else {
       if (expectedParameterType == null) {
         expectedParameterType=ErrorUtils.createErrorType("Error");
       }
-      variableDescriptor=classDescriptorResolver.resolveLocalVariableDescriptor(scope.getContainingDeclaration(),loopParameter,expectedParameterType);
+      variableDescriptor=context.classDescriptorResolver.resolveLocalVariableDescriptor(context.scope.getContainingDeclaration(),loopParameter,expectedParameterType);
     }
     loopScope.addVariableDescriptor(variableDescriptor);
   }

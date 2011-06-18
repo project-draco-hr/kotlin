@@ -11,12 +11,12 @@
   IElementType operationType=operationSign.getReferencedNameElementType();
   String name=unaryOperationNames.get(operationType);
   if (name == null) {
-    trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown unary operation");
+    context.trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown unary operation");
   }
  else {
-    JetType receiverType=getType(scope,baseExpression,false);
+    JetType receiverType=getType(context.scope,baseExpression,false);
     if (receiverType != null) {
-      FunctionDescriptor functionDescriptor=lookupFunction(scope,expression.getOperationSign(),name,receiverType,Collections.<JetType>emptyList(),true);
+      FunctionDescriptor functionDescriptor=services.lookupFunction(context.scope,expression.getOperationSign(),name,receiverType,Collections.<JetType>emptyList(),true);
       if (functionDescriptor != null) {
         JetType returnType=functionDescriptor.getUnsubstitutedReturnType();
         if (operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) {
@@ -25,7 +25,7 @@
           }
  else {
             if (!semanticServices.getTypeChecker().isSubtypeOf(returnType,receiverType)) {
-              trace.getErrorHandler().genericError(operationSign.getNode(),name + " must return " + receiverType+ " but returns "+ returnType);
+              context.trace.getErrorHandler().genericError(operationSign.getNode(),name + " must return " + receiverType+ " but returns "+ returnType);
             }
             result=receiverType;
           }

@@ -1,18 +1,18 @@
 {
-  if (preferBlock && !expression.hasParameterSpecification()) {
-    trace.recordBlock(expression);
-    result=getBlockReturnedType(scope,expression.getBody(),dataFlowInfo,expectedReturnType);
+  if (context.preferBlock && !expression.hasParameterSpecification()) {
+    context.trace.recordBlock(expression);
+    result=getBlockReturnedType(context.scope,expression.getBody(),context.dataFlowInfo,context.expectedReturnType);
     return;
   }
   JetTypeReference receiverTypeRef=expression.getReceiverTypeRef();
   final JetType receiverType;
   if (receiverTypeRef != null) {
-    receiverType=typeResolver.resolveType(scope,receiverTypeRef);
+    receiverType=context.typeResolver.resolveType(context.scope,receiverTypeRef);
   }
  else {
-    receiverType=scope.getThisType();
+    receiverType=context.scope.getThisType();
   }
-  FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(scope.getContainingDeclaration(),Collections.<Annotation>emptyList(),"<anonymous>");
+  FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(context.scope.getContainingDeclaration(),Collections.<Annotation>emptyList(),"<anonymous>");
   List<JetType> parameterTypes=new ArrayList<JetType>();
   List<ValueParameterDescriptor> valueParameterDescriptors=Lists.newArrayList();
   List<JetParameter> parameters=expression.getParameters();
@@ -21,31 +21,31 @@
     JetTypeReference typeReference=parameter.getTypeReference();
     JetType type;
     if (typeReference != null) {
-      type=typeResolver.resolveType(scope,typeReference);
+      type=context.typeResolver.resolveType(context.scope,typeReference);
     }
  else {
-      trace.getErrorHandler().genericError(parameter.getNode(),"Type inference for parameters is not implemented yet");
+      context.trace.getErrorHandler().genericError(parameter.getNode(),"Type inference for parameters is not implemented yet");
       type=ErrorUtils.createErrorType("Not inferred");
     }
-    ValueParameterDescriptor valueParameterDescriptor=classDescriptorResolver.resolveValueParameterDescriptor(functionDescriptor,parameter,i,type);
+    ValueParameterDescriptor valueParameterDescriptor=context.classDescriptorResolver.resolveValueParameterDescriptor(functionDescriptor,parameter,i,type);
     parameterTypes.add(valueParameterDescriptor.getOutType());
     valueParameterDescriptors.add(valueParameterDescriptor);
   }
   JetType effectiveReceiverType=receiverTypeRef == null ? null : receiverType;
   functionDescriptor.initialize(effectiveReceiverType,Collections.<TypeParameterDescriptor>emptyList(),valueParameterDescriptors,null);
-  trace.recordDeclarationResolution(expression,functionDescriptor);
+  context.trace.recordDeclarationResolution(expression,functionDescriptor);
   JetTypeReference returnTypeRef=expression.getReturnTypeRef();
   JetType returnType;
   if (returnTypeRef != null) {
-    returnType=typeResolver.resolveType(scope,returnTypeRef);
+    returnType=context.typeResolver.resolveType(context.scope,returnTypeRef);
   }
  else {
-    WritableScope writableScope=new WritableScopeImpl(scope,functionDescriptor,trace.getErrorHandler()).setDebugName("Inner scope of a function literal");
+    WritableScope writableScope=new WritableScopeImpl(context.scope,functionDescriptor,context.trace.getErrorHandler()).setDebugName("Inner scope of a function literal");
     for (    VariableDescriptor variableDescriptor : valueParameterDescriptors) {
       writableScope.addVariableDescriptor(variableDescriptor);
     }
     writableScope.setThisType(receiverType);
-    returnType=getBlockReturnedType(writableScope,expression.getBody(),dataFlowInfo,expectedReturnType);
+    returnType=getBlockReturnedType(writableScope,expression.getBody(),context.dataFlowInfo,context.expectedReturnType);
   }
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);

@@ -1,22 +1,22 @@
 {
   JetExpression body=expression.getBody();
-  JetScope conditionScope=scope;
+  JetScope conditionScope=context.scope;
   if (body instanceof JetFunctionLiteralExpression) {
     JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
     if (!function.hasParameterSpecification()) {
       WritableScope writableScope=newWritableScopeImpl().setDebugName("do..while body scope");
       conditionScope=writableScope;
-      getBlockReturnedTypeWithWritableScope(writableScope,function.getBody(),dataFlowInfo,expectedReturnType);
-      trace.recordBlock(function);
+      services.getBlockReturnedTypeWithWritableScope(writableScope,function.getBody(),context.dataFlowInfo,context.expectedReturnType);
+      context.trace.recordBlock(function);
     }
  else {
-      getType(scope,body,true);
+      getType(context.scope,body,true);
     }
   }
  else   if (body != null) {
     WritableScope writableScope=newWritableScopeImpl().setDebugName("do..while body scope");
     conditionScope=writableScope;
-    getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body),dataFlowInfo,expectedReturnType);
+    services.getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body),context.dataFlowInfo,context.expectedReturnType);
   }
   JetExpression condition=expression.getCondition();
   checkCondition(conditionScope,condition);

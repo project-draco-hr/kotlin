@@ -1,12 +1,12 @@
 {
   final JetExpression subjectExpression=expression.getSubjectExpression();
-  final JetType subjectType=subjectExpression != null ? safeGetType(scope,subjectExpression,false,NO_EXPECTED_TYPE) : ErrorUtils.createErrorType("Unknown type");
+  final JetType subjectType=subjectExpression != null ? services.safeGetType(context.scope,subjectExpression,false,NO_EXPECTED_TYPE) : ErrorUtils.createErrorType("Unknown type");
   final VariableDescriptor variableDescriptor=subjectExpression != null ? getVariableDescriptorFromSimpleName(subjectExpression) : null;
   Set<JetType> expressionTypes=Sets.newHashSet();
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
     JetWhenCondition condition=whenEntry.getCondition();
     WritableScope scopeToExtend=newWritableScopeImpl().setDebugName("Scope extended in when entry");
-    DataFlowInfo newDataFlowInfo=dataFlowInfo;
+    DataFlowInfo newDataFlowInfo=context.dataFlowInfo;
     if (condition != null) {
       newDataFlowInfo=checkWhenCondition(subjectExpression,subjectType,condition,scopeToExtend,variableDescriptor);
     }
@@ -23,6 +23,6 @@
     result=semanticServices.getTypeChecker().commonSupertype(expressionTypes);
   }
  else   if (expression.getEntries().isEmpty()) {
-    trace.getErrorHandler().genericError(expression.getNode(),"Entries required for when-expression");
+    context.trace.getErrorHandler().genericError(expression.getNode(),"Entries required for when-expression");
   }
 }

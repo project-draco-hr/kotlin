@@ -6,11 +6,11 @@
   if (operationType == JetTokens.IDENTIFIER) {
     String referencedName=operationSign.getReferencedName();
     if (referencedName != null) {
-      result=getTypeForBinaryCall(expression,referencedName,scope,true);
+      result=getTypeForBinaryCall(expression,referencedName,context.scope,true);
     }
   }
  else   if (binaryOperationNames.containsKey(operationType)) {
-    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),scope,true);
+    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),context.scope,true);
   }
  else   if (operationType == JetTokens.EQ) {
     visitAssignment(expression);
@@ -19,7 +19,7 @@
     visitAssignmentOperation(expression);
   }
  else   if (comparisonOperations.contains(operationType)) {
-    JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",scope,true);
+    JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",context.scope,true);
     if (compareToReturnType != null) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
       JetStandardLibrary standardLibrary=semanticServices.getStandardLibrary();
@@ -28,25 +28,25 @@
         result=standardLibrary.getBooleanType();
       }
  else {
-        trace.getErrorHandler().genericError(operationSign.getNode(),"compareTo must return Int, but returns " + compareToReturnType);
+        context.trace.getErrorHandler().genericError(operationSign.getNode(),"compareTo must return Int, but returns " + compareToReturnType);
       }
     }
   }
  else   if (equalsOperations.contains(operationType)) {
     String name="equals";
     if (right != null) {
-      JetType leftType=getType(scope,left,false);
+      JetType leftType=getType(context.scope,left,false);
       if (leftType != null) {
-        JetType rightType=getType(scope,right,false);
+        JetType rightType=getType(context.scope,right,false);
         if (rightType != null) {
-          FunctionDescriptor equals=lookupFunction(scope,operationSign,"equals",leftType,Collections.singletonList(JetStandardClasses.getNullableAnyType()),false);
+          FunctionDescriptor equals=services.lookupFunction(context.scope,operationSign,"equals",leftType,Collections.singletonList(JetStandardClasses.getNullableAnyType()),false);
           if (equals != null) {
             if (ensureBooleanResult(operationSign,name,equals.getUnsubstitutedReturnType())) {
               ensureNonemptyIntersectionOfOperandTypes(expression);
             }
           }
  else {
-            trace.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
+            context.trace.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
           }
         }
       }
@@ -66,25 +66,25 @@
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
-    JetType leftType=getType(scope,left,false);
+    JetType leftType=getType(context.scope,left,false);
     WritableScopeImpl leftScope=newWritableScopeImpl().setDebugName("Left scope of && or ||");
     DataFlowInfo flowInfoLeft=extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope);
     WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl().setDebugName("Right scope of && or ||");
     JetType rightType=right == null ? null : getTypeWithNewDataFlowInfo(rightScope,right,false,flowInfoLeft);
     if (leftType != null && !isBoolean(leftType)) {
-      trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
+      context.trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
     }
     if (rightType != null && !isBoolean(rightType)) {
-      trace.getErrorHandler().typeMismatch(right,semanticServices.getStandardLibrary().getBooleanType(),rightType);
+      context.trace.getErrorHandler().typeMismatch(right,semanticServices.getStandardLibrary().getBooleanType(),rightType);
     }
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ELVIS) {
-    JetType leftType=getType(scope,left,false);
-    JetType rightType=right == null ? null : getType(scope,right,false);
+    JetType leftType=getType(context.scope,left,false);
+    JetType rightType=right == null ? null : getType(context.scope,right,false);
     if (leftType != null) {
       if (!leftType.isNullable()) {
-        trace.getErrorHandler().genericWarning(left.getNode(),"Elvis operator (?:) is always returns the left operand of non-nullable type " + leftType);
+        context.trace.getErrorHandler().genericWarning(left.getNode(),"Elvis operator (?:) is always returns the left operand of non-nullable type " + leftType);
       }
       if (rightType != null) {
         result=TypeUtils.makeNullableAsSpecified(semanticServices.getTypeChecker().commonSupertype(leftType,rightType),rightType.isNullable());
@@ -92,6 +92,6 @@
     }
   }
  else {
-    trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown operation");
+    context.trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown operation");
   }
 }

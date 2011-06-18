@@ -1,6 +1,6 @@
 {
-  if (condition == null)   return dataFlowInfo;
-  final DataFlowInfo[] result=new DataFlowInfo[]{dataFlowInfo};
+  if (condition == null)   return context.dataFlowInfo;
+  final DataFlowInfo[] result=new DataFlowInfo[]{context.dataFlowInfo};
   condition.accept(new JetVisitor(){
     @Override public void visitIsExpression(    JetIsExpression expression){
       if (conditionValue) {
@@ -51,14 +51,14 @@
           }
         }
         VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(left);
-        JetType rhsType=trace.getBindingContext().getExpressionType(right);
+        JetType rhsType=context.trace.getBindingContext().getExpressionType(right);
         if (rhsType != null && !rhsType.isNullable()) {
           extendDataFlowWithNullComparison(operationToken,variableDescriptor,!conditionValue);
           return;
         }
         VariableDescriptor rightVariable=getVariableDescriptorFromSimpleName(right);
         if (rightVariable != null) {
-          JetType lhsType=trace.getBindingContext().getExpressionType(left);
+          JetType lhsType=context.trace.getBindingContext().getExpressionType(left);
           if (lhsType != null && !lhsType.isNullable()) {
             extendDataFlowWithNullComparison(operationToken,rightVariable,!conditionValue);
             return;
@@ -76,10 +76,10 @@
     }
     private void extendDataFlowWithNullComparison(    IElementType operationToken,    VariableDescriptor variableDescriptor,    boolean equalsToNull){
       if (operationToken == JetTokens.EQEQ || operationToken == JetTokens.EQEQEQ) {
-        result[0]=dataFlowInfo.equalsToNull(variableDescriptor,!equalsToNull);
+        result[0]=context.dataFlowInfo.equalsToNull(variableDescriptor,!equalsToNull);
       }
  else       if (operationToken == JetTokens.EXCLEQ || operationToken == JetTokens.EXCLEQEQEQ) {
-        result[0]=dataFlowInfo.equalsToNull(variableDescriptor,equalsToNull);
+        result[0]=context.dataFlowInfo.equalsToNull(variableDescriptor,equalsToNull);
       }
     }
     @Override public void visitUnaryExpression(    JetUnaryExpression expression){

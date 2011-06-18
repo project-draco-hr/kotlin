@@ -1,9 +1,9 @@
 {
   JetExpression selectorExpression=expression.getSelectorExpression();
   JetExpression receiverExpression=expression.getReceiverExpression();
-  JetType receiverType=new TypeInferrerVisitorWithNamespaces(scope,false,dataFlowInfo,NO_EXPECTED_TYPE,null).getType(receiverExpression);
+  JetType receiverType=new TypeInferrerVisitorWithNamespaces(new TypeInferenceContext(context.trace,context.scope,false,context.dataFlowInfo,NO_EXPECTED_TYPE,null)).getType(receiverExpression);
   if (receiverType != null) {
-    ErrorHandlerWithRegions errorHandler=trace.getErrorHandler();
+    ErrorHandlerWithRegions errorHandler=context.trace.getErrorHandler();
     errorHandler.openRegion();
     JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression);
     if (selectorReturnType != null) {
@@ -13,14 +13,14 @@
       ErrorHandlerWithRegions.DiagnosticsRegion regionToCommit=errorHandler.closeAndReturnCurrentRegion();
       VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(receiverExpression);
       if (variableDescriptor != null) {
-        List<JetType> possibleTypes=Lists.newArrayList(dataFlowInfo.getPossibleTypes(variableDescriptor));
+        List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
         Collections.reverse(possibleTypes);
         for (        JetType possibleType : possibleTypes) {
           errorHandler.openRegion();
           selectorReturnType=getSelectorReturnType(possibleType,selectorExpression);
           if (selectorReturnType != null) {
             regionToCommit=errorHandler.closeAndReturnCurrentRegion();
-            trace.recordAutoCast(receiverExpression,possibleType);
+            context.trace.recordAutoCast(receiverExpression,possibleType);
             break;
           }
  else {
@@ -40,12 +40,12 @@
       result=selectorReturnType;
     }
     if (selectorExpression != null && result != null) {
-      trace.recordExpressionType(selectorExpression,result);
+      context.trace.recordExpressionType(selectorExpression,result);
     }
     if (selectorReturnType != null) {
       if (selectorExpression != null) {
         receiverType=enrichOutType(receiverExpression,receiverType);
-        checkNullSafety(receiverType,expression.getOperationTokenNode(),getCalleeFunctionDescriptor(selectorExpression));
+        services.checkNullSafety(receiverType,expression.getOperationTokenNode(),getCalleeFunctionDescriptor(selectorExpression));
       }
     }
   }

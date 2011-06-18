@@ -1,21 +1,21 @@
 {
-  if (expectedReturnType == FORBIDDEN) {
-    trace.getErrorHandler().genericError(expression.getNode(),"'return' is not allowed here");
+  if (context.expectedReturnType == FORBIDDEN) {
+    context.trace.getErrorHandler().genericError(expression.getNode(),"'return' is not allowed here");
     return;
   }
   JetExpression returnedExpression=expression.getReturnedExpression();
   JetType returnedType=JetStandardClasses.getUnitType();
   if (returnedExpression != null) {
-    returnedType=getType(scope,returnedExpression,false);
+    returnedType=getType(context.scope,returnedExpression,false);
   }
  else {
-    if (expectedReturnType != null && !JetStandardClasses.isUnit(expectedReturnType)) {
-      trace.getErrorHandler().genericError(expression.getNode(),"This function must return a value of type " + expectedReturnType);
+    if (context.expectedReturnType != null && !JetStandardClasses.isUnit(context.expectedReturnType)) {
+      context.trace.getErrorHandler().genericError(expression.getNode(),"This function must return a value of type " + context.expectedReturnType);
     }
   }
-  if (expectedReturnType != null && returnedType != null) {
-    if (!semanticServices.getTypeChecker().isSubtypeOf(returnedType,expectedReturnType)) {
-      trace.getErrorHandler().typeMismatch(returnedExpression == null ? expression : returnedExpression,expectedReturnType,returnedType);
+  if (context.expectedReturnType != null && returnedType != null) {
+    if (!semanticServices.getTypeChecker().isSubtypeOf(returnedType,context.expectedReturnType)) {
+      context.trace.getErrorHandler().typeMismatch(returnedExpression == null ? expression : returnedExpression,context.expectedReturnType,returnedType);
     }
   }
   result=JetStandardClasses.getNothingType();

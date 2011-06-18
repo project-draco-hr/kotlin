@@ -1,12 +1,12 @@
 {
   IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
-  JetType actualType=getType(scope,expression.getLeft(),false);
+  JetType actualType=getType(context.scope,expression.getLeft(),false);
   JetTypeReference right=expression.getRight();
   if (right != null) {
-    JetType targetType=typeResolver.resolveType(scope,right);
+    JetType targetType=context.typeResolver.resolveType(context.scope,right);
     if (operationType == JetTokens.COLON) {
       if (actualType != null && !semanticServices.getTypeChecker().isSubtypeOf(actualType,targetType)) {
-        trace.getErrorHandler().typeMismatch(expression.getLeft(),targetType,actualType);
+        context.trace.getErrorHandler().typeMismatch(expression.getLeft(),targetType,actualType);
       }
       result=targetType;
     }
@@ -19,7 +19,7 @@
       result=TypeUtils.makeNullable(targetType);
     }
  else {
-      trace.getErrorHandler().genericError(expression.getOperationSign().getNode(),"Unsupported binary operation");
+      context.trace.getErrorHandler().genericError(expression.getOperationSign().getNode(),"Unsupported binary operation");
     }
   }
 }
