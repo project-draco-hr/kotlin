@@ -1,5 +1,6 @@
 {
   final Method bridge=erasedInvokeSignature(funDescriptor);
+  final Method delegate=invokeSignature(funDescriptor);
   final MethodVisitor mv=cv.visitMethod(Opcodes.ACC_PUBLIC,"invoke",bridge.getDescriptor(),typeMapper.genericSignature(funDescriptor),new String[0]);
   mv.visitCode();
   InstructionAdapter iv=new InstructionAdapter(mv);
@@ -11,7 +12,8 @@
     iv.checkcast(typeMapper.mapType(param.getOutType()));
     count++;
   }
-  iv.invokespecial(className,"invoke",invokeSignature(funDescriptor).getDescriptor());
+  iv.invokespecial(className,"invoke",delegate.getDescriptor());
+  StackValue.onStack(delegate.getReturnType()).put(JetTypeMapper.TYPE_OBJECT,iv);
   iv.areturn(JetTypeMapper.TYPE_OBJECT);
   mv.visitMaxs(0,0);
   mv.visitEnd();
