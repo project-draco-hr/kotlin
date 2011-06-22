@@ -17,11 +17,12 @@
         }
       }
       PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(funDescriptor);
+      final FunctionDescriptor fd=(FunctionDescriptor)funDescriptor;
       if (declarationPsiElement == null && isClass(functionParent,"String")) {
         final Project project=expression.getProject();
         PsiClass jlString=JavaPsiFacade.getInstance(project).findClass("java.lang.String",ProjectScope.getAllScope(project));
         final PsiMethod[] methods=jlString.findMethodsByName(funDescriptor.getName(),false);
-        final int arity=((FunctionDescriptor)funDescriptor).getUnsubstitutedValueParameters().size();
+        final int arity=fd.getUnsubstitutedValueParameters().size();
         for (        PsiMethod method : methods) {
           if (method.getParameterList().getParametersCount() == arity) {
             declarationPsiElement=method;
@@ -52,7 +53,7 @@
         pushMethodArguments(expression,methodDescriptor);
         v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKEVIRTUAL,owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
       }
- else {
+ else       if (declarationPsiElement instanceof JetFunction) {
         final JetFunction jetFunction=(JetFunction)declarationPsiElement;
         methodDescriptor=typeMapper.mapSignature(jetFunction);
         if (functionParent instanceof NamespaceDescriptorImpl) {
@@ -73,8 +74,22 @@
           throw new UnsupportedOperationException("don't know how to generate call to " + declarationPsiElement);
         }
       }
+ else {
+        gen(callee,Type.getObjectType(ClosureCodegen.getInternalClassName(fd)));
+        boolean isExtensionFunction=fd.getReceiverType() != null;
+        int paramCount=fd.getUnsubstitutedValueParameters().size();
+        if (isExtensionFunction) {
+          ensureReceiverOnStack(expression,null);
+          paramCount++;
+        }
+        methodDescriptor=ClosureCodegen.erasedInvokeSignature(fd);
+        pushMethodArguments(expression,methodDescriptor);
+        v.invokevirtual(ClosureCodegen.getInternalClassName(fd),"invoke",methodDescriptor.getDescriptor());
+      }
       if (methodDescriptor.getReturnType() != Type.VOID_TYPE) {
-        myStack.push(StackValue.onStack(methodDescriptor.getReturnType()));
+        final Type retType=typeMapper.mapType(fd.getUnsubstitutedReturnType());
+        StackValue.onStack(methodDescriptor.getReturnType()).put(retType,v);
+        myStack.push(StackValue.onStack(retType));
       }
     }
  else {
