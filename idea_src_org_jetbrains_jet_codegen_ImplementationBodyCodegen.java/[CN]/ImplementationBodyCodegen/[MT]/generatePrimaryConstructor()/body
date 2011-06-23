@@ -1,28 +1,28 @@
 {
-  ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor((JetElement)myClass);
+  ConstructorDescriptor constructorDescriptor=state.getBindingContext().getConstructorDescriptor((JetElement)myClass);
   if (constructorDescriptor == null && !(myClass instanceof JetObjectDeclaration))   return;
   Method method;
   if (myClass instanceof JetObjectDeclaration) {
     method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
   }
  else {
-    method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+    method=state.getTypeMapper().mapConstructorSignature(constructorDescriptor,kind);
   }
   int flags=Opcodes.ACC_PUBLIC;
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
   Type[] argTypes=method.getArgumentTypes();
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getUnsubstitutedValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
-  ConstructorFrameMap frameMap=new ConstructorFrameMap(typeMapper,constructorDescriptor,kind);
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(state.getTypeMapper(),constructorDescriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
-  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,typeMapper.jvmType(descriptor,kind)),factory);
-  String classname=typeMapper.jvmName(descriptor,kind);
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,state.getTypeMapper().jvmType(descriptor,kind)),state);
+  String classname=state.getTypeMapper().jvmName(descriptor,kind);
   final Type classType=Type.getType("L" + classname + ";");
   List<JetDelegationSpecifier> specifiers=myClass.getDelegationSpecifiers();
   if (specifiers.isEmpty() || !(specifiers.get(0) instanceof JetDelegatorToSuperCall)) {
     String superClass="java/lang/Object";
     if (!specifiers.isEmpty()) {
-      final JetType superType=bindingContext.resolveTypeReference(specifiers.get(0).getTypeReference());
+      final JetType superType=state.getBindingContext().resolveTypeReference(specifiers.get(0).getTypeReference());
       ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
       if (superClassDescriptor.hasConstructors()) {
         superClass=getSuperClass();
@@ -53,7 +53,7 @@
   HashSet<FunctionDescriptor> overridden=new HashSet<FunctionDescriptor>();
   for (  JetDeclaration declaration : myClass.getDeclarations()) {
     if (declaration instanceof JetFunction) {
-      overridden.addAll(bindingContext.getFunctionDescriptor((JetFunction)declaration).getOverriddenFunctions());
+      overridden.addAll(state.getBindingContext().getFunctionDescriptor((JetFunction)declaration).getOverriddenFunctions());
     }
   }
   int n=0;
@@ -63,21 +63,21 @@
       iv.load(0,classType);
     }
     if (specifier instanceof JetDelegatorToSuperCall) {
-      ConstructorDescriptor constructorDescriptor1=bindingContext.resolveSuperConstructor((JetDelegatorToSuperCall)specifier);
+      ConstructorDescriptor constructorDescriptor1=state.getBindingContext().resolveSuperConstructor((JetDelegatorToSuperCall)specifier);
       generateDelegatorToConstructorCall(iv,codegen,(JetDelegatorToSuperCall)specifier,constructorDescriptor1,n == 0,frameMap);
     }
  else     if (specifier instanceof JetDelegatorByExpressionSpecifier) {
       codegen.genToJVMStack(((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression());
     }
     if (delegateOnStack) {
-      JetType superType=bindingContext.resolveTypeReference(specifier.getTypeReference());
+      JetType superType=state.getBindingContext().resolveTypeReference(specifier.getTypeReference());
       ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
       String delegateField="$delegate_" + n;
       Type fieldType=JetTypeMapper.jetInterfaceType(superClassDescriptor);
       String fieldDesc=fieldType.getDescriptor();
       v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
-      JetClass superClass=(JetClass)bindingContext.getDeclarationPsiElement(superClassDescriptor);
+      JetClass superClass=(JetClass)state.getBindingContext().getDeclarationPsiElement(superClassDescriptor);
       generateDelegates(myClass,superClass,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)),overridden);
     }
     n++;
@@ -91,7 +91,7 @@
   for (  JetParameter parameter : constructorParameters) {
     if (parameter.getValOrVarNode() != null) {
       VariableDescriptor descriptor=paramDescrs.get(curParam);
-      Type type=typeMapper.mapType(descriptor.getOutType());
+      Type type=state.getTypeMapper().mapType(descriptor.getOutType());
       iv.load(0,classType);
       iv.load(frameMap.getIndex(descriptor),type);
       iv.putfield(classname,descriptor.getName(),type.getDescriptor());

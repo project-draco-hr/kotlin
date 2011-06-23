@@ -1,3 +1,29 @@
 {
-  generate(namespace,AnalyzingUtils.analyzeNamespace(namespace,JetControlFlowDataTraceFactory.EMPTY));
+  final JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
+  final FunctionCodegen functionCodegen=new FunctionCodegen(namespace,v,state);
+  final PropertyCodegen propertyCodegen=new PropertyCodegen(v,functionCodegen,state);
+  final ClassCodegen classCodegen=state.forClass();
+  if (hasNonConstantPropertyInitializers(namespace)) {
+    generateStaticInitializers(namespace);
+  }
+  for (  JetDeclaration declaration : namespace.getDeclarations()) {
+    if (declaration instanceof JetProperty) {
+      propertyCodegen.gen((JetProperty)declaration,OwnerKind.NAMESPACE);
+    }
+ else     if (declaration instanceof JetFunction) {
+      try {
+        functionCodegen.gen((JetFunction)declaration,OwnerKind.NAMESPACE);
+      }
+ catch (      Exception e) {
+        throw new RuntimeException("Failed to generate function " + declaration.getName(),e);
+      }
+    }
+ else     if (declaration instanceof JetClassOrObject) {
+      classCodegen.generate((JetClassOrObject)declaration);
+    }
+ else     if (declaration instanceof JetNamespace) {
+      JetNamespace childNamespace=(JetNamespace)declaration;
+      state.forNamespace(childNamespace).generate(childNamespace);
+    }
+  }
 }

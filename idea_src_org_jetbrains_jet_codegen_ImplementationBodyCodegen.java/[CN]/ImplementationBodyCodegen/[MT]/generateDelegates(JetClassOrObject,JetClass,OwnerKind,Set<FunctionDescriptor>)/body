@@ -1,19 +1,19 @@
 {
-  final FunctionCodegen functionCodegen=new FunctionCodegen(toClass,v,stdlib,bindingContext,factory);
-  final PropertyCodegen propertyCodegen=new PropertyCodegen(v,stdlib,bindingContext,functionCodegen);
+  final FunctionCodegen functionCodegen=new FunctionCodegen(toClass,v,state);
+  final PropertyCodegen propertyCodegen=new PropertyCodegen(v,functionCodegen,state);
   for (  JetDeclaration declaration : toClass.getDeclarations()) {
     if (declaration instanceof JetProperty) {
       propertyCodegen.gen((JetProperty)declaration,kind);
     }
  else     if (declaration instanceof JetFunction) {
-      if (!overriden.contains(bindingContext.getFunctionDescriptor((JetFunction)declaration))) {
+      if (!overriden.contains(state.getBindingContext().getFunctionDescriptor((JetFunction)declaration))) {
         functionCodegen.gen((JetFunction)declaration,kind);
       }
     }
   }
   for (  JetParameter p : toClass.getPrimaryConstructorParameters()) {
     if (p.getValOrVarNode() != null) {
-      PropertyDescriptor propertyDescriptor=bindingContext.getPropertyDescriptor(p);
+      PropertyDescriptor propertyDescriptor=state.getBindingContext().getPropertyDescriptor(p);
       if (propertyDescriptor != null) {
         propertyCodegen.generateDefaultGetter(propertyDescriptor,Opcodes.ACC_PUBLIC,kind);
         if (propertyDescriptor.isVar()) {
