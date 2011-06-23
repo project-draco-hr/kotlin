@@ -1,19 +1,19 @@
 {
-  ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor(constructor);
+  ConstructorDescriptor constructorDescriptor=state.getBindingContext().getConstructorDescriptor(constructor);
   if (constructorDescriptor == null) {
     throw new UnsupportedOperationException("failed to get descriptor for secondary constructor");
   }
-  Method method=typeMapper.mapConstructorSignature(constructorDescriptor,kind);
+  Method method=state.getTypeMapper().mapConstructorSignature(constructorDescriptor,kind);
   int flags=Opcodes.ACC_PUBLIC;
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
-  ConstructorFrameMap frameMap=new ConstructorFrameMap(typeMapper,constructorDescriptor,kind);
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(state.getTypeMapper(),constructorDescriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
-  ExpressionCodegen codegen=new ExpressionCodegen(mv,bindingContext,frameMap,typeMapper,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,typeMapper.jvmType(descriptor,kind)),factory);
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,state.getTypeMapper().jvmType(descriptor,kind)),state);
   for (  JetDelegationSpecifier initializer : constructor.getInitializers()) {
     if (initializer instanceof JetDelegatorToThisCall) {
       JetDelegatorToThisCall thisCall=(JetDelegatorToThisCall)initializer;
-      DeclarationDescriptor thisDescriptor=bindingContext.resolveReferenceExpression(thisCall.getThisReference());
+      DeclarationDescriptor thisDescriptor=state.getBindingContext().resolveReferenceExpression(thisCall.getThisReference());
       if (!(thisDescriptor instanceof ConstructorDescriptor)) {
         throw new UnsupportedOperationException("expected 'this' delegator to resolve to constructor");
       }
