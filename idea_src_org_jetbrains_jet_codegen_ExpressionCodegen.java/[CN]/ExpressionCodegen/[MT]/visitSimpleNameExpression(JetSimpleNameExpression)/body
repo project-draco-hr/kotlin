@@ -1,5 +1,6 @@
 {
   DeclarationDescriptor descriptor=bindingContext.resolveReferenceExpression(expression);
+  if (descriptor instanceof NamespaceDescriptor)   return;
   if (descriptor instanceof VariableAsFunctionDescriptor) {
     descriptor=((VariableAsFunctionDescriptor)descriptor).getVariableDescriptor();
   }
@@ -27,7 +28,7 @@
     myStack.push(StackValue.field(fieldType,owner,psiField.getName(),isStatic));
   }
  else {
-    int index=myMap.getIndex(descriptor);
+    int index=lookupLocal(descriptor);
     if (index >= 0) {
       final JetType outType=((VariableDescriptor)descriptor).getOutType();
       myStack.push(StackValue.local(index,typeMapper.mapType(outType)));
@@ -42,7 +43,7 @@
           for (          ValueParameterDescriptor parameter : parameters) {
             if (parameter.getName().equals(descriptor.getName())) {
               final JetType outType=((VariableDescriptor)descriptor).getOutType();
-              myStack.push(StackValue.local(myMap.getIndex(parameter),typeMapper.mapType(outType)));
+              myStack.push(StackValue.local(lookupLocal(parameter),typeMapper.mapType(outType)));
               return;
             }
           }
@@ -70,8 +71,13 @@
         myStack.push(iValue);
       }
     }
- else     if (!(descriptor instanceof NamespaceDescriptor)) {
-      throw new UnsupportedOperationException("don't know how to generate reference " + descriptor);
+ else {
+      final StackValue value=state.lookupInContext(descriptor);
+      if (value == null) {
+        throw new UnsupportedOperationException("don't know how to generate reference " + descriptor);
+      }
+      StackValue.local(0,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,v);
+      myStack.push(value);
     }
   }
 }
