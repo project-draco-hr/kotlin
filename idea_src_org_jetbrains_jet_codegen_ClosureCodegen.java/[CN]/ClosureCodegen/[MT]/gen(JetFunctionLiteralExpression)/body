@@ -8,8 +8,8 @@
     nameAndVisitor=state.forClosureIn(state.getBindingContext().getClassDescriptor((JetClassOrObject)container));
   }
   final FunctionDescriptor funDescriptor=(FunctionDescriptor)state.getBindingContext().getDeclarationDescriptor(fun);
-  final ClassVisitor cv=nameAndVisitor.getSecond();
-  final String name=nameAndVisitor.getFirst();
+  cv=nameAndVisitor.getSecond();
+  name=nameAndVisitor.getFirst();
   SignatureWriter signatureWriter=new SignatureWriter();
   final List<ValueParameterDescriptor> parameters=funDescriptor.getUnsubstitutedValueParameters();
   final String funClass=getInternalClassName(funDescriptor);
@@ -20,9 +20,14 @@
   appendType(signatureWriter,funDescriptor.getUnsubstitutedReturnType(),'=');
   signatureWriter.visitEnd();
   cv.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC,name,null,funClass,new String[0]);
-  final Method constructor=generateConstructor(cv,funClass);
   generateBridge(name,funDescriptor,cv);
-  generateBody(name,funDescriptor,cv,container.getProject(),fun.getFunctionLiteral().getBodyExpression().getStatements());
+  generateBody(funDescriptor,cv,fun.getFunctionLiteral().getBodyExpression().getStatements());
+  final Method constructor=generateConstructor(funClass);
   cv.visitEnd();
-  return new GeneratedClosureDescriptor(name,constructor);
+  final GeneratedClosureDescriptor answer=new GeneratedClosureDescriptor(name,constructor);
+  for (  DeclarationDescriptor descriptor : closure.keySet()) {
+    final EnclosedValueDescriptor valueDescriptor=closure.get(descriptor);
+    answer.addArg(valueDescriptor.getOuterValue());
+  }
+  return answer;
 }

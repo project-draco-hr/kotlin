@@ -3,9 +3,14 @@
     generateBlock(expression.getFunctionLiteral().getBodyExpression().getStatements());
   }
  else {
-    final GeneratedClosureDescriptor closure=new ClosureCodegen(state).gen(expression);
+    final GeneratedClosureDescriptor closure=state.generateClosure(expression,this);
     v.anew(Type.getObjectType(closure.getClassname()));
     v.dup();
-    v.invokespecial(closure.getClassname(),"<init>",closure.getConstructor().getDescriptor());
+    final Method cons=closure.getConstructor();
+    for (int i=0; i < closure.getArgs().size(); i++) {
+      StackValue arg=closure.getArgs().get(i);
+      arg.put(cons.getArgumentTypes()[i],v);
+    }
+    v.invokespecial(closure.getClassname(),"<init>",cons.getDescriptor());
   }
 }
