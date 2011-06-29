@@ -1,0 +1,21 @@
+{
+  String name=classNamesForAnonymousClasses.get(expression);
+  if (name != null) {
+    return name;
+  }
+  JetNamedDeclaration container=PsiTreeUtil.getParentOfType(expression,JetNamespace.class,JetClass.class,JetObjectDeclaration.class);
+  String baseName;
+  if (container instanceof JetNamespace) {
+    baseName=NamespaceCodegen.getJVMClassName(((JetNamespace)container).getFQName());
+  }
+ else {
+    ClassDescriptor aClass=bindingContext.getClassDescriptor((JetClassOrObject)container);
+    baseName=JetTypeMapper.jvmNameForInterface(aClass);
+  }
+  Integer count=anonymousSubclassesCount.get(baseName);
+  if (count == null)   count=0;
+  anonymousSubclassesCount.put(baseName,count + 1);
+  final String className=baseName + "$" + (count + 1);
+  classNamesForAnonymousClasses.put(expression,className);
+  return className;
+}

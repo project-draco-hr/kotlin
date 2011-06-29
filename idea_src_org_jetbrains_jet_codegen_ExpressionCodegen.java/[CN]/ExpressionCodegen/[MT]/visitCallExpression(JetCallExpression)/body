@@ -68,10 +68,12 @@
           v.invokestatic(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
         }
  else         if (functionParent instanceof ClassDescriptor) {
-          ensureReceiverOnStack(expression,(ClassDescriptor)functionParent);
+          ClassDescriptor containingClass=(ClassDescriptor)functionParent;
+          ensureReceiverOnStack(expression,containingClass);
           pushMethodArguments(expression,methodDescriptor);
-          final String owner=JetTypeMapper.jvmNameForInterface((ClassDescriptor)functionParent);
-          v.invokeinterface(owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
+          final String owner=typeMapper.jvmName(containingClass,OwnerKind.INTERFACE);
+          int opcode=typeMapper.isInterface(containingClass,OwnerKind.INTERFACE) ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL;
+          v.visitMethodInsn(opcode,owner,methodDescriptor.getName(),methodDescriptor.getDescriptor());
         }
  else {
           throw new UnsupportedOperationException("don't know how to generate call to " + declarationPsiElement);

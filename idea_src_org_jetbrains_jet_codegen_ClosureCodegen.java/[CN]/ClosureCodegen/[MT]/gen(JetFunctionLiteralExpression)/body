@@ -1,12 +1,5 @@
 {
-  JetNamedDeclaration container=PsiTreeUtil.getParentOfType(fun,JetNamespace.class,JetClass.class,JetObjectDeclaration.class);
-  final Pair<String,ClassVisitor> nameAndVisitor;
-  if (container instanceof JetNamespace) {
-    nameAndVisitor=state.forClosureIn((JetNamespace)container);
-  }
- else {
-    nameAndVisitor=state.forClosureIn(state.getBindingContext().getClassDescriptor((JetClassOrObject)container));
-  }
+  final Pair<String,ClassVisitor> nameAndVisitor=state.forAnonymousSubclass(fun);
   final FunctionDescriptor funDescriptor=(FunctionDescriptor)state.getBindingContext().getDeclarationDescriptor(fun);
   cv=nameAndVisitor.getSecond();
   name=nameAndVisitor.getFirst();
@@ -24,7 +17,7 @@
   generateBody(funDescriptor,cv,fun.getFunctionLiteral().getBodyExpression().getStatements());
   final Method constructor=generateConstructor(funClass);
   cv.visitEnd();
-  final GeneratedClosureDescriptor answer=new GeneratedClosureDescriptor(name,constructor);
+  final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor);
   for (  DeclarationDescriptor descriptor : closure.keySet()) {
     final EnclosedValueDescriptor valueDescriptor=closure.get(descriptor);
     answer.addArg(valueDescriptor.getOuterValue());

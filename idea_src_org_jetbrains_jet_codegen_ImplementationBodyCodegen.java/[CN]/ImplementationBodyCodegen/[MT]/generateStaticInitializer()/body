@@ -1,6 +1,6 @@
 {
   boolean needTypeInfo=descriptor.getTypeConstructor().getParameters().size() == 0;
-  boolean needInstance=myClass instanceof JetObjectDeclaration;
+  boolean needInstance=isNonLiteralObject();
   if (!needTypeInfo && !needInstance) {
     return;
   }
@@ -8,8 +8,9 @@
   mv.visitCode();
   InstructionAdapter v=new InstructionAdapter(mv);
   if (needTypeInfo) {
-    ClassCodegen.newTypeInfo(v,state.getTypeMapper().jvmType(descriptor,OwnerKind.INTERFACE));
-    v.putstatic(JetTypeMapper.jvmNameForImplementation(descriptor),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+    JetTypeMapper typeMapper=state.getTypeMapper();
+    ClassCodegen.newTypeInfo(v,typeMapper.jvmType(descriptor,OwnerKind.INTERFACE));
+    v.putstatic(typeMapper.jvmName(descriptor,kind),"$typeInfo","Ljet/typeinfo/TypeInfo;");
   }
   if (needInstance) {
     String name=jvmName();
