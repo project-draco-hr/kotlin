@@ -2,18 +2,21 @@
   ConstructorDescriptor constructorDescriptor=state.getBindingContext().getConstructorDescriptor((JetElement)myClass);
   if (constructorDescriptor == null && !(myClass instanceof JetObjectDeclaration))   return;
   Method method;
+  CallableMethod callableMethod;
   if (myClass instanceof JetObjectDeclaration) {
     method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
+    callableMethod=new CallableMethod("",method,Opcodes.INVOKESPECIAL,Collections.<Type>emptyList());
   }
  else {
-    method=state.getTypeMapper().mapConstructorSignature(constructorDescriptor,kind);
+    callableMethod=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,kind);
+    method=callableMethod.getSignature();
   }
   int flags=Opcodes.ACC_PUBLIC;
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
   Type[] argTypes=method.getArgumentTypes();
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
-  ConstructorFrameMap frameMap=new ConstructorFrameMap(state.getTypeMapper(),constructorDescriptor,kind);
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,descriptor,kind,StackValue.local(0,state.getTypeMapper().jvmType(descriptor,kind)),state);
   String classname=state.getTypeMapper().jvmName(descriptor,kind);

@@ -1,34 +1,20 @@
 {
-  Type[] argTypes=new Type[0];
-  if (descriptor != null) {
-    Method method=typeMapper.mapConstructorSignature(descriptor,kind);
-    argTypes=method.getArgumentTypes();
-  }
   enterTemp();
   ClassDescriptor classDescriptor=null;
   if (descriptor != null) {
     classDescriptor=descriptor.getContainingDeclaration();
     if (classDescriptor.getContainingDeclaration() instanceof ClassDescriptor) {
       myOuterThisIndex=enterTemp();
-      myFirstExplicitArgument++;
     }
   }
   if (kind == OwnerKind.DELEGATING_IMPLEMENTATION) {
     myDelegateThisIndex=enterTemp();
-    myFirstExplicitArgument++;
   }
-  if (myFirstExplicitArgument > 0) {
-    int explicitArgCount=argTypes.length - myFirstExplicitArgument;
-    myExplicitArgTypes=new Type[explicitArgCount];
-    System.arraycopy(argTypes,myFirstExplicitArgument,myExplicitArgTypes,0,explicitArgCount);
-  }
- else {
-    myExplicitArgTypes=argTypes;
-  }
+  List<Type> explicitArgTypes=callableMethod.getValueParameterTypes();
   List<ValueParameterDescriptor> paramDescrs=descriptor != null ? descriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
   for (int i=0; i < paramDescrs.size(); i++) {
     ValueParameterDescriptor parameter=paramDescrs.get(i);
-    enter(parameter,myExplicitArgTypes[i].getSize());
+    enter(parameter,explicitArgTypes.get(i).getSize());
   }
   if (classDescriptor != null) {
     myTypeParameterCount=classDescriptor.getTypeConstructor().getParameters().size();

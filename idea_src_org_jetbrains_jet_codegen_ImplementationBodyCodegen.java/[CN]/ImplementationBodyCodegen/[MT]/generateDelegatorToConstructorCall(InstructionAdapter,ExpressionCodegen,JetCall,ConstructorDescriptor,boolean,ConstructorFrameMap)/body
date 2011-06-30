@@ -27,12 +27,11 @@
   if (classDecl.getContainingDeclaration() instanceof ClassDescriptor) {
     iv.load(frameMap.getOuterThisIndex(),state.getTypeMapper().jvmType((ClassDescriptor)descriptor.getContainingDeclaration(),OwnerKind.IMPLEMENTATION));
   }
-  Method method=state.getTypeMapper().mapConstructorSignature(constructorDescriptor,kind);
-  List<ValueParameterDescriptor> valueParameters=constructorDescriptor.getValueParameters();
+  CallableMethod method=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,kind);
   List<JetArgument> args=constructorCall.getValueArguments();
   for (int i=0, argsSize=args.size(); i < argsSize; i++) {
     JetArgument arg=args.get(i);
-    codegen.gen(arg.getArgumentExpression(),state.getTypeMapper().mapType(valueParameters.get(i).getOutType()));
+    codegen.gen(arg.getArgumentExpression(),method.getValueParameterTypes().get(i));
   }
-  iv.invokespecial(type.getInternalName(),"<init>",method.getDescriptor());
+  method.invoke(iv);
 }
