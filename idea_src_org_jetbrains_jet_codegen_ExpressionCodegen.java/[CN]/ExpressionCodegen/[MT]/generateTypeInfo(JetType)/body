@@ -10,9 +10,14 @@
     }
     throw new UnsupportedOperationException("don't know what this type parameter resolves to");
   }
+  final Type jvmType=typeMapper.mapType(jetType,OwnerKind.INTERFACE);
+  if (jvmType.getSort() <= Type.DOUBLE) {
+    v.getstatic("jet/typeinfo/TypeInfo",PRIMITIVE_TYPE_INFO_FIELDS[jvmType.getSort()],"Ljet/typeinfo/TypeInfo;");
+    return;
+  }
   v.anew(JetTypeMapper.TYPE_TYPEINFO);
   v.dup();
-  v.aconst(typeMapper.jvmType((ClassDescriptor)declarationDescriptor,OwnerKind.INTERFACE));
+  v.aconst(jvmType);
   List<TypeProjection> arguments=jetType.getArguments();
   if (arguments.size() > 0) {
     v.iconst(arguments.size());
