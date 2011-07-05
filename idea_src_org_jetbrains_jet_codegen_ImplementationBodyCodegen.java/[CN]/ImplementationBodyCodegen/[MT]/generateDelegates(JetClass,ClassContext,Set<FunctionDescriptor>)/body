@@ -1,0 +1,25 @@
+{
+  final FunctionCodegen functionCodegen=new FunctionCodegen(delegateContext,v,state);
+  final PropertyCodegen propertyCodegen=new PropertyCodegen(delegateContext,v,functionCodegen,state);
+  for (  JetDeclaration declaration : toClass.getDeclarations()) {
+    if (declaration instanceof JetProperty) {
+      propertyCodegen.gen((JetProperty)declaration);
+    }
+ else     if (declaration instanceof JetFunction) {
+      if (!overriden.contains(state.getBindingContext().getFunctionDescriptor((JetNamedFunction)declaration))) {
+        functionCodegen.gen((JetNamedFunction)declaration);
+      }
+    }
+  }
+  for (  JetParameter p : toClass.getPrimaryConstructorParameters()) {
+    if (p.getValOrVarNode() != null) {
+      PropertyDescriptor propertyDescriptor=state.getBindingContext().getPropertyDescriptor(p);
+      if (propertyDescriptor != null) {
+        propertyCodegen.generateDefaultGetter(propertyDescriptor,Opcodes.ACC_PUBLIC);
+        if (propertyDescriptor.isVar()) {
+          propertyCodegen.generateDefaultSetter(propertyDescriptor,Opcodes.ACC_PUBLIC);
+        }
+      }
+    }
+  }
+}

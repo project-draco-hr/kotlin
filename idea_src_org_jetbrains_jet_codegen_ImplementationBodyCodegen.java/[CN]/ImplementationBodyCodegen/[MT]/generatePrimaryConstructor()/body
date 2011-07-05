@@ -18,7 +18,6 @@
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
   ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
-  ClassContext context=new ClassContext(descriptor,kind,StackValue.local(0,state.getTypeMapper().jvmType(descriptor,kind)));
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state);
   String classname=state.getTypeMapper().jvmName(descriptor,kind);
   final Type classType=Type.getType("L" + classname + ";");
@@ -39,7 +38,6 @@
   if (outerDescriptor instanceof ClassDescriptor) {
     final ClassDescriptor outerClassDescriptor=(ClassDescriptor)outerDescriptor;
     final Type type=JetTypeMapper.jetImplementationType(outerClassDescriptor);
-    codegen.addOuterThis(outerClassDescriptor,StackValue.local(frameMap.getOuterThisIndex(),type));
     String interfaceDesc=type.getDescriptor();
     final String fieldName="this$0";
     v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
@@ -82,7 +80,8 @@
       v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
       JetClass superClass=(JetClass)state.getBindingContext().getDeclarationPsiElement(superClassDescriptor);
-      generateDelegates(myClass,superClass,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)),overridden);
+      final ClassContext delegateContext=context.intoClass(superClassDescriptor,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
+      generateDelegates(superClass,delegateContext,overridden);
     }
     n++;
   }

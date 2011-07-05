@@ -1,0 +1,18 @@
+{
+  state.prepareAnonymousClasses((JetElement)aClass);
+  if (aClass instanceof JetObjectDeclaration) {
+    generateImplementation(parentContext,aClass,OwnerKind.IMPLEMENTATION);
+  }
+ else {
+    generateInterface(parentContext,aClass);
+    generateImplementation(parentContext,aClass,OwnerKind.IMPLEMENTATION);
+    generateImplementation(parentContext,aClass,OwnerKind.DELEGATING_IMPLEMENTATION);
+  }
+  ClassDescriptor descriptor=state.getBindingContext().getClassDescriptor(aClass);
+  final ClassContext contextForInners=parentContext.intoClass(descriptor,OwnerKind.IMPLEMENTATION);
+  for (  JetDeclaration declaration : aClass.getDeclarations()) {
+    if (declaration instanceof JetClass) {
+      generate(contextForInners,(JetClass)declaration);
+    }
+  }
+}

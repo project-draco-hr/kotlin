@@ -1,15 +1,26 @@
 {
-  final StackValue value=outerThisExpressions.get(calleeContainingClass);
-  if (value != null) {
-    return value;
+  boolean thisDone=false;
+  ClassContext cur=context;
+  while (true) {
+    ClassContext parentContext=cur.getParentContext();
+    if (parentContext == null)     break;
+    final DeclarationDescriptor curContextType=cur.getContextType();
+    if (curContextType instanceof ClassDescriptor) {
+      if (isSubclass((ClassDescriptor)curContextType,calleeContainingClass))       break;
+      final StackValue outer;
+      if (!thisDone && myMap instanceof ConstructorFrameMap) {
+        outer=StackValue.local(((ConstructorFrameMap)myMap).getOuterThisIndex(),JetTypeMapper.TYPE_OBJECT);
+      }
+ else {
+        thisToStack();
+        outer=StackValue.field(parentContext.jvmType(typeMapper),cur.jvmType(typeMapper).getInternalName(),"this$0",false);
+      }
+      thisDone=true;
+      outer.put(outer.type,v);
+    }
+    cur=parentContext;
   }
- else {
-    if (calleeContainingClass != null && contextType() instanceof ClassDescriptor && calleeContainingClass == contextType().getContainingDeclaration()) {
-      v.load(0,JetTypeMapper.TYPE_OBJECT);
-      return StackValue.field(typeMapper.jvmType(calleeContainingClass,OwnerKind.IMPLEMENTATION),typeMapper.jvmName((ClassDescriptor)contextType(),OwnerKind.IMPLEMENTATION),"this$0",false);
-    }
- else {
-      return thisExpression() != null ? thisExpression() : StackValue.local(0,JetTypeMapper.TYPE_OBJECT);
-    }
+  if (!thisDone) {
+    thisToStack();
   }
 }
