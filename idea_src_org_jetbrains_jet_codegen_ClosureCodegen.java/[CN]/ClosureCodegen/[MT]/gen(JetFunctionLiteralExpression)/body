@@ -14,10 +14,13 @@
   signatureWriter.visitEnd();
   cv.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC,name,null,funClass,new String[0]);
   generateBridge(name,funDescriptor,cv);
-  generateBody(funDescriptor,cv,fun.getFunctionLiteral());
-  final Method constructor=generateConstructor(funClass);
+  final boolean captureThis=generateBody(funDescriptor,cv,fun.getFunctionLiteral());
+  final Method constructor=generateConstructor(funClass,captureThis);
+  if (captureThis) {
+    cv.visitField(Opcodes.ACC_PRIVATE,"this$0",enclosingClassType().getDescriptor(),null,null);
+  }
   cv.visitEnd();
-  final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor);
+  final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor,captureThis);
   for (  DeclarationDescriptor descriptor : closure.keySet()) {
     final EnclosedValueDescriptor valueDescriptor=closure.get(descriptor);
     answer.addArg(valueDescriptor.getOuterValue());
