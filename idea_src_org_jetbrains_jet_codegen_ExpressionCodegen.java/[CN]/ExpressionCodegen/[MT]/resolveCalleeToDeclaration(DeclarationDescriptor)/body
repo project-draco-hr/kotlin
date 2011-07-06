@@ -1,0 +1,18 @@
+{
+  PsiElement declarationPsiElement=bindingContext.getDeclarationPsiElement(funDescriptor);
+  if (declarationPsiElement == null && isClass(funDescriptor.getContainingDeclaration(),"String")) {
+    final Project project=state.getProject();
+    PsiClass jlString=JavaPsiFacade.getInstance(project).findClass("java.lang.String",ProjectScope.getAllScope(project));
+    final PsiMethod[] methods=jlString.findMethodsByName(funDescriptor.getName(),false);
+    final int arity=((FunctionDescriptor)funDescriptor).getValueParameters().size();
+    for (    PsiMethod method : methods) {
+      if (method.getParameterList().getParametersCount() == arity) {
+        declarationPsiElement=method;
+      }
+    }
+  }
+  if (declarationPsiElement == null) {
+    throw new UnsupportedOperationException("couldn't find declaration for " + funDescriptor);
+  }
+  return declarationPsiElement;
+}
