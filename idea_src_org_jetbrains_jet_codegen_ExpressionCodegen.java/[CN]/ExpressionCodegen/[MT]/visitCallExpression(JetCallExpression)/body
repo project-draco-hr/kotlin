@@ -35,21 +35,18 @@
       if (declarationPsiElement == null) {
         throw new UnsupportedOperationException("couldn't find declaration for " + funDescriptor);
       }
-      Method methodDescriptor;
+      CallableMethod callableMethod;
       if (declarationPsiElement instanceof PsiMethod) {
         final PsiMethod psiMethod=(PsiMethod)declarationPsiElement;
-        CallableMethod callableMethod=JetTypeMapper.mapToCallableMethod(psiMethod);
+        callableMethod=JetTypeMapper.mapToCallableMethod(psiMethod);
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           ensureReceiverOnStack(expression,null);
           setOwnerFromCall(callableMethod,expression);
         }
-        pushMethodArguments(expression,callableMethod.getValueParameterTypes());
-        callableMethod.invoke(v);
-        methodDescriptor=callableMethod.getSignature();
       }
  else       if (declarationPsiElement instanceof JetNamedFunction) {
         final JetNamedFunction jetFunction=(JetNamedFunction)declarationPsiElement;
-        CallableMethod callableMethod=typeMapper.mapToCallableMethod(jetFunction);
+        callableMethod=typeMapper.mapToCallableMethod(jetFunction);
         if (functionParent instanceof NamespaceDescriptorImpl) {
           if (jetFunction.getReceiverTypeRef() != null) {
             ensureReceiverOnStack(expression,null);
@@ -58,10 +55,6 @@
  else         if (functionParent instanceof ClassDescriptor) {
           ensureReceiverOnStack(expression,(ClassDescriptor)functionParent);
         }
-        pushMethodArguments(expression,callableMethod.getValueParameterTypes());
-        pushTypeArguments(expression);
-        callableMethod.invoke(v);
-        methodDescriptor=callableMethod.getSignature();
       }
  else {
         gen(callee,Type.getObjectType(ClosureCodegen.getInternalClassName(fd)));
@@ -69,14 +62,13 @@
         if (isExtensionFunction) {
           ensureReceiverOnStack(expression,null);
         }
-        CallableMethod callableMethod=ClosureCodegen.asCallableMethod(fd);
-        pushMethodArguments(expression,callableMethod.getValueParameterTypes());
-        callableMethod.invoke(v);
-        methodDescriptor=callableMethod.getSignature();
+        callableMethod=ClosureCodegen.asCallableMethod(fd);
       }
-      if (methodDescriptor.getReturnType() != Type.VOID_TYPE) {
+      invokeMethodWithArguments(callableMethod,expression);
+      final Type callReturnType=callableMethod.getSignature().getReturnType();
+      if (callReturnType != Type.VOID_TYPE) {
         final Type retType=typeMapper.mapType(fd.getReturnType());
-        StackValue.onStack(methodDescriptor.getReturnType()).upcast(retType,v);
+        StackValue.onStack(callReturnType).upcast(retType,v);
         myStack.push(StackValue.onStack(retType));
       }
     }
