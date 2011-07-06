@@ -6,6 +6,17 @@
     StackValue value=StackValue.onStack(Type.BOOLEAN_TYPE);
     return negated ? StackValue.not(value) : value;
   }
+ else   if (pattern instanceof JetTuplePattern) {
+    return generateTuplePatternMatch((JetTuplePattern)pattern,negated,expressionToMatch);
+  }
+ else   if (pattern instanceof JetExpressionPattern) {
+    final Type subjectType=expressionToMatch.type;
+    expressionToMatch.put(subjectType,v);
+    JetExpression condExpression=((JetExpressionPattern)pattern).getExpression();
+    gen(condExpression,OBJECT_TYPE);
+    generateEqualsForExpressionsOnStack(JetTokens.EQEQ,subjectType,OBJECT_TYPE);
+    return myStack.pop();
+  }
  else   if (pattern instanceof JetWildcardPattern) {
     return StackValue.constant(!negated,Type.BOOLEAN_TYPE);
   }
