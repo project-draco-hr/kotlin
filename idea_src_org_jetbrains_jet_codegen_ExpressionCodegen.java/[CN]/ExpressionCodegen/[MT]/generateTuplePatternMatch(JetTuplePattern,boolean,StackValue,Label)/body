@@ -2,6 +2,7 @@
   final List<JetTuplePatternEntry> entries=pattern.getEntries();
   Label lblFail=new Label();
   Label lblDone=new Label();
+  expressionToMatch.dupReceiver(v,0);
   expressionToMatch.put(OBJECT_TYPE,v);
   v.dup();
   final String tupleClassName="jet/Tuple" + entries.size();
@@ -16,17 +17,25 @@
   v.mark(lblCheck);
   for (int i=0; i < entries.size(); i++) {
     final boolean isLast=i == entries.size() - 1;
-    if (!isLast) {
-      v.dup();
-    }
     final StackValue tupleField=StackValue.field(OBJECT_TYPE,tupleClassName,"_" + (i + 1),false);
-    final StackValue stackValue=generatePatternMatch(entries.get(i).getPattern(),false,tupleField);
-    stackValue.condJump(isLast ? lblFail : lblPopAndFail,true,v);
+    final StackValue stackValue=generatePatternMatch(entries.get(i).getPattern(),false,tupleField,nextEntry);
+    stackValue.condJump(lblPopAndFail,true,v);
   }
-  v.aconst(!negated);
+  v.pop();
+  if (negated && nextEntry != null) {
+    v.goTo(nextEntry);
+  }
+ else {
+    v.aconst(!negated);
+  }
   v.goTo(lblDone);
   v.mark(lblFail);
-  v.aconst(negated);
+  if (!negated && nextEntry != null) {
+    v.goTo(nextEntry);
+  }
+ else {
+    v.aconst(negated);
+  }
   v.mark(lblDone);
   return StackValue.onStack(Type.BOOLEAN_TYPE);
 }

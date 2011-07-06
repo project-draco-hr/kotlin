@@ -1,0 +1,44 @@
+{
+  StackValue conditionValue;
+  if (condition instanceof JetWhenConditionWithExpression) {
+    v.load(subjectLocal,subjectType);
+    JetExpression condExpression=((JetWhenConditionWithExpression)condition).getExpression();
+    Type condType=expressionType(condExpression);
+    gen(condExpression,condType);
+    generateEqualsForExpressionsOnStack(JetTokens.EQEQ,subjectType,condType);
+    conditionValue=myStack.pop();
+  }
+ else   if (condition instanceof JetWhenConditionInRange) {
+    JetExpression range=((JetWhenConditionInRange)condition).getRangeExpression();
+    gen(range,RANGE_TYPE);
+    new StackValue.Local(subjectLocal,subjectType).put(INTEGER_TYPE,v);
+    v.invokeinterface(CLASS_RANGE,"contains","(Ljava/lang/Comparable;)Z");
+    conditionValue=new StackValue.OnStack(Type.BOOLEAN_TYPE);
+  }
+ else   if (condition instanceof JetWhenConditionIsPattern) {
+    JetWhenConditionIsPattern patternCondition=(JetWhenConditionIsPattern)condition;
+    JetPattern pattern=patternCondition.getPattern();
+    conditionValue=generatePatternMatch(pattern,patternCondition.isNegated(),StackValue.local(subjectLocal,subjectType),nextEntry);
+  }
+ else   if (condition instanceof JetWhenConditionCall) {
+    final JetExpression call=((JetWhenConditionCall)condition).getCallSuffixExpression();
+    if (call instanceof JetCallExpression) {
+      v.load(subjectLocal,subjectType);
+      final DeclarationDescriptor declarationDescriptor=resolveCalleeDescriptor((JetCallExpression)call);
+      final PsiElement declaration=resolveCalleeToDeclaration(declarationDescriptor);
+      final CallableMethod callableMethod=typeMapper.mapToCallableMethod((PsiNamedElement)declaration);
+      if (callableMethod.getSignature().getReturnType() != Type.BOOLEAN_TYPE) {
+        throw new UnsupportedOperationException("calls in pattern matching must return boolean");
+      }
+      invokeMethodWithArguments(callableMethod,(JetCallExpression)call,true);
+      conditionValue=StackValue.onStack(Type.BOOLEAN_TYPE);
+    }
+ else {
+      throw new UnsupportedOperationException("unsupported kind of call suffix");
+    }
+  }
+ else {
+    throw new UnsupportedOperationException("unsupported kind of when condition");
+  }
+  return conditionValue;
+}
