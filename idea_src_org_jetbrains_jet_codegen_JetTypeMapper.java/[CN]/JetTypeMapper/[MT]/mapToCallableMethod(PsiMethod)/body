@@ -5,17 +5,25 @@
   List<Type> valueParameterTypes=new ArrayList<Type>();
   Collections.addAll(valueParameterTypes,signature.getArgumentTypes());
   int opcode;
+  boolean needsReceiver=false;
   if (method.isConstructor()) {
     opcode=Opcodes.INVOKESPECIAL;
   }
  else   if (method.hasModifierProperty(PsiModifier.STATIC)) {
     opcode=Opcodes.INVOKESTATIC;
   }
- else   if (containingClass.isInterface()) {
-    opcode=Opcodes.INVOKEINTERFACE;
-  }
  else {
-    opcode=Opcodes.INVOKEVIRTUAL;
+    needsReceiver=true;
+    if (containingClass.isInterface()) {
+      opcode=Opcodes.INVOKEINTERFACE;
+    }
+ else {
+      opcode=Opcodes.INVOKEVIRTUAL;
+    }
   }
-  return new CallableMethod(owner,signature,opcode,valueParameterTypes);
+  final CallableMethod result=new CallableMethod(owner,signature,opcode,valueParameterTypes);
+  if (needsReceiver) {
+    result.setNeedsReceiver(null);
+  }
+  return result;
 }
