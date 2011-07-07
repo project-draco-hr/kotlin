@@ -1,7 +1,8 @@
 {
   boolean needTypeInfo=descriptor.getTypeConstructor().getParameters().size() == 0;
   boolean needInstance=isNonLiteralObject();
-  if (!needTypeInfo && !needInstance) {
+  JetClassObject classObject=getClassObject();
+  if (!needTypeInfo && !needInstance && classObject == null) {
     return;
   }
   final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,"<clinit>","()V",null,null);
@@ -18,6 +19,14 @@
     v.dup();
     v.invokespecial(name,"<init>","()V");
     v.putstatic(name,"$instance",JetTypeMapper.jetImplementationType(descriptor).getDescriptor());
+  }
+  if (classObject != null) {
+    String name=state.getTypeMapper().jvmName(classObject);
+    final Type classObjectType=Type.getObjectType(name);
+    v.anew(classObjectType);
+    v.dup();
+    v.invokespecial(name,"<init>","()V");
+    v.putstatic(state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION),"$classobj",classObjectType.getDescriptor());
   }
   mv.visitInsn(Opcodes.RETURN);
   mv.visitMaxs(0,0);

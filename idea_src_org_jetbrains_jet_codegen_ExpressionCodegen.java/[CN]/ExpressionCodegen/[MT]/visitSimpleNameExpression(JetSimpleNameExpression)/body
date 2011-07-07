@@ -71,6 +71,14 @@
         myStack.push(iValue);
       }
     }
+ else     if (descriptor instanceof ClassDescriptor) {
+      final JetClassObject classObject=((JetClass)declaration).getClassObject();
+      if (classObject == null) {
+        throw new UnsupportedOperationException("trying to reference a class which doesn't have a class object");
+      }
+      final String type=typeMapper.jvmName(classObject);
+      myStack.push(StackValue.field(Type.getObjectType(type),typeMapper.jvmName((ClassDescriptor)descriptor,OwnerKind.IMPLEMENTATION),"$classobj",true));
+    }
  else {
       StackValue.local(0,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,v);
       final StackValue value=context.lookupInContext(descriptor,v);
