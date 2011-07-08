@@ -5,9 +5,7 @@
  else {
     errorAndAdvance("Expecting 'val' or 'var'");
   }
-  if (at(LT)) {
-    parseTypeParameterList(TokenSet.create(IDENTIFIER,EQ,COLON,SEMICOLON));
-  }
+  boolean typeParametersDeclared=at(LT) ? parseTypeParameterList(TokenSet.create(IDENTIFIER,EQ,COLON,SEMICOLON)) : false;
   TokenSet propertyNameFollow=TokenSet.create(COLON,EQ,LBRACE,SEMICOLON);
   int lastDot=matchTokenStreamPredicate(new FirstBefore(new AtSet(DOT,SAFE_ACCESS),new AbstractTokenStreamPredicate(){
     @Override public boolean matching(    boolean topLevel){
@@ -25,6 +23,7 @@
     advance();
     parseTypeRef();
   }
+  parseTypeConstraintsGuarded(typeParametersDeclared);
   if (local) {
     if (at(EQ)) {
       advance();
