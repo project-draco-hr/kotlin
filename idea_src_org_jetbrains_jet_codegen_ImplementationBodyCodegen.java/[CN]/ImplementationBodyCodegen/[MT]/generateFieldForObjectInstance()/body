@@ -1,0 +1,16 @@
+{
+  if (isNonLiteralObject()) {
+    Type type=JetTypeMapper.jetImplementationType(descriptor);
+    v.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,"$instance",type.getDescriptor(),null,null);
+    staticInitializerChunks.add(new CodeChunk(){
+      @Override public void generate(      InstructionAdapter v){
+        String name=jvmName();
+        v.anew(Type.getObjectType(name));
+        v.dup();
+        v.invokespecial(name,"<init>","()V");
+        v.putstatic(name,"$instance",JetTypeMapper.jetImplementationType(descriptor).getDescriptor());
+      }
+    }
+);
+  }
+}

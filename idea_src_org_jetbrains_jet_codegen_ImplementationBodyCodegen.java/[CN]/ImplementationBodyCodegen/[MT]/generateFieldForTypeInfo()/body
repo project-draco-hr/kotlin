@@ -1,0 +1,14 @@
+{
+  final boolean typeInfoIsStatic=descriptor.getTypeConstructor().getParameters().size() == 0;
+  v.visitField(Opcodes.ACC_PRIVATE | (typeInfoIsStatic ? Opcodes.ACC_STATIC : 0),"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
+  if (typeInfoIsStatic) {
+    staticInitializerChunks.add(new CodeChunk(){
+      @Override public void generate(      InstructionAdapter v){
+        JetTypeMapper typeMapper=state.getTypeMapper();
+        ClassCodegen.newTypeInfo(v,false,typeMapper.jvmType(descriptor,OwnerKind.INTERFACE));
+        v.putstatic(typeMapper.jvmName(descriptor,kind),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+      }
+    }
+);
+  }
+}
