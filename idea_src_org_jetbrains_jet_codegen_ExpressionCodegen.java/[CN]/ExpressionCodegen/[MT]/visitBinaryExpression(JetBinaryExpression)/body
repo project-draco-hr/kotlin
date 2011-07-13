@@ -27,13 +27,13 @@
  else {
     DeclarationDescriptor op=bindingContext.resolveReferenceExpression(expression.getOperationReference());
     if (op instanceof FunctionDescriptor) {
-      DeclarationDescriptor cls=op.getContainingDeclaration();
-      if (isNumberPrimitive(cls)) {
-        int opcode=opcodeForMethod(op.getName());
-        generateBinaryOp(expression,(FunctionDescriptor)op,opcode);
+      final IntrinsicMethod intrinsic=intrinsics.getIntrinsic(op);
+      if (intrinsic != null) {
+        myStack.push(intrinsic.generate(this,v,expressionType(expression),expression,Arrays.asList(expression.getLeft(),expression.getRight())));
         return;
       }
- else       if (isClass(cls,"String") && op.getName().equals("plus")) {
+      DeclarationDescriptor cls=op.getContainingDeclaration();
+      if (isClass(cls,"String") && op.getName().equals("plus")) {
         generateConcatenation(expression);
         return;
       }
