@@ -5,16 +5,16 @@
     generateConstructorCall(expression,(JetSimpleNameExpression)callee);
   }
  else   if (funDescriptor instanceof FunctionDescriptor) {
-    final DeclarationDescriptor functionParent=funDescriptor.getContainingDeclaration();
-    if (isNumberPrimitive(functionParent)) {
-      if (funDescriptor.getName().equals("inv")) {
-        final StackValue value=myStack.pop();
-        final Type asmType=expressionType(expression);
-        value.put(asmType,v);
-        generateInv(asmType);
-        return;
+    final IntrinsicMethod intrinsic=intrinsics.getIntrinsic(funDescriptor);
+    if (intrinsic != null) {
+      List<JetExpression> args=new ArrayList<JetExpression>();
+      for (      JetArgument argument : expression.getValueArguments()) {
+        args.add(argument.getArgumentExpression());
       }
+      myStack.push(intrinsic.generate(this,v,expressionType(expression),expression,args));
+      return;
     }
+    final DeclarationDescriptor functionParent=funDescriptor.getContainingDeclaration();
     if (state.getStandardLibrary().getTypeInfoFunctionGroup().getFunctionDescriptors().contains(funDescriptor.getOriginal())) {
       generateTypeInfoCall(expression);
       return;
