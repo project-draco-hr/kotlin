@@ -1,0 +1,20 @@
+{
+  if (!(sourcePosition.getFile() instanceof JetFile)) {
+    throw new NoDataException();
+  }
+  final Collection<String> classNames=classNamesForPosition(sourcePosition);
+  if (classNames.isEmpty()) {
+    return null;
+  }
+  final Iterator<String> iterator=classNames.iterator();
+  boolean wildcard=false;
+  String namePattern=iterator.next();
+  while (iterator.hasNext()) {
+    namePattern=StringUtil.commonPrefix(namePattern,iterator.next());
+    wildcard=true;
+  }
+  if (wildcard) {
+    namePattern+="*";
+  }
+  return myDebugProcess.getRequestsManager().createClassPrepareRequest(classPrepareRequestor,namePattern.replace('/','.'));
+}
