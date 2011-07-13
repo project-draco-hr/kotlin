@@ -1,6 +1,6 @@
 {
   PsiBuilder.Marker getterOrSetter=mark();
-  parseModifierList(MODIFIER_LIST);
+  parseModifierList(MODIFIER_LIST,false);
   if (!at(GET_KEYWORD) && !at(SET_KEYWORD)) {
     getterOrSetter.rollbackTo();
     return false;
@@ -22,8 +22,7 @@
   if (setter) {
     PsiBuilder.Marker parameterList=mark();
     PsiBuilder.Marker setterParameter=mark();
-    int lastId=findLastBefore(TokenSet.create(IDENTIFIER),TokenSet.create(RPAR,COMMA,COLON),false);
-    createTruncatedBuilder(lastId).parseModifierList(MODIFIER_LIST);
+    parseModifierListWithShortAnnotations(MODIFIER_LIST,TokenSet.create(IDENTIFIER),TokenSet.create(RPAR,COMMA,COLON));
     expect(IDENTIFIER,"Expecting parameter name",TokenSet.create(RPAR,COLON,LBRACE,EQ));
     if (at(COLON)) {
       advance();
