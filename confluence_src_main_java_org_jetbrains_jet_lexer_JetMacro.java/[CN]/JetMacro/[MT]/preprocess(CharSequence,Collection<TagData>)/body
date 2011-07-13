@@ -1,0 +1,56 @@
+{
+  StringBuilder afterPreprocessing=new StringBuilder();
+  int initialLength=afterPreprocessing.length();
+  Stack<TagData> tagStack=new Stack<TagData>();
+  charLoop:   for (int i=0; i < code.length(); i++) {
+    char c=code.charAt(i);
+    if (c == '\r')     continue;
+    int position=afterPreprocessing.length() - initialLength;
+    for (    TagType type : knownExtraTagTypes) {
+      Pattern open=openTags.get(type);
+      Matcher openMatcher=matchFrom(code,i,open);
+      if (openMatcher != null) {
+        tagStack.push(new TagData(type,openMatcher.group(2),position,false));
+        i+=openMatcher.end() - 1;
+        continue charLoop;
+      }
+      Pattern close=closeTags.get(type);
+      Matcher closeMatcher=matchFrom(code,i,close);
+      if (closeMatcher != null) {
+        if (tagStack.isEmpty()) {
+          throw new IllegalArgumentException("Unmatched closing tag: " + closeMatcher.group());
+        }
+ else {
+          TagData tag=tagStack.pop();
+          if (type != tag.type) {
+            throw new IllegalArgumentException("Unmatched closing tag: " + closeMatcher.group());
+          }
+          tag.end=position;
+          tags.add(tag);
+          i+=closeMatcher.end() - 1;
+          continue charLoop;
+        }
+      }
+      Pattern closed=closedTags.get(type);
+      Matcher closedMatcher=matchFrom(code,i,closed);
+      if (closedMatcher != null) {
+        TagData tag=new TagData(type,closedMatcher.group(2),position,false);
+        tag.end=position;
+        tags.add(tag);
+        i+=closedMatcher.end() - 1;
+        continue charLoop;
+      }
+      Pattern next=nextTokenTags.get(type);
+      Matcher nextMatcher=matchFrom(code,i,next);
+      if (nextMatcher != null) {
+        TagData tag=new TagData(type,nextMatcher.group(2),position,true);
+        tags.add(tag);
+        tag.end=code.length();
+        i+=nextMatcher.end() - 1;
+        continue charLoop;
+      }
+    }
+    afterPreprocessing.append(c);
+  }
+  return afterPreprocessing;
+}
