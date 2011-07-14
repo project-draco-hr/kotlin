@@ -1,0 +1,21 @@
+{
+  if (callable instanceof CallableMethod) {
+    final CallableMethod callableMethod=(CallableMethod)callable;
+    invokeMethodWithArguments(callableMethod,expression,haveReceiver);
+    final Type callReturnType=callableMethod.getSignature().getReturnType();
+    if (callReturnType != Type.VOID_TYPE) {
+      final Type retType=typeMapper.mapType(fd.getReturnType());
+      StackValue.onStack(callReturnType).upcast(retType,v);
+      return StackValue.onStack(retType);
+    }
+    return null;
+  }
+ else {
+    IntrinsicMethod intrinsic=(IntrinsicMethod)callable;
+    List<JetExpression> args=new ArrayList<JetExpression>();
+    for (    JetArgument argument : expression.getValueArguments()) {
+      args.add(argument.getArgumentExpression());
+    }
+    return intrinsic.generate(this,v,expressionType(expression),expression,args,haveReceiver);
+  }
+}

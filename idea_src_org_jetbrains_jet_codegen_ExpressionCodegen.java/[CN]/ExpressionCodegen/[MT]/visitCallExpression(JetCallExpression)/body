@@ -5,30 +5,10 @@
     generateConstructorCall(expression,(JetSimpleNameExpression)callee);
   }
  else   if (funDescriptor instanceof FunctionDescriptor) {
-    final IntrinsicMethod intrinsic=intrinsics.getIntrinsic(funDescriptor);
-    if (intrinsic != null) {
-      List<JetExpression> args=new ArrayList<JetExpression>();
-      for (      JetArgument argument : expression.getValueArguments()) {
-        args.add(argument.getArgumentExpression());
-      }
-      myStack.push(intrinsic.generate(this,v,expressionType(expression),expression,args));
-      return;
-    }
     final FunctionDescriptor fd=(FunctionDescriptor)funDescriptor;
-    PsiElement declarationPsiElement=resolveCalleeToDeclaration(funDescriptor);
-    CallableMethod callableMethod;
-    if (declarationPsiElement instanceof PsiMethod || declarationPsiElement instanceof JetNamedFunction) {
-      callableMethod=typeMapper.mapToCallableMethod((PsiNamedElement)declarationPsiElement);
-    }
- else {
-      callableMethod=ClosureCodegen.asCallableMethod(fd);
-    }
-    invokeMethodWithArguments(callableMethod,expression);
-    final Type callReturnType=callableMethod.getSignature().getReturnType();
-    if (callReturnType != Type.VOID_TYPE) {
-      final Type retType=typeMapper.mapType(fd.getReturnType());
-      StackValue.onStack(callReturnType).upcast(retType,v);
-      myStack.push(StackValue.onStack(retType));
+    final StackValue stackValue=invokeFunction(expression,fd,false);
+    if (stackValue != null) {
+      myStack.push(stackValue);
     }
   }
  else {
