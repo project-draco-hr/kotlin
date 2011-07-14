@@ -1,13 +1,21 @@
 {
-  final IntrinsicMethod intrinsic=intrinsics.getIntrinsic(op);
   final JetExpression operand=unaryExpression.getBaseExpression();
-  if (intrinsic != null) {
-    myStack.push(intrinsic.generate(this,v,asmType,unaryExpression,Collections.singletonList(operand),false));
-    return true;
-  }
- else   if (isNumberPrimitive(asmType) && (op.getName().equals("inc") || op.getName().equals("dec"))) {
+  if (isNumberPrimitive(asmType) && (op.getName().equals("inc") || op.getName().equals("dec"))) {
     myStack.push(generateIncrement(op,asmType,operand));
-    return true;
+    return;
   }
-  return false;
+  final Callable callable=resolveToCallable((FunctionDescriptor)op);
+  if (callable instanceof IntrinsicMethod) {
+    IntrinsicMethod intrinsic=(IntrinsicMethod)callable;
+    myStack.push(intrinsic.generate(this,v,expressionType(unaryExpression),unaryExpression,Arrays.asList(unaryExpression.getBaseExpression()),false));
+  }
+ else {
+    CallableMethod callableMethod=(CallableMethod)callable;
+    genToJVMStack(unaryExpression.getBaseExpression());
+    callableMethod.invoke(v);
+    final StackValue value=returnValueAsStackValue((FunctionDescriptor)op,callableMethod.getSignature().getReturnType());
+    if (value != null) {
+      myStack.push(value);
+    }
+  }
 }
