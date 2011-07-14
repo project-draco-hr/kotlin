@@ -1,7 +1,14 @@
 {
-  final ReferenceType referenceType=location.declaringType();
-  if (referenceType == null) {
-    return null;
+  try {
+    final String sourceName=location.sourceName();
+    final Project project=myDebugProcess.getProject();
+    final PsiFile[] files=FilenameIndex.getFilesByName(project,sourceName,ProjectScope.getAllScope(project));
+    if (files.length == 1 && files[0] instanceof JetFile) {
+      return files[0];
+    }
   }
-  return null;
+ catch (  AbsentInformationException e) {
+    throw new NoDataException();
+  }
+  throw new NoDataException();
 }
