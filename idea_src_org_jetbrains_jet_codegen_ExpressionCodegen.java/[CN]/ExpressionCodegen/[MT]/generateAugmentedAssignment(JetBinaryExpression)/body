@@ -1,26 +1,28 @@
 {
   DeclarationDescriptor op=bindingContext.resolveReferenceExpression(expression.getOperationReference());
+  final Callable callable=resolveToCallable(op);
   final JetExpression lhs=expression.getLeft();
   Type lhsType=expressionType(lhs);
-  if (isNumberPrimitive(lhsType)) {
-    StackValue value=generateIntermediateValue(lhs);
-    value.dupReceiver(v,0);
-    value.put(lhsType,v);
-    genToJVMStack(expression.getRight());
-    v.visitInsn(lhsType.getOpcode(opcodeForMethod(op.getName())));
-    value.store(v);
-  }
- else   if ("java.lang.String".equals(lhsType.getClassName()) && op.getName().equals("plus")) {
-    generateStringBuilderConstructor();
-    StackValue value=generateIntermediateValue(lhs);
-    value.dupReceiver(v,1);
-    value.put(lhsType,v);
-    invokeAppendMethod(lhsType);
-    invokeAppend(expression.getRight());
-    v.invokevirtual(CLASS_STRING_BUILDER,"toString","()Ljava/lang/String;");
-    value.store(v);
+  if (bindingContext.isVariableReassignment(expression)) {
+    if (isNumberPrimitive(lhsType)) {
+      StackValue value=generateIntermediateValue(lhs);
+      value.dupReceiver(v,0);
+      value.put(lhsType,v);
+      genToJVMStack(expression.getRight());
+      v.visitInsn(lhsType.getOpcode(opcodeForMethod(op.getName())));
+      value.store(v);
+    }
+ else {
+      throw new UnsupportedOperationException("Augmented assignment for non-primitive types not yet implemented");
+    }
   }
  else {
-    throw new UnsupportedOperationException("Augmented assignment for non-primitive types not yet implemented");
+    if (callable instanceof IntrinsicMethod) {
+      final IntrinsicMethod intrinsic=(IntrinsicMethod)callable;
+      intrinsic.generate(this,v,Type.VOID_TYPE,expression,Arrays.asList(lhs,expression.getRight()),false);
+    }
+ else {
+      throw new UnsupportedOperationException("TODO");
+    }
   }
 }
