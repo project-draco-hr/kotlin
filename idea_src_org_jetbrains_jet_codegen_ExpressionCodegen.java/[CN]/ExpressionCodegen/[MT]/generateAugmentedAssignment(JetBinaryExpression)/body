@@ -4,19 +4,16 @@
   final JetExpression lhs=expression.getLeft();
   Type lhsType=expressionType(lhs);
   if (bindingContext.isVariableReassignment(expression)) {
-    if (isNumberPrimitive(lhsType)) {
+    if (callable instanceof IntrinsicMethod) {
       StackValue value=generateIntermediateValue(lhs);
       value.dupReceiver(v,0);
       value.put(lhsType,v);
-      genToJVMStack(expression.getRight());
-      v.visitInsn(lhsType.getOpcode(opcodeForMethod(op.getName())));
+      final IntrinsicMethod intrinsic=(IntrinsicMethod)callable;
+      intrinsic.generate(this,v,lhsType,expression,Arrays.asList(lhs,expression.getRight()),true);
       value.store(v);
     }
- else     if (callable instanceof CallableMethod) {
-      callAugAssignMethod(expression,(CallableMethod)callable,lhsType,true);
-    }
  else {
-      throw new UnsupportedOperationException("Augmented assignment for non-primitive types not yet implemented");
+      callAugAssignMethod(expression,(CallableMethod)callable,lhsType,true);
     }
   }
  else {
