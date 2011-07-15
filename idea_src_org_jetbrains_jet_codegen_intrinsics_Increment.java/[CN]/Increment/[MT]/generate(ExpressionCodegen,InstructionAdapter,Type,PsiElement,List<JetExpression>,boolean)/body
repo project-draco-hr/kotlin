@@ -1,0 +1,28 @@
+{
+  final JetExpression operand=arguments.get(0);
+  if (operand instanceof JetReferenceExpression) {
+    final int index=codegen.indexOfLocal((JetReferenceExpression)operand);
+    if (index >= 0 && JetTypeMapper.isIntPrimitive(expectedType)) {
+      v.iinc(index,myDelta);
+      return StackValue.local(index,expectedType);
+    }
+  }
+  StackValue value=codegen.generateIntermediateValue(operand);
+  value.dupReceiver(v,0);
+  value.put(expectedType,v);
+  if (expectedType == Type.LONG_TYPE) {
+    v.aconst(Long.valueOf(myDelta));
+  }
+ else   if (expectedType == Type.FLOAT_TYPE) {
+    v.aconst(Float.valueOf(myDelta));
+  }
+ else   if (expectedType == Type.DOUBLE_TYPE) {
+    v.aconst(Double.valueOf(myDelta));
+  }
+ else {
+    v.aconst(myDelta);
+  }
+  v.add(expectedType);
+  value.store(v);
+  return value;
+}
