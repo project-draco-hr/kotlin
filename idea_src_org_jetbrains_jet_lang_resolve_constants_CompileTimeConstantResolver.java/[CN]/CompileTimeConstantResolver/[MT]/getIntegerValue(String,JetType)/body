@@ -1,0 +1,56 @@
+{
+  JetStandardLibrary standardLibrary=semanticServices.getStandardLibrary();
+  if (noExpectedType(expectedType)) {
+    Long value=parseLongValue(text);
+    if (value == null) {
+      return OUT_OF_RANGE;
+    }
+    if (Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE) {
+      return new IntValue(value.intValue());
+    }
+    return new LongValue(value);
+  }
+  Function<Long,? extends CompileTimeConstant<?>> create;
+  long lowerBound;
+  long upperBound;
+  TypeConstructor constructor=expectedType.getConstructor();
+  if (constructor == standardLibrary.getInt().getTypeConstructor()) {
+    create=IntValue.CREATE;
+    lowerBound=Integer.MIN_VALUE;
+    upperBound=Integer.MAX_VALUE;
+  }
+ else   if (constructor == standardLibrary.getLong().getTypeConstructor()) {
+    create=LongValue.CREATE;
+    lowerBound=Long.MIN_VALUE;
+    upperBound=Long.MAX_VALUE;
+  }
+ else   if (constructor == standardLibrary.getShort().getTypeConstructor()) {
+    create=ShortValue.CREATE;
+    lowerBound=Short.MIN_VALUE;
+    upperBound=Short.MAX_VALUE;
+  }
+ else   if (constructor == standardLibrary.getByte().getTypeConstructor()) {
+    create=ByteValue.CREATE;
+    lowerBound=Byte.MIN_VALUE;
+    upperBound=Byte.MAX_VALUE;
+  }
+ else {
+    JetTypeChecker typeChecker=semanticServices.getTypeChecker();
+    JetType intType=standardLibrary.getIntType();
+    JetType longType=standardLibrary.getLongType();
+    if (typeChecker.isSubtypeOf(intType,expectedType)) {
+      return getIntegerValue(text,intType);
+    }
+ else     if (typeChecker.isSubtypeOf(longType,expectedType)) {
+      return getIntegerValue(text,longType);
+    }
+ else {
+      return new ErrorValue("An integer literal does not conform to the expected type " + expectedType);
+    }
+  }
+  Long value=parseLongValue(text);
+  if (value != null && lowerBound <= value && value <= upperBound) {
+    return create.apply(value);
+  }
+  return new ErrorValue("An integer literal does not conform to the expected type " + expectedType);
+}
