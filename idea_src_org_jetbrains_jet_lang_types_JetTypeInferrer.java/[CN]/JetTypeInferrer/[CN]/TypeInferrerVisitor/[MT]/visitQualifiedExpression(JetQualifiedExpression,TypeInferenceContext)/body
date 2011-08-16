@@ -1,0 +1,54 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  JetExpression selectorExpression=expression.getSelectorExpression();
+  JetExpression receiverExpression=expression.getReceiverExpression();
+  JetType receiverType=context.services.typeInferrerVisitorWithNamespaces.getType(receiverExpression,new TypeInferenceContext(context.trace,context.scope,context.services,false,context.dataFlowInfo,NO_EXPECTED_TYPE,NO_EXPECTED_TYPE));
+  if (receiverType == null)   return null;
+  ErrorHandlerWithRegions errorHandler=context.trace.getErrorHandler();
+  errorHandler.openRegion();
+  JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,context);
+  if (selectorReturnType != null) {
+    errorHandler.closeAndCommitCurrentRegion();
+  }
+ else {
+    ErrorHandlerWithRegions.DiagnosticsRegion regionToCommit=errorHandler.closeAndReturnCurrentRegion();
+    VariableDescriptor variableDescriptor=context.services.getVariableDescriptorFromSimpleName(receiverExpression,context);
+    if (variableDescriptor != null) {
+      List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
+      Collections.reverse(possibleTypes);
+      for (      JetType possibleType : possibleTypes) {
+        errorHandler.openRegion();
+        selectorReturnType=getSelectorReturnType(possibleType,selectorExpression,context);
+        if (selectorReturnType != null) {
+          regionToCommit=errorHandler.closeAndReturnCurrentRegion();
+          context.trace.recordAutoCast(receiverExpression,possibleType);
+          break;
+        }
+ else {
+          errorHandler.closeAndReturnCurrentRegion();
+        }
+      }
+    }
+    regionToCommit.commit();
+  }
+  JetType result;
+  if (expression.getOperationSign() == JetTokens.QUEST) {
+    if (selectorReturnType != null && !isBoolean(selectorReturnType) && selectorExpression != null) {
+      errorHandler.typeMismatch(selectorExpression,semanticServices.getStandardLibrary().getBooleanType(),selectorReturnType);
+    }
+    result=TypeUtils.makeNullable(receiverType);
+  }
+ else {
+    result=selectorReturnType;
+  }
+  if (selectorExpression != null && result != null) {
+    context.trace.recordExpressionType(selectorExpression,result);
+  }
+  if (selectorReturnType != null) {
+    if (selectorExpression != null) {
+      receiverType=context.services.enrichOutType(receiverExpression,receiverType,context);
+      context.services.checkNullSafety(receiverType,expression.getOperationTokenNode(),getCalleeFunctionDescriptor(selectorExpression,context));
+    }
+  }
+  return context.services.checkType(result,expression,context);
+}

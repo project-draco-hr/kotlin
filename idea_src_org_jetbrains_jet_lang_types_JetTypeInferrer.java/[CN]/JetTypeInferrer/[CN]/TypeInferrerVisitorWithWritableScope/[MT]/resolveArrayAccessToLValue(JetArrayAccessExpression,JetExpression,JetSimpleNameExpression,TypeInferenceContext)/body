@@ -1,0 +1,14 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  List<JetType> argumentTypes=getTypes(scope,arrayAccessExpression.getIndexExpressions(),context);
+  if (argumentTypes == null)   return null;
+  JetType rhsType=getType(scope,rightHandSide,false,context);
+  if (rhsType == null)   return null;
+  argumentTypes.add(rhsType);
+  JetType receiverType=getType(scope,arrayAccessExpression.getArrayExpression(),false,context);
+  if (receiverType == null)   return null;
+  context.services.lookupFunction(scope,arrayAccessExpression,"set",receiverType,argumentTypes,true);
+  FunctionDescriptor functionDescriptor=context.services.lookupFunction(scope,operationSign,"set",receiverType,argumentTypes,true);
+  if (functionDescriptor == null)   return null;
+  return context.services.checkType(functionDescriptor.getReturnType(),arrayAccessExpression,contextWithExpectedType);
+}

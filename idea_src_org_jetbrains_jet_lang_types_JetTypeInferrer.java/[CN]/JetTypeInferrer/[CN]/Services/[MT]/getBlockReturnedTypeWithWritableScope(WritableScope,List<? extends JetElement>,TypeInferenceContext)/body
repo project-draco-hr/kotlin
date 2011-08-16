@@ -1,0 +1,26 @@
+{
+  if (block.isEmpty()) {
+    return JetStandardClasses.getUnitType();
+  }
+  TypeInferrerVisitorWithWritableScope blockLevelVisitor=newTypeInferrerVisitorWithWritableScope(scope);
+  TypeInferenceContext newContext=new TypeInferenceContext(trace,scope,this,true,context.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+  JetType result=null;
+  for (Iterator<? extends JetElement> iterator=block.iterator(); iterator.hasNext(); ) {
+    JetElement statement=iterator.next();
+    trace.recordStatement(statement);
+    JetExpression statementExpression=(JetExpression)statement;
+    if (!iterator.hasNext() && context.expectedType != NO_EXPECTED_TYPE) {
+      newContext=new TypeInferenceContext(trace,scope,this,true,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
+    }
+    result=blockLevelVisitor.getType(statementExpression,newContext);
+    DataFlowInfo newDataFlowInfo=blockLevelVisitor.getResultingDataFlowInfo();
+    if (newDataFlowInfo == null) {
+      newDataFlowInfo=context.dataFlowInfo;
+    }
+    if (newDataFlowInfo != context.dataFlowInfo) {
+      newContext=new TypeInferenceContext(trace,scope,this,true,newDataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+    }
+    blockLevelVisitor.resetResult();
+  }
+  return result;
+}

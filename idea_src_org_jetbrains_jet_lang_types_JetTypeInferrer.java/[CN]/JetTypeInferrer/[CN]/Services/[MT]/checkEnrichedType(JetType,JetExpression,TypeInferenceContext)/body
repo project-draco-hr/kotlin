@@ -1,0 +1,29 @@
+{
+  if (expressionType == null || context.expectedType == null || context.expectedType == NO_EXPECTED_TYPE || semanticServices.getTypeChecker().isSubtypeOf(expressionType,context.expectedType)) {
+    return expressionType;
+  }
+  VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(expression,context);
+  if (variableDescriptor == null)   return expressionType;
+  JetType enrichedType=null;
+  List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
+  Collections.reverse(possibleTypes);
+  for (  JetType possibleType : possibleTypes) {
+    if (semanticServices.getTypeChecker().isSubtypeOf(possibleType,context.expectedType)) {
+      enrichedType=possibleType;
+      break;
+    }
+  }
+  if (enrichedType == null) {
+    enrichedType=context.dataFlowInfo.getOutType(variableDescriptor);
+  }
+  if (enrichedType == null) {
+    enrichedType=expressionType;
+  }
+  if (!semanticServices.getTypeChecker().isSubtypeOf(enrichedType,context.expectedType)) {
+    context.trace.getErrorHandler().typeMismatch(expression,context.expectedType,expressionType);
+  }
+ else {
+    context.trace.recordAutoCast(expression,enrichedType);
+  }
+  return enrichedType;
+}

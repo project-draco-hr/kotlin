@@ -1,0 +1,15 @@
+{
+  JetSimpleNameExpression operationSign=expression.getOperationReference();
+  JetExpression left=expression.getLeft();
+  JetExpression right=expression.getRight();
+  JetType leftType=getType(context.scope,left,false,context);
+  if (leftType != null && right != null) {
+    JetType rightType=getType(context.scope,right,false,context);
+    if (rightType != null) {
+      JetType intersect=TypeUtils.intersect(semanticServices.getTypeChecker(),new HashSet<JetType>(Arrays.asList(leftType,rightType)));
+      if (intersect == null) {
+        context.trace.getErrorHandler().genericError(expression.getNode(),"Operator " + operationSign.getReferencedName() + " cannot be applied to "+ leftType+ " and "+ rightType);
+      }
+    }
+  }
+}

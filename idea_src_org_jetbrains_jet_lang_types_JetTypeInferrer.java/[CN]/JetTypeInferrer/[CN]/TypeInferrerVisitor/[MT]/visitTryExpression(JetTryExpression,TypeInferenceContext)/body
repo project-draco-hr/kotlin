@@ -1,0 +1,39 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  JetExpression tryBlock=expression.getTryBlock();
+  List<JetCatchClause> catchClauses=expression.getCatchClauses();
+  JetFinallySection finallyBlock=expression.getFinallyBlock();
+  List<JetType> types=new ArrayList<JetType>();
+  for (  JetCatchClause catchClause : catchClauses) {
+    JetParameter catchParameter=catchClause.getCatchParameter();
+    JetExpression catchBody=catchClause.getCatchBody();
+    if (catchParameter != null) {
+      VariableDescriptor variableDescriptor=context.classDescriptorResolver.resolveLocalVariableDescriptor(context.scope.getContainingDeclaration(),context.scope,catchParameter);
+      if (catchBody != null) {
+        WritableScope catchScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("Catch scope");
+        catchScope.addVariableDescriptor(variableDescriptor);
+        JetType type=getType(catchScope,catchBody,true,contextWithExpectedType);
+        if (type != null) {
+          types.add(type);
+        }
+      }
+    }
+  }
+  if (finallyBlock != null) {
+    types.clear();
+    JetType type=getType(context.scope,finallyBlock.getFinalExpression(),true,contextWithExpectedType);
+    if (type != null) {
+      types.add(type);
+    }
+  }
+  JetType type=getType(context.scope,tryBlock,true,contextWithExpectedType);
+  if (type != null) {
+    types.add(type);
+  }
+  if (types.isEmpty()) {
+    return null;
+  }
+ else {
+    return semanticServices.getTypeChecker().commonSupertype(types);
+  }
+}

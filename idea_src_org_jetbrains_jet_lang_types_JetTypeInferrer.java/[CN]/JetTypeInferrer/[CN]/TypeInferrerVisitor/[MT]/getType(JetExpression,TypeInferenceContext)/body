@@ -1,0 +1,30 @@
+{
+  if (context.trace.isProcessed(expression)) {
+    return context.trace.getBindingContext().getExpressionType(expression);
+  }
+  JetType result;
+  try {
+    result=expression.visit(this,context);
+    if (context.trace.isProcessed(expression)) {
+      return context.trace.getBindingContext().getExpressionType(expression);
+    }
+    if (result instanceof DeferredType) {
+      result=((DeferredType)result).getActualType();
+    }
+    if (result != null) {
+      context.trace.recordExpressionType(expression,result);
+      if (JetStandardClasses.isNothing(result) && !result.isNullable()) {
+        markDominatedExpressionsAsUnreachable(expression,context);
+      }
+    }
+  }
+ catch (  ReenteringLazyValueComputationException e) {
+    context.trace.getErrorHandler().genericError(expression.getNode(),"Type inference has run into a recursive problem");
+    result=null;
+  }
+  if (!context.trace.isProcessed(expression)) {
+    context.trace.recordResolutionScope(expression,context.scope);
+  }
+  context.trace.markAsProcessed(expression);
+  return result;
+}

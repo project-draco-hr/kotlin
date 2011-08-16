@@ -1,0 +1,24 @@
+{
+  final JetType[] result=new JetType[1];
+  TopDownAnalyzer topDownAnalyzer=new TopDownAnalyzer(semanticServices,new BindingTraceAdapter(context.trace){
+    @Override public void recordDeclarationResolution(    @NotNull PsiElement declaration,    @NotNull final DeclarationDescriptor descriptor){
+      if (declaration == expression.getObjectDeclaration()) {
+        JetType defaultType=new DeferredType(new LazyValue<JetType>(){
+          @Override protected JetType compute(){
+            return ((ClassDescriptor)descriptor).getDefaultType();
+          }
+        }
+);
+        result[0]=defaultType;
+        if (!context.trace.isProcessed(expression)) {
+          recordExpressionType(expression,defaultType);
+          markAsProcessed(expression);
+        }
+      }
+      super.recordDeclarationResolution(declaration,descriptor);
+    }
+  }
+);
+  topDownAnalyzer.processObject(context.scope,context.scope.getContainingDeclaration(),expression.getObjectDeclaration());
+  return context.services.checkType(result[0],expression,context);
+}
