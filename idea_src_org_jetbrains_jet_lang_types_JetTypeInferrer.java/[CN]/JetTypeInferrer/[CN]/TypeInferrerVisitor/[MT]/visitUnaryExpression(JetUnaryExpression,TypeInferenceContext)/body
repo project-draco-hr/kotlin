@@ -1,10 +1,9 @@
 {
-  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
   JetExpression baseExpression=expression.getBaseExpression();
   if (baseExpression == null)   return null;
   JetSimpleNameExpression operationSign=expression.getOperationSign();
   if (JetTokens.LABELS.contains(operationSign.getReferencedNameElementType())) {
-    return context.services.checkType(getType(baseExpression,context.replaceExpectedReturnType(contextWithExpectedType.expectedType)),expression,contextWithExpectedType);
+    return context.services.checkType(getType(baseExpression,context.replaceExpectedReturnType(context.expectedType)),expression,context);
   }
   IElementType operationType=operationSign.getReferencedNameElementType();
   String name=unaryOperationNames.get(operationType);
@@ -12,7 +11,7 @@
     context.trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown unary operation");
     return null;
   }
-  JetType receiverType=getType(context.scope,baseExpression,false,context);
+  JetType receiverType=getType(context.scope,baseExpression,false,context.replaceExpectedType(NO_EXPECTED_TYPE));
   if (receiverType == null)   return null;
   FunctionDescriptor functionDescriptor=context.services.lookupFunction(context.scope,expression.getOperationSign(),name,receiverType,Collections.<JetType>emptyList(),true);
   if (functionDescriptor == null)   return null;
@@ -35,5 +34,5 @@
  else {
     result=returnType;
   }
-  return context.services.checkType(result,expression,contextWithExpectedType);
+  return context.services.checkType(result,expression,context);
 }

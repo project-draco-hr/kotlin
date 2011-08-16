@@ -1,9 +1,8 @@
 {
-  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
   JetFunctionLiteral functionLiteral=expression.getFunctionLiteral();
   if (context.preferBlock && !functionLiteral.hasParameterSpecification()) {
     context.trace.recordBlock(expression);
-    return context.services.checkType(getBlockReturnedType(context.scope,functionLiteral.getBodyExpression(),contextWithExpectedType),expression,contextWithExpectedType);
+    return context.services.checkType(getBlockReturnedType(context.scope,functionLiteral.getBodyExpression(),context),expression,context);
   }
   JetTypeReference receiverTypeRef=functionLiteral.getReceiverTypeRef();
   final JetType receiverType;
@@ -43,12 +42,12 @@
     context.services.checkFunctionReturnType(functionInnerScope,expression,returnType,context.dataFlowInfo);
   }
  else {
-    if (contextWithExpectedType.expectedType != NO_EXPECTED_TYPE && JetStandardClasses.isFunctionType(contextWithExpectedType.expectedType)) {
-      returnType=JetStandardClasses.getReturnType(contextWithExpectedType.expectedType);
+    if (context.expectedType != NO_EXPECTED_TYPE && JetStandardClasses.isFunctionType(context.expectedType)) {
+      returnType=JetStandardClasses.getReturnType(context.expectedType);
     }
     returnType=getBlockReturnedType(functionInnerScope,functionLiteral.getBodyExpression(),context.replaceExpectedType(returnType));
   }
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
-  return context.services.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),effectiveReceiverType,parameterTypes,safeReturnType),expression,contextWithExpectedType);
+  return context.services.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),effectiveReceiverType,parameterTypes,safeReturnType),expression,context);
 }
