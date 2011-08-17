@@ -83,13 +83,14 @@
   }
  else   if (operationType == JetTokens.ELVIS) {
     JetType leftType=getType(context.scope,left,false,context);
-    JetType rightType=right == null ? null : getType(context.scope,right,false,context);
+    JetType rightType=right == null ? null : getType(context.scope,right,false,contextWithExpectedType);
     if (leftType != null) {
       if (!leftType.isNullable()) {
         context.trace.getErrorHandler().genericWarning(left.getNode(),"Elvis operator (?:) is always returns the left operand of non-nullable type " + leftType);
       }
       if (rightType != null) {
-        result=TypeUtils.makeNullableAsSpecified(semanticServices.getTypeChecker().commonSupertype(leftType,rightType),rightType.isNullable());
+        context.services.checkType(TypeUtils.makeNullableAsSpecified(leftType,rightType.isNullable()),left,contextWithExpectedType);
+        return TypeUtils.makeNullableAsSpecified(semanticServices.getTypeChecker().commonSupertype(leftType,rightType),rightType.isNullable());
       }
     }
   }

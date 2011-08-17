@@ -7,6 +7,11 @@
   ErrorHandlerWithRegions errorHandler=context.trace.getErrorHandler();
   errorHandler.openRegion();
   JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,context);
+  if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
+    if (selectorReturnType != null && !selectorReturnType.isNullable() && !JetStandardClasses.isUnit(selectorReturnType)) {
+      selectorReturnType=TypeUtils.makeNullable(selectorReturnType);
+    }
+  }
   if (selectorReturnType != null) {
     errorHandler.closeAndCommitCurrentRegion();
   }
