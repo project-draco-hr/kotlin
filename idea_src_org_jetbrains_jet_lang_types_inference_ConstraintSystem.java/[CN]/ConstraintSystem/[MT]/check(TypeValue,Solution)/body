@@ -1,0 +1,24 @@
+{
+  try {
+    KnownType resultingValue=typeValue.getValue();
+    JetType type=solution.getSubstitutor().substitute(resultingValue.getType(),Variance.INVARIANT);
+    for (    TypeValue upperBound : typeValue.getUpperBounds()) {
+      JetType boundingType=solution.getSubstitutor().substitute(upperBound.getValue().getType(),Variance.INVARIANT);
+      if (!typeChecker.isSubtypeOf(type,boundingType)) {
+        solution.registerError();
+        System.out.println("Constraint violation: " + type + " :< "+ boundingType);
+      }
+    }
+    for (    TypeValue lowerBound : typeValue.getLowerBounds()) {
+      JetType boundingType=solution.getSubstitutor().substitute(lowerBound.getValue().getType(),Variance.INVARIANT);
+      if (!typeChecker.isSubtypeOf(boundingType,type)) {
+        solution.registerError();
+        System.out.println("Constraint violation: " + boundingType + " :< "+ type);
+      }
+    }
+  }
+ catch (  LoopInTypeVariableConstraintsException e) {
+    solution.registerError();
+    e.printStackTrace();
+  }
+}
