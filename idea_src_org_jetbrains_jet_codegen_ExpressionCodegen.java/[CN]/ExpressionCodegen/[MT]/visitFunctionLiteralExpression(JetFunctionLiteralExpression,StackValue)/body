@@ -1,0 +1,20 @@
+{
+  if (bindingContext.get(BindingContext.BLOCK,expression)) {
+    return generateBlock(expression.getFunctionLiteral().getBodyExpression().getStatements());
+  }
+ else {
+    final GeneratedAnonymousClassDescriptor closure=new ClosureCodegen(state,this,context).gen(expression);
+    v.anew(Type.getObjectType(closure.getClassname()));
+    v.dup();
+    final Method cons=closure.getConstructor();
+    if (closure.isCaptureThis()) {
+      thisToStack();
+    }
+    for (int i=0; i < closure.getArgs().size(); i++) {
+      StackValue arg=closure.getArgs().get(i);
+      arg.put(cons.getArgumentTypes()[i],v);
+    }
+    v.invokespecial(closure.getClassname(),"<init>",cons.getDescriptor());
+    return StackValue.onStack(Type.getObjectType(closure.getClassname()));
+  }
+}
