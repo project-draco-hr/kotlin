@@ -2,44 +2,49 @@
   TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
   JetExpression selectorExpression=expression.getSelectorExpression();
   JetExpression receiverExpression=expression.getReceiverExpression();
-  JetType receiverType=context.services.typeInferrerVisitorWithNamespaces.getType(receiverExpression,new TypeInferenceContext(context.trace,context.scope,context.services,false,context.dataFlowInfo,NO_EXPECTED_TYPE,NO_EXPECTED_TYPE));
+  JetType receiverType=context.services.typeInferrerVisitorWithNamespaces.getType(receiverExpression,new TypeInferenceContext(context.trace,context.scope,false,context.dataFlowInfo,NO_EXPECTED_TYPE,NO_EXPECTED_TYPE));
   if (receiverType == null)   return null;
-  ErrorHandlerWithRegions errorHandler=context.trace.getErrorHandler();
-  errorHandler.openRegion();
-  JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,context);
+  TemporaryBindingTrace cleanResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+  TypeInferenceContext cleanResolutionContext=context.replaceBindingTrace(cleanResolutionTrace);
+  JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,cleanResolutionContext);
   if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
     if (selectorReturnType != null && !selectorReturnType.isNullable() && !JetStandardClasses.isUnit(selectorReturnType)) {
       selectorReturnType=TypeUtils.makeNullable(selectorReturnType);
     }
   }
   if (selectorReturnType != null) {
-    errorHandler.closeAndCommitCurrentRegion();
+    cleanResolutionTrace.addAllMyDataTo(context.trace);
   }
  else {
-    ErrorHandlerWithRegions.DiagnosticsRegion regionToCommit=errorHandler.closeAndReturnCurrentRegion();
-    VariableDescriptor variableDescriptor=context.services.getVariableDescriptorFromSimpleName(receiverExpression,context);
+    VariableDescriptor variableDescriptor=cleanResolutionContext.services.getVariableDescriptorFromSimpleName(receiverExpression,context);
+    boolean somethingFound=false;
     if (variableDescriptor != null) {
       List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
       Collections.reverse(possibleTypes);
+      TemporaryBindingTrace autocastResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+      TypeInferenceContext autocastResolutionContext=context.replaceBindingTrace(autocastResolutionTrace);
       for (      JetType possibleType : possibleTypes) {
-        errorHandler.openRegion();
-        selectorReturnType=getSelectorReturnType(possibleType,selectorExpression,context);
+        selectorReturnType=getSelectorReturnType(possibleType,selectorExpression,autocastResolutionContext);
         if (selectorReturnType != null) {
-          regionToCommit=errorHandler.closeAndReturnCurrentRegion();
-          context.trace.recordAutoCast(receiverExpression,possibleType);
+          autocastResolutionTrace.record(BindingContext.AUTOCAST,receiverExpression,possibleType);
+          autocastResolutionTrace.addAllMyDataTo(context.trace);
+          somethingFound=true;
           break;
         }
  else {
-          errorHandler.closeAndReturnCurrentRegion();
+          autocastResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+          autocastResolutionContext=context.replaceBindingTrace(autocastResolutionTrace);
         }
       }
     }
-    regionToCommit.commit();
+    if (!somethingFound) {
+      cleanResolutionTrace.addAllMyDataTo(context.trace);
+    }
   }
   JetType result;
   if (expression.getOperationSign() == JetTokens.QUEST) {
     if (selectorReturnType != null && !isBoolean(selectorReturnType) && selectorExpression != null) {
-      errorHandler.typeMismatch(selectorExpression,semanticServices.getStandardLibrary().getBooleanType(),selectorReturnType);
+      context.trace.getErrorHandler().typeMismatch(selectorExpression,semanticServices.getStandardLibrary().getBooleanType(),selectorReturnType);
     }
     result=TypeUtils.makeNullable(receiverType);
   }
@@ -47,7 +52,7 @@
     result=selectorReturnType;
   }
   if (selectorExpression != null && result != null) {
-    context.trace.recordExpressionType(selectorExpression,result);
+    context.trace.record(BindingContext.EXPRESSION_TYPE,selectorExpression,result);
   }
   if (selectorReturnType != null) {
     if (selectorExpression != null) {

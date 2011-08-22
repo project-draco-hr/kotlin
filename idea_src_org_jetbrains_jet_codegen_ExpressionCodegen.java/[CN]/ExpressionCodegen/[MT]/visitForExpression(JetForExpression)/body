@@ -1,13 +1,13 @@
 {
   final JetExpression loopRange=expression.getLoopRange();
-  final JetType expressionType=bindingContext.getExpressionType(loopRange);
+  final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,loopRange);
   Type loopRangeType=typeMapper.mapType(expressionType);
   if (loopRangeType.getSort() == Type.ARRAY) {
     new ForInArrayLoopGenerator(expression,loopRangeType).invoke();
   }
  else {
     final DeclarationDescriptor descriptor=expressionType.getConstructor().getDeclarationDescriptor();
-    final PsiElement declaration=bindingContext.getDeclarationPsiElement(descriptor);
+    final PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
     if (declaration instanceof PsiClass) {
       final Project project=declaration.getProject();
       final PsiClass iterable=JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable",ProjectScope.getAllScope(project));

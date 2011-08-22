@@ -1,5 +1,5 @@
 {
-  DeclarationDescriptor descriptor=bindingContext.resolveReferenceExpression(expression);
+  DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
   if (descriptor instanceof NamespaceDescriptor)   return;
   if (descriptor instanceof VariableAsFunctionDescriptor) {
     descriptor=((VariableAsFunctionDescriptor)descriptor).getVariableDescriptor();
@@ -11,7 +11,7 @@
     return;
   }
   final DeclarationDescriptor container=descriptor.getContainingDeclaration();
-  PsiElement declaration=bindingContext.getDeclarationPsiElement(descriptor);
+  PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
   if (declaration instanceof PsiField) {
     PsiField psiField=(PsiField)declaration;
     final String owner=JetTypeMapper.jvmName(psiField.getContainingClass());
@@ -33,7 +33,7 @@
       if (declaration instanceof JetParameter) {
         if (PsiTreeUtil.getParentOfType(expression,JetDelegationSpecifier.class) != null) {
           JetClass aClass=PsiTreeUtil.getParentOfType(expression,JetClass.class);
-          ConstructorDescriptor constructorDescriptor=bindingContext.getConstructorDescriptor(aClass);
+          ConstructorDescriptor constructorDescriptor=bindingContext.get(BindingContext.CONSTRUCTOR,aClass);
           List<ValueParameterDescriptor> parameters=constructorDescriptor.getValueParameters();
           for (          ValueParameterDescriptor parameter : parameters) {
             if (parameter.getName().equals(descriptor.getName())) {
@@ -46,7 +46,7 @@
       }
       if (declaration instanceof JetObjectDeclarationName) {
         JetObjectDeclaration objectDeclaration=PsiTreeUtil.getParentOfType(declaration,JetObjectDeclaration.class);
-        ClassDescriptor classDescriptor=bindingContext.getClassDescriptor(objectDeclaration);
+        ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,objectDeclaration);
         myStack.push(StackValue.field(typeMapper.jvmType(classDescriptor,OwnerKind.IMPLEMENTATION),typeMapper.jvmName(classDescriptor,OwnerKind.IMPLEMENTATION),"$instance",true));
       }
  else {
