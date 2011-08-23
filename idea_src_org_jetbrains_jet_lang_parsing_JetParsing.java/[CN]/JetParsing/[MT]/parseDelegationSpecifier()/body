@@ -1,17 +1,21 @@
 {
   PsiBuilder.Marker delegator=mark();
   parseAnnotations(false);
+  PsiBuilder.Marker reference=mark();
   parseTypeRef();
   if (at(BY_KEYWORD)) {
+    reference.drop();
     advance();
     createForByClause(myBuilder).myExpressionParsing.parseExpression();
     delegator.done(DELEGATOR_BY);
   }
  else   if (at(LPAR)) {
+    reference.done(CONSTRUCTOR_CALLEE);
     myExpressionParsing.parseValueArgumentList();
     delegator.done(DELEGATOR_SUPER_CALL);
   }
  else {
+    reference.drop();
     delegator.done(DELEGATOR_SUPER_CLASS);
   }
 }

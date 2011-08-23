@@ -3,14 +3,14 @@
     return JetStandardClasses.getUnitType();
   }
   TypeInferrerVisitorWithWritableScope blockLevelVisitor=newTypeInferrerVisitorWithWritableScope(scope);
-  TypeInferenceContext newContext=new TypeInferenceContext(trace,scope,this,true,context.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+  TypeInferenceContext newContext=new TypeInferenceContext(trace,scope,true,context.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
   JetType result=null;
   for (Iterator<? extends JetElement> iterator=block.iterator(); iterator.hasNext(); ) {
     JetElement statement=iterator.next();
-    trace.recordStatement(statement);
+    trace.record(STATEMENT,statement);
     JetExpression statementExpression=(JetExpression)statement;
     if (!iterator.hasNext() && context.expectedType != NO_EXPECTED_TYPE) {
-      newContext=new TypeInferenceContext(trace,scope,this,true,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
+      newContext=new TypeInferenceContext(trace,scope,true,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
     }
     result=blockLevelVisitor.getType(statementExpression,newContext);
     DataFlowInfo newDataFlowInfo=blockLevelVisitor.getResultingDataFlowInfo();
@@ -18,7 +18,7 @@
       newDataFlowInfo=context.dataFlowInfo;
     }
     if (newDataFlowInfo != context.dataFlowInfo) {
-      newContext=new TypeInferenceContext(trace,scope,this,true,newDataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+      newContext=new TypeInferenceContext(trace,scope,true,newDataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
     }
     blockLevelVisitor.resetResult();
   }

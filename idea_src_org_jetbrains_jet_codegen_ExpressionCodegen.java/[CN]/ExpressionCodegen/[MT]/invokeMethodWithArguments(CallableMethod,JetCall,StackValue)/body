@@ -1,0 +1,20 @@
+{
+  final Type calleeType=callableMethod.getGenerateCalleeType();
+  if (calleeType != null && expression instanceof JetCallExpression) {
+    gen(expression.getCalleeExpression(),calleeType);
+  }
+  if (callableMethod.isOwnerFromCall()) {
+    setOwnerFromCall(callableMethod,expression);
+  }
+  if (callableMethod.needsReceiverOnStack()) {
+    if (receiver == StackValue.none()) {
+      receiver=thisExpression();
+    }
+    receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+  }
+  pushMethodArguments(expression,callableMethod.getValueParameterTypes());
+  if (callableMethod.acceptsTypeArguments()) {
+    pushTypeArguments(expression);
+  }
+  callableMethod.invoke(v);
+}

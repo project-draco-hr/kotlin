@@ -1,12 +1,12 @@
 {
-  DeclarationDescriptor constructorDescriptor=bindingContext.resolveReferenceExpression(constructorReference);
-  final PsiElement declaration=bindingContext.getDeclarationPsiElement(constructorDescriptor);
+  DeclarationDescriptor constructorDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,constructorReference);
+  final PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,constructorDescriptor);
   Type type;
   if (declaration instanceof PsiMethod) {
     type=generateJavaConstructorCall(expression,(PsiMethod)declaration);
   }
  else   if (constructorDescriptor instanceof ConstructorDescriptor) {
-    type=typeMapper.mapType(bindingContext.getExpressionType(expression),OwnerKind.IMPLEMENTATION);
+    type=typeMapper.mapType(bindingContext.get(BindingContext.EXPRESSION_TYPE,expression),OwnerKind.IMPLEMENTATION);
     if (type.getSort() == Type.ARRAY) {
       generateNewArray(expression,type);
     }
@@ -22,5 +22,5 @@
  else {
     throw new UnsupportedOperationException("don't know how to generate this new expression");
   }
-  myStack.push(StackValue.onStack(type));
+  return StackValue.onStack(type);
 }
