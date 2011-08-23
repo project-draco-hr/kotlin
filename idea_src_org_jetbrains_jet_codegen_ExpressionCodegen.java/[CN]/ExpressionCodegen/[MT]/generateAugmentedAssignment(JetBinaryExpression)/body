@@ -3,13 +3,13 @@
   final Callable callable=resolveToCallable(op);
   final JetExpression lhs=expression.getLeft();
   Type lhsType=expressionType(lhs);
-  if ((boolean)bindingContext.get(BindingContext.VARIABLE_REASSIGNMENT,expression)) {
+  if (bindingContext.get(BindingContext.VARIABLE_REASSIGNMENT,expression)) {
     if (callable instanceof IntrinsicMethod) {
-      StackValue value=generateIntermediateValue(lhs);
+      StackValue value=gen(lhs);
       value.dupReceiver(v,0);
       value.put(lhsType,v);
       final IntrinsicMethod intrinsic=(IntrinsicMethod)callable;
-      intrinsic.generate(this,v,lhsType,expression,Arrays.asList(lhs,expression.getRight()),true);
+      intrinsic.generate(this,v,lhsType,expression,Arrays.asList(expression.getRight()),null);
       value.store(v);
     }
  else {
@@ -20,4 +20,5 @@
     final boolean keepReturnValue=!((FunctionDescriptor)op).getReturnType().equals(JetStandardClasses.getUnitType());
     callAugAssignMethod(expression,(CallableMethod)callable,lhsType,keepReturnValue);
   }
+  return StackValue.none();
 }
