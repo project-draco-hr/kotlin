@@ -1,0 +1,28 @@
+{
+  JetExpression calleeExpression=call.getCalleeExpression();
+  Collection<FunctionDescriptor> candidates;
+  final JetReferenceExpression functionReference;
+  if (calleeExpression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression expression=(JetSimpleNameExpression)calleeExpression;
+    functionReference=expression;
+    candidates=scope.getFunctionGroup(expression.getReferencedName()).getFunctionDescriptors();
+  }
+ else   if (calleeExpression instanceof JetConstructorCalleeExpression) {
+    JetConstructorCalleeExpression expression=(JetConstructorCalleeExpression)calleeExpression;
+    functionReference=expression.getConstructorReferenceExpression();
+    JetType constructedType=typeResolver.resolveType(scope,expression.getTypeReference());
+    DeclarationDescriptor declarationDescriptor=constructedType.getConstructor().getDeclarationDescriptor();
+    if (declarationDescriptor instanceof ClassDescriptor) {
+      ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
+      candidates=classDescriptor.getConstructors().getFunctionDescriptors();
+    }
+ else {
+      trace.getErrorHandler().genericError(calleeExpression.getNode(),"Not a class");
+      return null;
+    }
+  }
+ else {
+    throw new UnsupportedOperationException("Type argument inference not implemented");
+  }
+  return resolveCallToFunctionDescriptor(scope,receiver,call,call.getNode(),expectedType,candidates,functionReference);
+}

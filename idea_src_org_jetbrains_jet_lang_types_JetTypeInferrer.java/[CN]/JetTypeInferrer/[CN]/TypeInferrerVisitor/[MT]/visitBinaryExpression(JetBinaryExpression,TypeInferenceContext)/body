@@ -8,11 +8,11 @@
   if (operationType == JetTokens.IDENTIFIER) {
     String referencedName=operationSign.getReferencedName();
     if (referencedName != null) {
-      result=getTypeForBinaryCall(expression,referencedName,context.scope,true,context);
+      result=getTypeForBinaryCall(context.scope,referencedName,context,expression);
     }
   }
  else   if (binaryOperationNames.containsKey(operationType)) {
-    result=getTypeForBinaryCall(expression,binaryOperationNames.get(operationType),context.scope,true,context);
+    result=getTypeForBinaryCall(context.scope,binaryOperationNames.get(operationType),context,expression);
   }
  else   if (operationType == JetTokens.EQ) {
     result=visitAssignment(expression,context);
@@ -21,7 +21,7 @@
     result=visitAssignmentOperation(expression,context);
   }
  else   if (comparisonOperations.contains(operationType)) {
-    JetType compareToReturnType=getTypeForBinaryCall(expression,"compareTo",context.scope,true,context);
+    JetType compareToReturnType=getTypeForBinaryCall(context.scope,"compareTo",context,expression);
     if (compareToReturnType != null) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
       JetStandardLibrary standardLibrary=semanticServices.getStandardLibrary();
@@ -41,7 +41,14 @@
       if (leftType != null) {
         JetType rightType=getType(context.scope,right,false,context);
         if (rightType != null) {
-          FunctionDescriptor equals=context.services.lookupFunction(context.scope,operationSign,"equals",leftType,Collections.singletonList(JetStandardClasses.getNullableAnyType()),false);
+          OverloadResolutionResult resolutionResult=context.services.callResolver.resolveExactSignature(context.scope,leftType,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
+          FunctionDescriptor equals;
+          if (resolutionResult.isSuccess()) {
+            equals=resolutionResult.getFunctionDescriptor();
+          }
+ else {
+            equals=null;
+          }
           if (equals != null) {
             if (ensureBooleanResult(operationSign,name,equals.getReturnType(),context)) {
               ensureNonemptyIntersectionOfOperandTypes(expression,context);
