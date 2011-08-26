@@ -4,7 +4,7 @@
   JetExpression receiverExpression=expression.getReceiverExpression();
   JetType receiverType=context.services.typeInferrerVisitorWithNamespaces.getType(receiverExpression,new TypeInferenceContext(context.trace,context.scope,false,context.dataFlowInfo,NO_EXPECTED_TYPE,NO_EXPECTED_TYPE));
   if (receiverType == null)   return null;
-  TemporaryBindingTrace cleanResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+  TemporaryBindingTrace cleanResolutionTrace=TemporaryBindingTrace.create(context.trace);
   TypeInferenceContext cleanResolutionContext=context.replaceBindingTrace(cleanResolutionTrace);
   JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,cleanResolutionContext);
   if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
@@ -21,24 +21,24 @@
     if (variableDescriptor != null) {
       List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
       Collections.reverse(possibleTypes);
-      TemporaryBindingTrace autocastResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+      TemporaryBindingTrace autocastResolutionTrace=TemporaryBindingTrace.create(context.trace);
       TypeInferenceContext autocastResolutionContext=context.replaceBindingTrace(autocastResolutionTrace);
       for (      JetType possibleType : possibleTypes) {
         selectorReturnType=getSelectorReturnType(possibleType,selectorExpression,autocastResolutionContext);
         if (selectorReturnType != null) {
           context.services.checkAutoCast(receiverExpression,possibleType,variableDescriptor,autocastResolutionTrace);
-          autocastResolutionTrace.addAllMyDataTo(context.trace);
+          autocastResolutionTrace.commit();
           somethingFound=true;
           break;
         }
  else {
-          autocastResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
+          autocastResolutionTrace=TemporaryBindingTrace.create(context.trace);
           autocastResolutionContext=context.replaceBindingTrace(autocastResolutionTrace);
         }
       }
     }
     if (!somethingFound) {
-      cleanResolutionTrace.addAllMyDataTo(context.trace);
+      cleanResolutionTrace.commit();
     }
   }
   JetType result;

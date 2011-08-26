@@ -1,0 +1,45 @@
+{
+  if (successfulCandidates.size() > 0) {
+    if (successfulCandidates.size() == 1) {
+      Map.Entry<FunctionDescriptor,FunctionDescriptor> entry=successfulCandidates.entrySet().iterator().next();
+      FunctionDescriptor functionDescriptor=entry.getKey();
+      FunctionDescriptor result=entry.getValue();
+      TemporaryBindingTrace temporaryTrace=traces.get(functionDescriptor);
+      temporaryTrace.commit();
+      return result;
+    }
+ else {
+      FunctionDescriptor maximallySpecific=findMaximallySpecific(successfulCandidates,traces,false);
+      if (maximallySpecific != null) {
+        return maximallySpecific;
+      }
+      FunctionDescriptor maximallySpecificGenericsDiscriminated=findMaximallySpecific(successfulCandidates,traces,true);
+      if (maximallySpecificGenericsDiscriminated != null) {
+        return maximallySpecificGenericsDiscriminated;
+      }
+      StringBuilder stringBuilder=new StringBuilder();
+      for (      FunctionDescriptor functionDescriptor : successfulCandidates.keySet()) {
+        stringBuilder.append(DescriptorRenderer.TEXT.render(functionDescriptor)).append(" ");
+      }
+      tracing.reportOverallResolutionError(trace,"Overload resolution ambiguity: " + stringBuilder);
+    }
+  }
+ else   if (!failedCandidates.isEmpty()) {
+    if (failedCandidates.size() == 1) {
+      FunctionDescriptor functionDescriptor=failedCandidates.iterator().next();
+      TemporaryBindingTrace temporaryTrace=traces.get(functionDescriptor);
+      temporaryTrace.commit();
+    }
+ else {
+      StringBuilder stringBuilder=new StringBuilder();
+      for (      FunctionDescriptor functionDescriptor : failedCandidates) {
+        stringBuilder.append(DescriptorRenderer.TEXT.render(functionDescriptor)).append(" ");
+      }
+      tracing.reportOverallResolutionError(trace,"None of the following functions can be called with the arguments supplied: " + stringBuilder);
+    }
+  }
+ else {
+    tracing.reportUnresolvedFunctionReference(trace);
+  }
+  return null;
+}

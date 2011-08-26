@@ -1,20 +1,12 @@
 {
   builder.append(renderKeyword("fun")).append(" ");
-  List<TypeParameterDescriptor> typeParameters=descriptor.getTypeParameters();
-  renderTypeParameters(typeParameters,builder);
+  renderTypeParameters(descriptor.getTypeParameters(),builder);
   JetType receiverType=descriptor.getReceiverType();
   if (receiverType != null) {
     builder.append(escape(renderType(receiverType))).append(".");
   }
   renderName(descriptor,builder);
-  builder.append("(");
-  for (Iterator<ValueParameterDescriptor> iterator=descriptor.getValueParameters().iterator(); iterator.hasNext(); ) {
-    ValueParameterDescriptor parameterDescriptor=iterator.next();
-    parameterDescriptor.accept(subVisitor,builder);
-    if (iterator.hasNext()) {
-      builder.append(", ");
-    }
-  }
-  builder.append(") : ").append(escape(renderType(descriptor.getReturnType())));
+  renderValueParameters(descriptor,builder);
+  builder.append(" : ").append(escape(renderType(descriptor.getReturnType())));
   return super.visitFunctionDescriptor(descriptor,builder);
 }

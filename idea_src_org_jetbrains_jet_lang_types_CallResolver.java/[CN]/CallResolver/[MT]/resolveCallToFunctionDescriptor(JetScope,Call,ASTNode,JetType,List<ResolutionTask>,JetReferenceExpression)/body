@@ -1,0 +1,59 @@
+{
+  TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
+  TracingStrategy tracing=new TracingStrategy(){
+    @Override public void bindFunctionReference(    @NotNull BindingTrace trace,    @NotNull FunctionDescriptor functionDescriptor){
+      trace.record(BindingContext.REFERENCE_TARGET,functionReference,functionDescriptor);
+    }
+    @Override public void reportOverallResolutionError(    @NotNull BindingTrace trace,    @NotNull String message){
+      trace.getErrorHandler().genericError(callNode,message);
+    }
+    @Override public void reportWrongTypeArguments(    @NotNull BindingTrace trace,    @NotNull String message){
+      JetTypeArgumentList typeArgumentList=call.getTypeArgumentList();
+      if (typeArgumentList != null) {
+        trace.getErrorHandler().genericError(typeArgumentList.getNode(),message);
+      }
+ else {
+        reportOverallResolutionError(trace,message);
+      }
+    }
+    @Override public void reportWrongValueArguments(    @NotNull BindingTrace trace,    @NotNull String message){
+      ASTNode node;
+      JetValueArgumentList valueArgumentList=call.getValueArgumentList();
+      if (valueArgumentList != null) {
+        node=valueArgumentList.getNode();
+      }
+ else       if (!call.getFunctionLiteralArguments().isEmpty()) {
+        node=call.getFunctionLiteralArguments().get(0).getNode();
+      }
+ else {
+        node=callNode;
+      }
+      trace.getErrorHandler().genericError(node,message);
+    }
+    @Override public void reportUnresolvedFunctionReference(    @NotNull BindingTrace trace){
+      trace.getErrorHandler().unresolvedReference(functionReference);
+    }
+    @Override public void reportErrorOnFunctionReference(    BindingTrace trace,    String message){
+      trace.getErrorHandler().genericError(functionReference.getNode(),message);
+    }
+  }
+;
+  for (  ResolutionTask task : prioritizedTasks) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace);
+    FunctionDescriptor functionDescriptor=performResolution(temporaryTrace,scope,expectedType,task,tracing);
+    if (functionDescriptor != null) {
+      temporaryTrace.commit();
+      return functionDescriptor;
+    }
+    if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty()) {
+      traceForFirstNonemptyCandidateSet=temporaryTrace;
+    }
+  }
+  if (traceForFirstNonemptyCandidateSet != null) {
+    traceForFirstNonemptyCandidateSet.commit();
+  }
+ else {
+    trace.getErrorHandler().unresolvedReference(functionReference);
+  }
+  return null;
+}

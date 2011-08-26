@@ -1,0 +1,36 @@
+{
+  List<ResolutionTask> result=Lists.newArrayList();
+  if (receiverType != null) {
+    Collection<FunctionDescriptor> extensionFunctions=Sets.newLinkedHashSet(scope.getFunctionGroup(name).getFunctionDescriptors());
+    for (Iterator<FunctionDescriptor> iterator=extensionFunctions.iterator(); iterator.hasNext(); ) {
+      FunctionDescriptor functionDescriptor=iterator.next();
+      if (functionDescriptor.getReceiverType() == null) {
+        iterator.remove();
+      }
+    }
+    List<FunctionDescriptor> nonlocals=Lists.newArrayList();
+    List<FunctionDescriptor> locals=Lists.newArrayList();
+    splitLexicallyLocalDescriptors(extensionFunctions,scope.getContainingDeclaration(),locals,nonlocals);
+    Set<FunctionDescriptor> members=Sets.newHashSet(receiverType.getMemberScope().getFunctionGroup(name).getFunctionDescriptors());
+    addConstrtuctors(receiverType.getMemberScope(),name,members);
+    addTask(result,receiverType,call,locals);
+    addTask(result,null,call,members);
+    addTask(result,receiverType,call,nonlocals);
+  }
+ else {
+    Collection<FunctionDescriptor> functions=Sets.newLinkedHashSet(scope.getFunctionGroup(name).getFunctionDescriptors());
+    for (Iterator<FunctionDescriptor> iterator=functions.iterator(); iterator.hasNext(); ) {
+      FunctionDescriptor functionDescriptor=iterator.next();
+      if (functionDescriptor.getReceiverType() != null) {
+        iterator.remove();
+      }
+    }
+    addConstrtuctors(scope,name,functions);
+    List<FunctionDescriptor> nonlocals=Lists.newArrayList();
+    List<FunctionDescriptor> locals=Lists.newArrayList();
+    splitLexicallyLocalDescriptors(functions,scope.getContainingDeclaration(),locals,nonlocals);
+    addTask(result,receiverType,call,locals);
+    addTask(result,receiverType,call,nonlocals);
+  }
+  return result;
+}

@@ -1,35 +1,14 @@
 {
   addVariablesAsFunctions();
+  WritableFunctionGroup result=new WritableFunctionGroup(name);
   FunctionGroup functionGroup=getFunctionGroups().get(name);
-  FunctionGroup constructors=null;
-  ClassifierDescriptor classifier=getClassifier(name);
-  if (classifier instanceof ClassDescriptor) {
-    ClassDescriptor classDescriptor=(ClassDescriptor)classifier;
-    constructors=classDescriptor.getConstructors();
-  }
-  if (functionGroup != null && !functionGroup.isEmpty()) {
-    if (constructors != null) {
-      WritableFunctionGroup result=new WritableFunctionGroup(name);
-      for (      FunctionDescriptor functionDescriptor : functionGroup.getFunctionDescriptors()) {
-        result.addFunction(functionDescriptor);
-      }
-      for (      FunctionDescriptor functionDescriptor : constructors.getFunctionDescriptors()) {
-        result.addFunction(functionDescriptor);
-      }
-      return result;
-    }
-    return functionGroup;
-  }
-  if (constructors != null && !constructors.isEmpty()) {
-    return constructors;
+  if (functionGroup != null) {
+    result.addAllFunctions(functionGroup);
   }
   if (thisType != null) {
-    functionGroup=getThisType().getMemberScope().getFunctionGroup(name);
-    if (!functionGroup.isEmpty()) {
-      return functionGroup;
-    }
+    result.addAllFunctions(getThisType().getMemberScope().getFunctionGroup(name));
   }
-  functionGroup=getWorkerScope().getFunctionGroup(name);
-  if (!functionGroup.isEmpty())   return functionGroup;
-  return super.getFunctionGroup(name);
+  result.addAllFunctions(getWorkerScope().getFunctionGroup(name));
+  result.addAllFunctions(super.getFunctionGroup(name));
+  return result;
 }

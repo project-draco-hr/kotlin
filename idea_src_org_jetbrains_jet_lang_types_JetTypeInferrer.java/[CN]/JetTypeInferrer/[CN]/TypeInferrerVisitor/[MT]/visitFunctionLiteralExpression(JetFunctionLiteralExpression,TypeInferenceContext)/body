@@ -16,6 +16,12 @@
   List<JetType> parameterTypes=new ArrayList<JetType>();
   List<ValueParameterDescriptor> valueParameterDescriptors=Lists.newArrayList();
   List<JetParameter> parameters=functionLiteral.getValueParameters();
+  JetType expectedType=context.expectedType;
+  List<ValueParameterDescriptor> valueParameters=null;
+  boolean functionTypeExpected=expectedType != NO_EXPECTED_TYPE && JetStandardClasses.isFunctionType(expectedType);
+  if (functionTypeExpected) {
+    valueParameters=JetStandardClasses.getValueParameters(functionDescriptor,expectedType);
+  }
   for (int i=0, parametersSize=parameters.size(); i < parametersSize; i++) {
     JetParameter parameter=parameters.get(i);
     JetTypeReference typeReference=parameter.getTypeReference();
@@ -24,14 +30,30 @@
       type=context.typeResolver.resolveType(context.scope,typeReference);
     }
  else {
-      context.trace.getErrorHandler().genericError(parameter.getNode(),"Type inference for parameters is not implemented yet");
-      type=ErrorUtils.createErrorType("Not inferred");
+      if (valueParameters != null) {
+        type=valueParameters.get(i).getOutType();
+      }
+ else {
+        context.trace.getErrorHandler().genericError(parameter.getNode(),"Cannot infer a type for this parameter. To specify it explicitly use the {(p : Type) => ...} notation");
+        type=ErrorUtils.createErrorType("Cannot be inferred");
+      }
     }
     ValueParameterDescriptor valueParameterDescriptor=context.classDescriptorResolver.resolveValueParameterDescriptor(functionDescriptor,parameter,i,type);
     parameterTypes.add(valueParameterDescriptor.getOutType());
     valueParameterDescriptors.add(valueParameterDescriptor);
   }
-  JetType effectiveReceiverType=receiverTypeRef == null ? null : receiverType;
+  JetType effectiveReceiverType;
+  if (receiverTypeRef == null) {
+    if (functionTypeExpected) {
+      effectiveReceiverType=JetStandardClasses.getReceiverType(expectedType);
+    }
+ else {
+      effectiveReceiverType=null;
+    }
+  }
+ else {
+    effectiveReceiverType=receiverType;
+  }
   functionDescriptor.initialize(effectiveReceiverType,Collections.<TypeParameterDescriptor>emptyList(),valueParameterDescriptors,null);
   context.trace.record(BindingContext.FUNCTION,expression,functionDescriptor);
   JetType returnType=NO_EXPECTED_TYPE;
@@ -42,12 +64,14 @@
     context.services.checkFunctionReturnType(functionInnerScope,expression,returnType,context.dataFlowInfo);
   }
  else {
-    if (context.expectedType != NO_EXPECTED_TYPE && JetStandardClasses.isFunctionType(context.expectedType)) {
-      returnType=JetStandardClasses.getReturnType(context.expectedType);
+    if (functionTypeExpected) {
+      returnType=JetStandardClasses.getReturnType(expectedType);
     }
     returnType=getBlockReturnedType(functionInnerScope,functionLiteral.getBodyExpression(),context.replaceExpectedType(returnType));
   }
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
+  if (functionTypeExpected) {
+  }
   return context.services.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),effectiveReceiverType,parameterTypes,safeReturnType),expression,context);
 }

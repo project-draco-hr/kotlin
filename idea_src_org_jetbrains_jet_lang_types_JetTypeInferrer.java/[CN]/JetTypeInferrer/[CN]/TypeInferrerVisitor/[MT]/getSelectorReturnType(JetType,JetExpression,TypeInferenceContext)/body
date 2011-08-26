@@ -1,10 +1,10 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
-    return getCallExpressionType(receiverType,(JetCallExpression)selectorExpression,context);
+    return context.services.callResolver.resolveCall(context.scope,receiverType,(JetCallExpression)selectorExpression,context.expectedType);
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
-    JetScope compositeScope=new ScopeWithReceiver(context.scope,receiverType,semanticServices.getTypeChecker());
-    return getType(compositeScope,selectorExpression,false,context);
+    JetScope scope=receiverType != null ? receiverType.getMemberScope() : context.scope;
+    return getType(scope,selectorExpression,false,context);
   }
  else   if (selectorExpression != null) {
     context.trace.getErrorHandler().genericError(selectorExpression.getNode(),"Unsupported selector element type: " + selectorExpression);

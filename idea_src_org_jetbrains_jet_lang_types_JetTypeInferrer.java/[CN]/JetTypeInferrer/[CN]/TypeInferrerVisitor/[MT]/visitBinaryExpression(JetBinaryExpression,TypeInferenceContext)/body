@@ -42,20 +42,24 @@
         JetType rightType=getType(context.scope,right,false,context);
         if (rightType != null) {
           OverloadResolutionResult resolutionResult=context.services.callResolver.resolveExactSignature(context.scope,leftType,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
-          FunctionDescriptor equals;
           if (resolutionResult.isSuccess()) {
-            equals=resolutionResult.getFunctionDescriptor();
-          }
- else {
-            equals=null;
-          }
-          if (equals != null) {
+            FunctionDescriptor equals=resolutionResult.getFunctionDescriptor();
+            context.trace.record(REFERENCE_TARGET,operationSign,equals);
             if (ensureBooleanResult(operationSign,name,equals.getReturnType(),context)) {
               ensureNonemptyIntersectionOfOperandTypes(expression,context);
             }
           }
  else {
-            context.trace.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
+            if (resolutionResult.isAmbiguity()) {
+              StringBuilder stringBuilder=new StringBuilder();
+              for (              FunctionDescriptor functionDescriptor : resolutionResult.getFunctionDescriptors()) {
+                stringBuilder.append(DescriptorRenderer.TEXT.render(functionDescriptor)).append(" ");
+              }
+              context.trace.getErrorHandler().genericError(operationSign.getNode(),"Ambiguous function: " + stringBuilder);
+            }
+ else {
+              context.trace.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
+            }
           }
         }
       }
