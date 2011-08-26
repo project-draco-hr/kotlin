@@ -2,7 +2,7 @@
   JetFunctionLiteral functionLiteral=expression.getFunctionLiteral();
   if (context.preferBlock && !functionLiteral.hasParameterSpecification()) {
     context.trace.record(BindingContext.BLOCK,expression);
-    return context.services.checkType(getBlockReturnedType(context.scope,functionLiteral.getBodyExpression(),context),expression,context);
+    return context.services.checkType(context.services.getBlockReturnedType(context.scope,functionLiteral.getBodyExpression(),CoercionStrategy.NO_COERCION,context),expression,context);
   }
   JetTypeReference receiverTypeRef=functionLiteral.getReceiverTypeRef();
   final JetType receiverType;
@@ -61,17 +61,21 @@
   JetTypeReference returnTypeRef=functionLiteral.getReturnTypeRef();
   if (returnTypeRef != null) {
     returnType=context.typeResolver.resolveType(context.scope,returnTypeRef);
-    context.services.checkFunctionReturnType(functionInnerScope,expression,returnType,context.dataFlowInfo);
+    context.services.checkFunctionReturnType(functionInnerScope,expression,returnType,context.dataFlowInfo,CoercionStrategy.COERCION_TO_UNIT);
   }
  else {
     if (functionTypeExpected) {
       returnType=JetStandardClasses.getReturnType(expectedType);
     }
-    returnType=getBlockReturnedType(functionInnerScope,functionLiteral.getBodyExpression(),context.replaceExpectedType(returnType));
+    returnType=context.services.getBlockReturnedType(functionInnerScope,functionLiteral.getBodyExpression(),CoercionStrategy.COERCION_TO_UNIT,context.replaceExpectedType(returnType));
   }
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
   if (functionTypeExpected) {
+    JetType expectedReturnType=JetStandardClasses.getReturnType(expectedType);
+    if (JetStandardClasses.isUnit(expectedReturnType)) {
+      return context.services.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),effectiveReceiverType,parameterTypes,expectedReturnType),expression,context);
+    }
   }
   return context.services.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),effectiveReceiverType,parameterTypes,safeReturnType),expression,context);
 }
