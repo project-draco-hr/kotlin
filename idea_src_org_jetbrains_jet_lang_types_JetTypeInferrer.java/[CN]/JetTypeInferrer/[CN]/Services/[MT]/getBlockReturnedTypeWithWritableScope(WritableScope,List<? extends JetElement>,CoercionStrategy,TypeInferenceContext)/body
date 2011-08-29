@@ -3,7 +3,7 @@
     return JetStandardClasses.getUnitType();
   }
   TypeInferrerVisitorWithWritableScope blockLevelVisitor=newTypeInferrerVisitorWithWritableScope(scope);
-  TypeInferenceContext newContext=new TypeInferenceContext(trace,scope,true,context.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+  TypeInferenceContext newContext=newContext(trace,scope,context.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
   JetType result=null;
   for (Iterator<? extends JetElement> iterator=block.iterator(); iterator.hasNext(); ) {
     final JetElement statement=iterator.next();
@@ -14,13 +14,13 @@
         TemporaryBindingTrace temporaryTraceExpectingUnit=TemporaryBindingTrace.create(trace);
         final boolean[] mismatch=new boolean[1];
         BindingTraceAdapter errorInterceptingTrace=makeTraceInterceptingTypeMismatch(temporaryTraceExpectingUnit,statementExpression,mismatch);
-        newContext=new TypeInferenceContext(errorInterceptingTrace,scope,true,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
+        newContext=newContext(errorInterceptingTrace,scope,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
         result=blockLevelVisitor.getType(statementExpression,newContext);
         if (mismatch[0]) {
           TemporaryBindingTrace temporaryTraceNoExpectedType=TemporaryBindingTrace.create(trace);
           mismatch[0]=false;
           BindingTraceAdapter interceptingTrace=makeTraceInterceptingTypeMismatch(temporaryTraceNoExpectedType,statementExpression,mismatch);
-          newContext=new TypeInferenceContext(interceptingTrace,scope,true,newContext.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+          newContext=newContext(interceptingTrace,scope,newContext.dataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
           result=blockLevelVisitor.getType(statementExpression,newContext);
           if (mismatch[0]) {
             temporaryTraceExpectingUnit.commit();
@@ -31,7 +31,7 @@
         }
       }
  else {
-        newContext=new TypeInferenceContext(trace,scope,true,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
+        newContext=newContext(trace,scope,newContext.dataFlowInfo,context.expectedType,context.expectedReturnType);
         result=blockLevelVisitor.getType(statementExpression,newContext);
       }
     }
@@ -43,7 +43,7 @@
       newDataFlowInfo=context.dataFlowInfo;
     }
     if (newDataFlowInfo != context.dataFlowInfo) {
-      newContext=new TypeInferenceContext(trace,scope,true,newDataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
+      newContext=newContext(trace,scope,newDataFlowInfo,NO_EXPECTED_TYPE,context.expectedReturnType);
     }
     blockLevelVisitor.resetResult();
   }

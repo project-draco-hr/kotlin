@@ -37,9 +37,9 @@
  else   if (equalsOperations.contains(operationType)) {
     String name="equals";
     if (right != null) {
-      JetType leftType=getType(context.scope,left,false,context);
+      JetType leftType=getType(left,context.replaceScope(context.scope));
       if (leftType != null) {
-        JetType rightType=getType(context.scope,right,false,context);
+        JetType rightType=getType(right,context.replaceScope(context.scope));
         if (rightType != null) {
           OverloadResolutionResult resolutionResult=context.services.callResolver.resolveExactSignature(context.scope,leftType,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
           if (resolutionResult.isSuccess()) {
@@ -79,11 +79,11 @@
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
-    JetType leftType=getType(context.scope,left,false,context);
+    JetType leftType=getType(left,context.replaceScope(context.scope));
     WritableScopeImpl leftScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("Left scope of && or ||");
     DataFlowInfo flowInfoLeft=extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope,context);
     WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl(context.scope,context.trace).setDebugName("Right scope of && or ||");
-    JetType rightType=right == null ? null : getTypeWithNewDataFlowInfo(rightScope,right,false,flowInfoLeft,context);
+    JetType rightType=right == null ? null : getType(right,context.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope));
     if (leftType != null && !isBoolean(leftType)) {
       context.trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
     }
@@ -93,8 +93,8 @@
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ELVIS) {
-    JetType leftType=getType(context.scope,left,false,context);
-    JetType rightType=right == null ? null : getType(context.scope,right,false,contextWithExpectedType);
+    JetType leftType=getType(left,context.replaceScope(context.scope));
+    JetType rightType=right == null ? null : getType(right,contextWithExpectedType.replaceScope(context.scope));
     if (leftType != null) {
       if (!leftType.isNullable()) {
         context.trace.getErrorHandler().genericWarning(left.getNode(),"Elvis operator (?:) is always returns the left operand of non-nullable type " + leftType);

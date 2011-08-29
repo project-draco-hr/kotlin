@@ -31,15 +31,18 @@
       }
     }
     @Override public void visitDecomposerPattern(    JetDecomposerPattern pattern){
-      JetType selectorReturnType=getSelectorReturnType(subjectType,pattern.getDecomposerExpression(),context);
-      result[0]=checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,scopeToExtend,context);
+      JetExpression decomposerExpression=pattern.getDecomposerExpression();
+      if (decomposerExpression != null) {
+        JetType selectorReturnType=getSelectorReturnType(subjectType,decomposerExpression,context);
+        result[0]=checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,scopeToExtend,context);
+      }
     }
     @Override public void visitWildcardPattern(    JetWildcardPattern pattern){
     }
     @Override public void visitExpressionPattern(    JetExpressionPattern pattern){
       JetExpression expression=pattern.getExpression();
       if (expression != null) {
-        JetType type=getType(scopeToExtend,expression,false,context);
+        JetType type=getType(expression,context.replaceScope(scopeToExtend));
         checkTypeCompatibility(type,subjectType,pattern);
       }
     }

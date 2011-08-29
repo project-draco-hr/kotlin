@@ -4,9 +4,17 @@
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
     JetScope scope=receiverType != null ? receiverType.getMemberScope() : context.scope;
-    return getType(scope,selectorExpression,false,context);
+    return getType(selectorExpression,context.replaceScope(scope));
   }
- else   if (selectorExpression != null) {
+ else   if (selectorExpression instanceof JetQualifiedExpression) {
+    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)selectorExpression;
+    JetType newReceiverType=getSelectorReturnType(receiverType,qualifiedExpression.getReceiverExpression(),context.replaceExpectedType(NO_EXPECTED_TYPE));
+    JetExpression newSelectorExpression=qualifiedExpression.getSelectorExpression();
+    if (newReceiverType != null && newSelectorExpression != null) {
+      return getSelectorReturnType(newReceiverType,newSelectorExpression,context);
+    }
+  }
+ else {
     context.trace.getErrorHandler().genericError(selectorExpression.getNode(),"Unsupported selector element type: " + selectorExpression);
   }
   return null;
