@@ -1,4 +1,6 @@
 {
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  List<TypeParameterDescriptor> typeParameters=functionDescriptor.getTypeParameters();
   int flags=Opcodes.ACC_PUBLIC;
   OwnerKind kind=context.getContextKind();
   boolean isStatic=kind == OwnerKind.NAMESPACE;
@@ -39,5 +41,13 @@
     }
     mv.visitMaxs(0,0);
     mv.visitEnd();
+    Set<? extends FunctionDescriptor> overriddenFunctions=functionDescriptor.getOverriddenFunctions();
+    if (overriddenFunctions.size() > 0) {
+      for (      FunctionDescriptor overriddenFunction : overriddenFunctions) {
+        if (!JetTypeImpl.equalTypes(overriddenFunction.getReturnType(),functionDescriptor.getReturnType(),JetTypeImpl.EMPTY_AXIOMS)) {
+          generateBridgeMethod(jvmSignature,state.getTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction));
+        }
+      }
+    }
   }
 }

@@ -1,0 +1,18 @@
+{
+  int flags=Opcodes.ACC_PUBLIC;
+  final MethodVisitor mv=v.visitMethod(flags,function.getName(),overriden.getDescriptor(),null,null);
+  mv.visitCode();
+  Type[] argTypes=function.getArgumentTypes();
+  InstructionAdapterEx iv=new InstructionAdapterEx(mv);
+  iv.load(0,JetTypeMapper.TYPE_OBJECT);
+  for (int i=0, reg=1; i < argTypes.length; i++) {
+    Type argType=argTypes[i];
+    iv.load(reg,argType);
+    reg+=argType.getSize();
+  }
+  iv.invokevirtual(state.getTypeMapper().jvmName((ClassDescriptor)owner.getContextDescriptor(),OwnerKind.IMPLEMENTATION),function.getName(),function.getDescriptor());
+  if (JetTypeMapper.isPrimitive(function.getReturnType()) && !JetTypeMapper.isPrimitive(overriden.getReturnType()))   iv.valueOf(function.getReturnType());
+  iv.areturn(overriden.getReturnType());
+  mv.visitMaxs(0,0);
+  mv.visitEnd();
+}
