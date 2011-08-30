@@ -1,7 +1,7 @@
 {
-  OverloadResolutionResult iteratorResolutionResult=context.services.callResolver.resolveExactSignature(context.scope,type,"iterator",Collections.<JetType>emptyList());
+  OverloadResolutionResult<FunctionDescriptor> iteratorResolutionResult=context.services.callResolver.resolveExactSignature(context.scope,type,"iterator",Collections.<JetType>emptyList());
   if (iteratorResolutionResult.isSuccess()) {
-    JetType iteratorType=iteratorResolutionResult.getFunctionDescriptor().getReturnType();
+    JetType iteratorType=iteratorResolutionResult.getDescriptor().getReturnType();
     boolean hasNextFunctionSupported=checkHasNextFunctionSupport(reportErrorsOn,iteratorType,context);
     boolean hasNextPropertySupported=checkHasNextPropertySupport(reportErrorsOn,iteratorType,context);
     if (hasNextFunctionSupported && hasNextPropertySupported && !ErrorUtils.isErrorType(iteratorType)) {
@@ -10,7 +10,7 @@
  else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
       context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().hasNext()' function or an 'iterator().hasNext' property");
     }
-    OverloadResolutionResult nextResolutionResult=context.services.callResolver.resolveExactSignature(context.scope,iteratorType,"next",Collections.<JetType>emptyList());
+    OverloadResolutionResult<FunctionDescriptor> nextResolutionResult=context.services.callResolver.resolveExactSignature(context.scope,iteratorType,"next",Collections.<JetType>emptyList());
     if (nextResolutionResult.isAmbiguity()) {
       context.trace.getErrorHandler().genericError(reportErrorsOn,"Method 'iterator().next()' is ambiguous for this expression");
     }
@@ -18,7 +18,7 @@
       context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
     }
  else {
-      return nextResolutionResult.getFunctionDescriptor().getReturnType();
+      return nextResolutionResult.getDescriptor().getReturnType();
     }
   }
  else {
