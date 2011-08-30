@@ -1,0 +1,22 @@
+{
+  List<ResolutionTask<Descriptor>> result=Lists.newArrayList();
+  if (receiverType != null) {
+    Collection<Descriptor> extensionFunctions=getExtensionsByName(scope,name);
+    List<Descriptor> nonlocals=Lists.newArrayList();
+    List<Descriptor> locals=Lists.newArrayList();
+    splitLexicallyLocalDescriptors(extensionFunctions,scope.getContainingDeclaration(),locals,nonlocals);
+    Collection<Descriptor> members=getMembersByName(receiverType,name);
+    addTask(result,receiverType,call,locals);
+    addTask(result,null,call,members);
+    addTask(result,receiverType,call,nonlocals);
+  }
+ else {
+    Collection<Descriptor> functions=getNonExtensionsByName(scope,name);
+    List<Descriptor> nonlocals=Lists.newArrayList();
+    List<Descriptor> locals=Lists.newArrayList();
+    splitLexicallyLocalDescriptors(functions,scope.getContainingDeclaration(),locals,nonlocals);
+    addTask(result,receiverType,call,locals);
+    addTask(result,receiverType,call,nonlocals);
+  }
+  return result;
+}
