@@ -3,27 +3,27 @@
     return expressionType;
   }
   VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(expression,context);
-  if (variableDescriptor == null)   return expressionType;
-  JetType enrichedType=null;
-  List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
-  Collections.reverse(possibleTypes);
-  for (  JetType possibleType : possibleTypes) {
-    if (semanticServices.getTypeChecker().isSubtypeOf(possibleType,context.expectedType)) {
-      enrichedType=possibleType;
-      break;
+  boolean appropriateTypeFound=false;
+  if (variableDescriptor != null) {
+    List<JetType> possibleTypes=Lists.newArrayList(context.dataFlowInfo.getPossibleTypes(variableDescriptor));
+    Collections.reverse(possibleTypes);
+    for (    JetType possibleType : possibleTypes) {
+      if (semanticServices.getTypeChecker().isSubtypeOf(possibleType,context.expectedType)) {
+        appropriateTypeFound=true;
+        break;
+      }
+    }
+    if (!appropriateTypeFound) {
+      JetType notnullType=context.dataFlowInfo.getOutType(variableDescriptor);
+      if (notnullType != null && semanticServices.getTypeChecker().isSubtypeOf(notnullType,context.expectedType)) {
+        appropriateTypeFound=true;
+      }
     }
   }
-  if (enrichedType == null) {
-    enrichedType=context.dataFlowInfo.getOutType(variableDescriptor);
-  }
-  if (enrichedType == null) {
-    enrichedType=expressionType;
-  }
-  if (!semanticServices.getTypeChecker().isSubtypeOf(enrichedType,context.expectedType)) {
+  if (!appropriateTypeFound) {
     context.trace.getErrorHandler().typeMismatch(expression,context.expectedType,expressionType);
+    return expressionType;
   }
- else {
-    checkAutoCast(expression,context.expectedType,variableDescriptor,context.trace);
-  }
-  return enrichedType;
+  checkAutoCast(expression,context.expectedType,variableDescriptor,context.trace);
+  return context.expectedType;
 }
