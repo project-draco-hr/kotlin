@@ -1,7 +1,17 @@
 {
-  final Type leftType=expressionType(left);
-  final Type rightType=expressionType(right);
-  gen(left,leftType);
-  gen(right,rightType);
+  Type leftType=expressionType(left);
+  Type rightType=expressionType(right);
+  if (JetTypeMapper.isPrimitive(leftType) != JetTypeMapper.isPrimitive(rightType)) {
+    gen(left,leftType);
+    v.valueOf(leftType);
+    leftType=typeMapper.boxType(leftType);
+    gen(right,rightType);
+    v.valueOf(rightType);
+    rightType=typeMapper.boxType(rightType);
+  }
+ else {
+    gen(left,leftType);
+    gen(right,rightType);
+  }
   return generateEqualsForExpressionsOnStack(opToken,leftType,rightType);
 }

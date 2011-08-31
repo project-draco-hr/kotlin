@@ -4,13 +4,20 @@
   Label end=new Label();
   v.dup();
   v.ifnull(ifnull);
-  gen(expression.getSelectorExpression());
+  JetType receiverType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression.getReceiverExpression());
+  StackValue propValue=genQualified(StackValue.onStack(typeMapper.mapType(receiverType)),expression.getSelectorExpression());
+  Type type=propValue.type;
+  propValue.put(type,v);
+  if (JetTypeMapper.isPrimitive(type) && !type.equals(Type.VOID_TYPE)) {
+    v.valueOf(type);
+    type=typeMapper.boxType(type);
+  }
   v.goTo(end);
   v.mark(ifnull);
-  JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
-  if (expressionType.equals(JetStandardClasses.getUnitType())) {
-    v.pop();
+  v.pop();
+  if (!propValue.type.equals(Type.VOID_TYPE)) {
+    v.aconst(null);
   }
   v.mark(end);
-  return StackValue.onStack(typeMapper.mapType(expressionType));
+  return StackValue.onStack(type);
 }
