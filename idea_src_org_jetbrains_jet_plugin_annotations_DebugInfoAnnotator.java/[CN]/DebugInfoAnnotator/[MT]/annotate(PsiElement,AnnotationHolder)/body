@@ -1,0 +1,42 @@
+{
+  if (!debugInfoEnabled) {
+    return;
+  }
+  if (element instanceof JetFile) {
+    JetFile file=(JetFile)element;
+    try {
+      final BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
+      final Set<JetReferenceExpression> unresolvedReferences=Sets.newHashSet();
+      for (      JetDiagnostic diagnostic : bindingContext.getDiagnostics()) {
+        if (diagnostic instanceof JetDiagnostic.UnresolvedReferenceError) {
+          JetDiagnostic.UnresolvedReferenceError error=(JetDiagnostic.UnresolvedReferenceError)diagnostic;
+          unresolvedReferences.add(error.getReferenceExpression());
+        }
+      }
+      file.acceptChildren(new JetVisitorVoid(){
+        @Override public void visitReferenceExpression(        JetReferenceExpression expression){
+          DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,expression);
+          boolean resolved=declarationDescriptor != null;
+          boolean unresolved=unresolvedReferences.contains(expression);
+          if (resolved && unresolved) {
+            holder.createErrorAnnotation(expression,"Reference marked as unresolved is actually resolved to " + declarationDescriptor).setTextAttributes(JetHighlighter.JET_DEBUG_INFO);
+          }
+ else           if (!resolved && !unresolved) {
+            holder.createErrorAnnotation(expression,"Reference is not resolved to anything, but is not marked unresolved").setTextAttributes(JetHighlighter.JET_DEBUG_INFO);
+          }
+        }
+        @Override public void visitJetElement(        JetElement element){
+          element.acceptChildren(this);
+        }
+      }
+);
+    }
+ catch (    ProcessCanceledException e) {
+      throw e;
+    }
+catch (    Throwable e) {
+      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+}
