@@ -15,6 +15,13 @@
       }
       file.acceptChildren(new JetVisitorVoid(){
         @Override public void visitReferenceExpression(        JetReferenceExpression expression){
+          if (expression instanceof JetSimpleNameExpression) {
+            JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)expression;
+            IElementType elementType=expression.getNode().getElementType();
+            if (elementType == JetNodeTypes.OPERATION_REFERENCE && EXCLUDED.contains(nameExpression.getReferencedNameElementType())) {
+              return;
+            }
+          }
           DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,expression);
           boolean resolved=declarationDescriptor != null;
           boolean unresolved=unresolvedReferences.contains(expression);
