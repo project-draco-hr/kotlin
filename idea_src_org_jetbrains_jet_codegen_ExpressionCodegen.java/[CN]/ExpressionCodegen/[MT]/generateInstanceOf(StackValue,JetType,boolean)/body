@@ -13,7 +13,21 @@
     if (leaveExpressionOnStack) {
       v.dup();
     }
-    Type type=typeMapper.mapType(jetType,OwnerKind.INTERFACE);
-    v.instanceOf(type);
+    Type type=typeMapper.boxType(typeMapper.mapType(jetType,OwnerKind.INTERFACE));
+    if (jetType.isNullable()) {
+      Label nope=new Label();
+      Label end=new Label();
+      v.dup();
+      v.ifnull(nope);
+      v.instanceOf(type);
+      v.goTo(end);
+      v.mark(nope);
+      v.pop();
+      v.aconst(1);
+      v.mark(end);
+    }
+ else {
+      v.instanceOf(type);
+    }
   }
 }

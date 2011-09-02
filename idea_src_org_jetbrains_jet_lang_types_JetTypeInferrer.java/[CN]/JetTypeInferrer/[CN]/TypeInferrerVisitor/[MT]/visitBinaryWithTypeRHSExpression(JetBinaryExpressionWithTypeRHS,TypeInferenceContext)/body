@@ -1,27 +1,30 @@
 {
-  IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
-  JetType actualType=getType(expression.getLeft(),context.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(context.scope));
   JetTypeReference right=expression.getRight();
   JetType result=null;
   if (right != null) {
     JetType targetType=context.typeResolver.resolveType(context.scope,right);
-    if (operationType == JetTokens.COLON) {
-      if (actualType != null && !semanticServices.getTypeChecker().isSubtypeOf(actualType,targetType)) {
-        context.trace.getErrorHandler().typeMismatch(expression.getLeft(),targetType,actualType);
+    if (isTypeFlexible(expression.getLeft())) {
+      TemporaryBindingTrace temporaryTraceWithExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+      boolean success=checkBinaryWithTypeRHS(expression,context,targetType,targetType,temporaryTraceWithExpectedType);
+      if (success) {
+        temporaryTraceWithExpectedType.addAllMyDataTo(context.trace);
       }
-      result=targetType;
-    }
- else     if (operationType == JetTokens.AS_KEYWORD) {
-      checkForCastImpossibility(expression,actualType,targetType,context);
-      result=targetType;
-    }
- else     if (operationType == JetTokens.AS_SAFE) {
-      checkForCastImpossibility(expression,actualType,targetType,context);
-      result=TypeUtils.makeNullable(targetType);
+ else {
+        TemporaryBindingTrace temporaryTraceWithoutExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+        checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
+        temporaryTraceWithoutExpectedType.addAllMyDataTo(context.trace);
+      }
     }
  else {
-      context.trace.getErrorHandler().genericError(expression.getOperationSign().getNode(),"Unsupported binary operation");
+      TemporaryBindingTrace temporaryTraceWithoutExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+      checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
+      temporaryTraceWithoutExpectedType.addAllMyDataTo(context.trace);
     }
+    IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
+    result=operationType == JetTokens.AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
+  }
+ else {
+    getType(context.scope,expression.getLeft(),false,context.replaceExpectedType(NO_EXPECTED_TYPE));
   }
   return context.services.checkType(result,expression,context);
 }
