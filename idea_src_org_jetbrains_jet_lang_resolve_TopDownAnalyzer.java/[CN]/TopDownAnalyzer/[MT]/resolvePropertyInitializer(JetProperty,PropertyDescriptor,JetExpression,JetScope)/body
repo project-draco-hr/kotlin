@@ -2,18 +2,11 @@
   JetFlowInformationProvider flowInformationProvider=classDescriptorResolver.computeFlowData(property,initializer);
   JetTypeInferrer.Services typeInferrer=semanticServices.getTypeInferrerServices(traceForConstructors,flowInformationProvider);
   JetType type=typeInferrer.getType(getPropertyDeclarationInnerScope(scope,propertyDescriptor),initializer,NO_EXPECTED_TYPE);
-  JetType expectedType;
-  PropertySetterDescriptor setter=propertyDescriptor.getSetter();
-  if (setter != null) {
-    expectedType=setter.getReturnType();
+  JetType expectedType=propertyDescriptor.getInType();
+  if (expectedType == null) {
+    expectedType=propertyDescriptor.getOutType();
   }
- else {
-    expectedType=propertyDescriptor.getInType();
-    if (expectedType == null) {
-      expectedType=propertyDescriptor.getOutType();
-    }
-  }
-  if (type != null && expectedType != null && !semanticServices.getTypeChecker().isConvertibleTo(type,expectedType)) {
+  if (type != null && expectedType != null && !semanticServices.getTypeChecker().isSubtypeOf(type,expectedType)) {
     trace.getErrorHandler().typeMismatch(initializer,expectedType,type);
   }
 }
