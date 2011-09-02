@@ -4,19 +4,19 @@
   if (right != null) {
     JetType targetType=context.typeResolver.resolveType(context.scope,right);
     if (isTypeFlexible(expression.getLeft())) {
-      TemporaryBindingTrace temporaryTraceWithExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+      TemporaryBindingTrace temporaryTraceWithExpectedType=TemporaryBindingTrace.create(context.trace);
       boolean success=checkBinaryWithTypeRHS(expression,context,targetType,targetType,temporaryTraceWithExpectedType);
       if (success) {
         temporaryTraceWithExpectedType.addAllMyDataTo(context.trace);
       }
  else {
-        TemporaryBindingTrace temporaryTraceWithoutExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+        TemporaryBindingTrace temporaryTraceWithoutExpectedType=TemporaryBindingTrace.create(context.trace);
         checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
         temporaryTraceWithoutExpectedType.addAllMyDataTo(context.trace);
       }
     }
  else {
-      TemporaryBindingTrace temporaryTraceWithoutExpectedType=new TemporaryBindingTrace(context.trace.getBindingContext());
+      TemporaryBindingTrace temporaryTraceWithoutExpectedType=TemporaryBindingTrace.create(context.trace);
       checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
       temporaryTraceWithoutExpectedType.addAllMyDataTo(context.trace);
     }
@@ -24,7 +24,7 @@
     result=operationType == JetTokens.AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
   }
  else {
-    getType(context.scope,expression.getLeft(),false,context.replaceExpectedType(NO_EXPECTED_TYPE));
+    getType(expression.getLeft(),context.replaceExpectedType(NO_EXPECTED_TYPE));
   }
   return context.services.checkType(result,expression,context);
 }

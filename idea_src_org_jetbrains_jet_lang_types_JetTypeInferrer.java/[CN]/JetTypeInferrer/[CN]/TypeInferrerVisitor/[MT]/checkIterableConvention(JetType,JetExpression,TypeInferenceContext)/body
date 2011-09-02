@@ -1,8 +1,8 @@
 {
   ASTNode reportErrorsOn=loopRange.getNode();
-  OverloadResolutionResult iteratorResolutionResult=context.services.resolveNoParametersFunction(type,context.scope,"iterator");
+  OverloadResolutionResult<FunctionDescriptor> iteratorResolutionResult=context.services.callResolver.resolveExactSignature(context.scope,type,"iterator",Collections.<JetType>emptyList());
   if (iteratorResolutionResult.isSuccess()) {
-    FunctionDescriptor iteratorFunction=iteratorResolutionResult.getFunctionDescriptor();
+    FunctionDescriptor iteratorFunction=iteratorResolutionResult.getDescriptor();
     context.trace.record(LOOP_RANGE_ITERATOR,loopRange,iteratorFunction);
     JetType iteratorType=iteratorFunction.getReturnType();
     FunctionDescriptor hasNextFunction=checkHasNextFunctionSupport(loopRange,iteratorType,context);
@@ -26,7 +26,7 @@
       context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
     }
  else {
-      FunctionDescriptor nextFunction=nextResolutionResult.getFunctionDescriptor();
+      FunctionDescriptor nextFunction=nextResolutionResult.getDescriptor();
       context.trace.record(LOOP_RANGE_NEXT,loopRange,nextFunction);
       return nextFunction.getReturnType();
     }
