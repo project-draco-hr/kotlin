@@ -18,15 +18,35 @@
           if (expression instanceof JetSimpleNameExpression) {
             JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)expression;
             IElementType elementType=expression.getNode().getElementType();
-            if (elementType == JetNodeTypes.OPERATION_REFERENCE && EXCLUDED.contains(nameExpression.getReferencedNameElementType())) {
-              return;
+            if (elementType == JetNodeTypes.OPERATION_REFERENCE) {
+              IElementType referencedNameElementType=nameExpression.getReferencedNameElementType();
+              if (EXCLUDED.contains(referencedNameElementType)) {
+                return;
+              }
+              if (JetTokens.LABELS.contains(referencedNameElementType))               return;
             }
           }
+          String target=null;
           DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,expression);
-          boolean resolved=declarationDescriptor != null;
+          if (declarationDescriptor != null) {
+            target=declarationDescriptor.toString();
+          }
+ else {
+            PsiElement labelTarget=bindingContext.get(LABEL_TARGET,expression);
+            if (labelTarget != null) {
+              target=labelTarget.getText();
+            }
+ else {
+              Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,expression);
+              if (declarationDescriptors != null) {
+                target="[" + declarationDescriptors.size() + " descriptors]";
+              }
+            }
+          }
+          boolean resolved=target != null;
           boolean unresolved=unresolvedReferences.contains(expression);
           if (resolved && unresolved) {
-            holder.createErrorAnnotation(expression,"Reference marked as unresolved is actually resolved to " + declarationDescriptor).setTextAttributes(JetHighlighter.JET_DEBUG_INFO);
+            holder.createErrorAnnotation(expression,"Reference marked as unresolved is actually resolved to " + target).setTextAttributes(JetHighlighter.JET_DEBUG_INFO);
           }
  else           if (!resolved && !unresolved) {
             holder.createErrorAnnotation(expression,"Reference is not resolved to anything, but is not marked unresolved").setTextAttributes(JetHighlighter.JET_DEBUG_INFO);

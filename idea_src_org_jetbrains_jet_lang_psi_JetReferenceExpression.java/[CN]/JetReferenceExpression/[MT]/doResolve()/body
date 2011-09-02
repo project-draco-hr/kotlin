@@ -2,5 +2,10 @@
   JetFile file=(JetFile)getContainingFile();
   BindingContext bindingContext=AnalyzingUtils.analyzeFileWithCache(file);
   PsiElement psiElement=BindingContextUtils.resolveToDeclarationPsiElement(bindingContext,this);
-  return psiElement == null ? file : psiElement;
+  if (psiElement != null) {
+    return psiElement;
+  }
+  Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,this);
+  if (declarationDescriptors != null)   return null;
+  return file;
 }
