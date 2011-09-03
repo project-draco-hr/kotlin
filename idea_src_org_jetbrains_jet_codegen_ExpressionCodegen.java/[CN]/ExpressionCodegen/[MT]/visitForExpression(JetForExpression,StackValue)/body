@@ -8,19 +8,11 @@
   }
  else {
     final DeclarationDescriptor descriptor=expressionType.getConstructor().getDeclarationDescriptor();
-    final PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
-    if (declaration instanceof PsiClass) {
-      final Project project=declaration.getProject();
-      final PsiClass iterable=JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable",ProjectScope.getAllScope(project));
-      if (((PsiClass)declaration).isInheritor(iterable,true)) {
-        generateForInIterable(expression,loopRangeType);
-        return StackValue.none();
-      }
-    }
     if (isClass(descriptor,"IntRange")) {
       new ForInRangeLoopGenerator(expression,loopRangeType).invoke();
       return StackValue.none();
     }
-    throw new UnsupportedOperationException("for/in loop currently only supported for arrays and Iterable instances");
+    generateForInIterable(expression,loopRangeType);
+    return StackValue.none();
   }
 }
