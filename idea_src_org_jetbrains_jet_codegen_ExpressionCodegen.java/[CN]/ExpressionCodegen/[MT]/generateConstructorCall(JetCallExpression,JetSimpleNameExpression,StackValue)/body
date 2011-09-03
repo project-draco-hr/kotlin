@@ -12,9 +12,21 @@
     }
  else {
       ClassDescriptor classDecl=(ClassDescriptor)constructorDescriptor.getContainingDeclaration();
+      receiver.put(receiver.type,v);
       v.anew(type);
-      v.dup();
-      pushOuterClassArguments(classDecl);
+      if (classDecl.getContainingDeclaration() instanceof ClassDescriptor) {
+        if (!receiver.type.equals(Type.VOID_TYPE)) {
+          v.dupX1();
+          v.swap();
+        }
+ else {
+          v.dup();
+          v.load(0,JetTypeMapper.jetImplementationType(classDecl));
+        }
+      }
+ else {
+        v.dup();
+      }
       CallableMethod method=typeMapper.mapToCallableMethod((ConstructorDescriptor)constructorDescriptor,OwnerKind.IMPLEMENTATION);
       invokeMethodWithArguments(method,expression);
     }
