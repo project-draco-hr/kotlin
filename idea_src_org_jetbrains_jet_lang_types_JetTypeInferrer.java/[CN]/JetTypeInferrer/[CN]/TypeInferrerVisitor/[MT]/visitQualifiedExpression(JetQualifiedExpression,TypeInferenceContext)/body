@@ -4,32 +4,7 @@
   JetExpression receiverExpression=expression.getReceiverExpression();
   JetType receiverType=context.services.typeInferrerVisitorWithNamespaces.getType(receiverExpression,new TypeInferenceContext(context.trace,context.scope,false,context.dataFlowInfo,NO_EXPECTED_TYPE,NO_EXPECTED_TYPE));
   if (selectorExpression instanceof JetSimpleNameExpression) {
-    CompileTimeConstant<?> compileTimeConstant=context.trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,receiverExpression);
-    CompileTimeConstant<?> expressionCompileTimeConstant=context.trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,expression);
-    if (expressionCompileTimeConstant == null && compileTimeConstant != null && compileTimeConstant.getValue() instanceof Number) {
-      Number value=(Number)compileTimeConstant.getValue();
-      String referencedName=((JetSimpleNameExpression)selectorExpression).getReferencedName();
-      if (numberConversions.contains(referencedName)) {
-        if ("dbl".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new DoubleValue(value.doubleValue()));
-        }
- else         if ("flt".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new FloatValue(value.floatValue()));
-        }
- else         if ("lng".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new LongValue(value.longValue()));
-        }
- else         if ("sht".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ShortValue(value.shortValue()));
-        }
- else         if ("byt".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ByteValue(value.byteValue()));
-        }
- else         if ("byt".equals(referencedName)) {
-          context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new IntValue(value.intValue()));
-        }
-      }
-    }
+    propagateConstantValues(expression,context,(JetSimpleNameExpression)selectorExpression);
   }
   if (receiverType == null)   return null;
   TemporaryBindingTrace cleanResolutionTrace=new TemporaryBindingTrace(context.trace.getBindingContext());
