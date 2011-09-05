@@ -1,11 +1,18 @@
 {
   StackValue conditionValue;
   if (condition instanceof JetWhenConditionInRange) {
-    JetExpression range=((JetWhenConditionInRange)condition).getRangeExpression();
-    gen(range,RANGE_TYPE);
-    new StackValue.Local(subjectLocal,subjectType).put(INTEGER_TYPE,v);
-    v.invokeinterface(CLASS_RANGE,"contains","(Ljava/lang/Comparable;)Z");
-    conditionValue=new StackValue.OnStack(Type.BOOLEAN_TYPE);
+    JetWhenConditionInRange conditionInRange=(JetWhenConditionInRange)condition;
+    JetExpression rangeExpression=conditionInRange.getRangeExpression();
+    if (isIntRangeExpr(rangeExpression)) {
+      getInIntTest(new StackValue.Local(subjectLocal,subjectType),(JetBinaryExpression)rangeExpression,conditionInRange.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN);
+    }
+ else {
+      FunctionDescriptor op=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,conditionInRange.getOperationReference());
+      genToJVMStack(rangeExpression);
+      new StackValue.Local(subjectLocal,subjectType).put(JetTypeMapper.TYPE_OBJECT,v);
+      invokeFunctionNoParams(op,Type.BOOLEAN_TYPE,v);
+    }
+    return StackValue.onStack(Type.BOOLEAN_TYPE);
   }
  else   if (condition instanceof JetWhenConditionIsPattern) {
     JetWhenConditionIsPattern patternCondition=(JetWhenConditionIsPattern)condition;
@@ -20,7 +27,7 @@
       if (!(declarationDescriptor instanceof FunctionDescriptor)) {
         throw new UnsupportedOperationException("expected function descriptor in when condition with call, found " + declarationDescriptor);
       }
-      conditionValue=invokeFunction((JetCallExpression)call,declarationDescriptor,StackValue.none());
+      conditionValue=invokeFunction((JetCallExpression)call,declarationDescriptor,StackValue.onStack(subjectType));
     }
  else     if (call instanceof JetSimpleNameExpression) {
       final DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetSimpleNameExpression)call);

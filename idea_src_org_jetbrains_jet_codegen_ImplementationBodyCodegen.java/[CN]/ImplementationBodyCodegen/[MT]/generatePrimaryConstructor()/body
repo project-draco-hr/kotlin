@@ -1,5 +1,5 @@
 {
-  ConstructorDescriptor constructorDescriptor=state.getBindingContext().get(BindingContext.CONSTRUCTOR,(JetElement)myClass);
+  ConstructorDescriptor constructorDescriptor=state.getBindingContext().get(BindingContext.CONSTRUCTOR,myClass);
   if (constructorDescriptor == null && !(myClass instanceof JetObjectDeclaration) && !isEnum(myClass))   return;
   Method method;
   CallableMethod callableMethod;
@@ -34,10 +34,9 @@
     iv.load(0,Type.getType("L" + superClass + ";"));
     iv.invokespecial(superClass,"<init>","()V");
   }
-  final DeclarationDescriptor outerDescriptor=getOuterClassDescriptor();
-  if (outerDescriptor instanceof ClassDescriptor) {
-    final ClassDescriptor outerClassDescriptor=(ClassDescriptor)outerDescriptor;
-    final Type type=JetTypeMapper.jetImplementationType(outerClassDescriptor);
+  final ClassDescriptor outerDescriptor=getOuterClassDescriptor();
+  if (outerDescriptor != null && !outerDescriptor.isObject()) {
+    final Type type=JetTypeMapper.jetImplementationType(outerDescriptor);
     String interfaceDesc=type.getDescriptor();
     final String fieldName="this$0";
     v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);

@@ -1,6 +1,14 @@
 {
-  Type leftType=expressionType(left);
-  Type rightType=expressionType(right);
+  JetType leftJetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,left);
+  Type leftType=typeMapper.mapType(leftJetType);
+  JetType rightJetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,right);
+  Type rightType=typeMapper.mapType(rightJetType);
+  if (leftType == JetTypeMapper.TYPE_NOTHING) {
+    return genCmpWithNull(right,rightType,opToken);
+  }
+  if (rightType == JetTypeMapper.TYPE_NOTHING) {
+    return genCmpWithNull(left,leftType,opToken);
+  }
   if (JetTypeMapper.isPrimitive(leftType) != JetTypeMapper.isPrimitive(rightType)) {
     gen(left,leftType);
     v.valueOf(leftType);
@@ -13,5 +21,6 @@
     gen(left,leftType);
     gen(right,rightType);
   }
-  return generateEqualsForExpressionsOnStack(opToken,leftType,rightType);
+  if (JetTypeMapper.isPrimitive(leftType))   return generateEqualsForExpressionsOnStack(opToken,leftType,rightType,false,false);
+  return generateEqualsForExpressionsOnStack(opToken,leftType,rightType,leftJetType.isNullable(),rightJetType.isNullable());
 }
