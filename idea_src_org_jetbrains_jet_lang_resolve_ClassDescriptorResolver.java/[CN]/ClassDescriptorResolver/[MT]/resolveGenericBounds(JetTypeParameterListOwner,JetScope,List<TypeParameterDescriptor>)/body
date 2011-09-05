@@ -20,6 +20,8 @@
       continue;
     }
     TypeParameterDescriptor typeParameterDescriptor=parameterByName.get(referencedName);
+    JetTypeReference boundTypeReference=constraint.getBoundTypeReference();
+    JetType bound=boundTypeReference != null ? resolveAndCheckUpperBoundType(boundTypeReference,scope,constraint.isClassObjectContraint()) : null;
     if (typeParameterDescriptor == null) {
       ClassifierDescriptor classifier=scope.getClassifier(referencedName);
       if (classifier != null) {
@@ -32,9 +34,7 @@
     }
  else {
       trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
-      JetTypeReference boundTypeReference=constraint.getBoundTypeReference();
-      if (boundTypeReference != null) {
-        JetType bound=resolveAndCheckUpperBoundType(boundTypeReference,scope,constraint.isClassObjectContraint());
+      if (bound != null) {
         if (constraint.isClassObjectContraint()) {
           typeParameterDescriptor.addClassObjectBound(bound);
         }
