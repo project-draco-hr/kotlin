@@ -1,0 +1,15 @@
+{
+  return new BindingTraceAdapter(traceForConstructors).addHandler(BindingContext.VARIABLE_ASSIGNMENT,new BindingTraceAdapter.RecordHandler<JetExpression,DeclarationDescriptor>(){
+    @Override public void handleRecord(    WritableSlice<JetExpression,DeclarationDescriptor> jetExpressionBooleanWritableSlice,    JetExpression expression,    DeclarationDescriptor descriptor){
+      if (expression instanceof JetSimpleNameExpression) {
+        JetSimpleNameExpression variable=(JetSimpleNameExpression)expression;
+        if (variable.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER) {
+          if (descriptor instanceof PropertyDescriptor) {
+            traceForMembers.record(BindingContext.IS_INITIALIZED,(PropertyDescriptor)descriptor);
+          }
+        }
+      }
+    }
+  }
+);
+}
