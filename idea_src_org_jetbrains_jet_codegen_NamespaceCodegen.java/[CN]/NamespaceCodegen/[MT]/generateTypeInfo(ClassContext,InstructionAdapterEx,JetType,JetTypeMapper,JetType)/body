@@ -5,16 +5,12 @@
     return;
   }
   DeclarationDescriptor declarationDescriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (declarationDescriptor instanceof TypeParameterDescriptor) {
-    loadTypeParameterTypeInfo((TypeParameterDescriptor)declarationDescriptor);
-    return;
-  }
-  if (jetType.getArguments().size() == 0 && !(declarationDescriptor instanceof JavaClassDescriptor)) {
+  if (!jetType.equals(root) && jetType.getArguments().size() == 0 && !(declarationDescriptor instanceof JavaClassDescriptor)) {
     v.getstatic(typeMapper.mapType(jetType,OwnerKind.IMPLEMENTATION).getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
     return;
   }
   boolean hasUnsubstituted=TypeUtils.hasUnsubstitutedTypeParameters(jetType);
-  if (!hasUnsubstituted) {
+  if (!jetType.equals(root) && !hasUnsubstituted) {
     int typeInfoConstantIndex=context.getTypeInfoConstantIndex(jetType);
     v.invokestatic(context.getNamespaceClassName(),"$getCachedTypeInfo$" + typeInfoConstantIndex,"()Ljet/typeinfo/TypeInfo;");
     return;
@@ -30,8 +26,8 @@
       TypeProjection argument=arguments.get(i);
       v.dup();
       v.iconst(i);
-      generateTypeInfo(argument.getType());
-      genTypeInfoToProjection(v,argument.getProjectionKind());
+      generateTypeInfo(context,v,argument.getType(),typeMapper,root);
+      ExpressionCodegen.genTypeInfoToProjection(v,argument.getProjectionKind());
       v.astore(JetTypeMapper.TYPE_OBJECT);
     }
     v.invokestatic("jet/typeinfo/TypeInfo","getTypeInfo","(Ljava/lang/Class;Z[Ljet/typeinfo/TypeInfoProjection;)Ljet/typeinfo/TypeInfo;");
