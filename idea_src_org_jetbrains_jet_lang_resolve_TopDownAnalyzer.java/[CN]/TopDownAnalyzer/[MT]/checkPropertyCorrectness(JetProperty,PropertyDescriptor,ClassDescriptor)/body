@@ -1,0 +1,37 @@
+{
+  JetExpression initializer=property.getInitializer();
+  JetPropertyAccessor getter=property.getGetter();
+  JetPropertyAccessor setter=property.getSetter();
+  if (propertyDescriptor.getModifiers().isAbstract()) {
+    if (classDescriptor == null) {
+      trace.getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Global property can not be abstract");
+      return;
+    }
+    if (!classDescriptor.isAbstract()) {
+      trace.getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Abstract property " + property.getName() + " in non-abstract class "+ classDescriptor.getName());
+      return;
+    }
+    if (initializer != null) {
+      trace.getErrorHandler().genericError(initializer.getNode(),"Property with initializer can not be abstract");
+    }
+    if (getter != null && getter.getBodyExpression() != null) {
+      trace.getErrorHandler().genericError(getter.getNode(),"Property with getter implementation can not be abstract");
+    }
+    if (setter != null && setter.getBodyExpression() != null) {
+      trace.getErrorHandler().genericError(setter.getNode(),"Property with setter implementation can not be abstract");
+    }
+    return;
+  }
+  boolean backingFieldRequired=trace.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
+  if (initializer != null && !backingFieldRequired) {
+    trace.getErrorHandler().genericError(initializer.getNode(),"Initializer is not allowed here because this property has no backing field");
+  }
+  if (initializer == null && backingFieldRequired && !trace.getBindingContext().get(BindingContext.IS_INITIALIZED,propertyDescriptor)) {
+    if (classDescriptor == null || (getter != null && getter.getBodyExpression() != null) || (setter != null && setter.getBodyExpression() != null)) {
+      trace.getErrorHandler().genericError(property.getNameIdentifier().getNode(),"Property must be initialized");
+    }
+ else {
+      trace.getErrorHandler().genericError(property.getNameIdentifier().getNode(),"Property must be initialized or be abstract");
+    }
+  }
+}
