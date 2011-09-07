@@ -1,7 +1,7 @@
 {
   JetExpression subjectExpression=expression.getSubjectExpression();
   if (subjectExpression != null) {
-    value(subjectExpression,false,inCondition);
+    value(subjectExpression,inCondition);
   }
   Label doneLabel=builder.createUnboundLabel();
   Label nextLabel=builder.createUnboundLabel();
@@ -19,11 +19,11 @@
       condition.accept(new JetVisitorVoid(){
         private final JetVisitorVoid conditionVisitor=this;
         @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
-          value(condition.getCallSuffixExpression(),false,inCondition);
+          value(condition.getCallSuffixExpression(),inCondition);
         }
         @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
-          value(condition.getRangeExpression(),false,inCondition);
-          value(condition.getOperationReference(),false,inCondition);
+          value(condition.getRangeExpression(),inCondition);
+          value(condition.getOperationReference(),inCondition);
         }
         @Override public void visitWhenConditionIsPattern(        JetWhenConditionIsPattern condition){
           JetPattern pattern=condition.getPattern();
@@ -34,12 +34,12 @@
               @Override public void visitWildcardPattern(              JetWildcardPattern pattern){
               }
               @Override public void visitExpressionPattern(              JetExpressionPattern pattern){
-                value(pattern.getExpression(),false,inCondition);
+                value(pattern.getExpression(),inCondition);
               }
               @Override public void visitTuplePattern(              JetTuplePattern pattern){
               }
               @Override public void visitDecomposerPattern(              JetDecomposerPattern pattern){
-                value(pattern.getDecomposerExpression(),false,inCondition);
+                value(pattern.getDecomposerExpression(),inCondition);
                 pattern.getArgumentList().accept(this);
               }
               @Override public void visitBindingPattern(              JetBindingPattern pattern){
@@ -66,7 +66,7 @@
     }
     builder.nondeterministicJump(nextLabel);
     builder.bindLabel(bodyLabel);
-    value(whenEntry.getExpression(),true,inCondition);
+    value(whenEntry.getExpression(),inCondition);
     builder.jump(doneLabel);
     builder.bindLabel(nextLabel);
     nextLabel=builder.createUnboundLabel();

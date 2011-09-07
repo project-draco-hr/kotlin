@@ -6,7 +6,7 @@
       @Override public void generate(){
         if (working)         return;
         working=true;
-        value(finallyBlock.getFinalExpression(),true,inCondition);
+        value(finallyBlock.getFinalExpression(),inCondition);
         working=false;
       }
     }
@@ -14,7 +14,7 @@
   }
   Label onException=builder.createUnboundLabel();
   builder.nondeterministicJump(onException);
-  value(expression.getTryBlock(),true,inCondition);
+  value(expression.getTryBlock(),inCondition);
   List<JetCatchClause> catchClauses=expression.getCatchClauses();
   if (!catchClauses.isEmpty()) {
     Label afterCatches=builder.createUnboundLabel();
@@ -24,7 +24,7 @@
       JetCatchClause catchClause=iterator.next();
       JetExpression catchBody=catchClause.getCatchBody();
       if (catchBody != null) {
-        value(catchBody,true,false);
+        value(catchBody,false);
       }
       if (iterator.hasNext()) {
         builder.nondeterministicJump(afterCatches);
@@ -37,6 +37,6 @@
   }
   if (finallyBlock != null) {
     builder.exitTryFinally();
-    value(finallyBlock.getFinalExpression(),true,inCondition);
+    value(finallyBlock.getFinalExpression(),inCondition);
   }
 }
