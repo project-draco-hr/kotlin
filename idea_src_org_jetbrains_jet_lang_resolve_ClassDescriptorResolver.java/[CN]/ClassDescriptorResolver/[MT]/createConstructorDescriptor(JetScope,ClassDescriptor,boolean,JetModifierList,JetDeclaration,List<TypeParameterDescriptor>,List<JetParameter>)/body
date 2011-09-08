@@ -1,5 +1,8 @@
 {
   ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,annotationResolver.resolveAnnotations(scope,modifierList),isPrimary);
   trace.record(BindingContext.CONSTRUCTOR,declarationToTrace,constructorDescriptor);
-  return constructorDescriptor.initialize(typeParameters,resolveValueParameters(constructorDescriptor,new WritableScopeImpl(scope,classDescriptor,trace.getErrorHandler()).setDebugName("Scope with value parameters of a constructor"),valueParameters));
+  if (modifierList != null) {
+    modifierList.checkNotContains(trace,JetTokens.ABSTRACT_KEYWORD,JetTokens.VIRTUAL_KEYWORD,JetTokens.OVERRIDE_KEYWORD);
+  }
+  return constructorDescriptor.initialize(typeParameters,resolveValueParameters(constructorDescriptor,new WritableScopeImpl(scope,classDescriptor,trace.getErrorHandler()).setDebugName("Scope with value parameters of a constructor"),valueParameters),MemberModifiers.DEFAULT_MODIFIERS);
 }
