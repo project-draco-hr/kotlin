@@ -1,19 +1,29 @@
 {
   PsiElement nameIdentifier=function.getNameIdentifier();
+  boolean isAbstract=functionDescriptor.getModifiers().isAbstract();
   if (containingDescriptor instanceof ClassDescriptor) {
     ClassDescriptor classDescriptor=(ClassDescriptor)containingDescriptor;
-    if (functionDescriptor.getModifiers().isAbstract() && !classDescriptor.getClassModifiers().isAbstract()) {
+    boolean inTrait=classDescriptor.getModifiers().isTrait();
+    boolean inEnum=classDescriptor.getModifiers().isEnum();
+    boolean inAbstractClass=classDescriptor.getModifiers().isAbstract();
+    if (isAbstract && !inAbstractClass && !inTrait&& !inEnum) {
       trace.getErrorHandler().genericError(function.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Abstract method " + function.getName() + " in non-abstract class "+ classDescriptor.getName());
     }
-    if (function.getBodyExpression() == null && !functionDescriptor.getModifiers().isAbstract() && nameIdentifier != null) {
+    if (isAbstract && inTrait) {
+      trace.getErrorHandler().genericWarning(function.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Abstract modifier is not necessary in traits");
+    }
+    if (function.getBodyExpression() != null && isAbstract) {
+      trace.getErrorHandler().genericError(function.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Method " + function.getName() + " with body can not be abstract");
+    }
+    if (function.getBodyExpression() == null && !isAbstract && !inTrait && nameIdentifier != null) {
       trace.getErrorHandler().genericError(nameIdentifier.getNode(),"Method " + function.getName() + " without body must be abstract");
     }
     return;
   }
-  if (functionDescriptor.getModifiers().isAbstract()) {
+  if (isAbstract) {
     trace.getErrorHandler().genericError(function.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Global function " + function.getName() + " can not be abstract");
   }
-  if (function.getBodyExpression() == null && !functionDescriptor.getModifiers().isAbstract() && nameIdentifier != null) {
+  if (function.getBodyExpression() == null && !isAbstract && nameIdentifier != null) {
     trace.getErrorHandler().genericError(nameIdentifier.getNode(),"Global function " + function.getName() + " must have body");
   }
 }
