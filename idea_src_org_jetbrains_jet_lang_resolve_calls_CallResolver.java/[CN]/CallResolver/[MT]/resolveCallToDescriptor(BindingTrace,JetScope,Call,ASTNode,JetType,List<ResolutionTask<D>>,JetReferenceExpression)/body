@@ -1,2 +1,68 @@
 {
+  TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
+  OverloadResolutionResult<D> resultForFirstNonemptyCandidateSet=null;
+  TracingStrategy tracing=new TracingStrategy(){
+    @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull CallableDescriptor descriptor){
+      trace.record(REFERENCE_TARGET,reference,descriptor);
+    }
+    @Override public void reportOverallResolutionError(    @NotNull BindingTrace trace,    @NotNull String message){
+      trace.getErrorHandler().genericError(callNode,message);
+    }
+    @Override public void reportWrongTypeArguments(    @NotNull BindingTrace trace,    @NotNull String message){
+      JetTypeArgumentList typeArgumentList=call.getTypeArgumentList();
+      if (typeArgumentList != null) {
+        trace.getErrorHandler().genericError(typeArgumentList.getNode(),message);
+      }
+ else {
+        reportOverallResolutionError(trace,message);
+      }
+    }
+    @Override public void reportWrongValueArguments(    @NotNull BindingTrace trace,    @NotNull String message){
+      ASTNode node;
+      JetValueArgumentList valueArgumentList=call.getValueArgumentList();
+      if (valueArgumentList != null) {
+        node=valueArgumentList.getNode();
+      }
+ else       if (!call.getFunctionLiteralArguments().isEmpty()) {
+        node=call.getFunctionLiteralArguments().get(0).getNode();
+      }
+ else {
+        node=callNode;
+      }
+      trace.getErrorHandler().genericError(node,message);
+    }
+    @Override public void reportUnresolvedReference(    @NotNull BindingTrace trace){
+      trace.getErrorHandler().unresolvedReference(reference);
+    }
+    @Override public void reportErrorOnReference(    BindingTrace trace,    String message){
+      trace.getErrorHandler().genericError(reference.getNode(),message);
+    }
+    @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<D> candidates){
+      trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
+    }
+  }
+;
+  for (  ResolutionTask<D> task : prioritizedTasks) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace);
+    OverloadResolutionResult<D> result=performResolution(temporaryTrace,scope,expectedType,task,tracing);
+    if (result.isSuccess()) {
+      temporaryTrace.commit();
+      return result.getDescriptor();
+    }
+    if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty()) {
+      traceForFirstNonemptyCandidateSet=temporaryTrace;
+      resultForFirstNonemptyCandidateSet=result;
+    }
+  }
+  if (traceForFirstNonemptyCandidateSet != null) {
+    traceForFirstNonemptyCandidateSet.commit();
+    if (resultForFirstNonemptyCandidateSet.singleDescriptor()) {
+      return resultForFirstNonemptyCandidateSet.getDescriptor();
+    }
+  }
+ else {
+    trace.getErrorHandler().unresolvedReference(reference);
+    checkTypesWithNoCallee(trace,scope,call.getTypeArguments(),call.getValueArguments(),call.getFunctionLiteralArguments());
+  }
+  return null;
 }
