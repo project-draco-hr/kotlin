@@ -1,11 +1,9 @@
 {
   TypeHierarchyResolver typeHierarchyResolver=new TypeHierarchyResolver(semanticServices,trace);
-  typeHierarchyResolver.getNamespaceScopes().put(namespace,standardLibraryNamespace.getMemberScope());
-  typeHierarchyResolver.getNamespaceDescriptors().put(namespace,standardLibraryNamespace);
-  typeHierarchyResolver.process(outerScope,standardLibraryNamespace,namespace.getDeclarations());
-  DeclarationResolver declarationResolver=new DeclarationResolver(semanticServices,trace,typeHierarchyResolver);
+  TopDownAnalysisContext context=typeHierarchyResolver.processStandardLibraryNamespace(outerScope,standardLibraryNamespace,namespace);
+  DeclarationResolver declarationResolver=new DeclarationResolver(semanticServices,trace,context);
   declarationResolver.process();
-  BodyResolver bodyResolver=new BodyResolver(semanticServices,trace,typeHierarchyResolver,declarationResolver){
+  BodyResolver bodyResolver=new BodyResolver(semanticServices,trace,context,declarationResolver){
     @Override protected void checkProperty(    JetProperty property,    PropertyDescriptor propertyDescriptor,    @Nullable ClassDescriptor classDescriptor){
     }
     @Override protected void checkFunction(    JetDeclarationWithBody function,    FunctionDescriptor functionDescriptor){
