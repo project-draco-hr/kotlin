@@ -35,16 +35,16 @@
       returnType=ErrorUtils.createErrorType("No type, no body");
     }
   }
-  MemberModifiers defaultModifiers;
+  Modality defaultModality;
   if (containingDescriptor instanceof ClassDescriptor) {
-    boolean isDefinitelyAbstract=((ClassDescriptor)containingDescriptor).getModifiers().isTrait() && function.getBodyExpression() == null;
-    defaultModifiers=new MemberModifiers(isDefinitelyAbstract,isDefinitelyAbstract,false);
+    boolean isDefinitelyAbstract=((ClassDescriptor)containingDescriptor).getKind() == ClassKind.TRAIT && function.getBodyExpression() == null;
+    defaultModality=isDefinitelyAbstract ? Modality.ABSTRACT : Modality.FINAL;
   }
  else {
-    defaultModifiers=MemberModifiers.DEFAULT_MODIFIERS;
+    defaultModality=Modality.FINAL;
   }
-  MemberModifiers memberModifiers=resolveMemberModifiers(function.getModifierList(),defaultModifiers);
-  functionDescriptor.initialize(receiverType,typeParameterDescriptors,valueParameterDescriptors,returnType,memberModifiers);
+  Modality modality=resolveModalityFromModifiers(function.getModifierList(),defaultModality);
+  functionDescriptor.initialize(receiverType,typeParameterDescriptors,valueParameterDescriptors,returnType,modality);
   trace.record(BindingContext.FUNCTION,function,functionDescriptor);
   return functionDescriptor;
 }

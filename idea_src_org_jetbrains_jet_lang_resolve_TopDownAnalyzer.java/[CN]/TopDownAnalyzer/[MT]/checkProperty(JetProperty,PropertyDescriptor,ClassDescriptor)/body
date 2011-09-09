@@ -4,12 +4,12 @@
   JetPropertyAccessor setter=property.getSetter();
   PsiElement nameIdentifier=property.getNameIdentifier();
   ASTNode nameNode=nameIdentifier == null ? property.getNode() : nameIdentifier.getNode();
-  if (propertyDescriptor.getModifiers().isAbstract()) {
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
     if (classDescriptor == null) {
       trace.getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Global property can not be abstract");
       return;
     }
-    if (!classDescriptor.getModifiers().isAbstract()) {
+    if (classDescriptor.getModality() != Modality.ABSTRACT) {
       trace.getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Abstract property " + property.getName() + " in non-abstract class "+ classDescriptor.getName());
       return;
     }
@@ -30,7 +30,7 @@
       if (classDescriptor == null || (getter != null && getter.getBodyExpression() != null) || (setter != null && setter.getBodyExpression() != null)) {
         trace.getErrorHandler().genericError(nameNode,"Property must be initialized");
       }
- else       if (!classDescriptor.getModifiers().isTrait()) {
+ else       if (classDescriptor.getKind() != ClassKind.TRAIT) {
         trace.getErrorHandler().genericError(nameNode,"Property must be initialized or be abstract");
       }
     }
