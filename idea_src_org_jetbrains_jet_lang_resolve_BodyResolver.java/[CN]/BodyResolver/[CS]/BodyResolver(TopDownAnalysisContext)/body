@@ -1,0 +1,27 @@
+{
+  this.context=context;
+  this.traceForConstructors=new BindingTraceAdapter(context.getTrace()).addHandler(BindingContext.REFERENCE_TARGET,new BindingTraceAdapter.RecordHandler<JetReferenceExpression,DeclarationDescriptor>(){
+    @Override public void handleRecord(    WritableSlice<JetReferenceExpression,DeclarationDescriptor> slice,    JetReferenceExpression expression,    DeclarationDescriptor descriptor){
+      if (expression instanceof JetSimpleNameExpression) {
+        JetSimpleNameExpression simpleNameExpression=(JetSimpleNameExpression)expression;
+        if (simpleNameExpression.getReferencedNameElementType() == JetTokens.FIELD_IDENTIFIER) {
+          if (!BodyResolver.this.context.getTrace().getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)descriptor)) {
+            BodyResolver.this.context.getTrace().getErrorHandler().genericError(expression.getNode(),"This property does not have a backing field");
+          }
+        }
+      }
+    }
+  }
+);
+  this.traceForMembers=new BindingTraceAdapter(context.getTrace()).addHandler(BindingContext.REFERENCE_TARGET,new BindingTraceAdapter.RecordHandler<JetReferenceExpression,DeclarationDescriptor>(){
+    @Override public void handleRecord(    WritableSlice<JetReferenceExpression,DeclarationDescriptor> slice,    JetReferenceExpression expression,    DeclarationDescriptor descriptor){
+      if (descriptor instanceof PropertyDescriptor) {
+        PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+        if (BodyResolver.this.context.getPrimaryConstructorParameterProperties().contains(propertyDescriptor)) {
+          traceForMembers.record(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
+        }
+      }
+    }
+  }
+);
+}
