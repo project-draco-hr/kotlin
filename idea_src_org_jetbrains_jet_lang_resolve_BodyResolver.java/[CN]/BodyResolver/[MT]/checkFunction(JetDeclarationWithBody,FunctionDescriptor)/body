@@ -1,0 +1,43 @@
+{
+  DeclarationDescriptor containingDescriptor=functionDescriptor.getContainingDeclaration();
+  PsiElement nameIdentifier;
+  JetModifierList modifierList;
+  if (function instanceof JetNamedFunction) {
+    JetNamedFunction namedFunction=(JetNamedFunction)function;
+    nameIdentifier=namedFunction.getNameIdentifier();
+    modifierList=namedFunction.getModifierList();
+  }
+ else   if (function instanceof JetPropertyAccessor) {
+    return;
+  }
+ else {
+    throw new UnsupportedOperationException();
+  }
+  ASTNode abstractNode=modifierList != null ? modifierList.getModifierNode(JetTokens.ABSTRACT_KEYWORD) : null;
+  boolean hasAbstractModifier=abstractNode != null;
+  if (containingDescriptor instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)containingDescriptor;
+    boolean inTrait=classDescriptor.getKind() == ClassKind.TRAIT;
+    boolean inEnum=classDescriptor.getKind() == ClassKind.ENUM_CLASS;
+    boolean inAbstractClass=classDescriptor.getModality() == Modality.ABSTRACT;
+    if (hasAbstractModifier && !inAbstractClass && !inTrait&& !inEnum) {
+      trace.getErrorHandler().genericError(abstractNode,"Abstract method " + function.getName() + " in non-abstract class "+ classDescriptor.getName());
+    }
+    if (hasAbstractModifier && inTrait) {
+      trace.getErrorHandler().genericWarning(abstractNode,"Abstract modifier is not necessary in traits");
+    }
+    if (function.getBodyExpression() != null && hasAbstractModifier) {
+      trace.getErrorHandler().genericError(abstractNode,"Method " + function.getName() + " with body can not be abstract");
+    }
+    if (function.getBodyExpression() == null && !hasAbstractModifier && !inTrait && nameIdentifier != null) {
+      trace.getErrorHandler().genericError(nameIdentifier.getNode(),"Method " + function.getName() + " without body must be abstract");
+    }
+    return;
+  }
+  if (hasAbstractModifier) {
+    trace.getErrorHandler().genericError(abstractNode,"Function " + function.getName() + " can not be abstract");
+  }
+  if (function.getBodyExpression() == null && !hasAbstractModifier && nameIdentifier != null) {
+    trace.getErrorHandler().genericError(nameIdentifier.getNode(),"Function " + function.getName() + " must have body");
+  }
+}
