@@ -2,12 +2,12 @@
   if (kind == OwnerKind.NAMESPACE) {
     flags|=Opcodes.ACC_STATIC;
   }
- else   if (kind == OwnerKind.INTERFACE) {
-    flags|=Opcodes.ACC_ABSTRACT;
-  }
+  PsiElement psiElement=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,propertyDescriptor.getContainingDeclaration());
+  boolean isTrait=psiElement instanceof JetClass && ((JetClass)psiElement).isTrait();
+  if (isTrait && !(kind instanceof OwnerKind.DelegateKind))   flags|=Opcodes.ACC_ABSTRACT;
   final String signature=state.getTypeMapper().mapSetterSignature(propertyDescriptor).getDescriptor();
   MethodVisitor mv=v.visitMethod(flags,setterName(propertyDescriptor.getName()),signature,null,null);
-  if (kind != OwnerKind.INTERFACE) {
+  if (!isTrait || kind instanceof OwnerKind.DelegateKind) {
     mv.visitCode();
     InstructionAdapter iv=new InstructionAdapter(mv);
     final Type type=state.getTypeMapper().mapType(propertyDescriptor.getOutType());

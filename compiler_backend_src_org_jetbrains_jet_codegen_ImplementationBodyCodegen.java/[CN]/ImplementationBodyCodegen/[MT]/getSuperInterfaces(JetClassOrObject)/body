@@ -3,9 +3,9 @@
   String superClassName=null;
   Set<String> superInterfaces=new LinkedHashSet<String>();
   for (  JetDelegationSpecifier specifier : delegationSpecifiers) {
-    JetType superType=bindingContext.get(BindingContext.TYPE,specifier.getTypeReference());
+    JetType superType=state.getBindingContext().get(BindingContext.TYPE,specifier.getTypeReference());
     ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
-    PsiElement superPsi=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,superClassDescriptor);
+    PsiElement superPsi=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,superClassDescriptor);
     if (superPsi instanceof PsiClass) {
       PsiClass psiClass=(PsiClass)superPsi;
       String fqn=psiClass.getQualifiedName();
@@ -28,7 +28,7 @@
       }
     }
  else {
-      superInterfaces.add(JetTypeMapper.jvmNameForInterface(superClassDescriptor));
+      if (superPsi == null || ((JetClass)superPsi).isTrait())       superInterfaces.add(JetTypeMapper.jvmNameForInterface(superClassDescriptor));
     }
   }
   return superInterfaces;

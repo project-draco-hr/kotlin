@@ -20,8 +20,12 @@
     isInterface=false;
   }
  else {
-    owner=typeMapper.getOwner(propertyDescriptor,OwnerKind.INTERFACE);
-    isInterface=!(containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind() == ClassKind.OBJECT);
+    owner=typeMapper.getOwner(propertyDescriptor,OwnerKind.IMPLEMENTATION);
+    if (containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind() == ClassKind.OBJECT)     isInterface=false;
+ else {
+      JetClass jetClass=(JetClass)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,containingDeclaration);
+      isInterface=jetClass == null || jetClass.isTrait();
+    }
   }
   return StackValue.property(propertyDescriptor.getName(),owner,typeMapper.mapType(propertyDescriptor.getOutType()),isStatic,isInterface,getter,setter);
 }
