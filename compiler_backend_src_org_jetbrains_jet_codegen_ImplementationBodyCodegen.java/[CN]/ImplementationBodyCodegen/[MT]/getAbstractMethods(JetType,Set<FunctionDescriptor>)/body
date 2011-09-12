@@ -1,0 +1,25 @@
+{
+  if (type.equals(JetStandardClasses.getAny())) {
+    return;
+  }
+  for (  JetType superType : type.getConstructor().getSupertypes()) {
+    getAbstractMethods(superType,set);
+  }
+  PsiElement psiElement=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,type.getConstructor().getDeclarationDescriptor());
+  if (psiElement instanceof JetClass) {
+    JetClass jetClass=(JetClass)psiElement;
+    for (    JetDeclaration decl : jetClass.getDeclarations()) {
+      if (decl instanceof JetNamedFunction) {
+        JetNamedFunction jetNamedFunction=(JetNamedFunction)decl;
+        FunctionDescriptor funDescriptor=state.getBindingContext().get(BindingContext.FUNCTION,decl);
+        set.removeAll(funDescriptor.getOverriddenDescriptors());
+        if (jetNamedFunction.getBodyExpression() == null || jetClass.isTrait()) {
+          set.add(funDescriptor);
+        }
+      }
+    }
+  }
+ else   if (psiElement instanceof PsiClass) {
+    PsiClass psiClass=(PsiClass)psiElement;
+  }
+}
