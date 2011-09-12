@@ -1,0 +1,31 @@
+{
+  JetPropertyAccessor getter=property.getGetter();
+  JetPropertyAccessor setter=property.getSetter();
+  JetModifierList modifierList=property.getModifierList();
+  ASTNode abstractNode=modifierList != null ? modifierList.getModifierNode(JetTokens.ABSTRACT_KEYWORD) : null;
+  if (abstractNode != null) {
+    if (classDescriptor == null) {
+      context.getTrace().getErrorHandler().genericError(abstractNode,"This property cannot be abstract");
+      return;
+    }
+    if (!(classDescriptor.getModality() == Modality.ABSTRACT) && classDescriptor.getKind() != ClassKind.ENUM_CLASS) {
+      context.getTrace().getErrorHandler().genericError(abstractNode,"Abstract property " + property.getName() + " in non-abstract class "+ classDescriptor.getName());
+      return;
+    }
+    if (classDescriptor.getKind() == ClassKind.TRAIT) {
+      context.getTrace().getErrorHandler().genericWarning(abstractNode,"Abstract modifier is redundant in traits");
+    }
+  }
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
+    JetExpression initializer=property.getInitializer();
+    if (initializer != null) {
+      context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Property with initializer cannot be abstract");
+    }
+    if (getter != null && getter.getBodyExpression() != null) {
+      context.getTrace().getErrorHandler().genericError(getter.getNode(),"Property with getter implementation cannot be abstract");
+    }
+    if (setter != null && setter.getBodyExpression() != null) {
+      context.getTrace().getErrorHandler().genericError(setter.getNode(),"Property with setter implementation cannot be abstract");
+    }
+  }
+}

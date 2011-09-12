@@ -2,13 +2,17 @@
   DeclarationDescriptor containingDescriptor=functionDescriptor.getContainingDeclaration();
   PsiElement nameIdentifier;
   JetModifierList modifierList;
+  boolean isPropertyAccessor=false;
   if (function instanceof JetNamedFunction) {
     JetNamedFunction namedFunction=(JetNamedFunction)function;
     nameIdentifier=namedFunction.getNameIdentifier();
     modifierList=namedFunction.getModifierList();
   }
  else   if (function instanceof JetPropertyAccessor) {
-    return;
+    isPropertyAccessor=true;
+    JetPropertyAccessor propertyAccessor=(JetPropertyAccessor)function;
+    nameIdentifier=propertyAccessor.getNamePlaceholder();
+    modifierList=propertyAccessor.getModifierList();
   }
  else {
     throw new UnsupportedOperationException();
@@ -20,24 +24,30 @@
     boolean inTrait=classDescriptor.getKind() == ClassKind.TRAIT;
     boolean inEnum=classDescriptor.getKind() == ClassKind.ENUM_CLASS;
     boolean inAbstractClass=classDescriptor.getModality() == Modality.ABSTRACT;
+    String methodName=function.getName() != null ? function.getName() + " " : "";
     if (hasAbstractModifier && !inAbstractClass && !inTrait&& !inEnum) {
-      context.getTrace().getErrorHandler().genericError(abstractNode,"Abstract method " + function.getName() + " in non-abstract class "+ classDescriptor.getName());
+      context.getTrace().getErrorHandler().genericError(abstractNode,"Abstract method " + methodName + "in non-abstract class "+ classDescriptor.getName());
     }
-    if (hasAbstractModifier && inTrait) {
-      context.getTrace().getErrorHandler().genericWarning(abstractNode,"Abstract modifier is not necessary in traits");
+    if (hasAbstractModifier && inTrait && !isPropertyAccessor) {
+      context.getTrace().getErrorHandler().genericWarning(abstractNode,"Abstract modifier is redundant in trait");
     }
     if (function.getBodyExpression() != null && hasAbstractModifier) {
-      context.getTrace().getErrorHandler().genericError(abstractNode,"Method " + function.getName() + " with body can not be abstract");
+      context.getTrace().getErrorHandler().genericError(abstractNode,"Method " + methodName + "with body cannot be abstract");
     }
-    if (function.getBodyExpression() == null && !hasAbstractModifier && !inTrait && nameIdentifier != null) {
+    if (function.getBodyExpression() == null && !hasAbstractModifier && !inTrait && nameIdentifier != null && !isPropertyAccessor) {
       context.getTrace().getErrorHandler().genericError(nameIdentifier.getNode(),"Method " + function.getName() + " without body must be abstract");
     }
     return;
   }
   if (hasAbstractModifier) {
-    context.getTrace().getErrorHandler().genericError(abstractNode,"Function " + function.getName() + " can not be abstract");
+    if (!isPropertyAccessor) {
+      context.getTrace().getErrorHandler().genericError(abstractNode,"Function " + function.getName() + " cannot be abstract");
+    }
+ else {
+      context.getTrace().getErrorHandler().genericError(abstractNode,"This property accessor cannot be abstract");
+    }
   }
-  if (function.getBodyExpression() == null && !hasAbstractModifier && nameIdentifier != null) {
+  if (function.getBodyExpression() == null && !hasAbstractModifier && nameIdentifier != null && !isPropertyAccessor) {
     context.getTrace().getErrorHandler().genericError(nameIdentifier.getNode(),"Function " + function.getName() + " must have body");
   }
 }

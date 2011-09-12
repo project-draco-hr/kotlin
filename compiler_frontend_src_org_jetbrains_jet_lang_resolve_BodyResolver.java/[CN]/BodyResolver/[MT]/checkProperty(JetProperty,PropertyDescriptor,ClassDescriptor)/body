@@ -1,43 +1,4 @@
 {
-  JetExpression initializer=property.getInitializer();
-  JetPropertyAccessor getter=property.getGetter();
-  JetPropertyAccessor setter=property.getSetter();
-  PsiElement nameIdentifier=property.getNameIdentifier();
-  ASTNode nameNode=nameIdentifier == null ? property.getNode() : nameIdentifier.getNode();
-  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
-    if (classDescriptor == null) {
-      context.getTrace().getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Global property can not be abstract");
-      return;
-    }
-    if (classDescriptor.getModality() != Modality.ABSTRACT) {
-      context.getTrace().getErrorHandler().genericError(property.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD),"Abstract property " + property.getName() + " in non-abstract class "+ classDescriptor.getName());
-      return;
-    }
-    if (initializer != null) {
-      context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Property with initializer can not be abstract");
-    }
-    if (getter != null && getter.getBodyExpression() != null) {
-      context.getTrace().getErrorHandler().genericError(getter.getNode(),"Property with getter implementation can not be abstract");
-    }
-    if (setter != null && setter.getBodyExpression() != null) {
-      context.getTrace().getErrorHandler().genericError(setter.getNode(),"Property with setter implementation can not be abstract");
-    }
-    return;
-  }
-  boolean backingFieldRequired=context.getTrace().getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
-  if (backingFieldRequired) {
-    if (initializer == null && !context.getTrace().getBindingContext().get(BindingContext.IS_INITIALIZED,propertyDescriptor)) {
-      if (classDescriptor == null || (getter != null && getter.getBodyExpression() != null) || (setter != null && setter.getBodyExpression() != null)) {
-        context.getTrace().getErrorHandler().genericError(nameNode,"Property must be initialized");
-      }
- else       if (classDescriptor.getKind() != ClassKind.TRAIT) {
-        context.getTrace().getErrorHandler().genericError(nameNode,"Property must be initialized or be abstract");
-      }
-    }
-  }
- else {
-    if (initializer != null) {
-      context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Initializer is not allowed here because this property has no backing field");
-    }
-  }
+  checkPropertyAbstractness(property,propertyDescriptor,classDescriptor);
+  checkPropertyInitializer(property,propertyDescriptor,classDescriptor);
 }
