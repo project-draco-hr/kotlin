@@ -1,0 +1,32 @@
+{
+  boolean hasAccessorImplementation=(property.getGetter() != null && property.getGetter().getBodyExpression() != null) || (property.getSetter() != null && property.getSetter().getBodyExpression() != null);
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT)   return;
+  boolean inTrait=classDescriptor != null && classDescriptor.getKind() == ClassKind.TRAIT;
+  JetExpression initializer=property.getInitializer();
+  boolean backingFieldRequired=context.getTrace().getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
+  PsiElement nameIdentifier=property.getNameIdentifier();
+  ASTNode nameNode=nameIdentifier == null ? property.getNode() : nameIdentifier.getNode();
+  if (inTrait && backingFieldRequired && hasAccessorImplementation) {
+    context.getTrace().getErrorHandler().genericError(nameNode,"Property in trait cannot have backing field");
+  }
+  if (initializer == null) {
+    if (backingFieldRequired && !inTrait && !context.getTrace().getBindingContext().get(BindingContext.IS_INITIALIZED,propertyDescriptor)) {
+      if (classDescriptor == null || hasAccessorImplementation) {
+        context.getTrace().getErrorHandler().genericError(nameNode,"Property must be initialized");
+      }
+ else {
+        context.getTrace().getErrorHandler().genericError(nameNode,"Property must be initialized or be abstract");
+      }
+    }
+    return;
+  }
+  if (inTrait) {
+    context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Property initializers are not allowed in trait");
+  }
+ else   if (!backingFieldRequired) {
+    context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Initializer is not allowed here because this property has no backing field");
+  }
+ else   if (classDescriptor != null && classDescriptor.getUnsubstitutedPrimaryConstructor() == null) {
+    context.getTrace().getErrorHandler().genericError(initializer.getNode(),"Property initializers are not allowed when no primary constructor is present");
+  }
+}
