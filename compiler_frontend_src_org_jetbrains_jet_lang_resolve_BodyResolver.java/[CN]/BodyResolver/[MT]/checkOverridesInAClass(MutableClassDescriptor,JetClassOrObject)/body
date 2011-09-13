@@ -1,2 +1,40 @@
 {
+  for (  FunctionDescriptor declaredFunction : classDescriptor.getFunctions()) {
+    checkOverrideForFunction(declaredFunction);
+  }
+  if (classDescriptor.getModality() == Modality.ABSTRACT) {
+    return;
+  }
+  Set<FunctionDescriptor> allOverriddenFunctions=Sets.newHashSet();
+  Collection<DeclarationDescriptor> allDescriptors=classDescriptor.getDefaultType().getMemberScope().getAllDescriptors();
+  for (  DeclarationDescriptor descriptor : allDescriptors) {
+    if (descriptor instanceof FunctionDescriptor) {
+      FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+      if (functionDescriptor.getModality() != Modality.ABSTRACT) {
+        for (        FunctionDescriptor overriddenDescriptor : functionDescriptor.getOverriddenDescriptors()) {
+          allOverriddenFunctions.add(overriddenDescriptor.getOriginal());
+        }
+      }
+    }
+  }
+  boolean foundError=false;
+  PsiElement nameIdentifier=null;
+  if (klass instanceof JetClass) {
+    nameIdentifier=((JetClass)klass).getNameIdentifier();
+  }
+ else   if (klass instanceof JetObjectDeclaration) {
+    nameIdentifier=((JetObjectDeclaration)klass).getNameIdentifier();
+  }
+  for (  DeclarationDescriptor descriptor : allDescriptors) {
+    if (descriptor instanceof FunctionDescriptor) {
+      FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+      if (functionDescriptor.getModality() == Modality.ABSTRACT && !allOverriddenFunctions.contains(functionDescriptor.getOriginal()) && !foundError && nameIdentifier != null) {
+        DeclarationDescriptor declarationDescriptor=functionDescriptor.getContainingDeclaration();
+        if (declarationDescriptor != classDescriptor) {
+          context.getTrace().getErrorHandler().genericError(nameIdentifier.getNode(),"Class '" + klass.getName() + "' must be declared abstract or implement abstract method '"+ functionDescriptor.getName()+ "' in "+ declarationDescriptor.getName());
+          foundError=true;
+        }
+      }
+    }
+  }
 }
