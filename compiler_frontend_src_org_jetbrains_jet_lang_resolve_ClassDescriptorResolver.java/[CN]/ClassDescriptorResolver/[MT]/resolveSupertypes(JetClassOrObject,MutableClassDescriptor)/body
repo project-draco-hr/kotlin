@@ -1,18 +1,12 @@
 {
   List<JetDelegationSpecifier> delegationSpecifiers=jetClass.getDelegationSpecifiers();
-  JetType defaultSupertype=JetStandardClasses.getAnyType();
-  if (jetClass instanceof JetEnumEntry) {
-    JetClassOrObject parent=PsiTreeUtil.getParentOfType(jetClass,JetClassOrObject.class);
-    ClassDescriptor parentDescriptor=trace.getBindingContext().get(BindingContext.CLASS,parent);
-    if (parentDescriptor.getTypeConstructor().getParameters().isEmpty()) {
-      defaultSupertype=parentDescriptor.getDefaultType();
-    }
- else     if (delegationSpecifiers.isEmpty()) {
-      trace.getErrorHandler().genericError(((JetEnumEntry)jetClass).getNameIdentifier().getNode(),"generic arguments of the base type must be specified");
-    }
+  if (delegationSpecifiers.isEmpty()) {
+    descriptor.addSupertype(getDefaultSupertype(jetClass));
   }
-  Collection<? extends JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(defaultSupertype) : resolveDelegationSpecifiers(descriptor.getScopeForSupertypeResolution(),delegationSpecifiers,typeResolverNotCheckingBounds);
-  for (  JetType supertype : supertypes) {
-    descriptor.addSupertype(supertype);
+ else {
+    Collection<JetType> supertypes=resolveDelegationSpecifiers(descriptor.getScopeForSupertypeResolution(),delegationSpecifiers,typeResolverNotCheckingBounds);
+    for (    JetType supertype : supertypes) {
+      descriptor.addSupertype(supertype);
+    }
   }
 }

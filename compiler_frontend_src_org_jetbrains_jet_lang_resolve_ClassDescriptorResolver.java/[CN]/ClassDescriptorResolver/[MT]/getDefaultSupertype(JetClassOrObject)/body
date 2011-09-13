@@ -1,0 +1,14 @@
+{
+  if (jetClass instanceof JetEnumEntry) {
+    JetClassOrObject parent=PsiTreeUtil.getParentOfType(jetClass,JetClassOrObject.class);
+    ClassDescriptor parentDescriptor=trace.getBindingContext().get(BindingContext.CLASS,parent);
+    if (parentDescriptor.getTypeConstructor().getParameters().isEmpty()) {
+      return parentDescriptor.getDefaultType();
+    }
+ else {
+      trace.getErrorHandler().genericError(((JetEnumEntry)jetClass).getNameIdentifier().getNode(),"generic arguments of the base type must be specified");
+      return ErrorUtils.createErrorType("Supertype not specified");
+    }
+  }
+  return JetStandardClasses.getAnyType();
+}
