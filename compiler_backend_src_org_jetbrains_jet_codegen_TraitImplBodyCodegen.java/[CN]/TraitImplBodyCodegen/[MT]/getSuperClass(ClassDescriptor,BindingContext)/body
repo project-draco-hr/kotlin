@@ -1,0 +1,24 @@
+{
+  JetClassOrObject myClass=(JetClassOrObject)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,myClassDescr);
+  List<JetDelegationSpecifier> delegationSpecifiers=myClass.getDelegationSpecifiers();
+  for (  JetDelegationSpecifier specifier : delegationSpecifiers) {
+    if (specifier instanceof JetDelegatorToSuperClass || specifier instanceof JetDelegatorToSuperCall) {
+      JetType superType=bindingContext.get(BindingContext.TYPE,specifier.getTypeReference());
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      final PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,superClassDescriptor);
+      if (declaration != null) {
+        if (declaration instanceof PsiClass) {
+          if (!((PsiClass)declaration).isInterface()) {
+            return superClassDescriptor.getDefaultType();
+          }
+        }
+ else         if (declaration instanceof JetClass) {
+          if (!((JetClass)declaration).isTrait()) {
+            return superClassDescriptor.getDefaultType();
+          }
+        }
+      }
+    }
+  }
+  return null;
+}

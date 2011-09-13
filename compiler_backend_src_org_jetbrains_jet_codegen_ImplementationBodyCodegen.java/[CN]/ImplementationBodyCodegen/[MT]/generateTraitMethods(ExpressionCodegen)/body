@@ -16,7 +16,14 @@
       iv.load(reg,argType);
       reg+=argType.getSize();
     }
-    String fdescriptor=function.getDescriptor().replace("(","(L" + state.getTypeMapper().jvmName((ClassDescriptor)fun.getContainingDeclaration(),OwnerKind.IMPLEMENTATION) + ";");
+    ClassDescriptor containingDeclaration=(ClassDescriptor)fun.getContainingDeclaration();
+    JetType jetType=TraitImplBodyCodegen.getSuperClass(containingDeclaration,state.getBindingContext());
+    Type type=state.getTypeMapper().mapType(jetType);
+    if (type.getInternalName().equals("java/lang/Object")) {
+      jetType=containingDeclaration.getDefaultType();
+      type=state.getTypeMapper().mapType(jetType);
+    }
+    String fdescriptor=function.getDescriptor().replace("(","(" + type.getDescriptor());
     iv.invokestatic(state.getTypeMapper().jvmName((ClassDescriptor)fun.getContainingDeclaration(),OwnerKind.TRAIT_IMPL),function.getName(),fdescriptor);
     iv.areturn(function.getReturnType());
     mv.visitMaxs(0,0);
