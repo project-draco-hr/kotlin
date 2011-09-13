@@ -3,10 +3,14 @@
   JetPropertyAccessor getter=property.getGetter();
   if (getter != null) {
     List<AnnotationDescriptor> annotations=annotationResolver.resolveAnnotations(scope,getter.getModifierList());
-    JetType returnType=null;
+    JetType outType=propertyDescriptor.getOutType();
+    JetType returnType=outType;
     JetTypeReference returnTypeReference=getter.getReturnTypeReference();
     if (returnTypeReference != null) {
       returnType=typeResolver.resolveType(scope,returnTypeReference);
+      if (outType != null && !semanticServices.getTypeChecker().equalTypes(returnType,outType)) {
+        trace.getErrorHandler().genericError(returnTypeReference.getNode(),"Getter return type must be equal to the type of the property, i.e. " + propertyDescriptor.getReturnType());
+      }
     }
     getterDescriptor=new PropertyGetterDescriptor(resolveModalityFromModifiers(getter.getModifierList()),propertyDescriptor,annotations,returnType,getter.getBodyExpression() != null,false);
     trace.record(BindingContext.PROPERTY_ACCESSOR,getter,getterDescriptor);
