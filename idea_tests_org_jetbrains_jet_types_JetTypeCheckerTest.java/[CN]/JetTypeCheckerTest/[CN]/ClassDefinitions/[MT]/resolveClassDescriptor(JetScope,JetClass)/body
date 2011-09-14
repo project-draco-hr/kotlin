@@ -2,13 +2,13 @@
   final ClassDescriptorImpl classDescriptor=new ClassDescriptorImpl(scope.getContainingDeclaration(),Collections.<AnnotationDescriptor>emptyList(),JetPsiUtil.safeName(classElement.getName()));
   BindingTrace trace=JetTestUtils.DUMMY_TRACE;
   trace.record(BindingContext.CLASS,classElement,classDescriptor);
-  final WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,trace.getErrorHandler());
+  final WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,trace);
   List<TypeParameterDescriptor> typeParameters=classDescriptorResolver.resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters());
   classDescriptorResolver.resolveGenericBounds(classElement,parameterScope,typeParameters);
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
   Collection<JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : classDescriptorResolver.resolveDelegationSpecifiers(parameterScope,delegationSpecifiers,typeResolver);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
-  final WritableScope memberDeclarations=new WritableScopeImpl(JetScope.EMPTY,classDescriptor,trace.getErrorHandler());
+  final WritableScope memberDeclarations=new WritableScopeImpl(JetScope.EMPTY,classDescriptor,trace);
   List<JetDeclaration> declarations=classElement.getDeclarations();
   for (  JetDeclaration declaration : declarations) {
     declaration.accept(new JetVisitorVoid(){
