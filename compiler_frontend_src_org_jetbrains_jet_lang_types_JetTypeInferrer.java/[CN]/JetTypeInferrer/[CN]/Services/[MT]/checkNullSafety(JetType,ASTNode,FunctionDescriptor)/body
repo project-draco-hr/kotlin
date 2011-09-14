@@ -6,14 +6,14 @@
     boolean calleeForbidsNullableReceiver=calleeReceiverType == null || !calleeReceiverType.isNullable();
     IElementType operationSign=operationTokenNode.getElementType();
     if (nullableReceiver && calleeForbidsNullableReceiver && operationSign == JetTokens.DOT) {
-      trace.getErrorHandler().genericError(operationTokenNode,"Only safe calls (?.) are allowed on a nullable receiver of type " + receiverType);
+      trace.report(UNSAFE_CALL.on(operationTokenNode,receiverType));
     }
  else     if ((!nullableReceiver || !calleeForbidsNullableReceiver) && operationSign == JetTokens.SAFE_ACCESS) {
       if (namespaceType) {
-        trace.getErrorHandler().genericError(operationTokenNode,"Safe calls are not allowed on namespaces");
+        trace.report(SAFE_CALLS_ARE_NOT_ALLOWED_ON_NAMESPACES.on(operationTokenNode));
       }
  else {
-        trace.getErrorHandler().genericWarning(operationTokenNode,"Unnecessary safe call on a non-null receiver of type  " + receiverType);
+        trace.report(UNNECESSARY_SAFE_CALL.on(operationTokenNode,receiverType));
       }
     }
   }

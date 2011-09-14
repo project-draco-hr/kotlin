@@ -8,7 +8,7 @@
     if (classDescriptor != null) {
       if (classDescriptor.getKind() != ClassKind.TRAIT) {
         if (classAppeared) {
-          context.getTrace().getErrorHandler().genericError(typeReference.getNode(),"Only one class may appear in a supertype list");
+          context.getTrace().report(MANY_CLASSES_IN_SUPERTYPE_LIST.on(typeReference));
         }
  else {
           classAppeared=true;
@@ -16,14 +16,14 @@
       }
     }
  else {
-      context.getTrace().getErrorHandler().genericError(typeReference.getNode(),"Only classes and traits may serve as supertypes");
+      context.getTrace().report(SUPERTYPE_NOT_A_CLASS_OR_TRAIT.on(typeReference));
     }
     TypeConstructor constructor=supertype.getConstructor();
     if (!typeConstructors.add(constructor)) {
-      context.getTrace().getErrorHandler().genericError(typeReference.getNode(),"A supertype appears twice");
+      context.getTrace().report(SUPERTYPE_APPEARS_TWICE.on(typeReference));
     }
     if (constructor.isSealed() && !allowedFinalSupertypes.contains(constructor)) {
-      context.getTrace().getErrorHandler().genericError(typeReference.getNode(),"This type is final, so it cannot be inherited from");
+      context.getTrace().report(FINAL_SUPERTYPE.on(typeReference));
     }
   }
 }

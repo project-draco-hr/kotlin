@@ -10,20 +10,20 @@
     VariableDescriptor hasNextProperty=checkHasNextPropertySupport(loopRange,iteratorType,context);
     boolean hasNextPropertySupported=hasNextProperty != null;
     if (hasNextFunctionSupported && hasNextPropertySupported && !ErrorUtils.isErrorType(iteratorType)) {
-      context.trace.getErrorHandler().genericError(reportErrorsOn,"An ambiguity between 'iterator().hasNext()' function and 'iterator().hasNext' property");
+      context.trace.report(HAS_NEXT_PROPERTY_AND_FUNCTION_AMBIGUITY.on(reportErrorsOn));
     }
  else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
-      context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().hasNext()' function or an 'iterator().hasNext' property");
+      context.trace.report(HAS_NEXT_MISSING.on(reportErrorsOn));
     }
  else {
       context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange,hasNextFunctionSupported ? hasNextFunction : hasNextProperty);
     }
     OverloadResolutionResult<FunctionDescriptor> nextResolutionResult=callResolver.resolveExactSignature(context.scope,iteratorType,"next",Collections.<JetType>emptyList());
     if (nextResolutionResult.isAmbiguity()) {
-      context.trace.getErrorHandler().genericError(reportErrorsOn,"Method 'iterator().next()' is ambiguous for this expression");
+      context.trace.report(NEXT_AMBIGUITY.on(reportErrorsOn));
     }
  else     if (nextResolutionResult.isNothing()) {
-      context.trace.getErrorHandler().genericError(reportErrorsOn,"Loop range must have an 'iterator().next()' method");
+      context.trace.report(NEXT_MISSING.on(reportErrorsOn));
     }
  else {
       FunctionDescriptor nextFunction=nextResolutionResult.getDescriptor();
@@ -32,15 +32,12 @@
     }
   }
  else {
-    String errorMessage="For-loop range must have an iterator() method";
     if (iteratorResolutionResult.isAmbiguity()) {
-      StringBuffer stringBuffer=new StringBuffer("Method 'iterator()' is ambiguous for this expression: ");
-      for (      FunctionDescriptor functionDescriptor : iteratorResolutionResult.getDescriptors()) {
-        stringBuffer.append(DescriptorRenderer.TEXT.render(functionDescriptor)).append(" ");
-      }
-      errorMessage="Method 'iterator()' is ambiguous for this expression: " + stringBuffer;
+      context.trace.report(ITERATOR_AMBIGUITY.on(reportErrorsOn,iteratorResolutionResult.getDescriptors()));
     }
-    context.trace.getErrorHandler().genericError(reportErrorsOn,errorMessage);
+ else {
+      context.trace.report(ITERATOR_MISSING.on(reportErrorsOn));
+    }
   }
   return null;
 }

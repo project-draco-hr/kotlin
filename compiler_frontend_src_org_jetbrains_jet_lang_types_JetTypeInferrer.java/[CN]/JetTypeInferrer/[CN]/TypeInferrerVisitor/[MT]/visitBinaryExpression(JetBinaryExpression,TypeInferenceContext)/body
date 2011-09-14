@@ -30,7 +30,7 @@
         result=standardLibrary.getBooleanType();
       }
  else {
-        context.trace.getErrorHandler().genericError(operationSign.getNode(),"compareTo must return Int, but returns " + compareToReturnType);
+        context.trace.report(COMPARE_TO_TYPE_MISMATCH.on(operationSign,compareToReturnType));
       }
     }
   }
@@ -48,14 +48,10 @@
       }
  else {
         if (resolutionResult.isAmbiguity()) {
-          StringBuilder stringBuilder=new StringBuilder();
-          for (          FunctionDescriptor functionDescriptor : resolutionResult.getDescriptors()) {
-            stringBuilder.append(DescriptorRenderer.TEXT.render(functionDescriptor)).append(" ");
-          }
-          context.trace.getErrorHandler().genericError(operationSign.getNode(),"Ambiguous function: " + stringBuilder);
+          context.trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(operationSign,resolutionResult.getDescriptors()));
         }
  else {
-          context.trace.getErrorHandler().genericError(operationSign.getNode(),"No method 'equals(Any?) : Boolean' available");
+          context.trace.report(EQUALS_MISSING.on(operationSign));
         }
       }
     }
@@ -80,10 +76,10 @@
     WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl(context.scope,context.trace).setDebugName("Right scope of && or ||");
     JetType rightType=right == null ? null : getType(right,context.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope));
     if (leftType != null && !isBoolean(leftType)) {
-      context.trace.getErrorHandler().typeMismatch(left,semanticServices.getStandardLibrary().getBooleanType(),leftType);
+      context.trace.report(TYPE_MISMATCH.on(left,semanticServices.getStandardLibrary().getBooleanType(),leftType));
     }
     if (rightType != null && !isBoolean(rightType)) {
-      context.trace.getErrorHandler().typeMismatch(right,semanticServices.getStandardLibrary().getBooleanType(),rightType);
+      context.trace.report(TYPE_MISMATCH.on(right,semanticServices.getStandardLibrary().getBooleanType(),rightType));
     }
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
@@ -92,7 +88,7 @@
     JetType rightType=right == null ? null : getType(right,contextWithExpectedType.replaceScope(context.scope));
     if (leftType != null) {
       if (!leftType.isNullable()) {
-        context.trace.getErrorHandler().genericWarning(left.getNode(),"Elvis operator (?:) is always returns the left operand of non-nullable type " + leftType);
+        context.trace.report(USELESS_ELVIS.on(left,leftType));
       }
       if (rightType != null) {
         context.services.checkType(TypeUtils.makeNullableAsSpecified(leftType,rightType.isNullable()),left,contextWithExpectedType);
@@ -101,7 +97,7 @@
     }
   }
  else {
-    context.trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown operation");
+    context.trace.report(UNSUPPORTED.on(operationSign,"Unknown operation"));
   }
   return context.services.checkType(result,expression,contextWithExpectedType);
 }

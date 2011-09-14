@@ -8,7 +8,7 @@
   IElementType operationType=operationSign.getReferencedNameElementType();
   String name=unaryOperationNames.get(operationType);
   if (name == null) {
-    context.trace.getErrorHandler().genericError(operationSign.getNode(),"Unknown unary operation");
+    context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
     return null;
   }
   JetType receiverType=getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(context.scope));
@@ -23,7 +23,7 @@
     }
  else {
       if (!semanticServices.getTypeChecker().isSubtypeOf(returnType,receiverType)) {
-        context.trace.getErrorHandler().genericError(operationSign.getNode(),name + " must return " + receiverType+ " but returns "+ returnType);
+        context.trace.report(RESULT_TYPE_MISMATCH.on(operationSign,name,receiverType,returnType));
       }
  else {
         context.trace.record(BindingContext.VARIABLE_REASSIGNMENT,expression);

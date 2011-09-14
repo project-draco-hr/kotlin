@@ -7,11 +7,11 @@
     setterDescriptor=new PropertySetterDescriptor(resolveModalityFromModifiers(setter.getModifierList()),propertyDescriptor,annotations,setter.getBodyExpression() != null,false);
     if (parameter != null) {
       if (parameter.isRef()) {
-        trace.getErrorHandler().genericError(parameter.getRefNode(),"Setter parameters can not be 'ref'");
+        trace.report(Errors.REF_SETTER_PARAMETER.on(parameter.getRefNode()));
       }
       JetExpression defaultValue=parameter.getDefaultValue();
       if (defaultValue != null) {
-        trace.getErrorHandler().genericError(defaultValue.getNode(),"Setter parameters can not have default values");
+        trace.report(SETTER_PARAMETER_WITH_DEFAULT_VALUE.on(defaultValue));
       }
       JetType type;
       JetTypeReference typeReference=parameter.getTypeReference();
@@ -23,7 +23,7 @@
         JetType inType=propertyDescriptor.getInType();
         if (inType != null) {
           if (!semanticServices.getTypeChecker().equalTypes(type,inType)) {
-            trace.getErrorHandler().genericError(typeReference.getNode(),"Setter parameter type must be equal to the type of the property, i.e. " + inType);
+            trace.report(WRONG_SETTER_PARAMETER_TYPE.on(typeReference,inType));
           }
         }
  else {
@@ -39,7 +39,7 @@
   }
   if (!property.isVar()) {
     if (setter != null) {
-      trace.getErrorHandler().genericError(setter.asElement().getNode(),"A 'val'-property cannot have a setter");
+      trace.report(VAL_WITH_SETTER.on(setter));
     }
   }
   return setterDescriptor;

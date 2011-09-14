@@ -13,7 +13,7 @@
       List<JetTuplePatternEntry> entries=pattern.getEntries();
       TypeConstructor typeConstructor=subjectType.getConstructor();
       if (!JetStandardClasses.getTuple(entries.size()).getTypeConstructor().equals(typeConstructor) || typeConstructor.getParameters().size() != entries.size()) {
-        context.trace.getErrorHandler().genericError(pattern.getNode(),"Type mismatch: subject is of type " + subjectType + " but the pattern is of type Tuple"+ entries.size());
+        context.trace.report(TYPE_MISMATCH_IN_TUPLE_PATTERN.on(pattern,subjectType,entries.size()));
       }
  else {
         for (int i=0, entriesSize=entries.size(); i < entriesSize; i++) {
@@ -21,7 +21,7 @@
           JetType type=subjectType.getArguments().get(i).getType();
           ASTNode nameLabelNode=entry.getNameLabelNode();
           if (nameLabelNode != null) {
-            context.trace.getErrorHandler().genericError(nameLabelNode,"Unsupported [JetTypeInferrer]");
+            context.trace.report(UNSUPPORTED.on(nameLabelNode,getClass().getCanonicalName()));
           }
           JetPattern entryPattern=entry.getPattern();
           if (entryPattern != null) {
@@ -54,7 +54,7 @@
       scopeToExtend.addVariableDescriptor(variableDescriptor);
       if (propertyTypeRef != null) {
         if (!semanticServices.getTypeChecker().isSubtypeOf(subjectType,type)) {
-          context.trace.getErrorHandler().genericError(propertyTypeRef.getNode(),type + " must be a supertype of " + subjectType+ ". Use 'is' to match against "+ type);
+          context.trace.report(TYPE_MISMATCH_IN_BINDING_PATTERN.on(propertyTypeRef,type,subjectType));
         }
       }
       JetWhenCondition condition=pattern.getCondition();
@@ -71,11 +71,11 @@
         return;
       }
       if (TypeUtils.intersect(semanticServices.getTypeChecker(),Sets.newHashSet(type,subjectType)) == null) {
-        context.trace.getErrorHandler().genericError(reportErrorOn.getNode(),"Incompatible types: " + type + " and "+ subjectType);
+        context.trace.report(INCOMPATIBLE_TYPES.on(reportErrorOn,type,subjectType));
       }
     }
     @Override public void visitJetElement(    JetElement element){
-      context.trace.getErrorHandler().genericError(element.getNode(),"Unsupported [JetTypeInferrer]");
+      context.trace.report(UNSUPPORTED.on(element,getClass().getCanonicalName()));
     }
   }
 );

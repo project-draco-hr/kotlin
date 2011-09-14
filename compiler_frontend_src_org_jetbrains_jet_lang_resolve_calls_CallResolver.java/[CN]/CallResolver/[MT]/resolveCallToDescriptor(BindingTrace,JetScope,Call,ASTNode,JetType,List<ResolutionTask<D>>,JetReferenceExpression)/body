@@ -5,19 +5,13 @@
     @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull CallableDescriptor descriptor){
       trace.record(REFERENCE_TARGET,reference,descriptor);
     }
-    @Override public void reportOverallResolutionError(    @NotNull BindingTrace trace,    @NotNull String message){
-      trace.getErrorHandler().genericError(callNode,message);
+    @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<D> candidates){
+      trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
     }
-    @Override public void reportWrongTypeArguments(    @NotNull BindingTrace trace,    @NotNull String message){
-      JetTypeArgumentList typeArgumentList=call.getTypeArgumentList();
-      if (typeArgumentList != null) {
-        trace.getErrorHandler().genericError(typeArgumentList.getNode(),message);
-      }
- else {
-        reportOverallResolutionError(trace,message);
-      }
+    @Override public void unresolvedReference(    @NotNull BindingTrace trace){
+      trace.report(UNRESOLVED_REFERENCE.on(reference));
     }
-    @Override public void reportWrongValueArguments(    @NotNull BindingTrace trace,    @NotNull String message){
+    @Override public void noValueForParameter(    @NotNull BindingTrace trace,    @NotNull ValueParameterDescriptor valueParameter){
       ASTNode node;
       JetValueArgumentList valueArgumentList=call.getValueArgumentList();
       if (valueArgumentList != null) {
@@ -29,16 +23,34 @@
  else {
         node=callNode;
       }
-      trace.getErrorHandler().genericError(node,message);
+      trace.report(NO_VALUE_FOR_PARAMETER.on(node,valueParameter));
     }
-    @Override public void reportUnresolvedReference(    @NotNull BindingTrace trace){
-      trace.getErrorHandler().unresolvedReference(reference);
+    @Override public void missingReceiver(    @NotNull BindingTrace trace,    @NotNull JetType candidateReceiverType){
+      trace.report(MISSING_RECEIVER.on(reference,candidateReceiverType));
     }
-    @Override public void reportErrorOnReference(    BindingTrace trace,    String message){
-      trace.getErrorHandler().genericError(reference.getNode(),message);
+    @Override public void noReceiverAllowed(    @NotNull BindingTrace trace){
+      trace.report(NO_RECEIVER_ADMITTED.on(reference));
     }
-    @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<D> candidates){
-      trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
+    @Override public void wrongNumberOfTypeArguments(    @NotNull BindingTrace trace,    int expectedTypeArgumentCount){
+      JetTypeArgumentList typeArgumentList=call.getTypeArgumentList();
+      if (typeArgumentList != null) {
+        trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(typeArgumentList,expectedTypeArgumentCount));
+      }
+ else {
+        trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(reference,expectedTypeArgumentCount));
+      }
+    }
+    @Override public void ambiguity(    @NotNull BindingTrace trace,    @NotNull Set<? extends CallableDescriptor> descriptors){
+      trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(callNode,descriptors));
+    }
+    @Override public void noneApplicable(    @NotNull BindingTrace trace,    @NotNull Set<? extends CallableDescriptor> descriptors){
+      trace.report(NONE_APPLICABLE.on(callNode,descriptors));
+    }
+    @Override public void instantiationOfAbstractClass(    @NotNull BindingTrace trace){
+      trace.report(CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS.on(callNode));
+    }
+    @Override public void typeInferenceFailed(    @NotNull BindingTrace trace){
+      trace.report(TYPE_INFERENCE_FAILED.on(callNode));
     }
   }
 ;
@@ -61,7 +73,7 @@
     }
   }
  else {
-    trace.getErrorHandler().unresolvedReference(reference);
+    trace.report(UNRESOLVED_REFERENCE.on(reference));
     checkTypesWithNoCallee(trace,scope,call.getTypeArguments(),call.getValueArguments(),call.getFunctionLiteralArguments());
   }
   return null;
