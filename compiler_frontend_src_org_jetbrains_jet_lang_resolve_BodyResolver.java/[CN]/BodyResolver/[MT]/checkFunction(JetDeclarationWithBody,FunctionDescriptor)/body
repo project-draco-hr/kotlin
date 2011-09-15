@@ -1,22 +1,19 @@
 {
   DeclarationDescriptor containingDescriptor=functionDescriptor.getContainingDeclaration();
   PsiElement nameIdentifier;
-  JetModifierList modifierList;
   boolean isPropertyAccessor=false;
   if (function instanceof JetNamedFunction) {
-    JetNamedFunction namedFunction=(JetNamedFunction)function;
-    nameIdentifier=namedFunction.getNameIdentifier();
-    modifierList=namedFunction.getModifierList();
+    nameIdentifier=((JetNamedFunction)function).getNameIdentifier();
   }
  else   if (function instanceof JetPropertyAccessor) {
     isPropertyAccessor=true;
-    JetPropertyAccessor propertyAccessor=(JetPropertyAccessor)function;
-    nameIdentifier=propertyAccessor.getNamePlaceholder();
-    modifierList=propertyAccessor.getModifierList();
+    nameIdentifier=((JetPropertyAccessor)function).getNamePlaceholder();
   }
  else {
     throw new UnsupportedOperationException();
   }
+  JetModifierListOwner modifierListOwner=(JetModifierListOwner)function;
+  JetModifierList modifierList=modifierListOwner.getModifierList();
   ASTNode abstractNode=modifierList != null ? modifierList.getModifierNode(JetTokens.ABSTRACT_KEYWORD) : null;
   boolean hasAbstractModifier=abstractNode != null;
   if (containingDescriptor instanceof ClassDescriptor) {
@@ -28,7 +25,7 @@
       context.getTrace().report(ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.on(abstractNode,functionDescriptor.getName(),classDescriptor));
     }
     if (hasAbstractModifier && inTrait && !isPropertyAccessor) {
-      context.getTrace().report(REDUNDANT_ABSTRACT.on((JetDeclaration)function,abstractNode));
+      context.getTrace().report(REDUNDANT_ABSTRACT.on(modifierListOwner,abstractNode));
     }
     if (function.getBodyExpression() != null && hasAbstractModifier) {
       context.getTrace().report(ABSTRACT_FUNCTION_WITH_BODY.on(abstractNode,functionDescriptor));
