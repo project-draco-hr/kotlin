@@ -1,0 +1,24 @@
+{
+  Matcher matcher=RANGE_START_OR_END_PATTERN.matcher(text);
+  Stack<DiagnosedRange> opened=new Stack<DiagnosedRange>();
+  int offsetCompensation=0;
+  while (matcher.find()) {
+    int effectiveOffset=matcher.start() - offsetCompensation;
+    String matchedText=matcher.group();
+    if ("<!>".equals(matchedText)) {
+      opened.pop().setEnd(effectiveOffset);
+    }
+ else {
+      Matcher diagnosticTypeMatcher=INDIVIDUAL_DIAGNOSTIC_PATTERN.matcher(matchedText);
+      DiagnosedRange range=new DiagnosedRange(effectiveOffset);
+      while (diagnosticTypeMatcher.find()) {
+        range.addDiagnostic(diagnosticTypeMatcher.group());
+      }
+      opened.push(range);
+      result.add(range);
+    }
+    offsetCompensation+=matchedText.length();
+  }
+  matcher.reset();
+  return matcher.replaceAll("");
+}
