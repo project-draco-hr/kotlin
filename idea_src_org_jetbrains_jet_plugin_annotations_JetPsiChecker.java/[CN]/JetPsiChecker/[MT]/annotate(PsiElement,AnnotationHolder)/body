@@ -7,6 +7,7 @@
         Collection<Diagnostic> diagnostics=bindingContext.getDiagnostics();
         Set<DeclarationDescriptor> redeclarations=new HashSet<DeclarationDescriptor>();
         for (        Diagnostic diagnostic : diagnostics) {
+          Annotation annotation=null;
           if (diagnostic.getSeverity() == Severity.ERROR) {
             if (diagnostic instanceof UnresolvedReferenceDiagnostic) {
               UnresolvedReferenceDiagnostic unresolvedReferenceDiagnostic=(UnresolvedReferenceDiagnostic)diagnostic;
@@ -28,11 +29,25 @@
               markRedeclaration(redeclarations,redeclarationDiagnostic.getB(),bindingContext,holder);
             }
  else {
-              holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),diagnostic.getMessage());
+              annotation=holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),diagnostic.getMessage());
             }
           }
  else           if (diagnostic.getSeverity() == Severity.WARNING) {
-            holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),diagnostic.getMessage());
+            annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),diagnostic.getMessage());
+          }
+          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElement) {
+            DiagnosticWithPsiElement diagnosticWithPsiElement=(DiagnosticWithPsiElement)diagnostic;
+            if (diagnostic.getFactory() instanceof PsiElementOnlyDiagnosticFactory) {
+              PsiElementOnlyDiagnosticFactory factory=(PsiElementOnlyDiagnosticFactory)diagnostic.getFactory();
+              QuickFixes.IntentionActionFactory intentionActionFactory=QuickFixes.get(factory);
+              IntentionAction action=null;
+              if (intentionActionFactory != null) {
+                action=intentionActionFactory.createAction(diagnosticWithPsiElement);
+              }
+              if (action != null) {
+                annotation.registerFix(action);
+              }
+            }
           }
         }
       }
