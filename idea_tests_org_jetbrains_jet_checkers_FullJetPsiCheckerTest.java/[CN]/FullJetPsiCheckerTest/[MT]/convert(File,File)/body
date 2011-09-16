@@ -1,0 +1,27 @@
+{
+  File[] files=src.listFiles();
+  for (  File file : files) {
+    try {
+      if (file.isDirectory()) {
+        File destDir=new File(dest,file.getName());
+        destDir.mkdir();
+        convert(file,destDir);
+        continue;
+      }
+      if (!file.getName().endsWith(".jet"))       continue;
+      String text=loadFile(file.getAbsolutePath());
+      Pattern pattern=Pattern.compile("</?(error|warning|info( descr=\"[\\w ]+\")?)>");
+      String clearText=pattern.matcher(text).replaceAll("");
+      configureFromFileText(file.getName(),clearText);
+      BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)myFile);
+      String expectedText=CheckerTestUtil.addDiagnosticMarkersToText(myFile,bindingContext).toString();
+      File destFile=new File(dest,file.getName());
+      FileWriter fileWriter=new FileWriter(destFile);
+      fileWriter.write(expectedText);
+      fileWriter.close();
+    }
+ catch (    RuntimeException e) {
+      e.printStackTrace();
+    }
+  }
+}
