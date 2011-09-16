@@ -5,7 +5,7 @@
       final BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(file);
       if (errorReportingEnabled) {
         Collection<Diagnostic> diagnostics=bindingContext.getDiagnostics();
-        Set<DeclarationDescriptor> redeclarations=Sets.newHashSet();
+        Set<PsiElement> redeclarations=Sets.newHashSet();
         for (        Diagnostic diagnostic : diagnostics) {
           Annotation annotation=null;
           if (diagnostic.getSeverity() == Severity.ERROR) {
@@ -25,8 +25,7 @@
             }
  else             if (diagnostic instanceof RedeclarationDiagnostic) {
               RedeclarationDiagnostic redeclarationDiagnostic=(RedeclarationDiagnostic)diagnostic;
-              markRedeclaration(redeclarations,redeclarationDiagnostic.getA(),bindingContext,holder);
-              markRedeclaration(redeclarations,redeclarationDiagnostic.getB(),bindingContext,holder);
+              markRedeclaration(redeclarations,redeclarationDiagnostic.getPsiElement(),holder);
             }
  else {
               annotation=holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
@@ -35,7 +34,7 @@
  else           if (diagnostic.getSeverity() == Severity.WARNING) {
             annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
           }
-          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElement) {
+          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElementImpl) {
             DiagnosticWithPsiElement diagnosticWithPsiElement=(DiagnosticWithPsiElement)diagnostic;
             if (diagnostic.getFactory() instanceof PsiElementOnlyDiagnosticFactory) {
               PsiElementOnlyDiagnosticFactory factory=(PsiElementOnlyDiagnosticFactory)diagnostic.getFactory();
