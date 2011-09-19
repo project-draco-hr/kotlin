@@ -1,0 +1,21 @@
+{
+  String expectedText=loadFile(name + ".jet");
+  List<CheckerTestUtil.DiagnosedRange> diagnosedRanges=Lists.newArrayList();
+  String clearText=CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
+  createAndCheckPsiFile(name,clearText);
+  JetFile jetFile=(JetFile)myFile;
+  BindingContext bindingContext=AnalyzingUtils.getInstance(ImportingStrategy.NONE).analyzeFileWithCache(jetFile);
+  CheckerTestUtil.diagnosticsDiff(diagnosedRanges,bindingContext.getDiagnostics(),new CheckerTestUtil.DiagnosticDiffCallbacks(){
+    @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
+      String message="Missing " + type + DiagnosticUtils.atLocation(myFile,new TextRange(expectedStart,expectedEnd));
+      System.err.println(message);
+    }
+    @Override public void unexpectedDiagnostic(    String type,    int actualStart,    int actualEnd){
+      String message="Unexpected " + type + DiagnosticUtils.atLocation(myFile,new TextRange(actualStart,actualEnd));
+      System.err.println(message);
+    }
+  }
+);
+  String actualText=CheckerTestUtil.addDiagnosticMarkersToText(jetFile,bindingContext).toString();
+  assertEquals(expectedText,actualText);
+}

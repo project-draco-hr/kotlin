@@ -5,7 +5,7 @@
       final BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(file);
       if (errorReportingEnabled) {
         Collection<Diagnostic> diagnostics=bindingContext.getDiagnostics();
-        Set<DeclarationDescriptor> redeclarations=Sets.newHashSet();
+        Set<PsiElement> redeclarations=Sets.newHashSet();
         for (        Diagnostic diagnostic : diagnostics) {
           Annotation annotation=null;
           if (diagnostic.getSeverity() == Severity.ERROR) {
@@ -25,8 +25,7 @@
             }
  else             if (diagnostic instanceof RedeclarationDiagnostic) {
               RedeclarationDiagnostic redeclarationDiagnostic=(RedeclarationDiagnostic)diagnostic;
-              markRedeclaration(redeclarations,redeclarationDiagnostic.getA(),bindingContext,holder);
-              markRedeclaration(redeclarations,redeclarationDiagnostic.getB(),bindingContext,holder);
+              annotation=markRedeclaration(redeclarations,redeclarationDiagnostic,holder);
             }
  else {
               annotation=holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
@@ -35,7 +34,7 @@
  else           if (diagnostic.getSeverity() == Severity.WARNING) {
             annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
           }
-          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElement) {
+          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElementImpl) {
             DiagnosticWithPsiElement diagnosticWithPsiElement=(DiagnosticWithPsiElement)diagnostic;
             if (diagnostic.getFactory() instanceof PsiElementOnlyDiagnosticFactory) {
               PsiElementOnlyDiagnosticFactory factory=(PsiElementOnlyDiagnosticFactory)diagnostic.getFactory();
@@ -53,8 +52,18 @@
       }
       highlightBackingFields(holder,file,bindingContext);
       file.acceptChildren(new JetVisitorVoid(){
+        @Override public void visitSimpleNameExpression(        JetSimpleNameExpression expression){
+          DeclarationDescriptor target=bindingContext.get(REFERENCE_TARGET,expression);
+          if (target instanceof ValueParameterDescriptor) {
+            ValueParameterDescriptor parameterDescriptor=(ValueParameterDescriptor)target;
+            if (bindingContext.get(AUTO_CREATED_IT,parameterDescriptor)) {
+              holder.createInfoAnnotation(expression,"Automatically declared based on the expected type").setTextAttributes(JetHighlighter.JET_AUTOCREATED_IT);
+            }
+          }
+          super.visitSimpleNameExpression(expression);
+        }
         @Override public void visitExpression(        JetExpression expression){
-          JetType autoCast=bindingContext.get(BindingContext.AUTOCAST,expression);
+          JetType autoCast=bindingContext.get(AUTOCAST,expression);
           if (autoCast != null) {
             holder.createInfoAnnotation(expression,"Automatically cast to " + autoCast).setTextAttributes(JetHighlighter.JET_AUTO_CAST_EXPRESSION);
           }

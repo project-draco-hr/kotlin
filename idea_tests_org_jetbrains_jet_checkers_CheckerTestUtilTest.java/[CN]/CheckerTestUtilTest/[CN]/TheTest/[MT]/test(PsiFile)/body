@@ -1,0 +1,23 @@
+{
+  BindingContext bindingContext=AnalyzingUtils.getInstance(ImportingStrategy.NONE).analyzeFileWithCache((JetFile)psiFile);
+  String expectedText=CheckerTestUtil.addDiagnosticMarkersToText(psiFile,bindingContext).toString();
+  List<CheckerTestUtil.DiagnosedRange> diagnosedRanges=Lists.newArrayList();
+  CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
+  List<Diagnostic> diagnostics=Lists.newArrayList(bindingContext.getDiagnostics());
+  Collections.sort(diagnostics,CheckerTestUtil.DIAGNOSTIC_COMPARATOR);
+  makeTestData(diagnostics,diagnosedRanges);
+  final List<String> expectedMessages=Lists.newArrayList(expected);
+  final List<String> actualMessages=Lists.newArrayList();
+  CheckerTestUtil.diagnosticsDiff(diagnosedRanges,diagnostics,new CheckerTestUtil.DiagnosticDiffCallbacks(){
+    @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
+      String message="Missing " + type + " at "+ expectedStart+ " to "+ expectedEnd;
+      actualMessages.add(message);
+    }
+    @Override public void unexpectedDiagnostic(    String type,    int actualStart,    int actualEnd){
+      String message="Unexpected " + type + " at "+ actualStart+ " to "+ actualEnd;
+      actualMessages.add(message);
+    }
+  }
+);
+  assertEquals(listToString(expectedMessages),listToString(actualMessages));
+}
