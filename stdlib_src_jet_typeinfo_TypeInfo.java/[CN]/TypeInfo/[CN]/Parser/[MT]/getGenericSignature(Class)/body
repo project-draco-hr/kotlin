@@ -1,21 +1,33 @@
 {
   TypeVariable[] typeParameters=klass.getTypeParameters();
   Map<String,Integer> variables;
-  List<Var> vars;
+  List<TypeInfoProjection> vars;
   if (typeParameters == null || typeParameters.length == 0) {
     variables=Collections.emptyMap();
     vars=Collections.emptyList();
   }
  else {
     variables=new HashMap<String,Integer>();
-    vars=new LinkedList<Var>();
+    vars=new LinkedList<TypeInfoProjection>();
     for (int i=0; i < typeParameters.length; i++) {
       TypeVariable typeParameter=typeParameters[i];
       variables.put(typeParameter.getName(),i);
-      vars.add(new Var(typeParameter.getName(),TypeInfoVariance.INVARIANT));
+      final TypeInfoVar typeInfoVar=new TypeInfoVar(false,i);
+      vars.add(new TypeInfoProjection(){
+        @Override public TypeInfoVariance getVariance(){
+          return TypeInfoVariance.INVARIANT;
+        }
+        @Override public TypeInfo getType(){
+          return typeInfoVar;
+        }
+        @Override public String toString(){
+          return typeInfoVar.toString();
+        }
+      }
+);
     }
   }
-  List<Type> types=new LinkedList<Type>();
+  List<TypeInfo> types=new LinkedList<TypeInfo>();
   java.lang.reflect.Type genericSuperclass=klass.getGenericSuperclass();
   return new Signature(klass,vars,types);
 }

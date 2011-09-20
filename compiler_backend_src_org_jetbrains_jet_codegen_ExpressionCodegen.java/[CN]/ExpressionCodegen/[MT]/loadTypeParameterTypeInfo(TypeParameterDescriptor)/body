@@ -6,9 +6,26 @@
   }
   DeclarationDescriptor containingDeclaration=typeParameterDescriptor.getContainingDeclaration();
   if (containingDeclaration == contextType() && contextType() instanceof ClassDescriptor) {
-    loadTypeInfo(typeMapper,(ClassDescriptor)contextType(),v);
+    ClassDescriptor descriptor=(ClassDescriptor)contextType();
+    JetType defaultType=descriptor.getDefaultType();
+    Type ownerType=typeMapper.mapType(defaultType);
+    ownerType=JetTypeMapper.boxType(ownerType);
+    if (!typeMapper.isInterface(descriptor)) {
+      if (descriptor.getTypeConstructor().getParameters().size() > 0) {
+        v.load(0,JetTypeMapper.TYPE_OBJECT);
+        v.getfield(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+      }
+ else {
+        v.getstatic(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+      }
+    }
+ else {
+      v.load(0,JetTypeMapper.TYPE_OBJECT);
+      v.invokeinterface("jet/JetObject","getTypeInfo","()Ljet/typeinfo/TypeInfo;");
+    }
+    v.aconst(ownerType);
     v.iconst(typeParameterDescriptor.getIndex());
-    v.invokevirtual("jet/typeinfo/TypeInfo","getArgumentType","(I)Ljet/typeinfo/TypeInfo;");
+    v.invokevirtual("jet/typeinfo/TypeInfo","getArgumentType","(Ljava/lang/Class;I)Ljet/typeinfo/TypeInfo;");
     return;
   }
   throw new UnsupportedOperationException("don't know what this type parameter resolves to");

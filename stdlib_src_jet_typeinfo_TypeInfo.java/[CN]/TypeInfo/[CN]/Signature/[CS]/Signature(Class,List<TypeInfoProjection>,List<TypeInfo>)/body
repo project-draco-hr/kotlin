@@ -1,0 +1,26 @@
+{
+  this.klazz=klazz;
+  this.superTypes=superTypes;
+  this.variables=variables;
+  List<TypeInfo> myVars=variables == null ? Collections.<TypeInfo>emptyList() : new LinkedList<TypeInfo>();
+  if (variables != null)   for (int i=0; i != variables.size(); ++i)   myVars.add(new TypeInfoVar(false,i));
+  for (  TypeInfo superType : superTypes) {
+    if (superType instanceof TypeInfoImpl) {
+      TypeInfoImpl type=(TypeInfoImpl)superType;
+      Signature superSignature=Parser.parse(type.signature.klazz);
+      TypeInfo substituted=type.substitute(myVars);
+      superSignatures.put(type.signature.klazz,substituted);
+      List<TypeInfo> vars=Collections.emptyList();
+      if (superType.getProjectionCount() != 0) {
+        vars=new LinkedList<TypeInfo>();
+        for (int i=0; i != superType.getProjectionCount(); ++i) {
+          TypeInfo substitute=superType.getProjection(i).getType().substitute(myVars);
+          vars.add(substitute);
+        }
+      }
+      for (      Map.Entry<Class,TypeInfo> entry : superSignature.superSignatures.entrySet()) {
+        superSignatures.put(entry.getKey(),entry.getValue().substitute(vars));
+      }
+    }
+  }
+}
