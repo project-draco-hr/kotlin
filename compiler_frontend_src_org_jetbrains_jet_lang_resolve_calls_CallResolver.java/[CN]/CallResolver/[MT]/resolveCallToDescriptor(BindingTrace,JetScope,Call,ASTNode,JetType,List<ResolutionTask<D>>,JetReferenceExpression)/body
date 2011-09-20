@@ -2,8 +2,9 @@
   TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
   OverloadResolutionResult<D> resultForFirstNonemptyCandidateSet=null;
   TracingStrategy tracing=new TracingStrategy(){
-    @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull CallableDescriptor descriptor){
+    @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull ReceiverDescriptor receiver,    @NotNull CallableDescriptor descriptor){
       trace.record(REFERENCE_TARGET,reference,descriptor);
+      trace.record(RECEIVER,reference,receiver);
     }
     @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<D> candidates){
       trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
@@ -25,8 +26,8 @@
       }
       trace.report(NO_VALUE_FOR_PARAMETER.on(node,valueParameter));
     }
-    @Override public void missingReceiver(    @NotNull BindingTrace trace,    @NotNull JetType candidateReceiverType){
-      trace.report(MISSING_RECEIVER.on(reference,candidateReceiverType));
+    @Override public void missingReceiver(    @NotNull BindingTrace trace,    @NotNull ReceiverDescriptor expectedReceiver){
+      trace.report(MISSING_RECEIVER.on(reference,expectedReceiver.getType()));
     }
     @Override public void noReceiverAllowed(    @NotNull BindingTrace trace){
       trace.report(NO_RECEIVER_ADMITTED.on(reference));

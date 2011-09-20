@@ -2,13 +2,12 @@
   TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
   JetParameter loopParameter=expression.getLoopParameter();
   JetExpression loopRange=expression.getLoopRange();
-  JetType loopRangeType=null;
-  if (loopRange != null) {
-    loopRangeType=getType(loopRange,context.replaceScope(context.scope));
-  }
   JetType expectedParameterType=null;
-  if (loopRangeType != null) {
-    expectedParameterType=checkIterableConvention(loopRangeType,loopRange,context);
+  if (loopRange != null) {
+    ExpressionReceiver loopRangeReceiver=getExpressionReceiver(loopRange,context.replaceScope(context.scope));
+    if (loopRangeReceiver != null) {
+      expectedParameterType=checkIterableConvention(loopRangeReceiver,context);
+    }
   }
   WritableScope loopScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("Scope with for-loop index");
   if (loopParameter != null) {
