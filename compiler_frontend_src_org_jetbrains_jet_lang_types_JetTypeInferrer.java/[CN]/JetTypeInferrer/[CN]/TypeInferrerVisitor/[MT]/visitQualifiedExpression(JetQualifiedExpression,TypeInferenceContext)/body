@@ -10,7 +10,7 @@
   }
   TemporaryBindingTrace cleanResolutionTrace=TemporaryBindingTrace.create(context.trace);
   TypeInferenceContext cleanResolutionContext=context.replaceBindingTrace(cleanResolutionTrace);
-  JetType selectorReturnType=getSelectorReturnType(receiverType,selectorExpression,cleanResolutionContext);
+  JetType selectorReturnType=getSelectorReturnType(new ExpressionReceiver(receiverExpression,receiverType),selectorExpression,cleanResolutionContext);
   if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
     if (selectorReturnType != null && !selectorReturnType.isNullable() && !JetStandardClasses.isUnit(selectorReturnType)) {
       selectorReturnType=TypeUtils.makeNullable(selectorReturnType);
@@ -28,7 +28,7 @@
       TemporaryBindingTrace autocastResolutionTrace=TemporaryBindingTrace.create(context.trace);
       TypeInferenceContext autocastResolutionContext=context.replaceBindingTrace(autocastResolutionTrace);
       for (      JetType possibleType : possibleTypes) {
-        selectorReturnType=getSelectorReturnType(possibleType,selectorExpression,autocastResolutionContext);
+        selectorReturnType=getSelectorReturnType(new ExpressionReceiver(receiverExpression,possibleType),selectorExpression,autocastResolutionContext);
         if (selectorReturnType != null) {
           context.services.checkAutoCast(receiverExpression,possibleType,variableDescriptor,autocastResolutionTrace);
           autocastResolutionTrace.commit();
