@@ -35,16 +35,8 @@
       returnType=ErrorUtils.createErrorType("No type, no body");
     }
   }
-  Modality defaultModality;
-  if (containingDescriptor instanceof ClassDescriptor) {
-    boolean isTrait=((ClassDescriptor)containingDescriptor).getKind() == ClassKind.TRAIT;
-    boolean isDefinitelyAbstract=isTrait && function.getBodyExpression() == null;
-    Modality basicModality=isTrait ? Modality.OPEN : Modality.FINAL;
-    defaultModality=isDefinitelyAbstract ? Modality.ABSTRACT : basicModality;
-  }
- else {
-    defaultModality=Modality.FINAL;
-  }
+  boolean hasBody=function.getBodyExpression() != null;
+  Modality defaultModality=getDefaultModality(containingDescriptor,hasBody);
   Modality modality=resolveModalityFromModifiers(function.getModifierList(),defaultModality);
   functionDescriptor.initialize(receiverType,typeParameterDescriptors,valueParameterDescriptors,returnType,modality);
   trace.record(BindingContext.FUNCTION,function,functionDescriptor);

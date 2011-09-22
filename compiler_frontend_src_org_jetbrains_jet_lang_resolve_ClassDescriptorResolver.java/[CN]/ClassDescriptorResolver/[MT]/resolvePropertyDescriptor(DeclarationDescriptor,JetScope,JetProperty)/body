@@ -20,7 +20,19 @@
   JetModifierList modifierList=property.getModifierList();
   boolean isVar=property.isVar();
   JetType type=getVariableType(scopeWithTypeParameters,property,true);
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList),resolveModalityFromModifiers(modifierList),isVar,receiverType,JetPsiUtil.safeName(property.getName()),isVar ? type : null,type);
+  boolean hasBody=property.getInitializer() != null;
+  if (!hasBody) {
+    JetPropertyAccessor getter=property.getGetter();
+    if (getter != null && getter.getBodyExpression() != null) {
+      hasBody=true;
+    }
+    JetPropertyAccessor setter=property.getSetter();
+    if (!hasBody && setter != null && setter.getBodyExpression() != null) {
+      hasBody=true;
+    }
+  }
+  Modality defaultModality=getDefaultModality(containingDeclaration,hasBody);
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList),resolveModalityFromModifiers(modifierList,defaultModality),isVar,receiverType,JetPsiUtil.safeName(property.getName()),isVar ? type : null,type);
   propertyDescriptor.initialize(typeParameterDescriptors,resolvePropertyGetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor),resolvePropertySetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor));
   trace.record(BindingContext.VARIABLE,property,propertyDescriptor);
   return propertyDescriptor;
