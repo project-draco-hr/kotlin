@@ -1,9 +1,16 @@
 {
-  Set<D> candidates=Sets.newLinkedHashSet(candidateSet);
-  for (  D descriptor : candidateSet) {
-    Set<CallableDescriptor> overriddenDescriptors=Sets.newHashSet();
-    getAllOverriddenDescriptors(descriptor.getOriginal(),overriddenDescriptors);
-    candidates.removeAll(overriddenDescriptors);
+  Set<D> candidates=Sets.newLinkedHashSet();
+  outerLoop:   for (  D me : candidateSet) {
+    for (    D other : candidateSet) {
+      if (me == other)       continue;
+      if (overrides(other,me)) {
+        continue outerLoop;
+      }
+      if (me.getOriginal() == other.getOriginal() && isOverridableBy(JetTypeChecker.INSTANCE,other,me).isSuccess() && isOverridableBy(JetTypeChecker.INSTANCE,me,other).isSuccess()) {
+        continue outerLoop;
+      }
+    }
+    candidates.add(me);
   }
   return candidates;
 }

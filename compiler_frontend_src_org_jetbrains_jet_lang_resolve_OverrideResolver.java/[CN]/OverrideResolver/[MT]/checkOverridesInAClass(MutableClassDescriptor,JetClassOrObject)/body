@@ -1,4 +1,20 @@
 {
+  Set<FunctionDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
+  Set<PropertyDescriptor> inheritedProperties=Sets.newLinkedHashSet();
+  for (  JetType supertype : classDescriptor.getSupertypes()) {
+    for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
+      if (descriptor instanceof FunctionDescriptor) {
+        FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+        inheritedFunctions.add(functionDescriptor);
+      }
+ else       if (descriptor instanceof PropertyDescriptor) {
+        PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+        inheritedProperties.add(propertyDescriptor);
+      }
+    }
+  }
+  OverridingUtil.filterOverrides(inheritedFunctions);
+  OverridingUtil.filterOverrides(inheritedProperties);
   for (  FunctionDescriptor declaredFunction : classDescriptor.getFunctions()) {
     checkOverrideForFunction(declaredFunction);
   }
