@@ -1,0 +1,21 @@
+{
+  if (modifierList == null)   return true;
+  Collection<JetKeywordToken> presentModifiers=Sets.newLinkedHashSet();
+  for (  JetKeywordToken modifier : availableModifiers) {
+    if (modifierList.hasModifier(modifier)) {
+      presentModifiers.add(modifier);
+    }
+  }
+  if (presentModifiers.size() == 1) {
+    return true;
+  }
+  for (  Collection<JetToken> combination : availableCombinations) {
+    if (presentModifiers.containsAll(combination) && combination.containsAll(presentModifiers)) {
+      return true;
+    }
+  }
+  for (  JetKeywordToken token : presentModifiers) {
+    trace.report(Errors.INCOMPATIBLE_MODIFIERS.on(modifierList.getModifierNode(token),presentModifiers));
+  }
+  return false;
+}
