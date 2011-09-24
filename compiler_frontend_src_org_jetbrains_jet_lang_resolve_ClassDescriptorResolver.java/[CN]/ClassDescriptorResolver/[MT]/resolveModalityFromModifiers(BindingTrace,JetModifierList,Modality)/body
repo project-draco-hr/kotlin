@@ -7,7 +7,7 @@
     if (hasAbstractModifier || hasOverrideModifier) {
       trace.report(Errors.REDUNDANT_MODIFIER.on(modifierList,JetTokens.OPEN_KEYWORD,hasAbstractModifier ? JetTokens.ABSTRACT_KEYWORD : JetTokens.OVERRIDE_KEYWORD));
     }
-    if (hasAbstractModifier) {
+    if (hasAbstractModifier || defaultModality == Modality.ABSTRACT) {
       return Modality.ABSTRACT;
     }
     return Modality.OPEN;
@@ -15,10 +15,11 @@
   if (hasAbstractModifier) {
     return Modality.ABSTRACT;
   }
-  if (hasOverrideModifier) {
+  boolean hasFinalModifier=modifierList.hasModifier(JetTokens.FINAL_KEYWORD);
+  if (hasOverrideModifier && !hasFinalModifier && !(defaultModality == Modality.ABSTRACT)) {
     return Modality.OPEN;
   }
-  if (modifierList.hasModifier(JetTokens.FINAL_KEYWORD)) {
+  if (hasFinalModifier) {
     return Modality.FINAL;
   }
   return defaultModality;
