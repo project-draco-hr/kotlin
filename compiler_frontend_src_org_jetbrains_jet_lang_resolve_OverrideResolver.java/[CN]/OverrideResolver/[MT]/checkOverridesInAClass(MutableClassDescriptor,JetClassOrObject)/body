@@ -1,20 +1,47 @@
 {
-  Set<FunctionDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
-  Set<PropertyDescriptor> inheritedProperties=Sets.newLinkedHashSet();
+  Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
   for (  JetType supertype : classDescriptor.getSupertypes()) {
     for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
-      if (descriptor instanceof FunctionDescriptor) {
-        FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
-        inheritedFunctions.add(functionDescriptor);
-      }
- else       if (descriptor instanceof PropertyDescriptor) {
-        PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
-        inheritedProperties.add(propertyDescriptor);
+      if (descriptor instanceof CallableMemberDescriptor) {
+        CallableMemberDescriptor memberDescriptor=(CallableMemberDescriptor)descriptor;
+        inheritedFunctions.add(memberDescriptor);
       }
     }
   }
-  OverridingUtil.filterOverrides(inheritedFunctions);
-  OverridingUtil.filterOverrides(inheritedProperties);
+  Set<CallableMemberDescriptor> filteredMembers=OverridingUtil.filterOverrides(inheritedFunctions);
+  Multimap<CallableMemberDescriptor,CallableMemberDescriptor> factoredMembers=CommonSuppliers.newLinkedHashSetHashSetMultimap();
+  JetTypeChecker typeChecker=context.getSemanticServices().getTypeChecker();
+  for (  CallableMemberDescriptor one : filteredMembers) {
+    if (factoredMembers.values().contains(one))     continue;
+    for (    CallableMemberDescriptor another : filteredMembers) {
+      if (one == another)       continue;
+      factoredMembers.put(one,one);
+      if (OverridingUtil.isOverridableBy(typeChecker,one,another).isSuccess() || OverridingUtil.isOverridableBy(typeChecker,another,one).isSuccess()) {
+        factoredMembers.put(one,another);
+      }
+    }
+  }
+  Set<CallableMemberDescriptor> mustBeOverridden=Sets.newLinkedHashSet();
+  for (  CallableMemberDescriptor key : factoredMembers.keySet()) {
+    Collection<CallableMemberDescriptor> mutuallyOverridable=factoredMembers.get(key);
+    int implementationCount=0;
+    for (    CallableMemberDescriptor member : mutuallyOverridable) {
+      if (member.getModality() != Modality.ABSTRACT) {
+        implementationCount++;
+      }
+    }
+    if (implementationCount != 1) {
+      mustBeOverridden.addAll(mutuallyOverridable);
+    }
+  }
+  Set<CallableDescriptor> actuallyOverridden=Sets.newHashSet();
+  for (  FunctionDescriptor declaredFunction : classDescriptor.getFunctions()) {
+    actuallyOverridden.addAll(declaredFunction.getOverriddenDescriptors());
+  }
+  for (  PropertyDescriptor declaredProperty : classDescriptor.getProperties()) {
+    actuallyOverridden.addAll(declaredProperty.getOverriddenDescriptors());
+  }
+  mustBeOverridden.removeAll(actuallyOverridden);
   for (  FunctionDescriptor declaredFunction : classDescriptor.getFunctions()) {
     checkOverrideForFunction(declaredFunction);
   }
