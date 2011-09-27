@@ -1,0 +1,22 @@
+{
+  PsiFile psiFile=diagnostic.getFactory().getPsiFile(diagnostic);
+  TextRange textRange=diagnostic.getFactory().getTextRange(diagnostic);
+  Document document=psiFile.getViewProvider().getDocument();
+  int line;
+  int col;
+  if (document != null) {
+    line=document.getLineNumber(textRange.getStartOffset());
+    col=textRange.getStartOffset() - document.getLineStartOffset(line) + 1;
+  }
+ else {
+    line=-1;
+    col=-1;
+  }
+  VirtualFile virtualFile=psiFile.getVirtualFile();
+  if (virtualFile == null) {
+    compileContext.addMessage(ERROR,"[Internal Error] No virtual file for PsiFile. Diagnostic: " + diagnostic.getMessage(),"",-1,-1);
+  }
+ else {
+    compileContext.addMessage(severity,diagnostic.getMessage(),virtualFile.getUrl(),line + 1,col);
+  }
+}
