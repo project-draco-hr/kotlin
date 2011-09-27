@@ -2,27 +2,13 @@
   for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
     checkOverride(member);
   }
-  Set<JetType> delegatedByExpression=Sets.newHashSet();
-  for (  JetDelegationSpecifier delegationSpecifier : klass.getDelegationSpecifiers()) {
-    if (delegationSpecifier instanceof JetDelegatorByExpressionSpecifier) {
-      JetDelegatorByExpressionSpecifier specifier=(JetDelegatorByExpressionSpecifier)delegationSpecifier;
-      JetType type=context.getTrace().get(BindingContext.TYPE,specifier.getTypeReference());
-      if (type != null) {
-        delegatedByExpression.add(type);
-      }
-    }
-  }
   Map<CallableMemberDescriptor,CallableMemberDescriptor> implementedWithDelegationBy=Maps.newHashMap();
   Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
   for (  JetType supertype : classDescriptor.getSupertypes()) {
-    boolean delegatedBy=delegatedByExpression.contains(supertype);
     for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
       if (descriptor instanceof CallableMemberDescriptor) {
         CallableMemberDescriptor memberDescriptor=(CallableMemberDescriptor)descriptor;
         inheritedFunctions.add(memberDescriptor);
-        if (delegatedBy && memberDescriptor.getModality().isOpen()) {
-          implementedWithDelegationBy.put(memberDescriptor,createOverridingDescriptor(classDescriptor,memberDescriptor));
-        }
       }
     }
   }
