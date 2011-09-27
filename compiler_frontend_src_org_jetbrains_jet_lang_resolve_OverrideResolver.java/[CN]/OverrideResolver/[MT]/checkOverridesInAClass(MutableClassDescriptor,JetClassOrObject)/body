@@ -2,6 +2,7 @@
   for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
     checkOverride(member);
   }
+  Map<CallableMemberDescriptor,CallableMemberDescriptor> implementedWithDelegationBy=Maps.newHashMap();
   Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
   for (  JetType supertype : classDescriptor.getSupertypes()) {
     for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
@@ -16,7 +17,6 @@
   for (  CallableMemberDescriptor one : filteredMembers) {
     if (factoredMembers.values().contains(one))     continue;
     for (    CallableMemberDescriptor another : filteredMembers) {
-      if (one == another)       continue;
       factoredMembers.put(one,one);
       if (OverridingUtil.isOverridableBy(one,another).isSuccess() || OverridingUtil.isOverridableBy(another,one).isSuccess()) {
         factoredMembers.put(one,another);
@@ -40,7 +40,7 @@
       manyImpl.addAll(mutuallyOverridable);
     }
   }
-  Set<CallableDescriptor> actuallyOverridden=Sets.newHashSet();
+  Set<CallableMemberDescriptor> actuallyOverridden=Sets.newHashSet(implementedWithDelegationBy.keySet());
   for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
     actuallyOverridden.addAll(member.getOverriddenDescriptors());
   }
@@ -53,32 +53,15 @@
  else   if (klass instanceof JetObjectDeclaration) {
     nameIdentifier=((JetObjectDeclaration)klass).getNameIdentifier();
   }
+  for (  CallableMemberDescriptor memberDescriptor : manyImpl) {
+    context.getTrace().report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
+  }
   if (classDescriptor.getModality() == Modality.ABSTRACT) {
     return;
   }
-  Set<FunctionDescriptor> allOverriddenFunctions=Sets.newHashSet();
-  Collection<DeclarationDescriptor> allDescriptors=classDescriptor.getDefaultType().getMemberScope().getAllDescriptors();
-  for (  DeclarationDescriptor descriptor : allDescriptors) {
-    if (descriptor instanceof FunctionDescriptor) {
-      FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
-      if (functionDescriptor.getModality() != Modality.ABSTRACT) {
-        for (        FunctionDescriptor overriddenDescriptor : functionDescriptor.getOverriddenDescriptors()) {
-          allOverriddenFunctions.add(overriddenDescriptor.getOriginal());
-        }
-      }
-    }
-  }
-  boolean foundError=false;
-  for (  DeclarationDescriptor descriptor : allDescriptors) {
-    if (descriptor instanceof FunctionDescriptor) {
-      FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
-      if (functionDescriptor.getModality() == Modality.ABSTRACT && !allOverriddenFunctions.contains(functionDescriptor.getOriginal()) && !foundError && nameIdentifier != null) {
-        DeclarationDescriptor declarationDescriptor=functionDescriptor.getContainingDeclaration();
-        if (declarationDescriptor != classDescriptor) {
-          context.getTrace().report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,functionDescriptor));
-          foundError=true;
-        }
-      }
-    }
+  for (  CallableMemberDescriptor memberDescriptor : abstractNoImpl) {
+    context.getTrace().report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
   }
 }
