@@ -2,12 +2,27 @@
   for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
     checkOverride(member);
   }
+  Set<JetType> delegatedByExpression=Sets.newHashSet();
+  for (  JetDelegationSpecifier delegationSpecifier : klass.getDelegationSpecifiers()) {
+    if (delegationSpecifier instanceof JetDelegatorByExpressionSpecifier) {
+      JetDelegatorByExpressionSpecifier specifier=(JetDelegatorByExpressionSpecifier)delegationSpecifier;
+      JetType type=context.getTrace().get(BindingContext.TYPE,specifier.getTypeReference());
+      if (type != null) {
+        delegatedByExpression.add(type);
+      }
+    }
+  }
+  Map<CallableMemberDescriptor,CallableMemberDescriptor> implementedWithDelegationBy=Maps.newHashMap();
   Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
   for (  JetType supertype : classDescriptor.getSupertypes()) {
+    boolean delegatedBy=delegatedByExpression.contains(supertype);
     for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
       if (descriptor instanceof CallableMemberDescriptor) {
         CallableMemberDescriptor memberDescriptor=(CallableMemberDescriptor)descriptor;
         inheritedFunctions.add(memberDescriptor);
+        if (delegatedBy && memberDescriptor.getModality().isOpen()) {
+          implementedWithDelegationBy.put(memberDescriptor,createOverridingDescriptor(classDescriptor,memberDescriptor));
+        }
       }
     }
   }
@@ -16,7 +31,6 @@
   for (  CallableMemberDescriptor one : filteredMembers) {
     if (factoredMembers.values().contains(one))     continue;
     for (    CallableMemberDescriptor another : filteredMembers) {
-      if (one == another)       continue;
       factoredMembers.put(one,one);
       if (OverridingUtil.isOverridableBy(one,another).isSuccess() || OverridingUtil.isOverridableBy(another,one).isSuccess()) {
         factoredMembers.put(one,another);
@@ -40,7 +54,7 @@
       manyImpl.addAll(mutuallyOverridable);
     }
   }
-  Set<CallableDescriptor> actuallyOverridden=Sets.newHashSet();
+  Set<CallableMemberDescriptor> actuallyOverridden=Sets.newHashSet(implementedWithDelegationBy.keySet());
   for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
     actuallyOverridden.addAll(member.getOverriddenDescriptors());
   }
