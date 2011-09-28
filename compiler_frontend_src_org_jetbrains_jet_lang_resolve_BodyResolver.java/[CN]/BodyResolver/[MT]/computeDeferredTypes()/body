@@ -1,0 +1,25 @@
+{
+  Collection<DeferredType> deferredTypes=context.getTrace().get(DEFERRED_TYPES,DEFERRED_TYPE_KEY);
+  if (deferredTypes != null) {
+    final Queue<DeferredType> queue=new Queue<DeferredType>(deferredTypes.size());
+    context.getTrace().addHandler(DEFERRED_TYPE,new ObservableBindingTrace.RecordHandler<BindingContext.DeferredTypeKey,DeferredType>(){
+      @Override public void handleRecord(      WritableSlice<BindingContext.DeferredTypeKey,DeferredType> deferredTypeKeyDeferredTypeWritableSlice,      BindingContext.DeferredTypeKey key,      DeferredType value){
+        queue.addLast(value);
+      }
+    }
+);
+    for (    DeferredType deferredType : deferredTypes) {
+      queue.addLast(deferredType);
+    }
+    while (!queue.isEmpty()) {
+      DeferredType deferredType=queue.pullFirst();
+      if (!deferredType.isComputed()) {
+        try {
+          deferredType.getActualType();
+        }
+ catch (        ReenteringLazyValueComputationException e) {
+        }
+      }
+    }
+  }
+}
