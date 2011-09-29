@@ -1,8 +1,8 @@
 {
   if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())   return;
   JetType defaultType=descriptor.getDefaultType();
-  if (isParametrizedClass(defaultType)) {
-    if (!hasDerivedTypeInfoField(defaultType,true)) {
+  if (CodegenUtil.hasTypeInfoField(defaultType)) {
+    if (!CodegenUtil.hasDerivedTypeInfoField(defaultType,true)) {
       v.visitField(Opcodes.ACC_PRIVATE,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
       MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC,"getTypeInfo","()Ljet/typeinfo/TypeInfo;",null,null);
       mv.visitCode();
@@ -24,45 +24,9 @@
       mv.visitMaxs(0,0);
       mv.visitEnd();
     }
- else {
-      if (descriptor.getTypeConstructor().getParameters().isEmpty()) {
-        v.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
-        staticInitializerChunks.add(new CodeChunk(){
-          @Override public void generate(          InstructionAdapter v){
-            JetTypeMapper typeMapper=state.getTypeMapper();
-            ClassCodegen.newTypeInfo(v,false,typeMapper.jvmType(descriptor,OwnerKind.IMPLEMENTATION));
-            v.putstatic(typeMapper.jvmName(descriptor,kind),"$typeInfo","Ljet/typeinfo/TypeInfo;");
-          }
-        }
-);
-        final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC,"getTypeInfo","()Ljet/typeinfo/TypeInfo;",null,null);
-        mv.visitCode();
-        InstructionAdapter v=new InstructionAdapter(mv);
-        String owner=state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION);
-        v.getstatic(owner,"$typeInfo","Ljet/typeinfo/TypeInfo;");
-        v.areturn(JetTypeMapper.TYPE_TYPEINFO);
-        mv.visitMaxs(0,0);
-        mv.visitEnd();
-      }
-    }
   }
  else {
-    v.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
-    staticInitializerChunks.add(new CodeChunk(){
-      @Override public void generate(      InstructionAdapter v){
-        JetTypeMapper typeMapper=state.getTypeMapper();
-        ClassCodegen.newTypeInfo(v,false,typeMapper.jvmType(descriptor,OwnerKind.IMPLEMENTATION));
-        v.putstatic(typeMapper.jvmName(descriptor,kind),"$typeInfo","Ljet/typeinfo/TypeInfo;");
-      }
-    }
-);
-    final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC,"getTypeInfo","()Ljet/typeinfo/TypeInfo;",null,null);
-    mv.visitCode();
-    InstructionAdapter v=new InstructionAdapter(mv);
-    String owner=state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION);
-    v.getstatic(owner,"$typeInfo","Ljet/typeinfo/TypeInfo;");
-    v.areturn(JetTypeMapper.TYPE_TYPEINFO);
-    mv.visitMaxs(0,0);
-    mv.visitEnd();
+    genGetStaticGetTypeInfoMethod();
+    staticTypeInfoField();
   }
 }

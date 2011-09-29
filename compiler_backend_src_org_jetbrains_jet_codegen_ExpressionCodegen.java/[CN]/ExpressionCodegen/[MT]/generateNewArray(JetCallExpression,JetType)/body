@@ -1,0 +1,44 @@
+{
+  List<? extends ValueArgument> args=expression.getValueArguments();
+  if (args.size() != 1) {
+    throw new CompilationException("array constructor requires one value argument");
+  }
+  gen(args.get(0).getArgumentExpression(),Type.INT_TYPE);
+  JetType elementType=typeMapper.getGenericsElementType(arrayType);
+  if (elementType != null) {
+    generateTypeInfo(elementType);
+    v.invokestatic("jet/arrays/JetArray","newArray","(ILjet/typeinfo/TypeInfo;)Ljet/arrays/JetArray;");
+  }
+ else {
+    elementType=arrayType.getArguments().get(0).getType();
+    JetStandardLibrary standardLibrary=state.getStandardLibrary();
+    if (elementType.equals(standardLibrary.getIntType())) {
+      v.invokestatic("jet/arrays/JetArray","newIntArray","(I)Ljet/arrays/JetIntArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getLongType())) {
+      v.invokestatic("jet/arrays/JetArray","newLongArray","(I)Ljet/arrays/JetLongArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getShortType())) {
+      v.invokestatic("jet/arrays/JetArray","newShortArray","(I)Ljet/arrays/JetShortArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getByteType())) {
+      v.invokestatic("jet/arrays/JetArray","newByteArray","(I)Ljet/arrays/JetByteArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getCharType())) {
+      v.invokestatic("jet/arrays/JetArray","newCharArray","(I)Ljet/arrays/JetCharArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getFloatType())) {
+      v.invokestatic("jet/arrays/JetArray","newFloatArray","(I)Ljet/arrays/JetFloatArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getDoubleType())) {
+      v.invokestatic("jet/arrays/JetArray","newDoubleArray","(I)Ljet/arrays/JetDoubleArray;");
+    }
+ else     if (elementType.equals(standardLibrary.getBooleanType())) {
+      v.invokestatic("jet/arrays/JetArray","newBoolArray","(I)Ljet/arrays/JetBoolArray;");
+    }
+ else {
+      generateTypeInfo(elementType);
+      v.invokestatic("jet/arrays/JetArray","newGenericArray","(ILjet/typeinfo/TypeInfo;)Ljet/arrays/JetGenericArray;");
+    }
+  }
+}

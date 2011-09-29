@@ -4,7 +4,13 @@
     String value=annotation.value();
     if (value != null) {
       Parser parser=new Parser(value,klass.getClassLoader());
-      return new Signature(klass,parser.parseVars(),parser.parseTypes());
+      Class enclosingClass=klass.getEnclosingClass();
+      Signature signature=new Signature(parse(enclosingClass),klass);
+      map.put(klass,signature);
+      parser.parseVars(signature);
+      parser.parseTypes(signature);
+      signature.afterParse();
+      return signature;
     }
   }
   return getGenericSignature(klass);

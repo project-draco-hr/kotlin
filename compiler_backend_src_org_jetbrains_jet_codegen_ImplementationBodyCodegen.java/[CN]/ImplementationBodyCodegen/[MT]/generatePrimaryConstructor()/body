@@ -4,7 +4,15 @@
   Method method;
   CallableMethod callableMethod;
   if (constructorDescriptor == null) {
-    method=new Method("<init>",Type.VOID_TYPE,new Type[0]);
+    List<Type> parameterTypes=new ArrayList<Type>();
+    if (CodegenUtil.hasThis0(descriptor)) {
+      parameterTypes.add(state.getTypeMapper().jvmType(CodegenUtil.getOuterClassDescriptor(descriptor),OwnerKind.IMPLEMENTATION));
+    }
+    List<TypeParameterDescriptor> typeParameters=descriptor.getTypeConstructor().getParameters();
+    for (int n=typeParameters.size(); n > 0; n--) {
+      parameterTypes.add(JetTypeMapper.TYPE_TYPEINFO);
+    }
+    method=new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
     callableMethod=new CallableMethod("",method,Opcodes.INVOKESPECIAL,Collections.<Type>emptyList());
   }
  else {
@@ -15,11 +23,12 @@
   final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
-  ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,kind);
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,descriptor,kind);
   final InstructionAdapter iv=new InstructionAdapter(mv);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state);
   for (int slot=0; slot != frameMap.getTypeParameterCount(); ++slot) {
-    codegen.addTypeParameter(constructorDescriptor.getTypeParameters().get(slot),StackValue.local(frameMap.getFirstTypeParameter() + slot,JetTypeMapper.TYPE_TYPEINFO));
+    if (constructorDescriptor != null)     codegen.addTypeParameter(constructorDescriptor.getTypeParameters().get(slot),StackValue.local(frameMap.getFirstTypeParameter() + slot,JetTypeMapper.TYPE_TYPEINFO));
+ else     codegen.addTypeParameter(descriptor.getTypeConstructor().getParameters().get(slot),StackValue.local(frameMap.getFirstTypeParameter() + slot,JetTypeMapper.TYPE_TYPEINFO));
   }
   String classname=state.getTypeMapper().jvmName(descriptor,kind);
   final Type classType=Type.getType("L" + classname + ";");
@@ -31,7 +40,24 @@
   }
   if (superCall == null || superCall instanceof JetDelegatorToSuperClass) {
     iv.load(0,Type.getType("L" + superClass + ";"));
-    iv.invokespecial(superClass,"<init>","()V");
+    if (superCall == null) {
+      iv.invokespecial(superClass,"<init>","()V");
+    }
+ else {
+      JetType superType=state.getBindingContext().get(BindingContext.TYPE,superCall.getTypeReference());
+      List<Type> parameterTypes=new ArrayList<Type>();
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      if (CodegenUtil.hasThis0(superClassDescriptor)) {
+        iv.load(1,JetTypeMapper.TYPE_OBJECT);
+        parameterTypes.add(state.getTypeMapper().jvmType(CodegenUtil.getOuterClassDescriptor(descriptor),OwnerKind.IMPLEMENTATION));
+      }
+      for (      TypeProjection typeParameterDescriptor : superType.getArguments()) {
+        codegen.generateTypeInfo(typeParameterDescriptor.getType());
+        parameterTypes.add(JetTypeMapper.TYPE_TYPEINFO);
+      }
+      Method superCallMethod=new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
+      iv.invokespecial(state.getTypeMapper().jvmName(superClassDescriptor,OwnerKind.IMPLEMENTATION),"<init>",superCallMethod.getDescriptor());
+    }
   }
  else {
     iv.load(0,classType);
@@ -66,7 +92,7 @@
     iv.load(frameMap.getOuterThisIndex(),type);
     iv.putfield(classname,fieldName,interfaceDesc);
   }
-  if (frameMap.getFirstTypeParameter() > 0 && kind == OwnerKind.IMPLEMENTATION) {
+  if (CodegenUtil.hasTypeInfoField(descriptor.getDefaultType()) && kind == OwnerKind.IMPLEMENTATION) {
     generateTypeInfoInitializer(frameMap.getFirstTypeParameter(),frameMap.getTypeParameterCount(),iv);
   }
   generateInitializers(codegen,iv);

@@ -5,23 +5,33 @@
     return;
   }
   DeclarationDescriptor containingDeclaration=typeParameterDescriptor.getContainingDeclaration();
-  if (containingDeclaration == contextType() && contextType() instanceof ClassDescriptor) {
+  if (contextType() instanceof ClassDescriptor) {
     ClassDescriptor descriptor=(ClassDescriptor)contextType();
-    JetType defaultType=descriptor.getDefaultType();
+    JetType defaultType=((ClassDescriptor)containingDeclaration).getDefaultType();
     Type ownerType=typeMapper.mapType(defaultType);
     ownerType=JetTypeMapper.boxType(ownerType);
-    if (!CodegenUtil.isInterface(descriptor)) {
-      if (descriptor.getTypeConstructor().getParameters().size() > 0) {
-        v.load(0,JetTypeMapper.TYPE_OBJECT);
-        v.getfield(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+    if (containingDeclaration == contextType()) {
+      if (!CodegenUtil.isInterface(descriptor)) {
+        if (CodegenUtil.hasTypeInfoField(defaultType)) {
+          v.load(0,JetTypeMapper.TYPE_OBJECT);
+          v.getfield(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+        }
+ else {
+          v.getstatic(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+        }
       }
  else {
-        v.getstatic(ownerType.getInternalName(),"$typeInfo","Ljet/typeinfo/TypeInfo;");
+        v.load(0,JetTypeMapper.TYPE_OBJECT);
+        v.invokeinterface("jet/JetObject","getTypeInfo","()Ljet/typeinfo/TypeInfo;");
       }
     }
  else {
       v.load(0,JetTypeMapper.TYPE_OBJECT);
       v.invokeinterface("jet/JetObject","getTypeInfo","()Ljet/typeinfo/TypeInfo;");
+      while (descriptor != containingDeclaration) {
+        descriptor=CodegenUtil.getOuterClassDescriptor(descriptor);
+        v.invokevirtual("jet/typeinfo/TypeInfo","getOuterTypeInfo","()Ljet/typeinfo/TypeInfo;");
+      }
     }
     v.aconst(ownerType);
     v.iconst(typeParameterDescriptor.getIndex());

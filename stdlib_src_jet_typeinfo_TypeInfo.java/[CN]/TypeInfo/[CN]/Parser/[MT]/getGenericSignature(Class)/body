@@ -1,19 +1,21 @@
 {
+  java.lang.reflect.Type genericSuperclass=klass.getGenericSuperclass();
+  Signature signature=new Signature(parse(klass.getEnclosingClass()),klass);
   TypeVariable[] typeParameters=klass.getTypeParameters();
-  Map<String,Integer> variables;
-  List<TypeInfoProjection> vars;
   if (typeParameters == null || typeParameters.length == 0) {
-    variables=Collections.emptyMap();
-    vars=Collections.emptyList();
+    signature.varNames=Collections.emptyMap();
+    signature.variables=Collections.emptyList();
   }
  else {
-    variables=new HashMap<String,Integer>();
-    vars=new LinkedList<TypeInfoProjection>();
+    signature.varNames=new HashMap<String,Integer>();
+    signature.variables=new LinkedList<TypeInfoProjection>();
+  }
+  if (typeParameters != null && typeParameters.length != 0) {
     for (int i=0; i < typeParameters.length; i++) {
       TypeVariable typeParameter=typeParameters[i];
-      variables.put(typeParameter.getName(),i);
-      final TypeInfoVar typeInfoVar=new TypeInfoVar(false,i);
-      vars.add(new TypeInfoProjection(){
+      signature.varNames.put(typeParameter.getName(),i);
+      final TypeInfoVar typeInfoVar=new TypeInfoVar(signature,false,i);
+      signature.variables.add(new TypeInfoProjection(){
         @Override public TypeInfoVariance getVariance(){
           return TypeInfoVariance.INVARIANT;
         }
@@ -27,7 +29,5 @@
 );
     }
   }
-  List<TypeInfo> types=new LinkedList<TypeInfo>();
-  java.lang.reflect.Type genericSuperclass=klass.getGenericSuperclass();
-  return new Signature(klass,vars,types);
+  return signature;
 }
