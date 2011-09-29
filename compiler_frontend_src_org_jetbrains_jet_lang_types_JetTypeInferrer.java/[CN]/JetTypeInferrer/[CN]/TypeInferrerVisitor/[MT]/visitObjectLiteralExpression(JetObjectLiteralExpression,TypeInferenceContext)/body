@@ -1,9 +1,9 @@
 {
   final JetType[] result=new JetType[1];
-  BindingTraceAdapter.RecordHandler<PsiElement,ClassDescriptor> handler=new BindingTraceAdapter.RecordHandler<PsiElement,ClassDescriptor>(){
+  ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor> handler=new ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor>(){
     @Override public void handleRecord(    WritableSlice<PsiElement,ClassDescriptor> slice,    PsiElement declaration,    final ClassDescriptor descriptor){
       if (slice == CLASS && declaration == expression.getObjectDeclaration()) {
-        JetType defaultType=new DeferredType(new LazyValue<JetType>(){
+        JetType defaultType=DeferredType.create(context.trace,new LazyValueWithDefault<JetType>(ErrorUtils.createErrorType("Recursive dependency")){
           @Override protected JetType compute(){
             return descriptor.getDefaultType();
           }
@@ -18,7 +18,7 @@
     }
   }
 ;
-  BindingTraceAdapter traceAdapter=new BindingTraceAdapter(context.trace);
+  ObservableBindingTrace traceAdapter=new ObservableBindingTrace(context.trace);
   traceAdapter.addHandler(CLASS,handler);
   TopDownAnalyzer.processObject(semanticServices,traceAdapter,context.scope,context.scope.getContainingDeclaration(),expression.getObjectDeclaration());
   return context.services.checkType(result[0],expression,context);
