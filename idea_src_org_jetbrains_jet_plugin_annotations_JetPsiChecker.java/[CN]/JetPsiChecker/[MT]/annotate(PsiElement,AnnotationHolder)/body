@@ -1,10 +1,11 @@
 {
   if (element instanceof JetFile) {
     JetFile file=(JetFile)element;
+    Project project=element.getProject();
     try {
       final BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(file);
       if (errorReportingEnabled) {
-        Collection<Diagnostic> diagnostics=bindingContext.getDiagnostics();
+        Collection<Diagnostic> diagnostics=Sets.newLinkedHashSet(bindingContext.getDiagnostics());
         Set<PsiElement> redeclarations=Sets.newHashSet();
         for (        Diagnostic diagnostic : diagnostics) {
           Annotation annotation=null;
@@ -16,11 +17,11 @@
               if (reference instanceof MultiRangeReference) {
                 MultiRangeReference mrr=(MultiRangeReference)reference;
                 for (                TextRange range : mrr.getRanges()) {
-                  holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),"Unresolved").setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                  holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),diagnostic.getMessage()).setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                 }
               }
  else {
-                holder.createErrorAnnotation(referenceExpression,"Unresolved").setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                holder.createErrorAnnotation(referenceExpression,diagnostic.getMessage()).setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
               }
             }
  else             if (diagnostic instanceof RedeclarationDiagnostic) {

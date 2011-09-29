@@ -13,24 +13,22 @@
     ValueArgument valueArgument=valueArguments.get(i);
     if (valueArgument.isNamed()) {
       someNamed=true;
-      ASTNode nameNode=valueArgument.getArgumentName().getNode();
-      if (somePositioned) {
-        temporaryTrace.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(nameNode));
+      JetReferenceExpression nameReference=valueArgument.getArgumentName().getReferenceExpression();
+      ValueParameterDescriptor valueParameterDescriptor=parameterByName.get(valueArgument.getArgumentName().getReferenceExpression().getReferencedName());
+      if (valueParameterDescriptor == null) {
+        temporaryTrace.report(NAMED_PARAMETER_NOT_FOUND.on(nameReference));
         error=true;
       }
  else {
-        ValueParameterDescriptor valueParameterDescriptor=parameterByName.get(valueArgument.getArgumentName().getReferenceExpression().getReferencedName());
         if (!usedParameters.add(valueParameterDescriptor)) {
-          temporaryTrace.report(ARGUMENT_PASSED_TWICE.on(nameNode));
+          temporaryTrace.report(ARGUMENT_PASSED_TWICE.on(nameReference));
         }
-        if (valueParameterDescriptor == null) {
-          temporaryTrace.report(NAMED_PARAMETER_NOT_FOUND.on(nameNode));
-          error=true;
-        }
- else {
-          temporaryTrace.record(REFERENCE_TARGET,valueArgument.getArgumentName().getReferenceExpression(),valueParameterDescriptor);
-          argumentsToParameters.put(valueArgument,valueParameterDescriptor);
-        }
+        temporaryTrace.record(REFERENCE_TARGET,nameReference,valueParameterDescriptor);
+        argumentsToParameters.put(valueArgument,valueParameterDescriptor);
+      }
+      if (somePositioned) {
+        temporaryTrace.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(nameReference));
+        error=true;
       }
     }
  else {
