@@ -1,0 +1,115 @@
+{
+  if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())   return;
+  ConstructorDescriptor constructorDescriptor=state.getBindingContext().get(BindingContext.CONSTRUCTOR,myClass);
+  Method method;
+  CallableMethod callableMethod;
+  if (constructorDescriptor == null) {
+    List<Type> parameterTypes=new ArrayList<Type>();
+    if (CodegenUtil.hasThis0(descriptor)) {
+      parameterTypes.add(state.getTypeMapper().jvmType(CodegenUtil.getOuterClassDescriptor(descriptor),OwnerKind.IMPLEMENTATION));
+    }
+    List<TypeParameterDescriptor> typeParameters=descriptor.getTypeConstructor().getParameters();
+    for (int n=typeParameters.size(); n > 0; n--) {
+      parameterTypes.add(JetTypeMapper.TYPE_TYPEINFO);
+    }
+    method=new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
+    callableMethod=new CallableMethod("",method,Opcodes.INVOKESPECIAL,Collections.<Type>emptyList());
+  }
+ else {
+    callableMethod=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,kind);
+    method=callableMethod.getSignature();
+  }
+  int flags=Opcodes.ACC_PUBLIC;
+  final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
+  mv.visitCode();
+  List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
+  ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,descriptor,kind);
+  final InstructionAdapter iv=new InstructionAdapter(mv);
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state);
+  for (int slot=0; slot != frameMap.getTypeParameterCount(); ++slot) {
+    if (constructorDescriptor != null)     codegen.addTypeParameter(constructorDescriptor.getTypeParameters().get(slot),StackValue.local(frameMap.getFirstTypeParameter() + slot,JetTypeMapper.TYPE_TYPEINFO));
+ else     codegen.addTypeParameter(descriptor.getTypeConstructor().getParameters().get(slot),StackValue.local(frameMap.getFirstTypeParameter() + slot,JetTypeMapper.TYPE_TYPEINFO));
+  }
+  String classname=state.getTypeMapper().jvmName(descriptor,kind);
+  final Type classType=Type.getType("L" + classname + ";");
+  HashSet<FunctionDescriptor> overridden=new HashSet<FunctionDescriptor>();
+  for (  JetDeclaration declaration : myClass.getDeclarations()) {
+    if (declaration instanceof JetFunction) {
+      overridden.addAll(state.getBindingContext().get(BindingContext.FUNCTION,declaration).getOverriddenDescriptors());
+    }
+  }
+  if (superCall == null || superCall instanceof JetDelegatorToSuperClass) {
+    iv.load(0,Type.getType("L" + superClass + ";"));
+    if (superCall == null) {
+      iv.invokespecial(superClass,"<init>","()V");
+    }
+ else {
+      JetType superType=state.getBindingContext().get(BindingContext.TYPE,superCall.getTypeReference());
+      List<Type> parameterTypes=new ArrayList<Type>();
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      if (CodegenUtil.hasThis0(superClassDescriptor)) {
+        iv.load(1,JetTypeMapper.TYPE_OBJECT);
+        parameterTypes.add(state.getTypeMapper().jvmType(CodegenUtil.getOuterClassDescriptor(descriptor),OwnerKind.IMPLEMENTATION));
+      }
+      for (      TypeProjection typeParameterDescriptor : superType.getArguments()) {
+        codegen.generateTypeInfo(typeParameterDescriptor.getType());
+        parameterTypes.add(JetTypeMapper.TYPE_TYPEINFO);
+      }
+      Method superCallMethod=new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
+      iv.invokespecial(state.getTypeMapper().jvmName(superClassDescriptor,OwnerKind.IMPLEMENTATION),"<init>",superCallMethod.getDescriptor());
+    }
+  }
+ else {
+    iv.load(0,classType);
+    ConstructorDescriptor constructorDescriptor1=(ConstructorDescriptor)state.getBindingContext().get(BindingContext.REFERENCE_TARGET,((JetDelegatorToSuperCall)superCall).getCalleeExpression().getConstructorReferenceExpression());
+    generateDelegatorToConstructorCall(iv,codegen,(JetDelegatorToSuperCall)superCall,constructorDescriptor1,frameMap);
+  }
+  int n=0;
+  for (  JetDelegationSpecifier specifier : myClass.getDelegationSpecifiers()) {
+    if (specifier == superCall)     continue;
+    if (specifier instanceof JetDelegatorByExpressionSpecifier) {
+      iv.load(0,classType);
+      codegen.genToJVMStack(((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression());
+      JetType superType=state.getBindingContext().get(BindingContext.TYPE,specifier.getTypeReference());
+      ClassDescriptor superClassDescriptor=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+      String delegateField="$delegate_" + n;
+      Type fieldType=JetTypeMapper.jetInterfaceType(superClassDescriptor);
+      String fieldDesc=fieldType.getDescriptor();
+      v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
+      iv.putfield(classname,delegateField,fieldDesc);
+      JetClass superClass=(JetClass)state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,superClassDescriptor);
+      final ClassContext delegateContext=context.intoClass(superClassDescriptor,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
+      generateDelegates(superClass,delegateContext,overridden);
+    }
+  }
+  final ClassDescriptor outerDescriptor=getOuterClassDescriptor();
+  if (outerDescriptor != null && outerDescriptor.getKind() != ClassKind.OBJECT) {
+    final Type type=JetTypeMapper.jetImplementationType(outerDescriptor);
+    String interfaceDesc=type.getDescriptor();
+    final String fieldName="this$0";
+    v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
+    iv.load(0,classType);
+    iv.load(frameMap.getOuterThisIndex(),type);
+    iv.putfield(classname,fieldName,interfaceDesc);
+  }
+  if (CodegenUtil.hasTypeInfoField(descriptor.getDefaultType()) && kind == OwnerKind.IMPLEMENTATION) {
+    generateTypeInfoInitializer(frameMap.getFirstTypeParameter(),frameMap.getTypeParameterCount(),iv);
+  }
+  generateInitializers(codegen,iv);
+  generateTraitMethods(codegen);
+  int curParam=0;
+  List<JetParameter> constructorParameters=getPrimaryConstructorParameters();
+  for (  JetParameter parameter : constructorParameters) {
+    if (parameter.getValOrVarNode() != null) {
+      VariableDescriptor descriptor=paramDescrs.get(curParam);
+      Type type=state.getTypeMapper().mapType(descriptor.getOutType());
+      iv.load(0,classType);
+      iv.load(frameMap.getIndex(descriptor),type);
+      iv.putfield(classname,descriptor.getName(),type.getDescriptor());
+    }
+    curParam++;
+  }
+  mv.visitInsn(Opcodes.RETURN);
+  mv.visitMaxs(0,0);
+  mv.visitEnd();
+}

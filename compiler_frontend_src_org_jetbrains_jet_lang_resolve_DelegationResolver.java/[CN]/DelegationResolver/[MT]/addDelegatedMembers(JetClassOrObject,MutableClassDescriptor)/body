@@ -1,0 +1,28 @@
+{
+  for (  JetDelegationSpecifier delegationSpecifier : jetClass.getDelegationSpecifiers()) {
+    if (delegationSpecifier instanceof JetDelegatorByExpressionSpecifier) {
+      JetDelegatorByExpressionSpecifier specifier=(JetDelegatorByExpressionSpecifier)delegationSpecifier;
+      JetType type=context.getTrace().get(BindingContext.TYPE,specifier.getTypeReference());
+      if (type != null) {
+        for (        DeclarationDescriptor declarationDescriptor : type.getMemberScope().getAllDescriptors()) {
+          if (declarationDescriptor instanceof PropertyDescriptor) {
+            PropertyDescriptor propertyDescriptor=(PropertyDescriptor)declarationDescriptor;
+            if (propertyDescriptor.getModality().isOverridable()) {
+              PropertyDescriptor copy=propertyDescriptor.copy(classDescriptor,true);
+              classDescriptor.addPropertyDescriptor(copy);
+              context.getTrace().record(DELEGATED,copy);
+            }
+          }
+ else           if (declarationDescriptor instanceof FunctionDescriptor) {
+            FunctionDescriptor functionDescriptor=(FunctionDescriptor)declarationDescriptor;
+            if (functionDescriptor.getModality().isOverridable()) {
+              FunctionDescriptor copy=functionDescriptor.copy(classDescriptor,true);
+              classDescriptor.addFunctionDescriptor(copy);
+              context.getTrace().record(DELEGATED,copy);
+            }
+          }
+        }
+      }
+    }
+  }
+}

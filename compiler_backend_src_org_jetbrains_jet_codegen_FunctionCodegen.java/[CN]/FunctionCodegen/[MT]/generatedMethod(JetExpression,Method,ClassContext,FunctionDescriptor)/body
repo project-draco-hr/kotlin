@@ -1,0 +1,44 @@
+{
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  List<TypeParameterDescriptor> typeParameters=functionDescriptor.getTypeParameters();
+  int flags=Opcodes.ACC_PUBLIC;
+  OwnerKind kind=context.getContextKind();
+  if (kind == OwnerKind.TRAIT_IMPL && bodyExpressions == null)   return;
+  boolean isStatic=kind == OwnerKind.NAMESPACE || kind == OwnerKind.TRAIT_IMPL;
+  if (isStatic)   flags|=Opcodes.ACC_STATIC;
+  boolean isAbstract=!isStatic && (bodyExpressions == null || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()));
+  if (isAbstract)   flags|=Opcodes.ACC_ABSTRACT;
+  final MethodVisitor mv=v.visitMethod(flags,jvmSignature.getName(),jvmSignature.getDescriptor(),null,null);
+  if (!isAbstract) {
+    mv.visitCode();
+    FrameMap frameMap=context.prepareFrame();
+    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),context,state);
+    Type[] argTypes=jvmSignature.getArgumentTypes();
+    for (int i=0; i < paramDescrs.size(); i++) {
+      ValueParameterDescriptor parameter=paramDescrs.get(i);
+      frameMap.enter(parameter,argTypes[i].getSize());
+    }
+    for (    final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+      int slot=frameMap.enterTemp();
+      codegen.addTypeParameter(typeParameterDescriptor,StackValue.local(slot,JetTypeMapper.TYPE_TYPEINFO));
+    }
+    if (kind instanceof OwnerKind.DelegateKind) {
+      OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
+      InstructionAdapter iv=new InstructionAdapter(mv);
+      iv.load(0,JetTypeMapper.TYPE_OBJECT);
+      dk.getDelegate().put(JetTypeMapper.TYPE_OBJECT,iv);
+      for (int i=0; i < argTypes.length; i++) {
+        Type argType=argTypes[i];
+        iv.load(i + 1,argType);
+      }
+      iv.invokeinterface(dk.getOwnerClass(),jvmSignature.getName(),jvmSignature.getDescriptor());
+      iv.areturn(jvmSignature.getReturnType());
+    }
+ else {
+      codegen.returnExpression(bodyExpressions);
+    }
+    mv.visitMaxs(0,0);
+    mv.visitEnd();
+    generateBridgeIfNeeded(owner,state,v,jvmSignature,functionDescriptor,kind);
+  }
+}

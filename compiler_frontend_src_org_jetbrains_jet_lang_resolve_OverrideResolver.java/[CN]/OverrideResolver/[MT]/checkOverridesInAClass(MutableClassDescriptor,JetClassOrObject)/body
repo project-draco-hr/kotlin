@@ -1,0 +1,67 @@
+{
+  for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
+    checkOverride(member);
+  }
+  Map<CallableMemberDescriptor,CallableMemberDescriptor> implementedWithDelegationBy=Maps.newHashMap();
+  Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
+  for (  JetType supertype : classDescriptor.getSupertypes()) {
+    for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
+      if (descriptor instanceof CallableMemberDescriptor) {
+        CallableMemberDescriptor memberDescriptor=(CallableMemberDescriptor)descriptor;
+        inheritedFunctions.add(memberDescriptor);
+      }
+    }
+  }
+  Set<CallableMemberDescriptor> filteredMembers=OverridingUtil.filterOverrides(inheritedFunctions);
+  Multimap<CallableMemberDescriptor,CallableMemberDescriptor> factoredMembers=CommonSuppliers.newLinkedHashSetHashSetMultimap();
+  for (  CallableMemberDescriptor one : filteredMembers) {
+    if (factoredMembers.values().contains(one))     continue;
+    for (    CallableMemberDescriptor another : filteredMembers) {
+      factoredMembers.put(one,one);
+      if (OverridingUtil.isOverridableBy(one,another).isSuccess() || OverridingUtil.isOverridableBy(another,one).isSuccess()) {
+        factoredMembers.put(one,another);
+      }
+    }
+  }
+  Set<CallableMemberDescriptor> abstractNoImpl=Sets.newLinkedHashSet();
+  Set<CallableMemberDescriptor> manyImpl=Sets.newLinkedHashSet();
+  for (  CallableMemberDescriptor key : factoredMembers.keySet()) {
+    Collection<CallableMemberDescriptor> mutuallyOverridable=factoredMembers.get(key);
+    int implementationCount=0;
+    for (    CallableMemberDescriptor member : mutuallyOverridable) {
+      if (member.getModality() != Modality.ABSTRACT) {
+        implementationCount++;
+      }
+    }
+    if (implementationCount == 0) {
+      abstractNoImpl.addAll(mutuallyOverridable);
+    }
+ else     if (implementationCount > 1) {
+      manyImpl.addAll(mutuallyOverridable);
+    }
+  }
+  Set<CallableMemberDescriptor> actuallyOverridden=Sets.newHashSet(implementedWithDelegationBy.keySet());
+  for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
+    actuallyOverridden.addAll(member.getOverriddenDescriptors());
+  }
+  abstractNoImpl.removeAll(actuallyOverridden);
+  manyImpl.removeAll(actuallyOverridden);
+  PsiElement nameIdentifier=klass;
+  if (klass instanceof JetClass) {
+    nameIdentifier=((JetClass)klass).getNameIdentifier();
+  }
+ else   if (klass instanceof JetObjectDeclaration) {
+    nameIdentifier=((JetObjectDeclaration)klass).getNameIdentifier();
+  }
+  for (  CallableMemberDescriptor memberDescriptor : manyImpl) {
+    context.getTrace().report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
+  }
+  if (classDescriptor.getModality() == Modality.ABSTRACT) {
+    return;
+  }
+  for (  CallableMemberDescriptor memberDescriptor : abstractNoImpl) {
+    context.getTrace().report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
+  }
+}

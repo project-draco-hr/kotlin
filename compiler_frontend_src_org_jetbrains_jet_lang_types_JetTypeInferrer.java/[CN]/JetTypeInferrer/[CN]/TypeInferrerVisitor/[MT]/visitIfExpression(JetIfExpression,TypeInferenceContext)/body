@@ -1,0 +1,48 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  JetExpression condition=expression.getCondition();
+  checkCondition(context.scope,condition,context);
+  JetExpression elseBranch=expression.getElse();
+  JetExpression thenBranch=expression.getThen();
+  WritableScopeImpl thenScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("Then scope");
+  DataFlowInfo thenInfo=extractDataFlowInfoFromCondition(condition,true,thenScope,context);
+  DataFlowInfo elseInfo=extractDataFlowInfoFromCondition(condition,false,null,context);
+  if (elseBranch == null) {
+    if (thenBranch != null) {
+      JetType type=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,context);
+      if (type != null && JetStandardClasses.isNothing(type)) {
+        resultDataFlowInfo=elseInfo;
+      }
+      return context.services.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+    }
+    return null;
+  }
+  if (thenBranch == null) {
+    JetType type=getTypeWithNewScopeAndDataFlowInfo(context.scope,elseBranch,elseInfo,context);
+    if (type != null && JetStandardClasses.isNothing(type)) {
+      resultDataFlowInfo=thenInfo;
+    }
+    return context.services.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+  }
+  JetType thenType=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,contextWithExpectedType);
+  JetType elseType=getTypeWithNewScopeAndDataFlowInfo(context.scope,elseBranch,elseInfo,contextWithExpectedType);
+  JetType result;
+  if (thenType == null) {
+    result=elseType;
+  }
+ else   if (elseType == null) {
+    result=thenType;
+  }
+ else {
+    result=semanticServices.getTypeChecker().commonSupertype(Arrays.asList(thenType,elseType));
+  }
+  boolean jumpInThen=thenType != null && JetStandardClasses.isNothing(thenType);
+  boolean jumpInElse=elseType != null && JetStandardClasses.isNothing(elseType);
+  if (jumpInThen && !jumpInElse) {
+    resultDataFlowInfo=elseInfo;
+  }
+ else   if (jumpInElse && !jumpInThen) {
+    resultDataFlowInfo=thenInfo;
+  }
+  return result;
+}

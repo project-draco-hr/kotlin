@@ -1,0 +1,19 @@
+{
+  JetSimpleNameExpression operationSign=expression.getOperationSign();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  JetExpression baseExpression=expression.getBaseExpression();
+  if (JetTokens.LABELS.contains(operationType)) {
+    String referencedName=operationSign.getReferencedName();
+    referencedName=referencedName == null ? " <?>" : referencedName;
+    visitLabeledExpression(referencedName.substring(1),baseExpression);
+  }
+ else {
+    value(baseExpression,false);
+    value(operationSign,false);
+    boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
+    if (incrementOrDecrement) {
+      builder.write(expression,baseExpression);
+    }
+    builder.read(expression);
+  }
+}

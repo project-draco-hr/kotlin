@@ -1,0 +1,23 @@
+{
+  PsiType returnType=method.getReturnType();
+  if (returnType == null) {
+    return null;
+  }
+  FunctionDescriptor functionDescriptor=methodDescriptorCache.get(method);
+  if (functionDescriptor != null) {
+    if (method.getContainingClass() != psiClass) {
+      functionDescriptor=functionDescriptor.substitute(typeSubstitutorForGenericSuperclasses);
+    }
+    return functionDescriptor;
+  }
+  PsiParameter[] parameters=method.getParameterList().getParameters();
+  FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),method.getName());
+  methodDescriptorCache.put(method,functionDescriptorImpl);
+  functionDescriptorImpl.initialize(null,resolveTypeParameters(functionDescriptorImpl,method.getTypeParameters()),semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptorImpl,parameters),semanticServices.getTypeTransformer().transformToType(returnType),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(semanticServices.getTrace(),method));
+  semanticServices.getTrace().record(BindingContext.FUNCTION,method,functionDescriptorImpl);
+  FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
+  if (method.getContainingClass() != psiClass) {
+    substitutedFunctionDescriptor=functionDescriptorImpl.substitute(typeSubstitutorForGenericSuperclasses);
+  }
+  return substitutedFunctionDescriptor;
+}

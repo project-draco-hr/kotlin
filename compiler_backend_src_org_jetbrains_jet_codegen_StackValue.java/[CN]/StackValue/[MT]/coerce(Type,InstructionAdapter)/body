@@ -1,0 +1,34 @@
+{
+  if (type.equals(this.type))   return;
+  if (type.getSort() == Type.VOID && this.type.getSort() != Type.VOID) {
+    if (this.type.getSize() == 1)     v.pop();
+ else     v.pop2();
+  }
+ else   if (type.getSort() != Type.VOID && this.type.getSort() == Type.VOID) {
+    if (type.getSort() == Type.OBJECT)     v.visitFieldInsn(Opcodes.GETSTATIC,"jet/Tuple0","INSTANCE","Ljet/Tuple0;");
+ else     if (type == Type.LONG_TYPE)     v.lconst(0);
+ else     if (type == Type.FLOAT_TYPE)     v.fconst(0);
+ else     if (type == Type.DOUBLE_TYPE)     v.dconst(0);
+ else     v.iconst(0);
+  }
+ else   if (type.getSort() == Type.OBJECT && this.type.equals(JetTypeMapper.TYPE_OBJECT) || type.getSort() == Type.ARRAY) {
+    v.checkcast(type);
+  }
+ else   if (type.getSort() == Type.OBJECT) {
+    box(this.type,type,v);
+  }
+ else   if (this.type.getSort() == Type.OBJECT && type.getSort() <= Type.DOUBLE) {
+    if (this.type.equals(JetTypeMapper.TYPE_OBJECT)) {
+      if (type.getSort() == Type.BOOLEAN) {
+        v.checkcast(JetTypeMapper.JL_BOOLEAN_TYPE);
+      }
+ else {
+        v.checkcast(JetTypeMapper.JL_NUMBER_TYPE);
+      }
+    }
+    unbox(type,v);
+  }
+ else {
+    v.cast(this.type,type);
+  }
+}

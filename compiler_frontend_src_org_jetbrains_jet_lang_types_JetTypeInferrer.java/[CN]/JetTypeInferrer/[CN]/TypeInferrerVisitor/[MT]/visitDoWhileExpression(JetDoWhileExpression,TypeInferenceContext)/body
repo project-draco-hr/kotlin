@@ -1,0 +1,28 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  JetExpression body=expression.getBody();
+  JetScope conditionScope=context.scope;
+  if (body instanceof JetFunctionLiteralExpression) {
+    JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
+    if (!function.getFunctionLiteral().hasParameterSpecification()) {
+      WritableScope writableScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("do..while body scope");
+      conditionScope=writableScope;
+      context.services.getBlockReturnedTypeWithWritableScope(writableScope,function.getFunctionLiteral().getBodyExpression().getStatements(),CoercionStrategy.NO_COERCION,context);
+      context.trace.record(BindingContext.BLOCK,function);
+    }
+ else {
+      getType(body,context.replaceScope(context.scope));
+    }
+  }
+ else   if (body != null) {
+    WritableScope writableScope=newWritableScopeImpl(context.scope,context.trace).setDebugName("do..while body scope");
+    conditionScope=writableScope;
+    context.services.getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context);
+  }
+  JetExpression condition=expression.getCondition();
+  checkCondition(conditionScope,condition,context);
+  if (!flowInformationProvider.isBreakable(expression)) {
+    resultDataFlowInfo=extractDataFlowInfoFromCondition(condition,false,null,context);
+  }
+  return context.services.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+}

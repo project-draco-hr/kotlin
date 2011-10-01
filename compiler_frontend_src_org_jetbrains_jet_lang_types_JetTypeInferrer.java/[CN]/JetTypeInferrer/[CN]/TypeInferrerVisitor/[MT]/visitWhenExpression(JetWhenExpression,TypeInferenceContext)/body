@@ -1,0 +1,53 @@
+{
+  TypeInferenceContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  final JetExpression subjectExpression=expression.getSubjectExpression();
+  final JetType subjectType=subjectExpression != null ? context.services.safeGetType(context.scope,subjectExpression,NO_EXPECTED_TYPE) : ErrorUtils.createErrorType("Unknown type");
+  final VariableDescriptor variableDescriptor=subjectExpression != null ? context.services.getVariableDescriptorFromSimpleName(subjectExpression,context) : null;
+  Set<JetType> expressionTypes=Sets.newHashSet();
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    JetWhenCondition[] conditions=whenEntry.getConditions();
+    DataFlowInfo newDataFlowInfo;
+    WritableScope scopeToExtend;
+    if (conditions.length == 1) {
+      scopeToExtend=newWritableScopeImpl(context.scope,context.trace).setDebugName("Scope extended in when entry");
+      newDataFlowInfo=context.dataFlowInfo;
+      JetWhenCondition condition=conditions[0];
+      if (condition != null) {
+        newDataFlowInfo=checkWhenCondition(subjectExpression,subjectType,condition,scopeToExtend,context,variableDescriptor);
+      }
+    }
+ else {
+      scopeToExtend=newWritableScopeImpl(context.scope,context.trace);
+      newDataFlowInfo=null;
+      for (      JetWhenCondition condition : conditions) {
+        DataFlowInfo dataFlowInfo=checkWhenCondition(subjectExpression,subjectType,condition,newWritableScopeImpl(context.scope,context.trace),context,variableDescriptor);
+        if (newDataFlowInfo == null) {
+          newDataFlowInfo=dataFlowInfo;
+        }
+ else {
+          newDataFlowInfo=newDataFlowInfo.or(dataFlowInfo);
+        }
+      }
+      if (newDataFlowInfo == null) {
+        newDataFlowInfo=context.dataFlowInfo;
+      }
+ else {
+        newDataFlowInfo=newDataFlowInfo.and(context.dataFlowInfo);
+      }
+    }
+    JetExpression bodyExpression=whenEntry.getExpression();
+    if (bodyExpression != null) {
+      JetType type=getTypeWithNewScopeAndDataFlowInfo(scopeToExtend,bodyExpression,newDataFlowInfo,contextWithExpectedType);
+      if (type != null) {
+        expressionTypes.add(type);
+      }
+    }
+  }
+  if (!expressionTypes.isEmpty()) {
+    return semanticServices.getTypeChecker().commonSupertype(expressionTypes);
+  }
+ else   if (expression.getEntries().isEmpty()) {
+    context.trace.report(NO_WHEN_ENTRIES.on(expression));
+  }
+  return null;
+}

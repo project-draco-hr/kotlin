@@ -1,0 +1,24 @@
+{
+  if (!(myClass instanceof JetClass) || ((JetClass)myClass).isTrait()) {
+    return;
+  }
+  String sig=getGetSuperTypesTypeInfoSignature(descriptor.getDefaultType());
+  final MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,"$$getSuperTypesTypeInfo",sig,null,null);
+  mv.visitCode();
+  InstructionAdapter v=new InstructionAdapter(mv);
+  ExpressionCodegen codegen=new ExpressionCodegen(v,new FrameMap(),Type.VOID_TYPE,context,state);
+  v.load(0,JetTypeMapper.TYPE_OBJECT);
+  int k=1;
+  for (  TypeParameterDescriptor parameterDescriptor : descriptor.getTypeConstructor().getParameters()) {
+    codegen.addTypeParameter(parameterDescriptor,StackValue.local(k++,JetTypeMapper.TYPE_TYPEINFO));
+  }
+  for (  JetType superType : descriptor.getTypeConstructor().getSupertypes()) {
+    for (    TypeProjection typeProjection : superType.getArguments()) {
+      codegen.generateTypeInfo(typeProjection.getType());
+    }
+    v.invokestatic(state.getTypeMapper().mapType(superType).getInternalName(),"$$getSuperTypesTypeInfo",getGetSuperTypesTypeInfoSignature(superType));
+  }
+  v.areturn(Type.VOID_TYPE);
+  mv.visitMaxs(0,0);
+  mv.visitEnd();
+}

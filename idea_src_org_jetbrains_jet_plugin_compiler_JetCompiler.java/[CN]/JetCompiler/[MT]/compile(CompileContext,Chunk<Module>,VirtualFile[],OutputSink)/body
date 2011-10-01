@@ -1,15 +1,52 @@
 {
-  Map<Module,ModuleCompileState> moduleMap=new HashMap<Module,ModuleCompileState>();
-  for (  VirtualFile virtualFile : virtualFiles) {
-    Module module=compileContext.getModuleByFile(virtualFile);
-    ModuleCompileState state=moduleMap.get(module);
-    if (state == null) {
-      state=new ModuleCompileState(compileContext,module,outputSink);
-      moduleMap.put(module,state);
-    }
-    state.compile(virtualFile);
+  if (virtualFiles.length == 0)   return;
+  Module module=compileContext.getModuleByFile(virtualFiles[0]);
+  final VirtualFile outputDir=compileContext.getModuleOutputDirectory(module);
+  if (outputDir == null) {
+    compileContext.addMessage(ERROR,"[Internal Error] No output directory","",-1,-1);
+    return;
   }
-  for (  ModuleCompileState state : moduleMap.values()) {
-    state.done();
-  }
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      GenerationState generationState=new GenerationState(compileContext.getProject(),false);
+      List<JetNamespace> namespaces=Lists.newArrayList();
+      for (      VirtualFile virtualFile : virtualFiles) {
+        PsiFile psiFile=PsiManager.getInstance(compileContext.getProject()).findFile(virtualFile);
+        if (psiFile instanceof JetFile) {
+          namespaces.add(((JetFile)psiFile).getRootNamespace());
+        }
+      }
+      BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(compileContext.getProject(),namespaces,JetControlFlowDataTraceFactory.EMPTY);
+      boolean errors=false;
+      for (      Diagnostic diagnostic : bindingContext.getDiagnostics()) {
+switch (diagnostic.getSeverity()) {
+case ERROR:
+          errors=true;
+        report(diagnostic,CompilerMessageCategory.ERROR,compileContext);
+      break;
+case INFO:
+    report(diagnostic,CompilerMessageCategory.INFORMATION,compileContext);
+  break;
+case WARNING:
+report(diagnostic,CompilerMessageCategory.WARNING,compileContext);
+break;
+}
+}
+if (!errors) {
+generationState.compileCorrectNamespaces(bindingContext,namespaces);
+final ClassFileFactory factory=generationState.getFactory();
+List<String> files=factory.files();
+for (String file : files) {
+File target=new File(outputDir.getPath(),file);
+try {
+FileUtil.writeToFile(target,factory.asBytes(file));
+}
+ catch (IOException e) {
+compileContext.addMessage(ERROR,e.getMessage(),null,0,0);
+}
+}
+}
+}
+}
+);
 }

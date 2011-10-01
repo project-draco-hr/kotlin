@@ -1,0 +1,28 @@
+{
+  DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
+  if (descriptor instanceof ClassDescriptor) {
+    JetType defaultType=((ClassDescriptor)descriptor).getDefaultType();
+    org.objectweb.asm.Type type=typeMapper.mapType(defaultType,OwnerKind.IMPLEMENTATION);
+    if (JetTypeMapper.isPrimitive(type)) {
+      type=JetTypeMapper.boxType(type);
+    }
+    sb.append(type.getDescriptor());
+  }
+ else {
+    sb.append("T");
+    sb.append(descriptor.getContainingDeclaration().getName());
+    sb.append(";");
+    sb.append(descriptor.getName());
+    sb.append(";");
+  }
+  if (!jetType.getArguments().isEmpty()) {
+    sb.append("<");
+    for (    TypeProjection typeProjection : jetType.getArguments()) {
+      if (typeProjection.getProjectionKind() == Variance.IN_VARIANCE)       sb.append("in ");
+      if (typeProjection.getProjectionKind() == Variance.OUT_VARIANCE)       sb.append("out ");
+      genJetType(sb,typeProjection.getType(),typeMapper);
+    }
+    sb.append(">");
+  }
+  if (jetType.isNullable())   sb.append("?");
+}

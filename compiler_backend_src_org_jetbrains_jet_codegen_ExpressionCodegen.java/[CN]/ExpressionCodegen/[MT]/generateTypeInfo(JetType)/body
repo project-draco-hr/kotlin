@@ -1,0 +1,42 @@
+{
+  String knownTypeInfo=typeMapper.isKnownTypeInfo(jetType);
+  if (knownTypeInfo != null) {
+    v.getstatic("jet/typeinfo/TypeInfo",knownTypeInfo,"Ljet/typeinfo/TypeInfo;");
+    return;
+  }
+  DeclarationDescriptor declarationDescriptor=jetType.getConstructor().getDeclarationDescriptor();
+  if (declarationDescriptor instanceof TypeParameterDescriptor) {
+    loadTypeParameterTypeInfo((TypeParameterDescriptor)declarationDescriptor);
+    return;
+  }
+  if (!CodegenUtil.hasTypeInfoField(jetType)) {
+    v.getstatic(typeMapper.mapType(jetType,OwnerKind.IMPLEMENTATION).getInternalName(),"$staticTypeInfo","Ljet/typeinfo/TypeInfo;");
+    return;
+  }
+  boolean hasUnsubstituted=TypeUtils.hasUnsubstitutedTypeParameters(jetType);
+  if (!hasUnsubstituted) {
+    int typeInfoConstantIndex=context.getTypeInfoConstantIndex(jetType);
+    v.invokestatic(context.getNamespaceClassName(),"$getCachedTypeInfo$" + typeInfoConstantIndex,"()Ljet/typeinfo/TypeInfo;");
+    return;
+  }
+  final Type jvmType=typeMapper.mapType(jetType);
+  v.aconst(jvmType);
+  v.iconst(jetType.isNullable() ? 1 : 0);
+  List<TypeProjection> arguments=jetType.getArguments();
+  if (arguments.size() > 0) {
+    v.iconst(arguments.size());
+    v.newarray(JetTypeMapper.TYPE_TYPEINFOPROJECTION);
+    for (int i=0, argumentsSize=arguments.size(); i < argumentsSize; i++) {
+      TypeProjection argument=arguments.get(i);
+      v.dup();
+      v.iconst(i);
+      generateTypeInfo(argument.getType());
+      genTypeInfoToProjection(v,argument.getProjectionKind());
+      v.astore(JetTypeMapper.TYPE_OBJECT);
+    }
+    v.invokestatic("jet/typeinfo/TypeInfo","getTypeInfo","(Ljava/lang/Class;Z[Ljet/typeinfo/TypeInfoProjection;)Ljet/typeinfo/TypeInfo;");
+  }
+ else {
+    v.invokestatic("jet/typeinfo/TypeInfo","getTypeInfo","(Ljava/lang/Class;Z)Ljet/typeinfo/TypeInfo;");
+  }
+}

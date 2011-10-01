@@ -1,0 +1,25 @@
+{
+  if (declaration instanceof JetConstructor) {
+    generateSecondaryConstructor((JetConstructor)declaration);
+  }
+ else   if (declaration instanceof JetClassObject) {
+    generateClassObject((JetClassObject)declaration);
+  }
+ else   if (declaration instanceof JetEnumEntry && !((JetEnumEntry)declaration).hasPrimaryConstructor()) {
+    String name=declaration.getName();
+    final String desc="L" + state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION) + ";";
+    v.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,name,desc,null,null);
+    if (myEnumConstants.isEmpty()) {
+      staticInitializerChunks.add(new CodeChunk(){
+        @Override public void generate(        InstructionAdapter v){
+          initializeEnumConstants(v);
+        }
+      }
+);
+    }
+    myEnumConstants.add((JetEnumEntry)declaration);
+  }
+ else {
+    super.generateDeclaration(propertyCodegen,declaration,functionCodegen);
+  }
+}

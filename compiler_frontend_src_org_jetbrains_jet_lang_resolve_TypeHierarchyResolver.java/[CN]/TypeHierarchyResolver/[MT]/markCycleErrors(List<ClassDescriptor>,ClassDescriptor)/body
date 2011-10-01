@@ -1,0 +1,33 @@
+{
+  int size=currentPath.size();
+  boolean found=false;
+  for (int i=0; i < size; i++) {
+    ClassDescriptor classDescriptor=currentPath.get(i);
+    if (classDescriptor == current)     found=true;
+    if (!found)     continue;
+    ClassDescriptor superclass=(i < size - 1) ? currentPath.get(i + 1) : current;
+    PsiElement psiElement=context.getTrace().get(DESCRIPTOR_TO_DECLARATION,classDescriptor);
+    ASTNode node=null;
+    if (psiElement instanceof JetClassOrObject) {
+      JetClassOrObject classOrObject=(JetClassOrObject)psiElement;
+      for (      JetDelegationSpecifier delegationSpecifier : classOrObject.getDelegationSpecifiers()) {
+        JetTypeReference typeReference=delegationSpecifier.getTypeReference();
+        if (typeReference == null)         continue;
+        JetType supertype=context.getTrace().get(TYPE,typeReference);
+        if (supertype != null && supertype.getConstructor() == superclass.getTypeConstructor()) {
+          node=typeReference.getNode();
+        }
+      }
+    }
+    if (node == null && psiElement instanceof PsiNameIdentifierOwner) {
+      PsiNameIdentifierOwner namedElement=(PsiNameIdentifierOwner)psiElement;
+      PsiElement nameIdentifier=namedElement.getNameIdentifier();
+      if (nameIdentifier != null) {
+        node=nameIdentifier.getNode();
+      }
+    }
+    if (node != null) {
+      context.getTrace().report(CYCLIC_INHERITANCE_HIERARCHY.on(node));
+    }
+  }
+}

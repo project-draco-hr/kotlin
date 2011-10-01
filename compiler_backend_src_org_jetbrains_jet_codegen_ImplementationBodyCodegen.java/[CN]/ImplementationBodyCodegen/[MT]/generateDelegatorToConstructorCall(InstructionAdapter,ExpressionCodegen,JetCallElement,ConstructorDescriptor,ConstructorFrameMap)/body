@@ -1,0 +1,17 @@
+{
+  ClassDescriptor classDecl=constructorDescriptor.getContainingDeclaration();
+  PsiElement declaration=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,classDecl);
+  Type type;
+  if (declaration instanceof PsiClass) {
+    type=JetTypeMapper.psiClassType((PsiClass)declaration);
+  }
+ else {
+    type=JetTypeMapper.jetImplementationType(classDecl);
+  }
+  iv.load(0,type);
+  if (classDecl.getContainingDeclaration() instanceof ClassDescriptor) {
+    iv.load(frameMap.getOuterThisIndex(),state.getTypeMapper().jvmType((ClassDescriptor)descriptor.getContainingDeclaration(),OwnerKind.IMPLEMENTATION));
+  }
+  CallableMethod method=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,kind);
+  codegen.invokeMethodWithArguments(method,constructorCall);
+}

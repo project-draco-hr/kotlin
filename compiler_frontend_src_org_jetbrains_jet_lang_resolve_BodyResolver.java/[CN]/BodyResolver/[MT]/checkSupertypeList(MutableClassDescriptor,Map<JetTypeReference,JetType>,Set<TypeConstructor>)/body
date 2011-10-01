@@ -1,0 +1,29 @@
+{
+  Set<TypeConstructor> typeConstructors=Sets.newHashSet();
+  boolean classAppeared=false;
+  for (  Map.Entry<JetTypeReference,JetType> entry : supertypes.entrySet()) {
+    JetTypeReference typeReference=entry.getKey();
+    JetType supertype=entry.getValue();
+    ClassDescriptor classDescriptor=TypeUtils.getClassDescriptor(supertype);
+    if (classDescriptor != null) {
+      if (classDescriptor.getKind() != ClassKind.TRAIT) {
+        if (classAppeared) {
+          context.getTrace().report(MANY_CLASSES_IN_SUPERTYPE_LIST.on(typeReference));
+        }
+ else {
+          classAppeared=true;
+        }
+      }
+    }
+ else {
+      context.getTrace().report(SUPERTYPE_NOT_A_CLASS_OR_TRAIT.on(typeReference));
+    }
+    TypeConstructor constructor=supertype.getConstructor();
+    if (!typeConstructors.add(constructor)) {
+      context.getTrace().report(SUPERTYPE_APPEARS_TWICE.on(typeReference));
+    }
+    if (constructor.isSealed() && !allowedFinalSupertypes.contains(constructor)) {
+      context.getTrace().report(FINAL_SUPERTYPE.on(typeReference));
+    }
+  }
+}

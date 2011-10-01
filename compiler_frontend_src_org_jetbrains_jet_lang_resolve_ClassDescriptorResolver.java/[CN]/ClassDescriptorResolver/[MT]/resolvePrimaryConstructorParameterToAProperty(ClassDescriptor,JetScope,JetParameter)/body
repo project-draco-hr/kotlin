@@ -1,0 +1,16 @@
+{
+  JetType type=resolveParameterType(scope,parameter);
+  String name=parameter.getName();
+  boolean isMutable=parameter.isMutable();
+  JetModifierList modifierList=parameter.getModifierList();
+  if (modifierList != null) {
+    ASTNode abstractNode=modifierList.getModifierNode(JetTokens.ABSTRACT_KEYWORD);
+    if (abstractNode != null) {
+      trace.report(ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.on(parameter,abstractNode));
+    }
+  }
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(classDescriptor,annotationResolver.resolveAnnotations(scope,modifierList),resolveModalityFromModifiers(parameter.getModifierList(),Modality.FINAL),resolveVisibilityFromModifiers(parameter.getModifierList()),isMutable,null,name == null ? "<no name>" : name,isMutable ? type : null,type);
+  propertyDescriptor.initialize(Collections.<TypeParameterDescriptor>emptyList(),null,null);
+  trace.record(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,parameter,propertyDescriptor);
+  return propertyDescriptor;
+}

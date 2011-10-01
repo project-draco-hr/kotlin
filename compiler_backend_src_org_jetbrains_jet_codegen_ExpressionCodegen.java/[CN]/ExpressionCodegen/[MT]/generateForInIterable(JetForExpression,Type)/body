@@ -1,0 +1,49 @@
+{
+  final JetExpression loopRange=expression.getLoopRange();
+  FunctionDescriptor iteratorDescriptor=bindingContext.get(BindingContext.LOOP_RANGE_ITERATOR,loopRange);
+  FunctionDescriptor nextDescriptor=bindingContext.get(BindingContext.LOOP_RANGE_NEXT,loopRange);
+  DeclarationDescriptor hasNextDescriptor=bindingContext.get(BindingContext.LOOP_RANGE_HAS_NEXT,loopRange);
+  if (iteratorDescriptor == null)   throw new IllegalStateException("No iterator() method " + DiagnosticUtils.atLocation(loopRange));
+  if (nextDescriptor == null)   throw new IllegalStateException("No next() method " + DiagnosticUtils.atLocation(loopRange));
+  if (hasNextDescriptor == null)   throw new IllegalStateException("No iterator() method " + DiagnosticUtils.atLocation(loopRange));
+  final JetParameter loopParameter=expression.getLoopParameter();
+  final VariableDescriptor parameterDescriptor=bindingContext.get(BindingContext.VALUE_PARAMETER,loopParameter);
+  JetType iteratorType=parameterDescriptor.getOutType();
+  Type asmIterType=JetTypeMapper.boxType(typeMapper.mapType(iteratorType));
+  JetType paramType=parameterDescriptor.getOutType();
+  Type asmParamType=typeMapper.mapType(paramType);
+  int iteratorVar=myMap.enterTemp();
+  gen(expression.getLoopRange(),loopRangeType);
+  invokeFunctionNoParams(iteratorDescriptor,asmIterType,v);
+  v.store(iteratorVar,asmIterType);
+  Label begin=new Label();
+  Label end=new Label();
+  myContinueTargets.push(begin);
+  myBreakTargets.push(end);
+  v.mark(begin);
+  v.load(iteratorVar,asmIterType);
+  FunctionDescriptor hND;
+  if (hasNextDescriptor instanceof FunctionDescriptor) {
+    hND=(FunctionDescriptor)hasNextDescriptor;
+  }
+ else {
+    hND=((PropertyDescriptor)hasNextDescriptor).getGetter();
+  }
+  invokeFunctionNoParams(hND,Type.BOOLEAN_TYPE,v);
+  v.ifeq(end);
+  myMap.enter(parameterDescriptor,asmParamType.getSize());
+  v.load(iteratorVar,asmIterType);
+  invokeFunctionNoParams(nextDescriptor,asmParamType,v);
+  if (asmParamType.getSort() == Type.OBJECT && !"java.lang.Object".equals(asmParamType.getClassName())) {
+    v.checkcast(asmParamType);
+  }
+  v.store(lookupLocal(parameterDescriptor),asmParamType);
+  gen(expression.getBody(),Type.VOID_TYPE);
+  v.goTo(begin);
+  v.mark(end);
+  int paramIndex=myMap.leave(parameterDescriptor);
+  v.visitLocalVariable(loopParameter.getName(),asmParamType.getDescriptor(),null,begin,end,paramIndex);
+  myMap.leaveTemp();
+  myBreakTargets.pop();
+  myContinueTargets.pop();
+}

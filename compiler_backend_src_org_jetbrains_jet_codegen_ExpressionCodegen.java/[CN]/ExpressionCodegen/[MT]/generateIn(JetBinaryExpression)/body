@@ -1,0 +1,17 @@
+{
+  JetExpression expr=expression.getLeft();
+  StackValue leftValue=gen(expr);
+  if (isIntRangeExpr(expression.getRight())) {
+    JetBinaryExpression rangeExpression=(JetBinaryExpression)expression.getRight();
+    boolean inverted=expression.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN;
+    getInIntRange(leftValue,rangeExpression,inverted);
+  }
+ else {
+    FunctionDescriptor op=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,expression.getOperationReference());
+    leftValue.put(typeMapper.mapType(op.getValueParameters().get(0).getOutType()),v);
+    genToJVMStack(expression.getRight());
+    v.swap();
+    invokeFunctionNoParams(op,Type.BOOLEAN_TYPE,v);
+  }
+  return StackValue.onStack(Type.BOOLEAN_TYPE);
+}

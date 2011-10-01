@@ -1,2 +1,89 @@
 {
+  if (element instanceof JetFile) {
+    JetFile file=(JetFile)element;
+    Project project=element.getProject();
+    try {
+      final BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(file);
+      if (errorReportingEnabled) {
+        Collection<Diagnostic> diagnostics=Sets.newLinkedHashSet(bindingContext.getDiagnostics());
+        Set<PsiElement> redeclarations=Sets.newHashSet();
+        for (        Diagnostic diagnostic : diagnostics) {
+          Annotation annotation=null;
+          if (diagnostic.getSeverity() == Severity.ERROR) {
+            if (diagnostic instanceof UnresolvedReferenceDiagnostic) {
+              UnresolvedReferenceDiagnostic unresolvedReferenceDiagnostic=(UnresolvedReferenceDiagnostic)diagnostic;
+              JetReferenceExpression referenceExpression=unresolvedReferenceDiagnostic.getPsiElement();
+              PsiReference reference=referenceExpression.getReference();
+              if (reference instanceof MultiRangeReference) {
+                MultiRangeReference mrr=(MultiRangeReference)reference;
+                for (                TextRange range : mrr.getRanges()) {
+                  holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),diagnostic.getMessage()).setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+                }
+              }
+ else {
+                holder.createErrorAnnotation(referenceExpression,diagnostic.getMessage()).setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+              }
+            }
+ else             if (diagnostic instanceof RedeclarationDiagnostic) {
+              RedeclarationDiagnostic redeclarationDiagnostic=(RedeclarationDiagnostic)diagnostic;
+              annotation=markRedeclaration(redeclarations,redeclarationDiagnostic,holder);
+            }
+ else {
+              annotation=holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
+            }
+          }
+ else           if (diagnostic.getSeverity() == Severity.WARNING) {
+            annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
+          }
+          if (annotation != null && diagnostic instanceof DiagnosticWithPsiElementImpl) {
+            DiagnosticWithPsiElement diagnosticWithPsiElement=(DiagnosticWithPsiElement)diagnostic;
+            if (diagnostic.getFactory() instanceof PsiElementOnlyDiagnosticFactory) {
+              PsiElementOnlyDiagnosticFactory factory=(PsiElementOnlyDiagnosticFactory)diagnostic.getFactory();
+              Collection<JetIntentionActionFactory> intentionActionFactories=QuickFixes.get(factory);
+              for (              JetIntentionActionFactory intentionActionFactory : intentionActionFactories) {
+                IntentionAction action=null;
+                if (intentionActionFactory != null) {
+                  action=intentionActionFactory.createAction(diagnosticWithPsiElement);
+                }
+                if (action != null) {
+                  annotation.registerFix(action);
+                }
+              }
+            }
+          }
+        }
+      }
+      highlightBackingFields(holder,file,bindingContext);
+      file.acceptChildren(new JetVisitorVoid(){
+        @Override public void visitSimpleNameExpression(        JetSimpleNameExpression expression){
+          DeclarationDescriptor target=bindingContext.get(REFERENCE_TARGET,expression);
+          if (target instanceof ValueParameterDescriptor) {
+            ValueParameterDescriptor parameterDescriptor=(ValueParameterDescriptor)target;
+            if (bindingContext.get(AUTO_CREATED_IT,parameterDescriptor)) {
+              holder.createInfoAnnotation(expression,"Automatically declared based on the expected type").setTextAttributes(JetHighlighter.JET_AUTOCREATED_IT);
+            }
+          }
+          super.visitSimpleNameExpression(expression);
+        }
+        @Override public void visitExpression(        JetExpression expression){
+          JetType autoCast=bindingContext.get(AUTOCAST,expression);
+          if (autoCast != null) {
+            holder.createInfoAnnotation(expression,"Automatically cast to " + autoCast).setTextAttributes(JetHighlighter.JET_AUTO_CAST_EXPRESSION);
+          }
+          expression.acceptChildren(this);
+        }
+        @Override public void visitJetElement(        JetElement element){
+          element.acceptChildren(this);
+        }
+      }
+);
+    }
+ catch (    ProcessCanceledException e) {
+      throw e;
+    }
+catch (    Throwable e) {
+      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
 }

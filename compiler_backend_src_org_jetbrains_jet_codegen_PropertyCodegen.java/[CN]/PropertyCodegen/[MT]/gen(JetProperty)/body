@@ -1,0 +1,18 @@
+{
+  final VariableDescriptor descriptor=state.getBindingContext().get(BindingContext.VARIABLE,p);
+  if (!(descriptor instanceof PropertyDescriptor)) {
+    throw new UnsupportedOperationException("expect a property to have a property descriptor");
+  }
+  final PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+  if (kind == OwnerKind.NAMESPACE || kind == OwnerKind.IMPLEMENTATION) {
+    generateBackingField(p,propertyDescriptor);
+    generateGetter(p,propertyDescriptor);
+    generateSetter(p,propertyDescriptor);
+  }
+ else   if (kind instanceof OwnerKind.DelegateKind) {
+    generateDefaultGetter(propertyDescriptor,Opcodes.ACC_PUBLIC);
+    if (propertyDescriptor.isVar()) {
+      generateDefaultSetter(propertyDescriptor,Opcodes.ACC_PUBLIC);
+    }
+  }
+}

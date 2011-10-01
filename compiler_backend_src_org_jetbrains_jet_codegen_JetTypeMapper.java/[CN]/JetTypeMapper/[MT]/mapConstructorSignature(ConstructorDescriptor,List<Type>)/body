@@ -1,0 +1,18 @@
+{
+  List<ValueParameterDescriptor> parameters=descriptor.getOriginal().getValueParameters();
+  List<Type> parameterTypes=new ArrayList<Type>();
+  ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
+  if (CodegenUtil.hasThis0(classDescriptor)) {
+    parameterTypes.add(jvmType(CodegenUtil.getOuterClassDescriptor(classDescriptor),OwnerKind.IMPLEMENTATION));
+  }
+  for (  ValueParameterDescriptor parameter : parameters) {
+    final Type type=mapType(parameter.getOutType());
+    parameterTypes.add(type);
+    valueParameterTypes.add(type);
+  }
+  List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
+  for (int n=typeParameters.size(); n > 0; n--) {
+    parameterTypes.add(TYPE_TYPEINFO);
+  }
+  return new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
+}

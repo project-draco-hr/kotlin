@@ -1,0 +1,15 @@
+{
+  List<TypeParameterDescriptor> typeParameters=Lists.newArrayList();
+  int index=0;
+  for (  JetTypeParameter typeParameter : classElement.getTypeParameters()) {
+    TypeParameterDescriptor typeParameterDescriptor=TypeParameterDescriptor.createForFurtherModification(descriptor,annotationResolver.createAnnotationStubs(typeParameter.getModifierList()),typeParameter.getVariance(),JetPsiUtil.safeName(typeParameter.getName()),index);
+    trace.record(BindingContext.TYPE_PARAMETER,typeParameter,typeParameterDescriptor);
+    typeParameters.add(typeParameterDescriptor);
+    index++;
+  }
+  descriptor.setTypeParameterDescriptors(typeParameters);
+  Modality defaultModality=descriptor.getKind() == ClassKind.TRAIT ? Modality.ABSTRACT : Modality.FINAL;
+  descriptor.setModality(resolveModalityFromModifiers(classElement.getModifierList(),defaultModality));
+  descriptor.setVisibility(resolveVisibilityFromModifiers(classElement.getModifierList()));
+  trace.record(BindingContext.CLASS,classElement,descriptor);
+}

@@ -1,0 +1,33 @@
+{
+  java.lang.reflect.Type genericSuperclass=klass.getGenericSuperclass();
+  Signature signature=new Signature(parse(klass.getEnclosingClass()),klass);
+  TypeVariable[] typeParameters=klass.getTypeParameters();
+  if (typeParameters == null || typeParameters.length == 0) {
+    signature.varNames=Collections.emptyMap();
+    signature.variables=Collections.emptyList();
+  }
+ else {
+    signature.varNames=new HashMap<String,Integer>();
+    signature.variables=new LinkedList<TypeInfoProjection>();
+  }
+  if (typeParameters != null && typeParameters.length != 0) {
+    for (int i=0; i < typeParameters.length; i++) {
+      TypeVariable typeParameter=typeParameters[i];
+      signature.varNames.put(typeParameter.getName(),i);
+      final TypeInfoVar typeInfoVar=new TypeInfoVar(signature,false,i);
+      signature.variables.add(new TypeInfoProjection(){
+        @Override public TypeInfoVariance getVariance(){
+          return TypeInfoVariance.INVARIANT;
+        }
+        @Override public TypeInfo getType(){
+          return typeInfoVar;
+        }
+        @Override public String toString(){
+          return typeInfoVar.toString();
+        }
+      }
+);
+    }
+  }
+  return signature;
+}

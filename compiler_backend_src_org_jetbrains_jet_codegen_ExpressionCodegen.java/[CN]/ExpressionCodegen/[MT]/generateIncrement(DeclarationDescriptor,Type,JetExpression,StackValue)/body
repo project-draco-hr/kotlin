@@ -1,0 +1,27 @@
+{
+  int increment=op.getName().equals("inc") ? 1 : -1;
+  if (operand instanceof JetReferenceExpression) {
+    final int index=indexOfLocal((JetReferenceExpression)operand);
+    if (index >= 0 && JetTypeMapper.isIntPrimitive(asmType)) {
+      v.iinc(index,increment);
+      return;
+    }
+  }
+  StackValue value=genQualified(receiver,operand);
+  value.dupReceiver(v,0);
+  value.put(asmType,v);
+  if (asmType == Type.LONG_TYPE) {
+    v.lconst(increment);
+  }
+ else   if (asmType == Type.FLOAT_TYPE) {
+    v.fconst(increment);
+  }
+ else   if (asmType == Type.DOUBLE_TYPE) {
+    v.dconst(increment);
+  }
+ else {
+    v.iconst(increment);
+  }
+  v.add(asmType);
+  value.store(v);
+}

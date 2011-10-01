@@ -1,0 +1,28 @@
+{
+  if (originalSubstitutor.isEmpty()) {
+    return this;
+  }
+  FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy();
+  List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
+  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
+  JetType substitutedReceiverType=null;
+  if (receiver != NO_RECEIVER) {
+    substitutedReceiverType=substitutor.substitute(getReceiver().getType(),Variance.IN_VARIANCE);
+    if (substitutedReceiverType == null) {
+      return null;
+    }
+  }
+  List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
+  if (substitutedValueParameters == null) {
+    return null;
+  }
+  JetType substitutedReturnType=FunctionDescriptorUtil.getSubstitutedReturnType(this,substitutor);
+  if (substitutedReturnType == null) {
+    return null;
+  }
+  substitutedDescriptor.initialize(substitutedReceiverType,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,modality,visibility);
+  for (  FunctionDescriptor overriddenFunction : overriddenFunctions) {
+    substitutedDescriptor.addOverriddenFunction(overriddenFunction);
+  }
+  return substitutedDescriptor;
+}

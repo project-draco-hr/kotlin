@@ -1,0 +1,40 @@
+{
+  final List<JetTuplePatternEntry> entries=pattern.getEntries();
+  Label lblFail=new Label();
+  Label lblDone=new Label();
+  expressionToMatch.dupReceiver(v,0);
+  expressionToMatch.put(OBJECT_TYPE,v);
+  v.dup();
+  final String tupleClassName="jet/Tuple" + entries.size();
+  Type tupleType=Type.getObjectType(tupleClassName);
+  v.instanceOf(tupleType);
+  Label lblCheck=new Label();
+  v.ifne(lblCheck);
+  Label lblPopAndFail=new Label();
+  v.mark(lblPopAndFail);
+  v.pop();
+  v.goTo(lblFail);
+  v.mark(lblCheck);
+  for (int i=0; i < entries.size(); i++) {
+    final StackValue tupleField=StackValue.field(OBJECT_TYPE,tupleClassName,"_" + (i + 1),false);
+    final StackValue stackValue=generatePatternMatch(entries.get(i).getPattern(),false,tupleField,nextEntry);
+    stackValue.condJump(lblPopAndFail,true,v);
+  }
+  v.pop();
+  if (negated && nextEntry != null) {
+    v.goTo(nextEntry);
+  }
+ else {
+    v.iconst(!negated ? 1 : 0);
+  }
+  v.goTo(lblDone);
+  v.mark(lblFail);
+  if (!negated && nextEntry != null) {
+    v.goTo(nextEntry);
+  }
+ else {
+    v.iconst(negated ? 1 : 0);
+  }
+  v.mark(lblDone);
+  return StackValue.onStack(Type.BOOLEAN_TYPE);
+}

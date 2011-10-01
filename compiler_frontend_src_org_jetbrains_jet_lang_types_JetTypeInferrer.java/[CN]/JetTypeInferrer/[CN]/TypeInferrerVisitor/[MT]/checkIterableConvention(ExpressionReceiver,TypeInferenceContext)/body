@@ -1,0 +1,43 @@
+{
+  JetExpression loopRangeExpression=loopRange.getExpression();
+  OverloadResolutionResult<FunctionDescriptor> iteratorResolutionResult=callResolver.resolveExactSignature(context.scope,loopRange,"iterator",Collections.<JetType>emptyList());
+  if (iteratorResolutionResult.isSuccess()) {
+    FunctionDescriptor iteratorFunction=iteratorResolutionResult.getDescriptor();
+    context.trace.record(LOOP_RANGE_ITERATOR,loopRangeExpression,iteratorFunction);
+    JetType iteratorType=iteratorFunction.getReturnType();
+    FunctionDescriptor hasNextFunction=checkHasNextFunctionSupport(loopRangeExpression,iteratorType,context);
+    boolean hasNextFunctionSupported=hasNextFunction != null;
+    VariableDescriptor hasNextProperty=checkHasNextPropertySupport(loopRangeExpression,iteratorType,context);
+    boolean hasNextPropertySupported=hasNextProperty != null;
+    if (hasNextFunctionSupported && hasNextPropertySupported && !ErrorUtils.isErrorType(iteratorType)) {
+      context.trace.report(HAS_NEXT_PROPERTY_AND_FUNCTION_AMBIGUITY.on(loopRangeExpression));
+    }
+ else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
+      context.trace.report(HAS_NEXT_MISSING.on(loopRangeExpression));
+    }
+ else {
+      context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange.getExpression(),hasNextFunctionSupported ? hasNextFunction : hasNextProperty);
+    }
+    OverloadResolutionResult<FunctionDescriptor> nextResolutionResult=callResolver.resolveExactSignature(context.scope,new TransientReceiver(iteratorType),"next",Collections.<JetType>emptyList());
+    if (nextResolutionResult.isAmbiguity()) {
+      context.trace.report(NEXT_AMBIGUITY.on(loopRangeExpression));
+    }
+ else     if (nextResolutionResult.isNothing()) {
+      context.trace.report(NEXT_MISSING.on(loopRangeExpression));
+    }
+ else {
+      FunctionDescriptor nextFunction=nextResolutionResult.getDescriptor();
+      context.trace.record(LOOP_RANGE_NEXT,loopRange.getExpression(),nextFunction);
+      return nextFunction.getReturnType();
+    }
+  }
+ else {
+    if (iteratorResolutionResult.isAmbiguity()) {
+      context.trace.report(ITERATOR_AMBIGUITY.on(loopRangeExpression,iteratorResolutionResult.getDescriptors()));
+    }
+ else {
+      context.trace.report(ITERATOR_MISSING.on(loopRangeExpression));
+    }
+  }
+  return null;
+}

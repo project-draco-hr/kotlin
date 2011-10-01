@@ -1,0 +1,24 @@
+{
+  Type asmType=expressionType(expression);
+  StackValue condition=gen(expression.getCondition());
+  JetExpression thenExpression=expression.getThen();
+  JetExpression elseExpression=expression.getElse();
+  if (thenExpression == null && elseExpression == null) {
+    throw new CompilationException();
+  }
+  if (thenExpression == null) {
+    return generateSingleBranchIf(condition,elseExpression,false);
+  }
+  if (elseExpression == null) {
+    return generateSingleBranchIf(condition,thenExpression,true);
+  }
+  Label elseLabel=new Label();
+  condition.condJump(elseLabel,true,v);
+  gen(thenExpression,asmType);
+  Label endLabel=new Label();
+  v.goTo(endLabel);
+  v.mark(elseLabel);
+  gen(elseExpression,asmType);
+  v.mark(endLabel);
+  return StackValue.onStack(asmType);
+}

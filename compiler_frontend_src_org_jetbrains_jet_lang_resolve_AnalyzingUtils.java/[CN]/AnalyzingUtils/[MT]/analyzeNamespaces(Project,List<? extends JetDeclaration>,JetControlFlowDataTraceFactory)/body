@@ -1,0 +1,30 @@
+{
+  BindingTraceContext bindingTraceContext=new BindingTraceContext();
+  JetSemanticServices semanticServices=JetSemanticServices.createSemanticServices(project,flowDataTraceFactory);
+  JetScope libraryScope=semanticServices.getStandardLibrary().getLibraryScope();
+  ModuleDescriptor owner=new ModuleDescriptor("<module>");
+  final WritableScope scope=new WritableScopeImpl(libraryScope,owner,new TraceBasedRedeclarationHandler(bindingTraceContext)).setDebugName("Root scope in analyzeNamespace");
+  importingStrategy.addImports(project,semanticServices,bindingTraceContext,scope);
+  TopDownAnalyzer.process(semanticServices,bindingTraceContext,scope,new NamespaceLike.Adapter(owner){
+    @Override public NamespaceDescriptorImpl getNamespace(    String name){
+      return null;
+    }
+    @Override public void addNamespace(    @NotNull NamespaceDescriptor namespaceDescriptor){
+      scope.addNamespace(namespaceDescriptor);
+    }
+    @Override public void addClassifierDescriptor(    @NotNull MutableClassDescriptor classDescriptor){
+      scope.addClassifierDescriptor(classDescriptor);
+    }
+    @Override public void addFunctionDescriptor(    @NotNull FunctionDescriptor functionDescriptor){
+      scope.addFunctionDescriptor(functionDescriptor);
+    }
+    @Override public void addPropertyDescriptor(    @NotNull PropertyDescriptor propertyDescriptor){
+      scope.addVariableDescriptor(propertyDescriptor);
+    }
+    @Override public ClassObjectStatus setClassObjectDescriptor(    @NotNull MutableClassDescriptor classObjectDescriptor){
+      throw new IllegalStateException("Must be guaranteed not to happen by the parser");
+    }
+  }
+,declarations);
+  return bindingTraceContext.getBindingContext();
+}

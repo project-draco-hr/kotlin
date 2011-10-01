@@ -1,0 +1,25 @@
+{
+  getSuperClass();
+  List<String> interfaces=new ArrayList<String>();
+  interfaces.add("jet/JetObject");
+  interfaces.addAll(getSuperInterfaces(myClass));
+  boolean isAbstract=false;
+  boolean isInterface=false;
+  if (myClass instanceof JetClass) {
+    if (((JetClass)myClass).hasModifier(JetTokens.ABSTRACT_KEYWORD))     isAbstract=true;
+    if (((JetClass)myClass).isTrait()) {
+      isAbstract=true;
+      isInterface=true;
+    }
+  }
+  v.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC | (isAbstract ? Opcodes.ACC_ABSTRACT : 0) | (isInterface ? Opcodes.ACC_INTERFACE : 0),jvmName(),null,superClass,interfaces.toArray(new String[interfaces.size()]));
+  v.visitSource(myClass.getContainingFile().getName(),null);
+  if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
+    v.visitOuterClass(state.getTypeMapper().jvmType((ClassDescriptor)descriptor.getContainingDeclaration(),OwnerKind.IMPLEMENTATION).getInternalName(),null,null);
+  }
+  if (myClass instanceof JetClass) {
+    AnnotationVisitor annotationVisitor=v.visitAnnotation("Ljet/typeinfo/JetSignature;",true);
+    annotationVisitor.visit("value",SignatureUtil.classToSignature((JetClass)myClass,state.getBindingContext(),state.getTypeMapper()));
+    annotationVisitor.visitEnd();
+  }
+}

@@ -1,0 +1,15 @@
+{
+  JetSimpleNameExpression operationSign=expression.getOperationReference();
+  JetExpression left=expression.getLeft();
+  JetExpression right=expression.getRight();
+  JetType leftType=getType(left,context.replaceScope(context.scope));
+  if (leftType != null && right != null) {
+    JetType rightType=getType(right,context.replaceScope(context.scope));
+    if (rightType != null) {
+      JetType intersect=TypeUtils.intersect(semanticServices.getTypeChecker(),new HashSet<JetType>(Arrays.asList(leftType,rightType)));
+      if (intersect == null) {
+        context.trace.report(EQUALITY_NOT_APPLICABLE.on(expression,operationSign,leftType,rightType));
+      }
+    }
+  }
+}

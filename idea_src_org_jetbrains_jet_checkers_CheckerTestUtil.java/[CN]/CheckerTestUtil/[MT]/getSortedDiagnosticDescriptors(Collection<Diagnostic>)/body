@@ -1,0 +1,18 @@
+{
+  List<Diagnostic> list=Lists.newArrayList(diagnostics);
+  Collections.sort(list,DIAGNOSTIC_COMPARATOR);
+  List<DiagnosticDescriptor> diagnosticDescriptors=Lists.newArrayList();
+  DiagnosticDescriptor currentDiagnosticDescriptor=null;
+  for (Iterator<Diagnostic> iterator=list.iterator(); iterator.hasNext(); ) {
+    Diagnostic diagnostic=iterator.next();
+    TextRange textRange=getTextRange(diagnostic);
+    if (currentDiagnosticDescriptor != null && currentDiagnosticDescriptor.equalRange(textRange)) {
+      currentDiagnosticDescriptor.diagnostics.add(diagnostic);
+    }
+ else {
+      currentDiagnosticDescriptor=new DiagnosticDescriptor(textRange.getStartOffset(),textRange.getEndOffset(),diagnostic);
+      diagnosticDescriptors.add(currentDiagnosticDescriptor);
+    }
+  }
+  return diagnosticDescriptors;
+}

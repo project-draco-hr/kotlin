@@ -1,0 +1,32 @@
+{
+  if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())   return;
+  JetType defaultType=descriptor.getDefaultType();
+  if (CodegenUtil.hasTypeInfoField(defaultType)) {
+    if (!CodegenUtil.hasDerivedTypeInfoField(defaultType,true)) {
+      v.visitField(Opcodes.ACC_PRIVATE,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
+      MethodVisitor mv=v.visitMethod(Opcodes.ACC_PUBLIC,"getTypeInfo","()Ljet/typeinfo/TypeInfo;",null,null);
+      mv.visitCode();
+      InstructionAdapter iv=new InstructionAdapter(mv);
+      String owner=state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION);
+      iv.load(0,JetTypeMapper.TYPE_OBJECT);
+      iv.getfield(owner,"$typeInfo","Ljet/typeinfo/TypeInfo;");
+      iv.areturn(JetTypeMapper.TYPE_TYPEINFO);
+      mv.visitMaxs(0,0);
+      mv.visitEnd();
+      mv=v.visitMethod(Opcodes.ACC_PROTECTED | Opcodes.ACC_FINAL,"$setTypeInfo","(Ljet/typeinfo/TypeInfo;)V",null,null);
+      mv.visitCode();
+      iv=new InstructionAdapter(mv);
+      owner=state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION);
+      iv.load(0,JetTypeMapper.TYPE_OBJECT);
+      iv.load(1,JetTypeMapper.TYPE_OBJECT);
+      iv.putfield(owner,"$typeInfo","Ljet/typeinfo/TypeInfo;");
+      mv.visitInsn(Opcodes.RETURN);
+      mv.visitMaxs(0,0);
+      mv.visitEnd();
+    }
+  }
+ else {
+    genGetStaticGetTypeInfoMethod();
+    staticTypeInfoField();
+  }
+}

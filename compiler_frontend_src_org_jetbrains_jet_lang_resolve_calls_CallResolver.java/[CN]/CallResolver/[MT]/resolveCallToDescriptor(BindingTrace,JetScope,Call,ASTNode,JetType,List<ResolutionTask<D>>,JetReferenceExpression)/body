@@ -1,0 +1,70 @@
+{
+  TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
+  OverloadResolutionResult<D> resultForFirstNonemptyCandidateSet=null;
+  TracingStrategy tracing=new TracingStrategy(){
+    @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull ReceiverDescriptor receiver,    @NotNull CallableDescriptor descriptor){
+      trace.record(REFERENCE_TARGET,reference,descriptor);
+      trace.record(RECEIVER,reference,receiver);
+    }
+    @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<D> candidates){
+      trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
+    }
+    @Override public void unresolvedReference(    @NotNull BindingTrace trace){
+      trace.report(UNRESOLVED_REFERENCE.on(reference));
+    }
+    @Override public void noValueForParameter(    @NotNull BindingTrace trace,    @NotNull ValueParameterDescriptor valueParameter){
+      trace.report(NO_VALUE_FOR_PARAMETER.on(reference,valueParameter));
+    }
+    @Override public void missingReceiver(    @NotNull BindingTrace trace,    @NotNull ReceiverDescriptor expectedReceiver){
+      trace.report(MISSING_RECEIVER.on(reference,expectedReceiver.getType()));
+    }
+    @Override public void noReceiverAllowed(    @NotNull BindingTrace trace){
+      trace.report(NO_RECEIVER_ADMITTED.on(reference));
+    }
+    @Override public void wrongNumberOfTypeArguments(    @NotNull BindingTrace trace,    int expectedTypeArgumentCount){
+      JetTypeArgumentList typeArgumentList=call.getTypeArgumentList();
+      if (typeArgumentList != null) {
+        trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(typeArgumentList,expectedTypeArgumentCount));
+      }
+ else {
+        trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(reference,expectedTypeArgumentCount));
+      }
+    }
+    @Override public void ambiguity(    @NotNull BindingTrace trace,    @NotNull Set<? extends CallableDescriptor> descriptors){
+      trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(callNode,descriptors));
+    }
+    @Override public void noneApplicable(    @NotNull BindingTrace trace,    @NotNull Set<? extends CallableDescriptor> descriptors){
+      trace.report(NONE_APPLICABLE.on(callNode,descriptors));
+    }
+    @Override public void instantiationOfAbstractClass(    @NotNull BindingTrace trace){
+      trace.report(CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS.on(callNode));
+    }
+    @Override public void typeInferenceFailed(    @NotNull BindingTrace trace){
+      trace.report(TYPE_INFERENCE_FAILED.on(callNode));
+    }
+  }
+;
+  for (  ResolutionTask<D> task : prioritizedTasks) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace);
+    OverloadResolutionResult<D> result=performResolution(temporaryTrace,scope,expectedType,task,tracing);
+    if (result.isSuccess()) {
+      temporaryTrace.commit();
+      return result.getDescriptor();
+    }
+    if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty()) {
+      traceForFirstNonemptyCandidateSet=temporaryTrace;
+      resultForFirstNonemptyCandidateSet=result;
+    }
+  }
+  if (traceForFirstNonemptyCandidateSet != null) {
+    traceForFirstNonemptyCandidateSet.commit();
+    if (resultForFirstNonemptyCandidateSet.singleDescriptor()) {
+      return resultForFirstNonemptyCandidateSet.getDescriptor();
+    }
+  }
+ else {
+    trace.report(UNRESOLVED_REFERENCE.on(reference));
+    checkTypesWithNoCallee(trace,scope,call.getTypeArguments(),call.getValueArguments(),call.getFunctionLiteralArguments());
+  }
+  return null;
+}
