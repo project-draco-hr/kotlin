@@ -1,15 +1,21 @@
 {
   for (  JetPropertyAccessor accessor : property.getAccessors()) {
-    PropertyAccessorDescriptor accessorDescriptor=accessor.isGetter() ? propertyDescriptor.getGetter() : propertyDescriptor.getSetter();
-    checkFunction(accessor,accessorDescriptor);
-    checkModifiers(accessor.getModifierList());
-    if (propertyDescriptor.getModality() == Modality.FINAL && accessor.hasModifier(JetTokens.OPEN_KEYWORD)) {
-      ASTNode openModifierNode=accessor.getModifierList().getModifierNode(JetTokens.OPEN_KEYWORD);
-      context.getTrace().report(NON_FINAL_ACCESSOR_OF_FINAL_PROPERTY.on(accessor,openModifierNode,property));
+    checkIllegalInThisContextModifiers(accessor.getModifierList(),Sets.newHashSet(JetTokens.ABSTRACT_KEYWORD,JetTokens.OPEN_KEYWORD,JetTokens.FINAL_KEYWORD,JetTokens.OVERRIDE_KEYWORD));
+  }
+  JetPropertyAccessor getter=property.getGetter();
+  PropertyGetterDescriptor getterDescriptor=propertyDescriptor.getGetter();
+  JetModifierList getterModifierList=getter != null ? getter.getModifierList() : null;
+  if (getterModifierList != null && getterDescriptor != null) {
+    Map<JetKeywordToken,ASTNode> nodes=getNodesCorrespondingToModifiers(getterModifierList,Sets.newHashSet(JetTokens.PUBLIC_KEYWORD,JetTokens.PROTECTED_KEYWORD,JetTokens.PRIVATE_KEYWORD,JetTokens.INTERNAL_KEYWORD));
+    if (getterDescriptor.getVisibility() != propertyDescriptor.getVisibility()) {
+      for (      Map.Entry<JetKeywordToken,ASTNode> entry : nodes.entrySet()) {
+        context.getTrace().report(Errors.GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY.on(getterModifierList,entry.getValue(),entry.getKey()));
+      }
     }
-    if (propertyDescriptor.getModality() != Modality.ABSTRACT && accessor.hasModifier(JetTokens.ABSTRACT_KEYWORD)) {
-      ASTNode abstractModifierNode=accessor.getModifierList().getModifierNode(JetTokens.ABSTRACT_KEYWORD);
-      context.getTrace().report(ABSTRACT_ACCESSOR_OF_NON_ABSTRACT_PROPERTY.on(accessor,abstractModifierNode,property));
+ else {
+      for (      Map.Entry<JetKeywordToken,ASTNode> entry : nodes.entrySet()) {
+        context.getTrace().report(Errors.REDUNDANT_MODIFIER_IN_GETTER.on(getterModifierList,entry.getValue(),entry.getKey()));
+      }
     }
   }
 }
