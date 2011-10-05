@@ -1,0 +1,32 @@
+{
+  return receiverToCast.accept(new ReceiverDescriptorVisitor<List<? extends ReceiverDescriptor>,Object>(){
+    @Override public List<? extends ReceiverDescriptor> visitNoReceiver(    ReceiverDescriptor noReceiver,    Object data){
+      return Collections.emptyList();
+    }
+    @Override public List<? extends ReceiverDescriptor> visitTransientReceiver(    TransientReceiver receiver,    Object data){
+      return Collections.emptyList();
+    }
+    @Override public List<? extends ReceiverDescriptor> visitExtensionReceiver(    ExtensionReceiver receiver,    Object data){
+      return castThis(dataFlowInfo,receiver);
+    }
+    @Override public List<? extends ReceiverDescriptor> visitClassReceiver(    ClassReceiver receiver,    Object data){
+      return castThis(dataFlowInfo,receiver);
+    }
+    @Override public List<? extends ReceiverDescriptor> visitExpressionReceiver(    ExpressionReceiver receiver,    Object data){
+      JetExpression expression=receiver.getExpression();
+      VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(bindingContext,expression);
+      if (variableDescriptor != null && isAutocastable(variableDescriptor)) {
+        List<ReceiverDescriptor> result=Lists.newArrayList();
+        for (        JetType possibleType : dataFlowInfo.getPossibleTypesForVariable(variableDescriptor)) {
+          result.add(new AutocastReceiver(receiver,possibleType));
+        }
+        return result;
+      }
+ else       if (expression instanceof JetThisExpression) {
+        return castThis(dataFlowInfo,receiver);
+      }
+      return Collections.emptyList();
+    }
+  }
+,null);
+}

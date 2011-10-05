@@ -1,0 +1,49 @@
+{
+  if (successfulCandidates.size() > 0) {
+    if (successfulCandidates.size() != 1) {
+      Set<ResolvedCall<D>> cleanCandidates=Sets.newLinkedHashSet(successfulCandidates);
+      cleanCandidates.removeAll(dirtyCandidates);
+      if (cleanCandidates.isEmpty()) {
+        cleanCandidates=successfulCandidates;
+      }
+      ResolvedCall<D> maximallySpecific=overloadingConflictResolver.findMaximallySpecific(cleanCandidates,false);
+      if (maximallySpecific != null) {
+        return OverloadResolutionResults.success(maximallySpecific);
+      }
+      ResolvedCall<D> maximallySpecificGenericsDiscriminated=overloadingConflictResolver.findMaximallySpecific(cleanCandidates,true);
+      if (maximallySpecificGenericsDiscriminated != null) {
+        return OverloadResolutionResults.success(maximallySpecificGenericsDiscriminated);
+      }
+      Set<ResolvedCall<D>> noOverrides=OverridingUtil.filterOverrides(successfulCandidates,MAP_TO_RESULT);
+      if (dirtyCandidates.isEmpty()) {
+        tracing.ambiguity(trace,noOverrides);
+      }
+      tracing.recordAmbiguity(trace,noOverrides);
+      return OverloadResolutionResults.ambiguity(noOverrides);
+    }
+ else {
+      ResolvedCall<D> result=successfulCandidates.iterator().next();
+      TemporaryBindingTrace temporaryTrace=result.getTrace();
+      temporaryTrace.commit();
+      return OverloadResolutionResults.success(result);
+    }
+  }
+ else   if (!failedCandidates.isEmpty()) {
+    if (failedCandidates.size() != 1) {
+      Set<ResolvedCall<D>> noOverrides=OverridingUtil.filterOverrides(failedCandidates,MAP_TO_CANDIDATE);
+      if (noOverrides.size() != 1) {
+        tracing.noneApplicable(trace,noOverrides);
+        tracing.recordAmbiguity(trace,noOverrides);
+        return OverloadResolutionResults.manyFailedCandidates(noOverrides);
+      }
+      failedCandidates=noOverrides;
+    }
+    ResolvedCall<D> failed=failedCandidates.iterator().next();
+    failed.getTrace().commit();
+    return OverloadResolutionResults.singleFailedCandidate(failed);
+  }
+ else {
+    tracing.unresolvedReference(trace);
+    return OverloadResolutionResults.nameNotFound();
+  }
+}

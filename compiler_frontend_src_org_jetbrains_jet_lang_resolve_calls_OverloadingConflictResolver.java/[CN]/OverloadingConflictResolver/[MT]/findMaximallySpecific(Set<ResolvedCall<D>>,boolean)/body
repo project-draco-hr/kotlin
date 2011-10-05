@@ -1,0 +1,20 @@
+{
+  Set<ResolvedCall<D>> maximallySpecific=Sets.newHashSet();
+  meLoop:   for (  ResolvedCall<D> candidateCall : candidates) {
+    D me=candidateCall.getResultingDescriptor();
+    for (    ResolvedCall<D> otherCall : candidates) {
+      D other=otherCall.getResultingDescriptor();
+      if (other == me)       continue;
+      if (!moreSpecific(me,other,discriminateGenericDescriptors) || moreSpecific(other,me,discriminateGenericDescriptors)) {
+        continue meLoop;
+      }
+    }
+    maximallySpecific.add(candidateCall);
+  }
+  if (maximallySpecific.size() == 1) {
+    ResolvedCall<D> result=maximallySpecific.iterator().next();
+    result.getTrace().commit();
+    return result;
+  }
+  return null;
+}

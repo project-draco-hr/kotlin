@@ -1,11 +1,11 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
-    return callResolver.resolveCall(context.trace,context.scope,receiver,(JetCallExpression)selectorExpression,context.expectedType);
+    return context.resolveCall(receiver,(JetCallExpression)selectorExpression);
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
     JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)selectorExpression;
     TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
-    VariableDescriptor variableDescriptor=callResolver.resolveSimpleProperty(temporaryTrace,context.scope,receiver,nameExpression,context.expectedType);
+    VariableDescriptor variableDescriptor=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,nameExpression);
     if (variableDescriptor != null) {
       temporaryTrace.commit();
       return context.services.checkEnrichedType(variableDescriptor.getOutType(),nameExpression,context);
