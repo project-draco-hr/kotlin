@@ -2,17 +2,10 @@
   TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
   OverloadResolutionResults<D> resultsForFirstNonemptyCandidateSet=null;
   TracingStrategy tracing=new TracingStrategy(){
-    @Override public void bindReference(    @NotNull BindingTrace trace,    @NotNull ReceiverDescriptor receiver,    @NotNull CallableDescriptor descriptor){
+    @Override public <D extends CallableDescriptor>void bindReference(    @NotNull BindingTrace trace,    @NotNull ResolvedCall<D> resolvedCall){
+      D descriptor=resolvedCall.getCandidateDescriptor();
       trace.record(REFERENCE_TARGET,reference,descriptor);
-      trace.record(RECEIVER,reference,receiver);
-      if (receiver instanceof AutoCastReceiver) {
-        AutoCastReceiver autoCastReceiver=(AutoCastReceiver)receiver;
-        ReceiverDescriptor original=autoCastReceiver.getOriginal();
-        if (original instanceof ExpressionReceiver) {
-          ExpressionReceiver expressionReceiver=(ExpressionReceiver)original;
-          trace.record(AUTOCAST,expressionReceiver.getExpression(),autoCastReceiver.getType());
-        }
-      }
+      trace.record(RESOLVED_CALL,reference,resolvedCall);
     }
     @Override public <D extends CallableDescriptor>void recordAmbiguity(    BindingTrace trace,    Collection<ResolvedCall<D>> candidates){
       trace.record(AMBIGUOUS_REFERENCE_TARGET,reference,candidates);
