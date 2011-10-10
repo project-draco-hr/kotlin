@@ -1,0 +1,20 @@
+{
+  JetTypeChecker typeChecker=JetTypeChecker.INSTANCE;
+  VariableDescriptor variableDescriptor=getVariableDescriptorFromSimpleName(trace.getBindingContext(),expression);
+  if (variableDescriptor != null) {
+    List<JetType> possibleTypes=Lists.newArrayList(dataFlowInfo.getPossibleTypesForVariable(variableDescriptor));
+    Collections.reverse(possibleTypes);
+    for (    JetType possibleType : possibleTypes) {
+      if (typeChecker.isSubtypeOf(possibleType,expectedType)) {
+        if (isAutoCastable(variableDescriptor)) {
+          trace.record(AUTOCAST,expression,possibleType);
+        }
+ else {
+          trace.report(AUTOCAST_IMPOSSIBLE.on(expression,possibleType,expression.getText()));
+        }
+        return possibleType;
+      }
+    }
+  }
+  return null;
+}

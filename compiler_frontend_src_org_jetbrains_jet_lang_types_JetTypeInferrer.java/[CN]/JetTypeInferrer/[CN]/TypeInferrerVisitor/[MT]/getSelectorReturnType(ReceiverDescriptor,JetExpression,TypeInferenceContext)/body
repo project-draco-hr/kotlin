@@ -1,6 +1,7 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
-    return context.resolveCall(receiver,(JetCallExpression)selectorExpression);
+    JetCallExpression callExpression=(JetCallExpression)selectorExpression;
+    return context.resolveCall(receiver,callExpression);
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
     JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)selectorExpression;
@@ -8,14 +9,14 @@
     VariableDescriptor variableDescriptor=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,nameExpression);
     if (variableDescriptor != null) {
       temporaryTrace.commit();
-      return context.services.checkEnrichedType(variableDescriptor.getOutType(),nameExpression,context);
+      return context.services.checkType(variableDescriptor.getOutType(),nameExpression,context);
     }
     TypeInferenceContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
     JetType jetType=lookupNamespaceOrClassObject(nameExpression,nameExpression.getReferencedName(),newContext);
     if (jetType == null) {
       context.trace.report(UNRESOLVED_REFERENCE.on(nameExpression));
     }
-    return context.services.checkEnrichedType(jetType,nameExpression,context);
+    return context.services.checkType(jetType,nameExpression,context);
   }
  else   if (selectorExpression instanceof JetQualifiedExpression) {
     JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)selectorExpression;

@@ -1,0 +1,120 @@
+{
+  TemporaryBindingTrace temporaryTrace=candidateCall.getTrace();
+  Map<ValueParameterDescriptor,VarargValueArgument> varargs=Maps.newHashMap();
+  Set<ValueParameterDescriptor> usedParameters=Sets.newHashSet();
+  D candidate=candidateCall.getCandidateDescriptor();
+  List<ValueParameterDescriptor> valueParameters=candidate.getValueParameters();
+  Map<String,ValueParameterDescriptor> parameterByName=Maps.newHashMap();
+  for (  ValueParameterDescriptor valueParameter : valueParameters) {
+    parameterByName.put(valueParameter.getName(),valueParameter);
+  }
+  List<? extends ValueArgument> valueArguments=task.getValueArguments();
+  boolean error=false;
+  boolean someNamed=false;
+  boolean somePositioned=false;
+  for (int i=0; i < valueArguments.size(); i++) {
+    ValueArgument valueArgument=valueArguments.get(i);
+    if (valueArgument.isNamed()) {
+      someNamed=true;
+      JetReferenceExpression nameReference=valueArgument.getArgumentName().getReferenceExpression();
+      ValueParameterDescriptor valueParameterDescriptor=parameterByName.get(valueArgument.getArgumentName().getReferenceExpression().getReferencedName());
+      if (valueParameterDescriptor == null) {
+        temporaryTrace.report(NAMED_PARAMETER_NOT_FOUND.on(nameReference));
+        error=true;
+      }
+ else {
+        if (!usedParameters.add(valueParameterDescriptor)) {
+          temporaryTrace.report(ARGUMENT_PASSED_TWICE.on(nameReference));
+        }
+        temporaryTrace.record(REFERENCE_TARGET,nameReference,valueParameterDescriptor);
+        put(candidateCall,valueParameterDescriptor,valueArgument,varargs);
+      }
+      if (somePositioned) {
+        temporaryTrace.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(nameReference));
+        error=true;
+      }
+    }
+ else {
+      somePositioned=true;
+      if (someNamed) {
+        temporaryTrace.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(valueArgument.asElement()));
+        error=true;
+      }
+ else {
+        int parameterCount=valueParameters.size();
+        if (i < parameterCount) {
+          ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(i);
+          usedParameters.add(valueParameterDescriptor);
+          put(candidateCall,valueParameterDescriptor,valueArgument,varargs);
+        }
+ else         if (!valueParameters.isEmpty()) {
+          ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(valueParameters.size() - 1);
+          if (valueParameterDescriptor.isVararg()) {
+            put(candidateCall,valueParameterDescriptor,valueArgument,varargs);
+            usedParameters.add(valueParameterDescriptor);
+          }
+ else {
+            temporaryTrace.report(TOO_MANY_ARGUMENTS.on(valueArgument.asElement(),candidate));
+            error=true;
+          }
+        }
+ else {
+          temporaryTrace.report(TOO_MANY_ARGUMENTS.on(valueArgument.asElement(),candidate));
+          error=true;
+        }
+      }
+    }
+  }
+  List<JetExpression> functionLiteralArguments=task.getFunctionLiteralArguments();
+  if (!functionLiteralArguments.isEmpty()) {
+    JetExpression possiblyLabeledFunctionLiteral=functionLiteralArguments.get(0);
+    if (valueParameters.isEmpty()) {
+      temporaryTrace.report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
+      error=true;
+    }
+ else {
+      JetFunctionLiteralExpression functionLiteral;
+      if (possiblyLabeledFunctionLiteral instanceof JetLabelQualifiedExpression) {
+        JetLabelQualifiedExpression labeledFunctionLiteral=(JetLabelQualifiedExpression)possiblyLabeledFunctionLiteral;
+        functionLiteral=(JetFunctionLiteralExpression)labeledFunctionLiteral.getLabeledExpression();
+      }
+ else {
+        functionLiteral=(JetFunctionLiteralExpression)possiblyLabeledFunctionLiteral;
+      }
+      ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(valueParameters.size() - 1);
+      if (valueParameterDescriptor.isVararg()) {
+        temporaryTrace.report(VARARG_OUTSIDE_PARENTHESES.on(possiblyLabeledFunctionLiteral));
+        error=true;
+      }
+ else {
+        if (!usedParameters.add(valueParameterDescriptor)) {
+          temporaryTrace.report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
+          error=true;
+        }
+ else {
+          put(candidateCall,valueParameterDescriptor,CallMaker.makeValueArgument(functionLiteral),varargs);
+        }
+      }
+    }
+    for (int i=1; i < functionLiteralArguments.size(); i++) {
+      JetExpression argument=functionLiteralArguments.get(i);
+      temporaryTrace.report(MANY_FUNCTION_LITERAL_ARGUMENTS.on(argument));
+      error=true;
+    }
+  }
+  for (  ValueParameterDescriptor valueParameter : valueParameters) {
+    if (!usedParameters.contains(valueParameter)) {
+      if (valueParameter.hasDefaultValue()) {
+        candidateCall.recordValueArgument(valueParameter,DefaultValueArgument.DEFAULT);
+      }
+ else       if (valueParameter.isVararg()) {
+        candidateCall.recordValueArgument(valueParameter,new VarargValueArgument());
+      }
+ else {
+        tracing.noValueForParameter(temporaryTrace,valueParameter);
+        error=true;
+      }
+    }
+  }
+  return error;
+}
