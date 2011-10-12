@@ -12,6 +12,14 @@
       return null;
     }
   }
+  ReceiverDescriptor substitutedExpectedThis=NO_RECEIVER;
+  if (expectedThisObject.exists()) {
+    JetType substitutedType=substitutor.substitute(expectedThisObject.getType(),Variance.IN_VARIANCE);
+    if (substitutedType == null) {
+      return null;
+    }
+    substitutedExpectedThis=new TransientReceiver(substitutedType);
+  }
   List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
   if (substitutedValueParameters == null) {
     return null;
@@ -20,7 +28,7 @@
   if (substitutedReturnType == null) {
     return null;
   }
-  substitutedDescriptor.initialize(substitutedReceiverType,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,modality,visibility);
+  substitutedDescriptor.initialize(substitutedReceiverType,substitutedExpectedThis,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,modality,visibility);
   for (  FunctionDescriptor overriddenFunction : overriddenFunctions) {
     substitutedDescriptor.addOverriddenFunction(overriddenFunction);
   }
