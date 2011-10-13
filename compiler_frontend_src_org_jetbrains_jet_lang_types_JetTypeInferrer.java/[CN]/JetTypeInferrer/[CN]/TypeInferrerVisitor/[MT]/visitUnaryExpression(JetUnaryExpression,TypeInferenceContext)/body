@@ -3,7 +3,12 @@
   if (baseExpression == null)   return null;
   JetSimpleNameExpression operationSign=expression.getOperationSign();
   if (JetTokens.LABELS.contains(operationSign.getReferencedNameElementType())) {
-    return context.services.checkType(getType(baseExpression,context.replaceExpectedReturnType(context.expectedType)),expression,context);
+    String referencedName=operationSign.getReferencedName();
+    referencedName=referencedName == null ? " <?>" : referencedName;
+    labelsResolver.enterLabeledElement(referencedName.substring(1),baseExpression);
+    JetType type=context.services.checkType(getType(baseExpression,context.replaceExpectedReturnType(context.expectedType)),expression,context);
+    labelsResolver.exitLabeledElement(baseExpression);
+    return type;
   }
   IElementType operationType=operationSign.getReferencedNameElementType();
   String name=unaryOperationNames.get(operationType);

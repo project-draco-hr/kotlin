@@ -1,0 +1,30 @@
+{
+  final DeclarationDescriptor functionParent=functionDescriptor.getContainingDeclaration();
+  final List<Type> valueParameterTypes=new ArrayList<Type>();
+  Method descriptor=mapSignature(functionDescriptor.getOriginal(),valueParameterTypes,kind);
+  String owner;
+  int invokeOpcode;
+  boolean needsReceiver;
+  ClassDescriptor receiverClass=null;
+  if (functionParent instanceof NamespaceDescriptor) {
+    owner=NamespaceCodegen.getJVMClassName(DescriptorRenderer.getFQName(functionParent));
+    invokeOpcode=Opcodes.INVOKESTATIC;
+    needsReceiver=functionDescriptor.getReceiver() != ReceiverDescriptor.NO_RECEIVER;
+  }
+ else   if (functionParent instanceof ClassDescriptor) {
+    ClassDescriptor containingClass=(ClassDescriptor)functionParent;
+    owner=jvmName(containingClass,OwnerKind.IMPLEMENTATION);
+    invokeOpcode=CodegenUtil.isInterface(containingClass) ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL;
+    needsReceiver=true;
+    receiverClass=containingClass;
+  }
+ else {
+    throw new UnsupportedOperationException("unknown function parent");
+  }
+  final CallableMethod result=new CallableMethod(owner,descriptor,invokeOpcode,valueParameterTypes);
+  result.setAcceptsTypeArguments(true);
+  if (needsReceiver) {
+    result.setNeedsReceiver(receiverClass);
+  }
+  return result;
+}
