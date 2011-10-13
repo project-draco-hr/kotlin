@@ -1,2 +1,44 @@
 {
+  JetExpression bodyExpression=function.getBodyExpression();
+  if (bodyExpression == null)   return;
+  final boolean blockBody=function.hasBlockBody();
+  final TypeInferenceContext context=blockBody ? newContext(trace,functionInnerScope,dataFlowInfo,NO_EXPECTED_TYPE,expectedReturnType) : newContext(trace,functionInnerScope,dataFlowInfo,expectedReturnType,FORBIDDEN);
+  if (function instanceof JetFunctionLiteralExpression) {
+    JetFunctionLiteralExpression functionLiteralExpression=(JetFunctionLiteralExpression)function;
+    getBlockReturnedType(functionInnerScope,functionLiteralExpression.getBodyExpression(),CoercionStrategy.COERCION_TO_UNIT,context);
+  }
+ else {
+    typeInferrerVisitor.getType(bodyExpression,context);
+  }
+  List<JetElement> unreachableElements=Lists.newArrayList();
+  flowInformationProvider.collectUnreachableExpressions(function.asElement(),unreachableElements);
+  final Set<JetElement> rootUnreachableElements=JetPsiUtil.findRootExpressions(unreachableElements);
+  for (  JetElement element : rootUnreachableElements) {
+    trace.report(UNREACHABLE_CODE.on(element));
+  }
+  List<JetExpression> returnedExpressions=Lists.newArrayList();
+  flowInformationProvider.collectReturnExpressions(function.asElement(),returnedExpressions);
+  boolean nothingReturned=returnedExpressions.isEmpty();
+  returnedExpressions.remove(function);
+  if (expectedReturnType != NO_EXPECTED_TYPE && !JetStandardClasses.isUnit(expectedReturnType) && returnedExpressions.isEmpty() && !nothingReturned) {
+    trace.report(RETURN_TYPE_MISMATCH.on(bodyExpression,expectedReturnType));
+  }
+  for (  JetExpression returnedExpression : returnedExpressions) {
+    returnedExpression.accept(new JetVisitorVoid(){
+      @Override public void visitReturnExpression(      JetReturnExpression expression){
+        if (!blockBody) {
+          trace.report(RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.on(expression));
+        }
+      }
+      @Override public void visitExpression(      JetExpression expression){
+        if (blockBody && !JetStandardClasses.isUnit(expectedReturnType) && !rootUnreachableElements.contains(expression)) {
+          JetType type=typeInferrerVisitor.getType(expression,context.replaceExpectedType(NO_EXPECTED_TYPE));
+          if (type == null || !JetStandardClasses.isNothing(type)) {
+            trace.report(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.on(expression));
+          }
+        }
+      }
+    }
+);
+  }
 }

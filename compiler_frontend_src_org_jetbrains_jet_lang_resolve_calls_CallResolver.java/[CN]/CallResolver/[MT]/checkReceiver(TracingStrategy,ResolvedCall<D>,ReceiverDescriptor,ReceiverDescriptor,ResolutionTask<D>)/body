@@ -1,5 +1,5 @@
 {
-  boolean result=true;
+  ResolutionStatus result=SUCCESS;
   if (receiverParameter.exists() && receiverArgument.exists()) {
     ASTNode callOperationNode=task.getCall().getCallOperationNode();
     boolean safeAccess=callOperationNode != null && callOperationNode.getElementType() == JetTokens.SAFE_ACCESS;
@@ -7,12 +7,13 @@
     AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(task.getDataFlowInfo(),candidateCall.getTrace().getBindingContext());
     if (!safeAccess && !receiverParameter.getType().isNullable() && !autoCastService.isNotNull(receiverArgument)) {
       tracing.unsafeCall(candidateCall.getTrace(),receiverArgumentType);
+      result=UNSAFE_CALL_ERROR;
     }
  else {
       JetType effectiveReceiverArgumentType=safeAccess ? TypeUtils.makeNotNullable(receiverArgumentType) : receiverArgumentType;
       if (!semanticServices.getTypeChecker().isSubtypeOf(effectiveReceiverArgumentType,receiverParameter.getType())) {
         tracing.wrongReceiverType(candidateCall.getTrace(),receiverParameter,receiverArgument);
-        result=false;
+        result=OTHER_ERROR;
       }
     }
     if (safeAccess && (receiverParameter.getType().isNullable() || !receiverArgumentType.isNullable())) {
