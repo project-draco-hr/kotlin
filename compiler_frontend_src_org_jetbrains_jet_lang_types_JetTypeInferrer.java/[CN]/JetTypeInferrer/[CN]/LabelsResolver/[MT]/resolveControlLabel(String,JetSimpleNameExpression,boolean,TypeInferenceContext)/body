@@ -1,0 +1,21 @@
+{
+  Collection<DeclarationDescriptor> declarationsByLabel=context.scope.getDeclarationsByLabel(labelName);
+  int size=declarationsByLabel.size();
+  if (size == 1) {
+    DeclarationDescriptor declarationDescriptor=declarationsByLabel.iterator().next();
+    JetElement element;
+    if (declarationDescriptor instanceof FunctionDescriptor || declarationDescriptor instanceof ClassDescriptor) {
+      element=(JetElement)context.trace.get(BindingContext.DESCRIPTOR_TO_DECLARATION,declarationDescriptor);
+    }
+ else {
+      throw new UnsupportedOperationException();
+    }
+    context.trace.record(LABEL_TARGET,labelExpression,element);
+    return element;
+  }
+ else   if (size == 0) {
+    return resolveNamedLabel(labelName,labelExpression,reportUnresolved,context);
+  }
+  context.trace.report(AMBIGUOUS_LABEL.on(labelExpression));
+  return null;
+}
