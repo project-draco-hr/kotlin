@@ -1,0 +1,14 @@
+{
+  List<JetExpression> entries=expression.getEntries();
+  List<JetType> types=new ArrayList<JetType>();
+  for (  JetExpression entry : entries) {
+    types.add(context.getServices().safeGetType(context.scope,entry,TypeUtils.NO_EXPECTED_TYPE));
+  }
+  if (context.expectedType != TypeUtils.NO_EXPECTED_TYPE && JetStandardClasses.isTupleType(context.expectedType)) {
+    List<JetType> enrichedTypes=context.getServices().checkArgumentTypes(types,entries,context.expectedType.getArguments(),context);
+    if (enrichedTypes != types) {
+      return JetStandardClasses.getTupleType(enrichedTypes);
+    }
+  }
+  return context.getServices().checkType(JetStandardClasses.getTupleType(types),expression,context);
+}

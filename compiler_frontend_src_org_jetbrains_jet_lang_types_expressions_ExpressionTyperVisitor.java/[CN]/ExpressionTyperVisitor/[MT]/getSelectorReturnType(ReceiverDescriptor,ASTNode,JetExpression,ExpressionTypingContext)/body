@@ -1,0 +1,34 @@
+{
+  if (selectorExpression instanceof JetCallExpression) {
+    JetCallExpression callExpression=(JetCallExpression)selectorExpression;
+    return context.resolveCall(receiver,callOperationNode,callExpression);
+  }
+ else   if (selectorExpression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)selectorExpression;
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+    VariableDescriptor variableDescriptor=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,callOperationNode,nameExpression);
+    if (variableDescriptor != null) {
+      temporaryTrace.commit();
+      return context.getServices().checkType(variableDescriptor.getOutType(),nameExpression,context);
+    }
+    ExpressionTypingContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
+    JetType jetType=lookupNamespaceOrClassObject(nameExpression,nameExpression.getReferencedName(),newContext);
+    if (jetType == null) {
+      context.trace.report(UNRESOLVED_REFERENCE.on(nameExpression));
+    }
+    return context.getServices().checkType(jetType,nameExpression,context);
+  }
+ else   if (selectorExpression instanceof JetQualifiedExpression) {
+    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)selectorExpression;
+    JetExpression newReceiverExpression=qualifiedExpression.getReceiverExpression();
+    JetType newReceiverType=getSelectorReturnType(receiver,callOperationNode,newReceiverExpression,context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE));
+    JetExpression newSelectorExpression=qualifiedExpression.getSelectorExpression();
+    if (newReceiverType != null && newSelectorExpression != null) {
+      return getSelectorReturnType(new ExpressionReceiver(newReceiverExpression,newReceiverType),qualifiedExpression.getOperationTokenNode(),newSelectorExpression,context);
+    }
+  }
+ else {
+    context.trace.report(UNSUPPORTED.on(selectorExpression,"getSelectorReturnType"));
+  }
+  return null;
+}
