@@ -1,0 +1,20 @@
+{
+  ResolutionStatus result=SUCCESS;
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
+    ValueParameterDescriptor parameterDescriptor=entry.getKey();
+    ResolvedValueArgument resolvedArgument=entry.getValue();
+    JetType parameterType=parameterDescriptor.getOutType();
+    List<JetExpression> argumentExpressions=resolvedArgument.getArgumentExpressions();
+    for (    JetExpression argumentExpression : argumentExpressions) {
+      JetTypeInferrer.Services temporaryServices=typeInferrer.getServices(candidateCall.getTrace());
+      JetType type=temporaryServices.getType(scope,argumentExpression,parameterType);
+      if (type == null) {
+        candidateCall.argumentHasNoType();
+      }
+ else       if (!semanticServices.getTypeChecker().isSubtypeOf(type,parameterType)) {
+        result=OTHER_ERROR;
+      }
+    }
+  }
+  return result;
+}

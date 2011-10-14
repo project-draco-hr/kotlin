@@ -1,0 +1,21 @@
+{
+  Set<D> candidates=Sets.newLinkedHashSet();
+  outerLoop:   for (  D meD : candidateSet) {
+    CallableDescriptor me=transform.fun(meD);
+    for (    D otherD : candidateSet) {
+      CallableDescriptor other=transform.fun(otherD);
+      if (me == other)       continue;
+      if (overrides(other,me)) {
+        continue outerLoop;
+      }
+    }
+    for (    D otherD : candidates) {
+      CallableDescriptor other=transform.fun(otherD);
+      if (me.getOriginal() == other.getOriginal() && isOverridableBy(other,me).isSuccess() && isOverridableBy(me,other).isSuccess()) {
+        continue outerLoop;
+      }
+    }
+    candidates.add(meD);
+  }
+  return candidates;
+}

@@ -1,0 +1,38 @@
+{
+  JetExpression bodyExpression=function.getBodyExpression();
+  if (bodyExpression == null)   return;
+  JetFlowInformationProvider flowInformationProvider=context.getClassDescriptorResolver().computeFlowData((JetElement)function,bodyExpression);
+  final boolean blockBody=function.hasBlockBody();
+  List<JetElement> unreachableElements=Lists.newArrayList();
+  flowInformationProvider.collectUnreachableExpressions(function.asElement(),unreachableElements);
+  final Set<JetElement> rootUnreachableElements=JetPsiUtil.findRootExpressions(unreachableElements);
+  for (  JetElement element : rootUnreachableElements) {
+    context.getTrace().report(UNREACHABLE_CODE.on(element));
+  }
+  List<JetExpression> returnedExpressions=Lists.newArrayList();
+  flowInformationProvider.collectReturnExpressions(function.asElement(),returnedExpressions);
+  boolean nothingReturned=returnedExpressions.isEmpty();
+  returnedExpressions.remove(function);
+  final JetScope scope=this.context.getDeclaringScopes().get(function);
+  if (expectedReturnType != NO_EXPECTED_TYPE && !JetStandardClasses.isUnit(expectedReturnType) && returnedExpressions.isEmpty() && !nothingReturned) {
+    context.getTrace().report(RETURN_TYPE_MISMATCH.on(bodyExpression,expectedReturnType));
+  }
+  for (  JetExpression returnedExpression : returnedExpressions) {
+    returnedExpression.accept(new JetVisitorVoid(){
+      @Override public void visitReturnExpression(      JetReturnExpression expression){
+        if (!blockBody) {
+          context.getTrace().report(RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.on(expression));
+        }
+      }
+      @Override public void visitExpression(      JetExpression expression){
+        if (blockBody && expectedReturnType != NO_EXPECTED_TYPE && !JetStandardClasses.isUnit(expectedReturnType) && !rootUnreachableElements.contains(expression)) {
+          JetType type=typeInferrer.getType(scope,expression,expectedReturnType);
+          if (type == null || !JetStandardClasses.isNothing(type)) {
+            context.getTrace().report(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.on(expression));
+          }
+        }
+      }
+    }
+);
+  }
+}

@@ -1,0 +1,39 @@
+{
+  receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+  JetCallExpression call=(JetCallExpression)element;
+  FunctionDescriptor funDescriptor=(FunctionDescriptor)codegen.getBindingContext().get(BindingContext.REFERENCE_TARGET,(JetSimpleNameExpression)call.getCalleeExpression());
+  ClassDescriptor containingDeclaration=(ClassDescriptor)funDescriptor.getContainingDeclaration().getOriginal();
+  JetStandardLibrary standardLibrary=codegen.getState().getStandardLibrary();
+  if (containingDeclaration.equals(standardLibrary.getArray())) {
+    codegen.generateTypeInfo(funDescriptor.getReturnType().getArguments().get(0).getType());
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([Ljava/lang/Object;Ljet/typeinfo/TypeInfo;)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getByteArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([B)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getShortArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([S)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getIntArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([I)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getLongArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([J)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getFloatArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([F)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getDoubleArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([D)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getCharArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([C)Ljet/Iterator;");
+  }
+ else   if (containingDeclaration.equals(standardLibrary.getBooleanArrayClass())) {
+    v.invokestatic("jet/arrays/ArrayIterator","iterator","([Z)Ljet/Iterator;");
+  }
+ else {
+    throw new UnsupportedOperationException(containingDeclaration.toString());
+  }
+  return StackValue.onStack(JetTypeMapper.TYPE_ITERATOR);
+}

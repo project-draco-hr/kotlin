@@ -1,13 +1,7 @@
 {
   ExpressionReceiver receiver=safeGetExpressionReceiver(binaryExpression.getLeft(),context.replaceScope(scope));
-  FunctionDescriptor functionDescriptor=callResolver.resolveCallWithGivenName(context.trace,scope,CallMaker.makeCall(binaryExpression),binaryExpression.getOperationReference(),name,receiver,context.expectedType);
+  FunctionDescriptor functionDescriptor=context.replaceScope(scope).resolveCallWithGivenName(CallMaker.makeCall(receiver,binaryExpression),binaryExpression.getOperationReference(),name,receiver);
   if (functionDescriptor != null) {
-    if (receiver.getType().isNullable()) {
-      JetExpression right=binaryExpression.getRight();
-      String rightText=right == null ? "" : right.getText();
-      String leftText=binaryExpression.getLeft().getText();
-      context.trace.report(UNSAFE_INFIX_CALL.on(binaryExpression.getOperationReference(),leftText,name,rightText));
-    }
     return functionDescriptor.getReturnType();
   }
   return null;

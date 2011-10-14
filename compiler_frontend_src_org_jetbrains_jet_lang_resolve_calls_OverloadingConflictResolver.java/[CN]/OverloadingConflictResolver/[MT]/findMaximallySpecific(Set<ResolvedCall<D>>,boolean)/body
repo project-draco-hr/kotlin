@@ -1,0 +1,28 @@
+{
+  Set<ResolvedCall<D>> maximallySpecific=new THashSet<ResolvedCall<D>>(new TObjectHashingStrategy<ResolvedCall<D>>(){
+    @Override public boolean equals(    ResolvedCall<D> o1,    ResolvedCall<D> o2){
+      return o1 == null ? o2 == null : o1.getResultingDescriptor().equals(o2.getResultingDescriptor());
+    }
+    @Override public int computeHashCode(    ResolvedCall<D> object){
+      return object == null ? 0 : object.getResultingDescriptor().hashCode();
+    }
+  }
+);
+  meLoop:   for (  ResolvedCall<D> candidateCall : candidates) {
+    D me=candidateCall.getResultingDescriptor();
+    for (    ResolvedCall<D> otherCall : candidates) {
+      D other=otherCall.getResultingDescriptor();
+      if (other == me)       continue;
+      if (!moreSpecific(me,other,discriminateGenericDescriptors) || moreSpecific(other,me,discriminateGenericDescriptors)) {
+        continue meLoop;
+      }
+    }
+    maximallySpecific.add(candidateCall);
+  }
+  if (maximallySpecific.size() == 1) {
+    ResolvedCall<D> result=maximallySpecific.iterator().next();
+    result.getTrace().commit();
+    return result;
+  }
+  return null;
+}

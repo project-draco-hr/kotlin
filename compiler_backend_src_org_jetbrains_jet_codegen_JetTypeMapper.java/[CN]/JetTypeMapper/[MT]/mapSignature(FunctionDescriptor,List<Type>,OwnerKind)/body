@@ -1,0 +1,30 @@
+{
+  final ReceiverDescriptor receiverTypeRef=f.getReceiverParameter();
+  final JetType receiverType=!receiverTypeRef.exists() ? null : receiverTypeRef.getType();
+  final List<ValueParameterDescriptor> parameters=f.getValueParameters();
+  List<Type> parameterTypes=new ArrayList<Type>();
+  if (receiverType != null) {
+    parameterTypes.add(mapType(receiverType));
+  }
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    ClassDescriptor containingDeclaration=(ClassDescriptor)f.getContainingDeclaration();
+    JetType jetType=TraitImplBodyCodegen.getSuperClass(containingDeclaration,bindingContext);
+    Type type=mapType(jetType);
+    if (type.getInternalName().equals("java/lang/Object")) {
+      jetType=containingDeclaration.getDefaultType();
+      type=mapType(jetType);
+    }
+    valueParameterTypes.add(type);
+    parameterTypes.add(type);
+  }
+  for (  ValueParameterDescriptor parameter : parameters) {
+    final Type type=mapType(parameter.getOutType());
+    valueParameterTypes.add(type);
+    parameterTypes.add(type);
+  }
+  for (int n=f.getTypeParameters().size(); n > 0; n--) {
+    parameterTypes.add(TYPE_TYPEINFO);
+  }
+  Type returnType=mapReturnType(f.getReturnType());
+  return new Method(f.getName(),returnType,parameterTypes.toArray(new Type[parameterTypes.size()]));
+}

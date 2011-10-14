@@ -6,5 +6,13 @@
   if (inType == null && outType == null) {
     return null;
   }
-  return new PropertyDescriptor(this,receiver.exists() ? substitutor.substitute(receiver.getType(),Variance.IN_VARIANCE) : null,inType,outType);
+  JetType substitutedReceiverType;
+  if (receiver.exists()) {
+    substitutedReceiverType=substitutor.substitute(receiver.getType(),Variance.IN_VARIANCE);
+    if (substitutedReceiverType == null)     return null;
+  }
+ else {
+    substitutedReceiverType=null;
+  }
+  return new PropertyDescriptor(this,substitutedReceiverType,expectedThisObject.exists() ? new TransientReceiver(substitutor.substitute(expectedThisObject.getType(),Variance.IN_VARIANCE)) : expectedThisObject,inType,outType);
 }

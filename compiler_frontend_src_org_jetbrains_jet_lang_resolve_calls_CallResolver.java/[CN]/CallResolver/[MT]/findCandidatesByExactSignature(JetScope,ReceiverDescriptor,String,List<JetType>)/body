@@ -1,14 +1,14 @@
 {
-  List<FunctionDescriptor> result=Lists.newArrayList();
-  if (receiver != NO_RECEIVER) {
-    Set<FunctionDescriptor> extensionFunctionDescriptors=scope.getFunctions(name);
-    List<FunctionDescriptor> nonlocal=Lists.newArrayList();
-    List<FunctionDescriptor> local=Lists.newArrayList();
+  List<ResolvedCall<FunctionDescriptor>> result=Lists.newArrayList();
+  if (receiver.exists()) {
+    Collection<ResolvedCall<FunctionDescriptor>> extensionFunctionDescriptors=ResolvedCall.convertCollection(scope.getFunctions(name));
+    List<ResolvedCall<FunctionDescriptor>> nonlocal=Lists.newArrayList();
+    List<ResolvedCall<FunctionDescriptor>> local=Lists.newArrayList();
     TaskPrioritizer.splitLexicallyLocalDescriptors(extensionFunctionDescriptors,scope.getContainingDeclaration(),local,nonlocal);
     if (findExtensionFunctions(local,receiver,parameterTypes,result)) {
       return result;
     }
-    Set<FunctionDescriptor> functionDescriptors=receiver.getType().getMemberScope().getFunctions(name);
+    Collection<ResolvedCall<FunctionDescriptor>> functionDescriptors=ResolvedCall.convertCollection(receiver.getType().getMemberScope().getFunctions(name));
     if (lookupExactSignature(functionDescriptors,parameterTypes,result)) {
       return result;
     }
@@ -16,7 +16,7 @@
     return result;
   }
  else {
-    lookupExactSignature(scope.getFunctions(name),parameterTypes,result);
+    lookupExactSignature(ResolvedCall.convertCollection(scope.getFunctions(name)),parameterTypes,result);
     return result;
   }
 }

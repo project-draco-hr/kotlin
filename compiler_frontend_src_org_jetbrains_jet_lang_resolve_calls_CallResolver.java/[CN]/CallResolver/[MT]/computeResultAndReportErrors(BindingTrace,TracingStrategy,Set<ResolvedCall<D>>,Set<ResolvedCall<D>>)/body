@@ -1,0 +1,36 @@
+{
+  if (successfulCandidates.size() > 0) {
+    return chooseAndReportMaximallySpecific(trace,tracing,successfulCandidates);
+  }
+ else   if (!failedCandidates.isEmpty()) {
+    if (failedCandidates.size() != 1) {
+      Set<ResolvedCall<D>> weakErrors=Sets.newLinkedHashSet();
+      for (      ResolvedCall<D> candidate : failedCandidates) {
+        if (candidate.getStatus().isWeakError()) {
+          weakErrors.add(candidate);
+        }
+      }
+      if (!weakErrors.isEmpty()) {
+        OverloadResolutionResults<D> results=chooseAndReportMaximallySpecific(trace,tracing,weakErrors);
+        if (results.isSuccess()) {
+          return OverloadResolutionResults.singleFailedCandidate(results.getResult());
+        }
+        return OverloadResolutionResults.manyFailedCandidates(results.getResults());
+      }
+      Set<ResolvedCall<D>> noOverrides=OverridingUtil.filterOverrides(failedCandidates,MAP_TO_CANDIDATE);
+      if (noOverrides.size() != 1) {
+        tracing.noneApplicable(trace,noOverrides);
+        tracing.recordAmbiguity(trace,noOverrides);
+        return OverloadResolutionResults.manyFailedCandidates(noOverrides);
+      }
+      failedCandidates=noOverrides;
+    }
+    ResolvedCall<D> failed=failedCandidates.iterator().next();
+    failed.getTrace().commit();
+    return OverloadResolutionResults.singleFailedCandidate(failed);
+  }
+ else {
+    tracing.unresolvedReference(trace);
+    return OverloadResolutionResults.nameNotFound();
+  }
+}

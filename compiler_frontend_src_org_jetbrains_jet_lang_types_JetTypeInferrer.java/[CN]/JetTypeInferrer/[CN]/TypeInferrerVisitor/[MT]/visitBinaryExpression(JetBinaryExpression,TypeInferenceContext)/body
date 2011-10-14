@@ -15,10 +15,10 @@
     result=getTypeForBinaryCall(context.scope,binaryOperationNames.get(operationType),context,expression);
   }
  else   if (operationType == JetTokens.EQ) {
-    result=visitAssignment(expression,context);
+    result=visitAssignment(expression,contextWithExpectedType);
   }
  else   if (assignmentOperationNames.containsKey(operationType)) {
-    result=visitAssignmentOperation(expression,context);
+    result=visitAssignmentOperation(expression,contextWithExpectedType);
   }
  else   if (comparisonOperations.contains(operationType)) {
     JetType compareToReturnType=getTypeForBinaryCall(context.scope,"compareTo",context,expression);
@@ -38,17 +38,17 @@
     String name="equals";
     if (right != null) {
       ExpressionReceiver receiver=safeGetExpressionReceiver(left,context.replaceScope(context.scope));
-      OverloadResolutionResult<FunctionDescriptor> resolutionResult=callResolver.resolveExactSignature(context.scope,receiver,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
-      if (resolutionResult.isSuccess()) {
-        FunctionDescriptor equals=resolutionResult.getDescriptor();
+      OverloadResolutionResults<FunctionDescriptor> resolutionResults=context.resolveExactSignature(receiver,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
+      if (resolutionResults.isSuccess()) {
+        FunctionDescriptor equals=resolutionResults.getResult().getResultingDescriptor();
         context.trace.record(REFERENCE_TARGET,operationSign,equals);
         if (ensureBooleanResult(operationSign,name,equals.getReturnType(),context)) {
           ensureNonemptyIntersectionOfOperandTypes(expression,context);
         }
       }
  else {
-        if (resolutionResult.isAmbiguity()) {
-          context.trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(operationSign,resolutionResult.getDescriptors()));
+        if (resolutionResults.isAmbiguity()) {
+          context.trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(operationSign,resolutionResults.getResults()));
         }
  else {
           context.trace.report(EQUALS_MISSING.on(operationSign));
@@ -66,7 +66,7 @@
       result=ErrorUtils.createErrorType("No right argument");
       return null;
     }
-    checkInExpression(operationSign,left,right,context);
+    checkInExpression(expression,expression.getOperationReference(),expression.getLeft(),expression.getRight(),context);
     result=semanticServices.getStandardLibrary().getBooleanType();
   }
  else   if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
