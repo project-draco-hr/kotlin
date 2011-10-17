@@ -1,0 +1,44 @@
+{
+  JetExpression baseExpression=expression.getBaseExpression();
+  if (baseExpression == null)   return null;
+  JetSimpleNameExpression operationSign=expression.getOperationSign();
+  if (JetTokens.LABELS.contains(operationSign.getReferencedNameElementType())) {
+    String referencedName=operationSign.getReferencedName();
+    referencedName=referencedName == null ? " <?>" : referencedName;
+    context.labelResolver.enterLabeledElement(referencedName.substring(1),baseExpression);
+    JetType type=checkType(facade.getType(baseExpression,context.replaceExpectedReturnType(context.expectedType)),expression,context);
+    context.labelResolver.exitLabeledElement(baseExpression);
+    return type;
+  }
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  String name=OperatorConventions.UNARY_OPERATION_NAMES.get(operationType);
+  if (name == null) {
+    context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
+    return null;
+  }
+  ExpressionReceiver receiver=getExpressionReceiver(facade,baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(context.scope));
+  if (receiver == null)   return null;
+  FunctionDescriptor functionDescriptor=context.resolveCallWithGivenName(CallMaker.makeCall(receiver,expression),expression.getOperationSign(),name,receiver);
+  if (functionDescriptor == null)   return null;
+  JetType returnType=functionDescriptor.getReturnType();
+  JetType result;
+  if (operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) {
+    if (context.semanticServices.getTypeChecker().isSubtypeOf(returnType,JetStandardClasses.getUnitType())) {
+      result=JetStandardClasses.getUnitType();
+    }
+ else {
+      JetType receiverType=receiver.getType();
+      if (!context.semanticServices.getTypeChecker().isSubtypeOf(returnType,receiverType)) {
+        context.trace.report(RESULT_TYPE_MISMATCH.on(operationSign,name,receiverType,returnType));
+      }
+ else {
+        context.trace.record(BindingContext.VARIABLE_REASSIGNMENT,expression);
+      }
+      result=receiverType;
+    }
+  }
+ else {
+    result=returnType;
+  }
+  return checkType(result,expression,context);
+}
