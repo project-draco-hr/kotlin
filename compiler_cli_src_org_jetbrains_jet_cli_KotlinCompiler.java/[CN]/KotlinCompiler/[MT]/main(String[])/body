@@ -1,0 +1,64 @@
+{
+  System.setProperty("java.awt.headless","true");
+  if (args.length < 1) {
+    System.out.println("Usage: KotlinCompiler <filename>");
+    return;
+  }
+  String javaHome=System.getenv("JAVA_HOME");
+  if (javaHome == null) {
+    System.out.println("JAVA_HOME environment variable needs to be defined");
+    return;
+  }
+  File rtJar=findRtJar(javaHome);
+  if (rtJar == null || !rtJar.exists()) {
+    System.out.print("No rt.jar found under JAVA_HOME");
+    return;
+  }
+  Disposable root=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  JavaCoreEnvironment environment=new JavaCoreEnvironment(root);
+  environment.addToClasspath(rtJar);
+  environment.registerFileType(JetFileType.INSTANCE,"kt");
+  environment.registerParserDefinition(new JetParserDefinition());
+  VirtualFile vFile=environment.getLocalFileSystem().findFileByPath(args[0]);
+  Project project=environment.getProject();
+  GenerationState generationState=new GenerationState(project,false);
+  List<JetNamespace> namespaces=Lists.newArrayList();
+  PsiFile psiFile=PsiManager.getInstance(project).findFile(vFile);
+  if (psiFile instanceof JetFile) {
+    namespaces.add(((JetFile)psiFile).getRootNamespace());
+  }
+  BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
+  boolean errors=false;
+  for (  Diagnostic diagnostic : bindingContext.getDiagnostics()) {
+switch (diagnostic.getSeverity()) {
+case ERROR:
+      errors=true;
+    report(diagnostic);
+  break;
+case INFO:
+report(diagnostic);
+break;
+case WARNING:
+report(diagnostic);
+break;
+}
+}
+if (!errors) {
+generationState.compileCorrectNamespaces(bindingContext,namespaces);
+final ClassFileFactory factory=generationState.getFactory();
+List<String> files=factory.files();
+for (String file : files) {
+File target=new File(vFile.getParent().getPath(),file);
+try {
+FileUtil.writeToFile(target,factory.asBytes(file));
+}
+ catch (IOException e) {
+System.out.println(e.getMessage());
+}
+}
+}
+}
