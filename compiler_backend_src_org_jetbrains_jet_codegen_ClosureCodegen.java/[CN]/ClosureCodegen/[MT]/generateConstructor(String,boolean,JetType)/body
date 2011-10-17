@@ -10,7 +10,9 @@
     argTypes[0]=context.enclosingClassType(state.getTypeMapper());
   }
   for (  DeclarationDescriptor descriptor : closure.keySet()) {
-    argTypes[i++]=state.getTypeMapper().mapType(((VariableDescriptor)descriptor).getOutType());
+    final Type sharedVarType=exprContext.getSharedVarType(descriptor);
+    final Type type=sharedVarType != null ? sharedVarType : state.getTypeMapper().mapType(((VariableDescriptor)descriptor).getOutType());
+    argTypes[i++]=type;
   }
   final Method constructor=new Method("<init>",Type.VOID_TYPE,argTypes);
   final MethodVisitor mv=cv.visitMethod(Opcodes.ACC_PUBLIC,"<init>",constructor.getDescriptor(),null,new String[0]);
