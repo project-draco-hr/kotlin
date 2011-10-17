@@ -1,7 +1,7 @@
 {
   JetExpression bodyExpression=function.getBodyExpression();
   if (bodyExpression == null)   return;
-  JetFlowInformationProvider flowInformationProvider=context.getClassDescriptorResolver().computeFlowData((JetElement)function,bodyExpression);
+  JetFlowInformationProvider flowInformationProvider=new JetFlowInformationProvider((JetElement)function,bodyExpression,flowDataTraceFactory,context.getTrace());
   final boolean blockBody=function.hasBlockBody();
   List<JetElement> unreachableElements=Lists.newArrayList();
   flowInformationProvider.collectUnreachableExpressions(function.asElement(),unreachableElements);
@@ -26,7 +26,7 @@
       }
       @Override public void visitExpression(      JetExpression expression){
         if (blockBody && expectedReturnType != NO_EXPECTED_TYPE && !JetStandardClasses.isUnit(expectedReturnType) && !rootUnreachableElements.contains(expression)) {
-          JetType type=typeInferrer.getType(scope,expression,expectedReturnType);
+          JetType type=typeInferrerServices.getType(scope,expression,expectedReturnType);
           if (type == null || !JetStandardClasses.isNothing(type)) {
             context.getTrace().report(NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY.on(expression));
           }
