@@ -1,0 +1,84 @@
+{
+  final DataFlowInfo[] result=new DataFlowInfo[]{context.dataFlowInfo};
+  pattern.accept(new JetVisitorVoid(){
+    @Override public void visitTypePattern(    JetTypePattern typePattern){
+      JetTypeReference typeReference=typePattern.getTypeReference();
+      if (typeReference != null) {
+        JetType type=context.getTypeResolver().resolveType(context.scope,typeReference);
+        checkTypeCompatibility(type,subjectType,typePattern);
+        result[0]=context.dataFlowInfo.isInstanceOf(subjectVariables,type);
+      }
+    }
+    @Override public void visitTuplePattern(    JetTuplePattern pattern){
+      List<JetTuplePatternEntry> entries=pattern.getEntries();
+      TypeConstructor typeConstructor=subjectType.getConstructor();
+      if (!JetStandardClasses.getTuple(entries.size()).getTypeConstructor().equals(typeConstructor) || typeConstructor.getParameters().size() != entries.size()) {
+        context.trace.report(TYPE_MISMATCH_IN_TUPLE_PATTERN.on(pattern,subjectType,entries.size()));
+      }
+ else {
+        for (int i=0, entriesSize=entries.size(); i < entriesSize; i++) {
+          JetTuplePatternEntry entry=entries.get(i);
+          JetType type=subjectType.getArguments().get(i).getType();
+          ASTNode nameLabelNode=entry.getNameLabelNode();
+          if (nameLabelNode != null) {
+            context.trace.report(UNSUPPORTED.on(nameLabelNode,getClass().getCanonicalName()));
+          }
+          JetPattern entryPattern=entry.getPattern();
+          if (entryPattern != null) {
+            result[0]=result[0].and(checkPatternType(entryPattern,type,scopeToExtend,context));
+          }
+        }
+      }
+    }
+    @Override public void visitDecomposerPattern(    JetDecomposerPattern pattern){
+      JetExpression decomposerExpression=pattern.getDecomposerExpression();
+      if (decomposerExpression != null) {
+        ReceiverDescriptor receiver=new TransientReceiver(subjectType);
+        JetType selectorReturnType=facade.getSelectorReturnType(receiver,null,decomposerExpression,context);
+        result[0]=checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,scopeToExtend,context);
+      }
+    }
+    @Override public void visitWildcardPattern(    JetWildcardPattern pattern){
+    }
+    @Override public void visitExpressionPattern(    JetExpressionPattern pattern){
+      JetExpression expression=pattern.getExpression();
+      if (expression != null) {
+        JetType type=facade.getType(expression,context.replaceScope(scopeToExtend));
+        checkTypeCompatibility(type,subjectType,pattern);
+      }
+    }
+    @Override public void visitBindingPattern(    JetBindingPattern pattern){
+      JetProperty variableDeclaration=pattern.getVariableDeclaration();
+      JetTypeReference propertyTypeRef=variableDeclaration.getPropertyTypeRef();
+      JetType type=propertyTypeRef == null ? subjectType : context.getTypeResolver().resolveType(context.scope,propertyTypeRef);
+      VariableDescriptor variableDescriptor=context.getClassDescriptorResolver().resolveLocalVariableDescriptorWithType(context.scope.getContainingDeclaration(),variableDeclaration,type);
+      scopeToExtend.addVariableDescriptor(variableDescriptor);
+      if (propertyTypeRef != null) {
+        if (!context.semanticServices.getTypeChecker().isSubtypeOf(subjectType,type)) {
+          context.trace.report(TYPE_MISMATCH_IN_BINDING_PATTERN.on(propertyTypeRef,type,subjectType));
+        }
+      }
+      JetWhenCondition condition=pattern.getCondition();
+      if (condition != null) {
+        int oldLength=subjectVariables.length;
+        VariableDescriptor[] newSubjectVariables=new VariableDescriptor[oldLength + 1];
+        System.arraycopy(subjectVariables,0,newSubjectVariables,0,oldLength);
+        newSubjectVariables[oldLength]=variableDescriptor;
+        result[0]=checkWhenCondition(null,subjectType,condition,scopeToExtend,context,newSubjectVariables);
+      }
+    }
+    private void checkTypeCompatibility(    @Nullable JetType type,    @NotNull JetType subjectType,    @NotNull JetElement reportErrorOn){
+      if (type == null) {
+        return;
+      }
+      if (TypeUtils.intersect(context.semanticServices.getTypeChecker(),Sets.newHashSet(type,subjectType)) == null) {
+        context.trace.report(INCOMPATIBLE_TYPES.on(reportErrorOn,type,subjectType));
+      }
+    }
+    @Override public void visitJetElement(    JetElement element){
+      context.trace.report(UNSUPPORTED.on(element,getClass().getCanonicalName()));
+    }
+  }
+);
+  return result[0];
+}

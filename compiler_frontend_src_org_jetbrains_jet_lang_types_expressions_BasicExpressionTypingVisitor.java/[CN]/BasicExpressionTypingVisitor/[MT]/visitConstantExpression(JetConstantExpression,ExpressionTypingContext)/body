@@ -1,0 +1,38 @@
+{
+  ASTNode node=expression.getNode();
+  IElementType elementType=node.getElementType();
+  String text=node.getText();
+  JetStandardLibrary standardLibrary=context.semanticServices.getStandardLibrary();
+  CompileTimeConstantResolver compileTimeConstantResolver=context.getCompileTimeConstantResolver();
+  CompileTimeConstant<?> value;
+  if (elementType == JetNodeTypes.INTEGER_CONSTANT) {
+    value=compileTimeConstantResolver.getIntegerValue(text,context.expectedType);
+  }
+ else   if (elementType == JetNodeTypes.FLOAT_CONSTANT) {
+    value=compileTimeConstantResolver.getFloatValue(text,context.expectedType);
+  }
+ else   if (elementType == JetNodeTypes.BOOLEAN_CONSTANT) {
+    value=compileTimeConstantResolver.getBooleanValue(text,context.expectedType);
+  }
+ else   if (elementType == JetNodeTypes.CHARACTER_CONSTANT) {
+    value=compileTimeConstantResolver.getCharValue(text,context.expectedType);
+  }
+ else   if (elementType == JetNodeTypes.RAW_STRING_CONSTANT) {
+    value=compileTimeConstantResolver.getRawStringValue(text,context.expectedType);
+  }
+ else   if (elementType == JetNodeTypes.NULL) {
+    value=compileTimeConstantResolver.getNullValue(context.expectedType);
+  }
+ else {
+    throw new IllegalArgumentException("Unsupported constant: " + expression);
+  }
+  if (value instanceof ErrorValue) {
+    ErrorValue errorValue=(ErrorValue)value;
+    context.trace.report(ERROR_COMPILE_TIME_VALUE.on(node,errorValue.getMessage()));
+    return getDefaultType(context.semanticServices,elementType);
+  }
+ else {
+    context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,value);
+    return checkType(value.getType(standardLibrary),expression,context);
+  }
+}

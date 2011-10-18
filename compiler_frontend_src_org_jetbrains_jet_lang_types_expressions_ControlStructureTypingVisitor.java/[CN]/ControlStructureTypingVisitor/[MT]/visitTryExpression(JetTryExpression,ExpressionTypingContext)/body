@@ -1,0 +1,38 @@
+{
+  JetExpression tryBlock=expression.getTryBlock();
+  List<JetCatchClause> catchClauses=expression.getCatchClauses();
+  JetFinallySection finallyBlock=expression.getFinallyBlock();
+  List<JetType> types=new ArrayList<JetType>();
+  for (  JetCatchClause catchClause : catchClauses) {
+    JetParameter catchParameter=catchClause.getCatchParameter();
+    JetExpression catchBody=catchClause.getCatchBody();
+    if (catchParameter != null) {
+      VariableDescriptor variableDescriptor=context.getClassDescriptorResolver().resolveLocalVariableDescriptor(context.scope.getContainingDeclaration(),context.scope,catchParameter);
+      if (catchBody != null) {
+        WritableScope catchScope=newWritableScopeImpl(context).setDebugName("Catch scope");
+        catchScope.addVariableDescriptor(variableDescriptor);
+        JetType type=facade.getType(catchBody,context.replaceScope(catchScope));
+        if (type != null) {
+          types.add(type);
+        }
+      }
+    }
+  }
+  if (finallyBlock != null) {
+    types.clear();
+    JetType type=facade.getType(finallyBlock.getFinalExpression(),context.replaceScope(context.scope));
+    if (type != null) {
+      types.add(type);
+    }
+  }
+  JetType type=facade.getType(tryBlock,context.replaceScope(context.scope));
+  if (type != null) {
+    types.add(type);
+  }
+  if (types.isEmpty()) {
+    return null;
+  }
+ else {
+    return context.semanticServices.getTypeChecker().commonSupertype(types);
+  }
+}

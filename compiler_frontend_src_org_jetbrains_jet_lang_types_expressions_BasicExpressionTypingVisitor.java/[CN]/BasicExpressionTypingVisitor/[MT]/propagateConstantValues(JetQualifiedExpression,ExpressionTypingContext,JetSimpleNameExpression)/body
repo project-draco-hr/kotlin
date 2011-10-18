@@ -1,0 +1,29 @@
+{
+  JetExpression receiverExpression=expression.getReceiverExpression();
+  CompileTimeConstant<?> receiverValue=context.trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,receiverExpression);
+  CompileTimeConstant<?> wholeExpressionValue=context.trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,expression);
+  if (wholeExpressionValue == null && receiverValue != null && !(receiverValue instanceof ErrorValue) && receiverValue.getValue() instanceof Number) {
+    Number value=(Number)receiverValue.getValue();
+    String referencedName=selectorExpression.getReferencedName();
+    if (OperatorConventions.NUMBER_CONVERSIONS.contains(referencedName)) {
+      if ("dbl".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new DoubleValue(value.doubleValue()));
+      }
+ else       if ("flt".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new FloatValue(value.floatValue()));
+      }
+ else       if ("lng".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new LongValue(value.longValue()));
+      }
+ else       if ("sht".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ShortValue(value.shortValue()));
+      }
+ else       if ("byt".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ByteValue(value.byteValue()));
+      }
+ else       if ("int".equals(referencedName)) {
+        context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new IntValue(value.intValue()));
+      }
+    }
+  }
+}
