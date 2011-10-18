@@ -1,0 +1,18 @@
+{
+  Map<DataFlowValue,Nullability> nullabilityMapBuilder=Maps.newHashMap();
+  nullabilityMapBuilder.putAll(nullabilityInfo);
+  for (  Map.Entry<DataFlowValue,Nullability> entry : other.nullabilityInfo.entrySet()) {
+    DataFlowValue key=entry.getKey();
+    Nullability otherFlags=entry.getValue();
+    Nullability thisFlags=nullabilityInfo.get(key);
+    if (thisFlags != null) {
+      nullabilityMapBuilder.put(key,thisFlags.and(otherFlags));
+    }
+ else {
+      nullabilityMapBuilder.put(key,otherFlags);
+    }
+  }
+  ListMultimap<DataFlowValue,JetType> newTypeInfo=copyTypeInfo();
+  newTypeInfo.putAll(other.typeInfo);
+  return new DataFlowInfo(ImmutableMap.copyOf(nullabilityMapBuilder),newTypeInfo);
+}

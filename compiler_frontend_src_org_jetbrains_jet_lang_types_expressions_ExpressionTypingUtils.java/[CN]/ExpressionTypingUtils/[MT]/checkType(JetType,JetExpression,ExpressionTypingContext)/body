@@ -2,9 +2,18 @@
   if (expressionType == null || context.expectedType == null || context.expectedType == TypeUtils.NO_EXPECTED_TYPE || context.semanticServices.getTypeChecker().isSubtypeOf(expressionType,context.expectedType)) {
     return expressionType;
   }
-  if (AutoCastUtils.castExpression(expression,context.expectedType,context.dataFlowInfo,context.trace) == null) {
-    context.trace.report(TYPE_MISMATCH.on(expression,context.expectedType,expressionType));
-    return expressionType;
+  DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,expressionType,context.trace.getBindingContext());
+  for (  JetType possibleType : context.dataFlowInfo.getPossibleTypes(dataFlowValue)) {
+    if (JetTypeChecker.INSTANCE.isSubtypeOf(possibleType,context.expectedType)) {
+      if (dataFlowValue.isStableIdentifier()) {
+        context.trace.record(AUTOCAST,expression,possibleType);
+      }
+ else {
+        context.trace.report(AUTOCAST_IMPOSSIBLE.on(expression,possibleType,expression.getText()));
+      }
+      return possibleType;
+    }
   }
-  return context.expectedType;
+  context.trace.report(TYPE_MISMATCH.on(expression,context.expectedType,expressionType));
+  return expressionType;
 }

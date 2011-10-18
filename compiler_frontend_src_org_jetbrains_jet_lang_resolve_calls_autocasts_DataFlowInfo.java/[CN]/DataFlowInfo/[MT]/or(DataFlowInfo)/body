@@ -1,0 +1,22 @@
+{
+  Map<DataFlowValue,Nullability> builder=Maps.newHashMap(nullabilityInfo);
+  builder.keySet().retainAll(other.nullabilityInfo.keySet());
+  for (  Map.Entry<DataFlowValue,Nullability> entry : builder.entrySet()) {
+    DataFlowValue key=entry.getKey();
+    Nullability thisFlags=entry.getValue();
+    Nullability otherFlags=other.nullabilityInfo.get(key);
+    assert(otherFlags != null);
+    builder.put(key,thisFlags.or(otherFlags));
+  }
+  ListMultimap<DataFlowValue,JetType> newTypeInfo=Multimaps.newListMultimap(Maps.<DataFlowValue,Collection<JetType>>newHashMap(),CommonSuppliers.<JetType>getArrayListSupplier());
+  Set<DataFlowValue> keys=newTypeInfo.keySet();
+  keys.retainAll(other.typeInfo.keySet());
+  for (  DataFlowValue key : keys) {
+    Collection<JetType> thisTypes=typeInfo.get(key);
+    Collection<JetType> otherTypes=other.typeInfo.get(key);
+    Collection<JetType> newTypes=Sets.newHashSet(thisTypes);
+    newTypes.retainAll(otherTypes);
+    newTypeInfo.putAll(key,newTypes);
+  }
+  return new DataFlowInfo(ImmutableMap.copyOf(builder),newTypeInfo);
+}
