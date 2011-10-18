@@ -1,0 +1,43 @@
+{
+  List<Instruction> instructions=pseudocode.getInstructions();
+  List<Pseudocode.PseudocodeLabel> labels=pseudocode.getLabels();
+  List<Pseudocode> locals=new ArrayList<Pseudocode>();
+  int maxLength=0;
+  int maxNextLength=0;
+  for (  Instruction instruction : instructions) {
+    String instuctionText=instruction.toString();
+    if (instuctionText.length() > maxLength) {
+      String[] parts=instuctionText.split("\n");
+      if (parts.length > 1) {
+        for (        String part : parts) {
+          if (part.length() > maxLength) {
+            maxLength=part.length();
+          }
+        }
+      }
+ else {
+        maxLength=instuctionText.length();
+      }
+    }
+    String instructionListText=formatInstructionList(instruction.getNextInstructions());
+    if (instructionListText.length() > maxNextLength) {
+      maxNextLength=instructionListText.length();
+    }
+  }
+  for (int i=0, instructionsSize=instructions.size(); i < instructionsSize; i++) {
+    Instruction instruction=instructions.get(i);
+    if (instruction instanceof FunctionLiteralValueInstruction) {
+      FunctionLiteralValueInstruction functionLiteralValueInstruction=(FunctionLiteralValueInstruction)instruction;
+      locals.add(functionLiteralValueInstruction.getBody());
+    }
+    for (    Pseudocode.PseudocodeLabel label : labels) {
+      if (label.getTargetInstructionIndex() == i) {
+        out.append(label.getName()).append(":\n");
+      }
+    }
+    out.append(formatInstruction(instruction,maxLength)).append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(instruction.getNextInstructions()))).append("    PREV:").append(formatInstructionList(instruction.getPreviousInstructions())).append("\n");
+  }
+  for (  Pseudocode local : locals) {
+    dumpInstructions(local,out);
+  }
+}
