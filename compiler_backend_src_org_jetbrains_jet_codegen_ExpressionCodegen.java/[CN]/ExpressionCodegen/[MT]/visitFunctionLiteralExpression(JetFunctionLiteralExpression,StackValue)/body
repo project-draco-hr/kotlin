@@ -3,18 +3,24 @@
     return generateBlock(expression.getFunctionLiteral().getBodyExpression().getStatements());
   }
  else {
-    final GeneratedAnonymousClassDescriptor closure=new ClosureCodegen(state,this,context).gen(expression);
-    v.anew(Type.getObjectType(closure.getClassname()));
-    v.dup();
-    final Method cons=closure.getConstructor();
-    if (closure.isCaptureThis()) {
-      v.load(0,JetTypeMapper.TYPE_OBJECT);
+    ClosureCodegen closureCodegen=new ClosureCodegen(state,this,context);
+    final GeneratedAnonymousClassDescriptor closure=closureCodegen.gen(expression);
+    if (closureCodegen.isConst()) {
+      v.invokestatic(closure.getClassname(),"$getInstance","()L" + closure.getClassname() + ";");
     }
-    for (int i=0; i < closure.getArgs().size(); i++) {
-      StackValue arg=closure.getArgs().get(i);
-      arg.put(cons.getArgumentTypes()[i],v);
+ else {
+      v.anew(Type.getObjectType(closure.getClassname()));
+      v.dup();
+      final Method cons=closure.getConstructor();
+      if (closure.isCaptureThis()) {
+        v.load(0,JetTypeMapper.TYPE_OBJECT);
+      }
+      for (int i=0; i < closure.getArgs().size(); i++) {
+        StackValue arg=closure.getArgs().get(i);
+        arg.put(cons.getArgumentTypes()[i],v);
+      }
+      v.invokespecial(closure.getClassname(),"<init>",cons.getDescriptor());
     }
-    v.invokespecial(closure.getClassname(),"<init>",cons.getDescriptor());
     return StackValue.onStack(Type.getObjectType(closure.getClassname()));
   }
 }

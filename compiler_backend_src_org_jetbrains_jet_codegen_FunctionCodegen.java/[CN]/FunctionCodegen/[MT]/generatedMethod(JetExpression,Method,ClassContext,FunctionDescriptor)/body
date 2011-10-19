@@ -1,59 +1,66 @@
 {
   List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
   List<TypeParameterDescriptor> typeParameters=functionDescriptor.getTypeParameters();
-  int flags=Opcodes.ACC_PUBLIC;
+  int flags=ACC_PUBLIC;
   OwnerKind kind=context.getContextKind();
-  if (kind == OwnerKind.TRAIT_IMPL && bodyExpressions == null)   return;
-  boolean isStatic=kind == OwnerKind.NAMESPACE || kind == OwnerKind.TRAIT_IMPL;
-  if (isStatic)   flags|=Opcodes.ACC_STATIC;
-  boolean isAbstract=!isStatic && (bodyExpressions == null || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()));
-  if (isAbstract)   flags|=Opcodes.ACC_ABSTRACT;
-  final MethodVisitor mv=v.visitMethod(flags,jvmSignature.getName(),jvmSignature.getDescriptor(),null,null);
-  if (!isAbstract) {
-    mv.visitCode();
-    FrameMap frameMap=context.prepareFrame();
-    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),context,state);
-    Type[] argTypes=jvmSignature.getArgumentTypes();
-    for (int i=0; i < paramDescrs.size(); i++) {
-      ValueParameterDescriptor parameter=paramDescrs.get(i);
-      frameMap.enter(parameter,argTypes[i].getSize());
-    }
-    for (    final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
-      int slot=frameMap.enterTemp();
-      codegen.addTypeParameter(typeParameterDescriptor,StackValue.local(slot,JetTypeMapper.TYPE_TYPEINFO));
-    }
-    if (kind instanceof OwnerKind.DelegateKind) {
-      OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
-      InstructionAdapter iv=new InstructionAdapter(mv);
-      iv.load(0,JetTypeMapper.TYPE_OBJECT);
-      dk.getDelegate().put(JetTypeMapper.TYPE_OBJECT,iv);
-      for (int i=0; i < argTypes.length; i++) {
-        Type argType=argTypes[i];
-        iv.load(i + 1,argType);
-      }
-      iv.invokeinterface(dk.getOwnerClass(),jvmSignature.getName(),jvmSignature.getDescriptor());
-      iv.areturn(jvmSignature.getReturnType());
-    }
- else {
+  if (kind != OwnerKind.TRAIT_IMPL || bodyExpressions != null) {
+    boolean isStatic=kind == OwnerKind.NAMESPACE || kind == OwnerKind.TRAIT_IMPL;
+    if (isStatic)     flags|=ACC_STATIC;
+    boolean isAbstract=!isStatic && (bodyExpressions == null || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()));
+    if (isAbstract)     flags|=ACC_ABSTRACT;
+    final MethodVisitor mv=v.visitMethod(flags,jvmSignature.getName(),jvmSignature.getDescriptor(),null,null);
+    if (!isAbstract) {
+      mv.visitCode();
+      FrameMap frameMap=context.prepareFrame();
+      ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),context,state);
+      Type[] argTypes=jvmSignature.getArgumentTypes();
       for (int i=0; i < paramDescrs.size(); i++) {
         ValueParameterDescriptor parameter=paramDescrs.get(i);
-        Type sharedVarType=codegen.getSharedVarType(parameter);
-        Type localVarType=state.getTypeMapper().mapType(parameter.getOutType());
-        if (sharedVarType != null) {
-          int index=frameMap.getIndex(parameter);
-          mv.visitTypeInsn(Opcodes.NEW,sharedVarType.getInternalName());
-          mv.visitInsn(Opcodes.DUP);
-          mv.visitInsn(Opcodes.DUP);
-          mv.visitMethodInsn(Opcodes.INVOKESPECIAL,sharedVarType.getInternalName(),"<init>","()V");
-          mv.visitVarInsn(localVarType.getOpcode(Opcodes.ILOAD),index);
-          mv.visitFieldInsn(Opcodes.PUTFIELD,sharedVarType.getInternalName(),"ref",StackValue.refType(localVarType).getDescriptor());
-          mv.visitVarInsn(sharedVarType.getOpcode(Opcodes.ISTORE),index);
-        }
+        frameMap.enter(parameter,argTypes[i].getSize());
       }
-      codegen.returnExpression(bodyExpressions);
+      for (      final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+        int slot=frameMap.enterTemp();
+        codegen.addTypeParameter(typeParameterDescriptor,StackValue.local(slot,JetTypeMapper.TYPE_TYPEINFO));
+      }
+      if (kind instanceof OwnerKind.DelegateKind) {
+        OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
+        InstructionAdapter iv=new InstructionAdapter(mv);
+        iv.load(0,JetTypeMapper.TYPE_OBJECT);
+        dk.getDelegate().put(JetTypeMapper.TYPE_OBJECT,iv);
+        for (int i=0; i < argTypes.length; i++) {
+          Type argType=argTypes[i];
+          iv.load(i + 1,argType);
+        }
+        iv.invokeinterface(dk.getOwnerClass(),jvmSignature.getName(),jvmSignature.getDescriptor());
+        iv.areturn(jvmSignature.getReturnType());
+      }
+ else {
+        for (int i=0; i < paramDescrs.size(); i++) {
+          ValueParameterDescriptor parameter=paramDescrs.get(i);
+          Type sharedVarType=codegen.getSharedVarType(parameter);
+          Type localVarType=state.getTypeMapper().mapType(parameter.getOutType());
+          if (sharedVarType != null) {
+            int index=frameMap.getIndex(parameter);
+            mv.visitTypeInsn(NEW,sharedVarType.getInternalName());
+            mv.visitInsn(DUP);
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKESPECIAL,sharedVarType.getInternalName(),"<init>","()V");
+            mv.visitVarInsn(localVarType.getOpcode(ILOAD),index);
+            mv.visitFieldInsn(PUTFIELD,sharedVarType.getInternalName(),"ref",StackValue.refType(localVarType).getDescriptor());
+            mv.visitVarInsn(sharedVarType.getOpcode(ISTORE),index);
+          }
+        }
+        codegen.returnExpression(bodyExpressions);
+      }
+      try {
+        mv.visitMaxs(0,0);
+      }
+ catch (      Throwable t) {
+        System.out.println(t);
+      }
+      mv.visitEnd();
+      generateBridgeIfNeeded(owner,state,v,jvmSignature,functionDescriptor,kind);
     }
-    mv.visitMaxs(0,0);
-    mv.visitEnd();
-    generateBridgeIfNeeded(owner,state,v,jvmSignature,functionDescriptor,kind);
   }
+  generateDefaultIfNeeded(context,state,v,jvmSignature,functionDescriptor,kind);
 }
