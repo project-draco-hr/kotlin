@@ -1,0 +1,26 @@
+{
+  ReceiverDescriptor thisReceiver=null;
+  String labelName=expression.getLabelName();
+  if (labelName != null) {
+    thisReceiver=context.labelResolver.resolveThisLabel(expression.getInstanceReference(),expression.getTargetLabel(),context,thisReceiver,labelName);
+  }
+ else {
+    if (onlyClassReceivers) {
+      List<ReceiverDescriptor> receivers=Lists.newArrayList();
+      context.scope.getImplicitReceiversHierarchy(receivers);
+      for (      ReceiverDescriptor receiver : receivers) {
+        if (receiver instanceof ClassReceiver) {
+          thisReceiver=receiver;
+          break;
+        }
+      }
+    }
+ else {
+      thisReceiver=context.scope.getImplicitReceiver();
+    }
+    if (thisReceiver instanceof ThisReceiverDescriptor) {
+      context.trace.record(REFERENCE_TARGET,expression.getInstanceReference(),((ThisReceiverDescriptor)thisReceiver).getDeclarationDescriptor());
+    }
+  }
+  return thisReceiver;
+}

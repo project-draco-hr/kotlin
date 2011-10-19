@@ -1,0 +1,47 @@
+{
+  if (!context.namespacesAllowed) {
+    context.trace.report(SUPER_IS_NOT_AN_EXPRESSION.on(expression,expression.getText()));
+    return null;
+  }
+  JetType result=null;
+  ReceiverDescriptor thisReceiver=resolveToReceiver(expression,context,true);
+  if (thisReceiver == null)   return null;
+  if (!thisReceiver.exists()) {
+    context.trace.report(SUPER_NOT_AVAILABLE.on(expression));
+  }
+ else {
+    JetType thisType=thisReceiver.getType();
+    Collection<? extends JetType> supertypes=thisType.getConstructor().getSupertypes();
+    TypeSubstitutor substitutor=TypeSubstitutor.create(thisType);
+    JetTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
+    if (superTypeQualifier != null) {
+      JetType supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
+      DeclarationDescriptor classifierCandidate=supertype.getConstructor().getDeclarationDescriptor();
+      if (classifierCandidate instanceof ClassDescriptor) {
+        ClassDescriptor superclass=(ClassDescriptor)classifierCandidate;
+        for (        JetType declaredSupertype : supertypes) {
+          if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
+            result=substitutor.safeSubstitute(declaredSupertype,Variance.INVARIANT);
+            break;
+          }
+        }
+      }
+      if (result == null && !ErrorUtils.isErrorType(supertype)) {
+        context.trace.report(NOT_A_SUPERTYPE.on(superTypeQualifier));
+      }
+    }
+ else {
+      if (supertypes.size() > 1) {
+        context.trace.report(AMBIGUOUS_SUPER.on(expression));
+      }
+ else {
+        result=substitutor.substitute(supertypes.iterator().next(),Variance.INVARIANT);
+      }
+    }
+    if (result != null) {
+      context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
+      context.trace.record(BindingContext.REFERENCE_TARGET,expression.getInstanceReference(),result.getConstructor().getDeclarationDescriptor());
+    }
+  }
+  return DataFlowUtils.checkType(result,expression,context);
+}
