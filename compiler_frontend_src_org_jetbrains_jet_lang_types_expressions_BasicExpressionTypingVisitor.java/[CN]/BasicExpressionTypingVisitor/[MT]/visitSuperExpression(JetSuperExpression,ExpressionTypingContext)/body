@@ -15,9 +15,29 @@
     TypeSubstitutor substitutor=TypeSubstitutor.create(thisType);
     JetTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
     if (superTypeQualifier != null) {
-      JetType supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
-      DeclarationDescriptor classifierCandidate=supertype.getConstructor().getDeclarationDescriptor();
-      if (classifierCandidate instanceof ClassDescriptor) {
+      JetTypeElement typeElement=superTypeQualifier.getTypeElement();
+      DeclarationDescriptor classifierCandidate=null;
+      JetType supertype=null;
+      PsiElement redundantTypeArguments=null;
+      if (typeElement instanceof JetUserType) {
+        JetUserType userType=(JetUserType)typeElement;
+        if (userType.getTypeArguments().isEmpty()) {
+          classifierCandidate=context.getTypeResolver().resolveClass(context.scope,userType);
+        }
+ else {
+          supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
+          redundantTypeArguments=userType.getTypeArgumentList();
+        }
+      }
+ else {
+        supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
+      }
+      if (supertype != null) {
+        if (supertypes.contains(supertype)) {
+          result=supertype;
+        }
+      }
+ else       if (classifierCandidate instanceof ClassDescriptor) {
         ClassDescriptor superclass=(ClassDescriptor)classifierCandidate;
         for (        JetType declaredSupertype : supertypes) {
           if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
@@ -26,8 +46,13 @@
           }
         }
       }
-      if (result == null && !ErrorUtils.isErrorType(supertype)) {
+      boolean validClassifier=classifierCandidate != null && !ErrorUtils.isError(classifierCandidate);
+      boolean validType=supertype != null && !ErrorUtils.isErrorType(supertype);
+      if (result == null && (validClassifier || validType)) {
         context.trace.report(NOT_A_SUPERTYPE.on(superTypeQualifier));
+      }
+ else       if (redundantTypeArguments != null) {
+        context.trace.report(TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.on(redundantTypeArguments));
       }
     }
  else {
