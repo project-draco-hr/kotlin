@@ -16,50 +16,7 @@
     JetWhenCondition[] conditions=whenEntry.getConditions();
     for (int i=0; i < conditions.length; i++) {
       JetWhenCondition condition=conditions[i];
-      condition.accept(new JetVisitorVoid(){
-        private final JetVisitorVoid conditionVisitor=this;
-        @Override public void visitWhenConditionCall(        JetWhenConditionCall condition){
-          value(condition.getCallSuffixExpression(),inCondition);
-        }
-        @Override public void visitWhenConditionInRange(        JetWhenConditionInRange condition){
-          value(condition.getRangeExpression(),inCondition);
-          value(condition.getOperationReference(),inCondition);
-        }
-        @Override public void visitWhenConditionIsPattern(        JetWhenConditionIsPattern condition){
-          JetPattern pattern=condition.getPattern();
-          if (pattern != null) {
-            pattern.accept(new JetVisitorVoid(){
-              @Override public void visitTypePattern(              JetTypePattern typePattern){
-              }
-              @Override public void visitWildcardPattern(              JetWildcardPattern pattern){
-              }
-              @Override public void visitExpressionPattern(              JetExpressionPattern pattern){
-                value(pattern.getExpression(),inCondition);
-              }
-              @Override public void visitTuplePattern(              JetTuplePattern pattern){
-              }
-              @Override public void visitDecomposerPattern(              JetDecomposerPattern pattern){
-                value(pattern.getDecomposerExpression(),inCondition);
-                pattern.getArgumentList().accept(this);
-              }
-              @Override public void visitBindingPattern(              JetBindingPattern pattern){
-                JetWhenCondition condition=pattern.getCondition();
-                if (condition != null) {
-                  condition.accept(conditionVisitor);
-                }
-              }
-              @Override public void visitJetElement(              JetElement element){
-                throw new UnsupportedOperationException("[JetControlFlowProcessor] " + element.toString());
-              }
-            }
-);
-          }
-        }
-        @Override public void visitJetElement(        JetElement element){
-          throw new UnsupportedOperationException("[JetControlFlowProcessor] " + element.toString());
-        }
-      }
-);
+      condition.accept(conditionVisitor);
       if (i + 1 < conditions.length) {
         builder.nondeterministicJump(bodyLabel);
       }

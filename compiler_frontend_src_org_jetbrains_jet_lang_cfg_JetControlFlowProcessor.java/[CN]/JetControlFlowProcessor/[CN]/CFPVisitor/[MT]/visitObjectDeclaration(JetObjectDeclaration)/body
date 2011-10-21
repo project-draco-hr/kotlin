@@ -1,8 +1,22 @@
 {
-  for (  JetDelegationSpecifier delegationSpecifier : declaration.getDelegationSpecifiers()) {
-    value(delegationSpecifier,inCondition);
+  Queue<Label> declarationLabels=new LinkedList<Label>();
+  List<JetDeclaration> declarations=declaration.getDeclarations();
+  for (  JetDeclaration localDeclaration : declarations) {
+    declarationLabels.add(builder.createUnboundLabel());
   }
-  for (  JetDeclaration jetDeclaration : declaration.getDeclarations()) {
-    FOR_LOCAL_CLASSES.value(jetDeclaration,false);
+  builder.nondeterministicJump(Lists.newArrayList(declarationLabels));
+  for (  JetDeclaration localDeclaration : declarations) {
+    if (localDeclaration instanceof JetNamedDeclaration) {
+      if (localDeclaration instanceof JetFunction) {
+        generate(localDeclaration,((JetFunction)localDeclaration).getBodyExpression());
+      }
+ else {
+        generate(localDeclaration,localDeclaration);
+      }
+    }
+ else {
+      generate(declaration,localDeclaration);
+    }
+    builder.bindLabel(declarationLabels.remove());
   }
 }
