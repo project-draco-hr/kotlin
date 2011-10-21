@@ -5,15 +5,15 @@
   JetExpression elseBranch=expression.getElse();
   JetExpression thenBranch=expression.getThen();
   WritableScopeImpl thenScope=newWritableScopeImpl(context).setDebugName("Then scope");
-  DataFlowInfo thenInfo=extractDataFlowInfoFromCondition(condition,true,thenScope,context);
-  DataFlowInfo elseInfo=extractDataFlowInfoFromCondition(condition,false,null,context);
+  DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,thenScope,context);
+  DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context);
   if (elseBranch == null) {
     if (thenBranch != null) {
       JetType type=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,context);
       if (type != null && JetStandardClasses.isNothing(type)) {
         facade.setResultingDataFlowInfo(elseInfo);
       }
-      return checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+      return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
     }
     return null;
   }
@@ -22,7 +22,7 @@
     if (type != null && JetStandardClasses.isNothing(type)) {
       facade.setResultingDataFlowInfo(thenInfo);
     }
-    return checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+    return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
   }
   JetType thenType=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,contextWithExpectedType);
   JetType elseType=getTypeWithNewScopeAndDataFlowInfo(context.scope,elseBranch,elseInfo,contextWithExpectedType);

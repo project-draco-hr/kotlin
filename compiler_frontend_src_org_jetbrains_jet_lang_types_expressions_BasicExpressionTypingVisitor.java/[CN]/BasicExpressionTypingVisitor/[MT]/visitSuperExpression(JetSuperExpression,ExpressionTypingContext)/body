@@ -1,0 +1,73 @@
+{
+  if (!context.namespacesAllowed) {
+    context.trace.report(SUPER_IS_NOT_AN_EXPRESSION.on(expression,expression.getText()));
+    return null;
+  }
+  JetType result=null;
+  ReceiverDescriptor thisReceiver=resolveToReceiver(expression,context,true);
+  if (thisReceiver == null)   return null;
+  if (!thisReceiver.exists()) {
+    context.trace.report(SUPER_NOT_AVAILABLE.on(expression));
+  }
+ else {
+    JetType thisType=thisReceiver.getType();
+    Collection<? extends JetType> supertypes=thisType.getConstructor().getSupertypes();
+    TypeSubstitutor substitutor=TypeSubstitutor.create(thisType);
+    JetTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
+    if (superTypeQualifier != null) {
+      JetTypeElement typeElement=superTypeQualifier.getTypeElement();
+      DeclarationDescriptor classifierCandidate=null;
+      JetType supertype=null;
+      PsiElement redundantTypeArguments=null;
+      if (typeElement instanceof JetUserType) {
+        JetUserType userType=(JetUserType)typeElement;
+        if (userType.getTypeArguments().isEmpty()) {
+          classifierCandidate=context.getTypeResolver().resolveClass(context.scope,userType);
+        }
+ else {
+          supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
+          redundantTypeArguments=userType.getTypeArgumentList();
+        }
+      }
+ else {
+        supertype=context.getTypeResolver().resolveType(context.scope,superTypeQualifier);
+      }
+      if (supertype != null) {
+        if (supertypes.contains(supertype)) {
+          result=supertype;
+        }
+      }
+ else       if (classifierCandidate instanceof ClassDescriptor) {
+        ClassDescriptor superclass=(ClassDescriptor)classifierCandidate;
+        for (        JetType declaredSupertype : supertypes) {
+          if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
+            result=substitutor.safeSubstitute(declaredSupertype,Variance.INVARIANT);
+            break;
+          }
+        }
+      }
+      boolean validClassifier=classifierCandidate != null && !ErrorUtils.isError(classifierCandidate);
+      boolean validType=supertype != null && !ErrorUtils.isErrorType(supertype);
+      if (result == null && (validClassifier || validType)) {
+        context.trace.report(NOT_A_SUPERTYPE.on(superTypeQualifier));
+      }
+ else       if (redundantTypeArguments != null) {
+        context.trace.report(TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.on(redundantTypeArguments));
+      }
+    }
+ else {
+      if (supertypes.size() > 1) {
+        context.trace.report(AMBIGUOUS_SUPER.on(expression));
+      }
+ else {
+        JetType type=supertypes.isEmpty() ? JetStandardClasses.getAnyType() : supertypes.iterator().next();
+        result=substitutor.substitute(type,Variance.INVARIANT);
+      }
+    }
+    if (result != null) {
+      context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
+      context.trace.record(BindingContext.REFERENCE_TARGET,expression.getInstanceReference(),result.getConstructor().getDeclarationDescriptor());
+    }
+  }
+  return DataFlowUtils.checkType(result,expression,context);
+}

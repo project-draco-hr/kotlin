@@ -1,0 +1,49 @@
+{
+  if (expression instanceof JetParenthesizedExpression) {
+    JetParenthesizedExpression parenthesizedExpression=(JetParenthesizedExpression)expression;
+    JetExpression innerExpression=parenthesizedExpression.getExpression();
+    if (innerExpression == null) {
+      return Pair.create(null,false);
+    }
+    return getIdForStableIdentifier(innerExpression,bindingContext,allowNamespaces);
+  }
+ else   if (expression instanceof JetQualifiedExpression) {
+    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)expression;
+    JetExpression selectorExpression=qualifiedExpression.getSelectorExpression();
+    if (selectorExpression == null) {
+      return Pair.create(null,false);
+    }
+    Pair<Object,Boolean> receiverId=getIdForStableIdentifier(qualifiedExpression.getReceiverExpression(),bindingContext,true);
+    Pair<Object,Boolean> selectorId=getIdForStableIdentifier(selectorExpression,bindingContext,allowNamespaces);
+    return receiverId.second ? selectorId : Pair.create(receiverId.first,false);
+  }
+  if (expression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression simpleNameExpression=(JetSimpleNameExpression)expression;
+    DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,simpleNameExpression);
+    if (declarationDescriptor instanceof VariableDescriptor) {
+      return Pair.create((Object)declarationDescriptor,isStableVariable((VariableDescriptor)declarationDescriptor));
+    }
+    if (declarationDescriptor instanceof NamespaceDescriptor) {
+      return Pair.create((Object)declarationDescriptor,allowNamespaces);
+    }
+    if (declarationDescriptor instanceof ClassDescriptor) {
+      ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
+      return Pair.create((Object)classDescriptor,classDescriptor.isClassObjectAValue());
+    }
+  }
+ else   if (expression instanceof JetThisExpression) {
+    JetThisExpression thisExpression=(JetThisExpression)expression;
+    DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,thisExpression.getInstanceReference());
+    if (declarationDescriptor instanceof CallableDescriptor) {
+      return Pair.create((Object)((CallableDescriptor)declarationDescriptor).getReceiverParameter(),true);
+    }
+    if (declarationDescriptor instanceof ClassDescriptor) {
+      return Pair.create((Object)((ClassDescriptor)declarationDescriptor).getImplicitReceiver(),true);
+    }
+    return Pair.create(null,true);
+  }
+ else   if (expression instanceof JetRootNamespaceExpression) {
+    return Pair.create((Object)JetModuleUtil.getRootNamespaceType(expression),allowNamespaces);
+  }
+  return Pair.create(null,false);
+}

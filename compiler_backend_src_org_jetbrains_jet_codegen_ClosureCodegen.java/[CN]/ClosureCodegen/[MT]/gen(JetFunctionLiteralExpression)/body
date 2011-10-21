@@ -12,15 +12,18 @@
   }
   appendType(signatureWriter,funDescriptor.getReturnType(),'=');
   signatureWriter.visitEnd();
-  cv.visit(Opcodes.V1_6,Opcodes.ACC_PUBLIC,name,null,funClass,new String[0]);
+  cv.visit(V1_6,ACC_PUBLIC,name,null,funClass,new String[0]);
   cv.visitSource(fun.getContainingFile().getName(),null);
   generateBridge(name,funDescriptor,cv);
-  boolean captureThis=generateBody(funDescriptor,cv,fun.getFunctionLiteral());
+  captureThis=generateBody(funDescriptor,cv,fun.getFunctionLiteral());
   final Type enclosingType=context.enclosingClassType(state.getTypeMapper());
   if (enclosingType == null)   captureThis=false;
   final Method constructor=generateConstructor(funClass,captureThis,funDescriptor.getReturnType());
   if (captureThis) {
     cv.visitField(0,"this$0",enclosingType.getDescriptor(),null,null);
+  }
+  if (isConst()) {
+    generateConstInstance();
   }
   cv.visitEnd();
   final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor,captureThis);

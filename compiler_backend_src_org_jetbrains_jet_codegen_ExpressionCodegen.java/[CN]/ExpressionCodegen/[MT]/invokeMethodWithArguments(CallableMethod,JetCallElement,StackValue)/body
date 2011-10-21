@@ -6,16 +6,30 @@
   if (callableMethod.isOwnerFromCall()) {
     setOwnerFromCall(callableMethod,expression);
   }
-  if (callableMethod.needsReceiverOnStack()) {
-    if (receiver == StackValue.none()) {
-      ClassDescriptor receiverClass=callableMethod.getReceiverClass();
-      receiver=receiverClass == null ? thisExpression() : generateThisOrOuter(receiverClass);
+  if (callableMethod.isNeedsThis()) {
+    if (callableMethod.isNeedsReceiver()) {
+      generateThisOrOuter((ClassDescriptor)callableMethod.getThisClass()).put(JetTypeMapper.TYPE_OBJECT,v);
+      receiver.put(JetTypeMapper.TYPE_OBJECT,v);
     }
-    receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+ else {
+      if (receiver == StackValue.none()) {
+        generateThisOrOuter((ClassDescriptor)callableMethod.getThisClass()).put(JetTypeMapper.TYPE_OBJECT,v);
+        ;
+      }
+ else {
+        receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+      }
+    }
   }
-  pushMethodArguments(expression,callableMethod.getValueParameterTypes());
+ else {
+    if (callableMethod.isNeedsReceiver()) {
+      receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+    }
+  }
+  int mask=pushMethodArguments(expression,callableMethod.getValueParameterTypes());
   if (callableMethod.acceptsTypeArguments()) {
     pushTypeArguments(expression);
   }
-  callableMethod.invoke(v);
+  if (mask == 0)   callableMethod.invoke(v);
+ else   callableMethod.invokeWithDefault(v,mask);
 }

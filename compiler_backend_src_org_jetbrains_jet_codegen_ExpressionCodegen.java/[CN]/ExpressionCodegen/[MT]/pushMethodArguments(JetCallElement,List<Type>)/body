@@ -1,7 +1,46 @@
 {
+  ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,expression.getCalleeExpression());
   List<? extends ValueArgument> args=expression.getValueArguments();
-  for (int i=0, argsSize=args.size(); i < argsSize; i++) {
-    ValueArgument arg=args.get(i);
-    gen(arg.getArgumentExpression(),valueParameterTypes.get(i));
+  if (resolvedCall != null) {
+    Map<ValueParameterDescriptor,ResolvedValueArgument> valueArguments=resolvedCall.getValueArguments();
+    CallableDescriptor fd=resolvedCall.getResultingDescriptor();
+    int index=0;
+    int mask=0;
+    for (    ValueParameterDescriptor valueParameterDescriptor : fd.getValueParameters()) {
+      ResolvedValueArgument resolvedValueArgument=valueArguments.get(valueParameterDescriptor);
+      if (resolvedValueArgument instanceof ExpressionValueArgument) {
+        ExpressionValueArgument valueArgument=(ExpressionValueArgument)resolvedValueArgument;
+        gen(valueArgument.getExpression(),valueParameterTypes.get(index));
+      }
+ else       if (resolvedValueArgument instanceof DefaultValueArgument) {
+        Type type=valueParameterTypes.get(index);
+        if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY)         v.aconst(null);
+ else         if (type.getSort() == Type.FLOAT) {
+          v.aconst(0f);
+        }
+ else         if (type.getSort() == Type.DOUBLE) {
+          v.aconst(0d);
+        }
+ else {
+          v.iconst(0);
+        }
+        mask|=(1 << index);
+      }
+ else       if (resolvedValueArgument instanceof VarargValueArgument) {
+        throw new UnsupportedOperationException("Varargs are not supported yet");
+      }
+ else {
+        throw new UnsupportedOperationException();
+      }
+      index++;
+    }
+    return mask;
+  }
+ else {
+    for (int i=0, argsSize=args.size(); i < argsSize; i++) {
+      ValueArgument arg=args.get(i);
+      gen(arg.getArgumentExpression(),valueParameterTypes.get(i));
+    }
+    return 0;
   }
 }
