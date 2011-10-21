@@ -13,7 +13,10 @@
       }
       @Override public void visitNondeterministicJump(      NondeterministicJumpInstruction instruction){
         instruction.setNext(getNextPosition(currentPosition));
-        visitJump(instruction);
+        List<Label> targetLabels=instruction.getTargetLabels();
+        for (        Label targetLabel : targetLabels) {
+          instruction.setResolvedTarget(targetLabel,getJumpTarget(targetLabel));
+        }
       }
       @Override public void visitConditionalJump(      ConditionalJumpInstruction instruction){
         Instruction nextInstruction=getNextPosition(currentPosition);
@@ -28,7 +31,7 @@
         }
         visitJump(instruction);
       }
-      @Override public void visitFunctionLiteralValue(      FunctionLiteralValueInstruction instruction){
+      @Override public void visitFunctionLiteralValue(      LocalDeclarationInstruction instruction){
         instruction.getBody().postProcess();
         super.visitFunctionLiteralValue(instruction);
       }
