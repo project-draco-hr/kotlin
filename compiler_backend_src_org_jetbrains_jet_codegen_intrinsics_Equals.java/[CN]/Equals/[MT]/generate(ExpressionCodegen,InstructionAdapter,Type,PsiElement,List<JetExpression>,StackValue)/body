@@ -1,0 +1,16 @@
+{
+  receiver.put(JetTypeMapper.TYPE_OBJECT,v);
+  boolean leftNullable=true;
+  if (element instanceof JetCallExpression) {
+    JetCallExpression jetCallExpression=(JetCallExpression)element;
+    JetExpression calleeExpression=jetCallExpression.getCalleeExpression();
+    if (calleeExpression != null) {
+      JetType leftType=codegen.getBindingContext().get(BindingContext.EXPRESSION_TYPE,calleeExpression);
+      if (leftType != null)       leftNullable=leftType.isNullable();
+    }
+  }
+  JetExpression rightExpr=arguments.get(0);
+  JetType rightType=codegen.getBindingContext().get(BindingContext.EXPRESSION_TYPE,rightExpr);
+  codegen.gen(rightExpr).put(JetTypeMapper.TYPE_OBJECT,v);
+  return codegen.generateEqualsForExpressionsOnStack(JetTokens.EQEQ,JetTypeMapper.TYPE_OBJECT,JetTypeMapper.TYPE_OBJECT,leftNullable,rightType.isNullable());
+}

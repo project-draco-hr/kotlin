@@ -1,0 +1,31 @@
+{
+  this.trace=trace;
+  final JetPseudocodeTrace pseudocodeTrace=flowDataTraceFactory.createTrace(declaration);
+  pseudocodeMap=new HashMap<JetElement,Pseudocode>();
+  final Map<JetElement,Instruction> representativeInstructions=new HashMap<JetElement,Instruction>();
+  final Map<JetExpression,LoopInfo> loopInfo=Maps.newHashMap();
+  JetPseudocodeTrace wrappedTrace=new JetPseudocodeTrace(){
+    @Override public void recordControlFlowData(    @NotNull JetElement element,    @NotNull Pseudocode pseudocode){
+      pseudocodeTrace.recordControlFlowData(element,pseudocode);
+      pseudocodeMap.put(element,pseudocode);
+    }
+    @Override public void recordRepresentativeInstruction(    @NotNull JetElement element,    @NotNull Instruction instruction){
+      Instruction oldValue=representativeInstructions.put(element,instruction);
+      pseudocodeTrace.recordRepresentativeInstruction(element,instruction);
+    }
+    @Override public void recordLoopInfo(    JetExpression expression,    LoopInfo blockInfo){
+      loopInfo.put(expression,blockInfo);
+      pseudocodeTrace.recordLoopInfo(expression,blockInfo);
+    }
+    @Override public void close(){
+      pseudocodeTrace.close();
+      for (      Pseudocode pseudocode : pseudocodeMap.values()) {
+        pseudocode.postProcess();
+      }
+    }
+  }
+;
+  JetControlFlowInstructionsGenerator instructionsGenerator=new JetControlFlowInstructionsGenerator(wrappedTrace);
+  new JetControlFlowProcessor(trace,instructionsGenerator).generate(declaration,bodyExpression);
+  wrappedTrace.close();
+}
