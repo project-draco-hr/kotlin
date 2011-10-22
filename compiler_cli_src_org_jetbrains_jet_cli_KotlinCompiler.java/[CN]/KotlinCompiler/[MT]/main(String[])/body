@@ -1,7 +1,12 @@
 {
   System.setProperty("java.awt.headless","true");
-  if (args.length < 1) {
-    System.out.println("Usage: KotlinCompiler <filename> or <dirname>");
+  Arguments arguments=new Arguments();
+  try {
+    Args.parse(arguments,args);
+  }
+ catch (  Throwable t) {
+    System.out.println("Usage: KotlinCompiler -output <outputDir> -src <filename or dirname>");
+    t.printStackTrace();
     return;
   }
   Disposable root=new Disposable(){
@@ -15,9 +20,9 @@
   environment.addToClasspath(rtJar);
   environment.registerFileType(JetFileType.INSTANCE,"kt");
   environment.registerParserDefinition(new JetParserDefinition());
-  VirtualFile vFile=environment.getLocalFileSystem().findFileByPath(args[0]);
+  VirtualFile vFile=environment.getLocalFileSystem().findFileByPath(arguments.src);
   if (vFile == null) {
-    System.out.print("File/directory not found: " + args[0]);
+    System.out.print("File/directory not found: " + arguments.src);
     return;
   }
   Project project=environment.getProject();
@@ -56,15 +61,20 @@ break;
 if (!errors) {
 generationState.compileCorrectNamespaces(bindingContext,namespaces);
 final ClassFileFactory factory=generationState.getFactory();
+if (arguments.outputDir == null) {
+System.out.println("Output directory is not specified - no files will be saved to the disk");
+}
+ else {
 List<String> files=factory.files();
 for (String file : files) {
-File target=new File(vFile.getParent().getPath(),file);
+File target=new File(arguments.outputDir,file);
 try {
 FileUtil.writeToFile(target,factory.asBytes(file));
 System.out.println("Generated classfile: " + target);
 }
  catch (IOException e) {
 System.out.println(e.getMessage());
+}
 }
 }
 }
