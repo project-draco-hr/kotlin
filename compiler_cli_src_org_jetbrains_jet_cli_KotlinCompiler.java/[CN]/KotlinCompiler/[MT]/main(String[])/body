@@ -43,39 +43,26 @@
     }
   }
   BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
-  boolean errors=false;
-  for (  Diagnostic diagnostic : bindingContext.getDiagnostics()) {
-switch (diagnostic.getSeverity()) {
-case ERROR:
-      errors=true;
-    report(diagnostic);
-  break;
-case INFO:
-report(diagnostic);
-break;
-case WARNING:
-report(diagnostic);
-break;
-}
-}
-if (!errors) {
-generationState.compileCorrectNamespaces(bindingContext,namespaces);
-final ClassFileFactory factory=generationState.getFactory();
-if (arguments.outputDir == null) {
-System.out.println("Output directory is not specified - no files will be saved to the disk");
-}
+  ErrorCollector errorCollector=new ErrorCollector(bindingContext);
+  errorCollector.report();
+  if (!errorCollector.hasErrors) {
+    generationState.compileCorrectNamespaces(bindingContext,namespaces);
+    final ClassFileFactory factory=generationState.getFactory();
+    if (arguments.outputDir == null) {
+      System.out.println("Output directory is not specified - no files will be saved to the disk");
+    }
  else {
-List<String> files=factory.files();
-for (String file : files) {
-File target=new File(arguments.outputDir,file);
-try {
-FileUtil.writeToFile(target,factory.asBytes(file));
-System.out.println("Generated classfile: " + target);
-}
- catch (IOException e) {
-System.out.println(e.getMessage());
-}
-}
-}
-}
+      List<String> files=factory.files();
+      for (      String file : files) {
+        File target=new File(arguments.outputDir,file);
+        try {
+          FileUtil.writeToFile(target,factory.asBytes(file));
+          System.out.println("Generated classfile: " + target);
+        }
+ catch (        IOException e) {
+          System.out.println(e.getMessage());
+        }
+      }
+    }
+  }
 }

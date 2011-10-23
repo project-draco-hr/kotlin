@@ -1,0 +1,24 @@
+{
+  if (!maps.isEmpty()) {
+    for (    PsiFile psiFile : maps.keySet()) {
+      System.out.println(psiFile.getVirtualFile().getPath());
+      Collection<DiagnosticWithTextRange> diagnosticWithTextRanges=maps.get(psiFile);
+      for (      DiagnosticWithTextRange diagnosticWithTextRange : diagnosticWithTextRanges) {
+        PsiFile file=diagnosticWithTextRange.getPsiFile();
+        Document document=file.getViewProvider().getDocument();
+        String result;
+        int offset=diagnosticWithTextRange.getTextRange().getStartOffset();
+        if (document != null) {
+          int lineNumber=document.getLineNumber(offset);
+          int lineStartOffset=document.getLineStartOffset(lineNumber);
+          int column=offset - lineStartOffset;
+          result="(" + (lineNumber + 1) + ","+ column+ ")";
+        }
+ else {
+          result="(offset: " + offset + " line unknown)";
+        }
+        System.out.println("\t" + diagnosticWithTextRange.getSeverity().toString() + ": "+ result+ " "+ diagnosticWithTextRange.getMessage());
+      }
+    }
+  }
+}
