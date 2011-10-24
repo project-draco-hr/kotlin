@@ -1,0 +1,17 @@
+{
+  boolean hasRemovedInstruction=true;
+  Collection<Instruction> processedInstructions=Sets.newHashSet();
+  while (hasRemovedInstruction) {
+    hasRemovedInstruction=false;
+    for (    Instruction instruction : instructions) {
+      if (!(instruction instanceof SubroutineEnterInstruction || instruction instanceof SubroutineExitInstruction) && instruction.getPreviousInstructions().isEmpty() && !processedInstructions.contains(instruction)) {
+        hasRemovedInstruction=true;
+        for (        Instruction nextInstruction : instruction.getNextInstructions()) {
+          nextInstruction.getPreviousInstructions().remove(instruction);
+        }
+        ((InstructionImpl)instruction).die();
+        processedInstructions.add(instruction);
+      }
+    }
+  }
+}
