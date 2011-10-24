@@ -2,6 +2,7 @@
   List<Instruction> instructions=pseudocode.getInstructions();
   SubroutineEnterInstruction enterInstruction=pseudocode.getEnterInstruction();
   for (  Instruction instruction : instructions) {
+    if (!isLocal && instruction instanceof SubroutineEnterInstruction)     continue;
     Collection<Instruction> allPreviousInstructions;
     Collection<Instruction> previousInstructions=straightDirection ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
     if (instruction == enterInstruction && !previousSubGraphInstructions.isEmpty()) {
@@ -13,14 +14,14 @@
     }
     if (instruction instanceof LocalDeclarationInstruction) {
       Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
-      traverseSubGraph(subroutinePseudocode,instructionsMergeHandler,previousInstructions,straightDirection,dataMap,changed);
+      traverseSubGraph(subroutinePseudocode,instructionsMergeHandler,previousInstructions,straightDirection,dataMap,changed,true);
     }
     D previousDataValue=dataMap.get(instruction);
     Collection<D> incomingEdgesData=Sets.newHashSet();
     for (    Instruction previousInstruction : allPreviousInstructions) {
       incomingEdgesData.add(dataMap.get(previousInstruction));
     }
-    D mergedData=instructionsMergeHandler.merge(instruction,previousDataValue,incomingEdgesData);
+    D mergedData=instructionsMergeHandler.merge(instruction,incomingEdgesData);
     if (!mergedData.equals(previousDataValue)) {
       changed[0]=true;
       dataMap.put(instruction,mergedData);
