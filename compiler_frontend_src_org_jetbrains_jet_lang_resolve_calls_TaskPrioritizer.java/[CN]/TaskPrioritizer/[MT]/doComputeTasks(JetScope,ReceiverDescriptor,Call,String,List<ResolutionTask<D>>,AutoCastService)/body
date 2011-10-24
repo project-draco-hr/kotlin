@@ -13,8 +13,14 @@
       Collection<D> membersForThisVariant=getMembersByName(variant.getType(),name);
       convertWithReceivers(membersForThisVariant,Collections.singletonList(variant),Collections.singletonList(NO_RECEIVER),members);
     }
-    addTask(result,call,locals,dataFlowInfo);
-    addTask(result,call,members,dataFlowInfo);
+    if (getReceiverSuper(receiver) != null) {
+      addTask(result,call,members,dataFlowInfo);
+      addTask(result,call,locals,dataFlowInfo);
+    }
+ else {
+      addTask(result,call,locals,dataFlowInfo);
+      addTask(result,call,members,dataFlowInfo);
+    }
     for (    ReceiverDescriptor implicitReceiver : implicitReceivers) {
       Collection<D> memberExtensions=getExtensionsByName(implicitReceiver.getType().getMemberScope(),name);
       List<ReceiverDescriptor> variantsForImplicitReceiver=autoCastService.getVariantsForReceiver(implicitReceiver);
