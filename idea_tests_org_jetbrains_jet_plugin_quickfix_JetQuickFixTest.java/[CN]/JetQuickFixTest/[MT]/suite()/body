@@ -1,0 +1,23 @@
+{
+  TestSuite suite=new TestSuite();
+  FilenameFilter fileNameFilter=new FilenameFilter(){
+    @Override public boolean accept(    File file,    String s){
+      if (s.startsWith("before"))       return true;
+      return false;
+    }
+  }
+;
+  JetTestCaseBase.NamedTestFactory namedTestFactory=new JetTestCaseBase.NamedTestFactory(){
+    @NotNull @Override public Test createTest(    @NotNull String dataPath,    @NotNull String name){
+      return new JetQuickFixTest(dataPath,name);
+    }
+  }
+;
+  File dir=new File(getTestDataPathBase());
+  List<String> subDirs=Arrays.asList(quickFixTestsFilter != null ? dir.list(quickFixTestsFilter) : dir.list());
+  Collections.sort(subDirs);
+  for (  String subDirName : subDirs) {
+    suite.addTest(JetTestCaseBase.suiteForDirectory(getTestDataPathBase(),subDirName,false,fileNameFilter,namedTestFactory));
+  }
+  return suite;
+}
