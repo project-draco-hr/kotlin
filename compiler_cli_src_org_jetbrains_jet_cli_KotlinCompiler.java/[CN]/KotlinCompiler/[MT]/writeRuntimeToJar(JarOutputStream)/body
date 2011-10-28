@@ -1,17 +1,10 @@
 {
-  URL url=KotlinCompiler.class.getClassLoader().getResource("jet/JetObject.class");
-  if (url == null) {
-    System.out.println("Couldn't find runtime library");
-    return;
-  }
-  final String protocol=url.getProtocol();
-  final String path=url.getPath();
-  if (protocol.equals("file")) {
-    final File stdlibDir=new File(path).getParentFile().getParentFile();
-    FileUtil.processFilesRecursively(stdlibDir,new Processor<File>(){
+  final File unpackedRuntimePath=getUnpackedRuntimePath();
+  if (unpackedRuntimePath != null) {
+    FileUtil.processFilesRecursively(unpackedRuntimePath,new Processor<File>(){
       @Override public boolean process(      File file){
         if (file.isDirectory())         return true;
-        final String relativePath=FileUtil.getRelativePath(stdlibDir,file);
+        final String relativePath=FileUtil.getRelativePath(unpackedRuntimePath,file);
         try {
           stream.putNextEntry(new JarEntry(FileUtil.toSystemIndependentName(relativePath)));
           FileInputStream fis=new FileInputStream(file);
@@ -30,24 +23,28 @@
     }
 );
   }
- else   if (protocol.equals("jar")) {
-    File jar=new File(path.substring(path.indexOf(":") + 1,path.indexOf("!/")));
-    JarInputStream jis=new JarInputStream(new FileInputStream(jar));
-    try {
-      while (true) {
-        JarEntry e=jis.getNextJarEntry();
-        if (e == null) {
-          break;
+ else {
+    File runtimeJarPath=getRuntimeJarPath();
+    if (runtimeJarPath != null) {
+      JarInputStream jis=new JarInputStream(new FileInputStream(runtimeJarPath));
+      try {
+        while (true) {
+          JarEntry e=jis.getNextJarEntry();
+          if (e == null) {
+            break;
+          }
+          if (FileUtil.getExtension(e.getName()).equals("class")) {
+            stream.putNextEntry(e);
+            FileUtil.copy(jis,stream);
+          }
         }
-        stream.putNextEntry(e);
-        FileUtil.copy(jis,stream);
+      }
+  finally {
+        jis.close();
       }
     }
-  finally {
-      jis.close();
-    }
-  }
  else {
-    System.out.println("Couldn't copy runtime library from " + url + ", protocol "+ protocol);
+      System.out.println("Couldn't find runtime library");
+    }
   }
 }
