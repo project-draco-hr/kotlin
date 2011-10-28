@@ -1,12 +1,11 @@
 {
-  String fileName=name + ".jet";
-  String fullPath=getTestDataPath() + getTestFilePath();
+  String fileName=myName + ".jet";
+  String fullPath=myDataPath + "/" + fileName;
   String expectedText=loadFile(fullPath);
   List<CheckerTestUtil.DiagnosedRange> diagnosedRanges=Lists.newArrayList();
   String clearText=CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
-  configureFromFileText(fileName,clearText);
-  JetFile jetFile=(JetFile)myFile;
-  BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(jetFile);
+  myFile=createPsiFile(myName,clearText);
+  BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(myFile);
   CheckerTestUtil.diagnosticsDiff(diagnosedRanges,bindingContext.getDiagnostics(),new CheckerTestUtil.DiagnosticDiffCallbacks(){
     @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
       String message="Missing " + type + DiagnosticUtils.atLocation(myFile,new TextRange(expectedStart,expectedEnd));
@@ -18,6 +17,6 @@
     }
   }
 );
-  String actualText=CheckerTestUtil.addDiagnosticMarkersToText(jetFile,bindingContext).toString();
+  String actualText=CheckerTestUtil.addDiagnosticMarkersToText(myFile,bindingContext).toString();
   assertEquals(expectedText,actualText);
 }
