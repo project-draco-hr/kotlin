@@ -5,7 +5,7 @@
     Args.parse(arguments,args);
   }
  catch (  Throwable t) {
-    System.out.println("Usage: KotlinCompiler -output <outputDir> -src <filename or dirname>");
+    System.out.println("Usage: KotlinCompiler [-output <outputDir>|-jar <jarFileName>] -src <filename or dirname>");
     t.printStackTrace();
     return;
   }
@@ -26,6 +26,7 @@
   Project project=environment.getProject();
   GenerationState generationState=new GenerationState(project,false);
   List<JetNamespace> namespaces=Lists.newArrayList();
+  String mainClass=null;
   if (vFile.isDirectory()) {
     File dir=new File(vFile.getPath());
     addFiles(environment,project,namespaces,dir);
@@ -33,7 +34,11 @@
  else {
     PsiFile psiFile=PsiManager.getInstance(project).findFile(vFile);
     if (psiFile instanceof JetFile) {
-      namespaces.add(((JetFile)psiFile).getRootNamespace());
+      final JetNamespace namespace=((JetFile)psiFile).getRootNamespace();
+      if (JetMainDetector.hasMain(namespace.getDeclarations())) {
+        mainClass=namespace.getFQName() + ".namespace";
+      }
+      namespaces.add(namespace);
     }
  else {
       System.out.print("Not a Kotlin file: " + vFile.getPath());
@@ -46,21 +51,14 @@
   if (!errorCollector.hasErrors) {
     generationState.compileCorrectNamespaces(bindingContext,namespaces);
     final ClassFileFactory factory=generationState.getFactory();
-    if (arguments.outputDir == null) {
-      System.out.println("Output directory is not specified - no files will be saved to the disk");
+    if (arguments.jar != null) {
+      writeToJar(factory,arguments.jar,mainClass,true);
+    }
+ else     if (arguments.outputDir != null) {
+      writeToOutputDirectory(factory,arguments.outputDir);
     }
  else {
-      List<String> files=factory.files();
-      for (      String file : files) {
-        File target=new File(arguments.outputDir,file);
-        try {
-          FileUtil.writeToFile(target,factory.asBytes(file));
-          System.out.println("Generated classfile: " + target);
-        }
- catch (        IOException e) {
-          System.out.println(e.getMessage());
-        }
-      }
+      System.out.println("Output directory or jar file is not specified - no files will be saved to the disk");
     }
   }
 }
