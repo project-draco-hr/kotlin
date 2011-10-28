@@ -4,9 +4,22 @@
     bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<BindingContext>(){
       @Override public Result<BindingContext> compute(){
 synchronized (lock) {
+          final Project project=file.getProject();
+          final List<JetDeclaration> namespaces=Lists.newArrayList();
+          ProjectRootManager rootManager=ProjectRootManager.getInstance(project);
+          VirtualFile[] contentRoots=rootManager.getContentRoots();
+          CompilerPathsEx.visitFiles(contentRoots,new CompilerPathsEx.FileVisitor(){
+            @Override protected void acceptFile(            VirtualFile file,            String fileRoot,            String filePath){
+              if (!(file.getName().endsWith(".kt") || file.getName().endsWith(".kts")))               return;
+              PsiFile psiFile=PsiManager.getInstance(project).findFile(file);
+              if (psiFile instanceof JetFile) {
+                namespaces.add(((JetFile)psiFile).getRootNamespace());
+              }
+            }
+          }
+);
           try {
-            JetNamespace rootNamespace=file.getRootNamespace();
-            BindingContext bindingContext=analyzeNamespace(rootNamespace,JetControlFlowDataTraceFactory.EMPTY);
+            BindingContext bindingContext=analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
             return new Result<BindingContext>(bindingContext,PsiModificationTracker.MODIFICATION_COUNT);
           }
  catch (          ProcessCanceledException e) {
