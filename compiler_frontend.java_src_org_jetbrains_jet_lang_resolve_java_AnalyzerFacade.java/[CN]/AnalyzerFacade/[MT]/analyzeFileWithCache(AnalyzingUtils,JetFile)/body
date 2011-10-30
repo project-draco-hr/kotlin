@@ -5,7 +5,7 @@
       @Override public Result<BindingContext> compute(){
 synchronized (lock) {
           final Project project=file.getProject();
-          final List<JetDeclaration> namespaces=Lists.newArrayList();
+          final Set<JetDeclaration> namespaces=Sets.newLinkedHashSet();
           ProjectRootManager rootManager=ProjectRootManager.getInstance(project);
           if (rootManager != null && !ApplicationManager.getApplication().isUnitTestMode()) {
             VirtualFile[] contentRoots=rootManager.getContentRoots();
@@ -24,7 +24,7 @@ synchronized (lock) {
             namespaces.add(file.getRootNamespace());
           }
           try {
-            BindingContext bindingContext=analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
+            BindingContext bindingContext=analyzingUtils.analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
             return new Result<BindingContext>(bindingContext,PsiModificationTracker.MODIFICATION_COUNT);
           }
  catch (          ProcessCanceledException e) {
