@@ -5,7 +5,7 @@
     Args.parse(arguments,args);
   }
  catch (  Throwable t) {
-    System.out.println("Usage: KotlinCompiler -output <outputDir> -src <filename or dirname>");
+    System.out.println("Usage: KotlinCompiler [-output <outputDir>|-jar <jarFileName>] -src <filename or dirname>");
     t.printStackTrace();
     return;
   }
@@ -18,49 +18,44 @@
   File rtJar=initJdk();
   if (rtJar == null)   return;
   environment.addToClasspath(rtJar);
-  VirtualFile vFile=environment.getLocalFileSystem().findFileByPath(arguments.src);
-  if (vFile == null) {
-    System.out.print("File/directory not found: " + arguments.src);
-    return;
-  }
-  Project project=environment.getProject();
-  GenerationState generationState=new GenerationState(project,false);
-  List<JetNamespace> namespaces=Lists.newArrayList();
-  if (vFile.isDirectory()) {
-    File dir=new File(vFile.getPath());
-    addFiles(environment,project,namespaces,dir);
+  final File unpackedRuntimePath=getUnpackedRuntimePath();
+  if (unpackedRuntimePath != null) {
+    environment.addToClasspath(unpackedRuntimePath);
   }
  else {
-    PsiFile psiFile=PsiManager.getInstance(project).findFile(vFile);
-    if (psiFile instanceof JetFile) {
-      namespaces.add(((JetFile)psiFile).getRootNamespace());
+    final File runtimeJarPath=getRuntimeJarPath();
+    if (runtimeJarPath != null && runtimeJarPath.exists()) {
+      environment.addToClasspath(runtimeJarPath);
     }
  else {
-      System.out.print("Not a Kotlin file: " + vFile.getPath());
+      System.out.println("No runtime library found");
       return;
     }
   }
-  BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(project,namespaces,JetControlFlowDataTraceFactory.EMPTY);
-  ErrorCollector errorCollector=new ErrorCollector(bindingContext);
-  errorCollector.report();
-  if (!errorCollector.hasErrors) {
-    generationState.compileCorrectNamespaces(bindingContext,namespaces);
-    final ClassFileFactory factory=generationState.getFactory();
-    if (arguments.outputDir == null) {
-      System.out.println("Output directory is not specified - no files will be saved to the disk");
+  if (arguments.module != null) {
+    compileModuleScript(environment,arguments.module);
+    return;
+  }
+  CompileSession session=new CompileSession(environment);
+  session.addSources(arguments.src);
+  String mainClass=null;
+  for (  JetNamespace namespace : session.getSourceFileNamespaces()) {
+    if (JetMainDetector.hasMain(namespace.getDeclarations())) {
+      mainClass=namespace.getFQName() + ".namespace";
+      break;
     }
+  }
+  if (!session.analyze()) {
+    return;
+  }
+  ClassFileFactory factory=session.generate();
+  if (arguments.jar != null) {
+    writeToJar(factory,arguments.jar,mainClass,true);
+  }
+ else   if (arguments.outputDir != null) {
+    writeToOutputDirectory(factory,arguments.outputDir);
+  }
  else {
-      List<String> files=factory.files();
-      for (      String file : files) {
-        File target=new File(arguments.outputDir,file);
-        try {
-          FileUtil.writeToFile(target,factory.asBytes(file));
-          System.out.println("Generated classfile: " + target);
-        }
- catch (        IOException e) {
-          System.out.println(e.getMessage());
-        }
-      }
-    }
+    System.out.println("Output directory or jar file is not specified - no files will be saved to the disk");
   }
 }

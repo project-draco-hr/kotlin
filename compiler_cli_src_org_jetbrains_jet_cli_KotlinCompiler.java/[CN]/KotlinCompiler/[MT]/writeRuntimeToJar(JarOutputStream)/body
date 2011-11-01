@@ -1,0 +1,50 @@
+{
+  final File unpackedRuntimePath=getUnpackedRuntimePath();
+  if (unpackedRuntimePath != null) {
+    FileUtil.processFilesRecursively(unpackedRuntimePath,new Processor<File>(){
+      @Override public boolean process(      File file){
+        if (file.isDirectory())         return true;
+        final String relativePath=FileUtil.getRelativePath(unpackedRuntimePath,file);
+        try {
+          stream.putNextEntry(new JarEntry(FileUtil.toSystemIndependentName(relativePath)));
+          FileInputStream fis=new FileInputStream(file);
+          try {
+            FileUtil.copy(fis,stream);
+          }
+  finally {
+            fis.close();
+          }
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+        return true;
+      }
+    }
+);
+  }
+ else {
+    File runtimeJarPath=getRuntimeJarPath();
+    if (runtimeJarPath != null) {
+      JarInputStream jis=new JarInputStream(new FileInputStream(runtimeJarPath));
+      try {
+        while (true) {
+          JarEntry e=jis.getNextJarEntry();
+          if (e == null) {
+            break;
+          }
+          if (FileUtil.getExtension(e.getName()).equals("class")) {
+            stream.putNextEntry(e);
+            FileUtil.copy(jis,stream);
+          }
+        }
+      }
+  finally {
+        jis.close();
+      }
+    }
+ else {
+      System.out.println("Couldn't find runtime library");
+    }
+  }
+}
