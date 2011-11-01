@@ -1,4 +1,8 @@
 {
+  boolean nullable=expectedType.getSort() == Type.OBJECT;
+  if (nullable) {
+    expectedType=JetTypeMapper.unboxType(expectedType);
+  }
   if (arguments.size() == 1) {
     if (receiver != null) {
       receiver.put(expectedType,v);
@@ -10,5 +14,8 @@
     codegen.gen(arguments.get(1),expectedType);
   }
   v.visitInsn(expectedType.getOpcode(opcode));
+  if (nullable) {
+    StackValue.onStack(expectedType).put(expectedType=JetTypeMapper.boxType(expectedType),v);
+  }
   return StackValue.onStack(expectedType);
 }
