@@ -1,0 +1,11 @@
+{
+  ExpressionReceiver receiver=getExpressionReceiver(facade,arrayAccessExpression.getArrayExpression(),context.replaceScope(scope));
+  if (receiver == null)   return null;
+  Call call=CallMaker.makeArraySetCall(receiver,arrayAccessExpression,rightHandSide);
+  ResolvedCall<FunctionDescriptor> setFunctionCall=context.replaceScope(scope).replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).resolveCallWithGivenName(call,arrayAccessExpression,"set");
+  if (setFunctionCall == null)   return null;
+  FunctionDescriptor setFunctionDescriptor=setFunctionCall.getResultingDescriptor();
+  context.trace.record(INDEXED_LVALUE_SET,arrayAccessExpression,setFunctionCall);
+  context.trace.record(REFERENCE_TARGET,operationSign,setFunctionDescriptor);
+  return DataFlowUtils.checkType(setFunctionDescriptor.getReturnType(),arrayAccessExpression,context);
+}
