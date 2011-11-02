@@ -1,7 +1,7 @@
 {
   JetExpression expr=expression.getSubjectExpression();
   final Type subjectType=expressionType(expr);
-  final int subjectLocal=myMap.enterTemp(subjectType.getSize());
+  final int subjectLocal=myFrameMap.enterTemp(subjectType.getSize());
   gen(expr,subjectType);
   v.store(subjectLocal,subjectType);
   Label end=new Label();
@@ -12,7 +12,7 @@
       v.mark(nextCondition);
     }
     nextCondition=new Label();
-    FrameMap.Mark mark=myMap.mark();
+    FrameMap.Mark mark=myFrameMap.mark();
     Label thisEntry=new Label();
     if (!whenEntry.isElse()) {
       final JetWhenCondition[] conditions=whenEntry.getConditions();
@@ -39,6 +39,6 @@
     throwNewException(CLASS_NO_PATTERN_MATCHED_EXCEPTION);
   }
   v.mark(end);
-  myMap.leaveTemp(subjectType.getSize());
+  myFrameMap.leaveTemp(subjectType.getSize());
   return StackValue.onStack(expressionType(expression));
 }
