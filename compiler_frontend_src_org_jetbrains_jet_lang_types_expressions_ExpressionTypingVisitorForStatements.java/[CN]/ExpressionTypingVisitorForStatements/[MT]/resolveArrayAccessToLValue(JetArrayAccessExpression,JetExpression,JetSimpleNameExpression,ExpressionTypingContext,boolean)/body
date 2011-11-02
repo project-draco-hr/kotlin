@@ -1,0 +1,17 @@
+{
+  ExpressionReceiver receiver=getExpressionReceiver(facade,arrayAccessExpression.getArrayExpression(),context.replaceScope(scope));
+  if (receiver == null)   return null;
+  Call call=CallMaker.makeArraySetCall(receiver,arrayAccessExpression,rightHandSide);
+  FunctionDescriptor setFunction=context.replaceScope(scope).replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).resolveCallWithGivenName(call,arrayAccessExpression,"set",receiver);
+  if (setFunction == null)   return null;
+  context.trace.record(INDEXED_LVALUE_SET,arrayAccessExpression,setFunction);
+  if (getterNeeded) {
+    FunctionDescriptor getFunction=context.replaceScope(scope).replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).resolveCallWithGivenName(CallMaker.makeArrayGetCall(receiver,arrayAccessExpression),arrayAccessExpression,"get",receiver);
+    if (getFunction == null)     return null;
+    context.trace.record(INDEXED_LVALUE_GET,arrayAccessExpression,getFunction);
+  }
+ else {
+    context.trace.record(REFERENCE_TARGET,operationSign,setFunction);
+  }
+  return DataFlowUtils.checkType(setFunction.getReturnType(),arrayAccessExpression,context);
+}
