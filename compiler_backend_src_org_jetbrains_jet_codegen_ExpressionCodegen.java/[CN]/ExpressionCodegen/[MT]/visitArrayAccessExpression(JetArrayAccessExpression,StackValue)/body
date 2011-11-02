@@ -1,2 +1,31 @@
 {
+  final JetExpression array=expression.getArrayExpression();
+  JetType type=bindingContext.get(BindingContext.EXPRESSION_TYPE,array);
+  final Type arrayType=type == null ? Type.VOID_TYPE : typeMapper.mapType(type);
+  gen(array,arrayType);
+  generateArrayIndex(expression);
+  if (arrayType.getSort() == Type.ARRAY) {
+    if (state.getStandardLibrary().getArray().equals(type.getConstructor().getDeclarationDescriptor())) {
+      JetType elementType=type.getArguments().get(0).getType();
+      Type notBoxed=typeMapper.mapType(elementType);
+      Type boxed=JetTypeMapper.boxType(notBoxed);
+      return StackValue.arrayElement(notBoxed,true);
+    }
+ else {
+      return StackValue.arrayElement(arrayType.getElementType(),false);
+    }
+  }
+ else {
+    DeclarationDescriptor operationDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
+    CallableMethod accessor=typeMapper.mapToCallableMethod((FunctionDescriptor)operationDescriptor,OwnerKind.IMPLEMENTATION);
+    boolean isGetter=accessor.getSignature().getName().equals("get");
+    if (isGetter) {
+      FunctionDescriptor setterDescriptor=bindingContext.get(BindingContext.INDEXED_LVALUE_SET,expression);
+      return StackValue.collectionElement(accessor.getSignature().getReturnType(),accessor,setterDescriptor != null ? typeMapper.mapToCallableMethod(setterDescriptor,OwnerKind.IMPLEMENTATION) : null);
+    }
+ else {
+      FunctionDescriptor getterDescriptor=bindingContext.get(BindingContext.INDEXED_LVALUE_GET,expression);
+      return StackValue.collectionElement(accessor.getSignature().getArgumentTypes()[1],getterDescriptor != null ? typeMapper.mapToCallableMethod(getterDescriptor,OwnerKind.IMPLEMENTATION) : null,accessor);
+    }
+  }
 }
