@@ -1,12 +1,10 @@
 {
   JsBlock block=program().getFragmentBlock(0);
-  JsFunction dummyFunc=newNamespace(namespace.getName());
-  JsBlock namespaceBlock=new JsBlock();
-  dummyFunc.setBody(namespaceBlock);
-  TranslationContext newContext=translationContext().newBlock(namespaceBlock).newScope(dummyFunc.getScope()).newNamespace(new JsNameRef(getJSName(namespace.getName())));
-  DeclarationTranslator declarationTranslator=new DeclarationTranslator(newContext);
-  for (  JetDeclaration declaration : namespace.getDeclarations()) {
-    namespaceBlock.addStatement(declarationTranslator.translateDeclaration(declaration));
-  }
+  JsName namespaceName=Namer.getNameForNamespace(namespace.getName());
+  block.addStatement(namespaceInitStatement(namespaceName));
+  JsFunction dummyFunction=new JsFunction(scope());
+  TranslationContext newContext=translationContext().newNamespace(namespaceName,dummyFunction);
+  JsBlock namespaceDeclarations=translateDeclaration(namespace,newContext);
+  block.addStatement(AstUtil.convertToStatement(newNamespace(namespaceName,namespaceDeclarations,dummyFunction)));
   return block;
 }

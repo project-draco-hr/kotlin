@@ -1,44 +1,7 @@
 {
   System.setProperty("java.awt.headless","true");
   Arguments arguments=new Arguments();
-  arguments.src="C:\\Dev\\Projects\\jet-contrib\\k2js\\test_files\\test.kt";
-  Disposable root=new Disposable(){
-    @Override public void dispose(){
-    }
-  }
-;
-  JetCoreEnvironment environment=new JetCoreEnvironment(root);
-  File rtJar=initJdk();
-  if (rtJar == null)   return;
-  environment.addToClasspath(rtJar);
-  VirtualFile vFile=environment.getLocalFileSystem().findFileByPath(arguments.src);
-  if (vFile == null) {
-    System.out.print("File/directory not found: " + arguments.src);
-    return;
-  }
-  Project project=environment.getProject();
-  GenerationState generationState=new GenerationState(project,false);
-  List<JetNamespace> namespaces=Lists.newArrayList();
-  if (vFile.isDirectory()) {
-    File dir=new File(vFile.getPath());
-    addFiles(environment,project,namespaces,dir);
-  }
- else {
-    PsiFile psiFile=PsiManager.getInstance(project).findFile(vFile);
-    if (psiFile instanceof JetFile) {
-      namespaces.add(((JetFile)psiFile).getRootNamespace());
-    }
- else {
-      System.out.print("Not a Kotlin file: " + vFile.getPath());
-      return;
-    }
-  }
-  BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(project,namespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
-  ErrorCollector errorCollector=new ErrorCollector(bindingContext);
-  errorCollector.report();
-  if (!errorCollector.hasErrors) {
-    CodeGenerator generator=new CodeGenerator();
-    JsProgram program=generationState.compileCorrectNamespaces(bindingContext,namespaces);
-    generator.generate(program);
-  }
+  arguments.src="test_files\\test_cases\\test.kt";
+  arguments.outputDir=null;
+  translate(arguments);
 }
