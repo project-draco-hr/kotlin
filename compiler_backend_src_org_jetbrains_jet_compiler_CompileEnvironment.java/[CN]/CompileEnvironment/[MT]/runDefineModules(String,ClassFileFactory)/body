@@ -1,0 +1,24 @@
+{
+  GeneratedClassLoader loader=new GeneratedClassLoader(factory);
+  try {
+    Class moduleSetBuilderClass=loader.loadClass("kotlin.modules.ModuleSetBuilder");
+    final IModuleSetBuilder moduleSetBuilder=(IModuleSetBuilder)moduleSetBuilderClass.newInstance();
+    Class namespaceClass=loader.loadClass("namespace");
+    final Method[] methods=namespaceClass.getMethods();
+    boolean modulesDefined=false;
+    for (    Method method : methods) {
+      if (method.getName().equals("defineModules")) {
+        method.invoke(null,moduleSetBuilder);
+        modulesDefined=true;
+        break;
+      }
+    }
+    if (!modulesDefined) {
+      throw new CompileEnvironmentException("Module script " + moduleFile + " must define a defineModules() method");
+    }
+    return moduleSetBuilder;
+  }
+ catch (  Exception e) {
+    throw new CompileEnvironmentException(e);
+  }
+}

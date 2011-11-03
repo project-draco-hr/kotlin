@@ -1,0 +1,15 @@
+{
+  if (!myErrors.isEmpty()) {
+    for (    String error : myErrors) {
+      out.println(error);
+    }
+    return false;
+  }
+  final AnalyzingUtils instance=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS);
+  List<JetNamespace> allNamespaces=new ArrayList<JetNamespace>(mySourceFileNamespaces);
+  allNamespaces.addAll(myLibrarySourceFileNamespaces);
+  myBindingContext=instance.analyzeNamespaces(myEnvironment.getProject(),allNamespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
+  ErrorCollector errorCollector=new ErrorCollector(myBindingContext);
+  errorCollector.report(out);
+  return !errorCollector.hasErrors;
+}

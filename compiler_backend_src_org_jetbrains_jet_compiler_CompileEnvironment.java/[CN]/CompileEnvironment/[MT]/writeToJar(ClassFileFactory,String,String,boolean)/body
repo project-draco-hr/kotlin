@@ -1,0 +1,29 @@
+{
+  try {
+    Manifest manifest=new Manifest();
+    final Attributes mainAttributes=manifest.getMainAttributes();
+    mainAttributes.putValue("Manifest-Version","1.0");
+    mainAttributes.putValue("Created-By","JetBrains Kotlin");
+    if (mainClass != null) {
+      mainAttributes.putValue("Main-Class",mainClass);
+    }
+    FileOutputStream fos=new FileOutputStream(jar);
+    JarOutputStream stream=new JarOutputStream(fos,manifest);
+    try {
+      for (      String file : factory.files()) {
+        stream.putNextEntry(new JarEntry(file));
+        stream.write(factory.asBytes(file));
+      }
+      if (includeRuntime) {
+        writeRuntimeToJar(stream);
+      }
+    }
+  finally {
+      stream.close();
+      fos.close();
+    }
+  }
+ catch (  IOException e) {
+    throw new CompileEnvironmentException("Failed to generate jar file",e);
+  }
+}
