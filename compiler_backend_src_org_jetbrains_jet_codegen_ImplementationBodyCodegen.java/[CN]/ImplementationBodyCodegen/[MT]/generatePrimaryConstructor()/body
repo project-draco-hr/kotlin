@@ -31,7 +31,7 @@
     method=new Method("<init>",Type.VOID_TYPE,consArgTypes.toArray(new Type[consArgTypes.size()]));
   }
   int flags=Opcodes.ACC_PUBLIC;
-  final MethodVisitor mv=v.visitMethod(flags,"<init>",method.getDescriptor(),null,null);
+  final MethodVisitor mv=v.newMethod(myClass,flags,"<init>",method.getDescriptor(),null,null);
   mv.visitCode();
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
   ConstructorFrameMap frameMap=new ConstructorFrameMap(callableMethod,constructorDescriptor,descriptor,kind);
@@ -86,7 +86,7 @@
       String delegateField="$delegate_" + n;
       Type fieldType=JetTypeMapper.jetInterfaceType(superClassDescriptor);
       String fieldDesc=fieldType.getDescriptor();
-      v.visitField(Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
+      v.newField(specifier,Opcodes.ACC_PRIVATE,delegateField,fieldDesc,null,null);
       iv.putfield(classname,delegateField,fieldDesc);
       JetClass superClass=(JetClass)state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,superClassDescriptor);
       final ClassContext delegateContext=context.intoClass(null,superClassDescriptor,new OwnerKind.DelegateKind(StackValue.field(fieldType,classname,delegateField,false),JetTypeMapper.jvmNameForInterface(superClassDescriptor)));
@@ -98,7 +98,7 @@
     final Type type=JetTypeMapper.jetImplementationType(outerDescriptor);
     String interfaceDesc=type.getDescriptor();
     final String fieldName="this$0";
-    v.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
+    v.newField(myClass,Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,fieldName,interfaceDesc,null,null);
     iv.load(0,classType);
     iv.load(frameMap.getOuterThisIndex(),type);
     iv.putfield(classname,fieldName,interfaceDesc);

@@ -12,7 +12,7 @@
   Type asmIterType=JetTypeMapper.boxType(typeMapper.mapType(iteratorType));
   JetType paramType=parameterDescriptor.getOutType();
   Type asmParamType=typeMapper.mapType(paramType);
-  int iteratorVar=myMap.enterTemp();
+  int iteratorVar=myFrameMap.enterTemp();
   gen(expression.getLoopRange(),loopRangeType);
   invokeFunctionNoParams(iteratorDescriptor,asmIterType,v);
   v.store(iteratorVar,asmIterType);
@@ -30,7 +30,7 @@
     intermediateValueForProperty((PropertyDescriptor)hasNextDescriptor,false,false).put(Type.BOOLEAN_TYPE,v);
   }
   v.ifeq(end);
-  myMap.enter(parameterDescriptor,asmParamType.getSize());
+  myFrameMap.enter(parameterDescriptor,asmParamType.getSize());
   v.load(iteratorVar,asmIterType);
   invokeFunctionNoParams(nextDescriptor,asmParamType,v);
   if (asmParamType.getSort() == Type.OBJECT && !"java.lang.Object".equals(asmParamType.getClassName())) {
@@ -40,9 +40,9 @@
   gen(expression.getBody(),Type.VOID_TYPE);
   v.goTo(begin);
   v.mark(end);
-  int paramIndex=myMap.leave(parameterDescriptor);
+  int paramIndex=myFrameMap.leave(parameterDescriptor);
   v.visitLocalVariable(loopParameter.getName(),asmParamType.getDescriptor(),null,begin,end,paramIndex);
-  myMap.leaveTemp();
+  myFrameMap.leaveTemp();
   myBreakTargets.pop();
   myContinueTargets.pop();
 }

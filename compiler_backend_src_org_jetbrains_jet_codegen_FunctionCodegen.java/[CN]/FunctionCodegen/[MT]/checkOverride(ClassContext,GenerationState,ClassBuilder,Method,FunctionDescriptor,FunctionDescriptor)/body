@@ -1,0 +1,27 @@
+{
+  Type type1=state.getTypeMapper().mapType(overriddenFunction.getOriginal().getReturnType());
+  Type type2=state.getTypeMapper().mapType(functionDescriptor.getReturnType());
+  if (!type1.equals(type2)) {
+    Method overriden=state.getTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction.getOriginal());
+    int flags=ACC_PUBLIC;
+    final MethodVisitor mv=v.newMethod(null,flags,jvmSignature.getName(),overriden.getDescriptor(),null,null);
+    mv.visitCode();
+    Type[] argTypes=jvmSignature.getArgumentTypes();
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    iv.load(0,JetTypeMapper.TYPE_OBJECT);
+    for (int i=0, reg=1; i < argTypes.length; i++) {
+      Type argType=argTypes[i];
+      iv.load(reg,argType);
+      if (argType.getSort() == Type.OBJECT) {
+        iv.checkcast(argType);
+      }
+      reg+=argType.getSize();
+    }
+    iv.invokevirtual(state.getTypeMapper().jvmName((ClassDescriptor)owner.getContextDescriptor(),OwnerKind.IMPLEMENTATION),jvmSignature.getName(),jvmSignature.getDescriptor());
+    if (JetTypeMapper.isPrimitive(jvmSignature.getReturnType()) && !JetTypeMapper.isPrimitive(overriden.getReturnType()))     StackValue.valueOf(iv,jvmSignature.getReturnType());
+    if (jvmSignature.getReturnType() == Type.VOID_TYPE)     iv.aconst(null);
+    iv.areturn(overriden.getReturnType());
+    mv.visitMaxs(0,0);
+    mv.visitEnd();
+  }
+}

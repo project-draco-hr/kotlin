@@ -1,0 +1,24 @@
+{
+  CompileSession session=new CompileSession(myEnvironment);
+  session.addSources(sourceFileOrDir);
+  String mainClass=null;
+  for (  JetNamespace namespace : session.getSourceFileNamespaces()) {
+    if (JetMainDetector.hasMain(namespace.getDeclarations())) {
+      mainClass=namespace.getFQName() + ".namespace";
+      break;
+    }
+  }
+  if (!session.analyze(myErrorStream)) {
+    return;
+  }
+  ClassFileFactory factory=session.generate();
+  if (jar != null) {
+    writeToJar(factory,jar,mainClass,true);
+  }
+ else   if (outputDir != null) {
+    writeToOutputDirectory(factory,outputDir);
+  }
+ else {
+    throw new CompileEnvironmentException("Output directory or jar file is not specified - no files will be saved to the disk");
+  }
+}

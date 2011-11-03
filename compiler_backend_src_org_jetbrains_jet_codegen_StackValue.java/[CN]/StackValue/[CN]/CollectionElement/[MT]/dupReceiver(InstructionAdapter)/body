@@ -1,0 +1,46 @@
+{
+  int size=calcSize();
+  if (size == 2) {
+    v.dup2();
+  }
+ else {
+    Method signature=getter.getSignature();
+    Type[] argumentTypes=signature.getArgumentTypes();
+    int firstIndex=frame.enterTemp();
+    int lastIndex=firstIndex;
+    frame.leaveTemp();
+    for (int i=argumentTypes.length - 1; i >= 0; i--) {
+      int sz=argumentTypes[i].getSize();
+      frame.enterTemp(sz);
+      lastIndex+=sz;
+      v.store(lastIndex - sz,argumentTypes[i]);
+    }
+    if (getter.getInvokeOpcode() != Opcodes.INVOKESTATIC) {
+      frame.enterTemp();
+      lastIndex++;
+      v.store(lastIndex - 1,JetTypeMapper.TYPE_OBJECT);
+    }
+    firstIndex=lastIndex;
+    int curIndex=lastIndex;
+    if (getter.getInvokeOpcode() != Opcodes.INVOKESTATIC) {
+      v.load(curIndex - 1,JetTypeMapper.TYPE_OBJECT);
+      curIndex--;
+    }
+    for (int i=0; i != argumentTypes.length; i++) {
+      int sz=argumentTypes[i].getSize();
+      v.load(curIndex - sz,argumentTypes[i]);
+      curIndex-=sz;
+    }
+    curIndex=firstIndex;
+    if (getter.getInvokeOpcode() != Opcodes.INVOKESTATIC) {
+      v.load(curIndex - 1,JetTypeMapper.TYPE_OBJECT);
+      curIndex--;
+    }
+    for (int i=0; i != argumentTypes.length; i++) {
+      int sz=argumentTypes[i].getSize();
+      v.load(curIndex - sz,argumentTypes[i]);
+      curIndex-=sz;
+    }
+    frame.leaveTemp(size);
+  }
+}

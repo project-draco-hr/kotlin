@@ -1,0 +1,20 @@
+{
+  String classDescr="L" + name + ";";
+  cv.newField(fun,ACC_PRIVATE | ACC_STATIC,"$instance",classDescr,null,null);
+  MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_STATIC,"$getInstance","()" + classDescr,null,new String[0]);
+  mv.visitCode();
+  mv.visitFieldInsn(GETSTATIC,name,"$instance",classDescr);
+  mv.visitInsn(DUP);
+  Label ret=new Label();
+  mv.visitJumpInsn(IFNONNULL,ret);
+  mv.visitInsn(POP);
+  mv.visitTypeInsn(NEW,name);
+  mv.visitInsn(DUP);
+  mv.visitMethodInsn(INVOKESPECIAL,name,"<init>","()V");
+  mv.visitInsn(DUP);
+  mv.visitFieldInsn(PUTSTATIC,name,"$instance",classDescr);
+  mv.visitLabel(ret);
+  mv.visitInsn(ARETURN);
+  mv.visitMaxs(0,0);
+  mv.visitEnd();
+}

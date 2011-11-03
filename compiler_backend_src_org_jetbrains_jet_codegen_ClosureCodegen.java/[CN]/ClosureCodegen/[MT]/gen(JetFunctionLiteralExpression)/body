@@ -1,5 +1,5 @@
 {
-  final Pair<String,ClassVisitor> nameAndVisitor=state.forAnonymousSubclass(fun);
+  final Pair<String,ClassBuilder> nameAndVisitor=state.forAnonymousSubclass(fun);
   final FunctionDescriptor funDescriptor=(FunctionDescriptor)state.getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,fun);
   cv=nameAndVisitor.getSecond();
   name=nameAndVisitor.getFirst();
@@ -12,20 +12,20 @@
   }
   appendType(signatureWriter,funDescriptor.getReturnType(),'=');
   signatureWriter.visitEnd();
-  cv.visit(V1_6,ACC_PUBLIC,name,null,funClass,new String[0]);
+  cv.defineClass(V1_6,ACC_PUBLIC,name,null,funClass,new String[0]);
   cv.visitSource(fun.getContainingFile().getName(),null);
-  generateBridge(name,funDescriptor,cv);
+  generateBridge(name,funDescriptor,fun,cv);
   captureThis=generateBody(funDescriptor,cv,fun.getFunctionLiteral());
   final Type enclosingType=context.enclosingClassType(state.getTypeMapper());
   if (enclosingType == null)   captureThis=false;
-  final Method constructor=generateConstructor(funClass,captureThis,funDescriptor.getReturnType());
+  final Method constructor=generateConstructor(funClass,captureThis,fun,funDescriptor.getReturnType());
   if (captureThis) {
-    cv.visitField(0,"this$0",enclosingType.getDescriptor(),null,null);
+    cv.newField(fun,0,"this$0",enclosingType.getDescriptor(),null,null);
   }
   if (isConst()) {
-    generateConstInstance();
+    generateConstInstance(fun);
   }
-  cv.visitEnd();
+  cv.done();
   final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor,captureThis);
   for (  DeclarationDescriptor descriptor : closure.keySet()) {
     final EnclosedValueDescriptor valueDescriptor=closure.get(descriptor);

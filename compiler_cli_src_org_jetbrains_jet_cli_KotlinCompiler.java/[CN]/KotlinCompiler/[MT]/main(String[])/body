@@ -9,53 +9,24 @@
     t.printStackTrace();
     return;
   }
-  Disposable root=new Disposable(){
-    @Override public void dispose(){
-    }
-  }
-;
-  JetCoreEnvironment environment=new JetCoreEnvironment(root);
+  CompileEnvironment environment=new CompileEnvironment();
   File rtJar=initJdk();
   if (rtJar == null)   return;
-  environment.addToClasspath(rtJar);
-  final File unpackedRuntimePath=getUnpackedRuntimePath();
-  if (unpackedRuntimePath != null) {
-    environment.addToClasspath(unpackedRuntimePath);
-  }
- else {
-    final File runtimeJarPath=getRuntimeJarPath();
-    if (runtimeJarPath != null && runtimeJarPath.exists()) {
-      environment.addToClasspath(runtimeJarPath);
-    }
- else {
+  try {
+    environment.setJavaRuntime(rtJar);
+    if (!environment.initializeKotlinRuntime()) {
       System.out.println("No runtime library found");
       return;
     }
-  }
-  if (arguments.module != null) {
-    compileModuleScript(environment,arguments.module);
-    return;
-  }
-  CompileSession session=new CompileSession(environment);
-  session.addSources(arguments.src);
-  String mainClass=null;
-  for (  JetNamespace namespace : session.getSourceFileNamespaces()) {
-    if (JetMainDetector.hasMain(namespace.getDeclarations())) {
-      mainClass=namespace.getFQName() + ".namespace";
-      break;
+    if (arguments.module != null) {
+      environment.compileModuleScript(arguments.module);
+      return;
+    }
+ else {
+      environment.compileBunchOfSources(arguments.src,arguments.jar,arguments.outputDir);
     }
   }
-  if (!session.analyze()) {
-    return;
-  }
-  ClassFileFactory factory=session.generate();
-  if (arguments.jar != null) {
-    writeToJar(factory,arguments.jar,mainClass,true);
-  }
- else   if (arguments.outputDir != null) {
-    writeToOutputDirectory(factory,arguments.outputDir);
-  }
- else {
-    System.out.println("Output directory or jar file is not specified - no files will be saved to the disk");
+ catch (  CompileEnvironmentException e) {
+    System.out.println(e.getMessage());
   }
 }
