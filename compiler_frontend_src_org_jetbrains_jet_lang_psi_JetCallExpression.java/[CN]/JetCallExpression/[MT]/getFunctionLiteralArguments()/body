@@ -1,3 +1,23 @@
 {
+  JetExpression calleeExpression=getCalleeExpression();
+  if (calleeExpression instanceof JetFunctionLiteralExpression) {
+    List<JetExpression> result=new SmartList<JetExpression>();
+    ASTNode treeNext=calleeExpression.getNode().getTreeNext();
+    while (treeNext != null) {
+      PsiElement psi=treeNext.getPsi();
+      if (psi instanceof JetFunctionLiteralExpression) {
+        result.add((JetFunctionLiteralExpression)psi);
+      }
+ else       if (psi instanceof JetLabelQualifiedExpression) {
+        JetLabelQualifiedExpression labelQualifiedExpression=(JetLabelQualifiedExpression)psi;
+        JetExpression labeledExpression=labelQualifiedExpression.getLabeledExpression();
+        if (labeledExpression instanceof JetFunctionLiteralExpression) {
+          result.add(labeledExpression);
+        }
+      }
+      treeNext=treeNext.getTreeNext();
+    }
+    return result;
+  }
   return findChildrenByType(JetNodeTypes.FUNCTION_LITERAL_EXPRESSION);
 }
