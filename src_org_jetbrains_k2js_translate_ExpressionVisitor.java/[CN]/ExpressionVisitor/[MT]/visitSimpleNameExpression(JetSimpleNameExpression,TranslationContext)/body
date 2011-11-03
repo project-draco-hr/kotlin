@@ -1,8 +1,16 @@
 {
   String referencedName=expression.getReferencedName();
-  if (context.enclosingScope().findExistingName(referencedName) == null) {
-    JsName name=context.enclosingScope().declareName(referencedName);
-    return name.makeRef();
+  JsName jsName=context.enclosingScope().findExistingNameNoRecurse(referencedName);
+  if (jsName != null) {
+    return jsName.makeRef();
   }
-  return context.getNamespaceQualifiedReference(context.getJSName(referencedName));
+  jsName=context.functionScope().findExistingNameNoRecurse(referencedName);
+  if (jsName != null) {
+    return context.getNamespaceQualifiedReference(jsName);
+  }
+  jsName=context.namespaceScope().findExistingNameNoRecurse(referencedName);
+  if (jsName != null) {
+    return context.getNamespaceQualifiedReference(jsName);
+  }
+  throw new AssertionError("Unindentified name " + expression.getReferencedName());
 }
