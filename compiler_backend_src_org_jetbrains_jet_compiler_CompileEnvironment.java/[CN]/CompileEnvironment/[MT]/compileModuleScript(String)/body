@@ -6,6 +6,12 @@
   final String directory=new File(moduleFile).getParent();
   for (  IModuleBuilder moduleBuilder : moduleSetBuilder.getModules()) {
     ClassFileFactory moduleFactory=compileModule(moduleBuilder,directory);
-    writeToJar(moduleFactory,new File(directory,moduleBuilder.getModuleName() + ".jar").getPath(),null,true);
+    final String path=new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+    try {
+      writeToJar(moduleFactory,new FileOutputStream(path),null,true);
+    }
+ catch (    FileNotFoundException e) {
+      throw new CompileEnvironmentException("Invalid jar path " + path,e);
+    }
   }
 }
