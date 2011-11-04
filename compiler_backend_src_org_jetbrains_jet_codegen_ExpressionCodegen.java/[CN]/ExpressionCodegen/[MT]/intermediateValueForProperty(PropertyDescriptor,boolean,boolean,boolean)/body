@@ -2,7 +2,7 @@
   DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
   boolean isStatic=containingDeclaration instanceof NamespaceDescriptorImpl;
   propertyDescriptor=propertyDescriptor.getOriginal();
-  boolean isInsideClass=!forceInterface && containingDeclaration == context.getContextClass();
+  boolean isInsideClass=!forceInterface && containingDeclaration == context.getContextClass() && contextKind() != OwnerKind.TRAIT_IMPL;
   Method getter;
   Method setter;
   if (forceField) {
@@ -10,8 +10,8 @@
     setter=null;
   }
  else {
-    getter=isInsideClass && (propertyDescriptor.getGetter() == null || propertyDescriptor.getGetter().isDefault()) ? null : typeMapper.mapGetterSignature(propertyDescriptor);
-    setter=isInsideClass && (propertyDescriptor.getSetter() == null || propertyDescriptor.getSetter().isDefault()) ? null : typeMapper.mapSetterSignature(propertyDescriptor);
+    getter=isInsideClass && (propertyDescriptor.getGetter() == null || propertyDescriptor.getGetter().isDefault()) ? null : typeMapper.mapGetterSignature(propertyDescriptor,OwnerKind.IMPLEMENTATION);
+    setter=isInsideClass && (propertyDescriptor.getSetter() == null || propertyDescriptor.getSetter().isDefault()) ? null : typeMapper.mapSetterSignature(propertyDescriptor,OwnerKind.IMPLEMENTATION);
   }
   String owner;
   boolean isInterface;
@@ -27,5 +27,5 @@
       isInterface=jetClass == null || jetClass.isTrait();
     }
   }
-  return StackValue.property(propertyDescriptor.getName(),owner,typeMapper.mapType(propertyDescriptor.getOutType()),isStatic,isInterface,getter,setter);
+  return StackValue.property(propertyDescriptor.getName(),owner,typeMapper.mapType(propertyDescriptor.getOutType()),isStatic,isInterface,isSuper,getter,setter);
 }

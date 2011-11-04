@@ -1,11 +1,14 @@
 {
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    return;
+  }
   if (kind == OwnerKind.NAMESPACE) {
     flags|=Opcodes.ACC_STATIC;
   }
   PsiElement psiElement=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,propertyDescriptor.getContainingDeclaration());
   boolean isTrait=psiElement instanceof JetClass && ((JetClass)psiElement).isTrait();
   if (isTrait && !(kind instanceof OwnerKind.DelegateKind))   flags|=Opcodes.ACC_ABSTRACT;
-  final String signature=state.getTypeMapper().mapSetterSignature(propertyDescriptor).getDescriptor();
+  final String signature=state.getTypeMapper().mapSetterSignature(propertyDescriptor,kind).getDescriptor();
   MethodVisitor mv=v.newMethod(origin,flags,setterName(propertyDescriptor.getName()),signature,null,null);
   if (!isTrait || kind instanceof OwnerKind.DelegateKind) {
     mv.visitCode();

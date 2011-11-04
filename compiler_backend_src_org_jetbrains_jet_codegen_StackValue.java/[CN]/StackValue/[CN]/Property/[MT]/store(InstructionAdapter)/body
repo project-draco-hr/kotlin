@@ -1,8 +1,13 @@
 {
-  if (setter == null) {
-    v.visitFieldInsn(isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,owner,name,this.type.getDescriptor());
+  if (isSuper && isInterface) {
+    v.visitMethodInsn(Opcodes.INVOKESTATIC,owner + "$$TImpl",setter.getName(),setter.getDescriptor().replace("(","(L" + owner + ";"));
   }
  else {
-    v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,owner,setter.getName(),setter.getDescriptor());
+    if (setter == null) {
+      v.visitFieldInsn(isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD,owner,name,this.type.getDescriptor());
+    }
+ else {
+      v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : isSuper ? Opcodes.INVOKESPECIAL : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,owner,setter.getName(),setter.getDescriptor());
+    }
   }
 }
