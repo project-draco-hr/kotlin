@@ -1,0 +1,28 @@
+{
+  ClassLoader systemClassLoader=ClassLoader.getSystemClassLoader();
+  if (systemClassLoader instanceof URLClassLoader) {
+    URLClassLoader loader=(URLClassLoader)systemClassLoader;
+    for (    URL url : loader.getURLs()) {
+      if ("file".equals(url.getProtocol())) {
+        if (url.getFile().endsWith("/lib/rt.jar")) {
+          return new File(url.getFile());
+        }
+        if (url.getFile().endsWith("/Classes/classes.jar")) {
+          return new File(url.getFile()).getAbsoluteFile();
+        }
+      }
+    }
+    if (failOnError) {
+      throw new CompileEnvironmentException("Could not find rt.jar in system class loader: " + StringUtil.join(loader.getURLs(),new Function<URL,String>(){
+        @Override public String fun(        URL url){
+          return url.toString();
+        }
+      }
+,", "));
+    }
+  }
+ else   if (failOnError) {
+    throw new CompileEnvironmentException("System class loader is not an URLClassLoader: " + systemClassLoader);
+  }
+  return null;
+}
