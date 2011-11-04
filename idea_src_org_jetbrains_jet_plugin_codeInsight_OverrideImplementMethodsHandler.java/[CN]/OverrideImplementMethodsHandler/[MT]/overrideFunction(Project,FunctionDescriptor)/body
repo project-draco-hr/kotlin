@@ -1,0 +1,28 @@
+{
+  StringBuilder bodyBuilder=new StringBuilder("override fun ");
+  bodyBuilder.append(descriptor.getName());
+  bodyBuilder.append("(");
+  boolean first=true;
+  for (  ValueParameterDescriptor parameterDescriptor : descriptor.getValueParameters()) {
+    if (!first) {
+      bodyBuilder.append(",");
+    }
+    first=false;
+    bodyBuilder.append(parameterDescriptor.getName());
+    bodyBuilder.append(": ");
+    bodyBuilder.append(parameterDescriptor.getOutType().toString());
+  }
+  bodyBuilder.append(")");
+  final JetType returnType=descriptor.getReturnType();
+  final JetStandardLibrary stdlib=JetStandardLibrary.getJetStandardLibrary(project);
+  if (!returnType.equals(stdlib.getTuple0Type())) {
+    bodyBuilder.append(": ").append(returnType.toString());
+  }
+  bodyBuilder.append("{");
+  final String initializer=defaultInitializer(returnType,stdlib);
+  if (initializer != null) {
+    bodyBuilder.append("return ").append(initializer);
+  }
+  bodyBuilder.append("}");
+  return JetPsiFactory.createFunction(project,bodyBuilder.toString());
+}
