@@ -1,82 +1,6 @@
 {
-  if (jetType.equals(JetStandardClasses.getNothingType()) || jetType.equals(JetStandardClasses.getNullableNothingType())) {
-    return TYPE_NOTHING;
-  }
-  if (jetType.equals(standardLibrary.getIntType())) {
-    return Type.INT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableIntType())) {
-    return JL_INTEGER_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getLongType())) {
-    return Type.LONG_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableLongType())) {
-    return JL_LONG_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getShortType())) {
-    return Type.SHORT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableShortType())) {
-    return JL_SHORT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getByteType())) {
-    return Type.BYTE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableByteType())) {
-    return JL_BYTE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getCharType())) {
-    return Type.CHAR_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableCharType())) {
-    return JL_CHAR_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getFloatType())) {
-    return Type.FLOAT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableFloatType())) {
-    return JL_FLOAT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getDoubleType())) {
-    return Type.DOUBLE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableDoubleType())) {
-    return JL_DOUBLE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getBooleanType())) {
-    return Type.BOOLEAN_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getNullableBooleanType())) {
-    return JL_BOOLEAN_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getByteArrayType())) {
-    return ARRAY_BYTE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getShortArrayType())) {
-    return ARRAY_SHORT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getIntArrayType())) {
-    return ARRAY_INT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getLongArrayType())) {
-    return ARRAY_LONG_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getFloatArrayType())) {
-    return ARRAY_FLOAT_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getDoubleArrayType())) {
-    return ARRAY_DOUBLE_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getCharArrayType())) {
-    return ARRAY_CHAR_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getBooleanArrayType())) {
-    return ARRAY_BOOL_TYPE;
-  }
-  if (jetType.equals(standardLibrary.getStringType()) || jetType.equals(standardLibrary.getNullableStringType())) {
-    return Type.getType(String.class);
-  }
+  Type known=knowTypes.get(jetType);
+  if (known != null)   return known;
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
   if (standardLibrary.getArray().equals(descriptor)) {
     if (jetType.getArguments().size() != 1) {
@@ -90,7 +14,9 @@
     return Type.getType(Object.class);
   }
   if (descriptor instanceof ClassDescriptor) {
-    return Type.getObjectType(jvmName((ClassDescriptor)descriptor,kind));
+    String name=DescriptorRenderer.getFQName(descriptor).replace('.','/');
+    if (name.startsWith("<java_root>"))     name=name.substring("<java_root>".length() + 1);
+    return Type.getObjectType(name + (kind == OwnerKind.TRAIT_IMPL ? "$$TImpl" : ""));
   }
   if (descriptor instanceof TypeParameterDescriptor) {
     return mapType(((TypeParameterDescriptor)descriptor).getBoundsAsType(),kind);

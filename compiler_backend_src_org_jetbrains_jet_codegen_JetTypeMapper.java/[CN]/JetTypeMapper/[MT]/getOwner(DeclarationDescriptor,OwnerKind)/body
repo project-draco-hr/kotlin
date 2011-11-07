@@ -1,2 +1,23 @@
 {
+  String owner;
+  DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+  if (containingDeclaration instanceof NamespaceDescriptor) {
+    owner=jvmName((NamespaceDescriptor)containingDeclaration);
+  }
+ else   if (containingDeclaration instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)containingDeclaration;
+    if (kind instanceof OwnerKind.DelegateKind) {
+      kind=OwnerKind.IMPLEMENTATION;
+    }
+ else {
+      if (classDescriptor.getKind() == ClassKind.OBJECT) {
+        kind=OwnerKind.IMPLEMENTATION;
+      }
+    }
+    owner=jvmName(classDescriptor,kind);
+  }
+ else {
+    throw new UnsupportedOperationException("don't know how to generate owner for parent " + containingDeclaration);
+  }
+  return owner;
 }
