@@ -1,8 +1,8 @@
 {
   if (postPrecessed)   return;
   postPrecessed=true;
-  for (int i=0, instructionsSize=instructions.size(); i < instructionsSize; i++) {
-    Instruction instruction=instructions.get(i);
+  for (int i=0, instructionsSize=mutableInstructionList.size(); i < instructionsSize; i++) {
+    Instruction instruction=mutableInstructionList.get(i);
     final int currentPosition=i;
     instruction.accept(new InstructionVisitor(){
       @Override public void visitInstructionWithNext(      InstructionWithNext instruction){
@@ -46,5 +46,9 @@
 );
   }
   getExitInstruction().setSink(getSinkInstruction());
-  removeDeadInstructions();
+  Set<Instruction> allowedDeadStartInstructions=prepareAllowedDeadInstructions();
+  markDeadInstructions();
+  Collection<Instruction> allowedDeadInstructions=collectAllowedDeadInstructions(allowedDeadStartInstructions);
+  instructions.addAll(mutableInstructionList);
+  instructions.removeAll(allowedDeadInstructions);
 }

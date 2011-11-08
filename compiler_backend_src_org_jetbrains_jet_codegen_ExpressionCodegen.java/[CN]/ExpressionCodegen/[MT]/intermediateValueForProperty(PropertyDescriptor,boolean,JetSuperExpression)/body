@@ -1,9 +1,9 @@
 {
   boolean isSuper=superExpression != null;
-  DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+  DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration().getOriginal();
   boolean isStatic=containingDeclaration instanceof NamespaceDescriptorImpl;
   propertyDescriptor=propertyDescriptor.getOriginal();
-  boolean isInsideClass=containingDeclaration == context.getContextClass() && contextKind() != OwnerKind.TRAIT_IMPL;
+  boolean isInsideClass=((containingDeclaration == context.getThisDescriptor()) || (context.getParentContext() instanceof CodegenContext.NamespaceContext) && context.getParentContext().getContextDescriptor() == containingDeclaration) && contextKind() != OwnerKind.TRAIT_IMPL;
   Method getter;
   Method setter;
   if (forceField) {
@@ -19,8 +19,8 @@
         PsiElement enclosingElement=bindingContext.get(BindingContext.LABEL_TARGET,superExpression.getTargetLabel());
         ClassDescriptor enclosed=(ClassDescriptor)bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,enclosingElement);
         if (!CodegenUtil.isInterface(propertyDescriptor.getContainingDeclaration())) {
-          if (enclosed != null && enclosed != context.getContextClass()) {
-            ClassContext c=context;
+          if (enclosed != null && enclosed != context.getThisDescriptor()) {
+            CodegenContext c=context;
             while (c.getContextDescriptor() != enclosed) {
               c=c.getParentContext();
             }
