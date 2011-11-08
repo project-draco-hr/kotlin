@@ -12,16 +12,33 @@
     }
 );
   }
-  Label onException=builder.createUnboundLabel();
-  builder.nondeterministicJump(onException);
-  value(expression.getTryBlock(),inCondition);
   List<JetCatchClause> catchClauses=expression.getCatchClauses();
-  if (!catchClauses.isEmpty()) {
+  final boolean hasCatches=!catchClauses.isEmpty();
+  Label onException=null;
+  if (hasCatches) {
+    onException=builder.createUnboundLabel();
+    builder.nondeterministicJump(onException);
+  }
+  value(expression.getTryBlock(),inCondition);
+  if (hasCatches) {
+    builder.allowDead();
     Label afterCatches=builder.createUnboundLabel();
     builder.jump(afterCatches);
     builder.bindLabel(onException);
-    for (Iterator<JetCatchClause> iterator=catchClauses.iterator(); iterator.hasNext(); ) {
-      JetCatchClause catchClause=iterator.next();
+    LinkedList<Label> catchLabels=Lists.newLinkedList();
+    int catchClausesSize=catchClauses.size();
+    for (int i=0; i < catchClausesSize - 1; i++) {
+      catchLabels.add(builder.createUnboundLabel());
+    }
+    builder.nondeterministicJump(catchLabels);
+    boolean isFirst=true;
+    for (    JetCatchClause catchClause : catchClauses) {
+      if (!isFirst) {
+        builder.bindLabel(catchLabels.remove());
+      }
+ else {
+        isFirst=false;
+      }
       JetParameter catchParameter=catchClause.getCatchParameter();
       if (catchParameter != null) {
         builder.write(catchParameter,catchParameter);
@@ -30,14 +47,13 @@
       if (catchBody != null) {
         value(catchBody,false);
       }
-      if (iterator.hasNext()) {
-        builder.nondeterministicJump(afterCatches);
-      }
+      builder.allowDead();
+      builder.jump(afterCatches);
     }
     builder.bindLabel(afterCatches);
   }
  else {
-    builder.bindLabel(onException);
+    builder.allowDead();
   }
   if (finallyBlock != null) {
     builder.exitTryFinally();
