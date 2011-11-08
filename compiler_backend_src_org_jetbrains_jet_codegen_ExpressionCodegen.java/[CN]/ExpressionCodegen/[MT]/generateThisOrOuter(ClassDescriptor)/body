@@ -1,28 +1,21 @@
 {
-  boolean thisDone=false;
-  StackValue result=null;
-  ClassContext cur=context;
-  while (true) {
-    ClassContext parentContext=cur.getParentContext();
-    if (parentContext == null)     break;
-    final DeclarationDescriptor curContextType=cur.getContextDescriptor();
-    if (curContextType instanceof ClassDescriptor) {
-      if (isSubclass((ClassDescriptor)curContextType,calleeContainingClass))       break;
-      final StackValue outer;
-      if (!thisDone && myFrameMap instanceof ConstructorFrameMap) {
-        outer=StackValue.local(((ConstructorFrameMap)myFrameMap).getOuterThisIndex(),JetTypeMapper.TYPE_OBJECT);
-      }
- else {
-        thisToStack();
-        outer=StackValue.field(parentContext.jvmType(typeMapper),cur.jvmType(typeMapper).getInternalName(),"this$0",false);
-      }
-      thisDone=true;
-      result=outer;
+  CodegenContext cur=context;
+  if (cur.getReceiverDescriptor() == calleeContainingClass) {
+    return cur.getReceiverExpression();
+  }
+  StackValue result=StackValue.local(0,JetTypeMapper.TYPE_OBJECT);
+  while (cur != null) {
+    if (cur instanceof CodegenContext.MethodContext && !(cur instanceof CodegenContext.ConstructorContext))     cur=cur.getParentContext();
+    if (isSubclass(cur.getThisDescriptor(),calleeContainingClass)) {
+      Type type=typeMapper.mapType(calleeContainingClass.getDefaultType());
+      result.put(JetTypeMapper.TYPE_OBJECT,v);
+      return StackValue.onStack(type);
     }
-    cur=parentContext;
+    result=cur.getOuterExpression(result);
+    if (cur instanceof CodegenContext.ConstructorContext) {
+      cur=cur.getParentContext();
+    }
+    cur=cur.getParentContext();
   }
-  if (!thisDone) {
-    return thisExpression();
-  }
-  return result;
+  throw new UnsupportedOperationException();
 }
