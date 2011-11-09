@@ -1,0 +1,56 @@
+{
+  if (typeProjections.size() == 1) {
+    return typeProjections.iterator().next();
+  }
+  Set<JetType> ins=new HashSet<JetType>();
+  Set<JetType> outs=new HashSet<JetType>();
+  Variance variance=parameterDescriptor.getVariance();
+switch (variance) {
+case INVARIANT:
+    break;
+case IN_VARIANCE:
+  outs=null;
+break;
+case OUT_VARIANCE:
+ins=null;
+break;
+}
+for (TypeProjection projection : typeProjections) {
+Variance projectionKind=projection.getProjectionKind();
+if (projectionKind.allowsInPosition()) {
+if (ins != null) {
+ins.add(projection.getType());
+}
+}
+ else {
+ins=null;
+}
+if (projectionKind.allowsOutPosition()) {
+if (outs != null) {
+outs.add(projection.getType());
+}
+}
+ else {
+outs=null;
+}
+}
+if (ins != null) {
+JetType intersection=TypeUtils.intersect(JetTypeChecker.INSTANCE,ins);
+if (intersection == null) {
+if (outs != null) {
+return new TypeProjection(OUT_VARIANCE,commonSupertype(outs));
+}
+return new TypeProjection(OUT_VARIANCE,commonSupertype(parameterDescriptor.getUpperBounds()));
+}
+Variance projectionKind=variance == IN_VARIANCE ? Variance.INVARIANT : IN_VARIANCE;
+return new TypeProjection(projectionKind,intersection);
+}
+ else if (outs != null) {
+Variance projectionKind=variance == OUT_VARIANCE ? Variance.INVARIANT : OUT_VARIANCE;
+return new TypeProjection(projectionKind,commonSupertype(outs));
+}
+ else {
+Variance projectionKind=variance == OUT_VARIANCE ? Variance.INVARIANT : OUT_VARIANCE;
+return new TypeProjection(projectionKind,commonSupertype(parameterDescriptor.getUpperBounds()));
+}
+}
