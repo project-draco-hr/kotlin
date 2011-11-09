@@ -8,5 +8,9 @@
   }
  else {
     myResult=new NewClassExpression(elementToElement(expression.getClassOrAnonymousClassReference()),elementToElement(expression.getArgumentList()),expression.getAnonymousClass() != null ? anonymousClassToAnonymousClass(expression.getAnonymousClass()) : null);
+    final PsiMethod constructor=expression.resolveMethod();
+    if (constructor != null && !isConstructorPrimary(constructor)) {
+      myResult=new CallChainExpression(new IdentifierImpl(constructor.getName(),false),new MethodCallExpression(new IdentifierImpl("init"),elementToElement(expression.getArgumentList()),false));
+    }
   }
 }

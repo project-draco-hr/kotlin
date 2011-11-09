@@ -1,7 +1,18 @@
 {
   super.visitReferenceExpression(expression);
-  boolean hasDollar=isFinalFieldReference(expression) && isInsideConstructor(expression);
-  boolean isNullable=typeToType(expression.getType()).isNullable();
-  final IdentifierImpl identifier=hasDollar ? new IdentifierImpl(expression.getReferenceName(),hasDollar,isNullable) : new IdentifierImpl(expression.getReferenceName(),isNullable);
+  final boolean isFieldReference=isFieldReference(expression);
+  final boolean hasDollar=isFieldReference && isInsidePrimaryConstructor(expression);
+  final boolean insideSecondaryConstructor=isInsideSecondaryConstructor(expression);
+  final boolean hasReceiver=isFieldReference && insideSecondaryConstructor;
+  final boolean isThis=isThisExpression(expression);
+  final boolean isNullable=typeToType(expression.getType()).isNullable();
+  final String className=getClassName(expression);
+  Expression identifier=new IdentifierImpl(expression.getReferenceName(),isNullable);
+  if (hasDollar)   identifier=new IdentifierImpl(expression.getReferenceName(),hasDollar,isNullable);
+ else {
+    final String temporaryObject="__";
+    if (hasReceiver)     identifier=new CallChainExpression(new IdentifierImpl(temporaryObject,false),new IdentifierImpl(expression.getReferenceName(),isNullable));
+ else     if (insideSecondaryConstructor && isThis)     identifier=new IdentifierImpl("val " + temporaryObject + " = "+ className);
+  }
   myResult=new CallChainExpression(expressionToExpression(expression.getQualifierExpression()),identifier);
 }
