@@ -1,10 +1,10 @@
 {
-  ConstructorDescriptor constructorDescriptor=(context.bindingContext().get(BindingContext.CONSTRUCTOR,expression.getCalleeExpression()));
-  JetExpression calleeExpression=expression.getCalleeExpression();
-  if (constructorDescriptor == null) {
-    JsExpression callee=getCallee(expression,context);
-    List<JsExpression> arguments=generateArgumentList(expression.getValueArguments(),context);
-    return AstUtil.newInvocation(callee,arguments);
+  JsExpression callee=getCallee(expression,context);
+  List<JsExpression> arguments=generateArgumentList(expression.getValueArguments(),context);
+  if (isConstructorInvocation(expression,context)) {
+    JsNew constructorCall=new JsNew(callee);
+    constructorCall.setArguments(arguments);
+    return constructorCall;
   }
-  throw new AssertionError("Should generate constructor invocation");
+  return AstUtil.newInvocation(callee,arguments);
 }
