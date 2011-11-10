@@ -1,13 +1,14 @@
 {
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceExpectedReturnType(TypeUtils.NO_EXPECTED_TYPE);
   JetExpression left=JetPsiUtil.deparenthesize(expression.getLeft());
   JetExpression right=expression.getRight();
   if (left instanceof JetArrayAccessExpression) {
     JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
-    JetType resultType=resolveArrayAccessToLValue(arrayAccessExpression,right,expression.getOperationReference(),context);
+    JetType assignmentType=resolveArrayAccessToLValue(arrayAccessExpression,right,expression.getOperationReference(),context);
     checkLValue(context.trace,arrayAccessExpression);
-    return resultType;
+    return checkAssignmentType(assignmentType,expression,contextWithExpectedType);
   }
-  JetType leftType=facade.getType(expression.getLeft(),context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceScope(scope));
+  JetType leftType=facade.getType(expression.getLeft(),context.replaceScope(scope));
   if (right != null) {
     JetType rightType=facade.getType(right,context.replaceExpectedType(leftType).replaceScope(scope));
   }
@@ -25,5 +26,5 @@
     }
     ExpressionTypingUtils.checkWrappingInRef(simpleName,context);
   }
-  return checkExpectedType(expression,context);
+  return checkExpectedType(expression,contextWithExpectedType);
 }
