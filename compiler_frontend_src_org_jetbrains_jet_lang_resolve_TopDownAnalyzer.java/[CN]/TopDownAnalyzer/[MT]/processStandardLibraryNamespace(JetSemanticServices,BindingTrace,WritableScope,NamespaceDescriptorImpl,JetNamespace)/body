@@ -3,14 +3,6 @@
   context.getNamespaceScopes().put(namespace,standardLibraryNamespace.getMemberScope());
   context.getNamespaceDescriptors().put(namespace,standardLibraryNamespace);
   context.getDeclaringScopes().put(namespace,outerScope);
-  new TypeHierarchyResolver(context).process(outerScope,standardLibraryNamespace,namespace.getDeclarations());
-  new DeclarationResolver(context).process();
-  new DelegationResolver(context).process();
-  OverrideResolver overrideResolver=new OverrideResolver(context){
-    @Override protected void checkOverridesInAClass(    MutableClassDescriptor classDescriptor,    JetClassOrObject klass){
-    }
-  }
-;
-  overrideResolver.process();
-  new BodyResolver(context).resolveBehaviorDeclarationBodies();
+  context.setAnalyzingBootstrapLibrary(true);
+  doProcess(context,outerScope,standardLibraryNamespace,namespace.getDeclarations(),JetControlFlowDataTraceFactory.EMPTY,false);
 }
