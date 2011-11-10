@@ -1,0 +1,24 @@
+{
+class Key extends Pair<String,String> {
+    Key(    String namespace,    String name){
+      super(namespace,name);
+    }
+    public String getNamespace(){
+      return first;
+    }
+    public String getFunctionName(){
+      return second;
+    }
+  }
+  MultiMap<Key,FunctionDescriptor> functionsByName=MultiMap.create();
+  for (  FunctionDescriptorImpl function : context.getFunctions().values()) {
+    DeclarationDescriptor containingDeclaration=function.getContainingDeclaration();
+    if (containingDeclaration instanceof NamespaceDescriptor) {
+      NamespaceDescriptor namespaceDescriptor=(NamespaceDescriptor)containingDeclaration;
+      functionsByName.putValue(new Key(namespaceDescriptor.getName(),function.getName()),function);
+    }
+  }
+  for (  Map.Entry<Key,Collection<FunctionDescriptor>> e : functionsByName.entrySet()) {
+    checkOverloadsWithSameName(e.getKey().getFunctionName(),e.getValue(),e.getKey().getNamespace());
+  }
+}
