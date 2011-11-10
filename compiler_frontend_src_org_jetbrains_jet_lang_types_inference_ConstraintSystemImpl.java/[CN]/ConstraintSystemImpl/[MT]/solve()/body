@@ -1,0 +1,37 @@
+{
+  for (  Map.Entry<JetType,KnownType> entry : Sets.newHashSet(knownTypes.entrySet())) {
+    JetType jetType=entry.getKey();
+    KnownType typeValue=entry.getValue();
+    for (    TypeValue upperBound : typeValue.getUpperBounds()) {
+      if (upperBound instanceof KnownType) {
+        KnownType knownBoundType=(KnownType)upperBound;
+        boolean ok=constraintExpander.run(jetType,knownBoundType.getType());
+        if (!ok) {
+          return new Solution(true);
+        }
+      }
+    }
+  }
+  for (  Map.Entry<TypeParameterDescriptor,UnknownType> entry : Sets.newHashSet(unknownTypes.entrySet())) {
+    TypeParameterDescriptor typeParameterDescriptor=entry.getKey();
+    UnknownType typeValue=entry.getValue();
+    for (    JetType upperBound : typeParameterDescriptor.getUpperBounds()) {
+      addSubtypingConstraintOnTypeValues(typeValue,getTypeValueFor(upperBound));
+    }
+  }
+  Set<TypeValue> visited=Sets.newHashSet();
+  for (  KnownType knownType : knownTypes.values()) {
+    transitiveClosure(knownType,visited);
+  }
+  for (  UnknownType unknownType : unknownTypes.values()) {
+    transitiveClosure(unknownType,visited);
+  }
+  Solution solution=new Solution(false);
+  for (  UnknownType unknownType : unknownTypes.values()) {
+    check(unknownType,solution);
+  }
+  for (  KnownType knownType : knownTypes.values()) {
+    check(knownType,solution);
+  }
+  return solution;
+}
