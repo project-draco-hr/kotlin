@@ -5,20 +5,33 @@
     for (    TypeValue upperBound : typeValue.getUpperBounds()) {
       JetType boundingType=solution.getSubstitutor().substitute(upperBound.getValue().getType(),Variance.INVARIANT);
       if (!typeChecker.isSubtypeOf(type,boundingType)) {
-        solution.registerError();
+        solution.registerError("Constraint violation: " + type + " is not a subtype of "+ boundingType);
         println("Constraint violation: " + type + " :< "+ boundingType);
       }
     }
     for (    TypeValue lowerBound : typeValue.getLowerBounds()) {
       JetType boundingType=solution.getSubstitutor().substitute(lowerBound.getValue().getType(),Variance.INVARIANT);
       if (!typeChecker.isSubtypeOf(boundingType,type)) {
-        solution.registerError();
+        solution.registerError("Constraint violation: " + boundingType + " is not a subtype of "+ type);
         println("Constraint violation: " + boundingType + " :< "+ type);
       }
     }
   }
  catch (  LoopInTypeVariableConstraintsException e) {
-    solution.registerError();
+    println("-------------------------------------------------------------------");
+    for (    Map.Entry<TypeParameterDescriptor,UnknownType> entry : unknownTypes.entrySet()) {
+      println("Unknown: " + entry.getKey());
+      UnknownType unknownType=entry.getValue();
+      println("Lower bounds: ");
+      for (      TypeValue lowerBound : unknownType.getLowerBounds()) {
+        println("  " + lowerBound);
+      }
+      println("Upper bounds: ");
+      for (      TypeValue lowerBound : unknownType.getUpperBounds()) {
+        println("  " + lowerBound);
+      }
+    }
+    solution.registerError("[TODO] Loop in constraints");
     e.printStackTrace();
   }
 }
