@@ -5,13 +5,27 @@
     return null;
   }
   JetExpression returnedExpression=expression.getReturnedExpression();
-  JetType returnedType=JetStandardClasses.getUnitType();
-  if (returnedExpression != null) {
-    facade.getType(returnedExpression,context.replaceExpectedType(context.expectedReturnType).replaceScope(context.scope));
+  JetType expectedType=context.expectedReturnType;
+  if (expression.getTargetLabel() == null) {
+    if (PsiTreeUtil.getParentOfType(expression,JetFunctionLiteral.class) == PsiTreeUtil.getParentOfType(expression,JetDeclaration.class)) {
+      JetNamedFunction function=JetPsiUtil.getSurroundingFunction(expression);
+      if (function != null && function.getReturnTypeRef() != null) {
+        expectedType=BindingContextUtils.getFunctionReturnType(context.trace.getBindingContext(),function);
+      }
+    }
   }
  else {
-    if (context.expectedReturnType != TypeUtils.NO_EXPECTED_TYPE && !JetStandardClasses.isUnit(context.expectedReturnType)) {
-      context.trace.report(RETURN_TYPE_MISMATCH.on(expression,context.expectedReturnType));
+    PsiElement element=context.trace.get(LABEL_TARGET,expression.getTargetLabel());
+    if (element instanceof JetFunction && ((JetFunction)element).getReturnTypeRef() != null) {
+      expectedType=BindingContextUtils.getFunctionReturnType(context.trace.getBindingContext(),(JetFunction)element);
+    }
+  }
+  if (returnedExpression != null) {
+    facade.getType(returnedExpression,context.replaceExpectedType(expectedType).replaceScope(context.scope));
+  }
+ else {
+    if (expectedType != TypeUtils.NO_EXPECTED_TYPE && expectedType != null && !JetStandardClasses.isUnit(expectedType)) {
+      context.trace.report(RETURN_TYPE_MISMATCH.on(expression,expectedType));
     }
   }
   return DataFlowUtils.checkType(JetStandardClasses.getNothingType(),expression,context);
