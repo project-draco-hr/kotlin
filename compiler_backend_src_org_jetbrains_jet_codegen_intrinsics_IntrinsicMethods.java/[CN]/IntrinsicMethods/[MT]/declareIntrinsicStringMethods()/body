@@ -1,7 +1,12 @@
 {
   final ClassDescriptor stringClass=myStdLib.getString();
   final Collection<DeclarationDescriptor> stringMembers=stringClass.getMemberScope(Collections.<TypeProjection>emptyList()).getAllDescriptors();
-  final PsiClass stringPsiClass=JavaPsiFacade.getInstance(myProject).findClass("java.lang.String",ProjectScope.getLibrariesScope(myProject));
+  final PsiClass stringPsiClass=JavaPsiFacade.getInstance(myProject).findClass("java.lang.String",new DelegatingGlobalSearchScope(ProjectScope.getLibrariesScope(myProject)){
+    @Override public boolean contains(    VirtualFile file){
+      return myBaseScope.contains(file) && file.getFileType() != JetFileType.INSTANCE;
+    }
+  }
+);
   for (  DeclarationDescriptor stringMember : stringMembers) {
     if (stringMember instanceof FunctionDescriptor) {
       final FunctionDescriptor stringMethod=(FunctionDescriptor)stringMember;
