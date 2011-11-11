@@ -3,25 +3,27 @@
   final Method delegate=invokeSignature(funDescriptor);
   if (bridge.getDescriptor().equals(delegate.getDescriptor()))   return;
   final MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC,"invoke",bridge.getDescriptor(),state.getTypeMapper().genericSignature(funDescriptor),new String[0]);
-  mv.visitCode();
-  InstructionAdapter iv=new InstructionAdapter(mv);
-  iv.load(0,Type.getObjectType(className));
-  final ReceiverDescriptor receiver=funDescriptor.getReceiverParameter();
-  int count=1;
-  if (receiver.exists()) {
-    StackValue.local(count,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,iv);
-    StackValue.onStack(JetTypeMapper.TYPE_OBJECT).upcast(state.getTypeMapper().mapType(receiver.getType()),iv);
-    count++;
+  if (cv.generateCode()) {
+    mv.visitCode();
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    iv.load(0,Type.getObjectType(className));
+    final ReceiverDescriptor receiver=funDescriptor.getReceiverParameter();
+    int count=1;
+    if (receiver.exists()) {
+      StackValue.local(count,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,iv);
+      StackValue.onStack(JetTypeMapper.TYPE_OBJECT).upcast(state.getTypeMapper().mapType(receiver.getType()),iv);
+      count++;
+    }
+    final List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
+    for (    ValueParameterDescriptor param : params) {
+      StackValue.local(count,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,iv);
+      StackValue.onStack(JetTypeMapper.TYPE_OBJECT).upcast(state.getTypeMapper().mapType(param.getOutType()),iv);
+      count++;
+    }
+    iv.invokespecial(className,"invoke",delegate.getDescriptor());
+    StackValue.onStack(delegate.getReturnType()).put(JetTypeMapper.TYPE_OBJECT,iv);
+    iv.areturn(JetTypeMapper.TYPE_OBJECT);
+    mv.visitMaxs(0,0);
+    mv.visitEnd();
   }
-  final List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
-  for (  ValueParameterDescriptor param : params) {
-    StackValue.local(count,JetTypeMapper.TYPE_OBJECT).put(JetTypeMapper.TYPE_OBJECT,iv);
-    StackValue.onStack(JetTypeMapper.TYPE_OBJECT).upcast(state.getTypeMapper().mapType(param.getOutType()),iv);
-    count++;
-  }
-  iv.invokespecial(className,"invoke",delegate.getDescriptor());
-  StackValue.onStack(delegate.getReturnType()).put(JetTypeMapper.TYPE_OBJECT,iv);
-  iv.areturn(JetTypeMapper.TYPE_OBJECT);
-  mv.visitMaxs(0,0);
-  mv.visitEnd();
 }

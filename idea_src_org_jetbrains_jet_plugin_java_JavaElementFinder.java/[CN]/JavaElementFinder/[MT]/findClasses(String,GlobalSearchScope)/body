@@ -1,0 +1,14 @@
+{
+  if (qualifiedName.startsWith("java."))   return PsiClass.EMPTY_ARRAY;
+  List<PsiClass> answer=new SmartList<PsiClass>();
+  final List<PsiFile> filesInScope=ensureUpToDate(scope);
+  for (  PsiFile file : filesInScope) {
+    final PsiJavaFileStub stub=file.getUserData(JAVA_API_STUB);
+    if (stub == null)     continue;
+    final String packageName=stub.getPackageName();
+    if (packageName != null && qualifiedName.startsWith(packageName)) {
+      collectClasses(answer,qualifiedName,stub);
+    }
+  }
+  return answer.toArray(new PsiClass[answer.size()]);
+}

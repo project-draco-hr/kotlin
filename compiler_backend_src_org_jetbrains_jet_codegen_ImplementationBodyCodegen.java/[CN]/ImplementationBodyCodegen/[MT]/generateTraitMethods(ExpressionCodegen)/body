@@ -14,30 +14,32 @@
             Method function=state.getTypeMapper().mapSignature(fun.getName(),fun);
             Method functionOriginal=state.getTypeMapper().mapSignature(fun.getName(),fun.getOriginal());
             final MethodVisitor mv=v.newMethod(myClass,flags,function.getName(),function.getDescriptor(),null,null);
-            mv.visitCode();
-            codegen.generateThisOrOuter(descriptor);
-            Type[] argTypes=function.getArgumentTypes();
-            InstructionAdapter iv=new InstructionAdapter(mv);
-            iv.load(0,JetTypeMapper.TYPE_OBJECT);
-            for (int i=0, reg=1; i < argTypes.length; i++) {
-              Type argType=argTypes[i];
-              iv.load(reg,argType);
-              reg+=argType.getSize();
+            if (v.generateCode()) {
+              mv.visitCode();
+              codegen.generateThisOrOuter(descriptor);
+              Type[] argTypes=function.getArgumentTypes();
+              InstructionAdapter iv=new InstructionAdapter(mv);
+              iv.load(0,JetTypeMapper.TYPE_OBJECT);
+              for (int i=0, reg=1; i < argTypes.length; i++) {
+                Type argType=argTypes[i];
+                iv.load(reg,argType);
+                reg+=argType.getSize();
+              }
+              JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,state.getBindingContext());
+              Type type=state.getTypeMapper().mapType(jetType);
+              if (type.getInternalName().equals("java/lang/Object")) {
+                jetType=declaration.getDefaultType();
+                type=state.getTypeMapper().mapType(jetType);
+              }
+              String fdescriptor=functionOriginal.getDescriptor().replace("(","(" + type.getDescriptor());
+              iv.invokestatic(state.getTypeMapper().jvmName((ClassDescriptor)fun.getContainingDeclaration(),OwnerKind.TRAIT_IMPL),function.getName(),fdescriptor);
+              if (function.getReturnType().getSort() == Type.OBJECT) {
+                iv.checkcast(function.getReturnType());
+              }
+              iv.areturn(function.getReturnType());
+              mv.visitMaxs(0,0);
+              mv.visitEnd();
             }
-            JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,state.getBindingContext());
-            Type type=state.getTypeMapper().mapType(jetType);
-            if (type.getInternalName().equals("java/lang/Object")) {
-              jetType=declaration.getDefaultType();
-              type=state.getTypeMapper().mapType(jetType);
-            }
-            String fdescriptor=functionOriginal.getDescriptor().replace("(","(" + type.getDescriptor());
-            iv.invokestatic(state.getTypeMapper().jvmName((ClassDescriptor)fun.getContainingDeclaration(),OwnerKind.TRAIT_IMPL),function.getName(),fdescriptor);
-            if (function.getReturnType().getSort() == Type.OBJECT) {
-              iv.checkcast(function.getReturnType());
-            }
-            iv.areturn(function.getReturnType());
-            mv.visitMaxs(0,0);
-            mv.visitEnd();
             FunctionCodegen.generateBridgeIfNeeded(context,state,v,function,fun,kind);
           }
         }

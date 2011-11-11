@@ -1,0 +1,20 @@
+{
+  final List<PsiFile> answer=new ArrayList<PsiFile>();
+  final FileTypeManager fileTypeManager=FileTypeManager.getInstance();
+  final PsiManager psiManager=PsiManager.getInstance(project);
+  VirtualFile[] contentRoots=ProjectRootManager.getInstance(project).getContentRoots();
+  CompilerPathsEx.visitFiles(contentRoots,new CompilerPathsEx.FileVisitor(){
+    @Override protected void acceptFile(    VirtualFile file,    String fileRoot,    String filePath){
+      final FileType fileType=fileTypeManager.getFileTypeByFile(file);
+      if (fileType != JetFileType.INSTANCE)       return;
+      if (scope.accept(file)) {
+        final PsiFile psiFile=psiManager.findFile(file);
+        if (psiFile instanceof JetFile) {
+          answer.add(psiFile);
+        }
+      }
+    }
+  }
+);
+  return answer;
+}
