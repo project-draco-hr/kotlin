@@ -23,7 +23,9 @@
  else {
     PsiFile psiFile=PsiManager.getInstance(project).findFile(vFile);
     if (psiFile instanceof JetFile) {
-      namespaces.add(((JetFile)psiFile).getRootNamespace());
+      JetNamespace rootNamespace=((JetFile)psiFile).getRootNamespace();
+      AnalyzingUtils.checkForSyntacticErrors(rootNamespace);
+      namespaces.add(rootNamespace);
     }
  else {
       System.out.print("Not a Kotlin file: " + vFile.getPath());
@@ -31,6 +33,7 @@
     }
   }
   BindingContext bindingContext=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).analyzeNamespaces(project,namespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
+  AnalyzingUtils.throwExceptionOnErrors(bindingContext);
   ErrorCollector errorCollector=new ErrorCollector(bindingContext);
   errorCollector.report();
   if (!errorCollector.hasErrors) {
