@@ -1,2 +1,35 @@
 {
+  final ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE);
+  final StringBuilder builder=new StringBuilder();
+  final CompileTimeConstant<?>[] value=new CompileTimeConstant<?>[1];
+  for (  JetStringTemplateEntry entry : expression.getEntries()) {
+    entry.accept(new JetVisitorVoid(){
+      @Override public void visitStringTemplateEntryWithExpression(      JetStringTemplateEntryWithExpression entry){
+        JetExpression entryExpression=entry.getExpression();
+        if (entryExpression != null) {
+          facade.getType(entryExpression,context.replaceScope(context.scope));
+        }
+        value[0]=CompileTimeConstantResolver.OUT_OF_RANGE;
+      }
+      @Override public void visitLiteralStringTemplateEntry(      JetLiteralStringTemplateEntry entry){
+        builder.append(entry.getText());
+      }
+      @Override public void visitEscapeStringTemplateEntry(      JetEscapeStringTemplateEntry entry){
+        String text=entry.getText();
+        CompileTimeConstant<?> character=CompileTimeConstantResolver.escapedStringToCharValue(text);
+        if (character instanceof ErrorValue) {
+          context.trace.report(ILLEGAL_ESCAPE_SEQUENCE.on(entry));
+          value[0]=CompileTimeConstantResolver.OUT_OF_RANGE;
+        }
+ else {
+          builder.append(((CharValue)character).getValue());
+        }
+      }
+    }
+);
+  }
+  if (value[0] != CompileTimeConstantResolver.OUT_OF_RANGE) {
+    context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new StringValue(builder.toString()));
+  }
+  return DataFlowUtils.checkType(context.semanticServices.getStandardLibrary().getStringType(),expression,contextWithExpectedType);
 }
