@@ -11,7 +11,7 @@
   if (superDescriptor.getTypeParameters().size() != subDescriptor.getTypeParameters().size()) {
     return OverrideCompatibilityInfo.typeParameterNumberMismatch();
   }
-  if (superDescriptor.getValueParameters().size() != subDescriptor.getValueParameters().size()) {
+  if (compiledValueParameterCount(superDescriptor) != compiledValueParameterCount(subDescriptor)) {
     return OverrideCompatibilityInfo.valueParameterNumberMismatch();
   }
   List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
@@ -29,12 +29,12 @@
       return OverrideCompatibilityInfo.boundsMismatch(superTypeParameter,subTypeParameter);
     }
   }
-  List<ValueParameterDescriptor> superValueParameters=superDescriptor.getValueParameters();
-  List<ValueParameterDescriptor> subValueParameters=subDescriptor.getValueParameters();
+  List<JetType> superValueParameters=compiledValueParameters(superDescriptor);
+  List<JetType> subValueParameters=compiledValueParameters(subDescriptor);
   for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
-    ValueParameterDescriptor superValueParameter=superValueParameters.get(i);
-    ValueParameterDescriptor subValueParameter=subValueParameters.get(i);
-    if (!JetTypeImpl.equalTypes(superValueParameter.getOutType(),subValueParameter.getOutType(),axioms)) {
+    JetType superValueParameter=superValueParameters.get(i);
+    JetType subValueParameter=subValueParameters.get(i);
+    if (!JetTypeImpl.equalTypes(superValueParameter,subValueParameter,axioms)) {
       return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter);
     }
   }
