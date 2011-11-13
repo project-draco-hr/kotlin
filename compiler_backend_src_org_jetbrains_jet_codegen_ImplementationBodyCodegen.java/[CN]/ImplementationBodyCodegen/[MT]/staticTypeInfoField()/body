@@ -2,18 +2,17 @@
   v.newField(myClass,Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC,"$staticTypeInfo","Ljet/typeinfo/TypeInfo;",null,null);
   staticInitializerChunks.add(new CodeChunk(){
     @Override public void generate(    InstructionAdapter v){
-      JetTypeMapper typeMapper=state.getTypeMapper();
-      v.aconst(typeMapper.jvmType(descriptor,OwnerKind.IMPLEMENTATION));
+      v.aconst(typeMapper.mapType(descriptor.getDefaultType(),OwnerKind.IMPLEMENTATION));
       v.iconst(0);
       ClassDescriptor outerClassDescriptor=CodegenUtil.getOuterClassDescriptor(descriptor);
       if (outerClassDescriptor == null) {
         v.invokestatic("jet/typeinfo/TypeInfo","getTypeInfo","(Ljava/lang/Class;Z)Ljet/typeinfo/TypeInfo;");
       }
  else {
-        v.getstatic(state.getTypeMapper().jvmName(outerClassDescriptor,OwnerKind.IMPLEMENTATION),"$staticTypeInfo","Ljet/typeinfo/TypeInfo;");
+        v.getstatic(typeMapper.mapType(outerClassDescriptor.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),"$staticTypeInfo","Ljet/typeinfo/TypeInfo;");
         v.invokestatic("jet/typeinfo/TypeInfo","getTypeInfo","(Ljava/lang/Class;ZLjet/typeinfo/TypeInfo;)Ljet/typeinfo/TypeInfo;");
       }
-      v.putstatic(typeMapper.jvmName(descriptor,kind),"$staticTypeInfo","Ljet/typeinfo/TypeInfo;");
+      v.putstatic(typeMapper.mapType(descriptor.getDefaultType(),kind).getInternalName(),"$staticTypeInfo","Ljet/typeinfo/TypeInfo;");
     }
   }
 );

@@ -1,9 +1,9 @@
 {
-  ConstructorDescriptor constructorDescriptor=state.getBindingContext().get(BindingContext.CONSTRUCTOR,constructor);
+  ConstructorDescriptor constructorDescriptor=bindingContext.get(BindingContext.CONSTRUCTOR,constructor);
   if (constructorDescriptor == null) {
     throw new UnsupportedOperationException("failed to get descriptor for secondary constructor");
   }
-  CallableMethod method=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,kind);
+  CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor,kind);
   int flags=Opcodes.ACC_PUBLIC;
   final MethodVisitor mv=v.newMethod(constructor,flags,"<init>",method.getSignature().getDescriptor(),null,null);
   if (v.generateCode()) {
@@ -14,7 +14,7 @@
     for (    JetDelegationSpecifier initializer : constructor.getInitializers()) {
       if (initializer instanceof JetDelegatorToThisCall) {
         JetDelegatorToThisCall thisCall=(JetDelegatorToThisCall)initializer;
-        DeclarationDescriptor thisDescriptor=state.getBindingContext().get(BindingContext.REFERENCE_TARGET,thisCall.getThisReference());
+        DeclarationDescriptor thisDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,thisCall.getThisReference());
         if (!(thisDescriptor instanceof ConstructorDescriptor)) {
           throw new UnsupportedOperationException("expected 'this' delegator to resolve to constructor");
         }

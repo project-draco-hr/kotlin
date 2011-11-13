@@ -3,19 +3,16 @@
   List<Type> parameterTypes=new ArrayList<Type>();
   ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
   if (CodegenUtil.hasThis0(classDescriptor)) {
-    parameterTypes.add(jvmType(CodegenUtil.getOuterClassDescriptor(classDescriptor),OwnerKind.IMPLEMENTATION));
+    parameterTypes.add(mapType(CodegenUtil.getOuterClassDescriptor(classDescriptor).getDefaultType(),OwnerKind.IMPLEMENTATION));
+  }
+  List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
+  for (  TypeParameterDescriptor typeParameter : typeParameters) {
+    if (typeParameter.isReified())     parameterTypes.add(TYPE_TYPEINFO);
   }
   for (  ValueParameterDescriptor parameter : parameters) {
     final Type type=mapType(parameter.getOutType());
     parameterTypes.add(type);
     valueParameterTypes.add(type);
-  }
-  PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,classDescriptor);
-  if (!(psiElement instanceof PsiClass)) {
-    List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
-    for (int n=typeParameters.size(); n > 0; n--) {
-      parameterTypes.add(TYPE_TYPEINFO);
-    }
   }
   return new Method("<init>",Type.VOID_TYPE,parameterTypes.toArray(new Type[parameterTypes.size()]));
 }

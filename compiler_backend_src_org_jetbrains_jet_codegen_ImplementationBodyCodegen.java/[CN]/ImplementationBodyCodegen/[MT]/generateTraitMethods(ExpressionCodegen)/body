@@ -6,13 +6,13 @@
       DeclarationDescriptor containingDeclaration=fun.getContainingDeclaration();
       if (containingDeclaration instanceof ClassDescriptor) {
         ClassDescriptor declaration=(ClassDescriptor)containingDeclaration;
-        PsiElement psiElement=state.getBindingContext().get(BindingContext.DESCRIPTOR_TO_DECLARATION,declaration);
+        PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,declaration);
         if (psiElement instanceof JetClass) {
           JetClass jetClass=(JetClass)psiElement;
           if (jetClass.isTrait()) {
             int flags=Opcodes.ACC_PUBLIC;
-            Method function=state.getTypeMapper().mapSignature(fun.getName(),fun);
-            Method functionOriginal=state.getTypeMapper().mapSignature(fun.getName(),fun.getOriginal());
+            Method function=typeMapper.mapSignature(fun.getName(),fun);
+            Method functionOriginal=typeMapper.mapSignature(fun.getName(),fun.getOriginal());
             final MethodVisitor mv=v.newMethod(myClass,flags,function.getName(),function.getDescriptor(),null,null);
             if (v.generateCode()) {
               mv.visitCode();
@@ -25,14 +25,14 @@
                 iv.load(reg,argType);
                 reg+=argType.getSize();
               }
-              JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,state.getBindingContext());
-              Type type=state.getTypeMapper().mapType(jetType);
+              JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,bindingContext);
+              Type type=typeMapper.mapType(jetType);
               if (type.getInternalName().equals("java/lang/Object")) {
                 jetType=declaration.getDefaultType();
-                type=state.getTypeMapper().mapType(jetType);
+                type=typeMapper.mapType(jetType);
               }
               String fdescriptor=functionOriginal.getDescriptor().replace("(","(" + type.getDescriptor());
-              iv.invokestatic(state.getTypeMapper().jvmName((ClassDescriptor)fun.getContainingDeclaration(),OwnerKind.TRAIT_IMPL),function.getName(),fdescriptor);
+              iv.invokestatic(typeMapper.mapType(((ClassDescriptor)fun.getContainingDeclaration()).getDefaultType(),OwnerKind.TRAIT_IMPL).getInternalName(),function.getName(),fdescriptor);
               if (function.getReturnType().getSort() == Type.OBJECT) {
                 iv.checkcast(function.getReturnType());
               }

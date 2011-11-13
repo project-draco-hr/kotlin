@@ -1,7 +1,7 @@
 {
   ExpressionCodegen codegen=new ExpressionCodegen(v,new FrameMap(),Type.VOID_TYPE,context,state);
   for (  JetEnumEntry enumConstant : myEnumConstants) {
-    String implClass=state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION);
+    String implClass=typeMapper.mapType(descriptor.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName();
     final List<JetDelegationSpecifier> delegationSpecifiers=enumConstant.getDelegationSpecifiers();
     if (delegationSpecifiers.size() > 1) {
       throw new UnsupportedOperationException("multiple delegation specifiers for enum constant not supported");
@@ -12,8 +12,8 @@
       final JetDelegationSpecifier specifier=delegationSpecifiers.get(0);
       if (specifier instanceof JetDelegatorToSuperCall) {
         final JetDelegatorToSuperCall superCall=(JetDelegatorToSuperCall)specifier;
-        ConstructorDescriptor constructorDescriptor=(ConstructorDescriptor)state.getBindingContext().get(BindingContext.REFERENCE_TARGET,superCall.getCalleeExpression().getConstructorReferenceExpression());
-        CallableMethod method=state.getTypeMapper().mapToCallableMethod(constructorDescriptor,OwnerKind.IMPLEMENTATION);
+        ConstructorDescriptor constructorDescriptor=(ConstructorDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,superCall.getCalleeExpression().getConstructorReferenceExpression());
+        CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor,OwnerKind.IMPLEMENTATION);
         codegen.invokeMethodWithArguments(method,superCall,StackValue.none());
       }
  else {

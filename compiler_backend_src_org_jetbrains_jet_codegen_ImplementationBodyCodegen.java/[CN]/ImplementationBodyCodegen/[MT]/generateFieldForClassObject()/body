@@ -1,16 +1,18 @@
 {
   final JetClassObject classObject=getClassObject();
   if (classObject != null) {
-    Type type=Type.getObjectType(state.getTypeMapper().jvmName(classObject));
+    final ClassDescriptor descriptor1=bindingContext.get(BindingContext.CLASS,classObject.getObjectDeclaration());
+    Type type=Type.getObjectType(typeMapper.mapType(descriptor1.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName());
     v.newField(classObject,Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,"$classobj",type.getDescriptor(),null,null);
     staticInitializerChunks.add(new CodeChunk(){
       @Override public void generate(      InstructionAdapter v){
-        String name=state.getTypeMapper().jvmName(classObject);
+        final ClassDescriptor descriptor1=bindingContext.get(BindingContext.CLASS,classObject.getObjectDeclaration());
+        String name=typeMapper.mapType(descriptor1.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName();
         final Type classObjectType=Type.getObjectType(name);
         v.anew(classObjectType);
         v.dup();
         v.invokespecial(name,"<init>","()V");
-        v.putstatic(state.getTypeMapper().jvmName(descriptor,OwnerKind.IMPLEMENTATION),"$classobj",classObjectType.getDescriptor());
+        v.putstatic(typeMapper.mapType(descriptor.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),"$classobj",classObjectType.getDescriptor());
       }
     }
 );

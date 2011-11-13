@@ -1,0 +1,31 @@
+{
+  descriptor=descriptor.getOriginal();
+  DeclarationDescriptor container=descriptor.getContainingDeclaration();
+  String name=descriptor.getName();
+  if (JetPsiUtil.NO_NAME_PROVIDED.equals(name)) {
+    Map<DeclarationDescriptor,String> map=naming.get(container);
+    if (map == null) {
+      map=new HashMap<DeclarationDescriptor,String>();
+      naming.put(container,map);
+    }
+    name=map.get(descriptor);
+    if (name == null) {
+      name=getFQName(container) + "$" + (map.size() + 1);
+      map.put(descriptor,name);
+    }
+    return name;
+  }
+  if (container != null) {
+    if (container instanceof ModuleDescriptor) {
+      return name;
+    }
+    if (container instanceof JavaNamespaceDescriptor && JavaDescriptorResolver.JAVA_ROOT.equals(container.getName())) {
+      return name;
+    }
+    String baseName=getFQName(container);
+    if (!baseName.isEmpty()) {
+      return baseName + (container instanceof JavaNamespaceDescriptor || container instanceof NamespaceDescriptor ? "/" : "$") + name;
+    }
+  }
+  return name;
+}
