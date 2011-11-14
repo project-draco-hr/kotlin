@@ -7,7 +7,12 @@
   final List<Type> implementsTypes=typesToNotNullableTypeList(psiClass.getImplementsListTypes());
   final List<Type> extendsTypes=typesToNotNullableTypeList(psiClass.getExtendsListTypes());
   final IdentifierImpl name=new IdentifierImpl(psiClass.getName());
-  if (!psiClass.isEnum() && !psiClass.isInterface() && getPrimaryConstructor(psiClass) == null) {
+  final List<Expression> baseClassParams=new LinkedList<Expression>();
+  final SuperVisitor visitor=new SuperVisitor();
+  psiClass.accept(visitor);
+  final HashSet<PsiExpressionList> resolvedSuperCallParameters=visitor.getResolvedSuperCallParameters();
+  if (resolvedSuperCallParameters.size() == 1)   baseClassParams.addAll(expressionsToExpressionList(resolvedSuperCallParameters.toArray(new PsiExpressionList[1])[0].getExpressions()));
+  if (!psiClass.isEnum() && !psiClass.isInterface() && getPrimaryConstructorForThisCase(psiClass) == null) {
     final List<Field> finalOrWithEmptyInitializer=getFinalOrWithEmptyInitializer(fields);
     final Map<String,String> initializers=new HashMap<String,String>();
     for (    Field f : finalOrWithEmptyInitializer) {
@@ -41,7 +46,7 @@
     }
     methods.add(new Constructor(Identifier.EMPTY_IDENTIFIER,Collections.<String>emptySet(),new ClassType(name,false),Collections.<Element>emptyList(),new ParameterList(createParametersFromFields(finalOrWithEmptyInitializer)),new Block(createInitStatementsFromFields(finalOrWithEmptyInitializer)),true));
   }
-  if (psiClass.isInterface())   return new Trait(name,modifiers,typeParameters,extendsTypes,implementsTypes,innerClasses,methods,fields);
-  if (psiClass.isEnum())   return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),implementsTypes,innerClasses,methods,fieldsToFieldListForEnums(psiClass.getAllFields()));
-  return new Class(name,modifiers,typeParameters,extendsTypes,implementsTypes,innerClasses,methods,fields);
+  if (psiClass.isInterface())   return new Trait(name,modifiers,typeParameters,extendsTypes,Collections.<Expression>emptyList(),implementsTypes,innerClasses,methods,fields);
+  if (psiClass.isEnum())   return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),Collections.<Expression>emptyList(),implementsTypes,innerClasses,methods,fieldsToFieldListForEnums(psiClass.getAllFields()));
+  return new Class(name,modifiers,typeParameters,extendsTypes,baseClassParams,implementsTypes,innerClasses,methods,fields);
 }
