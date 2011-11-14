@@ -1,2 +1,56 @@
 {
+  final Stack<StubElement> stubStack=new Stack<StubElement>();
+  final ClassBuilderFactory builderFactory=new ClassBuilderFactory(){
+    @Override public ClassBuilder newClassBuilder(){
+      return new StubClassBuilder(stubStack);
+    }
+    @Override public String asText(    ClassBuilder builder){
+      throw new UnsupportedOperationException("asText is not implemented");
+    }
+    @Override public byte[] asBytes(    ClassBuilder builder){
+      throw new UnsupportedOperationException("asBytes is not implemented");
+    }
+  }
+;
+  final GenerationState state=new GenerationState(project,builderFactory){
+    @Override protected void generateNamespace(    JetNamespace namespace){
+      final PsiJavaFileStubImpl fileStub=new PsiJavaFileStubImpl(CodegenUtil.getFQName(namespace),true);
+      PsiManager manager=PsiManager.getInstance(project);
+      stubStack.push(fileStub);
+      final PsiFile file=namespace.getContainingFile();
+      file.putUserData(JAVA_API_STUB,fileStub);
+      fileStub.setPsiFactory(new ClsWrapperStubPsiFactory());
+      final ClsFileImpl fakeFile=new ClsFileImpl((PsiManagerImpl)manager,new ClassFileViewProvider(manager,file.getVirtualFile())){
+        @NotNull @Override public PsiClassHolderFileStub getStub(){
+          return fileStub;
+        }
+      }
+;
+      fakeFile.setPhysical(false);
+      fileStub.setPsi(fakeFile);
+      try {
+        super.generateNamespace(namespace);
+      }
+  finally {
+        final StubElement pop=stubStack.pop();
+        if (pop != fileStub) {
+          LOG.error("Unbalanced stack operations");
+        }
+      }
+    }
+  }
+;
+  final List<PsiFile> psiFiles=collectProjectFiles(project,scope);
+  Collection<PsiFile> dirty=Collections2.filter(psiFiles,new Predicate<PsiFile>(){
+    @Override public boolean apply(    PsiFile psiFile){
+      return psiFile.getUserData(JAVA_API_STUB) == null;
+    }
+  }
+);
+  if (dirty.size() > 0) {
+    final BindingContext context=AnalyzingUtils.getInstance(JavaDefaultImports.JAVA_DEFAULT_IMPORTS).shallowAnalyzeFiles(dirty);
+    state.compileCorrectNamespaces(context,AnalyzingUtils.collectRootNamespaces(dirty));
+    state.getFactory().files();
+  }
+  return psiFiles;
 }
