@@ -1,2 +1,14 @@
 {
+  JetToken jetOperationToken=getOperationToken(expression);
+  if (!OperatorTable.isAssignment(jetOperationToken)) {
+    return null;
+  }
+  JetExpression leftExpression=expression.getLeft();
+  JsInvocation setterCall=Translation.propertyAccessTranslator(translationContext()).resolveAsPropertySetterCall(leftExpression);
+  if (setterCall == null) {
+    return null;
+  }
+  JsExpression right=translateRightExpression(expression);
+  setterCall.setArguments(Arrays.asList(right));
+  return setterCall;
 }
