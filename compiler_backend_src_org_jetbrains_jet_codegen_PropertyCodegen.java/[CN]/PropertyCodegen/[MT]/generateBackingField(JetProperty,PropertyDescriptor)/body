@@ -1,2 +1,23 @@
 {
+  if (state.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
+    DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+    if (CodegenUtil.isInterface(containingDeclaration))     return;
+    Object value=null;
+    final JetExpression initializer=p.getInitializer();
+    if (initializer != null) {
+      if (initializer instanceof JetConstantExpression) {
+        CompileTimeConstant<?> compileTimeValue=state.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,initializer);
+        value=compileTimeValue != null ? compileTimeValue.getValue() : null;
+      }
+    }
+    final int modifiers;
+    if (kind == OwnerKind.NAMESPACE) {
+      int access=isExternallyAccessible(p) ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE;
+      modifiers=access | Opcodes.ACC_STATIC;
+    }
+ else {
+      modifiers=Opcodes.ACC_PRIVATE;
+    }
+    v.newField(p,modifiers,p.getName(),state.getTypeMapper().mapType(propertyDescriptor.getOutType()).getDescriptor(),null,value);
+  }
 }
