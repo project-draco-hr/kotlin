@@ -32,9 +32,11 @@
       return intrinsic.generate(this,v,expressionType(expression),expression,Arrays.asList(expression.getLeft(),expression.getRight()),receiver);
     }
  else {
+      ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,expression.getOperationReference());
       CallableMethod callableMethod=(CallableMethod)callable;
-      genToJVMStack(expression.getLeft());
-      genToJVMStack(expression.getRight());
+      genThisAndReceiverFromResolvedCall(callableMethod,StackValue.none(),resolvedCall);
+      pushTypeArguments(resolvedCall);
+      pushMethodArguments(resolvedCall,callableMethod.getValueParameterTypes());
       callableMethod.invoke(v);
       return returnValueAsStackValue((FunctionDescriptor)op,callableMethod.getSignature().getReturnType());
     }
