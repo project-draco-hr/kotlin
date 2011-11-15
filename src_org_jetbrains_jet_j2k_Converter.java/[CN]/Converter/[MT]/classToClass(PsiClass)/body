@@ -1,7 +1,7 @@
 {
   final Set<String> modifiers=modifiersListToModifiersSet(psiClass.getModifierList());
   final List<Class> innerClasses=classesToClassList(psiClass.getAllInnerClasses());
-  final List<Function> methods=methodsToFunctionList(psiClass.getMethods(),true);
+  final List<Function> methods=methodsToFunctionList(psiClass.getMethods());
   final List<Field> fields=fieldsToFieldList(psiClass.getFields());
   final List<Element> typeParameters=elementsToElementList(psiClass.getTypeParameters());
   final List<Type> implementsTypes=typesToNotNullableTypeList(psiClass.getImplementsListTypes());
@@ -24,7 +24,7 @@
         final List<Statement> newStatements=new LinkedList<Statement>();
         for (        Statement s : f.getBlock().getStatements()) {
           boolean isRemoved=false;
-          if (s.getKind() == INode.Kind.ASSINGNMENT_EXPRESSION) {
+          if (s.getKind() == INode.Kind.ASSIGNMENT_EXPRESSION) {
             final AssignmentExpression assignmentExpression=(AssignmentExpression)s;
             if (assignmentExpression.getLeft().getKind() == INode.Kind.CALL_CHAIN) {
               for (              Field fo : finalOrWithEmptyInitializer) {
@@ -44,7 +44,7 @@
         f.setBlock(new Block(newStatements));
       }
     }
-    methods.add(new Constructor(Identifier.EMPTY_IDENTIFIER,Collections.<String>emptySet(),new ClassType(name,false),Collections.<Element>emptyList(),new ParameterList(createParametersFromFields(finalOrWithEmptyInitializer)),new Block(createInitStatementsFromFields(finalOrWithEmptyInitializer)),true));
+    methods.add(new Constructor(Identifier.EMPTY_IDENTIFIER,Collections.<String>emptySet(),new ClassType(name),Collections.<Element>emptyList(),new ParameterList(createParametersFromFields(finalOrWithEmptyInitializer)),new Block(createInitStatementsFromFields(finalOrWithEmptyInitializer)),true));
   }
   if (psiClass.isInterface())   return new Trait(name,modifiers,typeParameters,extendsTypes,Collections.<Expression>emptyList(),implementsTypes,innerClasses,methods,fields);
   if (psiClass.isEnum())   return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),Collections.<Expression>emptyList(),implementsTypes,innerClasses,methods,fieldsToFieldListForEnums(psiClass.getAllFields()));
