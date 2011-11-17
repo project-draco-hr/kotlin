@@ -1,14 +1,17 @@
 {
   super.visitReferenceElement(reference);
-  if (!reference.isQualified())   myResult=new IdentifierImpl(reference.getReferenceName());
+  final List<Type> types=typesToTypeList(reference.getTypeParameters());
+  if (!reference.isQualified()) {
+    myResult=new ReferenceElement(new IdentifierImpl(reference.getReferenceName()),types);
+  }
  else {
-    String result=reference.getReferenceName();
+    String result=new IdentifierImpl(reference.getReferenceName()).toKotlin();
     PsiElement qualifier=reference.getQualifier();
     while (qualifier != null) {
       final PsiJavaCodeReferenceElement p=(PsiJavaCodeReferenceElement)qualifier;
-      result=p.getReferenceName() + "." + result;
+      result=new IdentifierImpl(p.getReferenceName()).toKotlin() + "." + result;
       qualifier=p.getQualifier();
     }
-    myResult=new IdentifierImpl(result);
+    myResult=new ReferenceElement(new IdentifierImpl(result),types);
   }
 }
