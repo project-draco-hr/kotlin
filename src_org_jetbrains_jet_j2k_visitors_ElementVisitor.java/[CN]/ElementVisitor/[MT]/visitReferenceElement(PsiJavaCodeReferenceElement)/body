@@ -1,4 +1,14 @@
 {
   super.visitReferenceElement(reference);
-  myResult=new IdentifierImpl(reference.getQualifiedName());
+  if (!reference.isQualified())   myResult=new IdentifierImpl(reference.getReferenceName());
+ else {
+    String result=reference.getReferenceName();
+    PsiElement qualifier=reference.getQualifier();
+    while (qualifier != null) {
+      final PsiJavaCodeReferenceElement p=(PsiJavaCodeReferenceElement)qualifier;
+      result=p.getReferenceName() + "." + result;
+      qualifier=p.getQualifier();
+    }
+    myResult=new IdentifierImpl(result);
+  }
 }
