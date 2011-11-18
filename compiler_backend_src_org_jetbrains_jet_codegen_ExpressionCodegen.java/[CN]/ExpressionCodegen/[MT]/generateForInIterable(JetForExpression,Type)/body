@@ -5,7 +5,7 @@
   DeclarationDescriptor hasNextDescriptor=bindingContext.get(BindingContext.LOOP_RANGE_HAS_NEXT,loopRange);
   if (iteratorDescriptor == null)   throw new IllegalStateException("No iterator() method " + DiagnosticUtils.atLocation(loopRange));
   if (nextDescriptor == null)   throw new IllegalStateException("No next() method " + DiagnosticUtils.atLocation(loopRange));
-  if (hasNextDescriptor == null)   throw new IllegalStateException("No iterator() method " + DiagnosticUtils.atLocation(loopRange));
+  if (hasNextDescriptor == null)   throw new IllegalStateException("No hasNext method or property" + DiagnosticUtils.atLocation(loopRange));
   final JetParameter loopParameter=expression.getLoopParameter();
   final VariableDescriptor parameterDescriptor=bindingContext.get(BindingContext.VALUE_PARAMETER,loopParameter);
   JetType iteratorType=iteratorDescriptor.getReturnType();
@@ -16,8 +16,12 @@
   gen(expression.getLoopRange(),loopRangeType);
   invokeFunctionNoParams(iteratorDescriptor,asmIterType,v);
   v.store(iteratorVar,asmIterType);
-  Label begin=new Label();
   Label end=new Label();
+  if (iteratorType.isNullable()) {
+    v.load(iteratorVar,JetTypeMapper.TYPE_OBJECT);
+    v.ifnull(end);
+  }
+  Label begin=new Label();
   myContinueTargets.push(begin);
   myBreakTargets.push(end);
   v.mark(begin);

@@ -1,9 +1,19 @@
 {
-  myLengthVar=myFrameMap.enterTemp();
-  gen(expression.getLoopRange(),loopRangeType);
-  v.arraylength();
-  v.store(myLengthVar,Type.INT_TYPE);
   myIndexVar=myFrameMap.enterTemp();
+  StackValue value=gen(expression.getLoopRange());
+  if (value instanceof StackValue.Local) {
+    myArrayVar=((StackValue.Local)value).index;
+    localArrayVar=true;
+  }
+ else {
+    myArrayVar=myFrameMap.enterTemp();
+    value.put(loopRangeType,v);
+    v.store(myArrayVar,JetTypeMapper.TYPE_OBJECT);
+  }
+  if (expressionType.isNullable()) {
+    v.load(myArrayVar,JetTypeMapper.TYPE_OBJECT);
+    v.ifnull(end);
+  }
   v.iconst(0);
   v.store(myIndexVar,Type.INT_TYPE);
 }
