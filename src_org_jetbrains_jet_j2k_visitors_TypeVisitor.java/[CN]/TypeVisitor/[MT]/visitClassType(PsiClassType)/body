@@ -1,18 +1,9 @@
 {
-  String classTypeName=getClassTypeName(classType);
-  if (classType instanceof PsiClassReferenceType) {
-    final PsiJavaCodeReferenceElement reference=((PsiClassReferenceType)classType).getReference();
-    if (reference.isQualified()) {
-      String result=new IdentifierImpl(reference.getReferenceName()).toKotlin();
-      PsiElement qualifier=reference.getQualifier();
-      while (qualifier != null) {
-        final PsiJavaCodeReferenceElement p=(PsiJavaCodeReferenceElement)qualifier;
-        result=new IdentifierImpl(p.getReferenceName()).toKotlin() + "." + result;
-        qualifier=p.getQualifier();
-      }
-      classTypeName=result;
-    }
-  }
-  myResult=new ClassType(new IdentifierImpl(classTypeName),typesToTypeList(classType.getParameters()));
+  String classTypeName=createQualifiedName(classType);
+  if (classTypeName.equals(""))   classTypeName=getClassTypeName(classType);
+  List<Type> resolvedClassTypeParams=createRawTypesForResolvedReference(classType);
+  final IdentifierImpl identifier=new IdentifierImpl(classTypeName);
+  if (classType.getParameterCount() == 0 && resolvedClassTypeParams.size() > 0)   myResult=new ClassType(identifier,resolvedClassTypeParams);
+ else   myResult=new ClassType(identifier,typesToTypeList(classType.getParameters()));
   return super.visitClassType(classType);
 }
