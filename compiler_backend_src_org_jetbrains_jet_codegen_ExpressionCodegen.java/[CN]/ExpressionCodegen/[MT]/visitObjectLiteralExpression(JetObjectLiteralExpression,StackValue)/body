@@ -8,12 +8,17 @@
   if (consArgTypes.size() > 0) {
     v.load(0,JetTypeMapper.TYPE_OBJECT);
   }
-  for (  DeclarationDescriptor descriptor : closureCodegen.closure.keySet()) {
-    Type sharedVarType=getSharedVarType(descriptor);
-    if (sharedVarType == null)     sharedVarType=state.getTypeMapper().mapType(((VariableDescriptor)descriptor).getOutType());
-    consArgTypes.add(sharedVarType);
-    final EnclosedValueDescriptor valueDescriptor=closureCodegen.closure.get(descriptor);
-    valueDescriptor.getOuterValue().put(sharedVarType,v);
+  if (closureCodegen.captureReceiver != null) {
+    v.load(context.isStatic() ? 0 : 1,closureCodegen.captureReceiver);
+    consArgTypes.add(closureCodegen.captureReceiver);
+  }
+  for (  Map.Entry<DeclarationDescriptor,EnclosedValueDescriptor> entry : closureCodegen.closure.entrySet()) {
+    if (entry.getKey() instanceof VariableDescriptor && !(entry.getKey() instanceof PropertyDescriptor)) {
+      Type sharedVarType=typeMapper.getSharedVarType(entry.getKey());
+      if (sharedVarType == null)       sharedVarType=state.getTypeMapper().mapType(((VariableDescriptor)entry.getKey()).getOutType());
+      consArgTypes.add(sharedVarType);
+      entry.getValue().getOuterValue().put(sharedVarType,v);
+    }
   }
   Method cons=new Method("<init>",Type.VOID_TYPE,consArgTypes.toArray(new Type[consArgTypes.size()]));
   v.invokespecial(closure.getClassname(),"<init>",cons.getDescriptor());
