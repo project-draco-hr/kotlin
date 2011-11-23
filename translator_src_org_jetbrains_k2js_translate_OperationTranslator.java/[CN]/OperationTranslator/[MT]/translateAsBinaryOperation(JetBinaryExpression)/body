@@ -1,6 +1,14 @@
 {
-  JsExpression left=AstUtil.convertToExpression(Translation.translateExpression(expression.getLeft(),translationContext()));
+  JsExpression left=Translation.translateAsExpression(expression.getLeft(),translationContext());
   JsExpression right=translateRightExpression(expression);
-  JetToken jetOperationToken=getOperationToken(expression);
-  return new JsBinaryOperation(OperatorTable.getBinaryOperator(jetOperationToken),left,right);
+  JetToken token=getOperationToken(expression);
+  if (OperatorTable.hasCorrespondingBinaryOperator(token)) {
+    return new JsBinaryOperation(OperatorTable.getBinaryOperator(token),left,right);
+  }
+  if (OperatorTable.hasCorrespondingFunctionInvocation(token)) {
+    JsInvocation functionInvocation=OperatorTable.getCorrespondingFunctionInvocation(token);
+    functionInvocation.setArguments(Arrays.asList(left,right));
+    return functionInvocation;
+  }
+  throw new AssertionError("Unsupported token encountered: " + token.toString());
 }
