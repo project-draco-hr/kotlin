@@ -1,0 +1,10 @@
+{
+  final PsiAnonymousClass anonymousClass=expression.getAnonymousClass();
+  final PsiMethod constructor=expression.resolveMethod();
+  if (constructor == null || isConstructorPrimary(constructor)) {
+    return new NewClassExpression(expressionToExpression(expression.getQualifier()),elementToElement(expression.getClassOrAnonymousClassReference()),elementToElement(expression.getArgumentList()),anonymousClass != null ? anonymousClassToAnonymousClass(anonymousClass) : null);
+  }
+  final PsiJavaCodeReferenceElement reference=expression.getClassReference();
+  final List<Type> typeParameters=reference != null ? typesToTypeList(reference.getTypeParameters()) : Collections.<Type>emptyList();
+  return new CallChainExpression(new IdentifierImpl(constructor.getName(),false),new MethodCallExpression(new IdentifierImpl("init"),elementToElement(expression.getArgumentList()),false,typeParameters));
+}
