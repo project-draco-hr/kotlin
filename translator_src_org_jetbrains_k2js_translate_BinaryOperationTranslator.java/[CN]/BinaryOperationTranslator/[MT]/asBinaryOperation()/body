@@ -1,9 +1,6 @@
 {
-  JsExpression left=Translation.translateAsExpression(expression.getLeft(),translationContext());
-  JsExpression right=translateRightExpression();
-  JsNameRef operationReference=getOverloadedOperationReference(expression);
-  if (operationReference != null) {
-    return overloadedMethodInvocation(left,right,operationReference);
+  if (isPropertyOnTheLeft && OperatorTable.isAssignment(getOperationToken())) {
+    return setterCall(right);
   }
   JetToken token=getOperationToken();
   if (OperatorTable.hasCorrespondingBinaryOperator(token)) {
@@ -11,7 +8,7 @@
   }
   if (OperatorTable.hasCorrespondingFunctionInvocation(token)) {
     JsInvocation functionInvocation=OperatorTable.getCorrespondingFunctionInvocation(token);
-    functionInvocation.setArguments(Arrays.asList(left,right));
+    functionInvocation.setArguments(left,right);
     return functionInvocation;
   }
   throw new AssertionError("Unsupported token encountered: " + token.toString());
