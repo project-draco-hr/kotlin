@@ -1,14 +1,6 @@
 {
   JetFunctionLiteral functionLiteral=expression.getFunctionLiteral();
   JetTypeReference receiverTypeRef=functionLiteral.getReceiverTypeRef();
-  final JetType receiverType;
-  if (receiverTypeRef != null) {
-    receiverType=context.getTypeResolver().resolveType(context.scope,receiverTypeRef);
-  }
- else {
-    ReceiverDescriptor implicitReceiver=context.scope.getImplicitReceiver();
-    receiverType=implicitReceiver.exists() ? implicitReceiver.getType() : null;
-  }
   FunctionDescriptorImpl functionDescriptor=new FunctionDescriptorImpl(context.scope.getContainingDeclaration(),Collections.<AnnotationDescriptor>emptyList(),"<anonymous>");
   List<ValueParameterDescriptor> valueParameterDescriptors=createValueParameterDescriptors(context,functionLiteral,functionDescriptor,functionTypeExpected);
   JetType effectiveReceiverType;
@@ -21,7 +13,7 @@
     }
   }
  else {
-    effectiveReceiverType=receiverType;
+    effectiveReceiverType=context.getTypeResolver().resolveType(context.scope,receiverTypeRef);
   }
   functionDescriptor.initialize(effectiveReceiverType,NO_RECEIVER,Collections.<TypeParameterDescriptor>emptyList(),valueParameterDescriptors,null,Modality.FINAL,Visibility.LOCAL);
   context.trace.record(BindingContext.FUNCTION,expression,functionDescriptor);
