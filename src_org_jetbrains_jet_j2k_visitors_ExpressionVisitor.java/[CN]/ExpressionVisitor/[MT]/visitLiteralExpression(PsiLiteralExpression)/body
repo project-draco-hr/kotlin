@@ -1,4 +1,14 @@
 {
   super.visitLiteralExpression(expression);
-  myResult=new LiteralExpression(new IdentifierImpl(((PsiLiteralExpressionImpl)expression).getCanonicalText()));
+  final Object value=expression.getValue();
+  String text=expression.getText();
+  final PsiType type=expression.getType();
+  if (type != null) {
+    String canonicalTypeStr=type.getCanonicalText();
+    if (canonicalTypeStr.equals("double") || canonicalTypeStr.equals("java.lang.Double"))     text=text.replace("D","").replace("d","");
+    if (canonicalTypeStr.equals("float") || canonicalTypeStr.equals("java.lang.Float"))     text=text.replace("F","").replace("f","") + "." + "flt";
+    if (canonicalTypeStr.equals("long") || canonicalTypeStr.equals("java.lang.Long"))     text=text.replace("L","").replace("l","");
+    if (canonicalTypeStr.equals("int") || canonicalTypeStr.equals("java.lang.Integer"))     text=value != null ? value.toString() : text;
+  }
+  myResult=new LiteralExpression(new IdentifierImpl(text));
 }
