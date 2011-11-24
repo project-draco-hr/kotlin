@@ -1,0 +1,28 @@
+{
+  Editor editor=location.editor;
+  if (editor == null) {
+    setText("");
+  }
+ else {
+    VirtualFile vFile=((EditorEx)editor).getVirtualFile();
+    if (vFile == null) {
+      setText("");
+      return;
+    }
+    PsiFile psiFile=PsiManager.getInstance(myProject).findFile(vFile);
+    if (!(psiFile instanceof JetFile)) {
+      setText("");
+      return;
+    }
+    if (oldLocation == null || !Comparing.equal(oldLocation.editor,location.editor) || oldLocation.modificationStamp != location.modificationStamp) {
+      setText(generateToText((JetFile)psiFile));
+    }
+    Document document=editor.getDocument();
+    int startLine=document.getLineNumber(location.startOffset);
+    int endLine=document.getLineNumber(location.endOffset);
+    if (endLine > startLine && location.endOffset > 0 && document.getCharsSequence().charAt(location.endOffset - 1) == '\n')     endLine--;
+    Document byteCodeDocument=myEditor.getDocument();
+    Pair<Integer,Integer> linesRange=mapLines(byteCodeDocument.getText(),startLine,endLine);
+    myEditor.getSelectionModel().setSelection(byteCodeDocument.getLineStartOffset(linesRange.first),Math.min(byteCodeDocument.getLineStartOffset(linesRange.second + 1),byteCodeDocument.getTextLength()));
+  }
+}
