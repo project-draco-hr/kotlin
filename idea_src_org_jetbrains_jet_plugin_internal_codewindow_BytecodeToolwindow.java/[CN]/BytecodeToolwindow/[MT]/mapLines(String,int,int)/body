@@ -1,0 +1,44 @@
+{
+  int byteCodeLine=0;
+  int byteCodeStartLine=-1;
+  int byteCodeEndLine=-1;
+  List<Integer> lines=new ArrayList<Integer>();
+  for (  String line : text.split("\n")) {
+    line=line.trim();
+    if (line.startsWith("LINENUMBER")) {
+      int ktLineNum=new Scanner(line.substring("LINENUMBER".length())).nextInt() - 1;
+      lines.add(ktLineNum);
+    }
+  }
+  Collections.sort(lines);
+  for (  Integer line : lines) {
+    if (line >= startLine) {
+      startLine=line;
+      break;
+    }
+  }
+  for (  String line : text.split("\n")) {
+    line=line.trim();
+    if (line.startsWith("LINENUMBER")) {
+      int ktLineNum=new Scanner(line.substring("LINENUMBER".length())).nextInt() - 1;
+      if (byteCodeStartLine < 0 && ktLineNum == startLine) {
+        byteCodeStartLine=byteCodeLine;
+      }
+      if (byteCodeStartLine > 0 && ktLineNum > endLine) {
+        byteCodeEndLine=byteCodeLine - 1;
+        break;
+      }
+    }
+    if (byteCodeStartLine >= 0 && (line.startsWith("MAXSTACK") || line.startsWith("LOCALVARIABLE") || line.isEmpty())) {
+      byteCodeEndLine=byteCodeLine - 1;
+      break;
+    }
+    byteCodeLine++;
+  }
+  if (byteCodeStartLine == -1 || byteCodeEndLine == -1) {
+    return new Pair<Integer,Integer>(0,0);
+  }
+ else {
+    return new Pair<Integer,Integer>(byteCodeStartLine,byteCodeEndLine);
+  }
+}
