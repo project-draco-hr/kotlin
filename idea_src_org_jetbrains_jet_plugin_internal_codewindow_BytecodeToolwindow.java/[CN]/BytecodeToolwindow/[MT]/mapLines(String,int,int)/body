@@ -2,14 +2,29 @@
   int byteCodeLine=0;
   int byteCodeStartLine=-1;
   int byteCodeEndLine=-1;
+  List<Integer> lines=new ArrayList<Integer>();
   for (  String line : text.split("\n")) {
     line=line.trim();
     if (line.startsWith("LINENUMBER")) {
       int ktLineNum=new Scanner(line.substring("LINENUMBER".length())).nextInt() - 1;
-      if (byteCodeStartLine < 0 && ktLineNum >= startLine) {
+      lines.add(ktLineNum);
+    }
+  }
+  Collections.sort(lines);
+  for (  Integer line : lines) {
+    if (line >= startLine) {
+      startLine=line;
+      break;
+    }
+  }
+  for (  String line : text.split("\n")) {
+    line=line.trim();
+    if (line.startsWith("LINENUMBER")) {
+      int ktLineNum=new Scanner(line.substring("LINENUMBER".length())).nextInt() - 1;
+      if (byteCodeStartLine < 0 && ktLineNum == startLine) {
         byteCodeStartLine=byteCodeLine;
       }
-      if (byteCodeEndLine < 0 && ktLineNum > endLine) {
+      if (byteCodeStartLine > 0 && ktLineNum > endLine) {
         byteCodeEndLine=byteCodeLine - 1;
         break;
       }
