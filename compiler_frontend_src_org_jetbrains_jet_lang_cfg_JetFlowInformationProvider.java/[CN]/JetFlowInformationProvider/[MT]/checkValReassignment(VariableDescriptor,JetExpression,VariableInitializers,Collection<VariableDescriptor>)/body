@@ -1,0 +1,37 @@
+{
+  boolean isInitializedNotHere=enterInitializers.isInitialized();
+  Set<JetElement> possibleLocalInitializers=enterInitializers.getPossibleLocalInitializers();
+  if (possibleLocalInitializers.size() == 1) {
+    JetElement initializer=possibleLocalInitializers.iterator().next();
+    if (initializer instanceof JetProperty && initializer == expression.getParent()) {
+      isInitializedNotHere=false;
+    }
+  }
+  boolean hasBackingField=true;
+  if (variableDescriptor instanceof PropertyDescriptor) {
+    hasBackingField=trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor);
+  }
+  if ((isInitializedNotHere || !hasBackingField) && !variableDescriptor.isVar() && !varWithValReassignErrorGenerated.contains(variableDescriptor)) {
+    varWithValReassignErrorGenerated.add(variableDescriptor);
+    boolean hasReassignMethodReturningUnit=false;
+    JetSimpleNameExpression operationReference=null;
+    PsiElement parent=expression.getParent();
+    if (parent instanceof JetBinaryExpression) {
+      operationReference=((JetBinaryExpression)parent).getOperationReference();
+    }
+ else     if (parent instanceof JetUnaryExpression) {
+      operationReference=((JetUnaryExpression)parent).getOperationSign();
+    }
+    if (operationReference != null) {
+      DeclarationDescriptor descriptor=trace.get(BindingContext.REFERENCE_TARGET,operationReference);
+      if (descriptor instanceof FunctionDescriptor) {
+        if (JetStandardClasses.isUnit(((FunctionDescriptor)descriptor).getReturnType())) {
+          hasReassignMethodReturningUnit=true;
+        }
+      }
+    }
+    if (!hasReassignMethodReturningUnit) {
+      trace.report(Errors.VAL_REASSIGNMENT.on(expression,variableDescriptor));
+    }
+  }
+}
