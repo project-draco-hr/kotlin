@@ -4,7 +4,7 @@
   IElementType operationType=operationSign.getReferencedNameElementType();
   String name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
   TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(context.trace);
-  JetType assignmentOperationType=getTypeForBinaryCall(scope,name,context.replaceBindingTrace(temporaryBindingTrace),expression);
+  JetType assignmentOperationType=basic.getTypeForBinaryCall(scope,name,context.replaceBindingTrace(temporaryBindingTrace),expression);
   JetExpression left=JetPsiUtil.deparenthesize(expression.getLeft());
   if (assignmentOperationType == null) {
     String counterpartName=OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
@@ -12,7 +12,7 @@
       JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
       resolveArrayAccessToLValue(arrayAccessExpression,expression.getRight(),operationSign,context);
     }
-    assignmentOperationType=getTypeForBinaryCall(scope,counterpartName,context,expression);
+    assignmentOperationType=basic.getTypeForBinaryCall(scope,counterpartName,context,expression);
     if (assignmentOperationType != null) {
       context.trace.record(VARIABLE_REASSIGNMENT,expression);
       ExpressionTypingUtils.checkWrappingInRef(expression.getLeft(),context);
@@ -22,6 +22,6 @@
     temporaryBindingTrace.commit();
     checkReassignment(expression,context,assignmentOperationType,left);
   }
-  checkLValue(context.trace,expression.getLeft());
+  basic.checkLValue(context.trace,expression.getLeft());
   return checkAssignmentType(assignmentOperationType,expression,contextWithExpectedType);
 }

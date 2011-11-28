@@ -5,11 +5,12 @@
   JetExpression elseBranch=expression.getElse();
   JetExpression thenBranch=expression.getThen();
   WritableScopeImpl thenScope=newWritableScopeImpl(context).setDebugName("Then scope");
+  WritableScopeImpl elseScope=newWritableScopeImpl(context).setDebugName("Else scope");
   DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,thenScope,context);
   DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context);
   if (elseBranch == null) {
     if (thenBranch != null) {
-      JetType type=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,context);
+      JetType type=context.getServices().getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(thenInfo));
       if (type != null && JetStandardClasses.isNothing(type)) {
         facade.setResultingDataFlowInfo(elseInfo);
       }
@@ -18,14 +19,14 @@
     return null;
   }
   if (thenBranch == null) {
-    JetType type=getTypeWithNewScopeAndDataFlowInfo(context.scope,elseBranch,elseInfo,context);
+    JetType type=context.getServices().getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(elseInfo));
     if (type != null && JetStandardClasses.isNothing(type)) {
       facade.setResultingDataFlowInfo(thenInfo);
     }
     return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
   }
-  JetType thenType=getTypeWithNewScopeAndDataFlowInfo(thenScope,thenBranch,thenInfo,contextWithExpectedType);
-  JetType elseType=getTypeWithNewScopeAndDataFlowInfo(context.scope,elseBranch,elseInfo,contextWithExpectedType);
+  JetType thenType=context.getServices().getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),CoercionStrategy.NO_COERCION,contextWithExpectedType.replaceDataFlowInfo(thenInfo));
+  JetType elseType=context.getServices().getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),CoercionStrategy.NO_COERCION,contextWithExpectedType.replaceDataFlowInfo(elseInfo));
   JetType result;
   if (thenType == null) {
     result=elseType;
