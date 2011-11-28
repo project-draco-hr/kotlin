@@ -1,23 +1,7 @@
 {
   CompileSession scriptCompileSession=new CompileSession(myEnvironment);
   scriptCompileSession.addSources(moduleFile);
-  URL url=CompileEnvironment.class.getClassLoader().getResource("ModuleBuilder.kt");
-  if (url != null) {
-    String path=url.getPath();
-    if (path.startsWith("file:")) {
-      path=path.substring(5);
-    }
-    final VirtualFile vFile=myEnvironment.getJarFileSystem().findFileByPath(path);
-    if (vFile == null) {
-      throw new CompileEnvironmentException("Couldn't load ModuleBuilder.kt from runtime jar: " + url);
-    }
-    scriptCompileSession.addSources(vFile);
-  }
- else {
-    final String homeDirectory=getHomeDirectory();
-    final File file=new File(homeDirectory,"stdlib/ktSrc/ModuleBuilder.kt");
-    scriptCompileSession.addSources(myEnvironment.getLocalFileSystem().findFileByPath(file.getPath()));
-  }
+  scriptCompileSession.addStdLibSources();
   if (!scriptCompileSession.analyze(myErrorStream)) {
     return null;
   }

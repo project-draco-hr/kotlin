@@ -17,6 +17,12 @@
     JetType outType=propertyDescriptor.getOutType();
     JetType initializerType=facade.getType(initializer,context.replaceExpectedType(outType).replaceScope(scope));
   }
+{
+    VariableDescriptor olderVariable=scope.getVariable(propertyDescriptor.getName());
+    if (olderVariable != null && DescriptorUtils.isLocal(propertyDescriptor.getContainingDeclaration(),olderVariable)) {
+      context.trace.report(Errors.NAME_SHADOWING.on(propertyDescriptor,context.trace.getBindingContext()));
+    }
+  }
   scope.addVariableDescriptor(propertyDescriptor);
   return checkExpectedType(property,context);
 }

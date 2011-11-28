@@ -1,0 +1,24 @@
+{
+  File tempFile=File.createTempFile("compilerTest","compilerTest");
+  try {
+    KotlinCompiler.main(Arrays.asList("-module",JetParsingTest.getTestDataDir() + "/compiler/smoke/Smoke.kts","-jar",tempFile.getAbsolutePath()).toArray(new String[0]));
+    FileInputStream fileInputStream=new FileInputStream(tempFile);
+    try {
+      JarInputStream is=new JarInputStream(fileInputStream);
+      try {
+        final List<String> entries=listEntries(is);
+        assertTrue(entries.contains("Smoke/namespace.class"));
+        assertEquals(1,entries.size());
+      }
+  finally {
+        is.close();
+      }
+    }
+  finally {
+      fileInputStream.close();
+    }
+  }
+  finally {
+    tempFile.delete();
+  }
+}
