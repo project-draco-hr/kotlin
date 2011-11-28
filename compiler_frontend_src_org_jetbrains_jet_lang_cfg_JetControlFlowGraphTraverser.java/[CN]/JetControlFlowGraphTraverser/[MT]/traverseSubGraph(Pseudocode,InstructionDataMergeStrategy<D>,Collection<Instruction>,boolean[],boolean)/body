@@ -1,0 +1,46 @@
+{
+  List<Instruction> instructions=pseudocode.getInstructions();
+  Instruction startInstruction=getStartInstruction(pseudocode);
+  if (!straightDirection) {
+    instructions=Lists.newArrayList(instructions);
+    Collections.reverse(instructions);
+  }
+  for (  Instruction instruction : instructions) {
+    boolean isStart=straightDirection ? instruction instanceof SubroutineEnterInstruction : instruction instanceof SubroutineSinkInstruction;
+    if (!isLocal && isStart)     continue;
+    Collection<Instruction> allPreviousInstructions;
+    Collection<Instruction> previousInstructions=straightDirection ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
+    if (instruction == startInstruction && !previousSubGraphInstructions.isEmpty()) {
+      allPreviousInstructions=Lists.newArrayList(previousInstructions);
+      allPreviousInstructions.addAll(previousSubGraphInstructions);
+    }
+ else {
+      allPreviousInstructions=previousInstructions;
+    }
+    if (lookInside && instruction instanceof LocalDeclarationInstruction) {
+      Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
+      traverseSubGraph(subroutinePseudocode,instructionDataMergeStrategy,previousInstructions,changed,true);
+      Instruction lastInstruction=straightDirection ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
+      Pair<D,D> previousValue=dataMap.get(instruction);
+      Pair<D,D> newValue=dataMap.get(lastInstruction);
+      if (!previousValue.equals(newValue)) {
+        changed[0]=true;
+        dataMap.put(instruction,newValue);
+      }
+      continue;
+    }
+    Pair<D,D> previousDataValue=dataMap.get(instruction);
+    Collection<D> incomingEdgesData=Sets.newHashSet();
+    for (    Instruction previousInstruction : allPreviousInstructions) {
+      Pair<D,D> previousData=dataMap.get(previousInstruction);
+      if (previousData != null) {
+        incomingEdgesData.add(previousData.getSecond());
+      }
+    }
+    Pair<D,D> mergedData=instructionDataMergeStrategy.execute(instruction,incomingEdgesData);
+    if (!mergedData.equals(previousDataValue)) {
+      changed[0]=true;
+      dataMap.put(instruction,mergedData);
+    }
+  }
+}
