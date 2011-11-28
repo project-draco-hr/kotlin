@@ -1,0 +1,62 @@
+{
+  Editor editor=location.getEditor();
+  if (editor == null) {
+    setText("No editor");
+  }
+ else {
+    VirtualFile vFile=((EditorEx)editor).getVirtualFile();
+    if (vFile == null) {
+      setText("");
+      return;
+    }
+    PsiFile psiFile=PsiManager.getInstance(myProject).findFile(vFile);
+    if (!(psiFile instanceof JetFile)) {
+      setText("");
+      return;
+    }
+    int startOffset=location.getStartOffset();
+    int endOffset=location.getEndOffset();
+    if (oldLocation == null || !Comparing.equal(oldLocation.getEditor(),location.getEditor()) || oldLocation.getStartOffset() != startOffset || oldLocation.getEndOffset() != endOffset) {
+      BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)psiFile);
+      PsiElement elementAtOffset;
+      if (startOffset == endOffset) {
+        elementAtOffset=PsiUtilCore.getElementAtOffset(psiFile,startOffset);
+      }
+ else {
+        PsiElement start=PsiUtilCore.getElementAtOffset(psiFile,startOffset);
+        System.out.println("start = " + start.getText());
+        PsiElement end=PsiUtilCore.getElementAtOffset(psiFile,endOffset - 1);
+        System.out.println("end = " + end.getText());
+        elementAtOffset=PsiTreeUtil.findCommonParent(start,end);
+        System.out.println("elementAtOffset = " + elementAtOffset.getText());
+      }
+      PsiElement currentElement=elementAtOffset;
+      boolean callFound=false;
+      while (currentElement != null && !(currentElement instanceof PsiFile)) {
+        if (currentElement instanceof JetElement) {
+          JetElement atOffset=(JetElement)currentElement;
+          ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(RESOLVED_CALL,(JetElement)atOffset);
+          if (resolvedCall != null) {
+            setText(renderCall(resolvedCall) + "\n===\n" + currentElement+ ": "+ currentElement.getText());
+            callFound=true;
+            break;
+          }
+        }
+        currentElement=currentElement.getParent();
+      }
+      if (!callFound) {
+        JetExpression parentExpression=(elementAtOffset instanceof JetExpression) ? (JetExpression)elementAtOffset : PsiTreeUtil.getParentOfType(elementAtOffset,JetExpression.class);
+        if (parentExpression != null) {
+          JetType type=bindingContext.get(EXPRESSION_TYPE,parentExpression);
+          String text=parentExpression + "|" + parentExpression.getText()+ "| : "+ type;
+          if (parentExpression instanceof JetReferenceExpression) {
+            JetReferenceExpression referenceExpression=(JetReferenceExpression)parentExpression;
+            DeclarationDescriptor target=bindingContext.get(REFERENCE_TARGET,referenceExpression);
+            text+="\nReference target: \n" + target;
+          }
+          setText(text);
+        }
+      }
+    }
+  }
+}
