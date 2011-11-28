@@ -8,10 +8,20 @@
       mainAttributes.putValue("Main-Class",mainClass);
     }
     JarOutputStream stream=new JarOutputStream(fos,manifest);
+    List<String> sanitized=Arrays.asList("kotlin/","std/");
     try {
       for (      String file : factory.files()) {
-        stream.putNextEntry(new JarEntry(file));
-        stream.write(factory.asBytes(file));
+        boolean skip=false;
+        for (        String prefix : sanitized) {
+          if (file.startsWith(prefix)) {
+            skip=true;
+            break;
+          }
+        }
+        if (!skip) {
+          stream.putNextEntry(new JarEntry(file));
+          stream.write(factory.asBytes(file));
+        }
       }
       if (includeRuntime) {
         writeRuntimeToJar(stream);
