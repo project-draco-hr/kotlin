@@ -1,11 +1,16 @@
 {
   List<Instruction> instructions=pseudocode.getInstructions();
-  SubroutineEnterInstruction enterInstruction=pseudocode.getEnterInstruction();
+  Instruction startInstruction=getStartInstruction(pseudocode);
+  if (!straightDirection) {
+    instructions=Lists.newArrayList(instructions);
+    Collections.reverse(instructions);
+  }
   for (  Instruction instruction : instructions) {
-    if (!isLocal && instruction instanceof SubroutineEnterInstruction)     continue;
+    boolean isStart=straightDirection ? instruction instanceof SubroutineEnterInstruction : instruction instanceof SubroutineSinkInstruction;
+    if (!isLocal && isStart)     continue;
     Collection<Instruction> allPreviousInstructions;
     Collection<Instruction> previousInstructions=straightDirection ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
-    if (instruction == enterInstruction && !previousSubGraphInstructions.isEmpty()) {
+    if (instruction == startInstruction && !previousSubGraphInstructions.isEmpty()) {
       allPreviousInstructions=Lists.newArrayList(previousInstructions);
       allPreviousInstructions.addAll(previousSubGraphInstructions);
     }
@@ -14,7 +19,15 @@
     }
     if (lookInside && instruction instanceof LocalDeclarationInstruction) {
       Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
-      traverseSubGraph(subroutinePseudocode,instructionDataMergeStrategy,previousInstructions,straightDirection,changed,true);
+      traverseSubGraph(subroutinePseudocode,instructionDataMergeStrategy,previousInstructions,changed,true);
+      Instruction lastInstruction=straightDirection ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
+      Pair<D,D> previousValue=dataMap.get(instruction);
+      Pair<D,D> newValue=dataMap.get(lastInstruction);
+      if (!previousValue.equals(newValue)) {
+        changed[0]=true;
+        dataMap.put(instruction,newValue);
+      }
+      continue;
     }
     Pair<D,D> previousDataValue=dataMap.get(instruction);
     Collection<D> incomingEdgesData=Sets.newHashSet();
