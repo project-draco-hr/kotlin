@@ -26,11 +26,18 @@
       }
       variableDescriptor=context.getDescriptorResolver().resolveLocalVariableDescriptor(context.scope.getContainingDeclaration(),loopParameter,expectedParameterType);
     }
+{
+      VariableDescriptor olderVariable=context.scope.getVariable(variableDescriptor.getName());
+      if (olderVariable != null && DescriptorUtils.isLocal(context.scope.getContainingDeclaration(),olderVariable)) {
+        context.trace.report(Errors.NAME_SHADOWING.on(variableDescriptor,context.trace.getBindingContext()));
+      }
+    }
     loopScope.addVariableDescriptor(variableDescriptor);
   }
   JetExpression body=expression.getBody();
   if (body != null) {
-    facade.getType(body,context.replaceScope(loopScope));
+    ExpressionTypingInternals blockLevelVisitor=ExpressionTypingVisitorDispatcher.createForBlock(loopScope);
+    blockLevelVisitor.getType(body,context.replaceScope(loopScope));
   }
   return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
 }
