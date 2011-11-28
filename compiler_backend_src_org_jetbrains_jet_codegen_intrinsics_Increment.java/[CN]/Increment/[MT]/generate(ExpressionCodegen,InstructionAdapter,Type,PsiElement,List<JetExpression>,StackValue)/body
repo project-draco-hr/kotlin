@@ -1,5 +1,8 @@
 {
-  final JetExpression operand=arguments.get(0);
+  JetExpression operand=arguments.get(0);
+  while (operand instanceof JetParenthesizedExpression) {
+    operand=((JetParenthesizedExpression)operand).getExpression();
+  }
   if (operand instanceof JetReferenceExpression) {
     final int index=codegen.indexOfLocal((JetReferenceExpression)operand);
     if (index >= 0 && JetTypeMapper.isIntPrimitive(expectedType)) {
@@ -8,6 +11,7 @@
     }
   }
   StackValue value=codegen.genQualified(receiver,operand);
+  value.dupReceiver(v);
   value.dupReceiver(v);
   value.put(expectedType,v);
   if (expectedType == Type.LONG_TYPE) {
@@ -20,9 +24,10 @@
     v.dconst(myDelta);
   }
  else {
-    v.aconst(myDelta);
+    v.iconst(myDelta);
   }
   v.add(expectedType);
   value.store(v);
-  return value;
+  value.put(expectedType,v);
+  return StackValue.onStack(expectedType);
 }

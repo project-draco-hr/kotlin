@@ -1,16 +1,7 @@
 {
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  boolean javaClass=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor) instanceof PsiClass;
-  if (!javaClass && (jetType.getArguments().size() > 0 || !(descriptor instanceof ClassDescriptor))) {
-    generateTypeInfo(jetType);
-    expressionToGen.put(OBJECT_TYPE,v);
-    if (leaveExpressionOnStack) {
-      v.dupX1();
-    }
-    v.invokevirtual("jet/typeinfo/TypeInfo","isInstance","(Ljava/lang/Object;)Z");
-  }
- else {
-    expressionToGen.put(OBJECT_TYPE,v);
+  if (!hasTypeInfoForInstanceOf(jetType)) {
+    expressionToGen.put(JetTypeMapper.TYPE_OBJECT,v);
     if (leaveExpressionOnStack) {
       v.dup();
     }
@@ -30,5 +21,13 @@
  else {
       v.instanceOf(type);
     }
+  }
+ else {
+    generateTypeInfo(jetType);
+    expressionToGen.put(JetTypeMapper.TYPE_OBJECT,v);
+    if (leaveExpressionOnStack) {
+      v.dupX1();
+    }
+    v.invokevirtual("jet/typeinfo/TypeInfo","isInstance","(Ljava/lang/Object;)Z");
   }
 }
