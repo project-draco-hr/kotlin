@@ -3,6 +3,7 @@
   WritableScope innerScope=new WritableScopeImpl(scope,functionDescriptor,new TraceBasedRedeclarationHandler(trace)).setDebugName("Function descriptor header scope");
   innerScope.addLabeledDeclaration(functionDescriptor);
   List<TypeParameterDescriptor> typeParameterDescriptors=resolveTypeParameters(functionDescriptor,innerScope,function.getTypeParameters());
+  innerScope.changeLockLevel(WritableScope.LockLevel.BOTH);
   resolveGenericBounds(function,innerScope,typeParameterDescriptors);
   JetType receiverType=null;
   JetTypeReference receiverTypeRef=function.getReceiverTypeRef();
@@ -11,6 +12,7 @@
     receiverType=typeResolver.resolveType(scopeForReceiver,receiverTypeRef);
   }
   List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,innerScope,function.getValueParameters());
+  innerScope.changeLockLevel(WritableScope.LockLevel.READING);
   JetTypeReference returnTypeRef=function.getReturnTypeRef();
   JetType returnType;
   if (returnTypeRef != null) {
