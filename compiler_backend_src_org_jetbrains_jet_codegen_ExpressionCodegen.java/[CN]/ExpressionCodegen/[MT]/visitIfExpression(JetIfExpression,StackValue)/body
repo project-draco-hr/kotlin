@@ -6,19 +6,26 @@
   if (thenExpression == null && elseExpression == null) {
     throw new CompilationException();
   }
-  if (thenExpression == null) {
+  if (isEmptyExpression(thenExpression)) {
+    if (isEmptyExpression(elseExpression)) {
+      condition.put(asmType,v);
+      return StackValue.onStack(asmType);
+    }
     return generateSingleBranchIf(condition,elseExpression,false);
   }
-  if (elseExpression == null) {
-    return generateSingleBranchIf(condition,thenExpression,true);
+ else {
+    if (isEmptyExpression(elseExpression)) {
+      return generateSingleBranchIf(condition,thenExpression,true);
+    }
   }
   Label elseLabel=new Label();
   condition.condJump(elseLabel,true,v);
+  Label end=continueLabel == null ? new Label() : continueLabel;
   gen(thenExpression,asmType);
-  Label endLabel=new Label();
-  v.goTo(endLabel);
+  v.goTo(end);
   v.mark(elseLabel);
   gen(elseExpression,asmType);
-  v.mark(endLabel);
+  if (end != continueLabel)   v.mark(end);
+ else   v.goTo(end);
   return StackValue.onStack(asmType);
 }

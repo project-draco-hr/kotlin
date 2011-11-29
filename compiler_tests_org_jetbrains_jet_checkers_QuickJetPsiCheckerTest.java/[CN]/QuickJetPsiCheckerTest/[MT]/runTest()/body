@@ -7,7 +7,7 @@
   boolean importJdk=expectedText.contains("+JDK");
   ImportingStrategy importingStrategy=importJdk ? JavaDefaultImports.JAVA_DEFAULT_IMPORTS : ImportingStrategy.NONE;
   BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache(AnalyzingUtils.getInstance(importingStrategy),jetFile,AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
-  CheckerTestUtil.diagnosticsDiff(diagnosedRanges,bindingContext.getDiagnostics(),new CheckerTestUtil.DiagnosticDiffCallbacks(){
+  CheckerTestUtil.diagnosticsDiff(diagnosedRanges,CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,jetFile),new CheckerTestUtil.DiagnosticDiffCallbacks(){
     @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
       String message="Missing " + type + DiagnosticUtils.atLocation(myFile,new TextRange(expectedStart,expectedEnd));
       System.err.println(message);
@@ -18,6 +18,6 @@
     }
   }
 );
-  String actualText=CheckerTestUtil.addDiagnosticMarkersToText(jetFile,bindingContext).toString();
+  String actualText=CheckerTestUtil.addDiagnosticMarkersToText(jetFile,bindingContext,AnalyzingUtils.getSyntaxErrorRanges(jetFile)).toString();
   assertEquals(expectedText,actualText);
 }
