@@ -5,8 +5,16 @@
     DeclarationDescriptor cls=op.getContainingDeclaration();
     if (isNumberPrimitive(cls) && (op.getName().equals("inc") || op.getName().equals("dec"))) {
       receiver.put(receiver.type,v);
-      gen(expression.getBaseExpression(),asmType);
-      generateIncrement(op,asmType,expression.getBaseExpression(),receiver);
+      JetExpression operand=expression.getBaseExpression();
+      if (operand instanceof JetReferenceExpression) {
+        final int index=indexOfLocal((JetReferenceExpression)operand);
+        if (index >= 0 && JetTypeMapper.isIntPrimitive(asmType)) {
+          int increment=op.getName().equals("inc") ? 1 : -1;
+          return StackValue.postIncrement(index,increment);
+        }
+      }
+      gen(operand,asmType);
+      generateIncrement(op,asmType,operand,receiver);
       return StackValue.onStack(asmType);
     }
   }
