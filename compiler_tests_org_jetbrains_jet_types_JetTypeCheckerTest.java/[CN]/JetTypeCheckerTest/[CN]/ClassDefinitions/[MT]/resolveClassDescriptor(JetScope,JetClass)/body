@@ -3,12 +3,14 @@
   BindingTrace trace=JetTestUtils.DUMMY_TRACE;
   trace.record(BindingContext.CLASS,classElement,classDescriptor);
   final WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,new TraceBasedRedeclarationHandler(trace));
+  parameterScope.changeLockLevel(WritableScope.LockLevel.BOTH);
   List<TypeParameterDescriptor> typeParameters=descriptorResolver.resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters());
   descriptorResolver.resolveGenericBounds(classElement,parameterScope,typeParameters);
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
   Collection<JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : descriptorResolver.resolveDelegationSpecifiers(parameterScope,delegationSpecifiers,typeResolver);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
   final WritableScope memberDeclarations=new WritableScopeImpl(JetScope.EMPTY,classDescriptor,new TraceBasedRedeclarationHandler(trace));
+  memberDeclarations.changeLockLevel(WritableScope.LockLevel.BOTH);
   List<JetDeclaration> declarations=classElement.getDeclarations();
   for (  JetDeclaration declaration : declarations) {
     declaration.accept(new JetVisitorVoid(){
