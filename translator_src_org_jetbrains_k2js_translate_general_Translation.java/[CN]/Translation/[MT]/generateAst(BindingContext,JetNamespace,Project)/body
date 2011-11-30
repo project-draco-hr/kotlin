@@ -1,11 +1,11 @@
 {
-  JsProgram result=new JsProgram("main");
+  JetStandardLibrary standardLibrary=JetStandardLibrary.getJetStandardLibrary(project);
   NamespaceDescriptor descriptor=BindingUtils.getNamespaceDescriptor(bindingContext,namespace);
-  Declarations declarations=Declarations.newInstance(result.getRootScope());
-  declarations.extractStandardLibrary(JetStandardLibrary.getJetStandardLibrary(project));
-  declarations.extractDeclarations(descriptor);
-  JsBlock block=result.getFragmentBlock(0);
-  TranslationContext context=TranslationContext.rootContext(result,bindingContext,declarations,project);
+  StaticContext staticContext=StaticContext.generateStaticContext(standardLibrary,bindingContext);
+  staticContext.getDeclarations().extractStandardLibrary(standardLibrary);
+  staticContext.getDeclarations().extractDeclarations(descriptor);
+  JsBlock block=staticContext.getProgram().getFragmentBlock(0);
+  TranslationContext context=TranslationContext.rootContext(staticContext);
   block.addStatement(Translation.translateNamespace(namespace,context));
-  return result;
+  return context.program();
 }
