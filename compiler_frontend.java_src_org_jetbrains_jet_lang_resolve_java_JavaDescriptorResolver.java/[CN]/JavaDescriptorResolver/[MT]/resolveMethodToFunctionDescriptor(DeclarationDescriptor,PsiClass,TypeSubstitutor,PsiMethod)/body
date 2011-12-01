@@ -10,12 +10,13 @@
     }
     return functionDescriptor;
   }
+  DeclarationDescriptor classDescriptor=method.hasModifierProperty(PsiModifier.STATIC) ? resolveNamespace(method.getContainingClass()) : resolveClass(method.getContainingClass());
   PsiParameter[] parameters=method.getParameterList().getParameters();
   FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),method.getName());
   methodDescriptorCache.put(method,functionDescriptorImpl);
   List<TypeParameterDescriptor> typeParameters=makeUninitializedTypeParameters(functionDescriptorImpl,method.getTypeParameters());
   initializeTypeParameters(method);
-  functionDescriptorImpl.initialize(null,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),typeParameters,semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptorImpl,parameters),semanticServices.getTypeTransformer().transformToType(returnType),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(semanticServices.getTrace(),method));
+  functionDescriptorImpl.initialize(null,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),typeParameters,semanticServices.getDescriptorResolver().resolveParameterDescriptors(functionDescriptorImpl,parameters),semanticServices.getTypeTransformer().transformToType(returnType),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(semanticServices.getTrace(),method));
   semanticServices.getTrace().record(BindingContext.FUNCTION,method,functionDescriptorImpl);
   FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
   if (method.getContainingClass() != psiClass) {
