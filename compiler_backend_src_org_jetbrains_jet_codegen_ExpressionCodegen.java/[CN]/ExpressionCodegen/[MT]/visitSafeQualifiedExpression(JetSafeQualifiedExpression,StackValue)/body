@@ -1,15 +1,15 @@
 {
   JetExpression expr=expression.getReceiverExpression();
   JetType receiverJetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression.getReceiverExpression());
-  Type receiverType=typeMapper.mapType(receiverJetType);
+  Type receiverType=asmType(receiverJetType);
   gen(expr,receiverType);
   if (receiverType.getSort() != Type.OBJECT && receiverType.getSort() != Type.ARRAY) {
     StackValue propValue=genQualified(StackValue.onStack(receiverType),expression.getSelectorExpression());
     Type type=propValue.type;
     propValue.put(type,v);
-    if (JetTypeMapper.isPrimitive(type) && !type.equals(Type.VOID_TYPE)) {
+    if (isPrimitive(type) && !type.equals(Type.VOID_TYPE)) {
       StackValue.valueOf(v,type);
-      type=JetTypeMapper.boxType(type);
+      type=boxType(type);
     }
     return StackValue.onStack(type);
   }
@@ -21,9 +21,9 @@
     StackValue propValue=genQualified(StackValue.onStack(receiverType),expression.getSelectorExpression());
     Type type=propValue.type;
     propValue.put(type,v);
-    if (JetTypeMapper.isPrimitive(type) && !type.equals(Type.VOID_TYPE)) {
+    if (isPrimitive(type) && !type.equals(Type.VOID_TYPE)) {
       StackValue.valueOf(v,type);
-      type=JetTypeMapper.boxType(type);
+      type=boxType(type);
     }
     v.goTo(end);
     v.mark(ifnull);
