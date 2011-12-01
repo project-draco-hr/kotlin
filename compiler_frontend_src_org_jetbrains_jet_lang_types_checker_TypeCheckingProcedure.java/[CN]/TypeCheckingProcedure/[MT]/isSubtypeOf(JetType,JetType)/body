@@ -1,0 +1,18 @@
+{
+  if (ErrorUtils.isErrorType(subtype) || ErrorUtils.isErrorType(supertype)) {
+    return true;
+  }
+  if (!supertype.isNullable() && subtype.isNullable()) {
+    return false;
+  }
+  subtype=TypeUtils.makeNotNullable(subtype);
+  supertype=TypeUtils.makeNotNullable(supertype);
+  if (JetStandardClasses.isNothingOrNullableNothing(subtype)) {
+    return true;
+  }
+  @Nullable JetType closestSupertype=findCorrespondingSupertype(subtype,supertype);
+  if (closestSupertype == null) {
+    return constraints.noCorrespondingSupertype(subtype,supertype);
+  }
+  return checkSubtypeForTheSameConstructor(closestSupertype,supertype);
+}
