@@ -1,29 +1,38 @@
 {
-  JetScope scopeWithTypeParameters;
-  List<TypeParameterDescriptor> typeParameterDescriptors;
-  List<JetTypeParameter> typeParameters=property.getTypeParameters();
-  if (typeParameters.isEmpty()) {
-    scopeWithTypeParameters=scope;
-    typeParameterDescriptors=Collections.emptyList();
-  }
- else {
-    WritableScope writableScope=new WritableScopeImpl(scope,containingDeclaration,new TraceBasedRedeclarationHandler(trace)).setDebugName("Scope with type parameters of a property");
-    typeParameterDescriptors=resolveTypeParameters(containingDeclaration,writableScope,typeParameters);
-    resolveGenericBounds(property,writableScope,typeParameterDescriptors);
-    scopeWithTypeParameters=writableScope;
-  }
-  JetType receiverType=null;
-  JetTypeReference receiverTypeRef=property.getReceiverTypeRef();
-  if (receiverTypeRef != null) {
-    receiverType=typeResolver.resolveType(scopeWithTypeParameters,receiverTypeRef);
-  }
   JetModifierList modifierList=property.getModifierList();
   boolean isVar=property.isVar();
-  JetType type=getVariableType(scopeWithTypeParameters,property,true);
   boolean hasBody=hasBody(property);
   Modality defaultModality=getDefaultModality(containingDeclaration,hasBody);
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList),resolveModalityFromModifiers(property.getModifierList(),defaultModality),resolveVisibilityFromModifiers(property.getModifierList()),isVar,receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(containingDeclaration),JetPsiUtil.safeName(property.getName()),isVar ? type : null,type);
-  propertyDescriptor.initialize(typeParameterDescriptors,resolvePropertyGetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor),resolvePropertySetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor));
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList),resolveModalityFromModifiers(property.getModifierList(),defaultModality),resolveVisibilityFromModifiers(property.getModifierList()),isVar,DescriptorUtils.getExpectedThisObjectIfNeeded(containingDeclaration),JetPsiUtil.safeName(property.getName()));
+  List<TypeParameterDescriptor> typeParameterDescriptors;
+  JetScope scopeWithTypeParameters;
+  JetType receiverType=null;
+{
+    List<JetTypeParameter> typeParameters=property.getTypeParameters();
+    if (typeParameters.isEmpty()) {
+      scopeWithTypeParameters=scope;
+      typeParameterDescriptors=Collections.emptyList();
+    }
+ else {
+      WritableScope writableScope=new WritableScopeImpl(scope,containingDeclaration,new TraceBasedRedeclarationHandler(trace)).setDebugName("Scope with type parameters of a property");
+      typeParameterDescriptors=resolveTypeParameters(containingDeclaration,writableScope,typeParameters);
+      writableScope.changeLockLevel(WritableScope.LockLevel.READING);
+      resolveGenericBounds(property,writableScope,typeParameterDescriptors);
+      scopeWithTypeParameters=writableScope;
+    }
+    JetTypeReference receiverTypeRef=property.getReceiverTypeRef();
+    if (receiverTypeRef != null) {
+      receiverType=typeResolver.resolveType(scopeWithTypeParameters,receiverTypeRef);
+    }
+  }
+  ReceiverDescriptor receiverDescriptor=receiverType == null ? ReceiverDescriptor.NO_RECEIVER : new ExtensionReceiver(propertyDescriptor,receiverType);
+  JetScope scope2=getPropertyDeclarationInnerScope(scope,propertyDescriptor,typeParameterDescriptors,receiverDescriptor);
+  JetType type=getVariableType(scope2,property,true);
+  JetType inType=isVar ? type : null;
+  propertyDescriptor.setType(inType,type,typeParameterDescriptors,receiverDescriptor);
+  PropertyGetterDescriptor getter=resolvePropertyGetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor);
+  PropertySetterDescriptor setter=resolvePropertySetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor);
+  propertyDescriptor.initialize(getter,setter);
   trace.record(BindingContext.VARIABLE,property,propertyDescriptor);
   return propertyDescriptor;
 }

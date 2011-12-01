@@ -1,8 +1,17 @@
 {
   super(containingDeclaration);
   TraceBasedRedeclarationHandler redeclarationHandler=new TraceBasedRedeclarationHandler(trace);
+  this.redeclarationHandler=redeclarationHandler;
   this.scopeForMemberLookup=new WritableScopeImpl(JetScope.EMPTY,this,redeclarationHandler).setDebugName("MemberLookup");
+  this.scopeForMemberLookup.changeLockLevel(WritableScope.LockLevel.BOTH);
   this.scopeForSupertypeResolution=new WritableScopeImpl(outerScope,this,redeclarationHandler).setDebugName("SupertypeResolution");
+  this.scopeForSupertypeResolution.changeLockLevel(WritableScope.LockLevel.BOTH);
   this.scopeForMemberResolution=new WritableScopeImpl(scopeForSupertypeResolution,this,redeclarationHandler).setDebugName("MemberResolution");
+  this.scopeForMemberResolution.changeLockLevel(WritableScope.LockLevel.BOTH);
+  this.scopeForAnyConstructor=new WritableScopeImpl(scopeForMemberResolution,this,redeclarationHandler).setDebugName("AnyConstrutor");
+  this.scopeForAnyConstructor.changeLockLevel(WritableScope.LockLevel.BOTH);
+  this.scopeForPrimaryConstructor=new WritableScopeImpl(scopeForAnyConstructor,this,redeclarationHandler).setDebugName("PrimaryConstructor");
+  this.scopeForPrimaryConstructor.changeLockLevel(WritableScope.LockLevel.BOTH);
+  this.scopesForConstructors=new HashMap<ConstructorDescriptor,WritableScope>();
   this.kind=kind;
 }
