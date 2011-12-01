@@ -1,0 +1,47 @@
+{
+  if (!(targetType.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor)) {
+    return false;
+  }
+{
+    Multimap<TypeConstructor,TypeProjection> typeSubstitutionMap=TypeUtils.buildDeepSubstitutionMultimap(targetType);
+    for (int i=0; i < actualType.getConstructor().getParameters().size(); ++i) {
+      TypeProjection actualTypeParameter=actualType.getArguments().get(i);
+      TypeParameterDescriptor subjectTypeParameterDescriptor=actualType.getConstructor().getParameters().get(i);
+      if (subjectTypeParameterDescriptor.isReified()) {
+        continue;
+      }
+      Collection<TypeProjection> subst=typeSubstitutionMap.get(subjectTypeParameterDescriptor.getTypeConstructor());
+      for (      TypeProjection proj : subst) {
+        if (!typeChecker.isSubtypeOf(actualTypeParameter.getType(),proj.getType())) {
+          return true;
+        }
+      }
+    }
+  }
+{
+    JetType targetTypeClerared=TypeUtils.makeUnsubstitutedType((ClassDescriptor)targetType.getConstructor().getDeclarationDescriptor(),null);
+    Multimap<TypeConstructor,TypeProjection> clearTypeSubstitutionMap=TypeUtils.buildDeepSubstitutionMultimap(targetTypeClerared);
+    Set<JetType> clearSubstituted=new HashSet<JetType>();
+    for (int i=0; i < actualType.getConstructor().getParameters().size(); ++i) {
+      TypeParameterDescriptor subjectTypeParameterDescriptor=actualType.getConstructor().getParameters().get(i);
+      Collection<TypeProjection> subst=clearTypeSubstitutionMap.get(subjectTypeParameterDescriptor.getTypeConstructor());
+      for (      TypeProjection proj : subst) {
+        clearSubstituted.add(proj.getType());
+      }
+    }
+    for (int i=0; i < targetType.getConstructor().getParameters().size(); ++i) {
+      TypeParameterDescriptor typeParameter=targetType.getConstructor().getParameters().get(i);
+      TypeProjection typeProjection=targetType.getArguments().get(i);
+      if (typeParameter.isReified()) {
+        continue;
+      }
+      if (typeProjection.equals(TypeUtils.makeStarProjection(typeParameter))) {
+        continue;
+      }
+      if (!clearSubstituted.contains(typeParameter.getDefaultType())) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
