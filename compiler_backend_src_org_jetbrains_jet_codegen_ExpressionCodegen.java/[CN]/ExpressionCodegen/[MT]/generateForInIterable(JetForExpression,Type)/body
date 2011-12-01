@@ -9,16 +9,16 @@
   final JetParameter loopParameter=expression.getLoopParameter();
   final VariableDescriptor parameterDescriptor=bindingContext.get(BindingContext.VALUE_PARAMETER,loopParameter);
   JetType iteratorType=iteratorDescriptor.getReturnType();
-  Type asmIterType=JetTypeMapper.boxType(typeMapper.mapType(iteratorType));
+  Type asmIterType=boxType(asmType(iteratorType));
   JetType paramType=parameterDescriptor.getOutType();
-  Type asmParamType=typeMapper.mapType(paramType);
+  Type asmParamType=asmType(paramType);
   int iteratorVar=myFrameMap.enterTemp();
   gen(expression.getLoopRange(),loopRangeType);
   invokeFunctionNoParams(iteratorDescriptor,asmIterType,v);
   v.store(iteratorVar,asmIterType);
   Label end=new Label();
   if (iteratorType.isNullable()) {
-    v.load(iteratorVar,JetTypeMapper.TYPE_OBJECT);
+    v.load(iteratorVar,TYPE_OBJECT);
     v.ifnull(end);
   }
   Label begin=new Label();
