@@ -1,8 +1,16 @@
 {
-  JsExpression result=tryToApplyIntrinsic(expression,context);
-  if (result != null)   return result;
   if (ArrayAccessTranslator.canBeArraySetterCall(expression)) {
     return ArrayAccessTranslator.translateAsArraySetterCall(expression,context);
   }
-  return translateAsBinary(expression,context);
+  DeclarationDescriptor descriptorForReferenceExpression=getDescriptorForReferenceExpression(context.bindingContext(),expression.getOperation());
+  if (descriptorForReferenceExpression == null) {
+    return IntrinsicBinaryOperationTranslator.translate(expression,context);
+  }
+  if (isEqualsCall(expression,context)) {
+    return translateAsEqualsCall(expression,context);
+  }
+  if (isCompareToCall(expression,context)) {
+    return translateAsCompareToCall(expression,context);
+  }
+  return CallTranslator.translate(expression,context);
 }
