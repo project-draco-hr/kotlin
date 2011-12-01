@@ -1,0 +1,17 @@
+{
+  String testFileName=name + ".jet";
+  String expectedText=loadFile(testFileName);
+  List<TestFile> testFileFiles=createTestFiles(testFileName,expectedText);
+  boolean importJdk=expectedText.contains("+JDK");
+  ImportingStrategy importingStrategy=importJdk ? JavaDefaultImports.JAVA_DEFAULT_IMPORTS : ImportingStrategy.NONE;
+  List<JetDeclaration> namespaces=Lists.newArrayList();
+  for (  TestFile testFileFile : testFileFiles) {
+    namespaces.add(testFileFile.jetFile.getRootNamespace());
+  }
+  BindingContext bindingContext=AnalyzingUtils.getInstance(importingStrategy).analyzeNamespaces(getProject(),namespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
+  StringBuilder actualText=new StringBuilder();
+  for (  TestFile testFileFile : testFileFiles) {
+    testFileFile.getActualText(bindingContext,actualText);
+  }
+  assertEquals(expectedText,actualText.toString());
+}
