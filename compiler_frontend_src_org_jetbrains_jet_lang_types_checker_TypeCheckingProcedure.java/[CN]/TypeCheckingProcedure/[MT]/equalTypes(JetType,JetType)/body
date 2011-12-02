@@ -1,0 +1,29 @@
+{
+  if (type1.isNullable() != type2.isNullable()) {
+    return false;
+  }
+  if (type1.isNullable()) {
+    return constraints.assertEqualTypes(TypeUtils.makeNotNullable(type1),TypeUtils.makeNotNullable(type2),this);
+  }
+  TypeConstructor constructor1=type1.getConstructor();
+  TypeConstructor constructor2=type2.getConstructor();
+  if (!constraints.assertEqualTypeConstructors(constructor1,constructor2)) {
+    return false;
+  }
+  List<TypeProjection> type1Arguments=type1.getArguments();
+  List<TypeProjection> type2Arguments=type2.getArguments();
+  if (type1Arguments.size() != type2Arguments.size()) {
+    return false;
+  }
+  for (int i=0; i < type1Arguments.size(); i++) {
+    TypeProjection typeProjection1=type1Arguments.get(i);
+    TypeProjection typeProjection2=type2Arguments.get(i);
+    if (typeProjection1.getProjectionKind() != typeProjection2.getProjectionKind()) {
+      return false;
+    }
+    if (!constraints.assertEqualTypes(typeProjection1.getType(),typeProjection2.getType(),this)) {
+      return false;
+    }
+  }
+  return true;
+}
