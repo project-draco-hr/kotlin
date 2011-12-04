@@ -19,6 +19,8 @@
     }
     if (!isAbstract && v.generateCode()) {
       mv.visitCode();
+      Label methodBegin=new Label();
+      mv.visitLabel(methodBegin);
       FrameMap frameMap=context.prepareFrame();
       ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),context,state);
       Type[] argTypes=jvmSignature.getArgumentTypes();
@@ -60,6 +62,13 @@
           }
         }
         codegen.returnExpression(bodyExpressions);
+      }
+      Label methodEnd=new Label();
+      mv.visitLabel(methodEnd);
+      for (int i=0; i < paramDescrs.size(); i++) {
+        ValueParameterDescriptor parameter=paramDescrs.get(i);
+        Type type=state.getTypeMapper().mapType(parameter.getOutType());
+        mv.visitLocalVariable(parameter.getName(),type.getDescriptor(),null,methodBegin,methodEnd,i + add);
       }
       mv.visitMaxs(0,0);
       mv.visitEnd();
