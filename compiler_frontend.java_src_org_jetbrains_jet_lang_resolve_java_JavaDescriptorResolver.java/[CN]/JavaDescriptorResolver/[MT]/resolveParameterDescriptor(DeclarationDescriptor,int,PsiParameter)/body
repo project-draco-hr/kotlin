@@ -1,5 +1,4 @@
 {
-  String name=parameter.getName();
   PsiType psiType=parameter.getType();
   JetType varargElementType;
   if (psiType instanceof PsiEllipsisType) {
@@ -9,6 +8,27 @@
  else {
     varargElementType=null;
   }
+  boolean changeNullable=false;
+  boolean nullable=true;
+  String name=parameter.getName() != null ? parameter.getName() : "p" + i;
+  for (  PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
+    PsiNameValuePair[] attributes=annotation.getParameterList().getAttributes();
+    attributes.toString();
+    if (annotation.getQualifiedName().equals("jet.typeinfo.JetParameter")) {
+      PsiLiteralExpression nameExpression=(PsiLiteralExpression)annotation.findAttributeValue("name");
+      if (nameExpression != null) {
+        name=(String)nameExpression.getValue();
+      }
+      PsiLiteralExpression nullableExpression=(PsiLiteralExpression)annotation.findAttributeValue("nullable");
+      if (nullableExpression != null) {
+        nullable=(Boolean)nullableExpression.getValue();
+      }
+ else {
+        nullable=false;
+        changeNullable=true;
+      }
+    }
+  }
   JetType outType=semanticServices.getTypeTransformer().transformToType(psiType);
-  return new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name == null ? "p" + i : name,null,outType,false,varargElementType);
+  return new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,false,varargElementType);
 }
