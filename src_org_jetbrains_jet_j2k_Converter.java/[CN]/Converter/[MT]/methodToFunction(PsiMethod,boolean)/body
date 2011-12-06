@@ -7,10 +7,7 @@
   final Set<String> modifiers=modifiersListToModifiersSet(method.getModifierList());
   if (isOverrideAnyMethodExceptMethodsFromObject(method))   modifiers.add(Modifier.OVERRIDE);
   if (method.getParent() instanceof PsiClass && ((PsiClass)method.getParent()).isInterface())   modifiers.remove(Modifier.ABSTRACT);
-  if (method.getParent() instanceof PsiClass) {
-    final PsiModifierList parentModifierList=((PsiClass)method.getParent()).getModifierList();
-    if (parentModifierList != null && parentModifierList.hasExplicitModifier(Modifier.FINAL))     modifiers.add(Modifier.NOT_OPEN);
-  }
+  if (isNotOpenMethod(method))   modifiers.add(Modifier.NOT_OPEN);
   if (method.isConstructor()) {
     boolean isPrimary=isConstructorPrimary(method);
     return new Constructor(identifier,modifiers,returnType,typeParameters,params,new Block(removeEmpty(body.getStatements()),false),isPrimary);
