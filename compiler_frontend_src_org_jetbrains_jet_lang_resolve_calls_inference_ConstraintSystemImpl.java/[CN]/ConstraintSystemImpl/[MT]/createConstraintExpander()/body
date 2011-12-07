@@ -1,0 +1,33 @@
+{
+  return new TypeCheckingProcedure(new TypeConstraintBuilderAdapter(new TypingConstraints(){
+    @Override public boolean assertEqualTypes(    @NotNull JetType a,    @NotNull JetType b,    TypeCheckingProcedure typeCheckingProcedure){
+      TypeValue aValue=getTypeValueFor(a);
+      TypeValue bValue=getTypeValueFor(b);
+      return aValue.equate(bValue);
+    }
+    @Override public boolean assertEqualTypeConstructors(    @NotNull TypeConstructor a,    @NotNull TypeConstructor b){
+      return a.equals(b) || unknownTypes.containsKey(a.getDeclarationDescriptor()) || unknownTypes.containsKey(b.getDeclarationDescriptor());
+    }
+    @Override public boolean assertSubtype(    @NotNull JetType subtype,    @NotNull JetType supertype,    TypeCheckingProcedure typeCheckingProcedure){
+      TypeValue subtypeValue=getTypeValueFor(subtype);
+      TypeValue supertypeValue=getTypeValueFor(supertype);
+      if (someUnknown(subtypeValue,supertypeValue)) {
+        addSubtypingConstraintOnTypeValues(subtypeValue,supertypeValue);
+      }
+      return true;
+    }
+    @Override public boolean noCorrespondingSupertype(    @NotNull JetType subtype,    @NotNull JetType supertype){
+      TypeValue subTypeValue=getTypeValueFor(subtype);
+      TypeValue superTypeValue=getTypeValueFor(supertype);
+      boolean someUnknown=someUnknown(subTypeValue,superTypeValue);
+      if (someUnknown) {
+        addSubtypingConstraintOnTypeValues(subTypeValue,superTypeValue);
+      }
+      return someUnknown;
+    }
+    private boolean someUnknown(    TypeValue subtypeValue,    TypeValue supertypeValue){
+      return subtypeValue instanceof UnknownType || supertypeValue instanceof UnknownType;
+    }
+  }
+,listener));
+}
