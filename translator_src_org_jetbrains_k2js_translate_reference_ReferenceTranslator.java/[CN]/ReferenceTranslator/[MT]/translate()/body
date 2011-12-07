@@ -1,8 +1,13 @@
 {
-  tryResolveAsAlias();
-  tryResolveAsReference();
-  if (result != null) {
-    return result;
+  if (!context().isDeclared(referencedDescriptor)) {
+    throw new AssertionError("Undefined name in this scope: " + referencedDescriptor.getName());
   }
-  throw new AssertionError("Undefined name in this scope: " + referencedDescriptor.getName());
+  JsName referencedName=context().getNameForDescriptor(referencedDescriptor);
+  JsExpression implicitReceiver=getImplicitReceiver(context(),referencedDescriptor);
+  if (shouldQualify && implicitReceiver != null) {
+    return AstUtil.qualified(referencedName,implicitReceiver);
+  }
+ else {
+    return referencedName.makeRef();
+  }
 }
