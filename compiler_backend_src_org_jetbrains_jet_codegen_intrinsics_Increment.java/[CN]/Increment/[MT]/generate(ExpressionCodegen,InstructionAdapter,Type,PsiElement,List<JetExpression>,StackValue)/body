@@ -1,32 +1,30 @@
 {
-  JetExpression operand=arguments.get(0);
-  while (operand instanceof JetParenthesizedExpression) {
-    operand=((JetParenthesizedExpression)operand).getExpression();
+  boolean nullable=expectedType.getSort() == Type.OBJECT;
+  if (nullable) {
+    expectedType=JetTypeMapper.unboxType(expectedType);
   }
-  if (operand instanceof JetReferenceExpression) {
-    final int index=codegen.indexOfLocal((JetReferenceExpression)operand);
-    if (index >= 0 && JetTypeMapper.isIntPrimitive(expectedType)) {
-      return StackValue.preIncrement(index,myDelta);
+  if (arguments.size() > 0) {
+    JetExpression operand=arguments.get(0);
+    while (operand instanceof JetParenthesizedExpression) {
+      operand=((JetParenthesizedExpression)operand).getExpression();
     }
-  }
-  StackValue value=codegen.genQualified(receiver,operand);
-  value.dupReceiver(v);
-  value.dupReceiver(v);
-  value.put(expectedType,v);
-  if (expectedType == Type.LONG_TYPE) {
-    v.lconst(myDelta);
-  }
- else   if (expectedType == Type.FLOAT_TYPE) {
-    v.fconst(myDelta);
-  }
- else   if (expectedType == Type.DOUBLE_TYPE) {
-    v.dconst(myDelta);
+    if (operand instanceof JetReferenceExpression) {
+      final int index=codegen.indexOfLocal((JetReferenceExpression)operand);
+      if (index >= 0 && JetTypeMapper.isIntPrimitive(expectedType)) {
+        return StackValue.preIncrement(index,myDelta);
+      }
+    }
+    StackValue value=codegen.genQualified(receiver,operand);
+    value.dupReceiver(v);
+    value.dupReceiver(v);
+    value.put(expectedType,v);
+    plusMinus(v,expectedType);
+    value.store(v);
+    value.put(expectedType,v);
   }
  else {
-    v.iconst(myDelta);
+    receiver.put(expectedType,v);
+    plusMinus(v,expectedType);
   }
-  v.add(expectedType);
-  value.store(v);
-  value.put(expectedType,v);
   return StackValue.onStack(expectedType);
 }

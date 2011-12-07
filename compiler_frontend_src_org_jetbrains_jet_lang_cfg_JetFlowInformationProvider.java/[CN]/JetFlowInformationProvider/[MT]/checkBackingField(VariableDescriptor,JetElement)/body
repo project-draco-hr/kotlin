@@ -1,0 +1,26 @@
+{
+  boolean[] error=new boolean[1];
+  if (isBackingFieldReference((JetElement)element.getParent(),error,false))   return false;
+  if (!isBackingFieldReference(element,error,true))   return false;
+  if (error[0])   return true;
+  if (!(variableDescriptor instanceof PropertyDescriptor)) {
+    trace.report(Errors.NOT_PROPERTY_BACKING_FIELD.on(element));
+    return true;
+  }
+  PsiElement property=trace.get(BindingContext.DESCRIPTOR_TO_DECLARATION,variableDescriptor);
+  if (!trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor) && !PsiTreeUtil.isAncestor(property,element,false)) {
+    if (((PropertyDescriptor)variableDescriptor).getModality() == Modality.ABSTRACT) {
+      trace.report(NO_BACKING_FIELD_ABSTRACT_PROPERTY.on(element));
+    }
+ else {
+      trace.report(NO_BACKING_FIELD_CUSTOM_ACCESSORS.on(element));
+    }
+    return true;
+  }
+  JetClassOrObject propertyClassOrObject=PsiTreeUtil.getParentOfType(property,JetClassOrObject.class);
+  if (propertyClassOrObject == null || !PsiTreeUtil.isAncestor(propertyClassOrObject,element,false)) {
+    trace.report(Errors.INACCESSIBLE_BACKING_FIELD.on(element));
+    return true;
+  }
+  return false;
+}
