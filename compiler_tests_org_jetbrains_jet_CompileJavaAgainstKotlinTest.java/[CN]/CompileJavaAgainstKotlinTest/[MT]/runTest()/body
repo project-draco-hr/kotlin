@@ -1,0 +1,25 @@
+{
+  createMockCoreEnvironment();
+  LanguageASTFactory.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE,new JavaASTFactory());
+  String text=FileUtil.loadFile(ktFile);
+  LightVirtualFile virtualFile=new LightVirtualFile("Hello.kt",JetLanguage.INSTANCE,text);
+  virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+  JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
+  GenerationState state=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactory.BINARIES);
+  AnalyzingUtils.checkForSyntacticErrors(psiFile);
+  state.compile(psiFile);
+  ClassFileFactory classFileFactory=state.getFactory();
+  CompileEnvironment.writeToOutputDirectory(classFileFactory,tmpdir.getPath());
+  Disposer.dispose(myTestRootDisposable);
+  JavaCompiler javaCompiler=ToolProvider.getSystemJavaCompiler();
+  StandardJavaFileManager fileManager=javaCompiler.getStandardFileManager(null,Locale.ENGLISH,Charset.forName("utf-8"));
+  try {
+    Iterable<? extends JavaFileObject> javaFileObjectsFromFiles=fileManager.getJavaFileObjectsFromFiles(Collections.singleton(javaFile));
+    List<String> options=Arrays.asList("-classpath",tmpdir.getPath(),"-d",tmpdir.getPath());
+    JavaCompiler.CompilationTask task=javaCompiler.getTask(null,fileManager,null,options,null,javaFileObjectsFromFiles);
+    Assert.assertTrue(task.call());
+  }
+  finally {
+    fileManager.close();
+  }
+}
