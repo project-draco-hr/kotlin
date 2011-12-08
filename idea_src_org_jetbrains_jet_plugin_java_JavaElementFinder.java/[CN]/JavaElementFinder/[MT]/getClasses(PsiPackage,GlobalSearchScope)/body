@@ -1,14 +1,14 @@
 {
   List<PsiClass> answer=new SmartList<PsiClass>();
-  final List<PsiFile> filesInScope=ensureUpToDate(scope);
-  final String qualifiedName=psiPackage.getQualifiedName();
-  for (  PsiFile file : filesInScope) {
-    final PsiJavaFileStub stub=file.getUserData(JAVA_API_STUB);
-    if (stub == null)     continue;
-    if (Comparing.equal(qualifiedName,stub.getPackageName())) {
-      for (      StubElement child : stub.getChildrenStubs()) {
-        if (child instanceof PsiClassStub) {
-          answer.add((PsiClass)child.getPsi());
+  final List<JetFile> filesInScope=collectProjectFiles(project,scope);
+  String packageFQN=psiPackage.getQualifiedName();
+  for (  JetFile file : filesInScope) {
+    final JetNamespace rootNamespace=file.getRootNamespace();
+    if (packageFQN.equals(CodegenUtil.getFQName(rootNamespace))) {
+      answer.add(new JetLightClass(psiManager,file,"namespace"));
+      for (      JetDeclaration declaration : rootNamespace.getDeclarations()) {
+        if (declaration instanceof JetClassOrObject) {
+          answer.add(new JetLightClass(psiManager,file,declaration.getName()));
         }
       }
     }

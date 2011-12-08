@@ -1,13 +1,21 @@
 {
   if (qualifiedName.startsWith("java."))   return PsiClass.EMPTY_ARRAY;
   List<PsiClass> answer=new SmartList<PsiClass>();
-  final List<PsiFile> filesInScope=ensureUpToDate(scope);
-  for (  PsiFile file : filesInScope) {
-    final PsiJavaFileStub stub=file.getUserData(JAVA_API_STUB);
-    if (stub == null)     continue;
-    final String packageName=stub.getPackageName();
+  final List<JetFile> filesInScope=collectProjectFiles(project,scope);
+  for (  JetFile file : filesInScope) {
+    JetNamespace rootNamespace=file.getRootNamespace();
+    final String packageName=CodegenUtil.getFQName(rootNamespace);
     if (packageName != null && qualifiedName.startsWith(packageName)) {
-      collectClasses(answer,qualifiedName,stub);
+      if (qualifiedName.equals(fqn(packageName,"namespace"))) {
+        answer.add(new JetLightClass(psiManager,file,"namespace"));
+      }
+      for (      JetDeclaration declaration : rootNamespace.getDeclarations()) {
+        if (declaration instanceof JetClassOrObject) {
+          if (qualifiedName.equals(fqn(packageName,declaration.getName()))) {
+            answer.add(new JetLightClass(psiManager,file,declaration.getName()));
+          }
+        }
+      }
     }
   }
   return answer.toArray(new PsiClass[answer.size()]);
