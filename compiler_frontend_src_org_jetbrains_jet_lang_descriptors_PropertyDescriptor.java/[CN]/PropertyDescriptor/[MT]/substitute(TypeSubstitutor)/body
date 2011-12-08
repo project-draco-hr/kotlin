@@ -1,10 +1,24 @@
 {
+  if (originalSubstitutor.isEmpty()) {
+    return this;
+  }
+  PropertyDescriptor substitutedDescriptor=new PropertyDescriptor(this,getContainingDeclaration(),getAnnotations(),getModality(),getVisibility(),isVar(),getName());
+  List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
+  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
   JetType originalInType=getInType();
   JetType inType=originalInType == null ? null : substitutor.substitute(originalInType,Variance.IN_VARIANCE);
   JetType originalOutType=getOutType();
   JetType outType=substitutor.substitute(originalOutType,Variance.OUT_VARIANCE);
   if (inType == null && outType == null) {
     return null;
+  }
+  ReceiverDescriptor substitutedExpectedThisObject;
+  if (expectedThisObject.exists()) {
+    JetType substitutedExpectedThisObjectType=substitutor.substitute(getExpectedThisObject().getType(),Variance.INVARIANT);
+    substitutedExpectedThisObject=new TransientReceiver(substitutedExpectedThisObjectType);
+  }
+ else {
+    substitutedExpectedThisObject=NO_RECEIVER;
   }
   JetType substitutedReceiverType;
   if (receiver.exists()) {
@@ -14,5 +28,6 @@
  else {
     substitutedReceiverType=null;
   }
-  return new PropertyDescriptor(this,substitutedReceiverType,expectedThisObject.exists() ? new TransientReceiver(substitutor.substitute(expectedThisObject.getType(),Variance.IN_VARIANCE)) : expectedThisObject,inType,outType);
+  substitutedDescriptor.setType(inType,outType,substitutedTypeParameters,substitutedExpectedThisObject,substitutedReceiverType);
+  return substitutedDescriptor;
 }
