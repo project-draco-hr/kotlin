@@ -1,0 +1,23 @@
+{
+  boolean changeNullable=false;
+  boolean nullable=true;
+  for (  PsiAnnotation annotation : method.getModifierList().getAnnotations()) {
+    if (annotation.getQualifiedName().equals(StdlibNames.JET_METHOD_CLASS)) {
+      PsiLiteralExpression nullableExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_METHOD_NULLABLE_RETURN_TYPE_FIELD);
+      if (nullableExpression != null) {
+        nullable=(Boolean)nullableExpression.getValue();
+      }
+ else {
+        nullable=false;
+        changeNullable=true;
+      }
+    }
+  }
+  JetType transformedType=semanticServices.getTypeTransformer().transformToType(returnType);
+  if (changeNullable) {
+    return TypeUtils.makeNullableAsSpecified(transformedType,nullable);
+  }
+ else {
+    return transformedType;
+  }
+}

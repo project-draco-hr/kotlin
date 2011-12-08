@@ -29,17 +29,17 @@
       }
       PsiElement currentElement=elementAtOffset;
       boolean callFound=false;
-      while (currentElement != null && !(currentElement instanceof PsiFile)) {
-        if (currentElement instanceof JetElement) {
-          JetElement atOffset=(JetElement)currentElement;
-          ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(RESOLVED_CALL,(JetElement)atOffset);
-          if (resolvedCall != null) {
-            setText(renderCall(resolvedCall) + "\n===\n" + currentElement+ ": "+ currentElement.getText());
-            callFound=true;
-            break;
-          }
+      PsiElement elementWithDebugInfo=findData(bindingContext,currentElement,RESOLUTION_DEBUG_INFO);
+      if (elementWithDebugInfo != null) {
+        callFound=true;
+        setText(renderDebugInfo(elementWithDebugInfo,bindingContext.get(RESOLUTION_DEBUG_INFO,elementWithDebugInfo),null));
+      }
+ else {
+        PsiElement elementWithResolvedCall=findData(bindingContext,currentElement,(WritableSlice)RESOLVED_CALL);
+        if (elementWithResolvedCall instanceof JetElement) {
+          callFound=true;
+          setText(renderDebugInfo(elementWithResolvedCall,null,bindingContext.get(RESOLVED_CALL,(JetElement)elementWithResolvedCall)));
         }
-        currentElement=currentElement.getParent();
       }
       if (!callFound) {
         JetExpression parentExpression=(elementAtOffset instanceof JetExpression) ? (JetExpression)elementAtOffset : PsiTreeUtil.getParentOfType(elementAtOffset,JetExpression.class);

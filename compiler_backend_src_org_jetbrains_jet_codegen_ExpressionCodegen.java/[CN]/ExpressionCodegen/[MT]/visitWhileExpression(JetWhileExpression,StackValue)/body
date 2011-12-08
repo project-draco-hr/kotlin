@@ -1,9 +1,8 @@
 {
   Label condition=new Label();
-  myContinueTargets.push(condition);
   v.mark(condition);
   Label end=continueLabel != null ? continueLabel : new Label();
-  myBreakTargets.push(end);
+  blockStackElements.push(new LoopBlockStackElement(end,condition));
   Label savedContinueLabel=continueLabel;
   continueLabel=condition;
   final StackValue conditionValue=gen(expression.getCondition());
@@ -12,7 +11,6 @@
   v.goTo(condition);
   continueLabel=savedContinueLabel;
   if (end != continueLabel)   v.mark(end);
-  myBreakTargets.pop();
-  myContinueTargets.pop();
+  blockStackElements.pop();
   return StackValue.onStack(Type.VOID_TYPE);
 }

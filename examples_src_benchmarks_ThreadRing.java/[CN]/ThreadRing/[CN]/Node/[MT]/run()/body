@@ -1,0 +1,32 @@
+{
+  if (isActive) {
+    try {
+      TokenMessage m=queue.take();
+      if (m.isStop) {
+        int nextValue=m.value + 1;
+        if (nextValue == MAX_NODES) {
+          executor.shutdown();
+          cdl.countDown();
+        }
+ else {
+          m.value=nextValue;
+          nextNode.sendMessage(m);
+        }
+        isActive=false;
+      }
+ else {
+        if (m.value == N) {
+          System.out.println(nodeId);
+          nextNode.sendMessage(new TokenMessage(nodeId,0,true));
+        }
+ else {
+          m.value=m.value + 1;
+          nextNode.sendMessage(m);
+        }
+      }
+    }
+ catch (    InterruptedException ie) {
+      ie.printStackTrace();
+    }
+  }
+}

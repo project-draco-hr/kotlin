@@ -1,24 +1,3 @@
 {
-  Type known=knowTypes.get(jetType);
-  if (known != null)   return known;
-  DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (standardLibrary.getArray().equals(descriptor)) {
-    if (jetType.getArguments().size() != 1) {
-      throw new UnsupportedOperationException("arrays must have one type argument");
-    }
-    JetType memberType=jetType.getArguments().get(0).getType();
-    if (!isGenericsArray(jetType))     return Type.getType("[" + boxType(mapType(memberType,kind)).getDescriptor());
- else     return ARRAY_GENERIC_TYPE;
-  }
-  if (JetStandardClasses.getAny().equals(descriptor)) {
-    return TYPE_OBJECT;
-  }
-  if (descriptor instanceof ClassDescriptor) {
-    String name=getFQName(descriptor);
-    return Type.getObjectType(name + (kind == OwnerKind.TRAIT_IMPL ? "$$TImpl" : ""));
-  }
-  if (descriptor instanceof TypeParameterDescriptor) {
-    return mapType(((TypeParameterDescriptor)descriptor).getUpperBoundsAsType(),kind);
-  }
-  throw new UnsupportedOperationException("Unknown type " + jetType);
+  return mapType(jetType,kind,null);
 }

@@ -1,0 +1,57 @@
+{
+  for (  ValueParameterDescriptor valueParameterDescriptor : f.getValueParameters()) {
+    if (valueParameterDescriptor.hasDefaultValue()) {
+      needGenericSignature=false;
+    }
+  }
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    needGenericSignature=false;
+  }
+  SignatureWriter signatureWriter=null;
+  SignatureVisitor signatureVisitor=null;
+  if (needGenericSignature) {
+    signatureWriter=new SignatureWriter();
+    signatureVisitor=DEBUG_SIGNATURE_WRITER ? new CheckSignatureAdapter(CheckSignatureAdapter.METHOD_SIGNATURE,signatureWriter) : signatureWriter;
+  }
+  for (  TypeParameterDescriptor typeParameterDescriptor : f.getTypeParameters()) {
+    if (signatureVisitor != null) {
+      signatureVisitor.visitFormalTypeParameter(typeParameterDescriptor.getName());
+      SignatureVisitor classBoundVisitor=signatureVisitor.visitClassBound();
+      visitAsmType(classBoundVisitor,TYPE_OBJECT);
+    }
+  }
+  final ReceiverDescriptor receiverTypeRef=f.getReceiverParameter();
+  final JetType receiverType=!receiverTypeRef.exists() ? null : receiverTypeRef.getType();
+  final List<ValueParameterDescriptor> parameters=f.getValueParameters();
+  List<Type> parameterTypes=new ArrayList<Type>();
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    ClassDescriptor containingDeclaration=(ClassDescriptor)f.getContainingDeclaration();
+    JetType jetType=TraitImplBodyCodegen.getSuperClass(containingDeclaration,bindingContext);
+    Type type=mapType(jetType,signatureVisitor);
+    if (type.getInternalName().equals("java/lang/Object")) {
+      jetType=containingDeclaration.getDefaultType();
+      type=mapType(jetType,signatureVisitor);
+    }
+    valueParameterTypes.add(type);
+    parameterTypes.add(type);
+  }
+  if (receiverType != null) {
+    parameterTypes.add(mapType(receiverType,signatureVisitor != null ? signatureVisitor.visitParameterType() : null));
+  }
+  for (  TypeParameterDescriptor parameterDescriptor : f.getTypeParameters()) {
+    if (parameterDescriptor.isReified()) {
+      parameterTypes.add(TYPE_TYPEINFO);
+      if (signatureVisitor != null) {
+        visitAsmType(signatureVisitor.visitParameterType(),TYPE_TYPEINFO);
+      }
+    }
+  }
+  for (  ValueParameterDescriptor parameter : parameters) {
+    Type type=mapType(parameter.getOutType(),signatureVisitor != null ? signatureVisitor.visitParameterType() : null);
+    valueParameterTypes.add(type);
+    parameterTypes.add(type);
+  }
+  Type returnType=f instanceof ConstructorDescriptor ? Type.VOID_TYPE : mapReturnType(f.getReturnType(),signatureVisitor != null ? signatureVisitor.visitReturnType() : null);
+  Method method=new Method(f.getName(),returnType,parameterTypes.toArray(new Type[parameterTypes.size()]));
+  return new JvmMethodSignature(method,signatureWriter != null ? signatureWriter.toString() : null);
+}
