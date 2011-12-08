@@ -1,4 +1,6 @@
 {
+  final PsiJavaFileStubImpl answer=new PsiJavaFileStubImpl(CodegenUtil.getFQName(file.getRootNamespace()),true);
+  final Project project=getProject();
   final Stack<StubElement> stubStack=new Stack<StubElement>();
   final ClassBuilderFactory builderFactory=new ClassBuilderFactory(){
     @Override public ClassBuilder newClassBuilder(){
@@ -14,43 +16,32 @@
 ;
   final GenerationState state=new GenerationState(project,builderFactory){
     @Override protected void generateNamespace(    JetNamespace namespace){
-      final PsiJavaFileStubImpl fileStub=new PsiJavaFileStubImpl(CodegenUtil.getFQName(namespace),true);
       PsiManager manager=PsiManager.getInstance(project);
-      stubStack.push(fileStub);
-      final PsiFile file=namespace.getContainingFile();
-      file.putUserData(JAVA_API_STUB,fileStub);
-      fileStub.setPsiFactory(new ClsWrapperStubPsiFactory());
+      stubStack.push(answer);
+      answer.setPsiFactory(new ClsWrapperStubPsiFactory());
       final ClsFileImpl fakeFile=new ClsFileImpl((PsiManagerImpl)manager,new ClassFileViewProvider(manager,file.getVirtualFile())){
         @NotNull @Override public PsiClassHolderFileStub getStub(){
-          return fileStub;
+          return answer;
         }
       }
 ;
       fakeFile.setPhysical(false);
-      fileStub.setPsi(fakeFile);
+      answer.setPsi(fakeFile);
       try {
         super.generateNamespace(namespace);
       }
   finally {
         final StubElement pop=stubStack.pop();
-        if (pop != fileStub) {
+        if (pop != answer) {
           LOG.error("Unbalanced stack operations");
         }
       }
     }
   }
 ;
-  final List<PsiFile> psiFiles=collectProjectFiles(project,scope);
-  Collection<PsiFile> dirty=Collections2.filter(psiFiles,new Predicate<PsiFile>(){
-    @Override public boolean apply(    PsiFile psiFile){
-      return psiFile.getUserData(JAVA_API_STUB) == null;
-    }
-  }
-);
-  if (dirty.size() > 0) {
-    final BindingContext context=AnalyzerFacade.shallowAnalyzeFiles(dirty);
-    state.compileCorrectNamespaces(context,AnalyzerFacade.collectRootNamespaces(dirty));
-    state.getFactory().files();
-  }
-  return psiFiles;
+  List<PsiFile> files=Collections.<PsiFile>singletonList(file);
+  final BindingContext context=AnalyzerFacade.shallowAnalyzeFiles(files);
+  state.compileCorrectNamespaces(context,AnalyzerFacade.collectRootNamespaces(files));
+  state.getFactory().files();
+  return answer;
 }
