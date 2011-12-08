@@ -1,6 +1,21 @@
 {
   JetSimpleNameExpression labelElement=expression.getTargetLabel();
-  Label label=labelElement == null ? myBreakTargets.peek() : null;
-  v.goTo(label);
-  return StackValue.none();
+  for (int i=blockStackElements.size() - 1; i >= 0; --i) {
+    BlockStackElement stackElement=blockStackElements.get(i);
+    if (stackElement instanceof FinallyBlockStackElement) {
+      FinallyBlockStackElement finallyBlockStackElement=(FinallyBlockStackElement)stackElement;
+      JetTryExpression jetTryExpression=finallyBlockStackElement.expression;
+      gen(jetTryExpression.getFinallyBlock().getFinalExpression(),Type.VOID_TYPE);
+    }
+ else     if (stackElement instanceof LoopBlockStackElement) {
+      LoopBlockStackElement loopBlockStackElement=(LoopBlockStackElement)stackElement;
+      Label label=labelElement == null ? loopBlockStackElement.breakLabel : null;
+      v.goTo(label);
+      return StackValue.none();
+    }
+ else {
+      throw new UnsupportedOperationException();
+    }
+  }
+  throw new UnsupportedOperationException();
 }

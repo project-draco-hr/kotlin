@@ -1,8 +1,15 @@
 {
-  if (stackOfFinallyBlocks.size() > 0) {
-    JetTryExpression jetTryExpression=stackOfFinallyBlocks.remove(stackOfFinallyBlocks.size() - 1);
-    gen(jetTryExpression.getFinallyBlock().getFinalExpression(),Type.VOID_TYPE);
-    doFinallyOnReturnOrThrow();
-    stackOfFinallyBlocks.add(jetTryExpression);
+  for (int i=blockStackElements.size() - 1; i >= 0; --i) {
+    BlockStackElement stackElement=blockStackElements.get(i);
+    if (stackElement instanceof FinallyBlockStackElement) {
+      FinallyBlockStackElement finallyBlockStackElement=(FinallyBlockStackElement)stackElement;
+      JetTryExpression jetTryExpression=finallyBlockStackElement.expression;
+      blockStackElements.pop();
+      gen(jetTryExpression.getFinallyBlock().getFinalExpression(),Type.VOID_TYPE);
+      blockStackElements.push(finallyBlockStackElement);
+    }
+ else {
+      break;
+    }
   }
 }
