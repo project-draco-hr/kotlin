@@ -12,6 +12,16 @@
         }
       }
     }
+    for (    TypeValue lowerBound : typeValue.getLowerBounds()) {
+      if (lowerBound instanceof KnownType) {
+        KnownType knownBoundType=(KnownType)lowerBound;
+        boolean ok=constraintExpander.isSubtypeOf(knownBoundType.getType(),jetType);
+        if (!ok) {
+          listener.error("Error while expanding '" + knownBoundType.getType() + " :< "+ jetType+ "'");
+          return new Solution().registerError("Mismatch while expanding constraints");
+        }
+      }
+    }
   }
   for (  Map.Entry<TypeParameterDescriptor,UnknownType> entry : Sets.newHashSet(unknownTypes.entrySet())) {
     TypeParameterDescriptor typeParameterDescriptor=entry.getKey();
