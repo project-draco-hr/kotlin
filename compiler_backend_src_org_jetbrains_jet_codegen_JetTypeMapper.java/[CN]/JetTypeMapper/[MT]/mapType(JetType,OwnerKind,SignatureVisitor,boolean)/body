@@ -1,7 +1,7 @@
 {
   Type known=knowTypes.get(jetType);
   if (known != null) {
-    return mapKnownAsmType(jetType,known,signatureVisitor,typeParameter);
+    return mapKnownAsmType(jetType,known,signatureVisitor,boxPrimitive);
   }
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
   if (standardLibrary.getArray().equals(descriptor)) {
@@ -11,7 +11,7 @@
     JetType memberType=jetType.getArguments().get(0).getType();
     if (signatureVisitor != null) {
       SignatureVisitor arraySignatureVisitor=signatureVisitor.visitArrayType();
-      mapType(memberType,kind,arraySignatureVisitor);
+      mapType(memberType,kind,arraySignatureVisitor,true);
     }
     if (!isGenericsArray(jetType)) {
       return Type.getType("[" + boxType(mapType(memberType,kind)).getDescriptor());
@@ -21,6 +21,9 @@
     }
   }
   if (JetStandardClasses.getAny().equals(descriptor)) {
+    if (signatureVisitor != null) {
+      visitAsmType(signatureVisitor,TYPE_OBJECT);
+    }
     return TYPE_OBJECT;
   }
   if (descriptor instanceof ClassDescriptor) {

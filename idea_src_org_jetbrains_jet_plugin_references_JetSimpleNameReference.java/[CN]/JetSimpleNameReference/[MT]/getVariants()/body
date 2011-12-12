@@ -6,8 +6,9 @@
     JetFile file=(JetFile)myExpression.getContainingFile();
     BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
     final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
-    if (expressionType != null) {
-      return collectLookupElements(bindingContext,expressionType.getMemberScope());
+    final JetScope resolutionScope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+    if (expressionType != null && resolutionScope != null) {
+      return collectLookupElements(bindingContext,includeExternalCallableExtensions(expressionType.getMemberScope().getAllDescriptors(),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType)));
     }
   }
  else {
@@ -15,7 +16,7 @@
     BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
     JetScope resolutionScope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,myExpression);
     if (resolutionScope != null) {
-      return collectLookupElements(bindingContext,resolutionScope);
+      return collectLookupElements(bindingContext,excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope));
     }
   }
   return EMPTY_ARRAY;

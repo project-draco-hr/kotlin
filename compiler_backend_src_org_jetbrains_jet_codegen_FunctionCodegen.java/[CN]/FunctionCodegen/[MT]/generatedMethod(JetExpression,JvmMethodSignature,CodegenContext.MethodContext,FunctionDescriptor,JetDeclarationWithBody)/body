@@ -2,6 +2,9 @@
   List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
   List<TypeParameterDescriptor> typeParameters=(functionDescriptor instanceof PropertyAccessorDescriptor ? ((PropertyAccessorDescriptor)functionDescriptor).getCorrespondingProperty() : functionDescriptor).getTypeParameters();
   int flags=ACC_PUBLIC;
+  if (!functionDescriptor.getValueParameters().isEmpty() && functionDescriptor.getValueParameters().get(functionDescriptor.getValueParameters().size() - 1).getVarargElementType() != null) {
+    flags|=ACC_VARARGS;
+  }
   OwnerKind kind=context.getContextKind();
   ReceiverDescriptor expectedThisObject=functionDescriptor.getExpectedThisObject();
   ReceiverDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
@@ -43,7 +46,7 @@
         ValueParameterDescriptor parameterDescriptor=paramDescrs.get(i);
         av.visit(StdlibNames.JET_PARAMETER_NAME_FIELD,parameterDescriptor.getName());
         if (parameterDescriptor.hasDefaultValue()) {
-          av.visit(StdlibNames.JET_PARAMETER_HAS_DEFAULT_FIELD,true);
+          av.visit(StdlibNames.JET_PARAMETER_HAS_DEFAULT_VALUE_FIELD,true);
         }
         if (parameterDescriptor.getOutType().isNullable()) {
           av.visit(StdlibNames.JET_PARAMETER_NULLABLE_FIELD,true);
