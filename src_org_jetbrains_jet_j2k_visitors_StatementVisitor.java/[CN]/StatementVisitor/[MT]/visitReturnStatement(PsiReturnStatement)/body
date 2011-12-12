@@ -1,4 +1,10 @@
 {
   super.visitReturnStatement(statement);
-  myResult=new ReturnStatement(expressionToExpression(statement.getReturnValue()));
+  PsiExpression returnValue=statement.getReturnValue();
+  String conversion="";
+  PsiType methodReturnType=Converter.getMethodReturnType();
+  if (returnValue != null && methodReturnType != null && isConversionNeeded(returnValue.getType(),methodReturnType)) {
+    conversion=getPrimitiveTypeConversion(methodReturnType.getCanonicalText());
+  }
+  myResult=new ReturnStatement(expressionToExpression(returnValue),conversion);
 }
