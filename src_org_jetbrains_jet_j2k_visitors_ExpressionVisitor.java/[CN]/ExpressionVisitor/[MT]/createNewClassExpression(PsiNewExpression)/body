@@ -4,11 +4,11 @@
   PsiJavaCodeReferenceElement classReference=expression.getClassOrAnonymousClassReference();
   final boolean isNotConvertedClass=classReference != null && !Converter.getClassIdentifiers().contains(classReference.getQualifiedName());
   PsiExpressionList argumentList=expression.getArgumentList();
+  PsiExpression[] arguments=argumentList != null ? argumentList.getExpressions() : new PsiExpression[]{};
   if (constructor == null || isConstructorPrimary(constructor) || isNotConvertedClass) {
-    return new NewClassExpression(expressionToExpression(expression.getQualifier()),elementToElement(classReference),elementToElement(argumentList),anonymousClass != null ? anonymousClassToAnonymousClass(anonymousClass) : null);
+    return new NewClassExpression(expressionToExpression(expression.getQualifier()),elementToElement(classReference),expressionsToExpressionList(arguments),createConversions(expression),anonymousClass != null ? anonymousClassToAnonymousClass(anonymousClass) : null);
   }
   final PsiJavaCodeReferenceElement reference=expression.getClassReference();
   final List<Type> typeParameters=reference != null ? typesToTypeList(reference.getTypeParameters()) : Collections.<Type>emptyList();
-  PsiExpression[] expressions=argumentList != null ? argumentList.getExpressions() : new PsiExpression[]{};
-  return new CallChainExpression(new IdentifierImpl(constructor.getName(),false),new MethodCallExpression(new IdentifierImpl("init"),expressionsToExpressionList(expressions),false,typeParameters));
+  return new CallChainExpression(new IdentifierImpl(constructor.getName(),false),new MethodCallExpression(new IdentifierImpl("init"),expressionsToExpressionList(arguments),false,typeParameters));
 }
