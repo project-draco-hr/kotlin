@@ -1,0 +1,28 @@
+{
+  listener.log("Constraint added: ",lower," :< ",upper);
+  if (lower == upper)   return true;
+  lower.addUpperBound(upper);
+  upper.addLowerBound(lower);
+  if (lower.isKnown() && upper.isKnown()) {
+    return constraintExpander.isSubtypeOf(lower.getType(),upper.getType());
+  }
+ else   if (!lower.isKnown() && !upper.isKnown()) {
+    return mergeUnknowns(lower,upper);
+  }
+ else {
+    if (upper.isKnown()) {
+      if (TypeUtils.canHaveSubtypes(typeChecker,upper.getType())) {
+        return expandEqualityConstraint(lower,upper);
+      }
+      if (lower.getLowerBounds().contains(upper)) {
+        return expandEqualityConstraint(lower,upper);
+      }
+    }
+ else {
+      if (upper.getUpperBounds().contains(lower)) {
+        return expandEqualityConstraint(lower,upper);
+      }
+    }
+  }
+  return true;
+}
