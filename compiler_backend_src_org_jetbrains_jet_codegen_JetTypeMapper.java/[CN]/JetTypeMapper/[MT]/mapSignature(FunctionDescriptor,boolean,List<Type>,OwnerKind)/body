@@ -36,12 +36,15 @@
       signatureVisitor.writeParameterTypeEnd();
     }
   }
+  if (signatureVisitor != null) {
+    signatureVisitor.writeParametersStart();
+  }
   for (  TypeParameterDescriptor parameterDescriptor : f.getTypeParameters()) {
     if (parameterDescriptor.isReified()) {
       parameterTypes.add(TYPE_TYPEINFO);
       if (signatureVisitor != null) {
         signatureVisitor.writeParameterType();
-        visitAsmType(signatureVisitor,TYPE_TYPEINFO);
+        visitAsmType(signatureVisitor,TYPE_TYPEINFO,false);
         signatureVisitor.writeParameterTypeEnd();
       }
     }
@@ -57,12 +60,15 @@
     valueParameterTypes.add(type);
     parameterTypes.add(type);
   }
+  if (signatureVisitor != null) {
+    signatureVisitor.writeParametersEnd();
+  }
   Type returnType;
   if (f instanceof ConstructorDescriptor) {
     returnType=Type.VOID_TYPE;
     if (signatureVisitor != null) {
       signatureVisitor.writeReturnType();
-      visitAsmType(signatureVisitor,Type.VOID_TYPE);
+      visitAsmType(signatureVisitor,Type.VOID_TYPE,false);
       signatureVisitor.writeReturnTypeEnd();
     }
   }
@@ -77,5 +83,10 @@
     }
   }
   Method method=new Method(f.getName(),returnType,parameterTypes.toArray(new Type[parameterTypes.size()]));
-  return new JvmMethodSignature(method,signatureVisitor != null ? signatureVisitor.makeJavaString() : null);
+  if (signatureVisitor == null) {
+    return new JvmMethodSignature(method,null,null,null);
+  }
+ else {
+    return new JvmMethodSignature(method,signatureVisitor.makeJavaString(),signatureVisitor.makeKotlinSignatures(),signatureVisitor.makeKotlinReturnTypeSignature());
+  }
 }
