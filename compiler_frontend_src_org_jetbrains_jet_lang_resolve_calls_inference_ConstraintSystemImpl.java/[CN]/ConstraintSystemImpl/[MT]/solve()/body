@@ -7,7 +7,17 @@
         KnownType knownBoundType=(KnownType)upperBound;
         boolean ok=constraintExpander.isSubtypeOf(jetType,knownBoundType.getType());
         if (!ok) {
-          listener.error("Error while expanding '" + jetType + " :< "+ knownBoundType.getType()+ "'");
+          listener.error("Error while expanding '",jetType," :< ",knownBoundType.getType(),"'");
+          return new Solution().registerError("Mismatch while expanding constraints");
+        }
+      }
+    }
+    for (    TypeValue lowerBound : typeValue.getLowerBounds()) {
+      if (lowerBound instanceof KnownType) {
+        KnownType knownBoundType=(KnownType)lowerBound;
+        boolean ok=constraintExpander.isSubtypeOf(knownBoundType.getType(),jetType);
+        if (!ok) {
+          listener.error("Error while expanding '" + knownBoundType.getType() + " :< "+ jetType+ "'");
           return new Solution().registerError("Mismatch while expanding constraints");
         }
       }
@@ -25,10 +35,8 @@
     transitiveClosure(unknownType,visited);
   }
   for (  UnknownType unknownType : unknownTypes.values()) {
-    listener.constraintsForUnknown(unknownType.getTypeParameterDescriptor(),unknownType);
   }
   for (  KnownType knownType : knownTypes.values()) {
-    listener.constraintsForKnownType(knownType.getType(),knownType);
   }
   Solution solution=new Solution();
   for (  UnknownType unknownType : unknownTypes.values()) {

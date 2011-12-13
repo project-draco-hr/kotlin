@@ -1,14 +1,13 @@
 {
   if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())   return;
   JetType defaultType=descriptor.getDefaultType();
-  if (CodegenUtil.hasTypeInfoField(defaultType)) {
-    if (!CodegenUtil.hasDerivedTypeInfoField(defaultType,true)) {
+  if (CodegenUtil.requireTypeInfoConstructorArg(defaultType)) {
+    if (!CodegenUtil.hasDerivedTypeInfoField(defaultType)) {
       v.newField(myClass,Opcodes.ACC_PROTECTED,"$typeInfo","Ljet/typeinfo/TypeInfo;",null,null);
       MethodVisitor mv=v.newMethod(myClass,Opcodes.ACC_PUBLIC,"getTypeInfo","()Ljet/typeinfo/TypeInfo;",null,null);
-      InstructionAdapter iv=null;
       if (v.generateCode()) {
         mv.visitCode();
-        iv=new InstructionAdapter(mv);
+        InstructionAdapter iv=new InstructionAdapter(mv);
         String owner=typeMapper.mapType(descriptor.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName();
         iv.load(0,JetTypeMapper.TYPE_OBJECT);
         iv.getfield(owner,"$typeInfo","Ljet/typeinfo/TypeInfo;");
@@ -19,7 +18,7 @@
       mv=v.newMethod(myClass,Opcodes.ACC_PROTECTED | Opcodes.ACC_FINAL,"$setTypeInfo","(Ljet/typeinfo/TypeInfo;)V",null,null);
       if (v.generateCode()) {
         mv.visitCode();
-        iv=new InstructionAdapter(mv);
+        InstructionAdapter iv=new InstructionAdapter(mv);
         String owner=typeMapper.mapType(descriptor.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName();
         iv.load(0,JetTypeMapper.TYPE_OBJECT);
         iv.load(1,JetTypeMapper.TYPE_OBJECT);
