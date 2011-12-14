@@ -1,0 +1,23 @@
+{
+  if (projections.length == 0)   return new TypeInfoImpl(this.signature.klazz,nullable,EMPTY);
+ else {
+    TypeInfoProjection[] proj=new TypeInfoProjection[projections.length];
+    for (int i=0; i != proj.length; ++i) {
+      final int finalI=i;
+      final TypeInfo substitute=TypeInfoUtils.substitute(projections[finalI].getType(),myVars);
+      proj[i]=new TypeInfoProjection(){
+        @Override public TypeInfoVariance getVariance(){
+          return projections[finalI].getVariance();
+        }
+        @Override public TypeInfo getType(){
+          return substitute;
+        }
+        @Override public String toString(){
+          return getVariance().toString() + " " + substitute;
+        }
+      }
+;
+    }
+    return new TypeInfoImpl(this.signature.klazz,nullable,proj);
+  }
+}
