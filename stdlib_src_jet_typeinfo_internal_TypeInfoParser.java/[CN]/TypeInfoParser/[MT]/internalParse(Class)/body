@@ -1,0 +1,20 @@
+{
+  if (klass.isArray() && !klass.getComponentType().isPrimitive()) {
+    Signature signature=new ArraySignature(klass);
+    map.put(klass,signature);
+    return signature;
+  }
+  JetSignature annotation=(JetSignature)klass.getAnnotation(JetSignature.class);
+  if (annotation != null) {
+    String value=annotation.value();
+    if (value != null) {
+      Class enclosingClass=klass.getEnclosingClass();
+      Signature signature=new Signature(klass);
+      map.put(klass,signature);
+      parse(value,signature);
+      signature.afterParse();
+      return signature;
+    }
+  }
+  return getGenericSignature(klass);
+}
