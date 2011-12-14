@@ -1,28 +1,3 @@
 {
-  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
-  JetExpression body=expression.getBody();
-  JetScope conditionScope=context.scope;
-  if (body instanceof JetFunctionLiteralExpression) {
-    JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
-    if (!function.getFunctionLiteral().hasParameterSpecification()) {
-      WritableScope writableScope=newWritableScopeImpl(context).setDebugName("do..while body scope");
-      conditionScope=writableScope;
-      context.getServices().getBlockReturnedTypeWithWritableScope(writableScope,function.getFunctionLiteral().getBodyExpression().getStatements(),CoercionStrategy.NO_COERCION,context);
-      context.trace.record(BindingContext.BLOCK,function);
-    }
- else {
-      facade.getType(body,context.replaceScope(context.scope));
-    }
-  }
- else   if (body != null) {
-    WritableScope writableScope=newWritableScopeImpl(context).setDebugName("do..while body scope");
-    conditionScope=writableScope;
-    context.getServices().getBlockReturnedTypeWithWritableScope(writableScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context);
-  }
-  JetExpression condition=expression.getCondition();
-  checkCondition(conditionScope,condition,context);
-  if (!containsBreak(expression,context)) {
-    facade.setResultingDataFlowInfo(DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context));
-  }
-  return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+  return visitDoWhileExpression(expression,context,false);
 }

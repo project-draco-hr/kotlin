@@ -1,0 +1,51 @@
+{
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
+  JetExpression condition=expression.getCondition();
+  checkCondition(context.scope,condition,context);
+  JetExpression elseBranch=expression.getElse();
+  JetExpression thenBranch=expression.getThen();
+  WritableScopeImpl thenScope=newWritableScopeImpl(context).setDebugName("Then scope");
+  WritableScopeImpl elseScope=newWritableScopeImpl(context).setDebugName("Else scope");
+  DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,thenScope,context);
+  DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context);
+  if (elseBranch == null) {
+    if (thenBranch != null) {
+      JetType type=context.getServices().getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(thenInfo));
+      if (type != null && JetStandardClasses.isNothing(type)) {
+        facade.setResultingDataFlowInfo(elseInfo);
+      }
+      return DataFlowUtils.checkImplicitCast(DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType),expression,contextWithExpectedType,isStatement);
+    }
+    return null;
+  }
+  if (thenBranch == null) {
+    JetType type=context.getServices().getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(elseInfo));
+    if (type != null && JetStandardClasses.isNothing(type)) {
+      facade.setResultingDataFlowInfo(thenInfo);
+    }
+    return DataFlowUtils.checkImplicitCast(DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType),expression,contextWithExpectedType,isStatement);
+  }
+  CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
+  JetType thenType=context.getServices().getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(thenInfo));
+  JetType elseType=context.getServices().getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(elseInfo));
+  JetType result;
+  if (thenType == null) {
+    result=elseType;
+  }
+ else   if (elseType == null) {
+    result=thenType;
+  }
+ else {
+    result=CommonSupertypes.commonSupertype(Arrays.asList(thenType,elseType));
+  }
+  boolean jumpInThen=thenType != null && JetStandardClasses.isNothing(thenType);
+  boolean jumpInElse=elseType != null && JetStandardClasses.isNothing(elseType);
+  if (jumpInThen && !jumpInElse) {
+    facade.setResultingDataFlowInfo(elseInfo);
+  }
+ else   if (jumpInElse && !jumpInThen) {
+    facade.setResultingDataFlowInfo(thenInfo);
+  }
+  if (result == null)   return null;
+  return DataFlowUtils.checkImplicitCast(result,expression,contextWithExpectedType,isStatement);
+}

@@ -10,16 +10,17 @@
   }
   boolean changeNullable=false;
   boolean nullable=true;
+  String typeFromAnnotation=null;
   String name=parameter.getName() != null ? parameter.getName() : "p" + i;
   for (  PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
     PsiNameValuePair[] attributes=annotation.getParameterList().getAttributes();
     attributes.toString();
-    if (annotation.getQualifiedName().equals(StdlibNames.JET_PARAMETER_CLASS)) {
-      PsiLiteralExpression nameExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_PARAMETER_NAME_FIELD);
+    if (annotation.getQualifiedName().equals(StdlibNames.JET_VALUE_PARAMETER_CLASS)) {
+      PsiLiteralExpression nameExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_NAME_FIELD);
       if (nameExpression != null) {
         name=(String)nameExpression.getValue();
       }
-      PsiLiteralExpression nullableExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_PARAMETER_NULLABLE_FIELD);
+      PsiLiteralExpression nullableExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_NULLABLE_FIELD);
       if (nullableExpression != null) {
         nullable=(Boolean)nullableExpression.getValue();
       }
@@ -27,8 +28,18 @@
         nullable=false;
         changeNullable=true;
       }
+      PsiLiteralExpression signatureExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_TYPE_FIELD);
+      if (signatureExpression != null) {
+        typeFromAnnotation=(String)signatureExpression.getValue();
+      }
     }
   }
-  JetType outType=semanticServices.getTypeTransformer().transformToType(psiType);
+  JetType outType;
+  if (typeFromAnnotation != null) {
+    outType=semanticServices.getTypeTransformer().transformToType(typeFromAnnotation);
+  }
+ else {
+    outType=semanticServices.getTypeTransformer().transformToType(psiType);
+  }
   return new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,false,varargElementType);
 }

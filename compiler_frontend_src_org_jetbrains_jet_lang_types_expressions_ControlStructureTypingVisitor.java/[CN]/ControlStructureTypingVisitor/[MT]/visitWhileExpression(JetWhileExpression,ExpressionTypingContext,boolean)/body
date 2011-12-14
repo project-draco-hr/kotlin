@@ -1,0 +1,16 @@
+{
+  if (!isStatement)   return DataFlowUtils.illegalStatementType(expression,contextWithExpectedType,facade);
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
+  JetExpression condition=expression.getCondition();
+  checkCondition(context.scope,condition,context);
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    WritableScopeImpl scopeToExtend=newWritableScopeImpl(context).setDebugName("Scope extended in while's condition");
+    DataFlowInfo conditionInfo=condition == null ? context.dataFlowInfo : DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,scopeToExtend,context);
+    context.getServices().getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(conditionInfo));
+  }
+  if (!containsBreak(expression,context)) {
+    facade.setResultingDataFlowInfo(DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context));
+  }
+  return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+}

@@ -7,19 +7,11 @@
   if (kind == OwnerKind.TRAIT_IMPL) {
     needGenericSignature=false;
   }
-  SignatureWriter signatureWriter=null;
-  SignatureVisitor signatureVisitor=null;
+  BothSignatureWriter signatureVisitor=null;
   if (needGenericSignature) {
-    signatureWriter=new SignatureWriter();
-    signatureVisitor=DEBUG_SIGNATURE_WRITER ? new CheckSignatureAdapter(CheckSignatureAdapter.METHOD_SIGNATURE,signatureWriter) : signatureWriter;
+    signatureVisitor=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD);
   }
-  for (  TypeParameterDescriptor typeParameterDescriptor : f.getTypeParameters()) {
-    if (signatureVisitor != null) {
-      signatureVisitor.visitFormalTypeParameter(typeParameterDescriptor.getName());
-      SignatureVisitor classBoundVisitor=signatureVisitor.visitClassBound();
-      visitAsmType(classBoundVisitor,TYPE_OBJECT);
-    }
-  }
+  writeFormalTypeParameters(f.getTypeParameters(),signatureVisitor);
   final ReceiverDescriptor receiverTypeRef=f.getReceiverParameter();
   final JetType receiverType=!receiverTypeRef.exists() ? null : receiverTypeRef.getType();
   final List<ValueParameterDescriptor> parameters=f.getValueParameters();
@@ -36,22 +28,65 @@
     parameterTypes.add(type);
   }
   if (receiverType != null) {
-    parameterTypes.add(mapType(receiverType,signatureVisitor != null ? signatureVisitor.visitParameterType() : null));
+    if (signatureVisitor != null) {
+      signatureVisitor.writeParameterType();
+    }
+    parameterTypes.add(mapType(receiverType,signatureVisitor));
+    if (signatureVisitor != null) {
+      signatureVisitor.writeParameterTypeEnd();
+    }
+  }
+  if (signatureVisitor != null) {
+    signatureVisitor.writeParametersStart();
   }
   for (  TypeParameterDescriptor parameterDescriptor : f.getTypeParameters()) {
     if (parameterDescriptor.isReified()) {
       parameterTypes.add(TYPE_TYPEINFO);
       if (signatureVisitor != null) {
-        visitAsmType(signatureVisitor.visitParameterType(),TYPE_TYPEINFO);
+        signatureVisitor.writeParameterType();
+        visitAsmType(signatureVisitor,TYPE_TYPEINFO,false);
+        signatureVisitor.writeParameterTypeEnd();
       }
     }
   }
   for (  ValueParameterDescriptor parameter : parameters) {
-    Type type=mapType(parameter.getOutType(),signatureVisitor != null ? signatureVisitor.visitParameterType() : null);
+    if (signatureVisitor != null) {
+      signatureVisitor.writeParameterType();
+    }
+    Type type=mapType(parameter.getOutType(),signatureVisitor);
+    if (signatureVisitor != null) {
+      signatureVisitor.writeParameterTypeEnd();
+    }
     valueParameterTypes.add(type);
     parameterTypes.add(type);
   }
-  Type returnType=f instanceof ConstructorDescriptor ? Type.VOID_TYPE : mapReturnType(f.getReturnType(),signatureVisitor != null ? signatureVisitor.visitReturnType() : null);
+  if (signatureVisitor != null) {
+    signatureVisitor.writeParametersEnd();
+  }
+  Type returnType;
+  if (f instanceof ConstructorDescriptor) {
+    returnType=Type.VOID_TYPE;
+    if (signatureVisitor != null) {
+      signatureVisitor.writeReturnType();
+      visitAsmType(signatureVisitor,Type.VOID_TYPE,false);
+      signatureVisitor.writeReturnTypeEnd();
+    }
+  }
+ else {
+    if (signatureVisitor != null) {
+      signatureVisitor.writeReturnType();
+      returnType=mapReturnType(f.getReturnType(),signatureVisitor);
+      signatureVisitor.writeReturnTypeEnd();
+    }
+ else {
+      returnType=mapReturnType(f.getReturnType(),null);
+    }
+  }
   Method method=new Method(f.getName(),returnType,parameterTypes.toArray(new Type[parameterTypes.size()]));
-  return new JvmMethodSignature(method,signatureWriter != null ? signatureWriter.toString() : null);
+  if (signatureVisitor == null) {
+    return new JvmMethodSignature(method,null,null,null);
+  }
+ else {
+    return new JvmMethodSignature(method,signatureVisitor.makeJavaString(),signatureVisitor.makeKotlinSignatures(),signatureVisitor.makeKotlinReturnTypeSignature());
+  }
 }

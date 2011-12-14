@@ -1,0 +1,24 @@
+{
+  signatureVisitor.writeFormalTypeParameter(typeParameterDescriptor.getName());
+  classBound: {
+    signatureVisitor.writeClassBound();
+    for (    JetType jetType : typeParameterDescriptor.getUpperBounds()) {
+      if (jetType.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor) {
+        if (!CodegenUtil.isInterface(jetType)) {
+          mapType(jetType,signatureVisitor);
+          break classBound;
+        }
+      }
+    }
+  }
+  signatureVisitor.writeClassBoundEnd();
+  for (  JetType jetType : typeParameterDescriptor.getUpperBounds()) {
+    if (jetType.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor) {
+      if (CodegenUtil.isInterface(jetType)) {
+        signatureVisitor.writeInterfaceBound();
+        mapType(jetType,signatureVisitor);
+        signatureVisitor.writeInterfaceBoundEnd();
+      }
+    }
+  }
+}

@@ -1,8 +1,6 @@
 {
   getSuperClass();
-  List<String> interfaces=new ArrayList<String>();
-  interfaces.add(JetTypeMapper.TYPE_JET_OBJECT.getInternalName());
-  interfaces.addAll(getSuperInterfaces(myClass));
+  JvmClassSignature signature=signature();
   boolean isAbstract=false;
   boolean isInterface=false;
   if (myClass instanceof JetClass) {
@@ -12,7 +10,7 @@
       isInterface=true;
     }
   }
-  v.defineClass(myClass,Opcodes.V1_6,Opcodes.ACC_PUBLIC | (isAbstract ? Opcodes.ACC_ABSTRACT : 0) | (isInterface ? Opcodes.ACC_INTERFACE : 0),jvmName(),genericSignature(),superClass,interfaces.toArray(new String[interfaces.size()]));
+  v.defineClass(myClass,Opcodes.V1_6,Opcodes.ACC_PUBLIC | (isAbstract ? Opcodes.ACC_ABSTRACT : 0) | (isInterface ? Opcodes.ACC_INTERFACE : 0),signature.getName(),signature.getJavaGenericSignature(),signature.getSuperclassName(),signature.getInterfaces().toArray(new String[0]));
   v.visitSource(myClass.getContainingFile().getName(),null);
   if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
     v.visitOuterClass(typeMapper.mapType(((ClassDescriptor)descriptor.getContainingDeclaration()).getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),null,null);
