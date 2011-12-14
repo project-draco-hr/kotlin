@@ -1,23 +1,20 @@
 {
-  final String bar="\n\n===\n\n";
   StringBuilder result=new StringBuilder();
   if (debugInfo != null) {
-    StringBuilder errors=debugInfo.get(ERRORS);
-    if (errors != null) {
-      result.append("Errors: \n").append(errors).append(bar);
+    List<? extends ResolutionTask<? extends CallableDescriptor>> resolutionTasks=debugInfo.get(TASKS);
+    for (    ResolutionTask<? extends CallableDescriptor> resolutionTask : resolutionTasks) {
+      for (      ResolvedCallImpl<? extends CallableDescriptor> resolvedCall : resolutionTask.getCandidates()) {
+        renderResolutionLogForCall(debugInfo,resolvedCall,result);
+      }
     }
-    StringBuilder log=debugInfo.get(LOG);
-    if (log != null) {
-      result.append("Log: \n").append(log).append(bar);
-    }
-    Map<JetType,BoundsOwner> knowns=debugInfo.get(BOUNDS_FOR_KNOWNS);
-    renderMap(knowns,result);
-    Map<TypeParameterDescriptor,BoundsOwner> unknowns=debugInfo.get(BOUNDS_FOR_UNKNOWNS);
-    renderMap(unknowns,result);
-    result.append(bar);
     call=debugInfo.get(RESULT);
   }
-  renderCall(result,call);
+  if (call != null) {
+    renderCall(result,call);
+  }
+ else {
+    result.append("Resolved call is null\n");
+  }
   result.append(currentElement + ": " + currentElement.getText());
   return result.toString();
 }
