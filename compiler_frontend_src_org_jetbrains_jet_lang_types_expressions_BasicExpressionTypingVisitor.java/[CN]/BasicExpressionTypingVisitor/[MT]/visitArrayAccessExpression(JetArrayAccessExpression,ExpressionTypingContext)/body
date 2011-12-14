@@ -3,10 +3,10 @@
   JetExpression arrayExpression=expression.getArrayExpression();
   ExpressionReceiver receiver=getExpressionReceiver(facade,arrayExpression,context.replaceScope(context.scope));
   if (receiver != null) {
-    ResolvedCall<FunctionDescriptor> resolvedCall=context.resolveCallWithGivenName(CallMaker.makeCallWithExpressions(expression,receiver,null,expression,expression.getIndexExpressions()),expression,"get");
-    if (resolvedCall != null) {
-      context.trace.record(INDEXED_LVALUE_GET,expression,resolvedCall);
-      return DataFlowUtils.checkType(resolvedCall.getResultingDescriptor().getReturnType(),expression,contextWithExpectedType);
+    OverloadResolutionResults<FunctionDescriptor> results=context.resolveCallWithGivenName(CallMaker.makeCallWithExpressions(expression,receiver,null,expression,expression.getIndexExpressions()),expression,"get");
+    if (results.isSuccess()) {
+      context.trace.record(INDEXED_LVALUE_GET,expression,results.getResultingCall());
+      return DataFlowUtils.checkType(results.getResultingDescriptor().getReturnType(),expression,contextWithExpectedType);
     }
   }
   return null;
