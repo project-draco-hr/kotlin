@@ -1,8 +1,8 @@
 {
   JetExpression loopRangeExpression=loopRange.getExpression();
-  OverloadResolutionResultsImpl<FunctionDescriptor> iteratorResolutionResults=context.resolveExactSignature(loopRange,"iterator",Collections.<JetType>emptyList());
+  OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=context.resolveExactSignature(loopRange,"iterator",Collections.<JetType>emptyList());
   if (iteratorResolutionResults.isSuccess()) {
-    FunctionDescriptor iteratorFunction=iteratorResolutionResults.getResult().getResultingDescriptor();
+    FunctionDescriptor iteratorFunction=iteratorResolutionResults.getResultingCall().getResultingDescriptor();
     context.trace.record(LOOP_RANGE_ITERATOR,loopRangeExpression,iteratorFunction);
     JetType iteratorType=iteratorFunction.getReturnType();
     FunctionDescriptor hasNextFunction=checkHasNextFunctionSupport(loopRangeExpression,iteratorType,context);
@@ -18,7 +18,7 @@
  else {
       context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange.getExpression(),hasNextFunctionSupported ? hasNextFunction : hasNextProperty);
     }
-    OverloadResolutionResultsImpl<FunctionDescriptor> nextResolutionResults=context.resolveExactSignature(new TransientReceiver(iteratorType),"next",Collections.<JetType>emptyList());
+    OverloadResolutionResults<FunctionDescriptor> nextResolutionResults=context.resolveExactSignature(new TransientReceiver(iteratorType),"next",Collections.<JetType>emptyList());
     if (nextResolutionResults.isAmbiguity()) {
       context.trace.report(NEXT_AMBIGUITY.on(loopRangeExpression));
     }
@@ -26,14 +26,14 @@
       context.trace.report(NEXT_MISSING.on(loopRangeExpression));
     }
  else {
-      FunctionDescriptor nextFunction=nextResolutionResults.getResult().getResultingDescriptor();
+      FunctionDescriptor nextFunction=nextResolutionResults.getResultingCall().getResultingDescriptor();
       context.trace.record(LOOP_RANGE_NEXT,loopRange.getExpression(),nextFunction);
       return nextFunction.getReturnType();
     }
   }
  else {
     if (iteratorResolutionResults.isAmbiguity()) {
-      context.trace.report(ITERATOR_AMBIGUITY.on(loopRangeExpression,iteratorResolutionResults.getResults()));
+      context.trace.report(ITERATOR_AMBIGUITY.on(loopRangeExpression,iteratorResolutionResults.getResultingCalls()));
     }
  else {
       context.trace.report(ITERATOR_MISSING.on(loopRangeExpression));

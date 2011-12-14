@@ -6,10 +6,10 @@
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
     JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)selectorExpression;
     TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
-    VariableDescriptor variableDescriptor=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,callOperationNode,nameExpression);
-    if (variableDescriptor != null) {
+    OverloadResolutionResults<VariableDescriptor> variableDescriptor=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,callOperationNode,nameExpression);
+    if (variableDescriptor.isSuccess()) {
       temporaryTrace.commit();
-      return variableDescriptor.getOutType();
+      return variableDescriptor.getResultingDescriptor().getOutType();
     }
     ExpressionTypingContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
     JetType jetType=lookupNamespaceOrClassObject(nameExpression,nameExpression.getReferencedName(),newContext);
