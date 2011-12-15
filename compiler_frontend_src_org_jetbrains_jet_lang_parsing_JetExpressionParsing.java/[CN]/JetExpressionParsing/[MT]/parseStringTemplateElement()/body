@@ -12,9 +12,25 @@
  else   if (at(SHORT_TEMPLATE_ENTRY_START)) {
     PsiBuilder.Marker entry=mark();
     advance();
-    PsiBuilder.Marker reference=mark();
-    expect(IDENTIFIER,"Expecting a name");
-    reference.done(REFERENCE_EXPRESSION);
+    if (at(THIS_KEYWORD)) {
+      PsiBuilder.Marker thisExpression=mark();
+      PsiBuilder.Marker reference=mark();
+      advance();
+      reference.done(REFERENCE_EXPRESSION);
+      thisExpression.done(THIS_EXPRESSION);
+    }
+ else {
+      JetToken keyword=KEYWORD_TEXTS.get(myBuilder.getTokenText());
+      if (keyword != null) {
+        myBuilder.remapCurrentToken(keyword);
+        errorAndAdvance("Keyword cannot be used as a reference");
+      }
+ else {
+        PsiBuilder.Marker reference=mark();
+        expect(IDENTIFIER,"Expecting a name");
+        reference.done(REFERENCE_EXPRESSION);
+      }
+    }
     entry.done(SHORT_STRING_TEMPLATE_ENTRY);
   }
  else   if (at(LONG_TEMPLATE_ENTRY_START)) {
