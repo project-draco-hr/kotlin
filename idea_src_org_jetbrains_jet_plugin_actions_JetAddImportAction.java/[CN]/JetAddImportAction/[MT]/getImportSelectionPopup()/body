@@ -1,0 +1,39 @@
+{
+  return new BaseListPopupStep<String>(QuickFixBundle.message("class.to.import.chooser.title"),possibleImports){
+    @Override public boolean isAutoSelectionEnabled(){
+      return false;
+    }
+    @Override public PopupStep onChosen(    String selectedValue,    boolean finalChoice){
+      if (selectedValue == null) {
+        return FINAL_CHOICE;
+      }
+      if (finalChoice) {
+        addImport(myElement,myProject,selectedValue);
+        return FINAL_CHOICE;
+      }
+      List<String> toExclude=AddImportAction.getAllExcludableStrings(selectedValue);
+      return new BaseListPopupStep<String>(null,toExclude){
+        @NotNull @Override public String getTextFor(        String value){
+          return "Exclude '" + value + "' from auto-import";
+        }
+        @Override public PopupStep onChosen(        String selectedValue,        boolean finalChoice){
+          if (finalChoice) {
+            AddImportAction.excludeFromImport(myProject,selectedValue);
+          }
+          return super.onChosen(selectedValue,finalChoice);
+        }
+      }
+;
+    }
+    @Override public boolean hasSubstep(    String selectedValue){
+      return true;
+    }
+    @NotNull @Override public String getTextFor(    String value){
+      return value;
+    }
+    @Override public Icon getIconFor(    String aValue){
+      return PlatformIcons.CLASS_ICON;
+    }
+  }
+;
+}

@@ -1,0 +1,36 @@
+{
+  if (diagnostic.getSeverity() == Severity.ERROR) {
+    if (diagnostic instanceof UnresolvedReferenceDiagnostic) {
+      UnresolvedReferenceDiagnostic unresolvedReferenceDiagnostic=(UnresolvedReferenceDiagnostic)diagnostic;
+      JetReferenceExpression referenceExpression=unresolvedReferenceDiagnostic.getPsiElement();
+      PsiReference reference=referenceExpression.getReference();
+      if (reference instanceof MultiRangeReference) {
+        MultiRangeReference mrr=(MultiRangeReference)reference;
+        for (        TextRange range : mrr.getRanges()) {
+          Annotation annotation=holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),diagnostic.getMessage());
+          registerQuickFix(annotation,diagnostic);
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+      }
+ else {
+        Annotation annotation=holder.createErrorAnnotation(referenceExpression,diagnostic.getMessage());
+        registerQuickFix(annotation,diagnostic);
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
+      return;
+    }
+    if (diagnostic instanceof RedeclarationDiagnostic) {
+      RedeclarationDiagnostic redeclarationDiagnostic=(RedeclarationDiagnostic)diagnostic;
+      registerQuickFix(markRedeclaration(redeclarations,redeclarationDiagnostic,holder),diagnostic);
+      return;
+    }
+    registerQuickFix(holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic)),diagnostic);
+  }
+ else   if (diagnostic.getSeverity() == Severity.WARNING) {
+    Annotation annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
+    registerQuickFix(annotation,diagnostic);
+    if (diagnostic.getFactory() instanceof UnusedElementDiagnosticFactory) {
+      annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    }
+  }
+}
