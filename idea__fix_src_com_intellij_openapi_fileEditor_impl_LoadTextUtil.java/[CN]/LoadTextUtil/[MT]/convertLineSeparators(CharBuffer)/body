@@ -1,0 +1,44 @@
+{
+  int dst=0;
+  char prev=' ';
+  int crCount=0;
+  int lfCount=0;
+  int crlfCount=0;
+  final int length=buffer.length();
+  final char[] bufferArray=CharArrayUtil.fromSequenceWithoutCopying(buffer);
+  for (int src=0; src < length; src++) {
+    char c=bufferArray != null ? bufferArray[src] : buffer.charAt(src);
+switch (c) {
+case '\r':
+      buffer.put(dst++,'\n');
+    crCount++;
+  break;
+case '\n':
+if (prev == '\r') {
+  crCount--;
+  crlfCount++;
+}
+ else {
+  buffer.put(dst++,'\n');
+  lfCount++;
+}
+break;
+default :
+buffer.put(dst++,c);
+break;
+}
+prev=c;
+}
+String detectedLineSeparator=null;
+if (crlfCount > crCount && crlfCount > lfCount) {
+detectedLineSeparator="\r\n";
+}
+ else if (crCount > lfCount) {
+detectedLineSeparator="\r";
+}
+ else if (lfCount > 0) {
+detectedLineSeparator="\n";
+}
+CharSequence result=buffer.length() == dst ? buffer : buffer.subSequence(0,dst);
+return Pair.create(result,detectedLineSeparator);
+}

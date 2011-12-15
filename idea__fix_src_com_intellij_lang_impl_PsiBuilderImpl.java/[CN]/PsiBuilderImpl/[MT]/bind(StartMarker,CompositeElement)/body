@@ -1,0 +1,34 @@
+{
+  StartMarker curMarker=rootMarker;
+  CompositeElement curNode=rootNode;
+  int lexIndex=rootMarker.myLexemeIndex;
+  ProductionMarker item=rootMarker.myFirstChild != null ? rootMarker.myFirstChild : rootMarker.myDoneMarker;
+  while (true) {
+    lexIndex=insertLeaves(lexIndex,item.myLexemeIndex,curNode);
+    if (item == rootMarker.myDoneMarker)     break;
+    if (item instanceof StartMarker) {
+      final StartMarker marker=(StartMarker)item;
+      if (!marker.myDoneMarker.myCollapse) {
+        curMarker=marker;
+        final CompositeElement childNode=createComposite(marker);
+        curNode.rawAddChildrenWithoutNotifications(childNode);
+        curNode=childNode;
+        item=marker.myFirstChild != null ? marker.myFirstChild : marker.myDoneMarker;
+        continue;
+      }
+ else {
+        lexIndex=collapseLeaves(curNode,marker);
+      }
+    }
+ else     if (item instanceof ErrorItem) {
+      final CompositeElement errorElement=Factory.createErrorElement(((ErrorItem)item).myMessage);
+      curNode.rawAddChildrenWithoutNotifications(errorElement);
+    }
+ else     if (item instanceof DoneMarker) {
+      curMarker=(StartMarker)((DoneMarker)item).myStart.myParent;
+      curNode=curNode.getTreeParent();
+      item=((DoneMarker)item).myStart;
+    }
+    item=item.myNext != null ? item.myNext : curMarker.myDoneMarker;
+  }
+}

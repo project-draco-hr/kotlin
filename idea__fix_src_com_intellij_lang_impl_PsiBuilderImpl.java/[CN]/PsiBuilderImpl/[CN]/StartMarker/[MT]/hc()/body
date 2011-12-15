@@ -1,0 +1,27 @@
+{
+  if (myHC == -1) {
+    PsiBuilderImpl builder=myBuilder;
+    int hc=0;
+    final CharSequence buf=builder.myText;
+    final char[] bufArray=builder.myTextArray;
+    ProductionMarker child=myFirstChild;
+    int lexIdx=myLexemeIndex;
+    while (child != null) {
+      int lastLeaf=child.myLexemeIndex;
+      for (int i=builder.myLexStarts[lexIdx]; i < builder.myLexStarts[lastLeaf]; i++) {
+        hc+=bufArray != null ? bufArray[i] : buf.charAt(i);
+      }
+      lexIdx=lastLeaf;
+      hc+=child.hc();
+      if (child instanceof StartMarker) {
+        lexIdx=((StartMarker)child).myDoneMarker.myLexemeIndex;
+      }
+      child=child.myNext;
+    }
+    for (int i=builder.myLexStarts[lexIdx]; i < builder.myLexStarts[myDoneMarker.myLexemeIndex]; i++) {
+      hc+=bufArray != null ? bufArray[i] : buf.charAt(i);
+    }
+    myHC=hc;
+  }
+  return myHC;
+}
