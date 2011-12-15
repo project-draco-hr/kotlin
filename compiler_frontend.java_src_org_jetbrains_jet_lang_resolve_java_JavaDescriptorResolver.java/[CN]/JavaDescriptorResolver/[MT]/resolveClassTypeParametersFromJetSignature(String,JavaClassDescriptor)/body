@@ -1,6 +1,6 @@
 {
   final List<TypeParameterDescriptor> r=new ArrayList<TypeParameterDescriptor>();
-  new JetSignatureReader(jetSignature).acceptFormalTypeParametersOnly(new JetSignatureExceptionsAdapter(){
+  new JetSignatureReader(jetSignature).accept(new JetSignatureExceptionsAdapter(){
     @Override public JetSignatureVisitor visitFormalTypeParameter(    final String name,    final TypeInfoVariance variance){
       return new JetSignatureExceptionsAdapter(){
         int index=0;
@@ -19,11 +19,17 @@
 ;
         }
         @Override public void visitFormalTypeParameterEnd(){
-          TypeParameterDescriptor typeParameter=TypeParameterDescriptor.createForFurtherModification(functionDescriptor,Collections.<AnnotationDescriptor>emptyList(),true,JetSignatureUtils.translateVariance(variance),name,++index);
+          TypeParameterDescriptor typeParameter=TypeParameterDescriptor.createForFurtherModification(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),true,JetSignatureUtils.translateVariance(variance),name,++index);
           r.add(typeParameter);
         }
       }
 ;
+    }
+    @Override public JetSignatureVisitor visitSuperclass(){
+      return new JetSignatureAdapter();
+    }
+    @Override public JetSignatureVisitor visitInterface(){
+      return new JetSignatureAdapter();
     }
   }
 );
