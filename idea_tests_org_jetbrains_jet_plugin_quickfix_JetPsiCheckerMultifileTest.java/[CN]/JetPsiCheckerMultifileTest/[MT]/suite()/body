@@ -1,0 +1,25 @@
+{
+  TestSuite suite=new TestSuite();
+  FilenameFilter multifileFileNameFilter=new FilenameFilter(){
+    @Override public boolean accept(    File file,    String s){
+      return s.startsWith("before") && JetPsiCheckerMultifileTest.isMainFile(s);
+    }
+  }
+;
+  JetTestCaseBuilder.NamedTestFactory multiFileNamedTestFactory=new JetTestCaseBuilder.NamedTestFactory(){
+    @NotNull @Override public Test createTest(    @NotNull String dataPath,    @NotNull String name,    @NotNull File file){
+      return new JetPsiCheckerMultifileTest(dataPath,name);
+    }
+  }
+;
+  File dir=new File(getTestDataPathBase());
+  List<String> subDirs=Arrays.asList(dir.list());
+  Collections.sort(subDirs);
+  for (  String subDirName : subDirs) {
+    final TestSuite multiFileTestSuite=JetTestCaseBuilder.suiteForDirectory(getTestDataPathBase(),subDirName,true,multifileFileNameFilter,multiFileNamedTestFactory);
+    if (multiFileTestSuite.countTestCases() != 0) {
+      suite.addTest(multiFileTestSuite);
+    }
+  }
+  return suite;
+}
