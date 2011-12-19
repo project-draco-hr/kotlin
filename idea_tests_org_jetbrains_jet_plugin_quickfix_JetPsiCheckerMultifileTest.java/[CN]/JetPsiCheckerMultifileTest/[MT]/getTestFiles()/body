@@ -1,0 +1,29 @@
+{
+  File dir=new File(getTestDataPath());
+  assertTrue("Main file should contain .Main. substring",name.contains(MAIN_SUBSTRING));
+  final String testPrefix=name.replace(MAIN_SUBSTRING,"");
+  FilenameFilter resultFilter=new FilenameFilter(){
+    @Override public boolean accept(    File file,    String s){
+      return s.contains(testPrefix) && !s.contains("after");
+    }
+  }
+;
+  List<File> allTestFiles=Arrays.asList(dir.listFiles(resultFilter));
+  final Collection<File> mainFiles=Collections2.filter(allTestFiles,new Predicate<File>(){
+    @Override public boolean apply(    @Nullable File file){
+      return file != null && file.getName().contains(MAIN_SUBSTRING);
+    }
+  }
+);
+  assertTrue("No main file for test",mainFiles.size() > 0);
+  assertTrue("Too many main files for the test",mainFiles.size() <= 1);
+  final Collection<File> dataFiles=Collections2.filter(allTestFiles,new Predicate<File>(){
+    @Override public boolean apply(    @Nullable File file){
+      return file != null && file.getName().contains(DATA_SUBSTRING);
+    }
+  }
+);
+  final ArrayList<File> fileResult=new ArrayList<File>(allTestFiles);
+  fileResult.addAll(dataFiles);
+  return fileResult;
+}
