@@ -2,27 +2,9 @@
   final List<TypeParameterDescriptor> r=new ArrayList<TypeParameterDescriptor>();
   new JetSignatureReader(jetSignature).accept(new JetSignatureExceptionsAdapter(){
     @Override public JetSignatureVisitor visitFormalTypeParameter(    final String name,    final TypeInfoVariance variance){
-      return new JetSignatureExceptionsAdapter(){
-        int index=0;
-        @Override public JetSignatureVisitor visitClassBound(){
-          return new JetTypeJetSignatureReader(JavaDescriptorResolver.this,semanticServices.getJetSemanticServices().getStandardLibrary()){
-            @Override protected void done(            @NotNull JetType jetType){
-            }
-          }
-;
-        }
-        @Override public JetSignatureVisitor visitInterfaceBound(){
-          return new JetTypeJetSignatureReader(JavaDescriptorResolver.this,semanticServices.getJetSemanticServices().getStandardLibrary()){
-            @Override protected void done(            @NotNull JetType jetType){
-            }
-          }
-;
-        }
-        @Override public void visitFormalTypeParameterEnd(){
-          TypeParameterDescriptor typeParameter=TypeParameterDescriptor.createForFurtherModification(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),true,JetSignatureUtils.translateVariance(variance),name,++index);
-          PsiTypeParameter psiTypeParameter=getPsiTypeParameterByName(clazz,clazz.getQualifiedName(),name);
-          typeParameterDescriptorCache.put(psiTypeParameter,new TypeParameterDescriptorInitialization(TypeParameterDescriptorOrigin.KOTLIN,typeParameter));
-          r.add(typeParameter);
+      return new JetSignatureTypeParameterVisitor(classDescriptor,clazz,name,variance){
+        @Override protected void done(        TypeParameterDescriptor typeParameterDescriptor){
+          r.add(typeParameterDescriptor);
         }
       }
 ;
