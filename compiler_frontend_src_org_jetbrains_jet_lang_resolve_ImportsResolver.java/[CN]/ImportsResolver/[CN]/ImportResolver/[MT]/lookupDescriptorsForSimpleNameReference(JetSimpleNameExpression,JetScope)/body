@@ -1,0 +1,26 @@
+{
+  List<DeclarationDescriptor> descriptors=Lists.newArrayList();
+  String referencedName=referenceExpression.getReferencedName();
+  if (referencedName != null) {
+    NamespaceDescriptor namespaceDescriptor=outerScope.getNamespace(referencedName);
+    if (namespaceDescriptor != null)     descriptors.add(namespaceDescriptor);
+    ClassifierDescriptor classifierDescriptor=outerScope.getClassifier(referencedName);
+    if (classifierDescriptor != null)     descriptors.add(classifierDescriptor);
+    Set<FunctionDescriptor> functionDescriptors=outerScope.getFunctions(referencedName);
+    descriptors.addAll(functionDescriptors);
+    VariableDescriptor variableDescriptor=outerScope.getVariable(referencedName);
+    if (variableDescriptor != null)     descriptors.add(variableDescriptor);
+  }
+  if (!firstPhase) {
+    if (descriptors.size() == 1) {
+      trace.record(BindingContext.REFERENCE_TARGET,referenceExpression,descriptors.iterator().next());
+    }
+ else     if (descriptors.size() > 1) {
+      trace.record(BindingContext.AMBIGUOUS_REFERENCE_TARGET,referenceExpression,descriptors);
+    }
+ else {
+      trace.report(UNRESOLVED_REFERENCE.on(referenceExpression));
+    }
+  }
+  return descriptors;
+}
