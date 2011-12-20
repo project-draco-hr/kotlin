@@ -1,0 +1,52 @@
+{
+  myBuilder.disableJoiningComplexTokens();
+  PsiBuilder.Marker typeRefMarker=mark();
+  parseAnnotations(false);
+  if (at(IDENTIFIER) || at(NAMESPACE_KEYWORD)) {
+    parseUserType();
+  }
+ else   if (at(HASH)) {
+    parseTupleType();
+  }
+ else   if (at(LPAR)) {
+    PsiBuilder.Marker functionOrParenthesizedType=mark();
+    advance();
+    parseTypeRefContents().drop();
+    if (at(RPAR)) {
+      advance();
+      if (at(ARROW)) {
+        functionOrParenthesizedType.rollbackTo();
+        parseFunctionType();
+      }
+ else {
+        functionOrParenthesizedType.drop();
+      }
+    }
+ else {
+      functionOrParenthesizedType.rollbackTo();
+      parseFunctionType();
+    }
+  }
+ else   if (at(CAPITALIZED_THIS_KEYWORD)) {
+    parseSelfType();
+  }
+ else {
+    errorWithRecovery("Type expected",TokenSet.orSet(TOPLEVEL_OBJECT_FIRST,TokenSet.create(EQ,COMMA,GT,RBRACKET,DOT,RPAR,RBRACE,LBRACE,SEMICOLON)));
+  }
+  while (at(QUEST)) {
+    PsiBuilder.Marker precede=typeRefMarker.precede();
+    advance();
+    typeRefMarker.done(NULLABLE_TYPE);
+    typeRefMarker=precede;
+  }
+  if (at(DOT)) {
+    PsiBuilder.Marker precede=typeRefMarker.precede();
+    typeRefMarker.done(TYPE_REFERENCE);
+    advance();
+    parseFunctionTypeContents().drop();
+    typeRefMarker=precede.precede();
+    precede.done(FUNCTION_TYPE);
+  }
+  myBuilder.restoreJoiningComplexTokensState();
+  return typeRefMarker;
+}
