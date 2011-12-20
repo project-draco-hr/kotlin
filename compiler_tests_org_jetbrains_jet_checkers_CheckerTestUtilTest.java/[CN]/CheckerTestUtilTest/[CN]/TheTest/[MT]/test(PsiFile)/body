@@ -3,12 +3,18 @@
   String expectedText=CheckerTestUtil.addDiagnosticMarkersToText(psiFile,CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,psiFile)).toString();
   List<CheckerTestUtil.DiagnosedRange> diagnosedRanges=Lists.newArrayList();
   CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
+  for (  CheckerTestUtil.DiagnosedRange diagnosedRange : diagnosedRanges) {
+    diagnosedRange.setFile(psiFile);
+  }
   List<Diagnostic> diagnostics=CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,psiFile);
   Collections.sort(diagnostics,CheckerTestUtil.DIAGNOSTIC_COMPARATOR);
   makeTestData(diagnostics,diagnosedRanges);
   final List<String> expectedMessages=Lists.newArrayList(expected);
   final List<String> actualMessages=Lists.newArrayList();
   CheckerTestUtil.diagnosticsDiff(diagnosedRanges,diagnostics,new CheckerTestUtil.DiagnosticDiffCallbacks(){
+    @NotNull @Override public PsiFile getFile(){
+      return psiFile;
+    }
     @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
       String message="Missing " + type + " at "+ expectedStart+ " to "+ expectedEnd;
       actualMessages.add(message);
