@@ -1,11 +1,20 @@
 {
   List<ValueParameterDescriptor> result=new ArrayList<ValueParameterDescriptor>();
+  JetType receiverType=null;
   for (int i=0, parametersLength=parameters.length; i < parametersLength; i++) {
     PsiParameter parameter=parameters[i];
-    ValueParameterDescriptor valueParameterDescriptor=resolveParameterDescriptor(containingDeclaration,i,parameter);
-    if (valueParameterDescriptor != null) {
-      result.add(valueParameterDescriptor);
+    JvmMethodParameterMeaning meaning=resolveParameterDescriptor(containingDeclaration,i,parameter);
+    if (meaning.kind == JvmMethodParameterKind.TYPE_INFO) {
+    }
+ else     if (meaning.kind == JvmMethodParameterKind.REGULAR) {
+      result.add(meaning.valueParameterDescriptor);
+    }
+ else     if (meaning.kind == JvmMethodParameterKind.RECEIVER) {
+      if (receiverType != null) {
+        throw new IllegalStateException("more then one receiver");
+      }
+      receiverType=meaning.receiverType;
     }
   }
-  return result;
+  return new ValueParameterDescriptors(receiverType,result);
 }

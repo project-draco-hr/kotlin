@@ -11,10 +11,9 @@
   boolean changeNullable=false;
   boolean nullable=true;
   String typeFromAnnotation=null;
+  boolean receiver=false;
   String name=parameter.getName() != null ? parameter.getName() : "p" + i;
   for (  PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
-    PsiNameValuePair[] attributes=annotation.getParameterList().getAttributes();
-    attributes.toString();
     if (annotation.getQualifiedName().equals(StdlibNames.JET_VALUE_PARAMETER.getFqName())) {
       PsiLiteralExpression nameExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_NAME_FIELD);
       if (nameExpression != null) {
@@ -32,9 +31,13 @@
       if (signatureExpression != null) {
         typeFromAnnotation=(String)signatureExpression.getValue();
       }
+      PsiLiteralExpression receiverExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_RECEIVER_FIELD);
+      if (receiverExpression != null) {
+        receiver=true;
+      }
     }
  else     if (annotation.getQualifiedName().equals(StdlibNames.JET_TYPE_PARAMETER.getFqName())) {
-      return null;
+      return JvmMethodParameterMeaning.typeInfo(new Object());
     }
   }
   JetType outType;
@@ -44,5 +47,10 @@
  else {
     outType=semanticServices.getTypeTransformer().transformToType(psiType);
   }
-  return new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,false,varargElementType);
+  if (receiver) {
+    return JvmMethodParameterMeaning.receiver(outType);
+  }
+ else {
+    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,false,varargElementType));
+  }
 }

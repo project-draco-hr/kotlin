@@ -1,6 +1,7 @@
 {
   StringBuilder sb=new StringBuilder();
-  sb.append("class ");
+  serialize(klass.getKind(),sb);
+  sb.append(" ");
   serialize(klass,sb);
   if (!klass.getTypeConstructor().getParameters().isEmpty()) {
     sb.append("<");
@@ -8,16 +9,18 @@
     sb.append(">");
   }
   sb.append(" {\n");
-  if (false) {
-    List<TypeProjection> typeArguments=new ArrayList<TypeProjection>();
-    for (    TypeParameterDescriptor param : klass.getTypeConstructor().getParameters()) {
-      typeArguments.add(new TypeProjection(Variance.INVARIANT,param.getDefaultType()));
+  List<TypeProjection> typeArguments=new ArrayList<TypeProjection>();
+  for (  TypeParameterDescriptor param : klass.getTypeConstructor().getParameters()) {
+    typeArguments.add(new TypeProjection(Variance.INVARIANT,param.getDefaultType()));
+  }
+  JetScope memberScope=klass.getMemberScope(typeArguments);
+  for (  DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+    if (member.getName().equals("equals") || member.getName().equals("hashCode") || member.getName().equals("wait")|| member.getName().equals("notify")|| member.getName().equals("notifyAll")|| member.getName().equals("toString")|| member.getName().equals("getClass")|| member.getName().equals("clone")|| member.getName().equals("finalize")|| member.getName().equals("getTypeInfo")|| member.getName().equals("$setTypeInfo")|| member.getName().equals("$typeInfo")) {
+      continue;
     }
-    JetScope memberScope=klass.getMemberScope(typeArguments);
-    for (    DeclarationDescriptor member : memberScope.getAllDescriptors()) {
-      serialize(member,sb);
-      sb.append("\n");
-    }
+    sb.append("    ");
+    serialize(member,sb);
+    sb.append("\n");
   }
   sb.append("}\n");
   return sb.toString();
