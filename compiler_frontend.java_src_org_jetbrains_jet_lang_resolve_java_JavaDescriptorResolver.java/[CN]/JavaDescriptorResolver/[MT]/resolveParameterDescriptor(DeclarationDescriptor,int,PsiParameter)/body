@@ -12,6 +12,7 @@
   boolean nullable=true;
   String typeFromAnnotation=null;
   boolean receiver=false;
+  boolean hasDefaultValue=false;
   String name=parameter.getName() != null ? parameter.getName() : "p" + i;
   for (  PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
     if (annotation.getQualifiedName().equals(StdlibNames.JET_VALUE_PARAMETER.getFqName())) {
@@ -35,6 +36,10 @@
       if (receiverExpression != null) {
         receiver=(Boolean)receiverExpression.getValue();
       }
+      PsiLiteralExpression hasDefaultValueExpression=(PsiLiteralExpression)annotation.findAttributeValue(StdlibNames.JET_VALUE_PARAMETER_HAS_DEFAULT_VALUE_FIELD);
+      if (hasDefaultValueExpression != null) {
+        hasDefaultValue=(Boolean)hasDefaultValueExpression.getValue();
+      }
     }
  else     if (annotation.getQualifiedName().equals(StdlibNames.JET_TYPE_PARAMETER.getFqName())) {
       return JvmMethodParameterMeaning.typeInfo(new Object());
@@ -51,6 +56,6 @@
     return JvmMethodParameterMeaning.receiver(outType);
   }
  else {
-    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,false,varargElementType));
+    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,hasDefaultValue,varargElementType));
   }
 }
