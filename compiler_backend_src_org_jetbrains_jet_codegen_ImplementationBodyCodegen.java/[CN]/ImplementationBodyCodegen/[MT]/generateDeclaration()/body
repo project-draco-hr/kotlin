@@ -3,14 +3,30 @@
   JvmClassSignature signature=signature();
   boolean isAbstract=false;
   boolean isInterface=false;
+  boolean isFinal=false;
   if (myClass instanceof JetClass) {
-    if (((JetClass)myClass).hasModifier(JetTokens.ABSTRACT_KEYWORD))     isAbstract=true;
-    if (((JetClass)myClass).isTrait()) {
+    JetClass jetClass=(JetClass)myClass;
+    if (jetClass.hasModifier(JetTokens.ABSTRACT_KEYWORD))     isAbstract=true;
+    if (jetClass.isTrait()) {
       isAbstract=true;
       isInterface=true;
     }
+    if (!jetClass.hasModifier(JetTokens.OPEN_KEYWORD)) {
+      isFinal=true;
+    }
   }
-  v.defineClass(myClass,Opcodes.V1_6,Opcodes.ACC_PUBLIC | (isAbstract ? Opcodes.ACC_ABSTRACT : 0) | (isInterface ? Opcodes.ACC_INTERFACE : 0),signature.getName(),signature.getJavaGenericSignature(),signature.getSuperclassName(),signature.getInterfaces().toArray(new String[0]));
+  int access=0;
+  access|=Opcodes.ACC_PUBLIC;
+  if (isAbstract) {
+    access|=Opcodes.ACC_ABSTRACT;
+  }
+  if (isInterface) {
+    access|=Opcodes.ACC_INTERFACE;
+  }
+  if (isFinal) {
+    access|=Opcodes.ACC_FINAL;
+  }
+  v.defineClass(myClass,Opcodes.V1_6,access,signature.getName(),signature.getJavaGenericSignature(),signature.getSuperclassName(),signature.getInterfaces().toArray(new String[0]));
   v.visitSource(myClass.getContainingFile().getName(),null);
   if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
     v.visitOuterClass(typeMapper.mapType(((ClassDescriptor)descriptor.getContainingDeclaration()).getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),null,null);
