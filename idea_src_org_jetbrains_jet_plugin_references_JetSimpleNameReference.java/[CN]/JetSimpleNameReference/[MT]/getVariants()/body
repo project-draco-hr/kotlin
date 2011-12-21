@@ -1,23 +1,4 @@
 {
-  PsiElement parent=myExpression.getParent();
-  if (parent instanceof JetQualifiedExpression) {
-    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)parent;
-    JetExpression receiverExpression=qualifiedExpression.getReceiverExpression();
-    JetFile file=(JetFile)myExpression.getContainingFile();
-    BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
-    final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
-    final JetScope resolutionScope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
-    if (expressionType != null && resolutionScope != null) {
-      return collectLookupElements(bindingContext,includeExternalCallableExtensions(expressionType.getMemberScope().getAllDescriptors(),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType)));
-    }
-  }
- else {
-    JetFile file=(JetFile)myExpression.getContainingFile();
-    BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
-    JetScope resolutionScope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,myExpression);
-    if (resolutionScope != null) {
-      return collectLookupElements(bindingContext,excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope));
-    }
-  }
-  return EMPTY_ARRAY;
+  BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)myExpression.getContainingFile());
+  return collectLookupElements(bindingContext,TipsManager.getReferenceVariants(myExpression,bindingContext));
 }
