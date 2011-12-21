@@ -1,0 +1,19 @@
+{
+  PsiElement parent=expression.getParent();
+  if (parent instanceof JetQualifiedExpression) {
+    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)parent;
+    JetExpression receiverExpression=qualifiedExpression.getReceiverExpression();
+    final JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
+    final JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+    if (expressionType != null && resolutionScope != null) {
+      return includeExternalCallableExtensions(expressionType.getMemberScope().getAllDescriptors(),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType));
+    }
+  }
+ else {
+    JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
+    if (resolutionScope != null) {
+      return excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope);
+    }
+  }
+  return Collections.emptyList();
+}
