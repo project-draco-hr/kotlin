@@ -5,6 +5,9 @@
     GenerationState.prepareAnonymousClasses((JetElement)aClass,state.getTypeMapper());
   }
   final CodegenContext contextForInners=context.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state.getTypeMapper());
+  if (!classBuilder.generateCode()) {
+    generateImplementation(context,aClass,OwnerKind.IMPLEMENTATION,contextForInners.accessors,classBuilder);
+  }
   for (  JetDeclaration declaration : aClass.getDeclarations()) {
     if (declaration instanceof JetClass && !(declaration instanceof JetEnumEntry)) {
       generate(contextForInners,(JetClass)declaration);
@@ -13,5 +16,8 @@
       state.forClass().generate(contextForInners,((JetClassObject)declaration).getObjectDeclaration());
     }
   }
-  generateImplementation(context,aClass,OwnerKind.IMPLEMENTATION,contextForInners.accessors,classBuilder);
+  if (classBuilder.generateCode()) {
+    generateImplementation(context,aClass,OwnerKind.IMPLEMENTATION,contextForInners.accessors,classBuilder);
+  }
+  classBuilder.done();
 }
