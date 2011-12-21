@@ -4,6 +4,7 @@
   boolean isAbstract=false;
   boolean isInterface=false;
   boolean isFinal=false;
+  boolean isStatic=false;
   if (myClass instanceof JetClass) {
     JetClass jetClass=(JetClass)myClass;
     if (jetClass.hasModifier(JetTokens.ABSTRACT_KEYWORD))     isAbstract=true;
@@ -14,6 +15,9 @@
     if (!jetClass.hasModifier(JetTokens.OPEN_KEYWORD) && !isAbstract) {
       isFinal=true;
     }
+  }
+ else   if (myClass.getParent() instanceof JetClassObject) {
+    isStatic=true;
   }
   int access=0;
   access|=Opcodes.ACC_PUBLIC;
@@ -26,10 +30,14 @@
   if (isFinal) {
     access|=Opcodes.ACC_FINAL;
   }
+  if (isStatic) {
+    access|=Opcodes.ACC_STATIC;
+  }
   v.defineClass(myClass,Opcodes.V1_6,access,signature.getName(),signature.getJavaGenericSignature(),signature.getSuperclassName(),signature.getInterfaces().toArray(new String[0]));
   v.visitSource(myClass.getContainingFile().getName(),null);
-  if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
-    v.visitOuterClass(typeMapper.mapType(((ClassDescriptor)descriptor.getContainingDeclaration()).getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),null,null);
+  ClassDescriptor container=getContainingClassDescriptor(descriptor);
+  if (container != null) {
+    v.visitOuterClass(typeMapper.mapType(container.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName(),null,null);
   }
   if (myClass instanceof JetClass && signature.getKotlinGenericSignature() != null) {
     AnnotationVisitor annotationVisitor=v.newAnnotation(myClass,JvmStdlibNames.JET_CLASS.getDescriptor(),true);
