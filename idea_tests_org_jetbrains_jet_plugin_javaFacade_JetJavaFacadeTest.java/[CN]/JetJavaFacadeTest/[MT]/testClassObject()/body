@@ -1,0 +1,15 @@
+{
+  myFixture.configureByFile(getTestName(true) + ".kt");
+  JavaPsiFacade facade=myFixture.getJavaFacade();
+  PsiClass theClass=facade.findClass("foo.TheClass",GlobalSearchScope.allScope(getProject()));
+  assertNotNull(theClass);
+  PsiField classobj=theClass.findFieldByName("$classobj",false);
+  assertTrue(classobj != null && classobj.hasModifierProperty(PsiModifier.STATIC));
+  PsiType type=classobj.getType();
+  assertTrue(type instanceof PsiClassType);
+  assertEquals("foo.TheClass.ClassObject$",type.getCanonicalText());
+  PsiClass classObjectClass=((PsiClassType)type).resolve();
+  assertTrue(classObjectClass != null && classObjectClass.hasModifierProperty(PsiModifier.STATIC));
+  PsiMethod[] methods=classObjectClass.findMethodsByName("getOut",false);
+  assertEquals("java.io.PrintStream",methods[0].getReturnType().getCanonicalText());
+}
