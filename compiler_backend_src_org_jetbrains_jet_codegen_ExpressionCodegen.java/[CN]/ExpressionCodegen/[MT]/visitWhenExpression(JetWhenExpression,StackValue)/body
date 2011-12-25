@@ -2,9 +2,11 @@
   JetExpression expr=expression.getSubjectExpression();
   final Type subjectType=expressionType(expr);
   final Type resultType=expressionType(expression);
-  final int subjectLocal=myFrameMap.enterTemp(subjectType.getSize());
-  gen(expr,subjectType);
-  v.store(subjectLocal,subjectType);
+  final int subjectLocal=expr != null ? myFrameMap.enterTemp(subjectType.getSize()) : -1;
+  if (subjectLocal != -1) {
+    gen(expr,subjectType);
+    v.store(subjectLocal,subjectType);
+  }
   Label end=new Label();
   boolean hasElse=false;
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
