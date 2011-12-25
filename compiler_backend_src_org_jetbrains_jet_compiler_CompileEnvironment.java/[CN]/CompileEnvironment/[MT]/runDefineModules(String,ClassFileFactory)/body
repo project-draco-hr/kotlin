@@ -4,17 +4,19 @@
     Class moduleSetBuilderClass=loader.loadClass("kotlin.modules.ModuleSetBuilder");
     final IModuleSetBuilder moduleSetBuilder=(IModuleSetBuilder)moduleSetBuilderClass.newInstance();
     Class namespaceClass=loader.loadClass("namespace");
-    final Method[] methods=namespaceClass.getMethods();
+    final Field[] fields=namespaceClass.getDeclaredFields();
     boolean modulesDefined=false;
-    for (    Method method : methods) {
-      if (method.getName().equals("defineModules")) {
-        method.invoke(null,moduleSetBuilder);
+    for (    Field field : fields) {
+      if (field.getName().equals("modules")) {
+        field.setAccessible(true);
+        ExtensionFunction0 defineMudules=(ExtensionFunction0)field.get(null);
+        defineMudules.invoke(moduleSetBuilder);
         modulesDefined=true;
         break;
       }
     }
     if (!modulesDefined) {
-      throw new CompileEnvironmentException("Module script " + moduleFile + " must define a defineModules() method");
+      throw new CompileEnvironmentException("Module script " + moduleFile + " must define a modules() property");
     }
     return moduleSetBuilder;
   }
