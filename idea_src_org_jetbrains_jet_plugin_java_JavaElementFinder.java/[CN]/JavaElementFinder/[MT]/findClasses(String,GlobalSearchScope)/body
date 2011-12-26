@@ -1,19 +1,17 @@
 {
   if (qualifiedName.startsWith("java."))   return PsiClass.EMPTY_ARRAY;
   List<PsiClass> answer=new SmartList<PsiClass>();
-  final List<JetFile> filesInScope=collectProjectFiles(project,scope);
+  final List<JetFile> filesInScope=collectProjectJetFiles(project,scope);
   for (  JetFile file : filesInScope) {
     JetNamespace rootNamespace=file.getRootNamespace();
     final String packageName=JetPsiUtil.getFQName(rootNamespace);
     if (packageName != null && qualifiedName.startsWith(packageName)) {
       if (qualifiedName.equals(fqn(packageName,"namespace"))) {
-        answer.add(new JetLightClass(psiManager,file,"namespace"));
+        answer.add(new JetLightClass(psiManager,file,qualifiedName));
       }
-      for (      JetDeclaration declaration : rootNamespace.getDeclarations()) {
-        if (declaration instanceof JetClassOrObject) {
-          if (qualifiedName.equals(fqn(packageName,declaration.getName()))) {
-            answer.add(new JetLightClass(psiManager,file,declaration.getName()));
-          }
+ else {
+        for (        JetDeclaration declaration : rootNamespace.getDeclarations()) {
+          scanClasses(answer,declaration,qualifiedName,packageName,file);
         }
       }
     }

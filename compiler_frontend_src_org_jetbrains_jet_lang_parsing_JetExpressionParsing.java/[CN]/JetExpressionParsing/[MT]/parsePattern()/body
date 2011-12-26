@@ -4,9 +4,8 @@
   if (at(NAMESPACE_KEYWORD) || at(IDENTIFIER) || at(FUN_KEYWORD)|| at(THIS_KEYWORD)) {
     PsiBuilder.Marker rollbackMarker=mark();
     parseBinaryExpression(Precedence.ELVIS);
-    if (at(AT)) {
+    if (at(HASH)) {
       rollbackMarker.drop();
-      advance();
       PsiBuilder.Marker list=mark();
       parseTuplePattern(DECOMPOSER_ARGUMENT);
       list.done(DECOMPOSER_ARGUMENT_LIST);
@@ -17,9 +16,6 @@
       rollbackMarker.rollbackTo();
       rollbackMarker=mark();
       myJetParsing.parseTypeRef();
-      if (at(AT)) {
-        errorAndAdvance("'@' is allowed only after a decomposer element, not after a type");
-      }
       if (myBuilder.getCurrentOffset() < expressionEndOffset) {
         rollbackMarker.rollbackTo();
         parseBinaryExpression(Precedence.ELVIS);
@@ -31,7 +27,7 @@
       }
     }
   }
- else   if (at(LPAR)) {
+ else   if (at(HASH)) {
     parseTuplePattern(TUPLE_PATTERN_ENTRY);
     pattern.done(TUPLE_PATTERN);
   }
@@ -51,7 +47,7 @@
     pattern.done(EXPRESSION_PATTERN);
   }
  else {
-    errorUntil("Pattern expected",TokenSet.create(RBRACE,DOUBLE_ARROW));
+    errorUntil("Pattern expected",TokenSet.create(RBRACE,ARROW));
     pattern.drop();
   }
 }

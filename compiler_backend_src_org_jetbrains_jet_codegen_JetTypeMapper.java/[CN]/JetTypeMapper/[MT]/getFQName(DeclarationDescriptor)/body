@@ -13,7 +13,16 @@
     }
     name=map.get(descriptor);
     if (name == null) {
-      name=getFQName(container) + "$" + (map.size() + 1);
+      PsiElement declaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
+      if (declaration instanceof JetObjectDeclaration) {
+        String stable=getStableNameForObject((JetObjectDeclaration)declaration,descriptor);
+        if (stable != null) {
+          name=stable;
+        }
+      }
+      if (name == null) {
+        name=getFQName(container) + "$" + (map.size() + 1);
+      }
       map.put(descriptor,name);
     }
     return name;

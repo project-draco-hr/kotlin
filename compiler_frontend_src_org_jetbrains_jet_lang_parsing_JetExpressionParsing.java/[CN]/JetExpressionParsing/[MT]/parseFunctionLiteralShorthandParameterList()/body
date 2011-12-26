@@ -1,0 +1,25 @@
+{
+  PsiBuilder.Marker parameterList=mark();
+  while (!eof()) {
+    PsiBuilder.Marker parameter=mark();
+    expect(IDENTIFIER,"Expecting parameter name",TokenSet.create(ARROW));
+    parameter.done(VALUE_PARAMETER);
+    if (at(COLON)) {
+      PsiBuilder.Marker errorMarker=mark();
+      advance();
+      myJetParsing.parseTypeRef();
+      errorMarker.error("To specify a type of a parameter or a return type, use the full notation: {(parameter : Type) : ReturnType => ...}");
+    }
+ else     if (at(ARROW)) {
+      break;
+    }
+ else     if (at(COMMA)) {
+      advance();
+    }
+ else {
+      error("Expecting '->' or ','");
+      break;
+    }
+  }
+  parameterList.done(VALUE_PARAMETER_LIST);
+}

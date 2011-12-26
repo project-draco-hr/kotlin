@@ -1,0 +1,45 @@
+{
+  System.setProperty("java.awt.headless","true");
+  Disposable rootDisposable=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  final JetCoreEnvironment environment=new JetCoreEnvironment(rootDisposable);
+  MutablePicoContainer picoContainer=environment.getApplication().getPicoContainer();
+  picoContainer.registerComponent(new ComponentAdapter(){
+    @Override public Object getComponentKey(){
+      return "com.intellij.openapi.progress.ProgressManager";
+    }
+    @Override public Class getComponentImplementation(){
+      return ProgressManagerImpl.class;
+    }
+    @Override public Object getComponentInstance(    PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
+      return new ProgressManagerImpl(environment.getApplication());
+    }
+    @Override public void verify(    PicoContainer picoContainer) throws PicoIntrospectionException {
+    }
+    @Override public void accept(    PicoVisitor picoVisitor){
+    }
+  }
+);
+  CompileEnvironment compileEnvironment=new CompileEnvironment();
+  compileEnvironment.setJavaRuntime(CompileEnvironment.findRtJar(true));
+  if (!compileEnvironment.initializeKotlinRuntime()) {
+    System.out.println("foo");
+  }
+  environment.getApplication().registerService(PomModel.class,new PomModelImpl(environment.getProject()));
+  final JetFile file=JetPsiFactory.createFile(environment.getProject(),"namespace foo\nclass A");
+  final ASTNode packageKeyword=JetPsiFactory.createFile(environment.getProject(),"package foo").getRootNamespace().getHeader().getNode().findChildByType(NAMESPACE_KEYWORD);
+  SwingUtilities.invokeAndWait(new Runnable(){
+    @Override public void run(){
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          convert(file,packageKeyword);
+        }
+      }
+);
+    }
+  }
+);
+}
