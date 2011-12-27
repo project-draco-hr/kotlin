@@ -1,0 +1,61 @@
+{
+  PsiType psiType=parameter.getType();
+  JetType varargElementType;
+  if (psiType instanceof PsiEllipsisType) {
+    PsiEllipsisType psiEllipsisType=(PsiEllipsisType)psiType;
+    varargElementType=semanticServices.getTypeTransformer().transformToType(psiEllipsisType.getComponentType());
+  }
+ else {
+    varargElementType=null;
+  }
+  boolean changeNullable=false;
+  boolean nullable=true;
+  String typeFromAnnotation=null;
+  boolean receiver=false;
+  boolean hasDefaultValue=false;
+  String name=parameter.getName() != null ? parameter.getName() : "p" + i;
+  for (  PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
+    if (annotation.getQualifiedName().equals(JvmStdlibNames.JET_VALUE_PARAMETER.getFqName())) {
+      PsiLiteralExpression nameExpression=(PsiLiteralExpression)annotation.findAttributeValue(JvmStdlibNames.JET_VALUE_PARAMETER_NAME_FIELD);
+      if (nameExpression != null) {
+        name=(String)nameExpression.getValue();
+      }
+      PsiLiteralExpression nullableExpression=(PsiLiteralExpression)annotation.findAttributeValue(JvmStdlibNames.JET_VALUE_PARAMETER_NULLABLE_FIELD);
+      if (nullableExpression != null) {
+        nullable=(Boolean)nullableExpression.getValue();
+      }
+ else {
+        nullable=false;
+        changeNullable=true;
+      }
+      PsiLiteralExpression signatureExpression=(PsiLiteralExpression)annotation.findAttributeValue(JvmStdlibNames.JET_VALUE_PARAMETER_TYPE_FIELD);
+      if (signatureExpression != null) {
+        typeFromAnnotation=(String)signatureExpression.getValue();
+      }
+      PsiLiteralExpression receiverExpression=(PsiLiteralExpression)annotation.findAttributeValue(JvmStdlibNames.JET_VALUE_PARAMETER_RECEIVER_FIELD);
+      if (receiverExpression != null) {
+        receiver=(Boolean)receiverExpression.getValue();
+      }
+      PsiLiteralExpression hasDefaultValueExpression=(PsiLiteralExpression)annotation.findAttributeValue(JvmStdlibNames.JET_VALUE_PARAMETER_HAS_DEFAULT_VALUE_FIELD);
+      if (hasDefaultValueExpression != null) {
+        hasDefaultValue=(Boolean)hasDefaultValueExpression.getValue();
+      }
+    }
+ else     if (annotation.getQualifiedName().equals(JvmStdlibNames.JET_TYPE_PARAMETER.getFqName())) {
+      return JvmMethodParameterMeaning.typeInfo(new Object());
+    }
+  }
+  JetType outType;
+  if (typeFromAnnotation != null && typeFromAnnotation.length() > 0) {
+    outType=semanticServices.getTypeTransformer().transformToType(typeFromAnnotation,typeVariableResolver);
+  }
+ else {
+    outType=semanticServices.getTypeTransformer().transformToType(psiType);
+  }
+  if (receiver) {
+    return JvmMethodParameterMeaning.receiver(outType);
+  }
+ else {
+    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,null,changeNullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,hasDefaultValue,varargElementType));
+  }
+}

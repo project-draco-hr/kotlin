@@ -1,0 +1,31 @@
+{
+  final List<TypeParameterDescriptor> r=new ArrayList<TypeParameterDescriptor>();
+class MyTypeVariableResolver implements TypeVariableResolver {
+    @NotNull @Override public TypeParameterDescriptor getTypeVariable(    @NotNull String name){
+      for (      TypeParameterDescriptor typeParameter : r) {
+        if (typeParameter.getName().equals(name)) {
+          return typeParameter;
+        }
+      }
+      return outerClassTypeVariableResolver.getTypeVariable(name);
+    }
+  }
+  new JetSignatureReader(jetSignature).accept(new JetSignatureExceptionsAdapter(){
+    @Override public JetSignatureVisitor visitFormalTypeParameter(    final String name,    final TypeInfoVariance variance){
+      return new JetSignatureTypeParameterVisitor(classDescriptor,clazz,name,variance,new MyTypeVariableResolver()){
+        @Override protected void done(        TypeParameterDescriptor typeParameterDescriptor){
+          r.add(typeParameterDescriptor);
+        }
+      }
+;
+    }
+    @Override public JetSignatureVisitor visitSuperclass(){
+      return new JetSignatureAdapter();
+    }
+    @Override public JetSignatureVisitor visitInterface(){
+      return new JetSignatureAdapter();
+    }
+  }
+);
+  return r;
+}
