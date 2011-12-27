@@ -1,0 +1,45 @@
+{
+  if (ApplicationManager.getApplication().isUnitTestMode())   return;
+  final LibraryTable libraryTable=ProjectLibraryTable.getInstance(module.getProject());
+  kotlin=ApplicationManager.getApplication().runReadAction(new Computable<Library>(){
+    @Override public Library compute(){
+      return libraryTable.getLibraryByName(KOTLIN_STD_LIB);
+    }
+  }
+);
+  if (kotlin == null) {
+    kotlin=ApplicationManager.getApplication().runWriteAction(new Computable<Library>(){
+      @Override public Library compute(){
+        Library library=libraryTable.createLibrary(KOTLIN_STD_LIB);
+        Library.ModifiableModel modifiableModel=library.getModifiableModel();
+        final File unpackedRuntimePath=AbstractCompileEnvironment.getUnpackedRuntimePath();
+        if (unpackedRuntimePath != null) {
+          modifiableModel.addRoot(LocalFileSystem.getInstance().findFileByIoFile(unpackedRuntimePath),OrderRootType.CLASSES);
+        }
+ else {
+          final File runtimeJarPath=AbstractCompileEnvironment.getRuntimeJarPath();
+          if (runtimeJarPath != null && runtimeJarPath.exists()) {
+            modifiableModel.addRoot(LocalFileSystem.getInstance().findFileByIoFile(unpackedRuntimePath),OrderRootType.CLASSES);
+          }
+ else {
+          }
+        }
+        modifiableModel.commit();
+        return library;
+      }
+    }
+);
+  }
+  ModuleRootManager rootManager=ModuleRootManager.getInstance(module);
+  final ModifiableRootModel modifiableModel=rootManager.getModifiableModel();
+  LibraryOrderEntry libraryOrderEntry=modifiableModel.findLibraryOrderEntry(kotlin);
+  if (libraryOrderEntry == null) {
+    modifiableModel.addLibraryEntry(kotlin);
+    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+      @Override public void run(){
+        modifiableModel.commit();
+      }
+    }
+);
+  }
+}

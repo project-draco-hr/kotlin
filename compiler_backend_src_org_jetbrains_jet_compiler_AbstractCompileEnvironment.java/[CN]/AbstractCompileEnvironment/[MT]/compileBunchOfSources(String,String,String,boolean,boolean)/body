@@ -1,0 +1,30 @@
+{
+  CompileSession session=new CompileSession(this);
+  session.addSources(sourceFileOrDir);
+  if (!stdlib)   session.addStdLibSources();
+  String mainClass=null;
+  for (  JetNamespace namespace : session.getSourceFileNamespaces()) {
+    if (JetMainDetector.hasMain(namespace.getDeclarations())) {
+      mainClass=JetPsiUtil.getFQName(namespace) + ".namespace";
+      break;
+    }
+  }
+  if (!session.analyze(System.out)) {
+    return;
+  }
+  ClassFileFactory factory=session.generate();
+  if (jar != null) {
+    try {
+      writeToJar(factory,new FileOutputStream(jar),mainClass,includeRuntime);
+    }
+ catch (    FileNotFoundException e) {
+      throw new CompileEnvironmentException("Invalid jar path " + jar,e);
+    }
+  }
+ else   if (outputDir != null) {
+    writeToOutputDirectory(factory,outputDir);
+  }
+ else {
+    throw new CompileEnvironmentException("Output directory or jar file is not specified - no files will be saved to the disk");
+  }
+}
