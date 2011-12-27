@@ -10,16 +10,42 @@
     }
     return functionDescriptor;
   }
-  DeclarationDescriptor classDescriptor=method.hasModifierProperty(PsiModifier.STATIC) ? resolveNamespace(method.getContainingClass()) : resolveClass(method.getContainingClass());
+  DeclarationDescriptor classDescriptor;
+  final List<TypeParameterDescriptor> classTypeParameters;
+  if (method.hasModifierProperty(PsiModifier.STATIC)) {
+    classDescriptor=resolveNamespace(method.getContainingClass());
+    classTypeParameters=Collections.emptyList();
+  }
+ else {
+    ClassDescriptor classClassDescriptor=resolveClass(method.getContainingClass());
+    classDescriptor=classClassDescriptor;
+    classTypeParameters=classClassDescriptor.getTypeConstructor().getParameters();
+  }
   if (classDescriptor == null) {
     return null;
   }
   PsiParameter[] parameters=method.getParameterList().getParameters();
   FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),method.getName());
   methodDescriptorCache.put(method,functionDescriptorImpl);
-  List<TypeParameterDescriptor> typeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl);
-  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,parameters);
-  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),typeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(method));
+  TypeParameterListTypeVariableResolver typeVariableResolverForParameters=new TypeParameterListTypeVariableResolver(classTypeParameters);
+  final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
+class MethodTypeVariableResolver implements TypeVariableResolver {
+    @NotNull @Override public TypeParameterDescriptor getTypeVariable(    @NotNull String name){
+      for (      TypeParameterDescriptor typeParameter : methodTypeParameters) {
+        if (typeParameter.getName().equals(name)) {
+          return typeParameter;
+        }
+      }
+      for (      TypeParameterDescriptor typeParameter : classTypeParameters) {
+        if (typeParameter.getName().equals(name)) {
+          return typeParameter;
+        }
+      }
+      throw new IllegalStateException("unresolver variable: " + name);
+    }
+  }
+  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,parameters,new MethodTypeVariableResolver());
+  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,new MethodTypeVariableResolver()),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(method));
   semanticServices.getTrace().record(BindingContext.FUNCTION,method,functionDescriptorImpl);
   FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
   if (method.getContainingClass() != psiClass) {
