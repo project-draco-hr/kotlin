@@ -1,9 +1,9 @@
 {
-  CachedValue<BindingContext> bindingContextCachedValue=file.getUserData(BINDING_CONTEXT);
-  if (bindingContextCachedValue == null) {
-    bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<BindingContext>(){
-      @Override public Result<BindingContext> compute(){
 synchronized (lock) {
+    CachedValue<BindingContext> bindingContextCachedValue=file.getUserData(BINDING_CONTEXT);
+    if (bindingContextCachedValue == null) {
+      bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<BindingContext>(){
+        @Override public Result<BindingContext> compute(){
           try {
             BindingContext bindingContext=analyzeNamespacesWithJavaIntegration(file.getProject(),declarationProvider.fun(file),Predicates.<PsiFile>equalTo(file),JetControlFlowDataTraceFactory.EMPTY);
             return new Result<BindingContext>(bindingContext,PsiModificationTracker.MODIFICATION_COUNT);
@@ -20,9 +20,9 @@ catch (          Throwable e) {
           }
         }
       }
-    }
 ,false);
-    file.putUserData(BINDING_CONTEXT,bindingContextCachedValue);
+      file.putUserData(BINDING_CONTEXT,bindingContextCachedValue);
+    }
+    return bindingContextCachedValue.getValue();
   }
-  return bindingContextCachedValue.getValue();
 }
