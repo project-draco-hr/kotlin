@@ -1,0 +1,31 @@
+{
+  JetScope libraryScope=semanticServices.getStandardLibrary().getLibraryScope();
+  ModuleDescriptor owner=new ModuleDescriptor("<module>");
+  final WritableScope scope=new WritableScopeImpl(JetScope.EMPTY,owner,new TraceBasedRedeclarationHandler(bindingTraceContext)).setDebugName("Root scope in analyzeNamespace");
+  scope.importScope(libraryScope);
+  scope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  TopDownAnalyzer.process(semanticServices,bindingTraceContext,scope,new NamespaceLike.Adapter(owner){
+    private Map<String,NamespaceDescriptorImpl> declaredNamespaces=Maps.newHashMap();
+    @Override public NamespaceDescriptorImpl getNamespace(    String name){
+      return declaredNamespaces.get(name);
+    }
+    @Override public void addNamespace(    @NotNull NamespaceDescriptor namespaceDescriptor){
+      scope.addNamespace(namespaceDescriptor);
+      declaredNamespaces.put(namespaceDescriptor.getName(),(NamespaceDescriptorImpl)namespaceDescriptor);
+    }
+    @Override public void addClassifierDescriptor(    @NotNull MutableClassDescriptor classDescriptor){
+      scope.addClassifierDescriptor(classDescriptor);
+    }
+    @Override public void addFunctionDescriptor(    @NotNull FunctionDescriptor functionDescriptor){
+      scope.addFunctionDescriptor(functionDescriptor);
+    }
+    @Override public void addPropertyDescriptor(    @NotNull PropertyDescriptor propertyDescriptor){
+      scope.addPropertyDescriptor(propertyDescriptor);
+    }
+    @Override public ClassObjectStatus setClassObjectDescriptor(    @NotNull MutableClassDescriptor classObjectDescriptor){
+      throw new IllegalStateException("Must be guaranteed not to happen by the parser");
+    }
+  }
+,files,filesToAnalyzeCompletely,flowDataTraceFactory,configuration);
+  return bindingTraceContext.getBindingContext();
+}
