@@ -1,0 +1,41 @@
+{
+  Map<String,Integer> declarationToIntPosition=Maps.newHashMap();
+  Map<Integer,String> intPositionToReference=Maps.newHashMap();
+  Map<Integer,String> intPositionToType=Maps.newHashMap();
+  Pattern pattern=Pattern.compile("(~[^~]+~)|(`[^`]+`)");
+  while (true) {
+    Matcher matcher=pattern.matcher(text);
+    if (!matcher.find())     break;
+    String group=matcher.group();
+    String name=group.substring(1,group.length() - 1);
+    int start=matcher.start();
+    if (group.startsWith("~")) {
+      if (declarationToIntPosition.put(name,start) != null) {
+        throw new IllegalArgumentException("Redeclaration: " + name);
+      }
+    }
+ else     if (group.startsWith("`")) {
+      if (name.startsWith(":")) {
+        intPositionToType.put(start - 1,name.substring(1));
+      }
+ else {
+        intPositionToReference.put(start,name);
+      }
+    }
+ else {
+      throw new IllegalStateException();
+    }
+    text=text.substring(0,start) + text.substring(matcher.end());
+  }
+  JetFile jetFile=createJetFile(fileName,text);
+  for (  Map.Entry<Integer,String> entry : intPositionToType.entrySet()) {
+    positionToType.put(new Position(jetFile,entry.getKey()),entry.getValue());
+  }
+  for (  Map.Entry<String,Integer> entry : declarationToIntPosition.entrySet()) {
+    declarationToPosition.put(entry.getKey(),new Position(jetFile,entry.getValue()));
+  }
+  for (  Map.Entry<Integer,String> entry : intPositionToReference.entrySet()) {
+    positionToReference.put(new Position(jetFile,entry.getKey()),entry.getValue());
+  }
+  return jetFile;
+}
