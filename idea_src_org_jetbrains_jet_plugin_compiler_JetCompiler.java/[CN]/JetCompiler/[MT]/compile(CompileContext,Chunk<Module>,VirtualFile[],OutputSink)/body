@@ -8,11 +8,16 @@
   }
   ApplicationManager.getApplication().runReadAction(new Runnable(){
     @Override public void run(){
-      PluginCompilerEnvironment compilerEnvironment=new PluginCompilerEnvironment(compileContext.getProject());
-      CompileSession compileSession=new CompileSession(compilerEnvironment);
-      compileSession.addSources(compileContext.getCompileScope().getFiles(null,true));
-      compileSession.addStdLibSources();
-      BindingContext bindingContext=compileSession.analyze();
+      VirtualFile[] allFiles=compileContext.getCompileScope().getFiles(null,true);
+      GenerationState generationState=new GenerationState(compileContext.getProject(),ClassBuilderFactory.BINARIES);
+      List<JetFile> files=Lists.newArrayList();
+      for (      VirtualFile virtualFile : allFiles) {
+        PsiFile psiFile=PsiManager.getInstance(compileContext.getProject()).findFile(virtualFile);
+        if (psiFile instanceof JetFile) {
+          files.add(((JetFile)psiFile));
+        }
+      }
+      BindingContext bindingContext=AnalyzerFacade.analyzeFilesWithJavaIntegration(compileContext.getProject(),files,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
       boolean errors=false;
       for (      Diagnostic diagnostic : bindingContext.getDiagnostics()) {
 switch (diagnostic.getSeverity()) {
@@ -29,7 +34,7 @@ break;
 }
 }
 if (!errors) {
-final ClassFileFactory factory=compileSession.generate(new CompilationErrorHandler(){
+generationState.compileCorrectFiles(bindingContext,files,new CompilationErrorHandler(){
 @Override public void reportException(Throwable exception,String fileUrl){
 if (exception instanceof CompilationException) {
 report((CompilationException)exception,compileContext);
@@ -40,8 +45,9 @@ compileContext.addMessage(CompilerMessageCategory.ERROR,exception.getClass().get
 }
 }
 );
-List<String> files=factory.files();
-for (String file : files) {
+final ClassFileFactory factory=generationState.getFactory();
+List<String> filesNames=factory.files();
+for (String file : filesNames) {
 File target=new File(outputDir.getPath(),file);
 try {
 FileUtil.writeToFile(target,factory.asBytes(file));

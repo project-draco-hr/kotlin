@@ -1,5 +1,5 @@
 {
-  final PsiJavaFileStubImpl answer=new PsiJavaFileStubImpl(JetPsiUtil.getFQName(file.getRootNamespace()),true);
+  final PsiJavaFileStubImpl answer=new PsiJavaFileStubImpl(JetPsiUtil.getFQName(file),true);
   final Project project=getProject();
   final Stack<StubElement> stubStack=new Stack<StubElement>();
   final ClassBuilderFactory builderFactory=new ClassBuilderFactory(){
@@ -15,7 +15,7 @@
   }
 ;
   final GenerationState state=new GenerationState(project,builderFactory){
-    @Override protected void generateNamespace(    JetNamespace namespace){
+    @Override protected void generateNamespace(    JetFile namespace){
       PsiManager manager=PsiManager.getInstance(project);
       stubStack.push(answer);
       answer.setPsiFactory(new ClsWrapperStubPsiFactory());
@@ -39,9 +39,9 @@
     }
   }
 ;
-  List<PsiFile> files=Collections.<PsiFile>singletonList(file);
+  List<JetFile> files=Collections.singletonList(file);
   final BindingContext context=AnalyzerFacade.shallowAnalyzeFiles(files);
-  state.compileCorrectNamespaces(context,AnalyzerFacade.collectRootNamespaces(files));
+  state.compileCorrectFiles(context,files);
   state.getFactory().files();
   return answer;
 }
