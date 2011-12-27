@@ -8,11 +8,16 @@
   }
   ApplicationManager.getApplication().runReadAction(new Runnable(){
     @Override public void run(){
-      PluginCompilerEnvironment compilerEnvironment=new PluginCompilerEnvironment(compileContext.getProject());
-      CompileSession compileSession=new CompileSession(compilerEnvironment);
-      compileSession.addSources(compileContext.getCompileScope().getFiles(null,true));
-      compileSession.addStdLibSources();
-      BindingContext bindingContext=compileSession.analyze();
+      VirtualFile[] allFiles=compileContext.getCompileScope().getFiles(null,true);
+      GenerationState generationState=new GenerationState(compileContext.getProject(),ClassBuilderFactory.BINARIES);
+      List<JetNamespace> namespaces=Lists.newArrayList();
+      for (      VirtualFile virtualFile : allFiles) {
+        PsiFile psiFile=PsiManager.getInstance(compileContext.getProject()).findFile(virtualFile);
+        if (psiFile instanceof JetFile) {
+          namespaces.add(((JetFile)psiFile).getRootNamespace());
+        }
+      }
+      BindingContext bindingContext=AnalyzerFacade.analyzeNamespacesWithJavaIntegration(compileContext.getProject(),namespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
       boolean errors=false;
       for (      Diagnostic diagnostic : bindingContext.getDiagnostics()) {
 switch (diagnostic.getSeverity()) {
@@ -29,7 +34,7 @@ break;
 }
 }
 if (!errors) {
-final ClassFileFactory factory=compileSession.generate(new CompilationErrorHandler(){
+generationState.compileCorrectNamespaces(bindingContext,namespaces,new CompilationErrorHandler(){
 @Override public void reportException(Throwable exception,String fileUrl){
 if (exception instanceof CompilationException) {
 report((CompilationException)exception,compileContext);
@@ -40,6 +45,7 @@ compileContext.addMessage(CompilerMessageCategory.ERROR,exception.getClass().get
 }
 }
 );
+final ClassFileFactory factory=generationState.getFactory();
 List<String> files=factory.files();
 for (String file : files) {
 File target=new File(outputDir.getPath(),file);
