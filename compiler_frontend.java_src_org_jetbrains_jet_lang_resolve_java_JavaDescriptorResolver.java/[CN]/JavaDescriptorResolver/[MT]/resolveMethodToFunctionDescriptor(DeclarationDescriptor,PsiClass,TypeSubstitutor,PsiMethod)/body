@@ -10,6 +10,30 @@
     }
     return functionDescriptor;
   }
+  boolean kotlin;
+  if (owner instanceof JavaNamespaceDescriptor) {
+    JavaNamespaceDescriptor javaNamespaceDescriptor=(JavaNamespaceDescriptor)owner;
+    ResolverNamespaceData namespaceData=namespaceDescriptorCacheByFqn.get(javaNamespaceDescriptor.getQualifiedName());
+    if (namespaceData == null) {
+      throw new IllegalStateException("namespaceData not found by name " + javaNamespaceDescriptor.getQualifiedName());
+    }
+    kotlin=namespaceData.kotlin;
+  }
+ else {
+    ResolverClassData classData=classDescriptorCache.get(psiClass.getQualifiedName());
+    if (classData == null) {
+      throw new IllegalStateException("classData not found by name " + psiClass.getQualifiedName());
+    }
+    kotlin=classData.kotlin;
+  }
+  if (kotlin) {
+    if (method.getName().startsWith(JvmAbi.GETTER_PREFIX) && method.getParameterList().getParametersCount() == 0) {
+      return null;
+    }
+    if (method.getName().startsWith(JvmAbi.SETTER_PREFIX) && method.getParameterList().getParametersCount() == 1) {
+      return null;
+    }
+  }
   DeclarationDescriptor classDescriptor;
   final List<TypeParameterDescriptor> classTypeParameters;
   if (method.hasModifierProperty(PsiModifier.STATIC)) {
