@@ -2,5 +2,10 @@
   if (firstPhase)   return Collections.emptyList();
   JetType variableType=variableDescriptor.getReturnType();
   if (variableType == null)   return Collections.emptyList();
-  return addBoundToReceiver(lookupDescriptorsForSimpleNameReference(memberReference,variableType.getMemberScope()),variableDescriptor);
+  Collection<DeclarationDescriptor> members=lookupDescriptorsForSimpleNameReference(memberReference,variableType.getMemberScope());
+  if (!importMembersFromObjectsAndVars) {
+    trace.report(CANNOT_IMPORT_VARIABLE_MEMBERS.on(memberReference));
+    return Collections.emptyList();
+  }
+  return addBoundToReceiver(members,variableDescriptor);
 }
