@@ -1,14 +1,15 @@
 {
   codegen.generateStringBuilderConstructor();
-  if (receiver == null) {
+  if (receiver == null || receiver == StackValue.none()) {
+    codegen.invokeAppend(arguments.get(0));
+    codegen.invokeAppend(arguments.get(1));
+  }
+ else {
     v.swap();
     codegen.invokeAppendMethod(expectedType);
     codegen.invokeAppend(arguments.get(0));
   }
- else {
-    codegen.invokeAppend(arguments.get(0));
-    codegen.invokeAppend(arguments.get(1));
-  }
   v.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;");
-  return StackValue.onStack(Type.getObjectType("java/lang/String"));
+  StackValue.onStack(JetTypeMapper.JL_STRING_TYPE).put(expectedType,v);
+  return StackValue.onStack(expectedType);
 }
