@@ -1,0 +1,63 @@
+{
+  ResolverScopeData scopeData;
+  if (owner instanceof JavaNamespaceDescriptor) {
+    scopeData=namespaceDescriptorCacheByFqn.get(((JavaNamespaceDescriptor)owner).getQualifiedName());
+  }
+ else   if (owner instanceof JavaClassDescriptor) {
+    scopeData=classDescriptorCache.get(psiClass.getQualifiedName());
+  }
+ else {
+    throw new IllegalStateException();
+  }
+  if (scopeData == null) {
+    throw new IllegalStateException();
+  }
+  if (scopeData.properties != null) {
+    return scopeData.properties;
+  }
+  Set<VariableDescriptor> descriptors=Sets.newHashSet();
+  for (  Map.Entry<PropertyKey,MembersForProperty> entry : getMembersForProperties(psiClass,staticMembers,scopeData.kotlin).entrySet()) {
+    String propertyName=entry.getKey().name;
+    PsiType propertyType=entry.getKey().type;
+    MembersForProperty members=entry.getValue();
+    JetType type=semanticServices.getTypeTransformer().transformToType(propertyType);
+    boolean isFinal;
+    if (members.setter == null && members.getter == null) {
+      isFinal=members.field.hasModifierProperty(PsiModifier.FINAL);
+    }
+ else     if (members.getter != null) {
+      isFinal=members.getter.hasModifierProperty(PsiModifier.FINAL);
+    }
+ else     if (members.setter != null) {
+      isFinal=members.setter.hasModifierProperty(PsiModifier.FINAL);
+    }
+ else {
+      isFinal=false;
+    }
+    PsiMember anyMember;
+    if (members.getter != null) {
+      anyMember=members.getter;
+    }
+ else     if (members.field != null) {
+      anyMember=members.field;
+    }
+ else     if (members.setter != null) {
+      anyMember=members.setter;
+    }
+ else {
+      throw new IllegalStateException();
+    }
+    boolean isVar;
+    if (members.getter == null && members.setter == null) {
+      isVar=true;
+    }
+ else {
+      isVar=members.setter != null;
+    }
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember),isVar,null,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),propertyName,type);
+    semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember,propertyDescriptor);
+    descriptors.add(propertyDescriptor);
+  }
+  scopeData.properties=descriptors;
+  return descriptors;
+}

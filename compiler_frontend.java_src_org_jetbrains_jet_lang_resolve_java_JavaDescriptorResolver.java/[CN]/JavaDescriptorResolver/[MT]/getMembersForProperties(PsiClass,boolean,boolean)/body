@@ -1,0 +1,56 @@
+{
+  Map<PropertyKey,MembersForProperty> membersMap=Maps.newHashMap();
+  if (!kotlin) {
+    for (    PsiField field : clazz.getFields()) {
+      if (field.getModifierList().hasExplicitModifier(PsiModifier.STATIC) != staticMembers) {
+        continue;
+      }
+      if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+        continue;
+      }
+      MembersForProperty members=new MembersForProperty();
+      members.field=field;
+      membersMap.put(new PropertyKey(field.getName(),field.getType()),members);
+    }
+  }
+  for (  PsiMethod method : clazz.getMethods()) {
+    if (method.getModifierList().hasExplicitModifier(PsiModifier.STATIC) != staticMembers) {
+      continue;
+    }
+    if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      continue;
+    }
+    if (method.getName().startsWith(JvmAbi.GETTER_PREFIX)) {
+      if (method.getModifierList().findAnnotation(JvmStdlibNames.JET_PROPERTY.getFqName()) != null) {
+        if (method.getParameterList().getParametersCount() == 0) {
+          if (method.getName().equals(JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD)) {
+            continue;
+          }
+          String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.GETTER_PREFIX.length()));
+          PropertyKey key=new PropertyKey(propertyName,method.getReturnType());
+          MembersForProperty members=membersMap.get(key);
+          if (members == null) {
+            members=new MembersForProperty();
+            membersMap.put(key,members);
+          }
+          members.getter=method;
+        }
+      }
+    }
+ else     if (method.getName().startsWith(JvmAbi.SETTER_PREFIX)) {
+      if (method.getModifierList().findAnnotation(JvmStdlibNames.JET_PROPERTY.getFqName()) != null) {
+        if (method.getParameterList().getParametersCount() == 1) {
+          String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.SETTER_PREFIX.length()));
+          PropertyKey key=new PropertyKey(propertyName,method.getParameterList().getParameters()[0].getType());
+          MembersForProperty members=membersMap.get(key);
+          if (members == null) {
+            members=new MembersForProperty();
+            membersMap.put(key,members);
+          }
+          members.setter=method;
+        }
+      }
+    }
+  }
+  return membersMap;
+}
