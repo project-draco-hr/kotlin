@@ -1,5 +1,16 @@
 {
-  return new JetTypeJetSignatureReader(javaDescriptorResolver,jetStandardLibrary,typeVariableResolver){
+  return new JetTypeJetSignatureReader(javaSemanticServices,jetStandardLibrary,typeVariableResolver){
+    @Override public void visitBaseType(    char descriptor,    boolean nullable){
+      JetType primitiveType=getPrimitiveType(descriptor,nullable);
+      JetType arrayType;
+      if (!nullable) {
+        arrayType=jetStandardLibrary.getPrimitiveArrayType(primitiveType);
+      }
+ else {
+        arrayType=TypeUtils.makeNullableAsSpecified(jetStandardLibrary.getArrayType(primitiveType),nullable);
+      }
+      JetTypeJetSignatureReader.this.done(arrayType);
+    }
     @Override protected void done(    @NotNull JetType jetType){
       JetType arrayType=TypeUtils.makeNullableAsSpecified(jetStandardLibrary.getArrayType(jetType),nullable);
       JetTypeJetSignatureReader.this.done(arrayType);
