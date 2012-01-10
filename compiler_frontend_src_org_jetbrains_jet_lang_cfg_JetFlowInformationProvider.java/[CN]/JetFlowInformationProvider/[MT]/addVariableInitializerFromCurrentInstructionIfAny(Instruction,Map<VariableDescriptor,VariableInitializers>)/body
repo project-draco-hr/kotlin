@@ -5,5 +5,19 @@
     VariableInitializers initializationAtThisElement=new VariableInitializers(((WriteValueInstruction)instruction).getElement());
     exitInstructionData.put(variable,initializationAtThisElement);
   }
+ else   if (instruction instanceof VariableDeclarationInstruction) {
+    VariableDescriptor variable=extractVariableDescriptorIfAny(instruction,false);
+    VariableInitializers enterInitializers=enterInstructionData.get(variable);
+    if (enterInitializers == null || !enterInitializers.isInitialized()) {
+      JetElement element=((VariableDeclarationInstruction)instruction).getElement();
+      if (element instanceof JetProperty) {
+        JetProperty property=(JetProperty)element;
+        if (property.getInitializer() == null) {
+          VariableInitializers variableDeclarationInfo=new VariableInitializers(false,true);
+          exitInstructionData.put(variable,variableDeclarationInfo);
+        }
+      }
+    }
+  }
   return exitInstructionData;
 }
