@@ -1,10 +1,10 @@
 {
   PsiElement parent=expression.getParent();
-  if (parent instanceof JetQualifiedExpression) {
+  if (parent instanceof JetQualifiedExpression && !(parent.getParent() instanceof JetImportDirective)) {
     JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)parent;
     JetExpression receiverExpression=qualifiedExpression.getReceiverExpression();
-    final JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
     final JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+    final JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
     if (expressionType != null && resolutionScope != null) {
       return includeExternalCallableExtensions(expressionType.getMemberScope().getAllDescriptors(),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType));
     }
@@ -12,7 +12,12 @@
  else {
     JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
     if (resolutionScope != null) {
-      return excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope);
+      if (parent instanceof JetImportDirective) {
+        return excludeNonPackageDescriptors(resolutionScope.getAllDescriptors());
+      }
+ else {
+        return excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope);
+      }
     }
   }
   return Collections.emptyList();
