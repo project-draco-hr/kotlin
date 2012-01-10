@@ -1,20 +1,19 @@
 {
-  Type type1=state.getTypeMapper().mapType(overriddenFunction.getOriginal().getReturnType());
-  Type type2=state.getTypeMapper().mapType(functionDescriptor.getReturnType());
-  if (!type1.equals(type2)) {
-    Method overriden=state.getTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction.getOriginal()).getAsmMethod();
+  Method method=state.getTypeMapper().mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod();
+  Method overriden=state.getTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction.getOriginal()).getAsmMethod();
+  if (differentMethods(method,overriden)) {
     int flags=ACC_PUBLIC;
     final MethodVisitor mv=v.newMethod(null,flags,jvmSignature.getName(),overriden.getDescriptor(),null,null);
     if (v.generateCode()) {
       mv.visitCode();
-      Type[] argTypes=jvmSignature.getArgumentTypes();
+      Type[] argTypes=overriden.getArgumentTypes();
       InstructionAdapter iv=new InstructionAdapter(mv);
       iv.load(0,JetTypeMapper.TYPE_OBJECT);
       for (int i=0, reg=1; i < argTypes.length; i++) {
         Type argType=argTypes[i];
         iv.load(reg,argType);
         if (argType.getSort() == Type.OBJECT) {
-          iv.checkcast(argType);
+          StackValue.onStack(JetTypeMapper.TYPE_OBJECT).put(method.getArgumentTypes()[i],iv);
         }
         reg+=argType.getSize();
       }
