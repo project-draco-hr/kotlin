@@ -6,22 +6,11 @@
     if (namespaceDescriptor != null)     descriptors.add(namespaceDescriptor);
     ClassifierDescriptor classifierDescriptor=outerScope.getClassifier(referencedName);
     if (classifierDescriptor != null)     descriptors.add(classifierDescriptor);
+    ClassDescriptor objectDescriptor=outerScope.getObjectDescriptor(referencedName);
+    if (objectDescriptor != null)     descriptors.add(objectDescriptor);
     descriptors.addAll(outerScope.getFunctions(referencedName));
     descriptors.addAll(outerScope.getProperties(referencedName));
   }
-  if (!firstPhase) {
-    if (descriptors.size() == 1) {
-      trace.record(BindingContext.REFERENCE_TARGET,referenceExpression,descriptors.get(0));
-    }
- else     if (descriptors.size() > 1) {
-      trace.record(BindingContext.AMBIGUOUS_REFERENCE_TARGET,referenceExpression,descriptors);
-    }
- else {
-      trace.report(UNRESOLVED_REFERENCE.on(referenceExpression));
-    }
-    if (descriptors.size() <= 1 && outerScope != JetScope.EMPTY) {
-      trace.record(BindingContext.RESOLUTION_SCOPE,referenceExpression,outerScope);
-    }
-  }
+  recordReference(descriptors,referenceExpression,outerScope);
   return descriptors;
 }
