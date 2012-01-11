@@ -19,6 +19,7 @@
   for (  Map.Entry<PropertyKey,MembersForProperty> entry : getMembersForProperties(psiClass,staticMembers,scopeData.kotlin).entrySet()) {
     String propertyName=entry.getKey().name;
     PsiType propertyType=entry.getKey().type;
+    PsiType receiverType=entry.getKey().receiverType;
     MembersForProperty members=entry.getValue();
     JetType type=semanticServices.getTypeTransformer().transformToType(propertyType);
     boolean isFinal;
@@ -54,7 +55,14 @@
  else {
       isVar=members.setter != null;
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember),isVar,false,null,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),propertyName,type);
+    JetType receiverJetType;
+    if (receiverType == null) {
+      receiverJetType=null;
+    }
+ else {
+      receiverJetType=semanticServices.getTypeTransformer().transformToType(receiverType);
+    }
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember),isVar,false,receiverJetType,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),propertyName,type);
     semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember,propertyDescriptor);
     descriptors.add(propertyDescriptor);
   }
