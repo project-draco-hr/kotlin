@@ -3,14 +3,13 @@
   BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
   Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,myExpression);
   if (declarationDescriptors == null)   return ResolveResult.EMPTY_ARRAY;
-  ResolveResult[] results=new ResolveResult[declarationDescriptors.size()];
-  int i=0;
+  ArrayList<ResolveResult> results=new ArrayList<ResolveResult>(declarationDescriptors.size());
   for (  DeclarationDescriptor descriptor : declarationDescriptors) {
     PsiElement element=bindingContext.get(DESCRIPTOR_TO_DECLARATION,descriptor);
-    if (element != null) {
-      results[i]=new PsiElementResolveResult(element,true);
-      i++;
+    if (element == null) {
+      element=file;
     }
+    results.add(new PsiElementResolveResult(element,true));
   }
-  return results;
+  return results.toArray(new ResolveResult[results.size()]);
 }
