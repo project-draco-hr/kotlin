@@ -1,0 +1,35 @@
+{
+  if (parameter.getJetTypeParameter().isDefined()) {
+    return JvmMethodParameterMeaning.typeInfo(new Object());
+  }
+  PsiType psiType=parameter.getPsiParameter().getType();
+  JetType varargElementType;
+  if (psiType instanceof PsiEllipsisType) {
+    PsiEllipsisType psiEllipsisType=(PsiEllipsisType)psiType;
+    varargElementType=semanticServices.getTypeTransformer().transformToType(psiEllipsisType.getComponentType());
+  }
+ else {
+    varargElementType=null;
+  }
+  boolean nullable=parameter.getJetValueParameter().nullable();
+  String name=parameter.getPsiParameter().getName() != null ? parameter.getPsiParameter().getName() : "p" + i;
+  if (parameter.getJetValueParameter().name().length() > 0) {
+    name=parameter.getJetValueParameter().name();
+  }
+  String typeFromAnnotation=parameter.getJetValueParameter().type();
+  boolean receiver=parameter.getJetValueParameter().receiver();
+  boolean hasDefaultValue=parameter.getJetValueParameter().hasDefaultValue();
+  JetType outType;
+  if (typeFromAnnotation.length() > 0) {
+    outType=semanticServices.getTypeTransformer().transformToType(typeFromAnnotation,typeVariableResolver);
+  }
+ else {
+    outType=semanticServices.getTypeTransformer().transformToType(psiType);
+  }
+  if (receiver) {
+    return JvmMethodParameterMeaning.receiver(outType);
+  }
+ else {
+    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,false,nullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,hasDefaultValue,varargElementType));
+  }
+}
