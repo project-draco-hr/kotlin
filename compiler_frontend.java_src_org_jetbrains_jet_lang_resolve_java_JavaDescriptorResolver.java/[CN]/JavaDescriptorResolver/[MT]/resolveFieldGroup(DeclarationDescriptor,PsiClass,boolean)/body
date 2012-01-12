@@ -16,26 +16,27 @@
     return scopeData.properties;
   }
   Set<VariableDescriptor> descriptors=Sets.newHashSet();
-  for (  Map.Entry<PropertyKey,MembersForProperty> entry : getMembersForProperties(psiClass,staticMembers,scopeData.kotlin).entrySet()) {
+  Map<PropertyKey,MembersForProperty> membersForProperties=getMembersForProperties(psiClass,staticMembers,scopeData.kotlin);
+  for (  Map.Entry<PropertyKey,MembersForProperty> entry : membersForProperties.entrySet()) {
     String propertyName=entry.getKey().name;
-    PsiType propertyType=entry.getKey().type;
-    PsiType receiverType=entry.getKey().receiverType;
+    PsiType propertyType=entry.getValue().type;
+    PsiType receiverType=entry.getValue().receiverType;
     MembersForProperty members=entry.getValue();
     JetType type=semanticServices.getTypeTransformer().transformToType(propertyType);
     boolean isFinal;
     if (members.setter == null && members.getter == null) {
-      isFinal=members.field.hasModifierProperty(PsiModifier.FINAL);
+      isFinal=false;
     }
  else     if (members.getter != null) {
-      isFinal=members.getter.hasModifierProperty(PsiModifier.FINAL);
+      isFinal=members.getter.isFinal();
     }
  else     if (members.setter != null) {
-      isFinal=members.setter.hasModifierProperty(PsiModifier.FINAL);
+      isFinal=members.setter.isFinal();
     }
  else {
       isFinal=false;
     }
-    PsiMember anyMember;
+    PsiMemberWrapper anyMember;
     if (members.getter != null) {
       anyMember=members.getter;
     }
@@ -55,6 +56,31 @@
  else {
       isVar=members.setter != null;
     }
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember.psiMember),isVar,false,propertyName);
+    PropertyGetterDescriptor getterDescriptor=null;
+    PropertySetterDescriptor setterDescriptor=null;
+    if (members.getter != null) {
+      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+    }
+    if (members.setter != null) {
+      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+    }
+    propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
+    final List<TypeParameterDescriptor> classTypeParameters;
+    if (anyMember instanceof PsiMethodWrapper && !anyMember.isStatic()) {
+      classTypeParameters=((ClassDescriptor)owner).getTypeConstructor().getParameters();
+    }
+ else {
+      classTypeParameters=new ArrayList<TypeParameterDescriptor>(0);
+    }
+    TypeParameterListTypeVariableResolver typeVariableResolver=new TypeParameterListTypeVariableResolver(classTypeParameters);
+    List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
+    if (members.setter != null) {
+      typeParameters=resolveMethodTypeParameters(members.setter,propertyDescriptor.getSetter(),typeVariableResolver);
+    }
+    if (members.getter != null) {
+      typeParameters=resolveMethodTypeParameters(members.getter,propertyDescriptor.getGetter(),typeVariableResolver);
+    }
     JetType receiverJetType;
     if (receiverType == null) {
       receiverJetType=null;
@@ -62,8 +88,13 @@
  else {
       receiverJetType=semanticServices.getTypeTransformer().transformToType(receiverType);
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember),isVar,false,receiverJetType,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),propertyName,type);
-    semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember,propertyDescriptor);
+    propertyDescriptor.setType(type,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverJetType);
+    if (getterDescriptor != null) {
+      getterDescriptor.initialize(type);
+    }
+    if (setterDescriptor != null) {
+    }
+    semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember.psiMember,propertyDescriptor);
     descriptors.add(propertyDescriptor);
   }
   scopeData.properties=descriptors;

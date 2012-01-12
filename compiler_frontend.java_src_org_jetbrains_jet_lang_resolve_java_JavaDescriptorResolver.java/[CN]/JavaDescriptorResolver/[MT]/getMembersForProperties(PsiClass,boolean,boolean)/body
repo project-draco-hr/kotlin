@@ -9,8 +9,9 @@
         continue;
       }
       MembersForProperty members=new MembersForProperty();
-      members.field=field;
-      membersMap.put(new PropertyKey(field.getName(),field.getType(),null),members);
+      members.field=new PsiFieldWrapper(field);
+      members.type=field.getType();
+      membersMap.put(new PropertyKey(field.getName()),members);
     }
   }
   for (  PsiMethod psiMethod : clazz.getMethods()) {
@@ -23,38 +24,34 @@
     }
     if (psiMethod.getName().startsWith(JvmAbi.GETTER_PREFIX)) {
       if (method.getJetProperty().isDefined()) {
-        PsiType receiverType;
-        if (method.getParameters().size() == 0) {
-          receiverType=null;
-        }
- else         if (method.getParameters().size() == 1) {
-          if (method.getParameter(0).getJetTypeParameter().isDefined()) {
-            receiverType=null;
-          }
- else {
-            receiverType=method.getParameter(0).getPsiParameter().getType();
-          }
-        }
- else         if (method.getParameters().size() == 2) {
-          if (!method.getParameter(1).getJetTypeParameter().isDefined()) {
-            throw new IllegalStateException();
-          }
-          receiverType=psiMethod.getParameterList().getParameters()[0].getType();
-        }
- else {
-          throw new IllegalStateException();
-        }
         if (psiMethod.getName().equals(JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD)) {
           continue;
         }
+        int i=0;
+        PsiType receiverType;
+        if (i < method.getParameters().size() && method.getParameter(i).getJetValueParameter().receiver()) {
+          receiverType=method.getParameter(i).getPsiParameter().getType();
+          ++i;
+        }
+ else {
+          receiverType=null;
+        }
+        while (i < method.getParameters().size() && method.getParameter(i).getJetTypeParameter().isDefined()) {
+          ++i;
+        }
+        if (i != method.getParameters().size()) {
+          throw new IllegalStateException();
+        }
         String propertyName=StringUtil.decapitalize(psiMethod.getName().substring(JvmAbi.GETTER_PREFIX.length()));
-        PropertyKey key=new PropertyKey(propertyName,psiMethod.getReturnType(),receiverType);
+        PropertyKey key=new PropertyKey(propertyName);
         MembersForProperty members=membersMap.get(key);
         if (members == null) {
           members=new MembersForProperty();
           membersMap.put(key,members);
         }
-        members.getter=psiMethod;
+        members.getter=new PsiMethodWrapper(psiMethod);
+        members.type=psiMethod.getReturnType();
+        members.receiverType=receiverType;
       }
     }
  else     if (psiMethod.getName().startsWith(JvmAbi.SETTER_PREFIX)) {
@@ -77,13 +74,15 @@
         }
         PsiType propertyType=psiMethod.getParameterList().getParameters()[i].getType();
         String propertyName=StringUtil.decapitalize(psiMethod.getName().substring(JvmAbi.SETTER_PREFIX.length()));
-        PropertyKey key=new PropertyKey(propertyName,propertyType,receiverType);
+        PropertyKey key=new PropertyKey(propertyName);
         MembersForProperty members=membersMap.get(key);
         if (members == null) {
           members=new MembersForProperty();
           membersMap.put(key,members);
         }
-        members.setter=psiMethod;
+        members.setter=new PsiMethodWrapper(psiMethod);
+        members.type=propertyType;
+        members.receiverType=receiverType;
       }
     }
   }
