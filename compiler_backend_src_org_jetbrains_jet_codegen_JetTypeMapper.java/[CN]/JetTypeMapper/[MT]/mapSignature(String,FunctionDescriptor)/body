@@ -1,13 +1,23 @@
 {
   final ReceiverDescriptor receiver=f.getReceiverParameter();
+  BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,false);
+  signatureWriter.writeFormalTypeParametersStart();
+  signatureWriter.writeFormalTypeParametersEnd();
+  signatureWriter.writeParametersStart();
   final List<ValueParameterDescriptor> parameters=f.getValueParameters();
-  List<Type> parameterTypes=new ArrayList<Type>();
   if (receiver.exists()) {
-    parameterTypes.add(mapType(receiver.getType()));
+    signatureWriter.writeParameterType(JvmMethodParameterKind.RECEIVER);
+    mapType(receiver.getType(),signatureWriter);
+    signatureWriter.writeParameterTypeEnd();
   }
   for (  ValueParameterDescriptor parameter : parameters) {
-    parameterTypes.add(mapType(parameter.getOutType()));
+    signatureWriter.writeParameterType(JvmMethodParameterKind.VALUE);
+    mapType(parameter.getOutType(),signatureWriter);
+    signatureWriter.writeParameterTypeEnd();
   }
-  Type returnType=mapReturnType(f.getReturnType());
-  return new JvmMethodSignature(new Method(name,returnType,parameterTypes.toArray(new Type[parameterTypes.size()])),null,null,null,"");
+  signatureWriter.writeParametersEnd();
+  signatureWriter.writeReturnType();
+  mapReturnType(f.getReturnType(),signatureWriter);
+  signatureWriter.writeReturnTypeEnd();
+  return signatureWriter.makeJvmMethodSignature(name);
 }

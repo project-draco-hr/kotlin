@@ -1,9 +1,16 @@
 {
   pop();
+  if (jvmCurrentType == null) {
+    throw new IllegalStateException();
+  }
   String signature=jetSignatureWriter.toString();
-  kotlinParameterTypes.add(signature);
+  kotlinParameterTypes.add(new JvmMethodParameterSignature(jvmCurrentType,signature,currentParameterKind));
   if (DEBUG_SIGNATURE_WRITER) {
     new JetSignatureReader(signature).acceptTypeOnly(new JetSignatureAdapter());
   }
+  currentParameterKind=null;
+  jvmCurrentType=null;
+  jvmCurrentTypeArrayLevel=0;
   jetSignatureWriter=null;
+  transitionState(State.PARAMETER,State.PARAMETERS);
 }

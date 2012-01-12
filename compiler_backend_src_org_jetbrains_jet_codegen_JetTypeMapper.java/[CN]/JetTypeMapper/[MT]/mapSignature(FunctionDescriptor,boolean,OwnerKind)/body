@@ -1,0 +1,53 @@
+{
+  for (  ValueParameterDescriptor valueParameterDescriptor : f.getValueParameters()) {
+    if (valueParameterDescriptor.hasDefaultValue()) {
+      needGenericSignature=false;
+    }
+  }
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    needGenericSignature=false;
+  }
+  BothSignatureWriter signatureVisitor=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,needGenericSignature);
+  writeFormalTypeParameters(f.getTypeParameters(),signatureVisitor);
+  final ReceiverDescriptor receiverTypeRef=f.getReceiverParameter();
+  final JetType receiverType=!receiverTypeRef.exists() ? null : receiverTypeRef.getType();
+  final List<ValueParameterDescriptor> parameters=f.getValueParameters();
+  signatureVisitor.writeParametersStart();
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    ClassDescriptor containingDeclaration=(ClassDescriptor)f.getContainingDeclaration();
+    JetType jetType=TraitImplBodyCodegen.getSuperClass(containingDeclaration,bindingContext);
+    Type type=mapType(jetType);
+    if (type.getInternalName().equals("java/lang/Object")) {
+      jetType=containingDeclaration.getDefaultType();
+      type=mapType(jetType);
+    }
+    signatureVisitor.writeParameterType(JvmMethodParameterKind.THIS);
+    signatureVisitor.writeAsmType(type,jetType.isNullable());
+    signatureVisitor.writeParameterTypeEnd();
+  }
+  if (receiverType != null) {
+    signatureVisitor.writeParameterType(JvmMethodParameterKind.RECEIVER);
+    mapType(receiverType,signatureVisitor);
+    signatureVisitor.writeParameterTypeEnd();
+  }
+  for (  TypeParameterDescriptor parameterDescriptor : f.getTypeParameters()) {
+    if (parameterDescriptor.isReified()) {
+      signatureVisitor.writeTypeInfoParameter();
+    }
+  }
+  for (  ValueParameterDescriptor parameter : parameters) {
+    signatureVisitor.writeParameterType(JvmMethodParameterKind.VALUE);
+    mapType(parameter.getOutType(),signatureVisitor);
+    signatureVisitor.writeParameterTypeEnd();
+  }
+  signatureVisitor.writeParametersEnd();
+  if (f instanceof ConstructorDescriptor) {
+    signatureVisitor.writeVoidReturn();
+  }
+ else {
+    signatureVisitor.writeReturnType();
+    mapReturnType(f.getReturnType(),signatureVisitor);
+    signatureVisitor.writeReturnTypeEnd();
+  }
+  return signatureVisitor.makeJvmMethodSignature(f.getName());
+}

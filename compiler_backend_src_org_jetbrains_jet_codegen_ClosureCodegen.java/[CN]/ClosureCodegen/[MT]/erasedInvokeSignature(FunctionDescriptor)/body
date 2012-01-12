@@ -1,10 +1,21 @@
 {
+  BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,false);
+  signatureWriter.writeFormalTypeParametersStart();
+  signatureWriter.writeFormalTypeParametersEnd();
   boolean isExtensionFunction=fd.getReceiverParameter().exists();
   int paramCount=fd.getValueParameters().size();
   if (isExtensionFunction) {
     paramCount++;
   }
-  Type[] args=new Type[paramCount];
-  Arrays.fill(args,JetTypeMapper.TYPE_OBJECT);
-  return new Method("invoke",JetTypeMapper.TYPE_OBJECT,args);
+  signatureWriter.writeParametersStart();
+  for (int i=0; i < paramCount; ++i) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.VALUE);
+    signatureWriter.writeAsmType(JetTypeMapper.TYPE_OBJECT,true);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  signatureWriter.writeParametersEnd();
+  signatureWriter.writeReturnType();
+  signatureWriter.writeAsmType(JetTypeMapper.TYPE_OBJECT,true);
+  signatureWriter.writeReturnTypeEnd();
+  return signatureWriter.makeJvmMethodSignature("invoke");
 }
