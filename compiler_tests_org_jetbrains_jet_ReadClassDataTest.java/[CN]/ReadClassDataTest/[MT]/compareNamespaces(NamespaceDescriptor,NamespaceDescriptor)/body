@@ -1,31 +1,40 @@
 {
   Assert.assertEquals(nsa.getName(),nsb.getName());
   System.out.println("namespace " + nsa.getName());
+  Set<String> classifierNames=new HashSet<String>();
+  Set<String> propertyNames=new HashSet<String>();
+  Set<String> functionNames=new HashSet<String>();
   for (  DeclarationDescriptor ad : nsa.getMemberScope().getAllDescriptors()) {
     if (ad instanceof ClassifierDescriptor) {
-      ClassifierDescriptor bd=nsb.getMemberScope().getClassifier(ad.getName());
-      Assert.assertTrue("classifier not found: " + ad.getName(),bd != null);
-      compareClassifiers((ClassifierDescriptor)ad,bd);
-      Assert.assertNull(nsb.getMemberScope().getClassifier(ad.getName() + JvmAbi.TRAIT_IMPL_SUFFIX));
-    }
- else     if (ad instanceof FunctionDescriptor) {
-      Set<FunctionDescriptor> functions=nsb.getMemberScope().getFunctions(ad.getName());
-      Assert.assertTrue(functions.size() >= 1);
-      Assert.assertTrue("not implemented",functions.size() == 1);
-      FunctionDescriptor bd=functions.iterator().next();
-      compareDescriptors(ad,bd);
+      classifierNames.add(ad.getName());
     }
  else     if (ad instanceof PropertyDescriptor) {
-      Set<VariableDescriptor> properties=nsb.getMemberScope().getProperties(ad.getName());
-      Assert.assertTrue("property not found by name: " + ad.getName(),properties.size() >= 1);
-      Assert.assertTrue("not implemented",properties.size() == 1);
-      PropertyDescriptor bd=(PropertyDescriptor)properties.iterator().next();
-      compareDescriptors(ad,bd);
-      Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.getterName(ad.getName())).isEmpty());
-      Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.setterName(ad.getName())).isEmpty());
+      propertyNames.add(ad.getName());
+    }
+ else     if (ad instanceof FunctionDescriptor) {
+      functionNames.add(ad.getName());
     }
  else {
-      throw new AssertionError("Unknown member: " + ad);
+      throw new AssertionError("unknown member: " + ad);
     }
+  }
+  for (  String name : classifierNames) {
+    ClassifierDescriptor ca=nsa.getMemberScope().getClassifier(name);
+    ClassifierDescriptor cb=nsb.getMemberScope().getClassifier(name);
+    Assert.assertTrue(ca != null);
+    Assert.assertTrue(cb != null);
+    compareClassifiers(ca,cb);
+  }
+  for (  String name : propertyNames) {
+    Set<VariableDescriptor> pa=nsa.getMemberScope().getProperties(name);
+    Set<VariableDescriptor> pb=nsb.getMemberScope().getProperties(name);
+    compareDeclarationSets(pa,pb);
+    Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.getterName(name)).isEmpty());
+    Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.setterName(name)).isEmpty());
+  }
+  for (  String name : functionNames) {
+    Set<FunctionDescriptor> fa=nsa.getMemberScope().getFunctions(name);
+    Set<FunctionDescriptor> fb=nsb.getMemberScope().getFunctions(name);
+    compareDeclarationSets(fa,fb);
   }
 }
