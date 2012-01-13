@@ -1,0 +1,30 @@
+{
+  if (firstPhase) {
+    if (descriptor instanceof NamespaceDescriptor) {
+      namespaceScope.importScope(((NamespaceDescriptor)descriptor).getMemberScope());
+    }
+    if (descriptor instanceof ClassDescriptor) {
+      ClassDescriptor objectDescriptor=getObjectIfObjectOrClassObjectDescriptor((ClassDescriptor)descriptor);
+      if (objectDescriptor != null) {
+        Collection<? extends DeclarationDescriptor> innerClassesAndObjects=objectDescriptor.getInnerClassesAndObjects();
+        for (        DeclarationDescriptor innerClassOrObject : innerClassesAndObjects) {
+          namespaceScope.importClassifierAlias(innerClassOrObject.getName(),(ClassifierDescriptor)innerClassOrObject);
+        }
+      }
+    }
+    return;
+  }
+  if (descriptor instanceof NamespaceDescriptor) {
+    namespaceScope.importScope(((NamespaceDescriptor)descriptor).getMemberScope());
+  }
+  if (descriptor instanceof VariableDescriptor) {
+    JetType type=((VariableDescriptor)descriptor).getOutType();
+    namespaceScope.importScope(type.getMemberScope());
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    JetType classObjectType=((ClassDescriptor)descriptor).getClassObjectType();
+    if (classObjectType != null) {
+      namespaceScope.importScope(classObjectType.getMemberScope());
+    }
+  }
+}
