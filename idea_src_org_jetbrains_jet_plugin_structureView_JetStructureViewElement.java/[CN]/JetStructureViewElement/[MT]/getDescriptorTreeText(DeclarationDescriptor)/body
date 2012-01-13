@@ -1,0 +1,34 @@
+{
+  StringBuilder textBuilder;
+  if (descriptor instanceof FunctionDescriptor) {
+    textBuilder=new StringBuilder();
+    FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+    ReceiverDescriptor receiver=functionDescriptor.getReceiverParameter();
+    if (receiver.exists()) {
+      textBuilder.append(DescriptorRenderer.TEXT.renderType(receiver.getType())).append(".");
+    }
+    textBuilder.append(functionDescriptor.getName());
+    String parametersString=StringUtil.join(functionDescriptor.getValueParameters(),new Function<ValueParameterDescriptor,String>(){
+      @Override public String fun(      ValueParameterDescriptor valueParameterDescriptor){
+        return valueParameterDescriptor.getName() + ":" + DescriptorRenderer.TEXT.renderType(valueParameterDescriptor.getOutType());
+      }
+    }
+,",");
+    textBuilder.append("(").append(parametersString).append(")");
+    JetType returnType=functionDescriptor.getReturnType();
+    textBuilder.append(":").append(DescriptorRenderer.TEXT.renderType(returnType));
+  }
+ else   if (descriptor instanceof VariableDescriptor) {
+    JetType outType=((VariableDescriptor)descriptor).getOutType();
+    textBuilder=new StringBuilder(descriptor.getName());
+    textBuilder.append(":").append(DescriptorRenderer.TEXT.renderType(outType));
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    textBuilder=new StringBuilder(descriptor.getName());
+    textBuilder.append(" (").append(DescriptorUtils.getFQName(descriptor.getContainingDeclaration())).append(")");
+  }
+ else {
+    return DescriptorRenderer.TEXT.render(descriptor);
+  }
+  return textBuilder.toString();
+}
