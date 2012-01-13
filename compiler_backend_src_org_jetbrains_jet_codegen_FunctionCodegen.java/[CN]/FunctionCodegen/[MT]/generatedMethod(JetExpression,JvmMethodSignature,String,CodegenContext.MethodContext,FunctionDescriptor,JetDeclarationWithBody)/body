@@ -1,0 +1,155 @@
+{
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  List<TypeParameterDescriptor> typeParameters=(functionDescriptor instanceof PropertyAccessorDescriptor ? ((PropertyAccessorDescriptor)functionDescriptor).getCorrespondingProperty() : functionDescriptor).getTypeParameters();
+  int flags=ACC_PUBLIC;
+  if (!functionDescriptor.getValueParameters().isEmpty() && functionDescriptor.getValueParameters().get(functionDescriptor.getValueParameters().size() - 1).getVarargElementType() != null) {
+    flags|=ACC_VARARGS;
+  }
+  if (functionDescriptor.getModality() == Modality.FINAL) {
+    flags|=ACC_FINAL;
+  }
+  OwnerKind kind=context.getContextKind();
+  ReceiverDescriptor expectedThisObject=functionDescriptor.getExpectedThisObject();
+  ReceiverDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
+  if (kind != OwnerKind.TRAIT_IMPL || bodyExpressions != null) {
+    boolean isStatic=kind == OwnerKind.NAMESPACE;
+    if (isStatic || kind == OwnerKind.TRAIT_IMPL)     flags|=ACC_STATIC;
+    boolean isAbstract=!isStatic && !(kind == OwnerKind.TRAIT_IMPL) && (bodyExpressions == null || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()));
+    if (isAbstract)     flags|=ACC_ABSTRACT;
+    final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
+    if (v.generateCode()) {
+      int start=0;
+      if (kind != OwnerKind.TRAIT_IMPL) {
+        if (functionDescriptor instanceof PropertyAccessorDescriptor) {
+          PropertyCodegen.generateJetPropertyAnnotation(mv,propertyTypeSignature,jvmSignature.getKotlinTypeParameter());
+        }
+ else         if (functionDescriptor instanceof NamedFunctionDescriptor) {
+          if (propertyTypeSignature != null) {
+            throw new IllegalStateException();
+          }
+          AnnotationVisitor av=mv.visitAnnotation(JvmStdlibNames.JET_METHOD.getDescriptor(),true);
+          if (functionDescriptor.getReturnType().isNullable()) {
+            av.visit(JvmStdlibNames.JET_METHOD_NULLABLE_RETURN_TYPE_FIELD,true);
+          }
+          if (jvmSignature.getKotlinReturnType() != null) {
+            av.visit(JvmStdlibNames.JET_METHOD_RETURN_TYPE_FIELD,jvmSignature.getKotlinReturnType());
+          }
+          if (jvmSignature.getKotlinTypeParameter() != null) {
+            av.visit(JvmStdlibNames.JET_METHOD_TYPE_PARAMETERS_FIELD,jvmSignature.getKotlinTypeParameter());
+          }
+          av.visitEnd();
+        }
+ else {
+          throw new IllegalStateException();
+        }
+      }
+      if (kind == OwnerKind.TRAIT_IMPL) {
+        AnnotationVisitor av=mv.visitParameterAnnotation(start++,JvmStdlibNames.JET_VALUE_PARAMETER.getDescriptor(),true);
+        av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_NAME_FIELD,"this$self");
+        av.visitEnd();
+      }
+      if (receiverParameter.exists()) {
+        AnnotationVisitor av=mv.visitParameterAnnotation(start++,JvmStdlibNames.JET_VALUE_PARAMETER.getDescriptor(),true);
+        av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_NAME_FIELD,"this$receiver");
+        if (receiverParameter.getType().isNullable()) {
+          av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_NULLABLE_FIELD,true);
+        }
+        av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_RECEIVER_FIELD,true);
+        av.visitEnd();
+      }
+      for (      final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+        AnnotationVisitor av=mv.visitParameterAnnotation(start++,JvmStdlibNames.JET_TYPE_PARAMETER.getDescriptor(),true);
+        av.visit(JvmStdlibNames.JET_TYPE_PARAMETER_NAME_FIELD,typeParameterDescriptor.getName());
+        av.visitEnd();
+      }
+      for (int i=0; i != paramDescrs.size(); ++i) {
+        AnnotationVisitor av=mv.visitParameterAnnotation(i + start,JvmStdlibNames.JET_VALUE_PARAMETER.getDescriptor(),true);
+        ValueParameterDescriptor parameterDescriptor=paramDescrs.get(i);
+        av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_NAME_FIELD,parameterDescriptor.getName());
+        if (parameterDescriptor.hasDefaultValue()) {
+          av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_HAS_DEFAULT_VALUE_FIELD,true);
+        }
+        if (parameterDescriptor.getOutType().isNullable()) {
+          av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_NULLABLE_FIELD,true);
+        }
+        if (jvmSignature.getKotlinParameterTypes() != null && jvmSignature.getKotlinParameterTypes().get(i) != null) {
+          av.visit(JvmStdlibNames.JET_VALUE_PARAMETER_TYPE_FIELD,jvmSignature.getKotlinParameterTypes().get(i + start).getKotlinSignature());
+        }
+        av.visitEnd();
+      }
+    }
+    if (!isAbstract && v.generateCode()) {
+      mv.visitCode();
+      Label methodBegin=new Label();
+      mv.visitLabel(methodBegin);
+      FrameMap frameMap=context.prepareFrame(typeMapper);
+      ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getAsmMethod().getReturnType(),context,state);
+      Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
+      int add=0;
+      if (kind == OwnerKind.TRAIT_IMPL)       add++;
+      if (receiverParameter.exists())       add++;
+      for (      final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+        int slot=frameMap.enterTemp();
+        add++;
+        codegen.addTypeParameter(typeParameterDescriptor,StackValue.local(slot,JetTypeMapper.TYPE_TYPEINFO));
+      }
+      for (int i=0; i < paramDescrs.size(); i++) {
+        ValueParameterDescriptor parameter=paramDescrs.get(i);
+        frameMap.enter(parameter,argTypes[i + add].getSize());
+      }
+      if (kind instanceof OwnerKind.DelegateKind) {
+        OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
+        InstructionAdapter iv=new InstructionAdapter(mv);
+        iv.load(0,JetTypeMapper.TYPE_OBJECT);
+        dk.getDelegate().put(JetTypeMapper.TYPE_OBJECT,iv);
+        for (int i=0; i < argTypes.length; i++) {
+          Type argType=argTypes[i];
+          iv.load(i + 1,argType);
+        }
+        iv.invokeinterface(dk.getOwnerClass(),jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor());
+        iv.areturn(jvmSignature.getAsmMethod().getReturnType());
+      }
+ else {
+        for (        ValueParameterDescriptor parameter : paramDescrs) {
+          Type sharedVarType=typeMapper.getSharedVarType(parameter);
+          if (sharedVarType != null) {
+            Type localVarType=typeMapper.mapType(parameter.getOutType());
+            int index=frameMap.getIndex(parameter);
+            mv.visitTypeInsn(NEW,sharedVarType.getInternalName());
+            mv.visitInsn(DUP);
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKESPECIAL,sharedVarType.getInternalName(),"<init>","()V");
+            mv.visitVarInsn(localVarType.getOpcode(ILOAD),index);
+            mv.visitFieldInsn(PUTFIELD,sharedVarType.getInternalName(),"ref",StackValue.refType(localVarType).getDescriptor());
+            mv.visitVarInsn(sharedVarType.getOpcode(ISTORE),index);
+          }
+        }
+        codegen.returnExpression(bodyExpressions);
+      }
+      Label methodEnd=new Label();
+      mv.visitLabel(methodEnd);
+      int k=0;
+      if (expectedThisObject.exists()) {
+        Type type=typeMapper.mapType(expectedThisObject.getType());
+        mv.visitLocalVariable("this",type.getDescriptor(),null,methodBegin,methodEnd,k++);
+      }
+      if (receiverParameter.exists()) {
+        Type type=typeMapper.mapType(receiverParameter.getType());
+        mv.visitLocalVariable("this$receiver",type.getDescriptor(),null,methodBegin,methodEnd,k);
+        k+=type.getSize();
+      }
+      for (      final TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+        mv.visitLocalVariable(typeParameterDescriptor.getName(),JetTypeMapper.TYPE_TYPEINFO.getDescriptor(),null,methodBegin,methodEnd,k++);
+      }
+      for (      ValueParameterDescriptor parameter : paramDescrs) {
+        Type type=typeMapper.mapType(parameter.getOutType());
+        mv.visitLocalVariable(parameter.getName(),type.getDescriptor(),null,methodBegin,methodEnd,k);
+        k+=type.getSize();
+      }
+      endVisit(mv,null,fun);
+      mv.visitEnd();
+      generateBridgeIfNeeded(owner,state,v,jvmSignature.getAsmMethod(),functionDescriptor,kind);
+    }
+  }
+  generateDefaultIfNeeded(context,state,v,jvmSignature.getAsmMethod(),functionDescriptor,kind);
+}

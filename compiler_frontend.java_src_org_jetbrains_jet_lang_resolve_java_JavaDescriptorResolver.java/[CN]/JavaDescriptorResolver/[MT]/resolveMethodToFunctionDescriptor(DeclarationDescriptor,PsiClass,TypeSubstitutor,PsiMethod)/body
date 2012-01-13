@@ -1,11 +1,12 @@
 {
-  PsiType returnType=method.getReturnType();
+  PsiMethodWrapper method=new PsiMethodWrapper(psiMethod);
+  PsiType returnType=psiMethod.getReturnType();
   if (returnType == null) {
     return null;
   }
-  FunctionDescriptor functionDescriptor=methodDescriptorCache.get(method);
+  FunctionDescriptor functionDescriptor=methodDescriptorCache.get(psiMethod);
   if (functionDescriptor != null) {
-    if (method.getContainingClass() != psiClass) {
+    if (psiMethod.getContainingClass() != psiClass) {
       functionDescriptor=functionDescriptor.substitute(typeSubstitutorForGenericSuperclasses);
     }
     return functionDescriptor;
@@ -26,33 +27,27 @@
     }
     kotlin=classData.kotlin;
   }
-  if (kotlin) {
-    if (method.getName().startsWith(JvmAbi.GETTER_PREFIX) && method.getParameterList().getParametersCount() == 0) {
-      if (method.getModifierList().findAnnotation(JvmStdlibNames.JET_PROPERTY.getFqName()) != null)       return null;
-    }
-    if (method.getName().startsWith(JvmAbi.SETTER_PREFIX) && method.getParameterList().getParametersCount() == 1) {
-      if (method.getModifierList().findAnnotation(JvmStdlibNames.JET_PROPERTY.getFqName()) != null)       return null;
-    }
+  if (method.getJetProperty().isDefined()) {
+    return null;
   }
   DeclarationDescriptor classDescriptor;
   final List<TypeParameterDescriptor> classTypeParameters;
-  if (method.hasModifierProperty(PsiModifier.STATIC)) {
-    classDescriptor=resolveNamespace(method.getContainingClass());
+  if (method.isStatic()) {
+    classDescriptor=resolveNamespace(psiMethod.getContainingClass());
     classTypeParameters=Collections.emptyList();
   }
  else {
-    ClassDescriptor classClassDescriptor=resolveClass(method.getContainingClass());
+    ClassDescriptor classClassDescriptor=resolveClass(psiMethod.getContainingClass());
     classDescriptor=classClassDescriptor;
     classTypeParameters=classClassDescriptor.getTypeConstructor().getParameters();
   }
   if (classDescriptor == null) {
     return null;
   }
-  PsiParameter[] parameters=method.getParameterList().getParameters();
-  FunctionDescriptorImpl functionDescriptorImpl=new FunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),method.getName());
-  methodDescriptorCache.put(method,functionDescriptorImpl);
+  NamedFunctionDescriptorImpl functionDescriptorImpl=new NamedFunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),psiMethod.getName());
+  methodDescriptorCache.put(psiMethod,functionDescriptorImpl);
   TypeParameterListTypeVariableResolver typeVariableResolverForParameters=new TypeParameterListTypeVariableResolver(classTypeParameters);
-  final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
+  final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(new PsiMethodWrapper(psiMethod),functionDescriptorImpl,typeVariableResolverForParameters);
 class MethodTypeVariableResolver implements TypeVariableResolver {
     @NotNull @Override public TypeParameterDescriptor getTypeVariable(    @NotNull String name){
       for (      TypeParameterDescriptor typeParameter : methodTypeParameters) {
@@ -68,11 +63,11 @@ class MethodTypeVariableResolver implements TypeVariableResolver {
       throw new IllegalStateException("unresolver variable: " + name);
     }
   }
-  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,parameters,new MethodTypeVariableResolver());
-  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,new MethodTypeVariableResolver()),Modality.convertFromFlags(method.hasModifierProperty(PsiModifier.ABSTRACT),!method.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(method));
-  semanticServices.getTrace().record(BindingContext.FUNCTION,method,functionDescriptorImpl);
+  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),new MethodTypeVariableResolver());
+  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,new MethodTypeVariableResolver()),Modality.convertFromFlags(psiMethod.hasModifierProperty(PsiModifier.ABSTRACT),!psiMethod.hasModifierProperty(PsiModifier.FINAL)),resolveVisibilityFromPsiModifiers(psiMethod));
+  semanticServices.getTrace().record(BindingContext.FUNCTION,psiMethod,functionDescriptorImpl);
   FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
-  if (method.getContainingClass() != psiClass) {
+  if (psiMethod.getContainingClass() != psiClass) {
     substitutedFunctionDescriptor=functionDescriptorImpl.substitute(typeSubstitutorForGenericSuperclasses);
   }
   return substitutedFunctionDescriptor;

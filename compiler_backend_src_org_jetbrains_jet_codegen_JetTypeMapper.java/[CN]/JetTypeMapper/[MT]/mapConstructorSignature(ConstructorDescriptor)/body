@@ -1,0 +1,23 @@
+{
+  BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,true);
+  List<ValueParameterDescriptor> parameters=descriptor.getOriginal().getValueParameters();
+  ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
+  writeFormalTypeParameters(descriptor.getTypeParameters(),signatureWriter);
+  signatureWriter.writeParametersStart();
+  if (CodegenUtil.hasThis0(classDescriptor)) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.THIS0);
+    mapType(CodegenUtil.getOuterClassDescriptor(classDescriptor).getDefaultType(),OwnerKind.IMPLEMENTATION,signatureWriter);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  if (CodegenUtil.requireTypeInfoConstructorArg(classDescriptor.getDefaultType())) {
+    signatureWriter.writeTypeInfoParameter();
+  }
+  for (  ValueParameterDescriptor parameter : parameters) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.VALUE);
+    mapType(parameter.getOutType(),signatureWriter);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  signatureWriter.writeParametersEnd();
+  signatureWriter.writeVoidReturn();
+  return signatureWriter.makeJvmMethodSignature("<init>");
+}
