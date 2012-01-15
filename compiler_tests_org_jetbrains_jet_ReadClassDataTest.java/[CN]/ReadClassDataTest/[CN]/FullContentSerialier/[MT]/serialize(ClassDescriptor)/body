@@ -3,7 +3,7 @@
   sb.append(" ");
   serialize(klass.getKind());
   sb.append(" ");
-  serialize(klass);
+  new Serializer(sb).serialize(klass);
   if (!klass.getTypeConstructor().getParameters().isEmpty()) {
     sb.append("<");
     serializeCommaSeparated(klass.getTypeConstructor().getParameters());
@@ -23,15 +23,12 @@
   JetScope memberScope=klass.getMemberScope(typeArguments);
   for (  DeclarationDescriptor member : memberScope.getAllDescriptors()) {
     StringBuilder memberSb=new StringBuilder();
-    new Serializer(memberSb).serialize(member);
+    new FullContentSerialier(memberSb).serialize(member);
     memberStrings.add(memberSb.toString());
   }
   Collections.sort(memberStrings);
   for (  String memberString : memberStrings) {
-    sb.append("    ");
-    sb.append(memberString);
-    sb.append("\n");
+    sb.append(indent(memberString));
   }
   sb.append("}\n");
-  return sb.toString();
 }
