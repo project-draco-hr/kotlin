@@ -1,0 +1,21 @@
+{
+  extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
+    @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    final @NotNull CompletionResultSet _result){
+      if (_result.getPrefixMatcher().getPrefix().isEmpty()) {
+        return;
+      }
+      final PsiElement position=parameters.getPosition();
+      if (!(position.getContainingFile() instanceof JetFile)) {
+        return;
+      }
+      CompletionResultSet result=_result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+      JavaClassNameCompletionContributor.addAllClasses(parameters,JavaCompletionSorting.addJavaSorting(parameters,result),parameters.getInvocationCount() <= 1,new Consumer<LookupElement>(){
+        @Override public void consume(        LookupElement element){
+          _result.addElement(element);
+        }
+      }
+);
+    }
+  }
+);
+}
