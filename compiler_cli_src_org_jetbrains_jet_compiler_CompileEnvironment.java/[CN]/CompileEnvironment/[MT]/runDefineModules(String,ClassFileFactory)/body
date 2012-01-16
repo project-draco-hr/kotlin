@@ -1,24 +1,14 @@
 {
   GeneratedClassLoader loader=new GeneratedClassLoader(factory);
   try {
-    Class moduleSetBuilderClass=loader.loadClass("kotlin.modules.ModuleSetBuilder");
-    final IModuleSetBuilder moduleSetBuilder=(IModuleSetBuilder)moduleSetBuilderClass.newInstance();
     Class namespaceClass=loader.loadClass(JvmAbi.PACKAGE_CLASS);
-    final Field[] fields=namespaceClass.getDeclaredFields();
-    boolean modulesDefined=false;
-    for (    Field field : fields) {
-      if (field.getName().equals("modules")) {
-        field.setAccessible(true);
-        ExtensionFunction0 defineMudules=(ExtensionFunction0)field.get(null);
-        defineMudules.invoke(moduleSetBuilder);
-        modulesDefined=true;
-        break;
-      }
+    final Method method=namespaceClass.getDeclaredMethod("project");
+    if (method == null) {
+      throw new CompileEnvironmentException("Module script " + moduleFile + " must define project() function");
     }
-    if (!modulesDefined) {
-      throw new CompileEnvironmentException("Module script " + moduleFile + " must define a modules() property");
-    }
-    return moduleSetBuilder;
+    method.setAccessible(true);
+    method.invoke(null);
+    return AllModules.modules;
   }
  catch (  Exception e) {
     throw new CompileEnvironmentException(e);
