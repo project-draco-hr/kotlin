@@ -1,6 +1,8 @@
 {
-  JsExpression receiver=translateReceiver(expression,context);
+  TemporaryVariable receiver=context.declareTemporary(translateReceiver(expression,context));
   JsNullLiteral nullLiteral=context.program().getNullLiteral();
-  JsExpression thenExpression=translateQualifiedExpression(expression,context);
-  return new JsConditional(notNullCheck(context,receiver),thenExpression,nullLiteral);
+  JsExpression selector=translateSelector(expression,context);
+  JsExpression thenExpression=composeQualifiedExpression(receiver.nameReference(),selector);
+  JsConditional callMethodIfNotNullConditional=new JsConditional(notNullCheck(context,receiver.nameReference()),thenExpression,nullLiteral);
+  return AstUtil.newSequence(receiver.assignmentExpression(),callMethodIfNotNullConditional);
 }
