@@ -2,53 +2,14 @@
   if (postPrecessed)   return;
   postPrecessed=true;
   for (int i=0, instructionsSize=mutableInstructionList.size(); i < instructionsSize; i++) {
-    Instruction instruction=mutableInstructionList.get(i);
-    final int currentPosition=i;
-    instruction.accept(new InstructionVisitor(){
-      @Override public void visitInstructionWithNext(      InstructionWithNext instruction){
-        instruction.setNext(getNextPosition(currentPosition));
-      }
-      @Override public void visitJump(      AbstractJumpInstruction instruction){
-        instruction.setResolvedTarget(getJumpTarget(instruction.getTargetLabel()));
-      }
-      @Override public void visitNondeterministicJump(      NondeterministicJumpInstruction instruction){
-        instruction.setNext(getNextPosition(currentPosition));
-        List<Label> targetLabels=instruction.getTargetLabels();
-        for (        Label targetLabel : targetLabels) {
-          instruction.setResolvedTarget(targetLabel,getJumpTarget(targetLabel));
-        }
-      }
-      @Override public void visitConditionalJump(      ConditionalJumpInstruction instruction){
-        Instruction nextInstruction=getNextPosition(currentPosition);
-        Instruction jumpTarget=getJumpTarget(instruction.getTargetLabel());
-        if (instruction.onTrue()) {
-          instruction.setNextOnFalse(nextInstruction);
-          instruction.setNextOnTrue(jumpTarget);
-        }
- else {
-          instruction.setNextOnFalse(jumpTarget);
-          instruction.setNextOnTrue(nextInstruction);
-        }
-        visitJump(instruction);
-      }
-      @Override public void visitLocalDeclarationInstruction(      LocalDeclarationInstruction instruction){
-        instruction.getBody().postProcess();
-        instruction.setNext(getSinkInstruction());
-      }
-      @Override public void visitSubroutineExit(      SubroutineExitInstruction instruction){
-      }
-      @Override public void visitSubroutineSink(      SubroutineSinkInstruction instruction){
-      }
-      @Override public void visitInstruction(      Instruction instruction){
-        throw new UnsupportedOperationException(instruction.toString());
-      }
-    }
-);
+    processInstruction(mutableInstructionList.get(i),i);
   }
   getExitInstruction().setSink(getSinkInstruction());
-  Set<Instruction> allowedDeadStartInstructions=prepareAllowedDeadInstructions();
+  Set<Instruction> reachableInstructions=collectReachableInstructions();
+  for (  Instruction instruction : mutableInstructionList) {
+    if (reachableInstructions.contains(instruction)) {
+      instructions.add(instruction);
+    }
+  }
   markDeadInstructions();
-  Collection<Instruction> allowedDeadInstructions=collectAllowedDeadInstructions(allowedDeadStartInstructions);
-  instructions.addAll(mutableInstructionList);
-  instructions.removeAll(allowedDeadInstructions);
 }
