@@ -3,14 +3,6 @@
     return JvmMethodParameterMeaning.typeInfo(new Object());
   }
   PsiType psiType=parameter.getPsiParameter().getType();
-  JetType varargElementType;
-  if (psiType instanceof PsiEllipsisType) {
-    PsiEllipsisType psiEllipsisType=(PsiEllipsisType)psiType;
-    varargElementType=semanticServices.getTypeTransformer().transformToType(psiEllipsisType.getComponentType());
-  }
- else {
-    varargElementType=null;
-  }
   boolean nullable=parameter.getJetValueParameter().nullable();
   String name=parameter.getPsiParameter().getName() != null ? parameter.getPsiParameter().getName() : "p" + i;
   if (parameter.getJetValueParameter().name().length() > 0) {
@@ -25,6 +17,13 @@
   }
  else {
     outType=semanticServices.getTypeTransformer().transformToType(psiType);
+  }
+  JetType varargElementType;
+  if (psiType instanceof PsiEllipsisType) {
+    varargElementType=semanticServices.getJetSemanticServices().getStandardLibrary().getArrayElementType(outType);
+  }
+ else {
+    varargElementType=null;
   }
   if (receiver) {
     return JvmMethodParameterMeaning.receiver(outType);
