@@ -3,30 +3,28 @@
   pattern.accept(new JetVisitorVoid(){
     @Override public void visitTypePattern(    JetTypePattern typePattern){
       JetTypeReference typeReference=typePattern.getTypeReference();
-      if (typeReference != null) {
-        JetType type=context.getTypeResolver().resolveType(context.scope,typeReference);
-        checkTypeCompatibility(type,subjectType,typePattern);
-        result.set(context.dataFlowInfo.establishSubtyping(subjectVariables,type));
-      }
+      if (typeReference == null)       return;
+      JetType type=context.getTypeResolver().resolveType(context.scope,typeReference);
+      checkTypeCompatibility(type,subjectType,typePattern);
+      result.set(context.dataFlowInfo.establishSubtyping(subjectVariables,type));
     }
     @Override public void visitTuplePattern(    JetTuplePattern pattern){
       List<JetTuplePatternEntry> entries=pattern.getEntries();
       TypeConstructor typeConstructor=subjectType.getConstructor();
       if (!JetStandardClasses.getTuple(entries.size()).getTypeConstructor().equals(typeConstructor) || typeConstructor.getParameters().size() != entries.size()) {
         context.trace.report(TYPE_MISMATCH_IN_TUPLE_PATTERN.on(pattern,subjectType,entries.size()));
+        return;
       }
- else {
-        for (int i=0, entriesSize=entries.size(); i < entriesSize; i++) {
-          JetTuplePatternEntry entry=entries.get(i);
-          JetType type=subjectType.getArguments().get(i).getType();
-          ASTNode nameLabelNode=entry.getNameLabelNode();
-          if (nameLabelNode != null) {
-            context.trace.report(UNSUPPORTED.on(nameLabelNode,getClass().getCanonicalName()));
-          }
-          JetPattern entryPattern=entry.getPattern();
-          if (entryPattern != null) {
-            result.set(result.get().and(checkPatternType(entryPattern,type,scopeToExtend,context)));
-          }
+      for (int i=0, entriesSize=entries.size(); i < entriesSize; i++) {
+        JetTuplePatternEntry entry=entries.get(i);
+        JetType type=subjectType.getArguments().get(i).getType();
+        ASTNode nameLabelNode=entry.getNameLabelNode();
+        if (nameLabelNode != null) {
+          context.trace.report(UNSUPPORTED.on(nameLabelNode,getClass().getCanonicalName()));
+        }
+        JetPattern entryPattern=entry.getPattern();
+        if (entryPattern != null) {
+          result.set(result.get().and(checkPatternType(entryPattern,type,false,scopeToExtend,context)));
         }
       }
     }
@@ -35,17 +33,23 @@
       if (decomposerExpression != null) {
         ReceiverDescriptor receiver=new TransientReceiver(subjectType);
         JetType selectorReturnType=facade.getSelectorReturnType(receiver,null,decomposerExpression,context);
-        result.set(checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,scopeToExtend,context));
+        result.set(checkPatternType(pattern.getArgumentList(),selectorReturnType == null ? ErrorUtils.createErrorType("No type") : selectorReturnType,false,scopeToExtend,context));
       }
     }
     @Override public void visitWildcardPattern(    JetWildcardPattern pattern){
     }
     @Override public void visitExpressionPattern(    JetExpressionPattern pattern){
       JetExpression expression=pattern.getExpression();
-      if (expression != null) {
-        JetType type=facade.getType(expression,context.replaceScope(scopeToExtend));
-        checkTypeCompatibility(type,subjectType,pattern);
+      if (expression == null)       return;
+      JetType type=facade.getType(expression,context.replaceScope(scopeToExtend));
+      if (conditionExpected) {
+        JetType booleanType=context.semanticServices.getStandardLibrary().getBooleanType();
+        if (type != null && !context.semanticServices.getTypeChecker().equalTypes(booleanType,type)) {
+          context.trace.report(TYPE_MISMATCH_IN_CONDITION.on(pattern,type));
+        }
+        return;
       }
+      checkTypeCompatibility(type,subjectType,pattern);
     }
     @Override public void visitBindingPattern(    JetBindingPattern pattern){
       JetProperty variableDeclaration=pattern.getVariableDeclaration();
@@ -64,7 +68,7 @@
         DataFlowValue[] newSubjectVariables=new DataFlowValue[oldLength + 1];
         System.arraycopy(subjectVariables,0,newSubjectVariables,0,oldLength);
         newSubjectVariables[oldLength]=DataFlowValueFactory.INSTANCE.createDataFlowValue(variableDescriptor);
-        result.set(checkWhenCondition(null,subjectType,condition,scopeToExtend,context,newSubjectVariables));
+        result.set(checkWhenCondition(null,false,subjectType,condition,scopeToExtend,context,newSubjectVariables));
       }
     }
     private void checkTypeCompatibility(    @Nullable JetType type,    @NotNull JetType subjectType,    @NotNull JetElement reportErrorOn){

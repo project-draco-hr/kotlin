@@ -1,0 +1,35 @@
+{
+  final DataFlowInfo[] newDataFlowInfo=new DataFlowInfo[]{context.dataFlowInfo};
+  condition.accept(new JetVisitorVoid(){
+    @Override public void visitWhenConditionInRange(    JetWhenConditionInRange condition){
+      JetExpression rangeExpression=condition.getRangeExpression();
+      if (rangeExpression == null)       return;
+      if (expectedCondition) {
+        context.trace.report(EXPECTED_CONDITION.on(condition));
+        facade.getType(rangeExpression,context);
+        return;
+      }
+      facade.checkInExpression(condition,condition.getOperationReference(),subjectExpression,rangeExpression,context);
+    }
+    @Override public void visitWhenConditionIsPattern(    JetWhenConditionIsPattern condition){
+      JetPattern pattern=condition.getPattern();
+      if (expectedCondition) {
+        context.trace.report(EXPECTED_CONDITION.on(condition));
+      }
+      if (pattern != null) {
+        newDataFlowInfo[0]=checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables);
+      }
+    }
+    @Override public void visitWhenConditionExpression(    JetWhenConditionWithExpression condition){
+      JetPattern pattern=condition.getPattern();
+      if (pattern != null) {
+        newDataFlowInfo[0]=checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables);
+      }
+    }
+    @Override public void visitJetElement(    JetElement element){
+      context.trace.report(UNSUPPORTED.on(element,getClass().getCanonicalName()));
+    }
+  }
+);
+  return newDataFlowInfo[0];
+}

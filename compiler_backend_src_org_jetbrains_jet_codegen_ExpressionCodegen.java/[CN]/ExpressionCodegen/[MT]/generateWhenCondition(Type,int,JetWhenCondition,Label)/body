@@ -1,5 +1,4 @@
 {
-  StackValue conditionValue;
   if (condition instanceof JetWhenConditionInRange) {
     JetWhenConditionInRange conditionInRange=(JetWhenConditionInRange)condition;
     JetExpression rangeExpression=conditionInRange.getRangeExpression();
@@ -14,13 +13,19 @@
     }
     return StackValue.onStack(Type.BOOLEAN_TYPE);
   }
- else   if (condition instanceof JetWhenConditionIsPattern) {
+  JetPattern pattern;
+  boolean isNegated;
+  if (condition instanceof JetWhenConditionIsPattern) {
     JetWhenConditionIsPattern patternCondition=(JetWhenConditionIsPattern)condition;
-    JetPattern pattern=patternCondition.getPattern();
-    conditionValue=generatePatternMatch(pattern,patternCondition.isNegated(),subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType),nextEntry);
+    pattern=patternCondition.getPattern();
+    isNegated=patternCondition.isNegated();
+  }
+ else   if (condition instanceof JetWhenConditionWithExpression) {
+    pattern=((JetWhenConditionWithExpression)condition).getPattern();
+    isNegated=false;
   }
  else {
     throw new UnsupportedOperationException("unsupported kind of when condition");
   }
-  return conditionValue;
+  return generatePatternMatch(pattern,isNegated,subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType),nextEntry);
 }
