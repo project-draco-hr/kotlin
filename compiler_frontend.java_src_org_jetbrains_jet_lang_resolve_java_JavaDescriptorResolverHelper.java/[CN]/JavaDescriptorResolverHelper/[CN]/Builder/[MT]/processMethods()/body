@@ -13,9 +13,10 @@
           continue;
         }
         int i=0;
-        PsiType receiverType;
+        TypeSource receiverType;
         if (i < method.getParameters().size() && method.getParameter(i).getJetValueParameter().receiver()) {
-          receiverType=method.getParameter(i).getPsiParameter().getType();
+          PsiParameterWrapper receiverParameter=method.getParameter(i);
+          receiverType=new TypeSource(receiverParameter.getJetValueParameter().type(),receiverParameter.getPsiParameter().getType());
           ++i;
         }
  else {
@@ -30,7 +31,7 @@
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.GETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
         members.getForProperty().getter=method;
-        members.getForProperty().type=method.getReturnType();
+        members.getForProperty().type=new TypeSource(method.getJetMethod().propertyType(),method.getReturnType());
         members.getForProperty().receiverType=receiverType;
       }
     }
@@ -40,10 +41,10 @@
           throw new IllegalStateException();
         }
         int i=0;
-        PsiType receiverType=null;
+        TypeSource receiverType=null;
         PsiParameterWrapper p1=method.getParameter(0);
         if (p1.getJetValueParameter().receiver()) {
-          receiverType=p1.getPsiParameter().getType();
+          receiverType=new TypeSource(p1.getJetValueParameter().type(),p1.getPsiParameter().getType());
           ++i;
         }
         while (i < method.getParameters().size() && method.getParameter(i).getJetTypeParameter().isDefined()) {
@@ -52,7 +53,8 @@
         if (i + 1 != method.getParameters().size()) {
           throw new IllegalStateException();
         }
-        PsiType propertyType=method.getParameter(i).getPsiParameter().getType();
+        PsiParameterWrapper propertyTypeParameter=method.getParameter(i);
+        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),propertyTypeParameter.getPsiParameter().getType());
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.SETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
         members.getForProperty().setter=method;

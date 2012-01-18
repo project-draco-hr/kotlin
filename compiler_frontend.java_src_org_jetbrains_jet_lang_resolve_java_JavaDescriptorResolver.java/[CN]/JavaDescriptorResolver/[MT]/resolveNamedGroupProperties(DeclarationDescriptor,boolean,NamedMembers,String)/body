@@ -6,8 +6,8 @@
     namedMembers.propertyDescriptors=Collections.emptySet();
     return;
   }
-  PsiType propertyType=namedMembers.properties.type;
-  PsiType receiverType=namedMembers.properties.receiverType;
+  TypeSource propertyType=namedMembers.properties.type;
+  TypeSource receiver=namedMembers.properties.receiverType;
   MembersForProperty members=namedMembers.properties;
   boolean isFinal;
   if (members.setter == null && members.getter == null) {
@@ -67,14 +67,27 @@
   if (members.getter != null) {
     typeParameters=resolveMethodTypeParameters(members.getter,propertyDescriptor.getGetter(),typeVariableResolver);
   }
+  List<TypeParameterDescriptor> typeParametersForReceiver=new ArrayList<TypeParameterDescriptor>();
+  typeParametersForReceiver.addAll(classTypeParameters);
+  typeParametersForReceiver.addAll(typeParameters);
+  TypeParameterListTypeVariableResolver typeVariableResolverForPropertyInternals=new TypeParameterListTypeVariableResolver(typeParametersForReceiver);
   JetType receiverJetType;
-  if (receiverType == null) {
+  if (receiver == null) {
     receiverJetType=null;
   }
- else {
-    receiverJetType=semanticServices.getTypeTransformer().transformToType(receiverType);
+ else   if (receiver.getTypeString().length() > 0) {
+    receiverJetType=semanticServices.getTypeTransformer().transformToType(receiver.getTypeString(),typeVariableResolverForPropertyInternals);
   }
-  JetType type=semanticServices.getTypeTransformer().transformToType(propertyType);
+ else {
+    receiverJetType=semanticServices.getTypeTransformer().transformToType(receiver.getPsiType());
+  }
+  JetType type;
+  if (propertyType.getTypeString().length() > 0) {
+    type=semanticServices.getTypeTransformer().transformToType(propertyType.getTypeString(),typeVariableResolverForPropertyInternals);
+  }
+ else {
+    type=semanticServices.getTypeTransformer().transformToType(propertyType.getPsiType());
+  }
   propertyDescriptor.setType(type,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverJetType);
   if (getterDescriptor != null) {
     getterDescriptor.initialize(type);
