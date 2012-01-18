@@ -1,10 +1,9 @@
 {
-  Set<VariableDescriptor> r=Sets.newHashSet();
-  Set<VariableDescriptor> variables=resolveFieldGroup(owner,psiClass,staticMembers);
-  for (  VariableDescriptor variable : variables) {
-    if (variable.getName().equals(fieldName)) {
-      r.add(variable);
-    }
+  ResolverScopeData scopeData=getResolverScopeData(owner,new PsiClassWrapper(psiClass));
+  NamedMembers namedMembers=scopeData.namedMembersMap.get(fieldName);
+  if (namedMembers == null) {
+    return Collections.emptySet();
   }
-  return r;
+  resolveNamedGroupProperties(owner,staticMembers,namedMembers,fieldName);
+  return namedMembers.propertyDescriptors;
 }

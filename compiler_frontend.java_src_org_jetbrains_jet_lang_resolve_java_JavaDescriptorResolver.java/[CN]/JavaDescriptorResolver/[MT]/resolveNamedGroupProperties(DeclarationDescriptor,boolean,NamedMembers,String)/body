@@ -1,0 +1,99 @@
+{
+  if (namedMembers.propertyDescriptors != null) {
+    return;
+  }
+  if (namedMembers.properties == null) {
+    namedMembers.propertyDescriptors=Collections.emptySet();
+    return;
+  }
+  TypeSource propertyType=namedMembers.properties.type;
+  TypeSource receiver=namedMembers.properties.receiverType;
+  MembersForProperty members=namedMembers.properties;
+  boolean isFinal;
+  if (members.setter == null && members.getter == null) {
+    isFinal=false;
+  }
+ else   if (members.getter != null) {
+    isFinal=members.getter.isFinal();
+  }
+ else   if (members.setter != null) {
+    isFinal=members.setter.isFinal();
+  }
+ else {
+    isFinal=false;
+  }
+  PsiMemberWrapper anyMember;
+  if (members.getter != null) {
+    anyMember=members.getter;
+  }
+ else   if (members.field != null) {
+    anyMember=members.field;
+  }
+ else   if (members.setter != null) {
+    anyMember=members.setter;
+  }
+ else {
+    throw new IllegalStateException();
+  }
+  boolean isVar;
+  if (members.getter == null && members.setter == null) {
+    isVar=!members.field.isFinal();
+  }
+ else {
+    isVar=members.setter != null;
+  }
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember.psiMember),isVar,false,propertyName);
+  PropertyGetterDescriptor getterDescriptor=null;
+  PropertySetterDescriptor setterDescriptor=null;
+  if (members.getter != null) {
+    getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+  }
+  if (members.setter != null) {
+    setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+  }
+  propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
+  final List<TypeParameterDescriptor> classTypeParameters;
+  if (anyMember instanceof PsiMethodWrapper && !anyMember.isStatic()) {
+    classTypeParameters=((ClassDescriptor)owner).getTypeConstructor().getParameters();
+  }
+ else {
+    classTypeParameters=new ArrayList<TypeParameterDescriptor>(0);
+  }
+  TypeParameterListTypeVariableResolver typeVariableResolver=new TypeParameterListTypeVariableResolver(classTypeParameters);
+  List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
+  if (members.setter != null) {
+    typeParameters=resolveMethodTypeParameters(members.setter,propertyDescriptor.getSetter(),typeVariableResolver);
+  }
+  if (members.getter != null) {
+    typeParameters=resolveMethodTypeParameters(members.getter,propertyDescriptor.getGetter(),typeVariableResolver);
+  }
+  List<TypeParameterDescriptor> typeParametersForReceiver=new ArrayList<TypeParameterDescriptor>();
+  typeParametersForReceiver.addAll(classTypeParameters);
+  typeParametersForReceiver.addAll(typeParameters);
+  TypeParameterListTypeVariableResolver typeVariableResolverForPropertyInternals=new TypeParameterListTypeVariableResolver(typeParametersForReceiver);
+  JetType receiverJetType;
+  if (receiver == null) {
+    receiverJetType=null;
+  }
+ else   if (receiver.getTypeString().length() > 0) {
+    receiverJetType=semanticServices.getTypeTransformer().transformToType(receiver.getTypeString(),typeVariableResolverForPropertyInternals);
+  }
+ else {
+    receiverJetType=semanticServices.getTypeTransformer().transformToType(receiver.getPsiType());
+  }
+  JetType type;
+  if (propertyType.getTypeString().length() > 0) {
+    type=semanticServices.getTypeTransformer().transformToType(propertyType.getTypeString(),typeVariableResolverForPropertyInternals);
+  }
+ else {
+    type=semanticServices.getTypeTransformer().transformToType(propertyType.getPsiType());
+  }
+  propertyDescriptor.setType(type,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverJetType);
+  if (getterDescriptor != null) {
+    getterDescriptor.initialize(type);
+  }
+  if (setterDescriptor != null) {
+  }
+  semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember.psiMember,propertyDescriptor);
+  namedMembers.propertyDescriptors=Collections.<VariableDescriptor>singleton(propertyDescriptor);
+}

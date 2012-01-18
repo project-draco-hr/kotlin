@@ -1,0 +1,22 @@
+{
+  ResolverScopeData scopeData;
+  boolean staticMembers;
+  if (owner instanceof JavaNamespaceDescriptor) {
+    scopeData=namespaceDescriptorCacheByFqn.get(((JavaNamespaceDescriptor)owner).getQualifiedName());
+    staticMembers=true;
+  }
+ else   if (owner instanceof ClassDescriptor) {
+    scopeData=classDescriptorCache.get(psiClass.getQualifiedName());
+    staticMembers=false;
+  }
+ else {
+    throw new IllegalStateException();
+  }
+  if (scopeData == null) {
+    throw new IllegalStateException();
+  }
+  if (scopeData.namedMembersMap == null) {
+    scopeData.namedMembersMap=JavaDescriptorResolverHelper.getNamedMembers(psiClass,staticMembers,scopeData.kotlin);
+  }
+  return scopeData;
+}
