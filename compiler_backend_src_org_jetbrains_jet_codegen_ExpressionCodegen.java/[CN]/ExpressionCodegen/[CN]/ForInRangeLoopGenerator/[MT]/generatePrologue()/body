@@ -1,18 +1,41 @@
 {
-  myEndVar=myFrameMap.enterTemp();
+  myIndexVar=lookupLocal(parameterDescriptor);
+  myCountVar=myFrameMap.enterTemp();
+  myDeltaVar=myFrameMap.enterTemp();
   if (isIntRangeExpr(expression.getLoopRange())) {
     JetBinaryExpression rangeExpression=(JetBinaryExpression)expression.getLoopRange();
     gen(rangeExpression.getLeft(),Type.INT_TYPE);
-    v.store(lookupLocal(parameterDescriptor),Type.INT_TYPE);
+    v.store(myIndexVar,Type.INT_TYPE);
     gen(rangeExpression.getRight(),Type.INT_TYPE);
-    v.store(myEndVar,Type.INT_TYPE);
+    v.store(myCountVar,Type.INT_TYPE);
+    v.load(myCountVar,Type.INT_TYPE);
+    v.load(myIndexVar,Type.INT_TYPE);
+    v.sub(Type.INT_TYPE);
+    v.iconst(1);
+    v.add(Type.INT_TYPE);
+    v.store(myCountVar,Type.INT_TYPE);
+    v.load(myCountVar,Type.INT_TYPE);
+    v.iflt(end);
+    v.iconst(1);
+    v.store(myDeltaVar,Type.INT_TYPE);
   }
  else {
     gen(expression.getLoopRange(),loopRangeType);
     v.dup();
-    v.invokevirtual("jet/IntRange","getIteratorStart","()I");
-    v.store(lookupLocal(parameterDescriptor),Type.INT_TYPE);
-    v.invokevirtual("jet/IntRange","getEnd","()I");
-    v.store(myEndVar,Type.INT_TYPE);
+    v.dup();
+    v.invokevirtual("jet/IntRange","getStart","()I");
+    v.store(myIndexVar,Type.INT_TYPE);
+    v.invokevirtual("jet/IntRange","getSize","()I");
+    v.store(myCountVar,Type.INT_TYPE);
+    v.invokevirtual("jet/IntRange","getIsReversed","()Z");
+    Label down=new Label();
+    v.ifne(down);
+    v.iconst(1);
+    Label initEnd=new Label();
+    v.goTo(initEnd);
+    v.mark(down);
+    v.iconst(-1);
+    v.mark(initEnd);
+    v.store(myDeltaVar,Type.INT_TYPE);
   }
 }
