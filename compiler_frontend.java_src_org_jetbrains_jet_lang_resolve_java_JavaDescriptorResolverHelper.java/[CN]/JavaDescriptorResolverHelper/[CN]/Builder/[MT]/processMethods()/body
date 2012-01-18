@@ -30,9 +30,8 @@
         }
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.GETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
-        members.getForProperty().getter=method;
-        members.getForProperty().type=new TypeSource(method.getJetMethod().propertyType(),method.getReturnType());
-        members.getForProperty().receiverType=receiverType;
+        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),method.getReturnType());
+        members.addPropertyAccessor(new PropertyAccessorData(method,true,propertyType,receiverType));
       }
     }
  else     if (method.getName().startsWith(JvmAbi.SETTER_PREFIX)) {
@@ -57,9 +56,7 @@
         TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),propertyTypeParameter.getPsiParameter().getType());
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.SETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
-        members.getForProperty().setter=method;
-        members.getForProperty().type=propertyType;
-        members.getForProperty().receiverType=receiverType;
+        members.addPropertyAccessor(new PropertyAccessorData(method,false,propertyType,receiverType));
       }
     }
     if (method.getJetMethod().kind() != JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
