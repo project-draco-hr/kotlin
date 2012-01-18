@@ -1,0 +1,45 @@
+{
+  PsiFile file=context.getFile();
+  if (!(file instanceof JetFile))   return null;
+  PsiElement element=file.findElementAt(context.getOffset());
+  while (element != null && !(element instanceof JetValueArgumentList)) {
+    element=element.getParent();
+  }
+  if (element == null)   return null;
+  JetValueArgumentList argumentList=(JetValueArgumentList)element;
+  JetCallExpression callExpression;
+  if (element.getParent() instanceof JetCallExpression) {
+    callExpression=(JetCallExpression)element.getParent();
+  }
+ else   return null;
+  BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)file,AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
+  JetExpression calleeExpression=callExpression.getCalleeExpression();
+  if (calleeExpression == null)   return null;
+  if (calleeExpression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression refExpression=(JetSimpleNameExpression)calleeExpression;
+    JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,refExpression);
+    DeclarationDescriptor placeDescriptor=null;
+    if (scope != null) {
+      placeDescriptor=scope.getContainingDeclaration();
+    }
+    Collection<DeclarationDescriptor> variants=TipsManager.getReferenceVariants(refExpression,bindingContext);
+    String refName=refExpression.getReferencedName();
+    PsiReference[] references=refExpression.getReferences();
+    if (references.length == 0)     return null;
+    ArrayList<DeclarationDescriptor> itemsToShow=new ArrayList<DeclarationDescriptor>();
+    for (    DeclarationDescriptor variant : variants) {
+      if (variant instanceof FunctionDescriptor) {
+        FunctionDescriptor functionDescriptor=(FunctionDescriptor)variant;
+        if (functionDescriptor.getName().equals(refName)) {
+          if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,functionDescriptor))           continue;
+          itemsToShow.add(functionDescriptor);
+        }
+      }
+    }
+    context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
+    return argumentList;
+  }
+ else {
+    return null;
+  }
+}
