@@ -1,15 +1,11 @@
 {
-  Set<FunctionDescriptor> writableFunctionGroup=Sets.newLinkedHashSet();
-  final Collection<HierarchicalMethodSignature> signatures=psiClass.getVisibleSignatures();
-  TypeSubstitutor typeSubstitutor=createSubstitutorForGenericSupertypes(classDescriptor);
-  for (  HierarchicalMethodSignature signature : signatures) {
-    if (!methodName.equals(signature.getName())) {
-      continue;
-    }
-    FunctionDescriptor substitutedFunctionDescriptor=resolveHierarchicalSignatureToFunction(owner,psiClass,staticMembers,typeSubstitutor,signature);
-    if (substitutedFunctionDescriptor != null) {
-      writableFunctionGroup.add(substitutedFunctionDescriptor);
-    }
+  ResolverScopeData resolverScopeData=getResolverScopeData(owner,new PsiClassWrapper(psiClass));
+  Map<String,NamedMembers> namedMembersMap=resolverScopeData.namedMembersMap;
+  NamedMembers namedMembers=namedMembersMap.get(methodName);
+  if (namedMembers == null || namedMembers.methods == null) {
+    return Collections.emptySet();
   }
-  return writableFunctionGroup;
+  TypeSubstitutor typeSubstitutor=createSubstitutorForGenericSupertypes(classDescriptor);
+  resolveNamedGroupFunctions(owner,psiClass,typeSubstitutor,staticMembers,namedMembers,methodName);
+  return namedMembers.functionDescriptors;
 }

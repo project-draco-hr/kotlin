@@ -1,0 +1,68 @@
+{
+  for (  HierarchicalMethodSignature method0 : psiClass.getPsiClass().getVisibleSignatures()) {
+    PsiMethodWrapper method=new PsiMethodWrapper(method0.getMethod());
+    if (method.isStatic() != staticMembers) {
+      continue;
+    }
+    if (method.isPrivate()) {
+      continue;
+    }
+    if (method.getName().startsWith(JvmAbi.GETTER_PREFIX)) {
+      if (method.getJetMethod().kind() == JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
+        if (method.getName().equals(JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD)) {
+          continue;
+        }
+        int i=0;
+        PsiType receiverType;
+        if (i < method.getParameters().size() && method.getParameter(i).getJetValueParameter().receiver()) {
+          receiverType=method.getParameter(i).getPsiParameter().getType();
+          ++i;
+        }
+ else {
+          receiverType=null;
+        }
+        while (i < method.getParameters().size() && method.getParameter(i).getJetTypeParameter().isDefined()) {
+          ++i;
+        }
+        if (i != method.getParameters().size()) {
+          throw new IllegalStateException();
+        }
+        String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.GETTER_PREFIX.length()));
+        NamedMembers members=getNamedMembers(propertyName);
+        members.getForProperty().getter=method;
+        members.getForProperty().type=method.getReturnType();
+        members.getForProperty().receiverType=receiverType;
+      }
+    }
+ else     if (method.getName().startsWith(JvmAbi.SETTER_PREFIX)) {
+      if (method.getJetMethod().kind() == JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
+        if (method.getParameters().size() == 0) {
+          throw new IllegalStateException();
+        }
+        int i=0;
+        PsiType receiverType=null;
+        PsiParameterWrapper p1=method.getParameter(0);
+        if (p1.getJetValueParameter().receiver()) {
+          receiverType=p1.getPsiParameter().getType();
+          ++i;
+        }
+        while (i < method.getParameters().size() && method.getParameter(i).getJetTypeParameter().isDefined()) {
+          ++i;
+        }
+        if (i + 1 != method.getParameters().size()) {
+          throw new IllegalStateException();
+        }
+        PsiType propertyType=method.getParameter(i).getPsiParameter().getType();
+        String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.SETTER_PREFIX.length()));
+        NamedMembers members=getNamedMembers(propertyName);
+        members.getForProperty().setter=method;
+        members.getForProperty().type=propertyType;
+        members.getForProperty().receiverType=receiverType;
+      }
+    }
+    if (method.getJetMethod().kind() != JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
+      NamedMembers namedMembers=getNamedMembers(method.getName());
+      namedMembers.addMethod(method);
+    }
+  }
+}
