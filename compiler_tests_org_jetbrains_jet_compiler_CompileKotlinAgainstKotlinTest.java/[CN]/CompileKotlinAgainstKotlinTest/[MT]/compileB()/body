@@ -1,0 +1,14 @@
+{
+  JetCoreEnvironment jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdk(myTestRootDisposable);
+  jetCoreEnvironment.addToClasspath(aDir);
+  String text=FileUtil.loadFile(ktBFile);
+  LightVirtualFile virtualFile=new LightVirtualFile(ktAFile.getName(),JetLanguage.INSTANCE,text);
+  virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+  JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
+  GenerationState state=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactory.BINARIES);
+  AnalyzingUtils.checkForSyntacticErrors(psiFile);
+  state.compile(psiFile);
+  ClassFileFactory classFileFactory=state.getFactory();
+  CompileEnvironment.writeToOutputDirectory(classFileFactory,bDir.getPath());
+  Disposer.dispose(myTestRootDisposable);
+}
