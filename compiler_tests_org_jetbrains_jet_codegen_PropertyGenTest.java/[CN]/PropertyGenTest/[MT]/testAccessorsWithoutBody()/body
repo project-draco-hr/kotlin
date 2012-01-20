@@ -1,10 +1,14 @@
 {
-  loadText("class AccessorsWithoutBody() { public var foo: Int = 349\n  get\n  private set\n fun setter() { foo = 610; } } ");
+  loadText("class AccessorsWithoutBody() { protected var foo: Int = 349\n get\n  private set\n fun setter() { foo = 610; } } ");
+  System.out.println(generateToText());
   final Class aClass=loadImplementationClass(generateClassesInFile(),"AccessorsWithoutBody");
   final Object instance=aClass.newInstance();
   final Method getFoo=findMethodByName(aClass,"getFoo");
+  getFoo.setAccessible(true);
+  assertTrue((getFoo.getModifiers() & Modifier.PROTECTED) != 0);
   assertEquals(349,getFoo.invoke(instance));
   final Method setFoo=findMethodByName(aClass,"setFoo");
+  setFoo.setAccessible(true);
   assertTrue((setFoo.getModifiers() & Modifier.PRIVATE) != 0);
   final Method setter=findMethodByName(aClass,"setter");
   setter.invoke(instance);
