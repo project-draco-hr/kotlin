@@ -1,0 +1,26 @@
+{
+  System.err.println("compiling stdlib for tests, resulting file: " + stdlibJarForTests);
+  File tmp=new File(stdlibJarForTests.getPath() + "~");
+  JetTestUtils.mkdirs(tmp.getParentFile());
+  FileOutputStream stdlibJar=new FileOutputStream(tmp);
+  try {
+    JarOutputStream jarOutputStream=new JarOutputStream(stdlibJar);
+    copyJavaPartOfStdlib(jarOutputStream);
+    compileKotlinPartOfStdlibToJar(jarOutputStream);
+    jarOutputStream.close();
+    stdlibJar.close();
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    try {
+      stdlibJar.close();
+    }
+ catch (    Throwable e) {
+    }
+  }
+  if (!tmp.renameTo(stdlibJarForTests)) {
+    throw new RuntimeException();
+  }
+}
