@@ -7,13 +7,21 @@
     String dest=getPath(this.destdir != null ? this.destdir : this.destjar);
     log(String.format("[%s] => [%s]",src,dest));
     if (this.destdir != null) {
-      compiler.sourcesToDir(src,dest,this.includeRuntime,this.excludeStdlib);
+      compiler.sourcesToDir(src,dest,this.excludeStdlib);
     }
  else {
       compiler.sourcesToJar(src,dest,this.includeRuntime,this.excludeStdlib);
     }
   }
+ else   if (this.module != null) {
+    if (this.destdir != null) {
+      throw new RuntimeException("Module compilation is only supported for jar destination");
+    }
+    String modulePath=getPath(this.module);
+    String jarPath=(this.destjar != null ? getPath(this.destjar) : null);
+    compiler.moduleToJar(modulePath,jarPath,this.includeRuntime);
+  }
  else {
-    throw new RuntimeException("Operation is not supported yet");
+    throw new RuntimeException("This operation is not supported");
   }
 }
