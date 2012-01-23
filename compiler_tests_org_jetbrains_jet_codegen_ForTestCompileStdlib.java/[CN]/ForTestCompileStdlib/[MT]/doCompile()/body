@@ -1,12 +1,15 @@
 {
   System.err.println("compiling stdlib for tests, resulting file: " + stdlibJarForTests);
-  File tmp=new File(stdlibJarForTests.getPath() + "~");
-  JetTestUtils.mkdirs(tmp.getParentFile());
-  FileOutputStream stdlibJar=new FileOutputStream(tmp);
+  File tmpFile=new File(stdlibJarForTests.getPath() + "~");
+  JetTestUtils.mkdirs(tmpFile.getParentFile());
+  File tmpDir=new File(JetTestUtils.tmpDirForTest(ForTestCompileStdlib.class),"classes");
+  JetTestUtils.recreateDirectory(tmpDir);
+  compileKotlinPartOfStdlib(tmpDir);
+  compileJavaPartOfStdlib(tmpDir);
+  FileOutputStream stdlibJar=new FileOutputStream(tmpFile);
   try {
     JarOutputStream jarOutputStream=new JarOutputStream(stdlibJar);
-    copyJavaPartOfStdlib(jarOutputStream);
-    compileKotlinPartOfStdlibToJar(jarOutputStream);
+    copyToJar(tmpDir,jarOutputStream);
     jarOutputStream.close();
     stdlibJar.close();
   }
@@ -20,7 +23,7 @@
  catch (    Throwable e) {
     }
   }
-  if (!tmp.renameTo(stdlibJarForTests)) {
+  if (!tmpFile.renameTo(stdlibJarForTests)) {
     throw new RuntimeException();
   }
 }
