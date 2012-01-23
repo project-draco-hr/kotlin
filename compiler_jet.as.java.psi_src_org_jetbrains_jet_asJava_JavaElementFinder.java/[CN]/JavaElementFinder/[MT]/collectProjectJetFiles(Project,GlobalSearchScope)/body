@@ -1,24 +1,8 @@
 {
   List<JetFile> cachedFiles=jetFiles.get(scope);
   if (cachedFiles == null) {
-    final List<JetFile> answer=new ArrayList<JetFile>();
-    final FileTypeManager fileTypeManager=FileTypeManager.getInstance();
-    List<VirtualFile> contentRoots=Arrays.asList(ProjectRootManager.getInstance(project).getContentRoots());
-    CompilerPathsEx.visitFiles(contentRoots,new CompilerPathsEx.FileVisitor(){
-      @Override protected void acceptFile(      VirtualFile file,      String fileRoot,      String filePath){
-        final FileType fileType=fileTypeManager.getFileTypeByFile(file);
-        if (fileType != JetFileType.INSTANCE)         return;
-        if (scope.accept(file)) {
-          final PsiFile psiFile=psiManager.findFile(file);
-          if (psiFile instanceof JetFile) {
-            answer.add((JetFile)psiFile);
-          }
-        }
-      }
-    }
-);
-    cachedFiles=answer;
-    jetFiles.put(scope,answer);
+    cachedFiles=JetFileUtil.collectJetFiles(project,scope);
+    jetFiles.put(scope,cachedFiles);
   }
   return cachedFiles;
 }
