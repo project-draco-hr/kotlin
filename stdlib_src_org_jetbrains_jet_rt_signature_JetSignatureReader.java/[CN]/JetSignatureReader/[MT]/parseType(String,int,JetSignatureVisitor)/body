@@ -29,7 +29,9 @@ case 'T':
 end=signature.indexOf(';',pos);
 v.visitTypeVariable(signature.substring(pos,end),nullable);
 return end + 1;
-default :
+case 'L':
+case 'M':
+boolean forceReal=signature.charAt(pos - 1) == 'M';
 start=pos;
 visited=false;
 inner=false;
@@ -43,7 +45,7 @@ if (inner) {
 v.visitInnerClassType(name,nullable);
 }
  else {
-v.visitClassType(name,nullable);
+v.visitClassType(name,nullable,forceReal);
 }
 }
 if (c == ';') {
@@ -60,7 +62,7 @@ if (inner) {
 v.visitInnerClassType(name,nullable);
 }
  else {
-v.visitClassType(name,nullable);
+v.visitClassType(name,nullable,forceReal);
 }
 visited=true;
 top: for (; ; ) {
@@ -82,5 +84,7 @@ break;
 }
 }
 }
+default :
+throw new IllegalStateException();
 }
 }

@@ -36,18 +36,21 @@
   }
   if (descriptor instanceof ClassDescriptor) {
     Type asmType;
+    boolean forceReal;
     if (standardLibrary.getComparable().equals(descriptor)) {
       if (jetType.getArguments().size() != 1) {
         throw new UnsupportedOperationException("Comparable must have one type argument");
       }
       asmType=JL_COMPARABLE_TYPE;
+      forceReal=false;
     }
  else {
-      String name=getFQName(descriptor);
-      asmType=Type.getObjectType(name + (kind == OwnerKind.TRAIT_IMPL ? JvmAbi.TRAIT_IMPL_SUFFIX : ""));
+      JvmClassName name=getClassFQName((ClassDescriptor)descriptor);
+      asmType=Type.getObjectType(name.getInternalName() + (kind == OwnerKind.TRAIT_IMPL ? JvmAbi.TRAIT_IMPL_SUFFIX : ""));
+      forceReal=isForceReal(name);
     }
     if (signatureVisitor != null) {
-      signatureVisitor.writeClassBegin(asmType.getInternalName(),jetType.isNullable());
+      signatureVisitor.writeClassBegin(asmType.getInternalName(),jetType.isNullable(),forceReal);
       for (      TypeProjection proj : jetType.getArguments()) {
         signatureVisitor.writeTypeArgument(proj.getProjectionKind());
         mapType(proj.getType(),kind,signatureVisitor,true);
