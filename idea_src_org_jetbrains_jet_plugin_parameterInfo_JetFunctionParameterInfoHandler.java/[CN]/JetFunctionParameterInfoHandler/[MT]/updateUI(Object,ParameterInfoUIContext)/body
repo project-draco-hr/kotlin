@@ -18,6 +18,29 @@
       boolean isGrey=false;
       boolean isDeprecated=false;
       Color color=context.getDefaultParameterColor();
+      PsiElement parent=argumentList.getParent();
+      if (parent instanceof JetCallElement) {
+        JetCallElement callExpression=(JetCallElement)parent;
+        JetExpression calleeExpression=callExpression.getCalleeExpression();
+        JetSimpleNameExpression refExpression=null;
+        if (calleeExpression instanceof JetSimpleNameExpression) {
+          refExpression=(JetSimpleNameExpression)calleeExpression;
+        }
+ else         if (calleeExpression instanceof JetConstructorCalleeExpression) {
+          JetConstructorCalleeExpression constructorCalleeExpression=(JetConstructorCalleeExpression)calleeExpression;
+          if (constructorCalleeExpression.getConstructorReferenceExpression() instanceof JetSimpleNameExpression) {
+            refExpression=(JetSimpleNameExpression)constructorCalleeExpression.getConstructorReferenceExpression();
+          }
+        }
+        if (refExpression != null) {
+          DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,refExpression);
+          if (declarationDescriptor != null) {
+            if (declarationDescriptor == functionDescriptor) {
+              color=GREEN_BACKGROUND;
+            }
+          }
+        }
+      }
       boolean[] usedIndexes=new boolean[valueParameters.size()];
       boolean namedMode=false;
       Arrays.fill(usedIndexes,false);
@@ -37,7 +60,7 @@
             }
  else {
               ValueParameterDescriptor param=valueParameters.get(i);
-              builder.append(renderParameter(param,false));
+              builder.append(renderParameter(param,false,bindingContext));
               if (i < currentParameterIndex) {
                 if (argument.getArgumentExpression() != null) {
                   JetType paramType=getActualParameterType(param);
@@ -51,7 +74,7 @@
           }
  else {
             ValueParameterDescriptor param=valueParameters.get(i);
-            builder.append(renderParameter(param,false));
+            builder.append(renderParameter(param,false,bindingContext));
           }
         }
         if (namedMode) {
@@ -65,7 +88,7 @@
                 if (referenceExpression != null && !usedIndexes[j] && param.getName().equals(referenceExpression.getReferencedName())) {
                   takeAnyArgument=false;
                   usedIndexes[j]=true;
-                  builder.append(renderParameter(param,true));
+                  builder.append(renderParameter(param,true,bindingContext));
                   if (i < currentParameterIndex) {
                     if (argument.getArgumentExpression() != null) {
                       JetType paramType=getActualParameterType(param);
@@ -85,7 +108,7 @@
               ValueParameterDescriptor param=valueParameters.get(j);
               if (!usedIndexes[j]) {
                 usedIndexes[j]=true;
-                builder.append(renderParameter(param,true));
+                builder.append(renderParameter(param,true,bindingContext));
                 break;
               }
             }
@@ -93,7 +116,7 @@
         }
         if (highlightParameter)         boldEndOffset=builder.length();
       }
-      if (builder.toString() == "")       context.setUIComponentEnabled(false);
+      if (builder.toString().isEmpty())       context.setUIComponentEnabled(false);
  else       context.setupUIComponentPresentation(builder.toString(),boldStartOffset,boldEndOffset,isGrey,isDeprecated,false,color);
     }
  else     context.setUIComponentEnabled(false);

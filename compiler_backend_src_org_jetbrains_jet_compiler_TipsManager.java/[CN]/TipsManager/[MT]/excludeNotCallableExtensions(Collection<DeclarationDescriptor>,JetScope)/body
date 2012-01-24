@@ -1,8 +1,16 @@
 {
   final Set<DeclarationDescriptor> descriptorsSet=Sets.newHashSet(descriptors);
+  final ArrayList<ReceiverDescriptor> result=new ArrayList<ReceiverDescriptor>();
+  scope.getImplicitReceiversHierarchy(result);
   descriptorsSet.removeAll(Collections2.filter(JetScopeUtils.getAllExtensions(scope),new Predicate<CallableDescriptor>(){
     @Override public boolean apply(    CallableDescriptor callableDescriptor){
-      return !checkReceiverResolution(scope.getImplicitReceiver(),callableDescriptor);
+      if (!callableDescriptor.getReceiverParameter().exists()) {
+        return false;
+      }
+      for (      ReceiverDescriptor receiverDescriptor : result) {
+        if (checkReceiverResolution(receiverDescriptor,callableDescriptor))         return false;
+      }
+      return true;
     }
   }
 ));
