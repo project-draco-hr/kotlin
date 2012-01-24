@@ -1,5 +1,18 @@
 {
-  codegen.gen(arguments.get(0),JetTypeMapper.TYPE_JET_OBJECT);
-  v.invokeinterface(JetTypeMapper.TYPE_JET_OBJECT.getInternalName(),JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD,"()Ljet/TypeInfo;");
+  JetExpression expr=arguments.get(0);
+  BindingContext bindingContext=codegen.getBindingContext();
+  JetType jetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expr);
+  DeclarationDescriptor declarationDescriptor=jetType.getConstructor().getDeclarationDescriptor();
+  PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,declarationDescriptor.getOriginal());
+  if (psiElement instanceof JetClassOrObject) {
+    codegen.gen(expr,JetTypeMapper.TYPE_JET_OBJECT);
+    v.invokeinterface(JetTypeMapper.TYPE_JET_OBJECT.getInternalName(),JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD,"()Ljet/TypeInfo;");
+  }
+ else {
+    codegen.gen(expr,JetTypeMapper.TYPE_OBJECT);
+    v.invokevirtual("java/lang/Object","getClass","()Ljava/lang/Class;");
+    v.iconst(jetType.isNullable() ? 1 : 0);
+    v.invokestatic("jet/TypeInfo","getTypeInfo","(Ljava/lang/Class;Z)Ljet/TypeInfo;");
+  }
   return StackValue.onStack(JetTypeMapper.TYPE_TYPEINFO);
 }
