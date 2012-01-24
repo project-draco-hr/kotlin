@@ -7,16 +7,25 @@
   }
   if (element == null)   return null;
   JetValueArgumentList argumentList=(JetValueArgumentList)element;
-  JetCallExpression callExpression;
-  if (element.getParent() instanceof JetCallExpression) {
-    callExpression=(JetCallExpression)element.getParent();
+  JetCallElement callExpression;
+  if (element.getParent() instanceof JetCallElement) {
+    callExpression=(JetCallElement)element.getParent();
   }
  else   return null;
   BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)file,AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
   JetExpression calleeExpression=callExpression.getCalleeExpression();
   if (calleeExpression == null)   return null;
+  JetSimpleNameExpression refExpression=null;
   if (calleeExpression instanceof JetSimpleNameExpression) {
-    JetSimpleNameExpression refExpression=(JetSimpleNameExpression)calleeExpression;
+    refExpression=(JetSimpleNameExpression)calleeExpression;
+  }
+ else   if (calleeExpression instanceof JetConstructorCalleeExpression) {
+    JetConstructorCalleeExpression constructorCalleeExpression=(JetConstructorCalleeExpression)calleeExpression;
+    if (constructorCalleeExpression.getConstructorReferenceExpression() instanceof JetSimpleNameExpression) {
+      refExpression=(JetSimpleNameExpression)constructorCalleeExpression.getConstructorReferenceExpression();
+    }
+  }
+  if (refExpression != null) {
     JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,refExpression);
     DeclarationDescriptor placeDescriptor=null;
     if (scope != null) {
@@ -35,11 +44,18 @@
           itemsToShow.add(functionDescriptor);
         }
       }
+ else       if (variant instanceof ClassDescriptor) {
+        ClassDescriptor classDescriptor=(ClassDescriptor)variant;
+        if (classDescriptor.getName().equals(refName)) {
+          for (          ConstructorDescriptor constructorDescriptor : classDescriptor.getConstructors()) {
+            if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,constructorDescriptor))             continue;
+            itemsToShow.add(constructorDescriptor);
+          }
+        }
+      }
     }
     context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
     return argumentList;
   }
- else {
-    return null;
-  }
+  return null;
 }
