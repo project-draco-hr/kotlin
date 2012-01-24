@@ -1,2 +1,34 @@
 {
+  JetPropertyAccessor getter=property.getGetter();
+  JetPropertyAccessor setter=property.getSetter();
+  boolean hasAccessorImplementation=(getter != null && getter.getBodyExpression() != null) || (setter != null && setter.getBodyExpression() != null);
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT)   return;
+  boolean inTrait=classDescriptor != null && classDescriptor.getKind() == ClassKind.TRAIT;
+  JetExpression initializer=property.getInitializer();
+  boolean backingFieldRequired=context.getTrace().getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
+  PsiElement nameIdentifier=property.getNameIdentifier();
+  if (inTrait && backingFieldRequired && hasAccessorImplementation&& nameIdentifier != null) {
+    context.getTrace().report(BACKING_FIELD_IN_TRAIT.on(nameIdentifier));
+  }
+  if (initializer == null) {
+    if (nameIdentifier != null && backingFieldRequired && !inTrait && !context.getTrace().getBindingContext().get(BindingContext.IS_INITIALIZED,propertyDescriptor)) {
+      if (classDescriptor == null || hasAccessorImplementation) {
+        context.getTrace().report(MUST_BE_INITIALIZED.on(nameIdentifier));
+      }
+ else {
+        context.getTrace().report(MUST_BE_INITIALIZED_OR_BE_ABSTRACT.on(property,nameIdentifier));
+      }
+    }
+    return;
+  }
+  if (inTrait) {
+    JetType returnType=propertyDescriptor.getReturnType();
+    if (returnType instanceof DeferredType) {
+      returnType=((DeferredType)returnType).getActualType();
+    }
+    context.getTrace().report(PROPERTY_INITIALIZER_IN_TRAIT.on(property,initializer,returnType));
+  }
+ else   if (!backingFieldRequired) {
+    context.getTrace().report(PROPERTY_INITIALIZER_NO_BACKING_FIELD.on(initializer));
+  }
 }
