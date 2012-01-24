@@ -1,8 +1,11 @@
 {
-  File tempFile=File.createTempFile("compilerTest","compilerTest");
+  File tempDir=FileUtil.createTempDirectory("compilerTest","compilerTest");
   try {
-    KotlinCompiler.main(Arrays.asList("-module",JetParsingTest.getTestDataDir() + "/compiler/smoke/Smoke.kts","-jar",tempFile.getAbsolutePath()).toArray(new String[0]));
-    FileInputStream fileInputStream=new FileInputStream(tempFile);
+    File stdlib=new File(tempDir,"stdlib.jar");
+    FileUtil.copy(ForTestCompileStdlib.stdlibJarForTests(),stdlib);
+    File resultJar=new File(tempDir,"result.jar");
+    KotlinCompiler.main("-module",JetParsingTest.getTestDataDir() + "/compiler/smoke/Smoke.kts","-jar",resultJar.getAbsolutePath(),"-stdlib",stdlib.getAbsolutePath());
+    FileInputStream fileInputStream=new FileInputStream(resultJar);
     try {
       JarInputStream is=new JarInputStream(fileInputStream);
       try {
@@ -19,6 +22,6 @@
     }
   }
   finally {
-    tempFile.delete();
+    FileUtil.delete(tempDir);
   }
 }

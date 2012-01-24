@@ -1,0 +1,65 @@
+{
+  try {
+    CompileSession session=new CompileSession(myEnvironment);
+    myEnvironment.addToClasspath(ForTestCompileStdlib.stdlibJarForTests());
+    File junitJar=new File("testlib/lib/junit-4.9.jar");
+    if (!junitJar.exists()) {
+      throw new AssertionError();
+    }
+    myEnvironment.addToClasspath(junitJar);
+    CoreLocalFileSystem localFileSystem=myEnvironment.getLocalFileSystem();
+    VirtualFile path=localFileSystem.findFileByPath(JetParsingTest.getTestDataDir() + "/../../testlib/test");
+    session.addSources(path);
+    if (!session.analyze(System.out)) {
+      throw new RuntimeException();
+    }
+    ClassFileFactory classFileFactory=session.generate();
+    URLClassLoader dependenciesClassLoader=new URLClassLoader(new URL[]{junitJar.toURI().toURL()});
+    GeneratedClassLoader loader;
+    URLClassLoader parentClassLoader=new URLClassLoader(new URL[]{ForTestCompileStdlib.stdlibJarForTests().toURI().toURL()},dependenciesClassLoader);
+    loader=new GeneratedClassLoader(classFileFactory,parentClassLoader);
+    JetTypeMapper typeMapper=new JetTypeMapper(classFileFactory.state.getStandardLibrary(),session.getMyBindingContext());
+    TestSuite suite=new TestSuite("StandardLibrary");
+    try {
+      for (      JetFile jetFile : session.getSourceFileNamespaces()) {
+        for (        JetDeclaration decl : jetFile.getDeclarations()) {
+          if (decl instanceof JetClass) {
+            JetClass jetClass=(JetClass)decl;
+            ClassDescriptor descriptor=(ClassDescriptor)session.getMyBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,jetClass);
+            Set<JetType> allSuperTypes=new THashSet<JetType>();
+            CodegenUtil.addSuperTypes(descriptor.getDefaultType(),allSuperTypes);
+            for (            JetType type : allSuperTypes) {
+              String internalName=typeMapper.mapType(type).getInternalName();
+              if (internalName.equals("junit/framework/Test")) {
+                String name=typeMapper.mapType(descriptor.getDefaultType()).getInternalName();
+                System.out.println(name);
+                Class<TestCase> aClass=(Class<TestCase>)loader.loadClass(name.replace('/','.'));
+                if ((aClass.getModifiers() & Modifier.ABSTRACT) == 0 && (aClass.getModifiers() & Modifier.PUBLIC) != 0) {
+                  try {
+                    Constructor<TestCase> constructor=aClass.getConstructor();
+                    if (constructor != null && (constructor.getModifiers() & Modifier.PUBLIC) != 0) {
+                      suite.addTestSuite(aClass);
+                    }
+                  }
+ catch (                  NoSuchMethodException e) {
+                  }
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  finally {
+      typeMapper=null;
+    }
+    return suite;
+  }
+ catch (  RuntimeException e) {
+    throw e;
+  }
+catch (  Throwable e) {
+    throw new RuntimeException(e);
+  }
+}
