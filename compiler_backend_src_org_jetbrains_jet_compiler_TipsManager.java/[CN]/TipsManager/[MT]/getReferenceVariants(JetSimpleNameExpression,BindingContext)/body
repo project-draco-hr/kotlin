@@ -14,7 +14,15 @@
         return excludeNonPackageDescriptors(resolutionScope.getAllDescriptors());
       }
  else {
-        return excludeNotCallableExtensions(resolutionScope.getAllDescriptors(),resolutionScope);
+        java.util.HashSet<DeclarationDescriptor> descriptorsSet=Sets.newHashSet();
+        ArrayList<ReceiverDescriptor> result=new ArrayList<ReceiverDescriptor>();
+        resolutionScope.getImplicitReceiversHierarchy(result);
+        for (        ReceiverDescriptor receiverDescriptor : result) {
+          JetType receiverType=receiverDescriptor.getType();
+          descriptorsSet.addAll(receiverType.getMemberScope().getAllDescriptors());
+        }
+        descriptorsSet.addAll(resolutionScope.getAllDescriptors());
+        return excludeNotCallableExtensions(descriptorsSet,resolutionScope);
       }
     }
   }
