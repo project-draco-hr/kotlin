@@ -3,22 +3,25 @@
     JetObjectLiteralExpression jetObjectLiteralExpression=(JetObjectLiteralExpression)expression;
     expression=jetObjectLiteralExpression.getObjectDeclaration();
   }
-  if (expression instanceof JetObjectDeclaration) {
-    DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,expression);
-    return getFQName(declarationDescriptor);
+  if (expression instanceof JetFunctionLiteralExpression) {
+    JetFunctionLiteralExpression jetFunctionLiteralExpression=(JetFunctionLiteralExpression)expression;
+    expression=jetFunctionLiteralExpression.getFunctionLiteral();
   }
   String name=classNamesForAnonymousClasses.get(expression);
   if (name != null) {
     return name;
   }
-  @SuppressWarnings("unchecked") PsiElement container=PsiTreeUtil.getParentOfType(expression,JetFile.class,JetClass.class,JetObjectDeclaration.class);
+  @SuppressWarnings("unchecked") PsiElement container=PsiTreeUtil.getParentOfType(expression,JetFile.class,JetClass.class,JetObjectDeclaration.class,JetFunctionLiteral.class);
   String baseName;
   if (container instanceof JetFile) {
     baseName=NamespaceCodegen.getJVMClassName(JetPsiUtil.getFQName(((JetFile)container)),true);
   }
- else {
+ else   if (container instanceof JetClass) {
     ClassDescriptor aClass=bindingContext.get(BindingContext.CLASS,container);
     baseName=mapType(aClass.getDefaultType(),OwnerKind.IMPLEMENTATION).getInternalName();
+  }
+ else {
+    baseName=classNameForAnonymousClass((JetElement)container);
   }
   Integer count=anonymousSubclassesCount.get(baseName);
   if (count == null)   count=0;
