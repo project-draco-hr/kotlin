@@ -1,0 +1,18 @@
+{
+  try {
+    if (file.getFileType() != JetFileType.INSTANCE)     return null;
+    if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file))     return null;
+    final Module module=ModuleUtil.findModuleForFile(file,myProject);
+    if (module == null)     return null;
+    if (isMavenModule(module))     return null;
+    GlobalSearchScope scope=module.getModuleWithDependenciesAndLibrariesScope(false);
+    if (JavaPsiFacade.getInstance(myProject).findClass("jet.JetObject",scope) == null) {
+      return createNotificationPanel(module);
+    }
+  }
+ catch (  ProcessCanceledException e) {
+  }
+catch (  IndexNotReadyException e) {
+  }
+  return null;
+}
