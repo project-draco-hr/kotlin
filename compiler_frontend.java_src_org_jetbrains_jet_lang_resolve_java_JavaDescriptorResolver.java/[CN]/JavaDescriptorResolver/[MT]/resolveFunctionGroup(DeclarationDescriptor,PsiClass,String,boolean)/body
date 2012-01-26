@@ -1,0 +1,17 @@
+{
+  ResolverScopeData resolverScopeData=getResolverScopeData(descriptor,new PsiClassWrapper(psiClass));
+  Map<String,NamedMembers> namedMembersMap=resolverScopeData.namedMembersMap;
+  NamedMembers namedMembers=namedMembersMap.get(methodName);
+  if (namedMembers == null || namedMembers.methods == null) {
+    return Collections.emptySet();
+  }
+  TypeSubstitutor typeSubstitutor;
+  if (descriptor instanceof ClassDescriptor && !staticMembers) {
+    typeSubstitutor=createSubstitutorForGenericSupertypes((ClassDescriptor)descriptor);
+  }
+ else {
+    typeSubstitutor=TypeSubstitutor.EMPTY;
+  }
+  resolveNamedGroupFunctions(descriptor,psiClass,typeSubstitutor,staticMembers,namedMembers,methodName);
+  return namedMembers.functionDescriptors;
+}
