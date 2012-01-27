@@ -1,12 +1,20 @@
 {
   CodegenContext cur=context;
+  PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,calleeContainingClass);
+  boolean isObject=psiElement instanceof JetClassOrObject && CodegenUtil.isNonLiteralObject((JetClassOrObject)psiElement);
+  cur=context;
   StackValue result=StackValue.local(0,TYPE_OBJECT);
   while (cur != null) {
     if (cur instanceof CodegenContext.MethodContext && !(cur instanceof CodegenContext.ConstructorContext))     cur=cur.getParentContext();
     if (CodegenUtil.isSubclass(cur.getThisDescriptor(),calleeContainingClass)) {
       Type type=asmType(calleeContainingClass.getDefaultType());
-      result.put(TYPE_OBJECT,v);
-      return castToRequiredTypeOfInterfaceIfNeeded(StackValue.onStack(type),cur.getThisDescriptor(),calleeContainingClass);
+      if (!isObject || (cur.getThisDescriptor() == calleeContainingClass)) {
+        result.put(TYPE_OBJECT,v);
+        return castToRequiredTypeOfInterfaceIfNeeded(StackValue.onStack(type),cur.getThisDescriptor(),calleeContainingClass);
+      }
+ else {
+        v.getstatic(type.getInternalName(),"$instance",type.getDescriptor());
+      }
     }
     result=cur.getOuterExpression(result);
     if (cur instanceof CodegenContext.ConstructorContext) {
