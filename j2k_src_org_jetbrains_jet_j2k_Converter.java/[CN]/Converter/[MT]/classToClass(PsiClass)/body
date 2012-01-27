@@ -1,0 +1,54 @@
+{
+  final Set<String> modifiers=modifiersListToModifiersSet(psiClass.getModifierList());
+  final List<Field> fields=fieldsToFieldList(psiClass.getFields(),psiClass);
+  final List<Element> typeParameters=elementsToElementList(psiClass.getTypeParameters());
+  final List<Type> implementsTypes=typesToNotNullableTypeList(psiClass.getImplementsListTypes());
+  final List<Type> extendsTypes=typesToNotNullableTypeList(psiClass.getExtendsListTypes());
+  final IdentifierImpl name=new IdentifierImpl(psiClass.getName());
+  final List<Expression> baseClassParams=new LinkedList<Expression>();
+  List<Member> members=getMembers(psiClass);
+  final SuperVisitor visitor=new SuperVisitor();
+  psiClass.accept(visitor);
+  final HashSet<PsiExpressionList> resolvedSuperCallParameters=visitor.getResolvedSuperCallParameters();
+  if (resolvedSuperCallParameters.size() == 1)   baseClassParams.addAll(expressionsToExpressionList(resolvedSuperCallParameters.toArray(new PsiExpressionList[1])[0].getExpressions()));
+  if (!psiClass.isEnum() && !psiClass.isInterface() && psiClass.getConstructors().length > 1 && getPrimaryConstructorForThisCase(psiClass) == null) {
+    final List<Field> finalOrWithEmptyInitializer=getFinalOrWithEmptyInitializer(fields);
+    final Map<String,String> initializers=new HashMap<String,String>();
+    for (    final Member m : members) {
+      if (m.getKind() == INode.Kind.CONSTRUCTOR) {
+        Function f=(Function)m;
+        if (!((Constructor)f).isPrimary()) {
+          for (          Field fo : finalOrWithEmptyInitializer) {
+            String init=getDefaultInitializer(fo);
+            initializers.put(fo.getIdentifier().toKotlin(),init);
+          }
+          final List<Statement> newStatements=new LinkedList<Statement>();
+          for (          Statement s : f.getBlock().getStatements()) {
+            boolean isRemoved=false;
+            if (s.getKind() == INode.Kind.ASSIGNMENT_EXPRESSION) {
+              final AssignmentExpression assignmentExpression=(AssignmentExpression)s;
+              if (assignmentExpression.getLeft().getKind() == INode.Kind.CALL_CHAIN) {
+                for (                Field fo : finalOrWithEmptyInitializer) {
+                  final String id=fo.getIdentifier().toKotlin();
+                  if (((CallChainExpression)assignmentExpression.getLeft()).getIdentifier().toKotlin().endsWith("." + id)) {
+                    initializers.put(id,assignmentExpression.getRight().toKotlin());
+                    isRemoved=true;
+                  }
+                }
+              }
+            }
+            if (!isRemoved) {
+              newStatements.add(s);
+            }
+          }
+          newStatements.add(0,new DummyStringExpression("val __ = " + createPrimaryConstructorInvocation(name.toKotlin(),finalOrWithEmptyInitializer,initializers)));
+          f.setBlock(new Block(newStatements));
+        }
+      }
+    }
+    members.add(new Constructor(Identifier.EMPTY_IDENTIFIER,Collections.<String>emptySet(),new ClassType(name),Collections.<Element>emptyList(),new ParameterList(createParametersFromFields(finalOrWithEmptyInitializer)),new Block(createInitStatementsFromFields(finalOrWithEmptyInitializer)),true));
+  }
+  if (psiClass.isInterface())   return new Trait(name,modifiers,typeParameters,extendsTypes,Collections.<Expression>emptyList(),implementsTypes,members);
+  if (psiClass.isEnum())   return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),Collections.<Expression>emptyList(),implementsTypes,members);
+  return new Class(name,modifiers,typeParameters,extendsTypes,baseClassParams,implementsTypes,members);
+}

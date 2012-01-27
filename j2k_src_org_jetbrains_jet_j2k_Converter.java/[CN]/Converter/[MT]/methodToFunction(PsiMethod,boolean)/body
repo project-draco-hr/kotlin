@@ -1,0 +1,19 @@
+{
+  if (isOverrideObjectDirect(method))   ourDispatcher.setExpressionVisitor(new ExpressionVisitorForDirectObjectInheritors());
+ else   ourDispatcher.setExpressionVisitor(new ExpressionVisitor());
+  ourMethodReturnType=method.getReturnType();
+  final IdentifierImpl identifier=new IdentifierImpl(method.getName());
+  final Type returnType=typeToType(method.getReturnType(),ConverterUtil.isAnnotatedAsNotNull(method.getModifierList()));
+  final Block body=hasSetting("declarations-only") ? Block.EMPTY_BLOCK : blockToBlock(method.getBody(),notEmpty);
+  final Element params=createFunctionParameters(method);
+  final List<Element> typeParameters=elementsToElementList(method.getTypeParameters());
+  final Set<String> modifiers=modifiersListToModifiersSet(method.getModifierList());
+  if (isOverrideAnyMethodExceptMethodsFromObject(method))   modifiers.add(Modifier.OVERRIDE);
+  if (method.getParent() instanceof PsiClass && ((PsiClass)method.getParent()).isInterface())   modifiers.remove(Modifier.ABSTRACT);
+  if (isNotOpenMethod(method))   modifiers.add(Modifier.NOT_OPEN);
+  if (method.isConstructor()) {
+    boolean isPrimary=isConstructorPrimary(method);
+    return new Constructor(identifier,modifiers,returnType,typeParameters,params,new Block(removeEmpty(body.getStatements()),false),isPrimary);
+  }
+  return new Function(identifier,modifiers,returnType,typeParameters,params,body);
+}
