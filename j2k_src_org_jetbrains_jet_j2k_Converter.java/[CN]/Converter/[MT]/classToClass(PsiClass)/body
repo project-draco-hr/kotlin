@@ -10,7 +10,9 @@
   final SuperVisitor visitor=new SuperVisitor();
   psiClass.accept(visitor);
   final HashSet<PsiExpressionList> resolvedSuperCallParameters=visitor.getResolvedSuperCallParameters();
-  if (resolvedSuperCallParameters.size() == 1)   baseClassParams.addAll(expressionsToExpressionList(resolvedSuperCallParameters.toArray(new PsiExpressionList[1])[0].getExpressions()));
+  if (resolvedSuperCallParameters.size() == 1) {
+    baseClassParams.addAll(expressionsToExpressionList(resolvedSuperCallParameters.toArray(new PsiExpressionList[1])[0].getExpressions()));
+  }
   if (!psiClass.isEnum() && !psiClass.isInterface() && psiClass.getConstructors().length > 1 && getPrimaryConstructorForThisCase(psiClass) == null) {
     final List<Field> finalOrWithEmptyInitializer=getFinalOrWithEmptyInitializer(fields);
     final Map<String,String> initializers=new HashMap<String,String>();
@@ -48,7 +50,11 @@
     }
     members.add(new Constructor(Identifier.EMPTY_IDENTIFIER,Collections.<String>emptySet(),new ClassType(name),Collections.<Element>emptyList(),new ParameterList(createParametersFromFields(finalOrWithEmptyInitializer)),new Block(createInitStatementsFromFields(finalOrWithEmptyInitializer)),true));
   }
-  if (psiClass.isInterface())   return new Trait(name,modifiers,typeParameters,extendsTypes,Collections.<Expression>emptyList(),implementsTypes,members);
-  if (psiClass.isEnum())   return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),Collections.<Expression>emptyList(),implementsTypes,members);
+  if (psiClass.isInterface()) {
+    return new Trait(name,modifiers,typeParameters,extendsTypes,Collections.<Expression>emptyList(),implementsTypes,members);
+  }
+  if (psiClass.isEnum()) {
+    return new Enum(name,modifiers,typeParameters,Collections.<Type>emptyList(),Collections.<Expression>emptyList(),implementsTypes,members);
+  }
   return new Class(name,modifiers,typeParameters,extendsTypes,baseClassParams,implementsTypes,members);
 }
