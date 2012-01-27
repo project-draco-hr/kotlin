@@ -1,0 +1,19 @@
+{
+  for (  final VirtualFile classRoot : roots) {
+    final VirtualFile classFile=classRoot.findFileByRelativePath(qualifiedName.replace('.','/') + ".class");
+    if (classFile != null) {
+      if (!classFile.isValid()) {
+        LOG.error("Invalid child of valid parent: " + classFile.getPath() + "; "+ classRoot.isValid()+ " path="+ classRoot.getPath());
+        return null;
+      }
+      final PsiFile file=psiManager.findFile(classFile);
+      if (file instanceof PsiClassOwner) {
+        final PsiClass[] classes=((PsiClassOwner)file).getClasses();
+        if (classes.length == 1) {
+          return classes[0];
+        }
+      }
+    }
+  }
+  return null;
+}
