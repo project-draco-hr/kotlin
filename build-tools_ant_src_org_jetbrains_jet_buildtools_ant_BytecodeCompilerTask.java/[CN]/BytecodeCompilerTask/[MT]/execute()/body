@@ -1,28 +1,28 @@
 {
-  final BytecodeCompiler compiler=new BytecodeCompiler(this.stdlib);
-  if ((this.srcdir != null) || (this.file != null)) {
-    if ((this.destdir == null) && (this.destjar == null)) {
-      throw new RuntimeException("\"destdir\" or \"destjar\" should be specified");
+  final BytecodeCompiler compiler=new BytecodeCompiler(this.stdlib != null ? getPath(this.stdlib) : null);
+  if (this.src != null) {
+    if ((this.output == null) && (this.jar == null)) {
+      throw new RuntimeException("\"output\" or \"jar\" should be specified");
     }
-    String src=getPath(this.srcdir != null ? this.srcdir : this.file);
-    String dest=getPath(this.destdir != null ? this.destdir : this.destjar);
-    log(String.format("[%s] => [%s]",src,dest));
-    if (this.destdir != null) {
-      compiler.sourcesToDir(src,dest);
+    String source=getPath(this.src);
+    String destination=getPath(this.output != null ? this.output : this.jar);
+    log(String.format("[%s] => [%s]",source,destination));
+    if (this.output != null) {
+      compiler.sourcesToDir(source,destination);
     }
  else {
-      compiler.sourcesToJar(src,dest,this.includeRuntime);
+      compiler.sourcesToJar(source,destination,this.includeRuntime);
     }
   }
  else   if (this.module != null) {
-    if (this.destdir != null) {
+    if (this.output != null) {
       throw new RuntimeException("Module compilation is only supported for jar destination");
     }
     String modulePath=getPath(this.module);
-    String jarPath=(this.destjar != null ? getPath(this.destjar) : null);
+    String jarPath=(this.jar != null ? getPath(this.jar) : null);
     compiler.moduleToJar(modulePath,jarPath,this.includeRuntime);
   }
  else {
-    throw new RuntimeException("This operation is not supported");
+    throw new RuntimeException("\"src\" or \"module\" should be specified");
   }
 }
