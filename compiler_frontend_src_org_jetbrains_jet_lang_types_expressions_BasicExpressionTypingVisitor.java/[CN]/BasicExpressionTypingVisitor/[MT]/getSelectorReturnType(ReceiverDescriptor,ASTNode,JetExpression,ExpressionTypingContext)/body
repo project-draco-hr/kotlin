@@ -1,7 +1,9 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
     JetCallExpression callExpression=(JetCallExpression)selectorExpression;
-    return context.resolveCall(receiver,callOperationNode,callExpression);
+    FunctionDescriptor functionDescriptor=context.resolveCall(receiver,callOperationNode,callExpression);
+    checkSuper(receiver,functionDescriptor,context.trace,selectorExpression);
+    return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
     JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)selectorExpression;
@@ -9,7 +11,9 @@
     OverloadResolutionResults<VariableDescriptor> resolutionResult=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,callOperationNode,nameExpression);
     if (resolutionResult.isSuccess()) {
       temporaryTrace.commit();
-      return resolutionResult.getResultingDescriptor().getOutType();
+      VariableDescriptor resultingDescriptor=resolutionResult.getResultingDescriptor();
+      checkSuper(receiver,resultingDescriptor,context.trace,selectorExpression);
+      return resultingDescriptor.getOutType();
     }
     if (resolutionResult.isAmbiguity()) {
       temporaryTrace.commit();
