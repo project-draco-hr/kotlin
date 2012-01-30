@@ -1,9 +1,8 @@
 {
-  boolean isStatement=BindingUtils.isStatement(context.bindingContext(),expression);
-  if (isStatement) {
-    return translateAsIfStatement(expression,context);
-  }
- else {
-    return translateAsConditionalExpression(expression,context);
-  }
+  TemporaryVariable result=context.declareTemporary(context.program().getNullLiteral());
+  AstUtil.SaveLastExpressionMutator saveResultToTemporaryMutator=new AstUtil.SaveLastExpressionMutator(result.nameReference());
+  JsNode mutatedIfStatement=AstUtil.mutateLastExpression(translateAsIfStatement(expression,context),saveResultToTemporaryMutator);
+  JsStatement resultingStatement=AstUtil.convertToStatement(mutatedIfStatement);
+  context.jsBlock().addStatement(resultingStatement);
+  return result.nameReference();
 }
