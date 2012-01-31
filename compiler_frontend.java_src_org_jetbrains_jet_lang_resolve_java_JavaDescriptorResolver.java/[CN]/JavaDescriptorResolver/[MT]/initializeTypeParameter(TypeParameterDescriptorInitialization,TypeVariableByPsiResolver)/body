@@ -1,0 +1,29 @@
+{
+  TypeParameterDescriptor typeParameterDescriptor=typeParameter.descriptor;
+  if (typeParameter.origin == TypeParameterDescriptorOrigin.KOTLIN) {
+    List<?> upperBounds=typeParameter.upperBoundsForKotlin;
+    if (upperBounds.size() == 0) {
+      typeParameterDescriptor.addUpperBound(JetStandardClasses.getNullableAnyType());
+    }
+ else {
+      for (      JetType upperBound : typeParameter.upperBoundsForKotlin) {
+        typeParameterDescriptor.addUpperBound(upperBound);
+      }
+    }
+  }
+ else {
+    PsiClassType[] referencedTypes=typeParameter.psiTypeParameter.getExtendsList().getReferencedTypes();
+    if (referencedTypes.length == 0) {
+      typeParameterDescriptor.addUpperBound(JetStandardClasses.getNullableAnyType());
+    }
+ else     if (referencedTypes.length == 1) {
+      typeParameterDescriptor.addUpperBound(semanticServices.getTypeTransformer().transformToType(referencedTypes[0],typeVariableByPsiResolver));
+    }
+ else {
+      for (      PsiClassType referencedType : referencedTypes) {
+        typeParameterDescriptor.addUpperBound(semanticServices.getTypeTransformer().transformToType(referencedType,typeVariableByPsiResolver));
+      }
+    }
+  }
+  typeParameterDescriptor.setInitialized();
+}

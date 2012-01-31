@@ -1,0 +1,16 @@
+{
+  String qualifiedName=psiClass.getQualifiedName();
+  if (qualifiedName.endsWith(JvmAbi.TRAIT_IMPL_SUFFIX)) {
+    return null;
+  }
+  ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(qualifiedName);
+  if (kotlinClassDescriptor != null) {
+    return new ResolverSrcClassData(kotlinClassDescriptor);
+  }
+  ResolverBinaryClassData classData=classDescriptorCache.get(qualifiedName);
+  if (classData == null) {
+    classData=createJavaClassDescriptor(psiClass);
+    classDescriptorCache.put(qualifiedName,classData);
+  }
+  return classData;
+}

@@ -1,0 +1,16 @@
+{
+  ResolverScopeData scopeData=getResolverScopeData(containingDeclaration,new PsiClassWrapper(psiClass));
+  TypeSubstitutor substitutorForGenericSupertypes;
+  if (scopeData instanceof ResolverBinaryClassData) {
+    substitutorForGenericSupertypes=createSubstitutorForGenericSupertypes(((ResolverBinaryClassData)scopeData).classDescriptor);
+  }
+ else {
+    substitutorForGenericSupertypes=TypeSubstitutor.EMPTY;
+  }
+  List<FunctionDescriptor> functions=new ArrayList<FunctionDescriptor>();
+  for (  NamedMembers namedMembers : scopeData.namedMembersMap.values()) {
+    resolveNamedGroupFunctions(containingDeclaration,psiClass,substitutorForGenericSupertypes,namedMembers);
+    functions.addAll(namedMembers.functionDescriptors);
+  }
+  return functions;
+}
