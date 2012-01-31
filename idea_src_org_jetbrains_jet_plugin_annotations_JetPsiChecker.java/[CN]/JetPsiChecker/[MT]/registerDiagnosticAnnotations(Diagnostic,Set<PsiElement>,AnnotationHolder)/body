@@ -1,4 +1,5 @@
 {
+  List<TextRange> textRanges=diagnostic.getFactory().getTextRanges(diagnostic);
   if (diagnostic.getSeverity() == Severity.ERROR) {
     if (diagnostic instanceof UnresolvedReferenceDiagnostic) {
       UnresolvedReferenceDiagnostic unresolvedReferenceDiagnostic=(UnresolvedReferenceDiagnostic)diagnostic;
@@ -13,9 +14,11 @@
         }
       }
  else {
-        Annotation annotation=holder.createErrorAnnotation(referenceExpression,diagnostic.getMessage());
-        registerQuickFix(annotation,diagnostic);
-        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        for (        TextRange textRange : textRanges) {
+          Annotation annotation=holder.createErrorAnnotation(textRange,diagnostic.getMessage());
+          registerQuickFix(annotation,diagnostic);
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
       }
       return;
     }
@@ -24,14 +27,18 @@
       registerQuickFix(markRedeclaration(redeclarations,redeclarationDiagnostic,holder),diagnostic);
       return;
     }
-    Annotation errorAnnotation=holder.createErrorAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
-    registerQuickFix(errorAnnotation,diagnostic);
+    for (    TextRange textRange : textRanges) {
+      Annotation errorAnnotation=holder.createErrorAnnotation(textRange,getMessage(diagnostic));
+      registerQuickFix(errorAnnotation,diagnostic);
+    }
   }
  else   if (diagnostic.getSeverity() == Severity.WARNING) {
-    Annotation annotation=holder.createWarningAnnotation(diagnostic.getFactory().getTextRange(diagnostic),getMessage(diagnostic));
-    registerQuickFix(annotation,diagnostic);
-    if (diagnostic.getFactory() instanceof UnusedElementDiagnosticFactory) {
-      annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    for (    TextRange textRange : textRanges) {
+      Annotation annotation=holder.createWarningAnnotation(textRange,getMessage(diagnostic));
+      registerQuickFix(annotation,diagnostic);
+      if (diagnostic.getFactory() instanceof UnusedElementDiagnosticFactory) {
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      }
     }
   }
 }
