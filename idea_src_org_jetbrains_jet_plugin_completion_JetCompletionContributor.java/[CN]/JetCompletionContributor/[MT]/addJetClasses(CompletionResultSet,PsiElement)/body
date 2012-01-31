@@ -1,18 +1,10 @@
 {
-  if (position.getParent() instanceof JetSimpleNameExpression) {
-    final JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)position.getParent();
-    if (PsiTreeUtil.getParentOfType(nameExpression,JetQualifiedExpression.class) == null) {
-      Project project=position.getProject();
-      final String referencedName=nameExpression.getReferencedName();
-      if (referencedName != null && referencedName.endsWith(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED)) {
-        int lastPrefixIndex=referencedName.length() - CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED.length();
-        String actualPrefix=referencedName.substring(0,lastPrefixIndex);
-        final Collection<ClassDescriptor> classDescriptors=JetCacheManager.getInstance(project).getNamesCache().getClassDescriptors();
-        for (        ClassDescriptor descriptor : classDescriptors) {
-          if (descriptor.getName().startsWith(actualPrefix)) {
-            result.addElement(DescriptorLookupConverter.createLookupElement(descriptor,null));
-          }
-        }
+  String actualPrefix=getActualCompletionPrefix(position);
+  if (actualPrefix != null) {
+    final Collection<ClassDescriptor> classDescriptors=JetCacheManager.getInstance(position.getProject()).getNamesCache().getClassDescriptors();
+    for (    ClassDescriptor descriptor : classDescriptors) {
+      if (descriptor.getName().startsWith(actualPrefix)) {
+        addCompletionToResult(result,DescriptorLookupConverter.createLookupElement(null,descriptor,null));
       }
     }
   }
