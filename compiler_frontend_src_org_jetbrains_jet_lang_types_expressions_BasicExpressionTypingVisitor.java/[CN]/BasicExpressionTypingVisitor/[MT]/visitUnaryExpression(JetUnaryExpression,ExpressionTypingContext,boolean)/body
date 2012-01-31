@@ -17,8 +17,24 @@
     context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
     return null;
   }
-  ExpressionReceiver receiver=getExpressionReceiver(facade,baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(context.scope));
-  if (receiver == null)   return null;
+  JetType type=null;
+  if ((operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) && baseExpression instanceof JetArrayAccessExpression) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+    JetType expressionType=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(temporaryTrace));
+    if (expressionType != null) {
+      JetExpression stubExpression=ExpressionTypingUtils.createStubExpressionOfNecessaryType(baseExpression.getProject(),expressionType,context.trace);
+      type=resolveArrayAccessToLValue((JetArrayAccessExpression)baseExpression,stubExpression,context,true);
+    }
+ else {
+      temporaryTrace.commit();
+      context.trace.report(UNRESOLVED_REFERENCE.on(operationSign));
+    }
+  }
+ else {
+    type=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
+  }
+  if (type == null)   return null;
+  ExpressionReceiver receiver=new ExpressionReceiver(baseExpression,type);
   OverloadResolutionResults<FunctionDescriptor> functionDescriptor=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
   if (!functionDescriptor.isSuccess())   return null;
   JetType returnType=functionDescriptor.getResultingDescriptor().getReturnType();

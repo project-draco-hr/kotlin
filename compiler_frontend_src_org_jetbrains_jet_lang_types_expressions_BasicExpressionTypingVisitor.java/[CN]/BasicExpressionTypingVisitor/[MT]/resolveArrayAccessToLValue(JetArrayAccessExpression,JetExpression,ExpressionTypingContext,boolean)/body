@@ -1,0 +1,30 @@
+{
+  ExpressionReceiver receiver=getExpressionReceiver(facade,arrayAccessExpression.getArrayExpression(),context.replaceExpectedType(NO_EXPECTED_TYPE));
+  if (receiver == null)   return null;
+  OverloadResolutionResults<FunctionDescriptor> getFunctionResults=null;
+  if (getterNeeded) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+    getFunctionResults=context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceBindingTrace(temporaryTrace).resolveCallWithGivenName(CallMaker.makeArrayGetCall(receiver,arrayAccessExpression),arrayAccessExpression,"get");
+    if (!getFunctionResults.isSuccess()) {
+      temporaryTrace.commit();
+      context.trace.report(NO_GET_METHOD.on(arrayAccessExpression.getIndicesNode()));
+      return null;
+    }
+    context.trace.record(INDEXED_LVALUE_GET,arrayAccessExpression,getFunctionResults.getResultingCall());
+  }
+  Call call=CallMaker.makeArraySetCall(receiver,arrayAccessExpression,right);
+  OverloadResolutionResults<FunctionDescriptor> setFunctionResults=context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).resolveCallWithGivenName(call,arrayAccessExpression,"set");
+  if (!setFunctionResults.isSuccess()) {
+    context.trace.report(NO_SET_METHOD.on(arrayAccessExpression.getIndicesNode()));
+    if (getterNeeded) {
+      return getFunctionResults.getResultingDescriptor().getReturnType();
+    }
+    return null;
+  }
+  FunctionDescriptor setFunctionDescriptor=setFunctionResults.getResultingDescriptor();
+  context.trace.record(INDEXED_LVALUE_SET,arrayAccessExpression,setFunctionResults.getResultingCall());
+  if (getterNeeded) {
+    return getFunctionResults.getResultingDescriptor().getReturnType();
+  }
+  return setFunctionDescriptor.getReturnType();
+}
