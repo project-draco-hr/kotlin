@@ -1,0 +1,19 @@
+{
+  Editor editor=context.getEditor();
+  final CodeFoldingManager foldManager=CodeFoldingManager.getInstance(context.getProject());
+  foldManager.updateFoldRegions(editor);
+  String text=context.getDocument().getText();
+  int firstParamStart=text.indexOf("<#<",context.getStartOffset());
+  int firstParamEnd=text.indexOf(">#>",firstParamStart);
+  SelectionModel selectionModel=editor.getSelectionModel();
+  if (firstParamStart >= 0 && firstParamEnd >= 0 && firstParamStart < context.getTailOffset()) {
+    selectionModel.setSelection(firstParamStart,firstParamEnd + 2);
+  }
+  CodeStyleManager.getInstance(context.getProject()).reformatText(context.getFile(),context.getStartOffset(),context.getTailOffset());
+  if (firstParamStart >= 0 && firstParamEnd >= 0 && selectionModel.hasSelection()) {
+    editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart());
+  }
+ else {
+    editor.getCaretModel().moveToOffset(context.getTailOffset());
+  }
+}
