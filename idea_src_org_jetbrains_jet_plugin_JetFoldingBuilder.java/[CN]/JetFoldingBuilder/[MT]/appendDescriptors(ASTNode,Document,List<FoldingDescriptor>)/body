@@ -1,7 +1,13 @@
 {
   TextRange textRange=node.getTextRange();
-  if ((node.getElementType() == JetNodeTypes.BLOCK || node.getElementType() == JetNodeTypes.CLASS_BODY) && !isOneLine(textRange,document)) {
+  IElementType type=node.getElementType();
+  if ((type == JetNodeTypes.BLOCK || type == JetNodeTypes.CLASS_BODY) && !isOneLine(textRange,document)) {
     descriptors.add(new FoldingDescriptor(node,textRange));
+  }
+ else   if (type == JetNodeTypes.PARENTHESIZED && node.getFirstChildNode().getElementType() == JetTokens.IDE_TEMPLATE_START) {
+    if (node.getTreeParent().getTextLength() > 0) {
+      descriptors.add(new FoldingDescriptor(node,textRange,null,Collections.<Object>emptySet(),true));
+    }
   }
   ASTNode child=node.getFirstChildNode();
   while (child != null) {
