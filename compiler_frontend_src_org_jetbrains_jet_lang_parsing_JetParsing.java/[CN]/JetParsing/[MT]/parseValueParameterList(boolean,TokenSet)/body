@@ -2,28 +2,30 @@
   PsiBuilder.Marker parameters=mark();
   myBuilder.disableNewlines();
   expect(LPAR,"Expecting '(",recoverySet);
-  if (!at(RPAR) && !atSet(recoverySet)) {
-    while (true) {
-      if (at(COMMA)) {
-        errorAndAdvance("Expecting a parameter declaration");
-      }
- else       if (at(RPAR)) {
-        error("Expecting a parameter declaration");
-        break;
-      }
-      if (isFunctionTypeContents) {
-        if (!tryParseValueParameter()) {
-          PsiBuilder.Marker valueParameter=mark();
-          parseModifierList(MODIFIER_LIST,false);
-          parseTypeRef();
-          valueParameter.done(VALUE_PARAMETER);
+  if (!parseIdeTemplate()) {
+    if (!at(RPAR) && !atSet(recoverySet)) {
+      while (true) {
+        if (at(COMMA)) {
+          errorAndAdvance("Expecting a parameter declaration");
         }
-      }
+ else         if (at(RPAR)) {
+          error("Expecting a parameter declaration");
+          break;
+        }
+        if (isFunctionTypeContents) {
+          if (!tryParseValueParameter()) {
+            PsiBuilder.Marker valueParameter=mark();
+            parseModifierList(MODIFIER_LIST,false);
+            parseTypeRef();
+            valueParameter.done(VALUE_PARAMETER);
+          }
+        }
  else {
-        parseValueParameter();
+          parseValueParameter();
+        }
+        if (!at(COMMA))         break;
+        advance();
       }
-      if (!at(COMMA))       break;
-      advance();
     }
   }
   expect(RPAR,"Expecting ')'",recoverySet);
