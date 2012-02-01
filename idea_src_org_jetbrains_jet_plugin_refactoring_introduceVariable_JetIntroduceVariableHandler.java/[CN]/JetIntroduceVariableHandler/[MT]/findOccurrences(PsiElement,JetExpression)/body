@@ -1,0 +1,34 @@
+{
+  if (expression instanceof JetParenthesizedExpression) {
+    JetParenthesizedExpression parenthesizedExpression=(JetParenthesizedExpression)expression;
+    JetExpression innerExpression=parenthesizedExpression.getExpression();
+    if (innerExpression != null) {
+      expression=innerExpression;
+    }
+  }
+  final JetExpression actualExpression=expression;
+  final ArrayList<JetExpression> result=new ArrayList<JetExpression>();
+  JetVisitorVoid visitor=new JetVisitorVoid(){
+    @Override public void visitJetElement(    JetElement element){
+      element.acceptChildren(this);
+      super.visitJetElement(element);
+    }
+    @Override public void visitExpression(    JetExpression expression){
+      if (PsiEquivalenceUtil.areElementsEquivalent(expression,actualExpression)) {
+        PsiElement parent=expression.getParent();
+        if (parent instanceof JetParenthesizedExpression) {
+          result.add((JetParenthesizedExpression)parent);
+        }
+ else {
+          result.add(expression);
+        }
+      }
+ else {
+        super.visitExpression(expression);
+      }
+    }
+  }
+;
+  occurrenceContainer.accept(visitor);
+  return result;
+}

@@ -1,0 +1,30 @@
+{
+  if (place instanceof JetBlockExpression || place instanceof JetClassBody || place instanceof JetFile|| place instanceof JetClassInitializer) {
+    return place;
+  }
+  while (place != null) {
+    PsiElement parent=place.getParent();
+    if (parent instanceof JetContainerNode) {
+      if (!(parent.getParent() instanceof JetIfExpression && ((JetIfExpression)parent.getParent()).getCondition() == place)) {
+        return parent;
+      }
+    }
+    if (parent instanceof JetBlockExpression || parent instanceof JetWhenEntry || parent instanceof JetClassBody|| parent instanceof JetFile|| parent instanceof JetClassInitializer) {
+      return parent;
+    }
+ else     if (parent instanceof JetNamedFunction) {
+      JetNamedFunction function=(JetNamedFunction)parent;
+      if (function.getBodyExpression() == place) {
+        return parent;
+      }
+    }
+ else     if (parent instanceof JetSecondaryConstructor) {
+      JetSecondaryConstructor secondaryConstructor=(JetSecondaryConstructor)parent;
+      if (secondaryConstructor.getBodyExpression() == place) {
+        return parent;
+      }
+    }
+    place=parent;
+  }
+  return null;
+}

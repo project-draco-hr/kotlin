@@ -1,0 +1,60 @@
+{
+  return new Runnable(){
+    @Override public void run(){
+      String variableText="val " + suggestedNames[0] + " = ";
+      if (expression instanceof JetParenthesizedExpression) {
+        JetParenthesizedExpression parenthesizedExpression=(JetParenthesizedExpression)expression;
+        JetExpression innerExpression=parenthesizedExpression.getExpression();
+        if (innerExpression != null)         variableText+=innerExpression.getText();
+ else         variableText+=expression.getText();
+      }
+ else       variableText+=expression.getText();
+      JetProperty property=JetPsiFactory.createProperty(project,variableText);
+      if (property == null)       return;
+      PsiElement anchor=commonParent;
+      if (anchor != commonContainer) {
+        while (anchor.getParent() != commonContainer) {
+          anchor=anchor.getParent();
+        }
+      }
+ else {
+        anchor=commonContainer.getFirstChild();
+        int startOffset=commonContainer.getTextRange().getEndOffset();
+        for (        JetExpression expr : allReplaces) {
+          int offset=expr.getTextRange().getStartOffset();
+          if (offset < startOffset)           startOffset=offset;
+        }
+        while (anchor != null && !anchor.getTextRange().contains(startOffset)) {
+          anchor=anchor.getNextSibling();
+        }
+        if (anchor == null)         return;
+      }
+      boolean needBraces=!(commonContainer instanceof JetBlockExpression || commonContainer instanceof JetClassBody || commonContainer instanceof JetFile|| commonContainer instanceof JetClassInitializer);
+      if (!needBraces) {
+        property=(JetProperty)commonContainer.addBefore(property,anchor);
+        commonContainer.addBefore(JetPsiFactory.createWhiteSpace(project,"\n"),anchor);
+      }
+ else {
+        JetExpression emptyBody=JetPsiFactory.createEmptyBody(project);
+        PsiElement firstChild=emptyBody.getFirstChild();
+        emptyBody.addAfter(JetPsiFactory.createWhiteSpace(project,"\n"),firstChild);
+        property=(JetProperty)emptyBody.addAfter(property,firstChild);
+        emptyBody.addAfter(JetPsiFactory.createWhiteSpace(project,"\n"),firstChild);
+        anchor.replace(emptyBody);
+      }
+      for (      JetExpression replace : allReplaces) {
+        if (replaceOccurrence) {
+          boolean isActualExpression=expression == replace;
+          JetExpression element=(JetExpression)replace.replace(JetPsiFactory.createExpression(project,suggestedNames[0]));
+          references.add(element);
+          if (isActualExpression)           reference.set(element);
+        }
+ else         if (!needBraces) {
+          replace.delete();
+        }
+      }
+      propertyRef.set(property);
+    }
+  }
+;
+}
