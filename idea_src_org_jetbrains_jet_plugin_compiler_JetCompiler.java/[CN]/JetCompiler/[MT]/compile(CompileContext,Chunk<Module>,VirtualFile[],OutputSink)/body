@@ -6,58 +6,74 @@
     compileContext.addMessage(ERROR,"[Internal Error] No output directory","",-1,-1);
     return;
   }
-  ApplicationManager.getApplication().runReadAction(new Runnable(){
-    @Override public void run(){
-      VirtualFile[] allFiles=compileContext.getCompileScope().getFiles(null,true);
-      GenerationState generationState=new GenerationState(compileContext.getProject(),ClassBuilderFactory.BINARIES);
-      List<JetFile> files=Lists.newArrayList();
-      for (      VirtualFile virtualFile : allFiles) {
-        PsiFile psiFile=PsiManager.getInstance(compileContext.getProject()).findFile(virtualFile);
-        if (psiFile instanceof JetFile) {
-          files.add(((JetFile)psiFile));
-        }
+  File kotlinHome=PathUtil.getDefaultCompilerPath();
+  if (kotlinHome == null) {
+    compileContext.addMessage(ERROR,"Cannot file kotlinc home. Make sure plugin is properly installed","",-1,-1);
+    return;
+  }
+  StringBuilder script=new StringBuilder();
+  script.append("import kotlin.modules.*\n");
+  script.append("fun project() {\n");
+  script.append("module(\"" + moduleChunk.getNodes().iterator().next().getName() + "\") {\n");
+  for (  VirtualFile sourceFile : virtualFiles) {
+    script.append("sources += \"" + path(sourceFile) + "\"\n");
+  }
+  ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
+  for (  VirtualFile root : chunk.getCompilationBootClasspathFiles()) {
+    script.append("classpath += \"" + path(root) + "\"\n");
+  }
+  for (  VirtualFile root : chunk.getCompilationClasspathFiles()) {
+    script.append("classpath += \"" + path(root) + "\"\n");
+  }
+  script.append("}\n");
+  script.append("}\n");
+  File scriptFile=new File(path(outputDir),"script.kts");
+  try {
+    FileUtil.writeToFile(scriptFile,script.toString());
+  }
+ catch (  IOException e) {
+    compileContext.addMessage(ERROR,"[Internal Error] Cannot write script to " + scriptFile.getAbsolutePath(),"",-1,-1);
+    return;
+  }
+  final SimpleJavaParameters params=new SimpleJavaParameters();
+  params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
+  params.setMainClass("org.jetbrains.jet.cli.KotlinCompiler");
+  params.getProgramParametersList().add("-module",scriptFile.getAbsolutePath());
+  params.getProgramParametersList().add("-output",path(outputDir));
+  File libs=new File(kotlinHome,"lib");
+  if (!libs.exists() || libs.isFile()) {
+    compileContext.addMessage(ERROR,"Broken compiler at '" + libs.getAbsolutePath() + "'. Make sure plugin is properly installed","",-1,-1);
+    return;
+  }
+  File[] jars=libs.listFiles();
+  if (jars != null) {
+    for (    File jar : jars) {
+      if (jar.isFile() && jar.getName().endsWith(".jar")) {
+        params.getClassPath().add(jar);
       }
-      BindingContext bindingContext=AnalyzerFacade.analyzeFilesWithJavaIntegration(compileContext.getProject(),files,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
-      boolean errors=false;
-      for (      Diagnostic diagnostic : bindingContext.getDiagnostics()) {
-switch (diagnostic.getSeverity()) {
-case ERROR:
-          errors=true;
-        report(diagnostic,CompilerMessageCategory.ERROR,compileContext);
-      break;
-case INFO:
-    report(diagnostic,CompilerMessageCategory.INFORMATION,compileContext);
-  break;
-case WARNING:
-report(diagnostic,CompilerMessageCategory.WARNING,compileContext);
-break;
-}
-}
-if (!errors) {
-generationState.compileCorrectFiles(bindingContext,files,new CompilationErrorHandler(){
-@Override public void reportException(Throwable exception,String fileUrl){
-if (exception instanceof CompilationException) {
-report((CompilationException)exception,compileContext);
-}
- else {
-compileContext.addMessage(CompilerMessageCategory.ERROR,exception.getClass().getCanonicalName() + ": " + exception.getMessage(),fileUrl,0,0);
-}
-}
-}
+    }
+  }
+  params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+  Sdk sdk=params.getJdk();
+  final GeneralCommandLine commandLine=JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),params,false);
+  try {
+    final OSProcessHandler processHandler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString()){
+      @Override public Charset getCharset(){
+        return commandLine.getCharset();
+      }
+    }
+;
+    processHandler.addProcessListener(new ProcessAdapter(){
+      @Override public void onTextAvailable(      ProcessEvent event,      Key outputType){
+        System.out.println(event.getText());
+      }
+    }
 );
-final ClassFileFactory factory=generationState.getFactory();
-List<String> filesNames=factory.files();
-for (String file : filesNames) {
-File target=new File(outputDir.getPath(),file);
-try {
-FileUtil.writeToFile(target,factory.asBytes(file));
-}
- catch (IOException e) {
-compileContext.addMessage(ERROR,e.getMessage(),null,0,0);
-}
-}
-}
-}
-}
-);
+    processHandler.startNotify();
+    processHandler.waitFor();
+  }
+ catch (  Exception e) {
+    compileContext.addMessage(ERROR,"[Internal Error] " + e.getLocalizedMessage(),"",-1,-1);
+    return;
+  }
 }
