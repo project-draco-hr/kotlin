@@ -1,19 +1,38 @@
 {
+  Document document=context.getDocument();
   Editor editor=context.getEditor();
+  String insertion=myInsertion;
+  final char currentChar=context.getTailOffset() < document.getTextLength() ? document.getCharsSequence().charAt(context.getTailOffset()) : 0;
+  if (insertion.endsWith(" ") && context.getCompletionChar() != ' ' && (currentChar == ')' || currentChar == ' ' || currentChar == '\t')) {
+    insertion=insertion.trim();
+  }
+  int tailOffset=context.getStartOffset() + insertion.length();
+  int caretOffset=insertion.indexOf('|');
+  if (caretOffset != -1) {
+    insertion=insertion.replace("|","");
+    tailOffset=context.getStartOffset() + caretOffset;
+  }
+  document.replaceString(context.getStartOffset(),context.getTailOffset(),insertion);
+  context.setTailOffset(tailOffset);
   final CodeFoldingManager foldManager=CodeFoldingManager.getInstance(context.getProject());
   foldManager.updateFoldRegions(editor);
-  String text=context.getDocument().getText();
+  String text=document.getText();
   int firstParamStart=text.indexOf("<#<",context.getStartOffset());
   int firstParamEnd=text.indexOf(">#>",firstParamStart);
   SelectionModel selectionModel=editor.getSelectionModel();
   if (firstParamStart >= 0 && firstParamEnd >= 0 && firstParamStart < context.getTailOffset()) {
     selectionModel.setSelection(firstParamStart,firstParamEnd + 2);
   }
-  CodeStyleManager.getInstance(context.getProject()).reformatText(context.getFile(),context.getStartOffset(),context.getTailOffset());
+  if (!insertion.endsWith(" ")) {
+    CodeStyleManager.getInstance(context.getProject()).reformatText(context.getFile(),context.getStartOffset(),context.getTailOffset());
+  }
   if (firstParamStart >= 0 && firstParamEnd >= 0 && selectionModel.hasSelection()) {
     editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart());
   }
  else {
     editor.getCaretModel().moveToOffset(context.getTailOffset());
+  }
+  if (context.getCompletionChar() == ' ') {
+    context.setAddCompletionChar(false);
   }
 }
