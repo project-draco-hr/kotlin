@@ -4,9 +4,14 @@
   if ((type == JetNodeTypes.BLOCK || type == JetNodeTypes.CLASS_BODY) && !isOneLine(textRange,document)) {
     descriptors.add(new FoldingDescriptor(node,textRange));
   }
- else   if (type == JetNodeTypes.PARENTHESIZED && node.getFirstChildNode().getElementType() == JetTokens.IDE_TEMPLATE_START) {
-    if (node.getTreeParent().getTextLength() > 0) {
-      descriptors.add(new FoldingDescriptor(node,textRange,null,Collections.<Object>emptySet(),true));
+ else   if (node.getElementType() == JetTokens.IDE_TEMPLATE_START) {
+    ASTNode next=node.getTreeNext();
+    if (next != null) {
+      ASTNode nextNext=next.getTreeNext();
+      if (nextNext.getElementType() == JetTokens.IDE_TEMPLATE_END) {
+        TextRange range=new TextRange(node.getStartOffset(),nextNext.getStartOffset() + nextNext.getTextLength());
+        descriptors.add(new FoldingDescriptor(next,range,null,Collections.<Object>emptySet(),true));
+      }
     }
   }
   ASTNode child=node.getFirstChildNode();
