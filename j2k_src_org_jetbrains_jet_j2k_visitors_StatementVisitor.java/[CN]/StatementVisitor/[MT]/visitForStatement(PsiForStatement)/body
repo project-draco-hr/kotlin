@@ -11,14 +11,14 @@
   boolean onceWritableIterator=updateWriteCount == 1 && bodyWriteCount + conditionWriteCount == 0;
   final IElementType operationTokenType=condition != null && condition instanceof PsiBinaryExpression ? ((PsiBinaryExpression)condition).getOperationTokenType() : null;
   if (initialization != null && initialization instanceof PsiDeclarationStatement && initialization.getFirstChild() == initialization.getLastChild() && condition != null && update != null && update.getChildren().length == 1 && isPlusPlusExpression(update.getChildren()[0]) && operationTokenType != null && (operationTokenType == JavaTokenType.LT || operationTokenType == JavaTokenType.LE) && initialization.getFirstChild() != null && initialization.getFirstChild() instanceof PsiLocalVariable && firstChild != null && firstChild.getNameIdentifier() != null && onceWritableIterator) {
-    final Expression end=expressionToExpression(((PsiBinaryExpression)condition).getROperand());
+    final Expression end=getConverter().expressionToExpression(((PsiBinaryExpression)condition).getROperand());
     final Expression endExpression=operationTokenType == JavaTokenType.LT ? new BinaryExpression(end,new IdentifierImpl("1"),"-") : end;
-    myResult=new ForeachWithRangeStatement(new IdentifierImpl(firstChild.getName()),expressionToExpression(firstChild.getInitializer()),endExpression,statementToStatement(body));
+    myResult=new ForeachWithRangeStatement(new IdentifierImpl(firstChild.getName()),getConverter().expressionToExpression(firstChild.getInitializer()),endExpression,getConverter().statementToStatement(body));
   }
  else {
     List<Statement> forStatements=new LinkedList<Statement>();
-    forStatements.add(statementToStatement(initialization));
-    forStatements.add(new WhileStatement(expressionToExpression(condition),new Block(Arrays.asList(statementToStatement(body),new Block(Arrays.asList(statementToStatement(update)))))));
+    forStatements.add(getConverter().statementToStatement(initialization));
+    forStatements.add(new WhileStatement(getConverter().expressionToExpression(condition),new Block(Arrays.asList(getConverter().statementToStatement(body),new Block(Arrays.asList(getConverter().statementToStatement(update)))))));
     myResult=new Block(forStatements);
   }
 }
