@@ -1,29 +1,25 @@
 {
   extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
     @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    final @NotNull CompletionResultSet result){
-synchronized (positions) {
-        positions.clear();
-        if (result.getPrefixMatcher().getPrefix().isEmpty()) {
-          return;
-        }
-        final PsiElement position=parameters.getPosition();
-        if (!(position.getContainingFile() instanceof JetFile)) {
-          return;
-        }
-        final JetSimpleNameReference jetReference=getJetReference(parameters);
-        if (jetReference != null) {
-          for (          Object variant : jetReference.getVariants()) {
-            addReferenceVariant(result,variant);
-          }
-        }
-        if (shouldRunClassNameCompletion(parameters)) {
-          addJavaClasses(parameters,result);
-        }
-        if (shouldRunFunctionNameCompletion(parameters)) {
-          addJetTopLevelFunctions(result,position);
-        }
-        result.stopHere();
+      final HashSet<LookupPositionObject> positions=new HashSet<LookupPositionObject>();
+      if (result.getPrefixMatcher().getPrefix().isEmpty()) {
+        return;
       }
+      final PsiElement position=parameters.getPosition();
+      if (!(position.getContainingFile() instanceof JetFile)) {
+        return;
+      }
+      final JetSimpleNameReference jetReference=getJetReference(parameters);
+      if (jetReference != null) {
+        for (        Object variant : jetReference.getVariants()) {
+          addReferenceVariant(result,variant,positions);
+        }
+      }
+      if (shouldRunTopLevelCompletion(parameters)) {
+        addClasses(parameters,result,positions);
+        addJetTopLevelFunctions(result,position,positions);
+      }
+      result.stopHere();
     }
   }
 );
