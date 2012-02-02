@@ -3,26 +3,28 @@
   PsiBuilder.Marker classBody=mark();
   myBuilder.enableNewlines();
   advance();
-  while (!eof() && !at(RBRACE)) {
-    PsiBuilder.Marker entryOrMember=mark();
-    TokenSet constructorNameFollow=TokenSet.create(SEMICOLON,COLON,LPAR,LT,LBRACE);
-    int lastId=findLastBefore(ENUM_MEMBER_FIRST,constructorNameFollow,false);
-    TokenDetector enumDetector=new TokenDetector(ENUM_KEYWORD);
-    createTruncatedBuilder(lastId).parseModifierList(MODIFIER_LIST,enumDetector,false);
-    IElementType type;
-    if (at(IDENTIFIER)) {
-      parseEnumEntry();
-      type=ENUM_ENTRY;
-    }
+  if (!parseIdeTemplate()) {
+    while (!eof() && !at(RBRACE)) {
+      PsiBuilder.Marker entryOrMember=mark();
+      TokenSet constructorNameFollow=TokenSet.create(SEMICOLON,COLON,LPAR,LT,LBRACE);
+      int lastId=findLastBefore(ENUM_MEMBER_FIRST,constructorNameFollow,false);
+      TokenDetector enumDetector=new TokenDetector(ENUM_KEYWORD);
+      createTruncatedBuilder(lastId).parseModifierList(MODIFIER_LIST,enumDetector,false);
+      IElementType type;
+      if (at(IDENTIFIER)) {
+        parseEnumEntry();
+        type=ENUM_ENTRY;
+      }
  else {
-      type=parseMemberDeclarationRest(enumDetector.isDetected());
-    }
-    if (type == null) {
-      errorAndAdvance("Expecting an enum entry or member declaration");
-      entryOrMember.drop();
-    }
+        type=parseMemberDeclarationRest(enumDetector.isDetected());
+      }
+      if (type == null) {
+        errorAndAdvance("Expecting an enum entry or member declaration");
+        entryOrMember.drop();
+      }
  else {
-      entryOrMember.done(type);
+        entryOrMember.done(type);
+      }
     }
   }
   expect(RBRACE,"Expecting '}' to close enum class body");
