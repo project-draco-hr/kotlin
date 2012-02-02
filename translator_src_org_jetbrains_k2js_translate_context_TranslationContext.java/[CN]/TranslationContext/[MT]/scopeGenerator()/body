@@ -1,0 +1,23 @@
+{
+  Generator<NamingScope> scopeGenerator=new Generator<NamingScope>();
+  Rule<NamingScope> generateNewScopesForNamespaceDescriptors=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof NamespaceDescriptor)) {
+        return null;
+      }
+      return staticContext.getRootScope().innerScope("Namespace " + descriptor.getName());
+    }
+  }
+;
+  Rule<NamingScope> generateInnerScopesForFunctions=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      DeclarationDescriptor containingDeclaration=getContainingDeclaration(descriptor);
+      NamingScope enclosingScope=getScopeForDescriptor(containingDeclaration);
+      return enclosingScope.innerScope("scope for member " + descriptor.getName());
+    }
+  }
+;
+  scopeGenerator.addRule(generateNewScopesForNamespaceDescriptors);
+  scopeGenerator.addRule(generateInnerScopesForFunctions);
+  return scopeGenerator;
+}
