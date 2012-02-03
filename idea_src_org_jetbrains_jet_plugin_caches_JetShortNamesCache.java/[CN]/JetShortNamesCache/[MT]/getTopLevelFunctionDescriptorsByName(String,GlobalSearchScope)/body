@@ -1,3 +1,12 @@
 {
-  return new ArrayList<FunctionDescriptor>();
+  final Collection<JetNamedFunction> jetNamedFunctions=JetShortFunctionNameIndex.getInstance().get(name,project,scope);
+  final BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCache(project,scope);
+  final HashSet<NamedFunctionDescriptor> result=new HashSet<NamedFunctionDescriptor>();
+  for (  JetNamedFunction jetNamedFunction : jetNamedFunctions) {
+    final NamedFunctionDescriptor functionDescriptor=context.get(BindingContext.FUNCTION,jetNamedFunction);
+    if (functionDescriptor != null) {
+      result.add(functionDescriptor);
+    }
+  }
+  return result;
 }
