@@ -1,6 +1,14 @@
 {
   JetExpression loopRangeExpression=loopRange.getExpression();
-  OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=context.resolveExactSignature(loopRange,"iterator",Collections.<JetType>emptyList());
+  String iterator="iterator";
+  OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=resolveFakeCall(loopRange,context,iterator);
+  if (!iteratorResolutionResults.isSuccess()) {
+    ExpressionReceiver nonNullReceiver=new ExpressionReceiver(loopRange.getExpression(),TypeUtils.makeNotNullable(loopRange.getType()));
+    OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResultsWithNonNullReceiver=resolveFakeCall(nonNullReceiver,context,iterator);
+    if (iteratorResolutionResultsWithNonNullReceiver.isSuccess()) {
+      iteratorResolutionResults=iteratorResolutionResultsWithNonNullReceiver;
+    }
+  }
   if (iteratorResolutionResults.isSuccess()) {
     FunctionDescriptor iteratorFunction=iteratorResolutionResults.getResultingCall().getResultingDescriptor();
     context.trace.record(LOOP_RANGE_ITERATOR,loopRangeExpression,iteratorFunction);
