@@ -1,8 +1,9 @@
 {
   JetModifierList modifierList=objectDeclaration.getModifierList();
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.createAnnotationStubs(modifierList),Modality.FINAL,resolveVisibilityFromModifiers(objectDeclaration.getModifierList()),false,true,JetPsiUtil.safeName(objectDeclaration.getName()));
+  Visibility visibility=resolveVisibilityFromModifiers(objectDeclaration.getModifierList());
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.createAnnotationStubs(modifierList),Modality.FINAL,visibility,false,true,JetPsiUtil.safeName(objectDeclaration.getName()));
   propertyDescriptor.setType(classDescriptor.getDefaultType(),Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(containingDeclaration),ReceiverDescriptor.NO_RECEIVER);
-  propertyDescriptor.initialize(null,null);
+  propertyDescriptor.initialize(createDefaultGetter(propertyDescriptor),null);
   JetObjectDeclarationName nameAsDeclaration=objectDeclaration.getNameAsDeclaration();
   if (nameAsDeclaration != null) {
     trace.record(BindingContext.OBJECT_DECLARATION,nameAsDeclaration,propertyDescriptor);
