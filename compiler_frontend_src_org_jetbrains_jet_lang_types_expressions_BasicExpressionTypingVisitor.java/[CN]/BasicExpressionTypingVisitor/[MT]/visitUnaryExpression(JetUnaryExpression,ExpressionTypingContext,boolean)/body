@@ -17,31 +17,30 @@
     context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
     return null;
   }
-  JetType type=null;
+  TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+  BindingTrace initialTrace=context.trace;
+  context=context.replaceBindingTrace(temporaryTrace);
+  JetType type=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
+  if (type == null) {
+    temporaryTrace.commit();
+    return null;
+  }
   if ((operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) && baseExpression instanceof JetArrayAccessExpression) {
-    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
-    JetType expressionType=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(temporaryTrace));
-    if (expressionType != null) {
-      JetExpression stubExpression=ExpressionTypingUtils.createStubExpressionOfNecessaryType(baseExpression.getProject(),expressionType,context.trace);
-      type=resolveArrayAccessToLValue((JetArrayAccessExpression)baseExpression,stubExpression,context,true);
-    }
- else {
-      temporaryTrace.commit();
-      context.trace.report(UNRESOLVED_REFERENCE.on(operationSign));
-    }
+    JetExpression stubExpression=ExpressionTypingUtils.createStubExpressionOfNecessaryType(baseExpression.getProject(),type,context.trace);
+    resolveArrayAccessSetMethod((JetArrayAccessExpression)baseExpression,stubExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(TemporaryBindingTrace.create(initialTrace)),context.trace);
   }
- else {
-    type=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
-  }
-  if (type == null)   return null;
   ExpressionReceiver receiver=new ExpressionReceiver(baseExpression,type);
   OverloadResolutionResults<FunctionDescriptor> functionDescriptor=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
-  if (!functionDescriptor.isSuccess())   return null;
+  if (!functionDescriptor.isSuccess()) {
+    temporaryTrace.commit();
+    return null;
+  }
   JetType returnType=functionDescriptor.getResultingDescriptor().getReturnType();
   JetType result;
   if (operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) {
     if (context.semanticServices.getTypeChecker().isSubtypeOf(returnType,JetStandardClasses.getUnitType())) {
       result=JetStandardClasses.getUnitType();
+      context.trace.report(INC_DEC_SHOULD_NOT_RETURN_UNIT.on(operationSign));
     }
  else {
       JetType receiverType=receiver.getType();
@@ -59,5 +58,6 @@
  else {
     result=returnType;
   }
+  temporaryTrace.commit();
   return DataFlowUtils.checkType(result,expression,context);
 }
