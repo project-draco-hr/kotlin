@@ -2,35 +2,5 @@
   if (originalSubstitutor.isEmpty()) {
     return this;
   }
-  FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy();
-  List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
-  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
-  JetType substitutedReceiverType=null;
-  if (receiver.exists()) {
-    substitutedReceiverType=substitutor.substitute(getReceiverParameter().getType(),Variance.IN_VARIANCE);
-    if (substitutedReceiverType == null) {
-      return null;
-    }
-  }
-  ReceiverDescriptor substitutedExpectedThis=NO_RECEIVER;
-  if (expectedThisObject.exists()) {
-    JetType substitutedType=substitutor.substitute(expectedThisObject.getType(),Variance.INVARIANT);
-    if (substitutedType == null) {
-      return null;
-    }
-    substitutedExpectedThis=new TransientReceiver(substitutedType);
-  }
-  List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
-  if (substitutedValueParameters == null) {
-    return null;
-  }
-  JetType substitutedReturnType=FunctionDescriptorUtil.getSubstitutedReturnType(this,substitutor);
-  if (substitutedReturnType == null) {
-    return null;
-  }
-  substitutedDescriptor.initialize(substitutedReceiverType,substitutedExpectedThis,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,modality,visibility);
-  for (  FunctionDescriptor overriddenFunction : overriddenFunctions) {
-    substitutedDescriptor.addOverriddenFunction(overriddenFunction);
-  }
-  return substitutedDescriptor;
+  return doSubstitute(originalSubstitutor,getContainingDeclaration(),modality,true);
 }
