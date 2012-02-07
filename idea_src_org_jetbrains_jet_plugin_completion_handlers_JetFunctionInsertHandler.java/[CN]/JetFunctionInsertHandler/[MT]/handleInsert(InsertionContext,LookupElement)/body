@@ -3,12 +3,24 @@
     context.setAddCompletionChar(false);
   }
   int startOffset=context.getStartOffset();
+  PsiElement element=context.getFile().findElementAt(startOffset);
+  if (element == null)   return;
   int lookupStringLength=item.getLookupString().length();
   int endOffset=startOffset + lookupStringLength;
-  context.getDocument().insertString(endOffset,"()");
+  Document document=context.getDocument();
+  boolean bothParentheses=false;
+  String documentText=document.getText();
+  if (documentText.charAt(endOffset) != '(') {
+    document.insertString(endOffset,"()");
+    bothParentheses=true;
+  }
+ else   if (documentText.charAt(endOffset + 1) == ')') {
+    bothParentheses=true;
+  }
   Editor editor=context.getEditor();
-  if (caretPosition == CaretPosition.IN_BRACKETS) {
+  if (caretPosition == CaretPosition.IN_BRACKETS || !bothParentheses) {
     editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
+    AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor,element);
   }
  else {
     editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 2);
