@@ -1,0 +1,28 @@
+{
+  final PsiElement elementAtCaret=file.findElementAt(editor.getCaretModel().getOffset());
+  final JetClassOrObject classOrObject=PsiTreeUtil.getParentOfType(elementAtCaret,JetClassOrObject.class);
+  Set<CallableMemberDescriptor> missingImplementations=collectMethodsToGenerate(classOrObject);
+  if (missingImplementations.isEmpty() && !implementAll) {
+    HintManager.getInstance().showErrorHint(editor,"No methods to implement have been found");
+    return;
+  }
+  List<DescriptorClassMember> members=membersFromDescriptors(missingImplementations);
+  final List<DescriptorClassMember> selectedElements;
+  if (implementAll) {
+    selectedElements=members;
+  }
+ else {
+    final MemberChooser<DescriptorClassMember> chooser=showOverrideImplementChooser(project,members.toArray(new DescriptorClassMember[members.size()]));
+    if (chooser == null) {
+      return;
+    }
+    selectedElements=chooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.isEmpty())     return;
+  }
+  new WriteCommandAction(project,file){
+    protected void run(    final Result result) throws Throwable {
+      generateMethods(project,editor,classOrObject,selectedElements);
+    }
+  }
+.execute();
+}
