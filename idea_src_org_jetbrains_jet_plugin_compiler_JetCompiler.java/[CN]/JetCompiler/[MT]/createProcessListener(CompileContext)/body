@@ -1,0 +1,48 @@
+{
+  return new ProcessAdapter(){
+    StringBuilder stderr=null;
+    @Override public void onTextAvailable(    ProcessEvent event,    Key outputType){
+      String text=event.getText();
+      String levelCode=parsePrefix(text);
+      if (outputType == ProcessOutputTypes.STDERR) {
+        if (stderr == null) {
+          stderr=new StringBuilder();
+        }
+        stderr.append(text);
+        return;
+      }
+      if (levelCode != null) {
+        CompilerMessageCategory category=categories.get(levelCode);
+        text=text.substring(levelCode.length());
+        String path="";
+        int line=-1;
+        int column=-1;
+        int colonIndex=text.indexOf(':');
+        if (colonIndex > 0) {
+          path="file://" + text.substring(0,colonIndex).trim();
+          text=text.substring(colonIndex + 1);
+          Pattern position=Pattern.compile("\\((\\d+),\\s*(\\d+)\\)");
+          Matcher matcher=position.matcher(text);
+          if (matcher.find()) {
+            line=Integer.parseInt(matcher.group(1));
+            column=Integer.parseInt(matcher.group(2));
+            text=text.substring(matcher.group(0).length());
+          }
+        }
+        compileContext.addMessage(category,text,path,line,column);
+      }
+ else {
+        compileContext.addMessage(INFORMATION,text,"",-1,-1);
+      }
+    }
+    @Override public void processTerminated(    ProcessEvent event){
+      if (event.getExitCode() != 0) {
+        compileContext.addMessage(ERROR,"Compiler terminated with exit code: " + event.getExitCode(),"",-1,-1);
+      }
+      if (stderr != null) {
+        compileContext.addMessage(ERROR,"stderr output:\r\n" + stderr.toString(),"",-1,-1);
+      }
+    }
+  }
+;
+}

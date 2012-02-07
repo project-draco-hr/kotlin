@@ -1,0 +1,20 @@
+{
+  ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
+  PrintStream out=new PrintStream(outputStream);
+  int rc=execInProcess(kotlinHome,outputDir,scriptFile,out,compileContext);
+  ProcessAdapter listener=createProcessListener(compileContext);
+  BufferedReader reader=new BufferedReader(new StringReader(outputStream.toString()));
+  while (true) {
+    try {
+      String line=reader.readLine();
+      if (line == null)       break;
+      listener.onTextAvailable(new ProcessEvent(NullProcessHandler.INSTANCE,line),ProcessOutputTypes.STDOUT);
+    }
+ catch (    IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  ProcessEvent termintationEvent=new ProcessEvent(NullProcessHandler.INSTANCE,rc);
+  listener.processWillTerminate(termintationEvent,false);
+  listener.processTerminated(termintationEvent);
+}

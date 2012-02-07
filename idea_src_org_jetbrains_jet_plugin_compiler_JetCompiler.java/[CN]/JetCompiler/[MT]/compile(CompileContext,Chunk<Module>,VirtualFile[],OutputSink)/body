@@ -35,83 +35,10 @@
     compileContext.addMessage(ERROR,"[Internal Error] Cannot write script to " + scriptFile.getAbsolutePath(),"",-1,-1);
     return;
   }
-  final SimpleJavaParameters params=new SimpleJavaParameters();
-  params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
-  params.setMainClass("org.jetbrains.jet.cli.KotlinCompiler");
-  params.getProgramParametersList().add("-module",scriptFile.getAbsolutePath());
-  params.getProgramParametersList().add("-output",path(outputDir));
-  File libs=new File(kotlinHome,"lib");
-  if (!libs.exists() || libs.isFile()) {
-    compileContext.addMessage(ERROR,"Broken compiler at '" + libs.getAbsolutePath() + "'. Make sure plugin is properly installed","",-1,-1);
-    return;
+  if (RUN_OUT_OF_PROCESS) {
+    runOutOfProcess(compileContext,outputDir,kotlinHome,scriptFile);
   }
-  File[] jars=libs.listFiles();
-  if (jars != null) {
-    for (    File jar : jars) {
-      if (jar.isFile() && jar.getName().endsWith(".jar")) {
-        params.getClassPath().add(jar);
-      }
-    }
-  }
-  params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
-  Sdk sdk=params.getJdk();
-  final GeneralCommandLine commandLine=JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),params,false);
-  try {
-    final OSProcessHandler processHandler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString()){
-      @Override public Charset getCharset(){
-        return commandLine.getCharset();
-      }
-    }
-;
-    processHandler.addProcessListener(new ProcessAdapter(){
-      StringBuilder stderr=null;
-      @Override public void onTextAvailable(      ProcessEvent event,      Key outputType){
-        String text=event.getText();
-        String levelCode=parsePrefix(text);
-        if (outputType.toString().equals("stderr")) {
-          if (stderr == null)           stderr=new StringBuilder();
-          stderr.append(text);
-          return;
-        }
-        if (levelCode != null) {
-          CompilerMessageCategory category=categories.get(levelCode);
-          text=text.substring(levelCode.length());
-          String path="";
-          int line=-1;
-          int column=-1;
-          int colonIndex=text.indexOf(':');
-          if (colonIndex > 0) {
-            path="file://" + text.substring(0,colonIndex).trim();
-            text=text.substring(colonIndex + 1);
-            Pattern position=Pattern.compile("\\((\\d+),\\s*(\\d+)\\)");
-            Matcher matcher=position.matcher(text);
-            if (matcher.find()) {
-              line=Integer.parseInt(matcher.group(1));
-              column=Integer.parseInt(matcher.group(2));
-              text=text.substring(matcher.group(0).length());
-            }
-          }
-          compileContext.addMessage(category,text,path,line,column);
-        }
  else {
-          compileContext.addMessage(INFORMATION,text,"",-1,-1);
-        }
-      }
-      @Override public void processTerminated(      ProcessEvent event){
-        if (event.getExitCode() != 0) {
-          compileContext.addMessage(ERROR,"Compiler terminated with exit code: " + event.getExitCode(),"",-1,-1);
-        }
-        if (stderr != null) {
-          compileContext.addMessage(ERROR,"stderr output:\r\n" + stderr.toString(),"",-1,-1);
-        }
-      }
-    }
-);
-    processHandler.startNotify();
-    processHandler.waitFor();
-  }
- catch (  Exception e) {
-    compileContext.addMessage(ERROR,"[Internal Error] " + e.getLocalizedMessage(),"",-1,-1);
-    return;
+    runInProcess(compileContext,outputDir,kotlinHome,scriptFile);
   }
 }

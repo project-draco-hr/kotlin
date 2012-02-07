@@ -1,0 +1,29 @@
+{
+  final SimpleJavaParameters params=new SimpleJavaParameters();
+  params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
+  params.setMainClass("org.jetbrains.jet.cli.KotlinCompiler");
+  params.getProgramParametersList().add("-module",scriptFile.getAbsolutePath());
+  params.getProgramParametersList().add("-output",path(outputDir));
+  for (  File jar : kompilerClasspath(kotlinHome,compileContext)) {
+    params.getClassPath().add(jar);
+  }
+  params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+  Sdk sdk=params.getJdk();
+  final GeneralCommandLine commandLine=JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),params,false);
+  try {
+    final OSProcessHandler processHandler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString()){
+      @Override public Charset getCharset(){
+        return commandLine.getCharset();
+      }
+    }
+;
+    ProcessAdapter processListener=createProcessListener(compileContext);
+    processHandler.addProcessListener(processListener);
+    processHandler.startNotify();
+    processHandler.waitFor();
+  }
+ catch (  Exception e) {
+    compileContext.addMessage(ERROR,"[Internal Error] " + e.getLocalizedMessage(),"",-1,-1);
+    return;
+  }
+}

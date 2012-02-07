@@ -1,0 +1,18 @@
+{
+  URLClassLoader loader=getOrCreateClassloader(kotlinHome,context);
+  try {
+    Class<?> kompiler=Class.forName("org.jetbrains.jet.cli.KotlinCompiler",true,loader);
+    Method exec=kompiler.getDeclaredMethod("exec",PrintStream.class,String[].class);
+    Object rc=exec.invoke(null,out,new String[]{"-module",scriptFile.getAbsolutePath(),"-output",path(outputDir)});
+    if (rc instanceof Integer) {
+      return ((Integer)rc).intValue();
+    }
+ else {
+      throw new RuntimeException("Unexpected return: " + rc);
+    }
+  }
+ catch (  Throwable e) {
+    LOG.error(e);
+    return -1;
+  }
+}
