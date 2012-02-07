@@ -4,7 +4,13 @@
     if (classDescriptor.getKind() == ClassKind.CLASS) {
       int placeToInsert=classRef.getTextRange().getEndOffset();
       PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile).insertString(placeToInsert,"()");
-      editor.getCaretModel().moveToOffset(placeToInsert + 1);
+      boolean hasConstructorsParameters=false;
+      for (      ConstructorDescriptor cd : classDescriptor.getConstructors()) {
+        hasConstructorsParameters|=cd.getValueParameters().size() != 0;
+      }
+      if (hasConstructorsParameters) {
+        editor.getCaretModel().moveToOffset(placeToInsert + 1);
+      }
     }
     new ImplementMethodsHandler().invoke(psiFile.getProject(),editor,psiFile,true);
   }
