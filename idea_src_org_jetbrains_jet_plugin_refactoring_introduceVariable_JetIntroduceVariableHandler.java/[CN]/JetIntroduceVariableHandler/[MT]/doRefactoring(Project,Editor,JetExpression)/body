@@ -26,7 +26,7 @@
  else {
         allReplaces=Collections.singletonList(expression);
       }
-      String[] suggestedNames=JetNameSuggester.suggestNames(expression);
+      String[] suggestedNames=JetNameSuggester.suggestNames(expression,new JetNameValidatorImpl(expression));
       final LinkedHashSet<String> suggestedNamesSet=new LinkedHashSet<String>();
       Collections.addAll(suggestedNamesSet,suggestedNames);
       PsiElement commonParent=PsiTreeUtil.findCommonParent(allReplaces);
@@ -44,8 +44,9 @@
             editor.getCaretModel().moveToOffset(property.getTextOffset());
             editor.getSelectionModel().removeSelection();
             if (isInplaceAvailableOnDataContext) {
-              JetInplaceVariableIntroducer variableIntroducer=new JetInplaceVariableIntroducer(property,editor,project,INTRODUCE_VARIABLE,references.toArray(new JetExpression[references.size()]),reference.get(),finalReplaceOccurrence,property);
+              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
               PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+              JetInplaceVariableIntroducer variableIntroducer=new JetInplaceVariableIntroducer(property,editor,project,INTRODUCE_VARIABLE,references.toArray(new JetExpression[references.size()]),reference.get(),finalReplaceOccurrence,property);
               variableIntroducer.performInplaceRefactoring(suggestedNamesSet);
             }
           }

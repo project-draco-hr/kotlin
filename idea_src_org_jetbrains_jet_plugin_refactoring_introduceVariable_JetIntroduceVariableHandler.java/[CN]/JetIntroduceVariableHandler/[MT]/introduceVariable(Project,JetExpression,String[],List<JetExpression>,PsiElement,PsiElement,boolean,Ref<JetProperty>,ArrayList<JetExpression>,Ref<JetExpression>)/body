@@ -29,7 +29,7 @@
         }
         if (anchor == null)         return;
       }
-      boolean needBraces=!(commonContainer instanceof JetBlockExpression || commonContainer instanceof JetClassBody || commonContainer instanceof JetFile|| commonContainer instanceof JetClassInitializer);
+      boolean needBraces=!(commonContainer instanceof JetBlockExpression || commonContainer instanceof JetClassBody || commonContainer instanceof JetClassInitializer);
       if (!needBraces) {
         property=(JetProperty)commonContainer.addBefore(property,anchor);
         commonContainer.addBefore(JetPsiFactory.createWhiteSpace(project,"\n"),anchor);
@@ -40,7 +40,32 @@
         emptyBody.addAfter(JetPsiFactory.createWhiteSpace(project,"\n"),firstChild);
         property=(JetProperty)emptyBody.addAfter(property,firstChild);
         emptyBody.addAfter(JetPsiFactory.createWhiteSpace(project,"\n"),firstChild);
-        anchor.replace(emptyBody);
+        emptyBody=(JetExpression)anchor.replace(emptyBody);
+        for (        PsiElement child : emptyBody.getChildren()) {
+          if (child instanceof JetProperty) {
+            property=(JetProperty)child;
+          }
+        }
+        if (commonContainer instanceof JetNamedFunction) {
+          JetNamedFunction function=(JetNamedFunction)commonContainer;
+          if (!function.hasDeclaredReturnType()) {
+          }
+          function.getEqualsToken().delete();
+        }
+ else         if (commonContainer instanceof JetContainerNode) {
+          JetContainerNode node=(JetContainerNode)commonContainer;
+          if (node.getParent() instanceof JetIfExpression) {
+            PsiElement next=node.getNextSibling();
+            if (next != null) {
+              PsiElement nextnext=next.getNextSibling();
+              if (nextnext != null && nextnext.getNode().getElementType() == JetTokens.ELSE_KEYWORD) {
+                if (next instanceof PsiWhiteSpace) {
+                  next.replace(JetPsiFactory.createWhiteSpace(project," "));
+                }
+              }
+            }
+          }
+        }
       }
       for (      JetExpression replace : allReplaces) {
         if (replaceOccurrence) {
