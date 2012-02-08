@@ -7,6 +7,34 @@
     _expression=(JetExpression)_expression.getParent();
   }
   final JetExpression expression=_expression;
+  if (expression.getParent() instanceof JetQualifiedExpression) {
+    JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)expression.getParent();
+    if (qualifiedExpression.getReceiverExpression() != expression) {
+      showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+      return;
+    }
+  }
+ else   if (expression.getParent() instanceof JetCallElement || expression instanceof JetStatementExpression) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+    return;
+  }
+ else   if (expression.getParent() instanceof JetOperationExpression) {
+    JetOperationExpression operationExpression=(JetOperationExpression)expression.getParent();
+    if (operationExpression.getOperationReference() == expression) {
+      showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+      return;
+    }
+  }
+  BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
+  JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
+  if (expressionType instanceof NamespaceType) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.namespace.expression"));
+    return;
+  }
+  if (expressionType != null && JetTypeChecker.INSTANCE.equalTypes(JetStandardLibrary.getJetStandardLibrary(project).getTuple0Type(),expressionType)) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.expression.has.unit.type"));
+    return;
+  }
   final PsiElement container=getContainer(expression);
   final PsiElement occurrenceContainer=getOccurrenceContainer(expression);
   if (container == null) {

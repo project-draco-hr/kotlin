@@ -8,13 +8,30 @@
   }
   final JetExpression actualExpression=expression;
   final ArrayList<JetExpression> result=new ArrayList<JetExpression>();
+  final BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
   JetVisitorVoid visitor=new JetVisitorVoid(){
     @Override public void visitJetElement(    JetElement element){
       element.acceptChildren(this);
       super.visitJetElement(element);
     }
-    @Override public void visitExpression(    JetExpression expression){
-      if (PsiEquivalenceUtil.areElementsEquivalent(expression,actualExpression)) {
+    @Override public void visitExpression(    final JetExpression expression){
+      if (PsiEquivalenceUtil.areElementsEquivalent(expression,actualExpression,null,new Comparator<PsiElement>(){
+        @Override public int compare(        PsiElement element1,        PsiElement element2){
+          if (element1.getNode().getElementType() == JetTokens.IDENTIFIER && element2.getNode().getElementType() == JetTokens.IDENTIFIER) {
+            if (element1.getParent() instanceof JetSimpleNameExpression && element2.getParent() instanceof JetSimpleNameExpression) {
+              JetSimpleNameExpression expr1=(JetSimpleNameExpression)element1.getParent();
+              JetSimpleNameExpression expr2=(JetSimpleNameExpression)element2.getParent();
+              DeclarationDescriptor descr1=bindingContext.get(BindingContext.REFERENCE_TARGET,expr1);
+              DeclarationDescriptor descr2=bindingContext.get(BindingContext.REFERENCE_TARGET,expr2);
+              if (descr1 != descr2)               return 1;
+ else               return 0;
+            }
+          }
+          if (!element1.textMatches(element2))           return 1;
+ else           return 0;
+        }
+      }
+,null,false)) {
         PsiElement parent=expression.getParent();
         if (parent instanceof JetParenthesizedExpression) {
           result.add((JetParenthesizedExpression)parent);
