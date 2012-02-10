@@ -1,16 +1,20 @@
 {
+  Project project=editor.getProject();
+  if (project == null) {
+    return;
+  }
   PsiDocumentManager.getInstance(project).commitAllDocuments();
-  JetToken terminatingToken=myNext ? JetTokens.IDE_TEMPLATE_START : JetTokens.IDE_TEMPLATE_END;
+  JetToken terminatingToken=next ? JetTokens.IDE_TEMPLATE_START : JetTokens.IDE_TEMPLATE_END;
   SelectionModel selModel=editor.getSelectionModel();
   PsiElement first=file.findElementAt((selModel.getSelectionStart() + selModel.getSelectionEnd()) / 2);
   PsiElement current=first;
   if (first != null) {
     do {
       if (current.getNode().getElementType() == terminatingToken) {
-        selectTemplate(editor,selModel,current);
+        selectTemplate(editor,selModel,current,next);
         return;
       }
-      current=goToNextPrevElement(current);
+      current=goToNextPrevElement(current,next);
     }
  while (current != first);
   }
