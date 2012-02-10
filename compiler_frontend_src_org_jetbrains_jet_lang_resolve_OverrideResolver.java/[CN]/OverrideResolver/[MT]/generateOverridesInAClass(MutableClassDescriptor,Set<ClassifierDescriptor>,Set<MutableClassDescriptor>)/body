@@ -1,0 +1,42 @@
+{
+  if (!processed.add(classDescriptor)) {
+    return;
+  }
+  if (!ourClasses.contains(classDescriptor)) {
+    return;
+  }
+  for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
+    ClassDescriptor superclass=(ClassDescriptor)supertype.getConstructor().getDeclarationDescriptor();
+    if (superclass instanceof MutableClassDescriptor) {
+      generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses);
+    }
+  }
+  List<NamedFunctionDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor,NamedFunctionDescriptor.class);
+  List<PropertyDescriptor> propertiesFromSupertypes=getDescriptorsFromSupertypes(classDescriptor,PropertyDescriptor.class);
+  MultiMap<String,NamedFunctionDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
+  MultiMap<String,PropertyDescriptor> propertiesFromSupertypesByName=groupDescriptorsByName(propertiesFromSupertypes);
+  MultiMap<String,NamedFunctionDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getFunctions());
+  MultiMap<String,PropertyDescriptor> propertiesFromCurrentByName=groupDescriptorsByName(classDescriptor.getProperties());
+  Set<String> functionNames=new HashSet<String>();
+  functionNames.addAll(functionsFromSupertypesByName.keySet());
+  functionNames.addAll(functionsFromCurrentByName.keySet());
+  Set<String> propertyNames=new HashSet<String>();
+  propertyNames.addAll(propertiesFromSupertypesByName.keySet());
+  propertyNames.addAll(propertiesFromCurrentByName.keySet());
+  for (  String functionName : functionNames) {
+    generateOverridesInFunctionGroup(functionName,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink<NamedFunctionDescriptor>(){
+      @Override public void addToScope(      NamedFunctionDescriptor fakeOverride){
+        classDescriptor.getScopeForMemberLookupAsWritableScope().addFunctionDescriptor(fakeOverride);
+      }
+    }
+);
+  }
+  for (  String propertyName : propertyNames) {
+    generateOverridesInPropertyGroup(propertyName,propertiesFromSupertypesByName.get(propertyName),propertiesFromCurrentByName.get(propertyName),classDescriptor,new DescriptorSink<PropertyDescriptor>(){
+      @Override public void addToScope(      PropertyDescriptor fakeOverride){
+        classDescriptor.getScopeForMemberLookupAsWritableScope().addPropertyDescriptor(fakeOverride);
+      }
+    }
+);
+  }
+}

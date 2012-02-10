@@ -1,0 +1,42 @@
+{
+  DeclarationDescriptor containingDeclaration=fun.getContainingDeclaration();
+  if (containingDeclaration instanceof ClassDescriptor) {
+    ClassDescriptor declaration=(ClassDescriptor)containingDeclaration;
+    PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,declaration);
+    if (psiElement instanceof JetClass) {
+      JetClass jetClass=(JetClass)psiElement;
+      if (jetClass.isTrait()) {
+        int flags=ACC_PUBLIC;
+        Method function=typeMapper.mapSignature(fun.getName(),fun).getAsmMethod();
+        Method functionOriginal=typeMapper.mapSignature(fun.getName(),fun.getOriginal()).getAsmMethod();
+        final MethodVisitor mv=v.newMethod(myClass,flags,function.getName(),function.getDescriptor(),null,null);
+        if (v.generateCode()) {
+          mv.visitCode();
+          codegen.generateThisOrOuter(descriptor);
+          Type[] argTypes=function.getArgumentTypes();
+          InstructionAdapter iv=new InstructionAdapter(mv);
+          iv.load(0,JetTypeMapper.TYPE_OBJECT);
+          for (int i=0, reg=1; i < argTypes.length; i++) {
+            Type argType=argTypes[i];
+            iv.load(reg,argType);
+            reg+=argType.getSize();
+          }
+          JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,bindingContext);
+          Type type=typeMapper.mapType(jetType);
+          if (type.getInternalName().equals("java/lang/Object")) {
+            jetType=declaration.getDefaultType();
+            type=typeMapper.mapType(jetType);
+          }
+          String fdescriptor=functionOriginal.getDescriptor().replace("(","(" + type.getDescriptor());
+          iv.invokestatic(typeMapper.mapType(((ClassDescriptor)fun.getContainingDeclaration()).getDefaultType(),OwnerKind.TRAIT_IMPL).getInternalName(),function.getName(),fdescriptor);
+          if (function.getReturnType().getSort() == Type.OBJECT) {
+            iv.checkcast(function.getReturnType());
+          }
+          iv.areturn(function.getReturnType());
+          FunctionCodegen.endVisit(iv,"trait method",bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,fun));
+        }
+        FunctionCodegen.generateBridgeIfNeeded(context,state,v,function,fun,kind);
+      }
+    }
+  }
+}

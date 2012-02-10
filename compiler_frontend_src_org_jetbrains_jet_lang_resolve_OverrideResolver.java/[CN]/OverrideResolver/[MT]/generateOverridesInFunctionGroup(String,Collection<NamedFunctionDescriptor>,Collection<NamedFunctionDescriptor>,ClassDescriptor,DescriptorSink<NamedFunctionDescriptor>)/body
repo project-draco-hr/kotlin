@@ -1,0 +1,24 @@
+{
+  List<NamedFunctionDescriptor> fakeOverrides=Lists.newArrayList();
+  for (  NamedFunctionDescriptor functionFromSupertype : functionsFromSupertypes) {
+    boolean overrides=false;
+    for (    NamedFunctionDescriptor functionFromCurrent : functionsFromCurrent) {
+      if (OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).isSuccess()) {
+        ((FunctionDescriptorImpl)functionFromCurrent).addOverriddenFunction(functionFromSupertype);
+        overrides=true;
+      }
+    }
+    for (    NamedFunctionDescriptor fakeOverride : fakeOverrides) {
+      if (OverridingUtil.isOverridableBy(functionFromSupertype,fakeOverride).isSuccess()) {
+        ((FunctionDescriptorImpl)fakeOverride).addOverriddenFunction(functionFromSupertype);
+        overrides=true;
+      }
+    }
+    if (!overrides) {
+      NamedFunctionDescriptor fakeOverride=functionFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
+      ((FunctionDescriptorImpl)fakeOverride).addOverriddenFunction(functionFromSupertype);
+      fakeOverrides.add(fakeOverride);
+      sink.addToScope(fakeOverride);
+    }
+  }
+}

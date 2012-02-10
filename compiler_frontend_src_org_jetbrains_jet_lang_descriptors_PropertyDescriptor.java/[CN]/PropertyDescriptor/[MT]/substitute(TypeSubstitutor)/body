@@ -2,30 +2,5 @@
   if (originalSubstitutor.isEmpty()) {
     return this;
   }
-  PropertyDescriptor substitutedDescriptor=new PropertyDescriptor(this,getContainingDeclaration(),getAnnotations(),getModality(),getVisibility(),isVar(),isObjectDeclaration(),getName());
-  List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
-  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
-  JetType originalOutType=getOutType();
-  JetType outType=substitutor.substitute(originalOutType,Variance.OUT_VARIANCE);
-  if (outType == null) {
-    return null;
-  }
-  ReceiverDescriptor substitutedExpectedThisObject;
-  if (expectedThisObject.exists()) {
-    JetType substitutedExpectedThisObjectType=substitutor.substitute(getExpectedThisObject().getType(),Variance.INVARIANT);
-    substitutedExpectedThisObject=new TransientReceiver(substitutedExpectedThisObjectType);
-  }
- else {
-    substitutedExpectedThisObject=NO_RECEIVER;
-  }
-  JetType substitutedReceiverType;
-  if (receiver.exists()) {
-    substitutedReceiverType=substitutor.substitute(receiver.getType(),Variance.IN_VARIANCE);
-    if (substitutedReceiverType == null)     return null;
-  }
- else {
-    substitutedReceiverType=null;
-  }
-  substitutedDescriptor.setType(outType,substitutedTypeParameters,substitutedExpectedThisObject,substitutedReceiverType);
-  return substitutedDescriptor;
+  return doSubstitute(originalSubstitutor,getContainingDeclaration(),modality,true,true,getKind());
 }

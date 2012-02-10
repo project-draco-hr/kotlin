@@ -1,25 +1,7 @@
 {
-  Map<CallableMemberDescriptor,CallableMemberDescriptor> implementedWithDelegationBy=Maps.newHashMap();
-  Multimap<CallableMemberDescriptor,CallableMemberDescriptor> factoredMembers=collectSuperMethods(classDescriptor);
-  for (  CallableMemberDescriptor key : factoredMembers.keySet()) {
-    Collection<CallableMemberDescriptor> mutuallyOverridable=factoredMembers.get(key);
-    int implementationCount=0;
-    for (    CallableMemberDescriptor member : mutuallyOverridable) {
-      if (member.getModality() != Modality.ABSTRACT) {
-        implementationCount++;
-      }
-    }
-    if (implementationCount == 0) {
-      abstractNoImpl.addAll(mutuallyOverridable);
-    }
- else     if (implementationCount > 1) {
-      manyImpl.addAll(mutuallyOverridable);
+  for (  DeclarationDescriptor descriptor : classDescriptor.getScopeForMemberLookup().getAllDescriptors()) {
+    if (descriptor instanceof CallableMemberDescriptor) {
+      collectMissingImplementations((CallableMemberDescriptor)descriptor,abstractNoImpl,manyImpl);
     }
   }
-  Set<CallableMemberDescriptor> actuallyOverridden=Sets.newHashSet(implementedWithDelegationBy.keySet());
-  for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
-    actuallyOverridden.addAll(member.getOverriddenDescriptors());
-  }
-  abstractNoImpl.removeAll(actuallyOverridden);
-  manyImpl.removeAll(actuallyOverridden);
 }

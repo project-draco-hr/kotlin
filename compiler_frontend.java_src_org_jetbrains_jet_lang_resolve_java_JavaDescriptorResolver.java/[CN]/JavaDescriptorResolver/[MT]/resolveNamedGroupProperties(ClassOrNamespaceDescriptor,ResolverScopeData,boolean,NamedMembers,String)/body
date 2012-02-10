@@ -84,14 +84,14 @@ class GroupingValue {
  else {
       isVar=members.setter != null;
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember.getMember().psiMember),isVar,false,propertyName);
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember.getMember().psiMember),isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
-      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false,CallableMemberDescriptor.Kind.DECLARATION);
     }
     if (members.setter != null) {
-      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false);
+      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false,CallableMemberDescriptor.Kind.DECLARATION);
     }
     propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
     List<TypeParameterDescriptorInitialization> typeParametersInitialization=new ArrayList<TypeParameterDescriptorInitialization>(0);
@@ -137,6 +137,7 @@ class GroupingValue {
       getterDescriptor.initialize(propertyType);
     }
     if (setterDescriptor != null) {
+      setterDescriptor.initialize(new ValueParameterDescriptorImpl(setterDescriptor,0,Collections.<AnnotationDescriptor>emptyList(),"p0",false,propertyDescriptor.getOutType(),false,null));
     }
     semanticServices.getTrace().record(BindingContext.VARIABLE,anyMember.getMember().psiMember,propertyDescriptor);
     r.add(propertyDescriptor);

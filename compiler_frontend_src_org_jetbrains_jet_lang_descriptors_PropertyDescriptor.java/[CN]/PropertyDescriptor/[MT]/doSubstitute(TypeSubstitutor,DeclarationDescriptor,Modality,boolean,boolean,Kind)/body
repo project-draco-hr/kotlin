@@ -1,0 +1,50 @@
+{
+  PropertyDescriptor substitutedDescriptor=new PropertyDescriptor(preserveOriginal ? getOriginal() : this,newOwner,getAnnotations(),newModality,getVisibility(),isVar(),isObjectDeclaration(),getName(),kind);
+  List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
+  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
+  JetType originalOutType=getOutType();
+  JetType outType=substitutor.substitute(originalOutType,Variance.OUT_VARIANCE);
+  if (outType == null) {
+    return null;
+  }
+  ReceiverDescriptor substitutedExpectedThisObject;
+  if (expectedThisObject.exists()) {
+    JetType substitutedExpectedThisObjectType=substitutor.substitute(getExpectedThisObject().getType(),Variance.INVARIANT);
+    substitutedExpectedThisObject=new TransientReceiver(substitutedExpectedThisObjectType);
+  }
+ else {
+    substitutedExpectedThisObject=NO_RECEIVER;
+  }
+  JetType substitutedReceiverType;
+  if (receiver.exists()) {
+    substitutedReceiverType=substitutor.substitute(receiver.getType(),Variance.IN_VARIANCE);
+    if (substitutedReceiverType == null)     return null;
+  }
+ else {
+    substitutedReceiverType=null;
+  }
+  substitutedDescriptor.setType(outType,substitutedTypeParameters,substitutedExpectedThisObject,substitutedReceiverType);
+  PropertyGetterDescriptor newGetter=getter == null ? null : new PropertyGetterDescriptor(substitutedDescriptor,Lists.newArrayList(getter.getAnnotations()),DescriptorUtils.convertModality(getter.getModality(),false),getter.getVisibility(),getter.hasBody(),getter.isDefault(),kind);
+  if (newGetter != null) {
+    JetType returnType=getter.getReturnType();
+    newGetter.initialize(returnType != null ? substitutor.substitute(returnType,Variance.OUT_VARIANCE) : null);
+  }
+  PropertySetterDescriptor newSetter=setter == null ? null : new PropertySetterDescriptor(substitutedDescriptor,Lists.newArrayList(setter.getAnnotations()),DescriptorUtils.convertModality(setter.getModality(),false),setter.getVisibility(),setter.hasBody(),setter.isDefault(),kind);
+  if (newSetter != null) {
+    List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(newSetter,setter,substitutor);
+    if (substitutedValueParameters == null) {
+      return null;
+    }
+    if (substitutedValueParameters.size() != 1) {
+      throw new IllegalStateException();
+    }
+    newSetter.initialize(substitutedValueParameters.get(0));
+  }
+  substitutedDescriptor.initialize(newGetter,newSetter);
+  if (copyOverrides) {
+    for (    PropertyDescriptor propertyDescriptor : overriddenProperties) {
+      substitutedDescriptor.addOverriddenDescriptor(propertyDescriptor.substitute(substitutor));
+    }
+  }
+  return substitutedDescriptor;
+}

@@ -1,0 +1,24 @@
+{
+  List<PropertyDescriptor> fakeOverrides=Lists.newArrayList();
+  for (  PropertyDescriptor propertyFromSupertype : propertiesFromSupertypes) {
+    boolean overrides=false;
+    for (    PropertyDescriptor propertyFromCurrent : propertiesFromCurrent) {
+      if (OverridingUtil.isOverridableBy(propertyFromSupertype,propertyFromCurrent).isSuccess()) {
+        propertyFromCurrent.addOverriddenDescriptor(propertyFromSupertype);
+        overrides=true;
+      }
+    }
+    for (    PropertyDescriptor fakeOverride : fakeOverrides) {
+      if (OverridingUtil.isOverridableBy(propertyFromSupertype,fakeOverride).isSuccess()) {
+        ((PropertyDescriptor)fakeOverride).addOverriddenDescriptor(propertyFromSupertype);
+        overrides=true;
+      }
+    }
+    if (!overrides) {
+      PropertyDescriptor fakeOverride=propertyFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
+      fakeOverride.addOverriddenDescriptor(propertyFromSupertype);
+      fakeOverrides.add(fakeOverride);
+      sink.addToScope(fakeOverride);
+    }
+  }
+}
