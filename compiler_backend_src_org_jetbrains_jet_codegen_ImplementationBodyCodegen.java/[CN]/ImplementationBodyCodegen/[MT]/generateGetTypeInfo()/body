@@ -1,7 +1,7 @@
 {
-  if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())   return;
   JetType defaultType=descriptor.getDefaultType();
   if (CodegenUtil.requireTypeInfoConstructorArg(defaultType)) {
+    if (myClass instanceof JetClass && ((JetClass)myClass).isTrait())     return;
     if (!CodegenUtil.hasDerivedTypeInfoField(defaultType)) {
       v.newField(myClass,ACC_PROTECTED,JvmAbi.TYPE_INFO_FIELD,"Ljet/TypeInfo;",null,null);
       MethodVisitor mv=v.newMethod(myClass,ACC_PUBLIC,JvmStdlibNames.JET_OBJECT_GET_TYPEINFO_METHOD,"()Ljet/TypeInfo;",null,null);
@@ -28,7 +28,9 @@
     }
   }
  else {
-    genGetStaticGetTypeInfoMethod();
+    if (!(myClass instanceof JetClass) || !((JetClass)myClass).isTrait()) {
+      genGetStaticGetTypeInfoMethod();
+    }
     staticTypeInfoField();
   }
 }
