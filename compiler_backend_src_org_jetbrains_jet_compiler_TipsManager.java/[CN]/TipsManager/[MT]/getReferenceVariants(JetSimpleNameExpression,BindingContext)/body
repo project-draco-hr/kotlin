@@ -4,7 +4,7 @@
     final JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
     final JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
     if (expressionType != null && resolutionScope != null) {
-      return includeExternalCallableExtensions(expressionType.getMemberScope().getAllDescriptors(),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType));
+      return includeExternalCallableExtensions(excludePrivateDescriptors(expressionType.getMemberScope().getAllDescriptors()),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType));
     }
   }
  else {
@@ -14,7 +14,7 @@
         return excludeNonPackageDescriptors(resolutionScope.getAllDescriptors());
       }
  else {
-        java.util.HashSet<DeclarationDescriptor> descriptorsSet=Sets.newHashSet();
+        HashSet<DeclarationDescriptor> descriptorsSet=Sets.newHashSet();
         ArrayList<ReceiverDescriptor> result=new ArrayList<ReceiverDescriptor>();
         resolutionScope.getImplicitReceiversHierarchy(result);
         for (        ReceiverDescriptor receiverDescriptor : result) {
@@ -22,8 +22,7 @@
           descriptorsSet.addAll(receiverType.getMemberScope().getAllDescriptors());
         }
         descriptorsSet.addAll(resolutionScope.getAllDescriptors());
-        ClassDescriptor anInt=context.get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,"Int");
-        return excludeNotCallableExtensions(descriptorsSet,resolutionScope);
+        return excludeNotCallableExtensions(excludePrivateDescriptors(descriptorsSet),resolutionScope);
       }
     }
   }
