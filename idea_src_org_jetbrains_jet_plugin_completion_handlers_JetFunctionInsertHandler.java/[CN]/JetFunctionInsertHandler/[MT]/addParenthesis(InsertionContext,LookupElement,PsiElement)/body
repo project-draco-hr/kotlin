@@ -1,0 +1,24 @@
+{
+  int startOffset=context.getStartOffset();
+  int lookupStringLength=item.getLookupString().length();
+  int endOffset=startOffset + lookupStringLength;
+  Document document=context.getDocument();
+  boolean bothParentheses=false;
+  String documentText=document.getText();
+  if (!(endOffset < documentText.length() && documentText.charAt(endOffset) == '(')) {
+    document.insertString(endOffset,"()");
+    bothParentheses=true;
+  }
+ else   if (endOffset + 1 < documentText.length() && documentText.charAt(endOffset) == ')') {
+    bothParentheses=true;
+  }
+  Editor editor=context.getEditor();
+  if (caretPosition == CaretPosition.IN_BRACKETS || !bothParentheses) {
+    editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
+    AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor,offsetElement);
+  }
+ else {
+    editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 2);
+  }
+  PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
+}

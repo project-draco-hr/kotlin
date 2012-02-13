@@ -7,26 +7,8 @@
   if (element == null) {
     return;
   }
-  int lookupStringLength=item.getLookupString().length();
-  int endOffset=startOffset + lookupStringLength;
-  Document document=context.getDocument();
-  boolean bothParentheses=false;
-  String documentText=document.getText();
-  if (documentText.charAt(endOffset) != '(') {
-    document.insertString(endOffset,"()");
-    bothParentheses=true;
+  if (shouldAddParenthesis(element)) {
+    addParenthesis(context,item,element);
   }
- else   if (documentText.charAt(endOffset + 1) == ')') {
-    bothParentheses=true;
-  }
-  Editor editor=context.getEditor();
-  if (caretPosition == CaretPosition.IN_BRACKETS || !bothParentheses) {
-    editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
-    AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(editor,element);
-  }
- else {
-    editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 2);
-  }
-  PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
   addImport(context,item);
 }
