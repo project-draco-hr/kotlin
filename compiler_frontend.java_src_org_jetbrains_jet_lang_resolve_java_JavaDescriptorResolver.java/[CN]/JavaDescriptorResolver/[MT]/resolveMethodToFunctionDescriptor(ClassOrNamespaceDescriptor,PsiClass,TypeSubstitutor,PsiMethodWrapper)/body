@@ -45,63 +45,31 @@
       return null;
     }
   }
-  DeclarationDescriptor classDescriptor;
-  final List<TypeParameterDescriptor> classTypeParameters;
-  final List<TypeParameterDescriptorInitialization> classTypeParameterDescriptorsInitialization;
+  ClassOrNamespaceDescriptor classDescriptor;
+  final List<TypeParameterDescriptor> classTypeParameters=scopeData.getTypeParameters();
   if (scopeData instanceof ResolverBinaryClassData) {
     ClassDescriptor classClassDescriptor=resolveClass(method.getPsiMethod().getContainingClass());
     classDescriptor=classClassDescriptor;
-    classTypeParameters=classClassDescriptor.getTypeConstructor().getParameters();
-    classTypeParameterDescriptorsInitialization=new ArrayList<TypeParameterDescriptorInitialization>();
-    getAllTypeParameterDescriptorInitialization(psiClass,classTypeParameterDescriptorsInitialization);
   }
  else {
     classDescriptor=resolveNamespace(method.getPsiMethod().getContainingClass());
-    classTypeParameters=new ArrayList<TypeParameterDescriptor>(0);
-    classTypeParameterDescriptorsInitialization=new ArrayList<TypeParameterDescriptorInitialization>(0);
   }
   if (classDescriptor == null) {
     return null;
   }
   NamedFunctionDescriptorImpl functionDescriptorImpl=new NamedFunctionDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
   methodDescriptorCache.put(method.getPsiMethod(),functionDescriptorImpl);
-  TypeVariableResolver typeVariableResolverForParameters=new TypeVariableResoverFromTypeDescriptorsInitialization(classTypeParameterDescriptorsInitialization,null);
-  final List<TypeParameterDescriptorInitialization> methodTypeParametersInitialization=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
+  TypeVariableResolver typeVariableResolverForParameters=TypeVariableResolvers.classTypeVariableResolver(classDescriptor);
+  final List<TypeParameterDescriptor> methodTypeParametersInitialization=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
   List<TypeParameterDescriptor> methodTypeParameters=new ArrayList<TypeParameterDescriptor>();
-  for (  TypeParameterDescriptorInitialization typeParameterDescriptorInitialization : methodTypeParametersInitialization) {
-    methodTypeParameters.add(typeParameterDescriptorInitialization.descriptor);
+  for (  TypeParameterDescriptor typeParameterDescriptorInitialization : methodTypeParametersInitialization) {
+    methodTypeParameters.add(typeParameterDescriptorInitialization);
   }
 class MethodTypeVariableResolver implements TypeVariableResolver {
-    @NotNull @Override public TypeParameterDescriptor getTypeVariable(    @NotNull PsiTypeParameter psiTypeParameter){
-      for (      TypeParameterDescriptorInitialization typeParameter : methodTypeParametersInitialization) {
-        if (equal(typeParameter.psiTypeParameter,psiTypeParameter)) {
-          return typeParameter.descriptor;
-        }
-      }
-      for (      TypeParameterDescriptorInitialization typeParameter : classTypeParameterDescriptorsInitialization) {
-        if (equal(typeParameter.psiTypeParameter,psiTypeParameter)) {
-          return typeParameter.descriptor;
-        }
-      }
-      throw new IllegalStateException("unresolved PsiTypeParameter " + psiTypeParameter.getName() + " in method "+ method.getName()+ " in class "+ psiClass.getQualifiedName());
-    }
-    @NotNull @Override public TypeParameterDescriptor getTypeVariableByPsiByName(    @NotNull String name){
-      for (      TypeParameterDescriptorInitialization typeParameter : methodTypeParametersInitialization) {
-        if (typeParameter.psiTypeParameter.getName().equals(name)) {
-          return typeParameter.descriptor;
-        }
-      }
-      for (      TypeParameterDescriptorInitialization typeParameter : classTypeParameterDescriptorsInitialization) {
-        if (typeParameter.psiTypeParameter.getName().equals(name)) {
-          return typeParameter.descriptor;
-        }
-      }
-      throw new IllegalStateException("unresolved PsiTypeParameter " + name + " in method "+ method.getName()+ " in class "+ psiClass.getQualifiedName());
-    }
     @NotNull @Override public TypeParameterDescriptor getTypeVariable(    @NotNull String name){
-      for (      TypeParameterDescriptorInitialization typeParameter : methodTypeParametersInitialization) {
-        if (typeParameter.descriptor.getName().equals(name)) {
-          return typeParameter.descriptor;
+      for (      TypeParameterDescriptor typeParameter : methodTypeParametersInitialization) {
+        if (typeParameter.getName().equals(name)) {
+          return typeParameter;
         }
       }
       for (      TypeParameterDescriptor typeParameter : classTypeParameters) {
