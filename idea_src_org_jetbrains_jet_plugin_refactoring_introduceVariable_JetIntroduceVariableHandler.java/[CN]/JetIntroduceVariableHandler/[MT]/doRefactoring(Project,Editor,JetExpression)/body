@@ -26,7 +26,7 @@
     }
   }
   BindingContext bindingContext=AnalyzerFacade.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacade.SINGLE_DECLARATION_PROVIDER);
-  JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
+  final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
   if (expressionType instanceof NamespaceType) {
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.namespace.expression"));
     return;
@@ -54,11 +54,12 @@
  else {
         allReplaces=Collections.singletonList(expression);
       }
-      String[] suggestedNames=JetNameSuggester.suggestNames(expression,new JetNameValidatorImpl(expression));
-      final LinkedHashSet<String> suggestedNamesSet=new LinkedHashSet<String>();
-      Collections.addAll(suggestedNamesSet,suggestedNames);
       PsiElement commonParent=PsiTreeUtil.findCommonParent(allReplaces);
       PsiElement commonContainer=getContainer(commonParent);
+      JetNameValidatorImpl validator=new JetNameValidatorImpl(commonContainer,calculateAnchor(commonParent,commonContainer,allReplaces));
+      String[] suggestedNames=JetNameSuggester.suggestNames(expression,validator);
+      final LinkedHashSet<String> suggestedNamesSet=new LinkedHashSet<String>();
+      Collections.addAll(suggestedNamesSet,suggestedNames);
       final Ref<JetProperty> propertyRef=new Ref<JetProperty>();
       final ArrayList<JetExpression> references=new ArrayList<JetExpression>();
       final Ref<JetExpression> reference=new Ref<JetExpression>();
@@ -74,7 +75,7 @@
             if (isInplaceAvailableOnDataContext) {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
               PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-              JetInplaceVariableIntroducer variableIntroducer=new JetInplaceVariableIntroducer(property,editor,project,INTRODUCE_VARIABLE,references.toArray(new JetExpression[references.size()]),reference.get(),finalReplaceOccurrence,property);
+              JetInplaceVariableIntroducer variableIntroducer=new JetInplaceVariableIntroducer(property,editor,project,INTRODUCE_VARIABLE,references.toArray(new JetExpression[references.size()]),reference.get(),finalReplaceOccurrence,property,false,false,expressionType);
               variableIntroducer.performInplaceRefactoring(suggestedNamesSet);
             }
           }

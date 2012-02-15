@@ -1,0 +1,26 @@
+{
+  if (myBindingContext == null) {
+    myBindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)myContainer.getContainingFile());
+  }
+  final Ref<Boolean> result=new Ref<Boolean>(true);
+  JetVisitorVoid visitor=new JetVisitorVoid(){
+    @Override public void visitElement(    PsiElement element){
+      if (result.get()) {
+        element.acceptChildren(this);
+      }
+    }
+    @Override public void visitExpression(    JetExpression expression){
+      Collection<DeclarationDescriptor> variants=TipsManager.getVariantsNoReceiver(expression,myBindingContext);
+      for (      DeclarationDescriptor variant : variants) {
+        if (variant.getName().equals(name)) {
+          result.set(false);
+          return;
+        }
+      }
+      super.visitExpression(expression);
+    }
+  }
+;
+  sibling.accept(visitor);
+  return result.get();
+}
