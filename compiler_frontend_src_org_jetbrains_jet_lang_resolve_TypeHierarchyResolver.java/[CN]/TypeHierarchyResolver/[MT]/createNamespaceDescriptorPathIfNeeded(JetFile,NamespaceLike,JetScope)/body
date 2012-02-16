@@ -1,0 +1,14 @@
+{
+  NamespaceLike currentOwner=owner;
+  for (  JetSimpleNameExpression nameExpression : file.getNamespaceHeader().getParentNamespaceNames()) {
+    String namespaceName=JetPsiUtil.safeName(nameExpression.getReferencedName());
+    NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(null,currentOwner,namespaceName);
+    currentOwner=namespaceDescriptor;
+    context.getTrace().record(REFERENCE_TARGET,nameExpression,currentOwner);
+    context.getTrace().record(RESOLUTION_SCOPE,nameExpression,outerScope);
+    outerScope=namespaceDescriptor.getMemberScope();
+  }
+  String name=JetPsiUtil.safeName(file.getNamespaceHeader().getName());
+  context.getTrace().record(RESOLUTION_SCOPE,file.getNamespaceHeader(),outerScope);
+  return createNamespaceDescriptorIfNeeded(file,currentOwner,name);
+}
