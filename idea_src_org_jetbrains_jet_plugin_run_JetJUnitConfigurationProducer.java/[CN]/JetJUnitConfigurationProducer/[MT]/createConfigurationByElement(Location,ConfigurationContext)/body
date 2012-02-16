@@ -1,0 +1,16 @@
+{
+  PsiElement leaf=location.getPsiElement();
+  JetClass jetClass=PsiTreeUtil.getParentOfType(leaf,JetClass.class);
+  if (jetClass != null) {
+    myElement=jetClass;
+    PsiClass delegate=new JetLightClass(jetClass.getManager(),(JetFile)jetClass.getContainingFile(),JetPsiUtil.getFQName(jetClass));
+    RunnerAndConfigurationSettings settings=cloneTemplateConfiguration(jetClass.getProject(),context);
+    final JUnitConfiguration configuration=(JUnitConfiguration)settings.getConfiguration();
+    final Module originalModule=configuration.getConfigurationModule().getModule();
+    configuration.beClassConfiguration(delegate);
+    configuration.restoreOriginalModule(originalModule);
+    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration,location);
+    return settings;
+  }
+  return null;
+}
