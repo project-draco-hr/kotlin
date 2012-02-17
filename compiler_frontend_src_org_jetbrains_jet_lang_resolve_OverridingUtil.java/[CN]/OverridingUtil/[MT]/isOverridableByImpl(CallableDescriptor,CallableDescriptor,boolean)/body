@@ -1,32 +1,45 @@
 {
-  if (superDescriptor.getTypeParameters().size() != subDescriptor.getTypeParameters().size()) {
-    return OverrideCompatibilityInfo.typeParameterNumberMismatch();
+  if (forOverride) {
+    if (superDescriptor.getTypeParameters().size() != subDescriptor.getTypeParameters().size()) {
+      return OverrideCompatibilityInfo.typeParameterNumberMismatch();
+    }
   }
   if (compiledValueParameterCount(superDescriptor) != compiledValueParameterCount(subDescriptor)) {
     return OverrideCompatibilityInfo.valueParameterNumberMismatch();
   }
-  List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
-  List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
-  BiMap<TypeConstructor,TypeConstructor> axioms=HashBiMap.create();
-  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
-    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
-    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
-    axioms.put(superTypeParameter.getTypeConstructor(),subTypeParameter.getTypeConstructor());
-  }
-  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
-    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
-    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
-    if (!JetTypeChecker.INSTANCE.equalTypes(superTypeParameter.getUpperBoundsAsType(),subTypeParameter.getUpperBoundsAsType(),axioms)) {
-      return OverrideCompatibilityInfo.boundsMismatch(superTypeParameter,subTypeParameter);
-    }
-  }
   List<JetType> superValueParameters=compiledValueParameters(superDescriptor);
   List<JetType> subValueParameters=compiledValueParameters(subDescriptor);
-  for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
-    JetType superValueParameter=superValueParameters.get(i);
-    JetType subValueParameter=subValueParameters.get(i);
-    if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameter,subValueParameter,axioms)) {
-      return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter);
+  if (forOverride) {
+    List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
+    List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
+    BiMap<TypeConstructor,TypeConstructor> axioms=HashBiMap.create();
+    for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
+      TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
+      TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
+      axioms.put(superTypeParameter.getTypeConstructor(),subTypeParameter.getTypeConstructor());
+    }
+    for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
+      TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
+      TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
+      if (!JetTypeChecker.INSTANCE.equalTypes(superTypeParameter.getUpperBoundsAsType(),subTypeParameter.getUpperBoundsAsType(),axioms)) {
+        return OverrideCompatibilityInfo.boundsMismatch(superTypeParameter,subTypeParameter);
+      }
+    }
+    for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
+      JetType superValueParameter=superValueParameters.get(i);
+      JetType subValueParameter=subValueParameters.get(i);
+      if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameter,subValueParameter,axioms)) {
+        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter);
+      }
+    }
+  }
+ else {
+    for (int i=0; i < superValueParameters.size(); ++i) {
+      JetType superValueParameterType=getUpperBound(superValueParameters.get(i));
+      JetType subValueParameterType=getUpperBound(subValueParameters.get(i));
+      if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameterType,subValueParameterType)) {
+        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameterType,subValueParameterType);
+      }
     }
   }
   return OverrideCompatibilityInfo.success();
