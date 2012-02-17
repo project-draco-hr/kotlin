@@ -1,47 +1,17 @@
 {
   if (virtualFiles.length == 0)   return;
-  final Module module=compileContext.getModuleByFile(virtualFiles[0]);
-  final VirtualFile outputDir=compileContext.getModuleOutputDirectory(module);
-  if (outputDir == null) {
-    compileContext.addMessage(ERROR,"[Internal Error] No output directory","",-1,-1);
-    return;
-  }
-  File kotlinHome=PathUtil.getDefaultCompilerPath();
-  if (kotlinHome == null) {
-    compileContext.addMessage(ERROR,"Cannot find kotlinc home. Make sure plugin is properly installed","",-1,-1);
-    return;
-  }
-  StringBuilder script=new StringBuilder();
-  script.append("import kotlin.modules.*\n");
-  script.append("fun project() {\n");
-  script.append("module(\"" + moduleChunk.getNodes().iterator().next().getName() + "\") {\n");
-  for (  VirtualFile sourceFile : virtualFiles) {
-    script.append("sources += \"" + path(sourceFile) + "\"\n");
-  }
-  ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
-  for (  VirtualFile root : chunk.getCompilationBootClasspathFiles()) {
-    script.append("classpath += \"" + path(root) + "\"\n");
-  }
-  for (  VirtualFile root : chunk.getCompilationClasspathFiles()) {
-    script.append("classpath += \"" + path(root) + "\"\n");
-  }
-  for (  VirtualFile root : chunk.getSourceRoots()) {
-    script.append("classpath += \"" + path(root) + "\"\n");
-  }
-  script.append("}\n");
-  script.append("}\n");
-  File scriptFile=new File(path(outputDir),"script.kts");
-  try {
-    FileUtil.writeToFile(scriptFile,script.toString());
-  }
- catch (  IOException e) {
-    compileContext.addMessage(ERROR,"[Internal Error] Cannot write script to " + scriptFile.getAbsolutePath(),"",-1,-1);
-    return;
-  }
-  if (RUN_OUT_OF_PROCESS) {
-    runOutOfProcess(compileContext,outputDir,kotlinHome,scriptFile);
-  }
+  List<VirtualFile> productionFiles=new ArrayList<VirtualFile>();
+  List<VirtualFile> testFiles=new ArrayList<VirtualFile>();
+  for (  VirtualFile file : virtualFiles) {
+    final boolean inTests=((CompileContextEx)compileContext).isInTestSourceContent(file);
+    if (inTests) {
+      testFiles.add(file);
+    }
  else {
-    runInProcess(compileContext,outputDir,kotlinHome,scriptFile);
+      productionFiles.add(file);
+    }
   }
+  final Module module=compileContext.getModuleByFile(virtualFiles[0]);
+  doCompile(compileContext,moduleChunk,productionFiles,module,false);
+  doCompile(compileContext,moduleChunk,testFiles,module,true);
 }
