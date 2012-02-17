@@ -5,10 +5,9 @@
     }
     return false;
   }
-  List<JetFile> allNamespaces=new ArrayList<JetFile>(mySourceFiles);
-  allNamespaces.addAll(myLibrarySourceFiles);
-  myBindingContext=AnalyzerFacade.analyzeFilesWithJavaIntegration(myEnvironment.getProject(),allNamespaces,Predicates.<PsiFile>alwaysTrue(),JetControlFlowDataTraceFactory.EMPTY);
-  ErrorCollector errorCollector=new ErrorCollector(myBindingContext);
-  errorCollector.report(out);
+  final ErrorCollector errorCollector=new ErrorCollector();
+  reportSyntaxErrors(errorCollector);
+  analyzeAndReportSemanticErrors(errorCollector);
+  errorCollector.flushTo(out);
   return !errorCollector.hasErrors;
 }
