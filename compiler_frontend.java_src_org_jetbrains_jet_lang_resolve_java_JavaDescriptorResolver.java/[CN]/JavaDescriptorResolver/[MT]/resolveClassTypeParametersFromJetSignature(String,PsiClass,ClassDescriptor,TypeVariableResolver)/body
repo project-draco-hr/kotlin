@@ -1,18 +1,5 @@
 {
-  final List<TypeParameterDescriptorInitialization> r=new ArrayList<TypeParameterDescriptorInitialization>();
-  final List<TypeParameterDescriptor> previousTypeParameters=new ArrayList<TypeParameterDescriptor>();
-  final TypeVariableResolver typeVariableResolver=new TypeVariableResolverFromTypeDescriptors(previousTypeParameters,outerClassTypeVariableResolver);
-  new JetSignatureReader(jetSignature).accept(new JetSignatureExceptionsAdapter(){
-    private int formalTypeParameterIndex=0;
-    @Override public JetSignatureVisitor visitFormalTypeParameter(    final String name,    final TypeInfoVariance variance,    boolean reified){
-      return new JetSignatureTypeParameterVisitor(classDescriptor,clazz,name,reified,formalTypeParameterIndex++,variance,typeVariableResolver){
-        @Override protected void done(        TypeParameterDescriptorInitialization typeParameterDescriptor){
-          r.add(typeParameterDescriptor);
-          previousTypeParameters.add(typeParameterDescriptor.descriptor);
-        }
-      }
-;
-    }
+  JetSignatureTypeParametersVisitor jetSignatureTypeParametersVisitor=new JetSignatureTypeParametersVisitor(outerClassTypeVariableResolver,classDescriptor,clazz){
     @Override public JetSignatureVisitor visitSuperclass(){
       return new JetSignatureAdapter();
     }
@@ -20,6 +7,7 @@
       return new JetSignatureAdapter();
     }
   }
-);
-  return r;
+;
+  new JetSignatureReader(jetSignature).accept(jetSignatureTypeParametersVisitor);
+  return jetSignatureTypeParametersVisitor.r;
 }
