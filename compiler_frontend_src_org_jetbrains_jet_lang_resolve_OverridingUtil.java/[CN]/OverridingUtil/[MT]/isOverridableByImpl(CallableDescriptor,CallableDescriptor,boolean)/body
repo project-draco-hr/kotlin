@@ -1,14 +1,21 @@
 {
-  if (forOverride) {
-    if (superDescriptor.getTypeParameters().size() != subDescriptor.getTypeParameters().size()) {
-      return OverrideCompatibilityInfo.typeParameterNumberMismatch();
-    }
-  }
   if (compiledValueParameterCount(superDescriptor) != compiledValueParameterCount(subDescriptor)) {
     return OverrideCompatibilityInfo.valueParameterNumberMismatch();
   }
   List<JetType> superValueParameters=compiledValueParameters(superDescriptor);
   List<JetType> subValueParameters=compiledValueParameters(subDescriptor);
+  if (forOverride) {
+    if (superDescriptor.getTypeParameters().size() != subDescriptor.getTypeParameters().size()) {
+      for (int i=0; i < superValueParameters.size(); ++i) {
+        JetType superValueParameterType=getUpperBound(superValueParameters.get(i));
+        JetType subValueParameterType=getUpperBound(subValueParameters.get(i));
+        if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameterType,subValueParameterType)) {
+          return OverrideCompatibilityInfo.typeParameterNumberMismatch();
+        }
+      }
+      return OverrideCompatibilityInfo.valueParameterTypeMismatch(null,null,OverrideCompatibilityInfo.ErrorKind.CONFLICT);
+    }
+  }
   if (forOverride) {
     List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
     List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
@@ -29,7 +36,7 @@
       JetType superValueParameter=superValueParameters.get(i);
       JetType subValueParameter=subValueParameters.get(i);
       if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameter,subValueParameter,axioms)) {
-        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter);
+        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,OverrideCompatibilityInfo.ErrorKind.INCOMPATIBLE);
       }
     }
   }
@@ -38,7 +45,7 @@
       JetType superValueParameterType=getUpperBound(superValueParameters.get(i));
       JetType subValueParameterType=getUpperBound(subValueParameters.get(i));
       if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameterType,subValueParameterType)) {
-        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameterType,subValueParameterType);
+        return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameterType,subValueParameterType,OverrideCompatibilityInfo.ErrorKind.CONFLICT);
       }
     }
   }

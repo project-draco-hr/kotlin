@@ -3,13 +3,17 @@
   for (  PropertyDescriptor propertyFromSupertype : propertiesFromSupertypes) {
     boolean overrides=false;
     for (    PropertyDescriptor propertyFromCurrent : propertiesFromCurrent) {
-      if (OverridingUtil.isOverridableBy(propertyFromSupertype,propertyFromCurrent).isOverridable()) {
+      OverridingUtil.OverrideCompatibilityInfo.ErrorKind overridable=OverridingUtil.isOverridableBy(propertyFromSupertype,propertyFromCurrent).isOverridable();
+      if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
         propertyFromCurrent.addOverriddenDescriptor(propertyFromSupertype);
         overrides=true;
       }
+ else       if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.CONFLICT) {
+        sink.conflict(propertyFromSupertype,propertyFromCurrent);
+      }
     }
     for (    PropertyDescriptor fakeOverride : fakeOverrides) {
-      if (OverridingUtil.isOverridableBy(propertyFromSupertype,fakeOverride).isOverridable()) {
+      if (OverridingUtil.isOverridableBy(propertyFromSupertype,fakeOverride).isOverridable() == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
         ((PropertyDescriptor)fakeOverride).addOverriddenDescriptor(propertyFromSupertype);
         overrides=true;
       }

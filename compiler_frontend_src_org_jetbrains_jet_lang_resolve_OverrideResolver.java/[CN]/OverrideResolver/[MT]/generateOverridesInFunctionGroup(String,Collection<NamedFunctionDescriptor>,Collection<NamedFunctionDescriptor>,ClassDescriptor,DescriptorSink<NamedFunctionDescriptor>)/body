@@ -3,13 +3,17 @@
   for (  NamedFunctionDescriptor functionFromSupertype : functionsFromSupertypes) {
     boolean overrides=false;
     for (    NamedFunctionDescriptor functionFromCurrent : functionsFromCurrent) {
-      if (OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).isOverridable()) {
+      OverridingUtil.OverrideCompatibilityInfo.ErrorKind overridable=OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).isOverridable();
+      if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
         ((FunctionDescriptorImpl)functionFromCurrent).addOverriddenFunction(functionFromSupertype);
         overrides=true;
       }
+ else       if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.CONFLICT) {
+        sink.conflict(functionFromSupertype,functionFromCurrent);
+      }
     }
     for (    NamedFunctionDescriptor fakeOverride : fakeOverrides) {
-      if (OverridingUtil.isOverridableBy(functionFromSupertype,fakeOverride).isOverridable()) {
+      if (OverridingUtil.isOverridableBy(functionFromSupertype,fakeOverride).isOverridable() == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
         ((FunctionDescriptorImpl)fakeOverride).addOverriddenFunction(functionFromSupertype);
         overrides=true;
       }
