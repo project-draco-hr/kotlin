@@ -1,5 +1,5 @@
 {
-  MultiMap<Key,FunctionDescriptor> functionsByName=MultiMap.create();
+  MultiMap<Key,CallableMemberDescriptor> functionsByName=MultiMap.create();
   for (  NamedFunctionDescriptor function : context.getFunctions().values()) {
     DeclarationDescriptor containingDeclaration=function.getContainingDeclaration();
     if (containingDeclaration instanceof NamespaceDescriptor) {
@@ -7,10 +7,17 @@
       functionsByName.putValue(new Key(namespaceDescriptor,function.getName()),function);
     }
   }
+  for (  PropertyDescriptor property : context.getProperties().values()) {
+    DeclarationDescriptor containingDeclaration=property.getContainingDeclaration();
+    if (containingDeclaration instanceof NamespaceDescriptor) {
+      NamespaceDescriptor namespaceDescriptor=(NamespaceDescriptor)containingDeclaration;
+      functionsByName.putValue(new Key(namespaceDescriptor,property.getName()),property);
+    }
+  }
   for (  Map.Entry<Key,Collection<ConstructorDescriptor>> entry : inNamespaces.entrySet()) {
     functionsByName.putValues(entry.getKey(),entry.getValue());
   }
-  for (  Map.Entry<Key,Collection<FunctionDescriptor>> e : functionsByName.entrySet()) {
+  for (  Map.Entry<Key,Collection<CallableMemberDescriptor>> e : functionsByName.entrySet()) {
     checkOverloadsWithSameName(e.getKey().getFunctionName(),e.getValue(),e.getKey().getNamespace());
   }
 }
