@@ -11,37 +11,27 @@
       generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses);
     }
   }
-  List<NamedFunctionDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor,NamedFunctionDescriptor.class);
-  List<PropertyDescriptor> propertiesFromSupertypes=getDescriptorsFromSupertypes(classDescriptor,PropertyDescriptor.class);
-  MultiMap<String,NamedFunctionDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
-  MultiMap<String,PropertyDescriptor> propertiesFromSupertypesByName=groupDescriptorsByName(propertiesFromSupertypes);
-  MultiMap<String,NamedFunctionDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getFunctions());
-  MultiMap<String,PropertyDescriptor> propertiesFromCurrentByName=groupDescriptorsByName(classDescriptor.getProperties());
+  List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
+  MultiMap<String,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
+  MultiMap<String,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getCallableMembers());
   Set<String> functionNames=new HashSet<String>();
   functionNames.addAll(functionsFromSupertypesByName.keySet());
   functionNames.addAll(functionsFromCurrentByName.keySet());
-  Set<String> propertyNames=new HashSet<String>();
-  propertyNames.addAll(propertiesFromSupertypesByName.keySet());
-  propertyNames.addAll(propertiesFromCurrentByName.keySet());
   for (  String functionName : functionNames) {
-    generateOverridesInFunctionGroup(functionName,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink<NamedFunctionDescriptor>(){
-      @Override public void addToScope(      @NotNull NamedFunctionDescriptor fakeOverride){
-        classDescriptor.getScopeForMemberLookupAsWritableScope().addFunctionDescriptor(fakeOverride);
+    generateOverridesInFunctionGroup(functionName,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink(){
+      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
+        if (fakeOverride instanceof PropertyDescriptor) {
+          classDescriptor.getScopeForMemberLookupAsWritableScope().addPropertyDescriptor((PropertyDescriptor)fakeOverride);
+        }
+ else         if (fakeOverride instanceof NamedFunctionDescriptor) {
+          classDescriptor.getScopeForMemberLookupAsWritableScope().addFunctionDescriptor((NamedFunctionDescriptor)fakeOverride);
+        }
+ else {
+          throw new IllegalStateException(fakeOverride.getClass().getName());
+        }
       }
-      @Override public void conflict(      @NotNull NamedFunctionDescriptor fromSuper,      @NotNull NamedFunctionDescriptor fromCurrent){
-        JetNamedFunction jetDeclaration=(JetNamedFunction)context.getTrace().get(BindingContext.DESCRIPTOR_TO_DECLARATION,fromCurrent);
-        context.getTrace().report(Errors.CONFLICTING_OVERLOADS.on(jetDeclaration,fromCurrent,fromCurrent.getContainingDeclaration().getName()));
-      }
-    }
-);
-  }
-  for (  String propertyName : propertyNames) {
-    generateOverridesInPropertyGroup(propertyName,propertiesFromSupertypesByName.get(propertyName),propertiesFromCurrentByName.get(propertyName),classDescriptor,new DescriptorSink<PropertyDescriptor>(){
-      @Override public void addToScope(      @NotNull PropertyDescriptor fakeOverride){
-        classDescriptor.getScopeForMemberLookupAsWritableScope().addPropertyDescriptor(fakeOverride);
-      }
-      @Override public void conflict(      @NotNull PropertyDescriptor fromSuper,      @NotNull PropertyDescriptor fromCurrent){
-        JetProperty jetProperty=(JetProperty)context.getTrace().get(BindingContext.DESCRIPTOR_TO_DECLARATION,fromCurrent);
+      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
+        JetDeclaration jetProperty=(JetDeclaration)context.getTrace().get(BindingContext.DESCRIPTOR_TO_DECLARATION,fromCurrent);
         context.getTrace().report(Errors.CONFLICTING_OVERLOADS.on(jetProperty,fromCurrent,fromCurrent.getContainingDeclaration().getName()));
       }
     }

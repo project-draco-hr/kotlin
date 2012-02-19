@@ -1,26 +1,26 @@
 {
-  List<NamedFunctionDescriptor> fakeOverrides=Lists.newArrayList();
-  for (  NamedFunctionDescriptor functionFromSupertype : functionsFromSupertypes) {
+  List<CallableMemberDescriptor> fakeOverrides=Lists.newArrayList();
+  for (  CallableMemberDescriptor functionFromSupertype : functionsFromSupertypes) {
     boolean overrides=false;
-    for (    NamedFunctionDescriptor functionFromCurrent : functionsFromCurrent) {
+    for (    CallableMemberDescriptor functionFromCurrent : functionsFromCurrent) {
       OverridingUtil.OverrideCompatibilityInfo.ErrorKind overridable=OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).isOverridable();
       if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
-        ((FunctionDescriptorImpl)functionFromCurrent).addOverriddenFunction(functionFromSupertype);
+        functionFromCurrent.addOverriddenDescriptor(functionFromSupertype);
         overrides=true;
       }
  else       if (overridable == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.CONFLICT) {
         sink.conflict(functionFromSupertype,functionFromCurrent);
       }
     }
-    for (    NamedFunctionDescriptor fakeOverride : fakeOverrides) {
+    for (    CallableMemberDescriptor fakeOverride : fakeOverrides) {
       if (OverridingUtil.isOverridableBy(functionFromSupertype,fakeOverride).isOverridable() == OverridingUtil.OverrideCompatibilityInfo.ErrorKind.OVERRIDABLE) {
-        ((FunctionDescriptorImpl)fakeOverride).addOverriddenFunction(functionFromSupertype);
+        fakeOverride.addOverriddenDescriptor(functionFromSupertype);
         overrides=true;
       }
     }
     if (!overrides) {
-      NamedFunctionDescriptor fakeOverride=functionFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
-      ((FunctionDescriptorImpl)fakeOverride).addOverriddenFunction(functionFromSupertype);
+      CallableMemberDescriptor fakeOverride=functionFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
+      fakeOverride.addOverriddenDescriptor(functionFromSupertype);
       fakeOverrides.add(fakeOverride);
       sink.addToScope(fakeOverride);
     }
