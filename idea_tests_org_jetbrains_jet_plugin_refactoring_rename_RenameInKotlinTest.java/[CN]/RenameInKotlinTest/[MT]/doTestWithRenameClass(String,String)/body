@@ -1,0 +1,15 @@
+{
+  doTest(new PerformAction(){
+    @Override public void performAction(    VirtualFile rootDir,    VirtualFile rootAfter) throws Exception {
+      BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCache(getProject(),GlobalSearchScope.allScope(getProject()));
+      ClassDescriptor classDescriptor=bindingContext.get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,qClassName);
+      assertNotNull(classDescriptor);
+      PsiElement psiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,classDescriptor);
+      assertNotNull(psiElement);
+      new RenameProcessor(myProject,psiElement,newName,true,true).run();
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
+  }
+);
+}
