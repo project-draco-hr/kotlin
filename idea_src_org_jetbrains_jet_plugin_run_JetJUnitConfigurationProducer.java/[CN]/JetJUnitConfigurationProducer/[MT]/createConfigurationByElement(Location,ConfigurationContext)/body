@@ -1,16 +1,41 @@
 {
   PsiElement leaf=location.getPsiElement();
+  JetNamedFunction function=PsiTreeUtil.getParentOfType(leaf,JetNamedFunction.class);
+  if (function != null) {
+    myElement=function;
+    JetElement owner=PsiTreeUtil.getParentOfType(function,JetFunction.class,JetClass.class);
+    if (owner instanceof JetClass) {
+      JetLightClass delegate=wrapDelegate((JetClass)owner);
+      for (      PsiMethod method : delegate.getMethods()) {
+        if (method.getNavigationElement() == function) {
+          Location<PsiMethod> methodLocation=PsiLocation.fromPsiElement(method);
+          if (JUnitUtil.isTestMethod(methodLocation,false)) {
+            RunnerAndConfigurationSettings settings=cloneTemplateConfiguration(context.getProject(),context);
+            final JUnitConfiguration configuration=(JUnitConfiguration)settings.getConfiguration();
+            final Module originalModule=configuration.getConfigurationModule().getModule();
+            configuration.beMethodConfiguration(methodLocation);
+            configuration.restoreOriginalModule(originalModule);
+            JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration,location);
+            return settings;
+          }
+          break;
+        }
+      }
+    }
+  }
   JetClass jetClass=PsiTreeUtil.getParentOfType(leaf,JetClass.class);
   if (jetClass != null) {
     myElement=jetClass;
-    PsiClass delegate=new JetLightClass(jetClass.getManager(),(JetFile)jetClass.getContainingFile(),JetPsiUtil.getFQName(jetClass));
-    RunnerAndConfigurationSettings settings=cloneTemplateConfiguration(jetClass.getProject(),context);
-    final JUnitConfiguration configuration=(JUnitConfiguration)settings.getConfiguration();
-    final Module originalModule=configuration.getConfigurationModule().getModule();
-    configuration.beClassConfiguration(delegate);
-    configuration.restoreOriginalModule(originalModule);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration,location);
-    return settings;
+    PsiClass delegate=wrapDelegate(jetClass);
+    if (JUnitUtil.isTestClass(delegate)) {
+      RunnerAndConfigurationSettings settings=cloneTemplateConfiguration(context.getProject(),context);
+      final JUnitConfiguration configuration=(JUnitConfiguration)settings.getConfiguration();
+      final Module originalModule=configuration.getConfigurationModule().getModule();
+      configuration.beClassConfiguration(delegate);
+      configuration.restoreOriginalModule(originalModule);
+      JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration,location);
+      return settings;
+    }
   }
   return null;
 }
