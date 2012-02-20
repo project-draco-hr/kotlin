@@ -3,7 +3,6 @@
     return JvmMethodParameterMeaning.typeInfo(new Object());
   }
   PsiType psiType=parameter.getPsiParameter().getType();
-  boolean nullable=parameter.getJetValueParameter().nullable();
   String name=parameter.getPsiParameter().getName() != null ? parameter.getPsiParameter().getName() : "p" + i;
   if (parameter.getJetValueParameter().name().length() > 0) {
     name=parameter.getJetValueParameter().name();
@@ -29,6 +28,16 @@
     return JvmMethodParameterMeaning.receiver(outType);
   }
  else {
-    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,false,nullable ? TypeUtils.makeNullableAsSpecified(outType,nullable) : outType,hasDefaultValue,varargElementType));
+    JetType transformedType;
+    if (parameter.getJetValueParameter().nullable()) {
+      transformedType=TypeUtils.makeNullableAsSpecified(outType,parameter.getJetValueParameter().nullable());
+    }
+ else     if (parameter.getPsiParameter().getModifierList().findAnnotation(JvmAbi.JETBRAINS_NOT_NULL_ANNOTATION.getFqName()) != null) {
+      transformedType=TypeUtils.makeNullableAsSpecified(outType,false);
+    }
+ else {
+      transformedType=outType;
+    }
+    return JvmMethodParameterMeaning.regular(new ValueParameterDescriptorImpl(containingDeclaration,i,Collections.<AnnotationDescriptor>emptyList(),name,false,transformedType,hasDefaultValue,varargElementType));
   }
 }

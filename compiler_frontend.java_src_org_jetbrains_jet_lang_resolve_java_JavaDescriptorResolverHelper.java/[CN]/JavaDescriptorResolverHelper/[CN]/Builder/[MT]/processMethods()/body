@@ -16,7 +16,7 @@
         TypeSource receiverType;
         if (i < method.getParameters().size() && method.getParameter(i).getJetValueParameter().receiver()) {
           PsiParameterWrapper receiverParameter=method.getParameter(i);
-          receiverType=new TypeSource(receiverParameter.getJetValueParameter().type(),receiverParameter.getPsiParameter().getType());
+          receiverType=new TypeSource(receiverParameter.getJetValueParameter().type(),receiverParameter.getPsiParameter().getType(),receiverParameter.getPsiParameter());
           ++i;
         }
  else {
@@ -30,7 +30,7 @@
         }
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.GETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
-        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),method.getReturnType());
+        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),method.getReturnType(),method.getPsiMethod());
         members.addPropertyAccessor(new PropertyAccessorData(method,true,propertyType,receiverType));
       }
     }
@@ -43,7 +43,7 @@
         TypeSource receiverType=null;
         PsiParameterWrapper p1=method.getParameter(0);
         if (p1.getJetValueParameter().receiver()) {
-          receiverType=new TypeSource(p1.getJetValueParameter().type(),p1.getPsiParameter().getType());
+          receiverType=new TypeSource(p1.getJetValueParameter().type(),p1.getPsiParameter().getType(),p1.getPsiParameter());
           ++i;
         }
         while (i < method.getParameters().size() && method.getParameter(i).getJetTypeParameter().isDefined()) {
@@ -53,7 +53,7 @@
           throw new IllegalStateException();
         }
         PsiParameterWrapper propertyTypeParameter=method.getParameter(i);
-        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),propertyTypeParameter.getPsiParameter().getType());
+        TypeSource propertyType=new TypeSource(method.getJetMethod().propertyType(),propertyTypeParameter.getPsiParameter().getType(),propertyTypeParameter.getPsiParameter());
         String propertyName=StringUtil.decapitalize(method.getName().substring(JvmAbi.SETTER_PREFIX.length()));
         NamedMembers members=getNamedMembers(propertyName);
         members.addPropertyAccessor(new PropertyAccessorData(method,false,propertyType,receiverType));
