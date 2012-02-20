@@ -26,6 +26,11 @@
     transformSupertypeList(result,psiClass.getPsiClass().getExtendsListTypes(),new TypeVariableResolverFromTypeDescriptors(typeParameters,null));
     transformSupertypeList(result,psiClass.getPsiClass().getImplementsListTypes(),new TypeVariableResolverFromTypeDescriptors(typeParameters,null));
   }
+  for (  JetType supertype : result) {
+    if (ErrorUtils.isErrorType(supertype)) {
+      semanticServices.getTrace().record(BindingContext.INCOMPLETE_HIERARCHY,classDescriptor);
+    }
+  }
   if (result.isEmpty()) {
     result.add(JetStandardClasses.getAnyType());
   }

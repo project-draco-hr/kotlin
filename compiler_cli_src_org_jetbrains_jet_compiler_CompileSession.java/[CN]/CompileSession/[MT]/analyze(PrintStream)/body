@@ -8,6 +8,18 @@
   final ErrorCollector errorCollector=new ErrorCollector();
   reportSyntaxErrors(errorCollector);
   analyzeAndReportSemanticErrors(errorCollector);
+  boolean hasIncompleteHierarchyErrors;
+  Collection<ClassDescriptor> incompletes=myBindingContext.getKeys(BindingContext.INCOMPLETE_HIERARCHY);
+  if (!incompletes.isEmpty()) {
+    out.println("following classes have incomplete hierarchies:");
+    for (    ClassDescriptor incomplete : incompletes) {
+      out.println("    " + fqName(incomplete));
+    }
+    hasIncompleteHierarchyErrors=true;
+  }
+ else {
+    hasIncompleteHierarchyErrors=false;
+  }
   errorCollector.flushTo(out);
-  return !errorCollector.hasErrors;
+  return !errorCollector.hasErrors && !hasIncompleteHierarchyErrors;
 }
