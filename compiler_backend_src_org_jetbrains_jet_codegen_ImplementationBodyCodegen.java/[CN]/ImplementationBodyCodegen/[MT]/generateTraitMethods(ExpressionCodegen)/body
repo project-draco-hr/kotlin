@@ -2,7 +2,14 @@
   if (!(myClass instanceof JetClass) || ((JetClass)myClass).isTrait() || ((JetClass)myClass).hasModifier(JetTokens.ABSTRACT_KEYWORD))   return;
   for (  Pair<CallableMemberDescriptor,CallableMemberDescriptor> needDelegates : getTraitImplementations(descriptor)) {
     CallableMemberDescriptor callableDescriptor=needDelegates.first;
-    FunctionDescriptor fun=(FunctionDescriptor)needDelegates.second;
-    generateDelegationToTraitImpl(codegen,fun);
+    if (needDelegates.second instanceof NamedFunctionDescriptor) {
+      generateDelegationToTraitImpl(codegen,(FunctionDescriptor)needDelegates.second);
+    }
+ else     if (needDelegates.second instanceof PropertyDescriptor) {
+      PropertyDescriptor property=(PropertyDescriptor)needDelegates.second;
+      for (      PropertyAccessorDescriptor accessor : property.getAccessors()) {
+        generateDelegationToTraitImpl(codegen,accessor);
+      }
+    }
   }
 }
