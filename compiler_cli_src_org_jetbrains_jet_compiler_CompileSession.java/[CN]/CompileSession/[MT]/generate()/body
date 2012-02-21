@@ -1,5 +1,13 @@
 {
-  GenerationState generationState=new GenerationState(myEnvironment.getProject(),ClassBuilderFactory.BINARIES,myFileNameTransformer);
+  Project project=myEnvironment.getProject();
+  GenerationState generationState=new GenerationState(project,ClassBuilderFactory.BINARIES,myFileNameTransformer);
   generationState.compileCorrectFiles(myBindingContext,mySourceFiles);
-  return generationState.getFactory();
+  ClassFileFactory answer=generationState.getFactory();
+  List<JetFileProcessor> fileProcessors=myEnvironment.getFileProcessors();
+  if (fileProcessors != null) {
+    for (    JetFileProcessor processor : fileProcessors) {
+      processor.processFiles(getSourceFileNamespaces());
+    }
+  }
+  return answer;
 }
