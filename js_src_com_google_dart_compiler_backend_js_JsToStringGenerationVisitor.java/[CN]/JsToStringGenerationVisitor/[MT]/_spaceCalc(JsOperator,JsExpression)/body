@@ -1,0 +1,21 @@
+{
+  if (op.isKeyword()) {
+    return true;
+  }
+  if (arg instanceof JsBinaryOperation) {
+    JsBinaryOperation binary=(JsBinaryOperation)arg;
+    if (binary.getOperator().getPrecedence() > op.getPrecedence()) {
+      return _spaceCalc(op,binary.getArg1());
+    }
+    return false;
+  }
+  if (arg instanceof JsPrefixOperation) {
+    JsOperator op2=((JsPrefixOperation)arg).getOperator();
+    return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG) && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG) || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
+  }
+  if (arg instanceof JsNumberLiteral) {
+    JsNumberLiteral literal=(JsNumberLiteral)arg;
+    return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG) && (literal.getValue() < 0);
+  }
+  return false;
+}

@@ -1,0 +1,41 @@
+{
+  HashMap<String,Integer> startIdent=startIdentForScope.get(scope);
+  if (startIdent == null) {
+    startIdent=new HashMap<String,Integer>();
+    startIdentForScope.put(scope,startIdent);
+  }
+  Set<String> myChildIdents=childIdents;
+  childIdents=new HashSet<String>();
+  List<JsScope> children=scope.getChildren();
+  for (Iterator<JsScope> it=children.iterator(); it.hasNext(); ) {
+    visit(it.next());
+  }
+  JsRootScope rootScope=program.getRootScope();
+  if (scope == rootScope) {
+    return;
+  }
+  for (Iterator<JsName> it=scope.getAllNames(); it.hasNext(); ) {
+    JsName name=it.next();
+    if (!name.isObfuscatable()) {
+      name.setShortIdent(name.getIdent());
+      continue;
+    }
+    String newIdent=name.getShortIdent();
+    if (!isLegal(scope,childIdents,newIdent)) {
+      String checkIdent;
+      Integer s=startIdent.get(newIdent);
+      int suffix=(s == null) ? 0 : s.intValue();
+      do {
+        checkIdent=newIdent + "_" + suffix++;
+      }
+ while (!isLegal(scope,childIdents,checkIdent));
+      startIdent.put(newIdent,suffix);
+      name.setShortIdent(checkIdent);
+    }
+ else {
+    }
+    childIdents.add(name.getShortIdent());
+  }
+  myChildIdents.addAll(childIdents);
+  childIdents=myChildIdents;
+}

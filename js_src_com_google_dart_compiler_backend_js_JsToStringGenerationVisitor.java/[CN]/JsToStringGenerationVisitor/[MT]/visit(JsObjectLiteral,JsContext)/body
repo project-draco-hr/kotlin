@@ -1,0 +1,26 @@
+{
+  _lbrace();
+  boolean sep=false;
+  for (  Object element : x.getPropertyInitializers()) {
+    sep=_sepCommaOptSpace(sep);
+    JsPropertyInitializer propInit=(JsPropertyInitializer)element;
+    printLabel: {
+      JsExpression labelExpr=propInit.getLabelExpr();
+      if (labelExpr instanceof JsStringLiteral) {
+        String propName=((JsStringLiteral)labelExpr).getValue();
+        if (VALID_NAME_PATTERN.matcher(propName).matches() && !JsReservedIdentifiers.isKeyword(propName)) {
+          p.print(propName);
+          break printLabel;
+        }
+      }
+      accept(labelExpr);
+    }
+    _colon();
+    JsExpression valueExpr=propInit.getValueExpr();
+    _parenPushIfCommaExpr(valueExpr);
+    accept(valueExpr);
+    _parenPopIfCommaExpr(valueExpr);
+  }
+  _rbrace();
+  return false;
+}
