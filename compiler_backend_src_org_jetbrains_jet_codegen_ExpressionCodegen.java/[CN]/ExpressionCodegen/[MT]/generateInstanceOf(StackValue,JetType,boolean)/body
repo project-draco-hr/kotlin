@@ -1,32 +1,22 @@
 {
-  if (!hasTypeInfoForInstanceOf(jetType)) {
-    expressionToGen.put(TYPE_OBJECT,v);
-    if (leaveExpressionOnStack) {
-      v.dup();
-    }
-    Type type=boxType(asmType(jetType));
-    if (jetType.isNullable()) {
-      Label nope=new Label();
-      Label end=new Label();
-      v.dup();
-      v.ifnull(nope);
-      v.instanceOf(type);
-      v.goTo(end);
-      v.mark(nope);
-      v.pop();
-      v.iconst(1);
-      v.mark(end);
-    }
- else {
-      v.instanceOf(type);
-    }
+  expressionToGen.put(TYPE_OBJECT,v);
+  if (leaveExpressionOnStack) {
+    v.dup();
+  }
+  Type type=boxType(asmType(jetType));
+  if (jetType.isNullable()) {
+    Label nope=new Label();
+    Label end=new Label();
+    v.dup();
+    v.ifnull(nope);
+    v.instanceOf(type);
+    v.goTo(end);
+    v.mark(nope);
+    v.pop();
+    v.iconst(1);
+    v.mark(end);
   }
  else {
-    generateTypeInfo(jetType,null);
-    expressionToGen.put(TYPE_OBJECT,v);
-    if (leaveExpressionOnStack) {
-      v.dupX1();
-    }
-    v.invokevirtual("jet/TypeInfo","isInstance","(Ljava/lang/Object;)Z");
+    v.instanceOf(type);
   }
 }
