@@ -1,0 +1,15 @@
+{
+  ConstraintSystem constraintSystem=new ConstraintSystemImpl(ConstraintResolutionListener.DO_NOTHING);
+  for (  TypeParameterDescriptor typeParameterDescriptor : receiverArgument.getTypeParameters()) {
+    constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+  }
+  ReceiverDescriptor receiverParameter=receiverArgument.getReceiverParameter();
+  if (expectedReceiver.exists() && receiverParameter.exists()) {
+    constraintSystem.addSubtypingConstraint(RECEIVER.assertSubtyping(receiverType,receiverParameter.getType()));
+  }
+ else   if (expectedReceiver.exists() || receiverParameter.exists()) {
+    return false;
+  }
+  ConstraintSystemSolution solution=constraintSystem.solve();
+  return solution.getStatus().isSuccessful();
+}

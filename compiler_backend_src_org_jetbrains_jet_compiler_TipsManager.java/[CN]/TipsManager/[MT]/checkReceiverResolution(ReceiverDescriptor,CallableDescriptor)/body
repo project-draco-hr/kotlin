@@ -1,15 +1,9 @@
 {
-  ConstraintSystem constraintSystem=new ConstraintSystemImpl(ConstraintResolutionListener.DO_NOTHING);
-  for (  TypeParameterDescriptor typeParameterDescriptor : receiverArgument.getTypeParameters()) {
-    constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+  JetType type=expectedReceiver.getType();
+  if (checkReceiverResolution(expectedReceiver,type,receiverArgument))   return true;
+  if (type.isNullable()) {
+    JetType notNullableType=TypeUtils.makeNotNullable(type);
+    if (checkReceiverResolution(expectedReceiver,notNullableType,receiverArgument))     return true;
   }
-  ReceiverDescriptor receiverParameter=receiverArgument.getReceiverParameter();
-  if (expectedReceiver.exists() && receiverParameter.exists()) {
-    constraintSystem.addSubtypingConstraint(RECEIVER.assertSubtyping(expectedReceiver.getType(),receiverParameter.getType()));
-  }
- else   if (expectedReceiver.exists() || receiverParameter.exists()) {
-    return false;
-  }
-  ConstraintSystemSolution solution=constraintSystem.solve();
-  return solution.getStatus().isSuccessful();
+  return false;
 }
