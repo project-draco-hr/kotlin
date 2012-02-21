@@ -3,13 +3,6 @@
   if (returnType == null) {
     return null;
   }
-  FunctionDescriptorImpl functionDescriptor=methodDescriptorCache.get(method.getPsiMethod());
-  if (functionDescriptor != null) {
-    if (method.getPsiMethod().getContainingClass() != psiClass) {
-      throw new IllegalStateException();
-    }
-    return functionDescriptor;
-  }
   ResolverScopeData scopeData=getResolverScopeData(owner,new PsiClassWrapper(psiClass));
   boolean kotlin;
   if (owner instanceof JavaNamespaceDescriptor) {
@@ -48,7 +41,6 @@
     return null;
   }
   NamedFunctionDescriptorImpl functionDescriptorImpl=new NamedFunctionDescriptorImpl(owner,resolveAnnotations(method.getPsiMethod()),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
-  methodDescriptorCache.put(method.getPsiMethod(),functionDescriptorImpl);
   final TypeVariableResolver typeVariableResolverForParameters=TypeVariableResolvers.classTypeVariableResolver(classDescriptor);
   final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
   TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolverFromTypeDescriptors(methodTypeParameters,typeVariableResolverForParameters);
@@ -56,8 +48,8 @@
   functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,methodTypeVariableResolver),Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()));
   semanticServices.getTrace().record(BindingContext.FUNCTION,method.getPsiMethod(),functionDescriptorImpl);
   FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
-  if (method.getPsiMethod().getContainingClass() != psiClass) {
-    throw new IllegalStateException();
+  if (method.getPsiMethod().getContainingClass() != psiClass && !method.isStatic()) {
+    throw new IllegalStateException("non-static method in subclass");
   }
   return (FunctionDescriptorImpl)substitutedFunctionDescriptor;
 }
