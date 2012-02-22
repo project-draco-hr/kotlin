@@ -1,0 +1,34 @@
+{
+  final FunctionCodegen functionCodegen=new FunctionCodegen(delegateContext,v,state);
+  final PropertyCodegen propertyCodegen=new PropertyCodegen(delegateContext,v,functionCodegen,state);
+  ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,toClass);
+  for (  DeclarationDescriptor declaration : descriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
+    if (declaration instanceof CallableMemberDescriptor) {
+      CallableMemberDescriptor callableMemberDescriptor=(CallableMemberDescriptor)declaration;
+      if (callableMemberDescriptor.getKind() == CallableMemberDescriptor.Kind.DELEGATION) {
+        Set<? extends CallableMemberDescriptor> overriddenDescriptors=callableMemberDescriptor.getOverriddenDescriptors();
+        for (        CallableMemberDescriptor overriddenDescriptor : overriddenDescriptors) {
+          if (overriddenDescriptor.getContainingDeclaration() == classDescriptor) {
+            if (declaration instanceof PropertyDescriptor) {
+              propertyCodegen.genDelegate((PropertyDescriptor)declaration,(PropertyDescriptor)overriddenDescriptor,field);
+            }
+ else             if (declaration instanceof NamedFunctionDescriptor) {
+              functionCodegen.genDelegate((NamedFunctionDescriptor)declaration,overriddenDescriptor,field);
+            }
+          }
+        }
+      }
+    }
+  }
+  for (  JetParameter p : toClass.getPrimaryConstructorParameters()) {
+    if (p.getValOrVarNode() != null) {
+      PropertyDescriptor propertyDescriptor=bindingContext.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,p);
+      if (propertyDescriptor != null) {
+        propertyCodegen.generateDefaultGetter(propertyDescriptor,ACC_PUBLIC,p);
+        if (propertyDescriptor.isVar()) {
+          propertyCodegen.generateDefaultSetter(propertyDescriptor,ACC_PUBLIC,p);
+        }
+      }
+    }
+  }
+}
