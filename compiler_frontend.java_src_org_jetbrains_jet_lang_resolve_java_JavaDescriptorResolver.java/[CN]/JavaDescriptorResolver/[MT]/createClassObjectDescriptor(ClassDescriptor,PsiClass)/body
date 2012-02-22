@@ -1,9 +1,21 @@
 {
-  MutableClassDescriptorLite classObjectDescriptor=new MutableClassDescriptorLite(containing,ClassKind.OBJECT);
-  classObjectDescriptor.setName("<TODO>");
-  classObjectDescriptor.setModality(Modality.FINAL);
-  classObjectDescriptor.setTypeParameterDescriptors(new ArrayList<TypeParameterDescriptor>(0));
-  classObjectDescriptor.createTypeConstructor();
-  classObjectDescriptor.setScopeForMemberLookup(new JavaClassMembersScope(classObjectDescriptor,psiClass,semanticServices,true));
-  return classObjectDescriptor;
+  PsiClass classObjectPsiClass=getInnerClassClassObject(psiClass);
+  if (classObjectPsiClass == null) {
+    return null;
+  }
+  ResolverBinaryClassData classData=new ResolverBinaryClassData();
+  classData.kotlin=true;
+  classData.classDescriptor=new MutableClassDescriptorLite(containing,ClassKind.OBJECT);
+  classDescriptorCache.put(classObjectPsiClass.getQualifiedName(),classData);
+  classData.classDescriptor.setSupertypes(getSupertypes(new PsiClassWrapper(classObjectPsiClass),classData.classDescriptor,new ArrayList<TypeParameterDescriptor>(0)));
+  classData.classDescriptor.setName(JetPsiUtil.NO_NAME_PROVIDED);
+  classData.classDescriptor.setModality(Modality.FINAL);
+  classData.classDescriptor.setTypeParameterDescriptors(new ArrayList<TypeParameterDescriptor>(0));
+  classData.classDescriptor.createTypeConstructor();
+  classData.classDescriptor.setScopeForMemberLookup(new JavaClassMembersScope(classData.classDescriptor,classObjectPsiClass,semanticServices,false));
+  ConstructorDescriptorImpl constructor=new ConstructorDescriptorImpl(classData.classDescriptor,new ArrayList<AnnotationDescriptor>(0),true);
+  constructor.setReturnType(classData.classDescriptor.getDefaultType());
+  constructor.initialize(new ArrayList<TypeParameterDescriptor>(0),new ArrayList<ValueParameterDescriptor>(0),Visibility.PUBLIC);
+  classData.classDescriptor.addConstructor(constructor,null);
+  return classData.classDescriptor;
 }
