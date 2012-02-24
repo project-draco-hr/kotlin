@@ -1,0 +1,26 @@
+{
+  _new();
+  _space();
+  JsExpression ctorExpr=x.getConstructorExpression();
+  boolean needsParens=JsConstructExpressionVisitor.exec(ctorExpr);
+  if (needsParens) {
+    _lparen();
+  }
+  accept(ctorExpr);
+  if (needsParens) {
+    _rparen();
+  }
+  List<JsExpression> args=x.getArguments();
+  if (args.size() > 0) {
+    _lparen();
+    boolean sep=false;
+    for (    JsExpression arg : args) {
+      sep=_sepCommaOptSpace(sep);
+      _parenPushIfCommaExpr(arg);
+      accept(arg);
+      _parenPopIfCommaExpr(arg);
+    }
+    _rparen();
+  }
+  return false;
+}

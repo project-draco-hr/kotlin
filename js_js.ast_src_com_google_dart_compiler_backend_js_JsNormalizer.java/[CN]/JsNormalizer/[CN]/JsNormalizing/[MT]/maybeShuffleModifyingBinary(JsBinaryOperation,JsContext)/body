@@ -1,0 +1,15 @@
+{
+  JsBinaryOperator myOp=x.getOperator();
+  JsExpression lhs=x.getArg1();
+  if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
+    JsBinaryOperation curLhs=(JsBinaryOperation)lhs;
+    assert(curLhs.getOperator() == JsBinaryOperator.COMMA);
+    while (curLhs.getArg2() instanceof JsBinaryOperation) {
+      curLhs=(JsBinaryOperation)curLhs.getArg2();
+      assert(curLhs.getOperator() == JsBinaryOperator.COMMA);
+    }
+    x.setArg1(curLhs.getArg2());
+    curLhs.setArg2(x);
+    ctx.replaceMe(lhs);
+  }
+}
