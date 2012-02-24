@@ -1,0 +1,47 @@
+{
+  Rule<NamingScope> generateNewScopesForClassesWithNoAncestors=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof ClassDescriptor)) {
+        return null;
+      }
+      if (getSuperclass((ClassDescriptor)descriptor) == null) {
+        return getRootScope().innerScope("Scope for class " + descriptor.getName());
+      }
+      return null;
+    }
+  }
+;
+  Rule<NamingScope> generateInnerScopesForDerivedClasses=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof ClassDescriptor)) {
+        return null;
+      }
+      ClassDescriptor superclass=getSuperclass((ClassDescriptor)descriptor);
+      if (superclass == null) {
+        return null;
+      }
+      return getScopeForDescriptor(superclass).innerScope("Scope for class " + descriptor.getName());
+    }
+  }
+;
+  Rule<NamingScope> generateNewScopesForNamespaceDescriptors=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof NamespaceDescriptor)) {
+        return null;
+      }
+      return getRootScope().innerScope("Namespace " + descriptor.getName());
+    }
+  }
+;
+  Rule<NamingScope> generateInnerScopesForMembers=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      NamingScope enclosingScope=getEnclosingScope(descriptor);
+      return enclosingScope.innerScope("Scope for member " + descriptor.getName());
+    }
+  }
+;
+  addRule(generateNewScopesForClassesWithNoAncestors);
+  addRule(generateInnerScopesForDerivedClasses);
+  addRule(generateNewScopesForNamespaceDescriptors);
+  addRule(generateInnerScopesForMembers);
+}
