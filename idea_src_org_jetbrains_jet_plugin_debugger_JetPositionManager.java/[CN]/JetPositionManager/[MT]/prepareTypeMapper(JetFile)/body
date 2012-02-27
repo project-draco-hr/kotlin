@@ -5,16 +5,8 @@
   }
   final BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
   final JetStandardLibrary standardLibrary=JetStandardLibrary.getInstance();
-  final JetTypeMapper typeMapper=new JetTypeMapper(standardLibrary,bindingContext);
-  file.acceptChildren(new JetVisitorVoid(){
-    @Override public void visitJetElement(    JetElement element){
-      element.acceptChildren(this);
-    }
-    @Override public void visitClass(    JetClass klass){
-      GenerationState.prepareAnonymousClasses(klass,typeMapper);
-    }
-  }
-);
+  ClosureAnnotator closureAnnotator=new ClosureAnnotator(bindingContext,Collections.singleton(file));
+  final JetTypeMapper typeMapper=new JetTypeMapper(standardLibrary,bindingContext,closureAnnotator);
   myTypeMappers.put(file,typeMapper);
   return typeMapper;
 }

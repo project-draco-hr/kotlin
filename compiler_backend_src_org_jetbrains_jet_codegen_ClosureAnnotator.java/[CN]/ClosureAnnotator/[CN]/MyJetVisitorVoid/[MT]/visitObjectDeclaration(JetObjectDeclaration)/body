@@ -1,0 +1,18 @@
+{
+  if (declaration.getParent() instanceof JetObjectLiteralExpression || declaration.getParent() instanceof JetClassObject) {
+    super.visitObjectDeclaration(declaration);
+  }
+ else {
+    ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,declaration);
+    recordEnclosing(classDescriptor);
+    classStack.push(classDescriptor);
+    String base=nameStack.peek();
+    if (classDescriptor.getContainingDeclaration() instanceof NamespaceDescriptor) {
+      nameStack.push(base.isEmpty() ? classDescriptor.getName() : base + '/' + classDescriptor.getName());
+    }
+ else     nameStack.push(base + '$' + classDescriptor.getName());
+    super.visitObjectDeclaration(declaration);
+    nameStack.pop();
+    classStack.pop();
+  }
+}
