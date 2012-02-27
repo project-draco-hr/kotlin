@@ -1,0 +1,18 @@
+{
+  WritableScopeWithImports writableScopeWithImports=new WritableScopeImpl(scope,scope.getContainingDeclaration(),RedeclarationHandler.DO_NOTHING);
+  JetImportDirective importDirective=JetPsiFactory.createImportDirective(project,functionFQN);
+  ExpressionReceiver expressionReceiver=new ExpressionReceiver(receiverExpression,receiverType);
+  ImportsResolver.ImportResolver importResolver=new ImportsResolver.ImportResolver(new BindingTraceContext(),false);
+  importResolver.processImportReference(importDirective,scope,new Importer.StandardImporter(writableScopeWithImports,false));
+  ExpressionTypingContext context=ExpressionTypingContext.newContext(project,JetSemanticServices.createSemanticServices(project),new HashMap<JetPattern,DataFlowInfo>(),new HashMap<JetPattern,List<VariableDescriptor>>(),new LabelResolver(),new BindingTraceContext(),writableScopeWithImports,DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE,TypeUtils.NO_EXPECTED_TYPE,false);
+  writableScopeWithImports.changeLockLevel(WritableScope.LockLevel.READING);
+  OverloadResolutionResults<FunctionDescriptor> resolutionResult=ControlStructureTypingVisitor.resolveFakeCall(expressionReceiver,context,QualifiedNamesUtil.fqnToShortName(functionFQN));
+  if (!resolutionResult.isSuccess()) {
+    return new ArrayList<FunctionDescriptor>();
+  }
+  ArrayList<FunctionDescriptor> resolvedDescriptors=new ArrayList<FunctionDescriptor>();
+  for (  ResolvedCall<? extends FunctionDescriptor> resolvedCall : resolutionResult.getResultingCalls()) {
+    resolvedDescriptors.add(resolvedCall.getCandidateDescriptor());
+  }
+  return resolvedDescriptors;
+}
