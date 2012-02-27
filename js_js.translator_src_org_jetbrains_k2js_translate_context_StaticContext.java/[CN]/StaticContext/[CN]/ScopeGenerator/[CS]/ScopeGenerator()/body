@@ -40,6 +40,20 @@
     }
   }
 ;
+  Rule<NamingScope> createFunctionObjectsForCallableDescriptors=new Rule<NamingScope>(){
+    @Override public NamingScope apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof CallableDescriptor)) {
+        return null;
+      }
+      NamingScope enclosingScope=getEnclosingScope(descriptor);
+      JsFunction correspondingFunction=new JsFunction(enclosingScope.jsScope());
+      NamingScope newScope=enclosingScope.innerScope(correspondingFunction.getScope());
+      scopeToFunction.put(newScope,correspondingFunction);
+      return newScope;
+    }
+  }
+;
+  addRule(createFunctionObjectsForCallableDescriptors);
   addRule(generateNewScopesForClassesWithNoAncestors);
   addRule(generateInnerScopesForDerivedClasses);
   addRule(generateNewScopesForNamespaceDescriptors);
