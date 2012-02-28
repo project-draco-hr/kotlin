@@ -3,12 +3,12 @@
   if (constructorDescriptor == null) {
     throw new UnsupportedOperationException("failed to get descriptor for secondary constructor");
   }
-  CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor,kind);
+  CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor,kind,typeMapper.hasThis0(constructorDescriptor.getContainingDeclaration()));
   int flags=ACC_PUBLIC;
   final MethodVisitor mv=v.newMethod(constructor,flags,"<init>",method.getSignature().getAsmMethod().getDescriptor(),null,null);
   if (v.generateCode()) {
     mv.visitCode();
-    ConstructorFrameMap frameMap=new ConstructorFrameMap(method,constructorDescriptor,descriptor,kind);
+    ConstructorFrameMap frameMap=new ConstructorFrameMap(method,constructorDescriptor,typeMapper.hasThis0(constructorDescriptor.getContainingDeclaration()));
     final InstructionAdapter iv=new InstructionAdapter(mv);
     ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state);
     for (    JetDelegationSpecifier initializer : constructor.getInitializers()) {

@@ -1,0 +1,23 @@
+{
+  ClosureAnnotator closureAnnotator=!annotate ? null : new ClosureAnnotator(bindingContext,files);
+  typeMapper=new JetTypeMapper(standardLibrary,bindingContext,closureAnnotator);
+  bindingContexts.push(bindingContext);
+  try {
+    for (    JetFile namespace : files) {
+      try {
+        generateNamespace(namespace);
+      }
+ catch (      Throwable e) {
+        errorHandler.reportException(e,namespace.getContainingFile().getVirtualFile().getUrl());
+        DiagnosticUtils.throwIfRunningOnServer(e);
+        if (ApplicationManager.getApplication().isInternal()) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+  finally {
+    bindingContexts.pop();
+    typeMapper=null;
+  }
+}

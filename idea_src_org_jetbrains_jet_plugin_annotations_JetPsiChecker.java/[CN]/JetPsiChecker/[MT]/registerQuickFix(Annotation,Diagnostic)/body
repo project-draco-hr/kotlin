@@ -2,20 +2,17 @@
   if (annotation == null) {
     return null;
   }
-  if (diagnostic instanceof DiagnosticWithPsiElementImpl && diagnostic.getFactory() instanceof PsiElementOnlyDiagnosticFactory) {
-    PsiElementOnlyDiagnosticFactory factory=(PsiElementOnlyDiagnosticFactory)diagnostic.getFactory();
-    Collection<JetIntentionActionFactory> intentionActionFactories=QuickFixes.get(factory);
-    for (    JetIntentionActionFactory intentionActionFactory : intentionActionFactories) {
-      IntentionAction action=null;
-      if (intentionActionFactory != null) {
-        action=intentionActionFactory.createAction((DiagnosticWithPsiElement)diagnostic);
-      }
-      if (action != null) {
-        annotation.registerFix(action);
-      }
+  Collection<JetIntentionActionFactory> intentionActionFactories=QuickFixes.getActionFactories(diagnostic.getFactory());
+  for (  JetIntentionActionFactory intentionActionFactory : intentionActionFactories) {
+    IntentionAction action=null;
+    if (intentionActionFactory != null) {
+      action=intentionActionFactory.createAction(diagnostic);
+    }
+    if (action != null) {
+      annotation.registerFix(action);
     }
   }
-  Collection<IntentionAction> actions=QuickFixes.get(diagnostic.getFactory());
+  Collection<IntentionAction> actions=QuickFixes.getActions(diagnostic.getFactory());
   for (  IntentionAction action : actions) {
     annotation.registerFix(action);
   }
