@@ -10,7 +10,10 @@
         Method function=typeMapper.mapSignature(fun.getName(),fun).getAsmMethod();
         Method functionOriginal=typeMapper.mapSignature(fun.getName(),fun.getOriginal()).getAsmMethod();
         final MethodVisitor mv=v.newMethod(myClass,flags,function.getName(),function.getDescriptor(),null,null);
-        if (v.generateCode()) {
+        if (v.generateCode() == ClassBuilder.Mode.STUBS) {
+          StubCodegen.generateStubCode(mv);
+        }
+ else         if (v.generateCode() == ClassBuilder.Mode.FULL) {
           mv.visitCode();
           codegen.generateThisOrOuter(descriptor);
           Type[] argTypes=function.getArgumentTypes();
