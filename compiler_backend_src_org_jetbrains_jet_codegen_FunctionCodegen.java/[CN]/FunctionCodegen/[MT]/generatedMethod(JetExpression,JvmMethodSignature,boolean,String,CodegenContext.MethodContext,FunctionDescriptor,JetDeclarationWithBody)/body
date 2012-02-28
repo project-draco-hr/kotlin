@@ -21,7 +21,7 @@
     if (isAbstract)     flags|=ACC_ABSTRACT;
     final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
     AnnotationCodegen.forMethod(mv).genAnnotations(functionDescriptor,state.getTypeMapper());
-    if (v.generateCode()) {
+    if (v.generateCode() != ClassBuilder.Mode.SIGNATURES) {
       int start=0;
       if (needJetAnnotations) {
         if (functionDescriptor instanceof PropertyAccessorDescriptor) {
@@ -70,7 +70,10 @@
         }
       }
     }
-    if (!isAbstract && v.generateCode()) {
+    if (!isAbstract && v.generateCode() == ClassBuilder.Mode.STUBS) {
+      StubCodegen.generateStubCode(mv);
+    }
+    if (!isAbstract && v.generateCode() == ClassBuilder.Mode.FULL) {
       mv.visitCode();
       Label methodBegin=new Label();
       mv.visitLabel(methodBegin);

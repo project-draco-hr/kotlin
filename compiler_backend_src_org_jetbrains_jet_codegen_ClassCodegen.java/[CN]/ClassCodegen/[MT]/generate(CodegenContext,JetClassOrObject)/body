@@ -2,7 +2,7 @@
   ClassDescriptor descriptor=state.getBindingContext().get(BindingContext.CLASS,aClass);
   ClassBuilder classBuilder=state.forClassImplementation(descriptor);
   final CodegenContext contextForInners=context.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state.getTypeMapper());
-  if (!classBuilder.generateCode()) {
+  if (classBuilder.generateCode() == ClassBuilder.Mode.SIGNATURES) {
     generateImplementation(context,aClass,OwnerKind.IMPLEMENTATION,contextForInners.accessors,classBuilder);
   }
   for (  JetDeclaration declaration : aClass.getDeclarations()) {
@@ -13,7 +13,7 @@
       state.forClass().generate(contextForInners,((JetClassObject)declaration).getObjectDeclaration());
     }
   }
-  if (classBuilder.generateCode()) {
+  if (classBuilder.generateCode() != ClassBuilder.Mode.SIGNATURES) {
     generateImplementation(context,aClass,OwnerKind.IMPLEMENTATION,contextForInners.accessors,classBuilder);
   }
   classBuilder.done();

@@ -10,7 +10,10 @@
   if (differentMethods(method,overriden)) {
     int flags=ACC_PUBLIC | ACC_BRIDGE;
     final MethodVisitor mv=v.newMethod(null,flags,jvmSignature.getName(),overriden.getDescriptor(),null,null);
-    if (v.generateCode()) {
+    if (v.generateCode() == ClassBuilder.Mode.STUBS) {
+      StubCodegen.generateStubCode(mv);
+    }
+ else     if (v.generateCode() == ClassBuilder.Mode.FULL) {
       mv.visitCode();
       Type[] argTypes=overriden.getArgumentTypes();
       InstructionAdapter iv=new InstructionAdapter(mv);

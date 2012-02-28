@@ -6,7 +6,10 @@
   CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor,kind,typeMapper.hasThis0(constructorDescriptor.getContainingDeclaration()));
   int flags=ACC_PUBLIC;
   final MethodVisitor mv=v.newMethod(constructor,flags,"<init>",method.getSignature().getAsmMethod().getDescriptor(),null,null);
-  if (v.generateCode()) {
+  if (v.generateCode() == ClassBuilder.Mode.STUBS) {
+    StubCodegen.generateStubCode(mv);
+  }
+ else   if (v.generateCode() == ClassBuilder.Mode.FULL) {
     mv.visitCode();
     ConstructorFrameMap frameMap=new ConstructorFrameMap(method,constructorDescriptor,typeMapper.hasThis0(constructorDescriptor.getContainingDeclaration()));
     final InstructionAdapter iv=new InstructionAdapter(mv);
