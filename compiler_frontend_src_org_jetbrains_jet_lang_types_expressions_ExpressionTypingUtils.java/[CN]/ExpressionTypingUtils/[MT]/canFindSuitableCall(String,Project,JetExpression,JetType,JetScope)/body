@@ -1,10 +1,17 @@
 {
   WritableScopeWithImports writableScopeWithImports=new WritableScopeImpl(scope,scope.getContainingDeclaration(),RedeclarationHandler.DO_NOTHING);
   JetImportDirective importDirective=JetPsiFactory.createImportDirective(project,callableFQN);
-  ExpressionReceiver expressionReceiver=new ExpressionReceiver(receiverExpression,receiverType);
   ImportsResolver.ImportResolver importResolver=new ImportsResolver.ImportResolver(new BindingTraceContext(),false);
-  importResolver.processImportReference(importDirective,scope,new Importer.StandardImporter(writableScopeWithImports,false));
-  ExpressionTypingContext context=ExpressionTypingContext.newContext(project,JetSemanticServices.createSemanticServices(project),new HashMap<JetPattern,DataFlowInfo>(),new HashMap<JetPattern,List<VariableDescriptor>>(),new LabelResolver(),new BindingTraceContext(),writableScopeWithImports,DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE,TypeUtils.NO_EXPECTED_TYPE,false);
-  writableScopeWithImports.changeLockLevel(WritableScope.LockLevel.READING);
-  return ControlStructureTypingVisitor.resolveFakeCallWithReceiverOnly(expressionReceiver,context,QualifiedNamesUtil.fqnToShortName(callableFQN));
+  Collection<? extends DeclarationDescriptor> declarationDescriptors=importResolver.processImportReference(importDirective,scope,new Importer.StandardImporter(writableScopeWithImports,false));
+  List<CallableDescriptor> callableExtensionDescriptors=new ArrayList<CallableDescriptor>();
+  ReceiverDescriptor receiverDescriptor=new ExpressionReceiver(receiverExpression,receiverType);
+  for (  DeclarationDescriptor declarationDescriptor : declarationDescriptors) {
+    if (declarationDescriptor instanceof CallableDescriptor) {
+      CallableDescriptor callableDescriptor=(CallableDescriptor)declarationDescriptor;
+      if (checkIsExtensionCallable(receiverDescriptor,callableDescriptor)) {
+        callableExtensionDescriptors.add(callableDescriptor);
+      }
+    }
+  }
+  return callableExtensionDescriptors;
 }
