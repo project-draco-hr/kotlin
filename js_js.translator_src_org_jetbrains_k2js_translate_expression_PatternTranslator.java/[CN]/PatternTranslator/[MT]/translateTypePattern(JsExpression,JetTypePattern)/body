@@ -1,14 +1,7 @@
 {
-  JsName className=getClassReference(pattern).getName();
-  if (className.getIdent().equals("String")) {
-    return typeof(expressionToMatch,program().getStringLiteral("string"));
+  JsExpression result=translateAsIntrinsicTypeCheck(expressionToMatch,pattern);
+  if (result != null) {
+    return result;
   }
-  if (className.getIdent().equals("Int")) {
-    return typeof(expressionToMatch,program().getStringLiteral("number"));
-  }
-  JsInvocation isCheck=AstUtil.newInvocation(context().namer().isOperationReference(),expressionToMatch,getClassReference(pattern));
-  if (isNullable(pattern)) {
-    return addNullCheck(expressionToMatch,isCheck);
-  }
-  return isCheck;
+  return translateAsIsCheck(expressionToMatch,pattern);
 }
