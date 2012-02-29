@@ -1,16 +1,25 @@
 {
+  javaFilesDir=new File(FileUtil.getTempDirectory(),"java-files");
   String testFileName=name + ".jet";
   String expectedText=loadFile(testFileName);
   List<TestFile> testFileFiles=JetTestUtils.createTestFiles(testFileName,expectedText,new JetTestUtils.TestFileFactory<TestFile>(){
     @Override public TestFile create(    String fileName,    String text){
+      if (fileName.endsWith(".java")) {
+        writeJavaFile(fileName,text);
+      }
       return new TestFile(fileName,text);
     }
   }
 );
   boolean importJdk=expectedText.contains("+JDK");
+  if (hasJavaFiles) {
+    myEnvironment.addToClasspath(javaFilesDir);
+  }
   List<JetFile> jetFiles=Lists.newArrayList();
   for (  TestFile testFileFile : testFileFiles) {
-    jetFiles.add(testFileFile.jetFile);
+    if (testFileFile.jetFile != null) {
+      jetFiles.add(testFileFile.jetFile);
+    }
   }
   BindingContext bindingContext;
   if (importJdk) {

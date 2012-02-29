@@ -1,8 +1,16 @@
 {
-  expectedText=textWithMarkers;
-  clearText=CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
-  jetFile=createCheckAndReturnPsiFile(fileName,clearText);
-  for (  CheckerTestUtil.DiagnosedRange diagnosedRange : diagnosedRanges) {
-    diagnosedRange.setFile(jetFile);
+  if (fileName.endsWith(".java")) {
+    this.javaFile=PsiFileFactory.getInstance(getProject()).createFileFromText(fileName,JavaLanguage.INSTANCE,textWithMarkers);
+    this.jetFile=null;
+    this.expectedText=this.clearText=textWithMarkers;
+  }
+ else {
+    expectedText=textWithMarkers;
+    clearText=CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
+    this.javaFile=null;
+    this.jetFile=createCheckAndReturnPsiFile(fileName,clearText);
+    for (    CheckerTestUtil.DiagnosedRange diagnosedRange : diagnosedRanges) {
+      diagnosedRange.setFile(jetFile);
+    }
   }
 }
