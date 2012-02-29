@@ -1,7 +1,8 @@
 {
   final List<JetType> result=new ArrayList<JetType>();
+  String context="class " + psiClass.getQualifiedName();
   if (psiClass.getJetClass().signature().length() > 0) {
-    final TypeVariableResolver typeVariableResolver=new TypeVariableResolverFromTypeDescriptors(typeParameters,null);
+    final TypeVariableResolver typeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,classDescriptor,context);
     new JetSignatureReader(psiClass.getJetClass().signature()).accept(new JetSignatureExceptionsAdapter(){
       @Override public JetSignatureVisitor visitFormalTypeParameter(      String name,      TypeInfoVariance variance,      boolean reified){
         return new JetSignatureAdapter();
@@ -23,8 +24,9 @@
 );
   }
  else {
-    transformSupertypeList(result,psiClass.getPsiClass().getExtendsListTypes(),new TypeVariableResolverFromTypeDescriptors(typeParameters,null),classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS);
-    transformSupertypeList(result,psiClass.getPsiClass().getImplementsListTypes(),new TypeVariableResolverFromTypeDescriptors(typeParameters,null),classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS);
+    TypeVariableResolver typeVariableResolverForSupertypes=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,classDescriptor,context);
+    transformSupertypeList(result,psiClass.getPsiClass().getExtendsListTypes(),typeVariableResolverForSupertypes,classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS);
+    transformSupertypeList(result,psiClass.getPsiClass().getImplementsListTypes(),typeVariableResolverForSupertypes,classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS);
   }
   for (  JetType supertype : result) {
     if (ErrorUtils.isErrorType(supertype)) {

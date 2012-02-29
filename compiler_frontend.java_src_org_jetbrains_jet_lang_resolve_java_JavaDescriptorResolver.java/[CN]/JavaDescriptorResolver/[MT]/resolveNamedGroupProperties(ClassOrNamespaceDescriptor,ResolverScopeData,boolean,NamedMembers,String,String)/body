@@ -6,8 +6,7 @@
     namedMembers.propertyDescriptors=Collections.emptySet();
     return;
   }
-  final List<TypeParameterDescriptor> classTypeParameterDescriptorInitialization=scopeData.getTypeParameters();
-  TypeVariableResolver typeVariableResolver=new TypeVariableResolverFromTypeDescriptors(scopeData.getTypeParameters(),null);
+  TypeVariableResolver typeVariableResolver=TypeVariableResolvers.classTypeVariableResolver(owner,context);
 class GroupingValue {
     PropertyAccessorData getter;
     PropertyAccessorData setter;
@@ -102,27 +101,20 @@ class GroupingValue {
       setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,Collections.<AnnotationDescriptor>emptyList(),Modality.OPEN,Visibility.PUBLIC,true,false,CallableMemberDescriptor.Kind.DECLARATION);
     }
     propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
-    List<TypeParameterDescriptor> typeParametersInitialization=new ArrayList<TypeParameterDescriptor>(0);
+    List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
     if (members.setter != null) {
       PsiMethodWrapper method=(PsiMethodWrapper)members.setter.getMember();
       if (anyMember == members.setter) {
-        typeParametersInitialization=resolveMethodTypeParameters(method,setterDescriptor,typeVariableResolver);
+        typeParameters=resolveMethodTypeParameters(method,propertyDescriptor,typeVariableResolver);
       }
     }
     if (members.getter != null) {
       PsiMethodWrapper method=(PsiMethodWrapper)members.getter.getMember();
       if (anyMember == members.getter) {
-        typeParametersInitialization=resolveMethodTypeParameters(method,getterDescriptor,typeVariableResolver);
+        typeParameters=resolveMethodTypeParameters(method,propertyDescriptor,typeVariableResolver);
       }
     }
-    List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>();
-    for (    TypeParameterDescriptor typeParameter : typeParametersInitialization) {
-      typeParameters.add(typeParameter);
-    }
-    List<TypeParameterDescriptor> typeParametersForReceiver=new ArrayList<TypeParameterDescriptor>();
-    typeParametersForReceiver.addAll(classTypeParameterDescriptorInitialization);
-    typeParametersForReceiver.addAll(typeParametersInitialization);
-    TypeVariableResolver typeVariableResolverForPropertyInternals=new TypeVariableResolverFromTypeDescriptors(typeParametersForReceiver,null);
+    TypeVariableResolver typeVariableResolverForPropertyInternals=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,propertyDescriptor,"property " + propertyName + " in "+ context);
     JetType propertyType;
     if (anyMember.getType().getTypeString().length() > 0) {
       propertyType=semanticServices.getTypeTransformer().transformToType(anyMember.getType().getTypeString(),typeVariableResolverForPropertyInternals);
