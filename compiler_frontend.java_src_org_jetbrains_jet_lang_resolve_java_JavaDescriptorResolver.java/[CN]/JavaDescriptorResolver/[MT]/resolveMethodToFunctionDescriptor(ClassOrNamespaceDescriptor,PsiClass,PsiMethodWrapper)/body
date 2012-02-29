@@ -41,9 +41,10 @@
     return null;
   }
   SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(owner,resolveAnnotations(method.getPsiMethod()),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
-  final TypeVariableResolver typeVariableResolverForParameters=TypeVariableResolvers.classTypeVariableResolver(classDescriptor);
+  String context="method " + method.getName() + " in class "+ psiClass.getQualifiedName();
+  final TypeVariableResolver typeVariableResolverForParameters=TypeVariableResolvers.classTypeVariableResolver(classDescriptor,context);
   final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
-  TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolverFromTypeDescriptors(methodTypeParameters,typeVariableResolverForParameters);
+  TypeVariableResolver methodTypeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(methodTypeParameters,functionDescriptorImpl,context);
   ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),methodTypeVariableResolver);
   functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,methodTypeVariableResolver),Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()));
   semanticServices.getTrace().record(BindingContext.FUNCTION,method.getPsiMethod(),functionDescriptorImpl);
