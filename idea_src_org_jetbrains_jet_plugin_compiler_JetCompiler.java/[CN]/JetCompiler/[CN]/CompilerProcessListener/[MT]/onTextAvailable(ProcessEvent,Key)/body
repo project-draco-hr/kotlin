@@ -1,0 +1,52 @@
+{
+  String text=event.getText();
+  if (outputType == ProcessOutputTypes.STDERR) {
+    output.append(text);
+    State lastState;
+    do {
+      lastState=state;
+switch (state) {
+case WAITING:
+{
+          Matcher matcher=matcher(DIAGNOSTIC_PATTERN);
+          if (find(matcher)) {
+            currentCompilerMessage=new CompilerMessage();
+            currentCompilerMessage.setMessageCategoryFromString(matcher.group(1));
+            state=State.ATTRIBUTES;
+          }
+          break;
+        }
+case ATTRIBUTES:
+{
+        Matcher matcher=matcher(ATTRIBUTE_PATTERN);
+        int indexDelta=0;
+        while (matcher.find()) {
+          handleSkippedOutput(output.subSequence(firstUnprocessedIndex + indexDelta,firstUnprocessedIndex + matcher.start()));
+          currentCompilerMessage.setAttributeFromStrings(matcher.group(1),matcher.group(2));
+          indexDelta=matcher.end();
+        }
+        firstUnprocessedIndex+=indexDelta;
+        Matcher endMatcher=matcher(OPEN_TAG_END_PATTERN);
+        if (find(endMatcher)) {
+          state=State.MESSAGE;
+        }
+        break;
+      }
+case MESSAGE:
+{
+      Matcher matcher=matcher(MESSAGE_PATTERN);
+      if (find(matcher)) {
+        currentCompilerMessage.setMessage(matcher.group(1));
+        currentCompilerMessage.reportTo(compileContext);
+        state=State.WAITING;
+      }
+      break;
+    }
+}
+}
+ while (state != lastState);
+}
+ else {
+compileContext.addMessage(INFORMATION,text,"",-1,-1);
+}
+}

@@ -9,14 +9,16 @@
     return 1;
   }
 catch (  Throwable t) {
-    t.printStackTrace();
+    errStream.println(MessageRenderer.TAGS.renderException(t));
     return 1;
   }
   if (arguments.help) {
     usage(errStream);
     return 0;
   }
-  CompileEnvironment environment=new CompileEnvironment(arguments.transformNamesToJava ? ANY_EXTENSION_TO_JAVA : FileNameTransformer.IDENTITY);
+  FileNameTransformer fileNameTransformer=arguments.transformNamesToJava ? ANY_EXTENSION_TO_JAVA : FileNameTransformer.IDENTITY;
+  MessageRenderer messageRenderer=arguments.tags ? MessageRenderer.TAGS : MessageRenderer.PLAIN;
+  CompileEnvironment environment=new CompileEnvironment(fileNameTransformer,messageRenderer);
   try {
     environment.setIgnoreErrors(false);
     environment.setErrorStream(errStream);
@@ -33,16 +35,17 @@ catch (  Throwable t) {
     }
     if (arguments.module != null) {
       environment.compileModuleScript(arguments.module,arguments.jar,arguments.outputDir,arguments.includeRuntime);
-      return 0;
     }
  else {
-      if (!environment.compileBunchOfSources(arguments.src,arguments.jar,arguments.outputDir,arguments.includeRuntime)) {
-        return 1;
-      }
+      environment.compileBunchOfSources(arguments.src,arguments.jar,arguments.outputDir,arguments.includeRuntime);
     }
     return 0;
   }
-  finally {
+ catch (  Throwable t) {
+    errStream.println(messageRenderer.renderException(t));
+    return 1;
+  }
+ finally {
     environment.dispose();
   }
 }

@@ -1,5 +1,5 @@
 {
-  final List<Module> modules=loadModuleScript(moduleFile);
+  List<Module> modules=loadModuleScript(moduleFile);
   if (modules == null) {
     throw new CompileEnvironmentException("Module script " + moduleFile + " compilation failed");
   }
@@ -9,19 +9,21 @@
   final String directory=new File(moduleFile).getParent();
   for (  Module moduleBuilder : modules) {
     ClassFileFactory moduleFactory=compileModule(moduleBuilder,directory);
-    if (moduleFactory != null) {
-      if (outputDir != null) {
-        writeToOutputDirectory(moduleFactory,outputDir);
-      }
+    if (moduleFactory == null) {
+      return false;
+    }
+    if (outputDir != null) {
+      writeToOutputDirectory(moduleFactory,outputDir);
+    }
  else {
-        String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
-        try {
-          writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
-        }
- catch (        FileNotFoundException e) {
-          throw new CompileEnvironmentException("Invalid jar path " + path,e);
-        }
+      String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+      try {
+        writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
+      }
+ catch (      FileNotFoundException e) {
+        throw new CompileEnvironmentException("Invalid jar path " + path,e);
       }
     }
   }
+  return true;
 }
