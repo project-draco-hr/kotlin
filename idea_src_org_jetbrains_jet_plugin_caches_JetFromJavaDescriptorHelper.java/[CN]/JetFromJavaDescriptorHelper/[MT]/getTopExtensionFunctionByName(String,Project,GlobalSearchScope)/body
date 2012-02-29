@@ -1,0 +1,27 @@
+{
+  Set<PsiMethod> selectedMethods=new HashSet<PsiMethod>();
+  Collection<PsiMethod> psiMethods=JavaMethodNameIndex.getInstance().get(name,project,scope);
+  for (  PsiMethod psiMethod : psiMethods) {
+    if (psiMethod == null) {
+      continue;
+    }
+    PsiClass containingClass=psiMethod.getContainingClass();
+    if (containingClass == null || !JvmAbi.PACKAGE_CLASS.equals(containingClass.getName())) {
+      continue;
+    }
+    for (    PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+      PsiModifierList modifierList=parameter.getModifierList();
+      if (modifierList != null) {
+        for (        PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
+          if (!JetValueParameter.class.getCanonicalName().equals(psiAnnotation.getQualifiedName())) {
+            continue;
+          }
+          if (new JetValueParameterAnnotation(psiAnnotation).receiver()) {
+            selectedMethods.add(psiMethod);
+          }
+        }
+      }
+    }
+  }
+  return selectedMethods;
+}
