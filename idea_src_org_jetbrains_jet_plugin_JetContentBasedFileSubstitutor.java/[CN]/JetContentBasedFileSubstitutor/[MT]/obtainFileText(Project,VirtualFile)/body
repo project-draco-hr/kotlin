@@ -8,12 +8,19 @@
     }
     PsiClass psiClass=js.getClasses()[0];
     JavaDescriptorResolver jdr=jss.getDescriptorResolver();
+    if (psiClass.getName().equals("namespace")) {
+      NamespaceDescriptor nd=jdr.resolveNamespace(js.getPackageName());
+      if (nd != null) {
+        for (        DeclarationDescriptor member : nd.getMemberScope().getAllDescriptors()) {
+          builder.append(DescriptorRenderer.COMPACT.render(member)).append("\n\n");
+        }
+      }
+    }
     ClassDescriptor cd=jdr.resolveClass(psiClass);
     if (cd != null) {
       builder.append(DescriptorRenderer.COMPACT.render(cd));
       builder.append(" {\n");
-      JetScope memberScope=cd.getDefaultType().getMemberScope();
-      for (      DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+      for (      DeclarationDescriptor member : cd.getDefaultType().getMemberScope().getAllDescriptors()) {
         if (member.getContainingDeclaration() == cd) {
           builder.append("    ").append(DescriptorRenderer.COMPACT.render(member)).append("\n");
         }
