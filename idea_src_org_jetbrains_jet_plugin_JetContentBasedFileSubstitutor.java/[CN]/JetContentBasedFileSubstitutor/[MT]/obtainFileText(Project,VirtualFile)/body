@@ -4,12 +4,22 @@
   PsiJavaFileStub js=getJavaStub(project,file);
   if (js != null) {
     if (js.getPackageName() != null && js.getPackageName().length() > 0) {
-      builder.append("package ").append(js.getPackageName()).append(";\n\n");
+      builder.append("package ").append(js.getPackageName()).append("\n\n");
     }
     PsiClass psiClass=js.getClasses()[0];
     JavaDescriptorResolver jdr=jss.getDescriptorResolver();
     ClassDescriptor cd=jdr.resolveClass(psiClass);
-    builder.append(DescriptorRenderer.TEXT.render(cd));
+    if (cd != null) {
+      builder.append(DescriptorRenderer.COMPACT.render(cd));
+      builder.append(" {\n");
+      JetScope memberScope=cd.getDefaultType().getMemberScope();
+      for (      DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+        if (member.getContainingDeclaration() == cd) {
+          builder.append("    ").append(DescriptorRenderer.COMPACT.render(member)).append("\n");
+        }
+      }
+      builder.append("}");
+    }
   }
   return builder.toString();
 }
