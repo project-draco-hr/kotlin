@@ -59,7 +59,10 @@ class GroupingValue {
       continue;
     }
     boolean isFinal;
-    if (members.setter == null && members.getter == null) {
+    if (!scopeData.kotlin) {
+      isFinal=true;
+    }
+ else     if (members.setter == null && members.getter == null) {
       isFinal=false;
     }
  else     if (members.getter != null) {
@@ -91,7 +94,14 @@ class GroupingValue {
  else {
       isVar=members.setter != null;
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),isFinal && !staticMembers ? Modality.FINAL : Modality.OPEN,resolveVisibilityFromPsiModifiers(anyMember.getMember().psiMember),isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
+    Modality modality;
+    if (isFinal) {
+      modality=Modality.FINAL;
+    }
+ else {
+      modality=anyMember.getMember().isAbstract() ? Modality.ABSTRACT : Modality.OPEN;
+    }
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,Collections.<AnnotationDescriptor>emptyList(),modality,resolveVisibilityFromPsiModifiers(anyMember.getMember().psiMember),isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
