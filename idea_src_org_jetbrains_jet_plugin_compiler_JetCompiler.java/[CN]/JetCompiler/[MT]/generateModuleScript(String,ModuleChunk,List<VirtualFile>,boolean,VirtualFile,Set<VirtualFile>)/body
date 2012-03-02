@@ -1,0 +1,39 @@
+{
+  StringBuilder script=new StringBuilder();
+  if (tests) {
+    script.append("// Module script for tests\n");
+  }
+ else {
+    script.append("// Module script for production\n");
+  }
+  script.append("import kotlin.modules.*\n");
+  script.append("fun project() {\n");
+  script.append("    module(\"" + moduleName + "\") {\n");
+  for (  VirtualFile sourceFile : files) {
+    script.append("        sources += \"" + path(sourceFile) + "\"\n");
+  }
+  script.append("        // Boot classpath\n");
+  for (  VirtualFile root : chunk.getCompilationBootClasspathFiles()) {
+    script.append("        classpath += \"" + path(root) + "\"\n");
+  }
+  script.append("        // Compilation classpath\n");
+  for (  VirtualFile root : chunk.getCompilationClasspathFiles()) {
+    String path=path(root);
+    if (allOutputDirectories.contains(root)) {
+      script.append("        // Output directory, commented out\n");
+      script.append("        // ");
+    }
+    script.append("        classpath += \"" + path + "\"\n");
+  }
+  script.append("        // Java classpath (for Java sources)\n");
+  for (  VirtualFile root : chunk.getSourceRoots()) {
+    script.append("        classpath += \"" + path(root) + "\"\n");
+  }
+  script.append("        // Main output\n");
+  if (tests && mainOutput != null) {
+    script.append("        classpath += \"" + path(mainOutput) + "\"\n");
+  }
+  script.append("    }\n");
+  script.append("}\n");
+  return script;
+}
