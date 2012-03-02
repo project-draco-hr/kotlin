@@ -3,8 +3,10 @@
   JavaSemanticServices jss=new JavaSemanticServices(project,JetSemanticServices.createSemanticServices(project),new BindingTraceContext());
   PsiJavaFileStub js=getJavaStub(project,file);
   if (js != null) {
+    builder.append(PsiBundle.message("psi.decompiled.text.header"));
+    builder.append("\n\n");
     if (js.getPackageName() != null && js.getPackageName().length() > 0) {
-      builder.append("package ").append(js.getPackageName()).append("\n\n\n");
+      builder.append("package ").append(js.getPackageName()).append("\n\n");
     }
     PsiClass psiClass=js.getClasses()[0];
     JavaDescriptorResolver jdr=jss.getDescriptorResolver();
@@ -12,10 +14,10 @@
       NamespaceDescriptor nd=jdr.resolveNamespace(js.getPackageName());
       if (nd != null) {
         for (        DeclarationDescriptor member : nd.getMemberScope().getAllDescriptors()) {
-          if (member instanceof ClassDescriptor && member.getName().equals("namespace")) {
+          if (member instanceof ClassDescriptor && member.getName().equals("namespace") || member instanceof NamespaceDescriptor) {
             continue;
           }
-          builder.append(DescriptorRenderer.COMPACT.render(member)).append("\n\n");
+          appendMemberDescriptor(builder,member);
         }
       }
     }
@@ -26,7 +28,8 @@
         builder.append(" {\n");
         for (        DeclarationDescriptor member : cd.getDefaultType().getMemberScope().getAllDescriptors()) {
           if (member.getContainingDeclaration() == cd) {
-            builder.append("    ").append(DescriptorRenderer.COMPACT.render(member)).append("\n\n");
+            builder.append("    ");
+            appendMemberDescriptor(builder,member);
           }
         }
         builder.append("}");
