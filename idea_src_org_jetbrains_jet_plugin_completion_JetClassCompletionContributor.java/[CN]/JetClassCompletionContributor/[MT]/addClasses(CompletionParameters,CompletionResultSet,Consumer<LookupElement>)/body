@@ -1,6 +1,13 @@
 {
   CompletionResultSet tempResult=result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-  JavaClassNameCompletionContributor.addAllClasses(parameters,parameters.getInvocationCount() <= 2,JavaCompletionSorting.addJavaSorting(parameters,tempResult).getPrefixMatcher(),new Consumer<LookupElement>(){
+  Project project=parameters.getPosition().getProject();
+  JetShortNamesCache namesCache=JetCacheManager.getInstance(project).getNamesCache();
+  Collection<DeclarationDescriptor> jetOnlyClasses=JetShortNamesCache.getJetOnlyTypes();
+  BindingContext bindingContext=namesCache.getResolutionContext(GlobalSearchScope.allScope(project));
+  for (  DeclarationDescriptor jetOnlyClass : jetOnlyClasses) {
+    consumer.consume(DescriptorLookupConverter.createLookupElement(bindingContext,jetOnlyClass));
+  }
+  JavaClassNameCompletionContributor.addAllClasses(parameters,false,JavaCompletionSorting.addJavaSorting(parameters,tempResult).getPrefixMatcher(),new Consumer<LookupElement>(){
     @Override public void consume(    LookupElement lookupElement){
       if (lookupElement instanceof JavaPsiClassReferenceElement) {
         JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
