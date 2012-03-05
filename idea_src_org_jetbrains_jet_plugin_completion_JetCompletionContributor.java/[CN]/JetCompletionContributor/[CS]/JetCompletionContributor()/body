@@ -2,20 +2,25 @@
   extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
     @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    @NotNull CompletionResultSet result){
       Set<LookupPositionObject> positions=new HashSet<LookupPositionObject>();
-      if (result.getPrefixMatcher().getPrefix().isEmpty()) {
-        return;
-      }
       PsiElement position=parameters.getPosition();
       if (!(position.getContainingFile() instanceof JetFile)) {
         return;
       }
       JetSimpleNameReference jetReference=getJetReference(parameters);
       if (jetReference != null) {
+        if (shouldRunTypeCompletionOnly(position,jetReference)) {
+          addClasses(parameters,result);
+          result.stopHere();
+          return;
+        }
         for (        Object variant : jetReference.getVariants()) {
           addReferenceVariant(result,variant,positions);
         }
+        if (result.getPrefixMatcher().getPrefix().isEmpty()) {
+          return;
+        }
         if (shouldRunTopLevelCompletion(parameters)) {
-          addClasses(parameters,result,positions);
+          addClasses(parameters,result);
           addJetTopLevelFunctions(result,position,positions);
           addJetExtensionFunctions(jetReference.getExpression(),result,position);
         }
