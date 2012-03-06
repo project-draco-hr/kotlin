@@ -1,13 +1,18 @@
 {
-  ImportResolver importResolver=new ImportResolver(context.getTrace(),firstPhase);
+  SingleImportResolver importResolver=new SingleImportResolver(context.getTrace(),firstPhase);
+  SingleImportResolver defaultImportResolver=new SingleImportResolver(TemporaryBindingTrace.create(context.getTrace()),firstPhase);
   for (  JetFile file : context.getNamespaceDescriptors().keySet()) {
     WritableScope namespaceScope=context.getNamespaceScopes().get(file);
     Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope,firstPhase);
     if (!firstPhase) {
       namespaceScope.clearImports();
     }
-    context.getConfiguration().addDefaultImports(context.getTrace(),namespaceScope,delayedImporter);
     Map<JetImportDirective,DeclarationDescriptor> resolvedDirectives=Maps.newHashMap();
+    Collection<JetImportDirective> defaultImportDirectives=Lists.newArrayList();
+    context.getConfiguration().addDefaultImports(namespaceScope,defaultImportDirectives);
+    for (    JetImportDirective defaultImportDirective : defaultImportDirectives) {
+      defaultImportResolver.processImportReference(defaultImportDirective,namespaceScope,delayedImporter);
+    }
     List<JetImportDirective> importDirectives=file.getImportDirectives();
     for (    JetImportDirective importDirective : importDirectives) {
       Collection<? extends DeclarationDescriptor> descriptors=importResolver.processImportReference(importDirective,namespaceScope,delayedImporter);
