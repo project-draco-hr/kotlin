@@ -13,7 +13,11 @@
   }
   ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
   String moduleName=moduleChunk.getNodes().iterator().next().getName();
-  CharSequence script=generateModuleScript(moduleName,chunk,files,tests,mainOutput,Sets.newHashSet(compileContext.getAllOutputDirectories()));
+  Set<VirtualFile> outputDirectoriesToFilter=Sets.newHashSet(compileContext.getModuleOutputDirectoryForTests(module));
+  if (!tests) {
+    outputDirectoriesToFilter.add(compileContext.getModuleOutputDirectory(module));
+  }
+  CharSequence script=generateModuleScript(moduleName,chunk,files,tests,mainOutput,outputDirectoriesToFilter);
   File scriptFile=new File(path(outputDir),"script.kts");
   try {
     FileUtil.writeToFile(scriptFile,script.toString());
@@ -28,5 +32,4 @@
  else {
     runInProcess(compileContext,outputDir,kotlinHome,scriptFile);
   }
-  compileContext.addMessage(INFORMATION,"Generated module script:\n" + script.toString(),"file://" + path(mainOutput),0,1);
 }
