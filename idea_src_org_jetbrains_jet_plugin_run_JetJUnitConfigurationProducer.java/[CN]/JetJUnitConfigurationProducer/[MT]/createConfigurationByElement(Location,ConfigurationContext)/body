@@ -1,9 +1,13 @@
 {
   PsiElement leaf=location.getPsiElement();
-  JetNamedFunction function=PsiTreeUtil.getParentOfType(leaf,JetNamedFunction.class);
+  if (!(leaf.getContainingFile() instanceof JetFile)) {
+    return null;
+  }
+  JetFile jetFile=(JetFile)leaf.getContainingFile();
+  JetNamedFunction function=PsiTreeUtil.getParentOfType(leaf,JetNamedFunction.class,false);
   if (function != null) {
     myElement=function;
-    JetElement owner=PsiTreeUtil.getParentOfType(function,JetFunction.class,JetClass.class);
+    @SuppressWarnings("unchecked") JetElement owner=PsiTreeUtil.getParentOfType(function,JetFunction.class,JetClass.class);
     if (owner instanceof JetClass) {
       JetLightClass delegate=wrapDelegate((JetClass)owner);
       for (      PsiMethod method : delegate.getMethods()) {
@@ -23,7 +27,10 @@
       }
     }
   }
-  JetClass jetClass=PsiTreeUtil.getParentOfType(leaf,JetClass.class);
+  JetClass jetClass=PsiTreeUtil.getParentOfType(leaf,JetClass.class,false);
+  if (jetClass == null) {
+    jetClass=getClassDeclarationInFile(jetFile);
+  }
   if (jetClass != null) {
     myElement=jetClass;
     PsiClass delegate=wrapDelegate(jetClass);
