@@ -1,9 +1,9 @@
 {
   if (!context.completeAnalysisNeeded(declaration))   return;
   MutableClassDescriptor classDescriptor=(MutableClassDescriptor)descriptor.getContainingDeclaration();
-  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,context.getTrace());
-  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,context.getTrace());
-  final CallResolver callResolver=new CallResolver(callResolverContext,DataFlowInfo.EMPTY);
+  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,trace);
+  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,trace);
+  final CallResolver callResolver=new CallResolver(context.getSemanticServices(),DataFlowInfo.EMPTY);
   PsiElement nameElement=declaration.getNameNode().getPsi();
   if (classDescriptor.getUnsubstitutedPrimaryConstructor() == null) {
     context.getTrace().report(SECONDARY_CONSTRUCTOR_BUT_NO_PRIMARY.on(nameElement));
@@ -44,7 +44,8 @@
   }
   JetExpression bodyExpression=declaration.getBodyExpression();
   if (bodyExpression != null) {
-    expressionTypingServices.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType(),context.getTrace());
+    ExpressionTypingServices typeInferrer=context.getSemanticServices().getTypeInferrerServices(trace);
+    typeInferrer.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType());
   }
   checkDefaultParameterValues(declaration.getValueParameters(),descriptor.getValueParameters(),scopeForConstructorBody);
 }

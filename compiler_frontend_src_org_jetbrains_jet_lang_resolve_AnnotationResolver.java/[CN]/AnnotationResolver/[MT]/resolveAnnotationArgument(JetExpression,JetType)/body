@@ -1,0 +1,24 @@
+{
+  JetVisitor<CompileTimeConstant<?>,Void> visitor=new JetVisitor<CompileTimeConstant<?>,Void>(){
+    @Override public CompileTimeConstant<?> visitConstantExpression(    JetConstantExpression expression,    Void nothing){
+      ExpressionTypingServices typeInferrerServices=semanticServices.getTypeInferrerServices(trace);
+      JetType type=typeInferrerServices.getType(JetScope.EMPTY,expression,expectedType,DataFlowInfo.EMPTY);
+      if (type == null) {
+      }
+      return trace.get(BindingContext.COMPILE_TIME_VALUE,expression);
+    }
+    @Override public CompileTimeConstant<?> visitParenthesizedExpression(    JetParenthesizedExpression expression,    Void nothing){
+      JetExpression innerExpression=expression.getExpression();
+      if (innerExpression == null)       return null;
+      return innerExpression.accept(this,null);
+    }
+    @Override public CompileTimeConstant<?> visitStringTemplateExpression(    JetStringTemplateExpression expression,    Void nothing){
+      return trace.get(BindingContext.COMPILE_TIME_VALUE,expression);
+    }
+    @Override public CompileTimeConstant<?> visitJetElement(    JetElement element,    Void nothing){
+      return null;
+    }
+  }
+;
+  return expression.accept(visitor,null);
+}

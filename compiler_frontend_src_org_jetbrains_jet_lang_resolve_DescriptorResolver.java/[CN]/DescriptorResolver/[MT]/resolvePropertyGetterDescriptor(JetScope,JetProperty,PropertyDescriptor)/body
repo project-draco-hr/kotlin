@@ -1,0 +1,24 @@
+{
+  PropertyGetterDescriptor getterDescriptor;
+  JetPropertyAccessor getter=property.getGetter();
+  if (getter != null) {
+    List<AnnotationDescriptor> annotations=annotationResolver.resolveAnnotations(scope,getter.getModifierList());
+    JetType outType=propertyDescriptor.getType();
+    JetType returnType=outType;
+    JetTypeReference returnTypeReference=getter.getReturnTypeReference();
+    if (returnTypeReference != null) {
+      returnType=typeResolver.resolveType(scope,returnTypeReference);
+      if (outType != null && !TypeUtils.equalTypes(returnType,outType)) {
+        trace.report(WRONG_GETTER_RETURN_TYPE.on(returnTypeReference,propertyDescriptor.getReturnType()));
+      }
+    }
+    getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,annotations,resolveModalityFromModifiers(getter.getModifierList(),propertyDescriptor.getModality()),resolveVisibilityFromModifiers(getter.getModifierList(),propertyDescriptor.getVisibility()),getter.getBodyExpression() != null,false,CallableMemberDescriptor.Kind.DECLARATION);
+    getterDescriptor.initialize(returnType);
+    trace.record(BindingContext.PROPERTY_ACCESSOR,getter,getterDescriptor);
+  }
+ else {
+    getterDescriptor=createDefaultGetter(propertyDescriptor);
+    getterDescriptor.initialize(propertyDescriptor.getType());
+  }
+  return getterDescriptor;
+}

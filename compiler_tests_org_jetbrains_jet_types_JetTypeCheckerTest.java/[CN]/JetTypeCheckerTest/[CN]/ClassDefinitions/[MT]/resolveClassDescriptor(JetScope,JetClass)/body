@@ -4,10 +4,10 @@
   trace.record(BindingContext.CLASS,classElement,classDescriptor);
   final WritableScope parameterScope=new WritableScopeImpl(scope,classDescriptor,new TraceBasedRedeclarationHandler(trace));
   parameterScope.changeLockLevel(WritableScope.LockLevel.BOTH);
-  List<TypeParameterDescriptor> typeParameters=descriptorResolver.resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters(),JetTestUtils.DUMMY_TRACE);
-  descriptorResolver.resolveGenericBounds(classElement,parameterScope,typeParameters,JetTestUtils.DUMMY_TRACE);
+  List<TypeParameterDescriptor> typeParameters=descriptorResolver.resolveTypeParameters(classDescriptor,parameterScope,classElement.getTypeParameters());
+  descriptorResolver.resolveGenericBounds(classElement,parameterScope,typeParameters);
   List<JetDelegationSpecifier> delegationSpecifiers=classElement.getDelegationSpecifiers();
-  Collection<JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : descriptorResolver.resolveDelegationSpecifiers(parameterScope,delegationSpecifiers,typeResolver,JetTestUtils.DUMMY_TRACE,true);
+  Collection<JetType> supertypes=delegationSpecifiers.isEmpty() ? Collections.singleton(JetStandardClasses.getAnyType()) : descriptorResolver.resolveDelegationSpecifiers(parameterScope,delegationSpecifiers,typeResolver);
   boolean open=classElement.hasModifier(JetTokens.OPEN_KEYWORD);
   final WritableScope memberDeclarations=new WritableScopeImpl(JetScope.EMPTY,classDescriptor,new TraceBasedRedeclarationHandler(trace));
   memberDeclarations.changeLockLevel(WritableScope.LockLevel.BOTH);
@@ -16,7 +16,7 @@
     declaration.accept(new JetVisitorVoid(){
       @Override public void visitProperty(      JetProperty property){
         if (property.getPropertyTypeRef() != null) {
-          memberDeclarations.addPropertyDescriptor(descriptorResolver.resolvePropertyDescriptor(classDescriptor,parameterScope,property,JetTestUtils.DUMMY_TRACE));
+          memberDeclarations.addPropertyDescriptor(descriptorResolver.resolvePropertyDescriptor(classDescriptor,parameterScope,property));
         }
  else {
           throw new UnsupportedOperationException();
@@ -24,7 +24,7 @@
       }
       @Override public void visitNamedFunction(      JetNamedFunction function){
         if (function.getReturnTypeRef() != null) {
-          memberDeclarations.addFunctionDescriptor(descriptorResolver.resolveFunctionDescriptor(classDescriptor,parameterScope,function,JetTestUtils.DUMMY_TRACE));
+          memberDeclarations.addFunctionDescriptor(descriptorResolver.resolveFunctionDescriptor(classDescriptor,parameterScope,function));
         }
  else {
           throw new UnsupportedOperationException();
@@ -39,11 +39,11 @@
   Set<ConstructorDescriptor> constructors=Sets.newLinkedHashSet();
   classDescriptor.initialize(!open,typeParameters,supertypes,memberDeclarations,constructors,null);
   for (  JetSecondaryConstructor constructor : classElement.getSecondaryConstructors()) {
-    ConstructorDescriptorImpl functionDescriptor=descriptorResolver.resolveSecondaryConstructorDescriptor(memberDeclarations,classDescriptor,constructor,JetTestUtils.DUMMY_TRACE);
+    ConstructorDescriptorImpl functionDescriptor=descriptorResolver.resolveSecondaryConstructorDescriptor(memberDeclarations,classDescriptor,constructor);
     functionDescriptor.setReturnType(classDescriptor.getDefaultType());
     constructors.add(functionDescriptor);
   }
-  ConstructorDescriptorImpl primaryConstructorDescriptor=descriptorResolver.resolvePrimaryConstructorDescriptor(scope,classDescriptor,classElement,JetTestUtils.DUMMY_TRACE);
+  ConstructorDescriptorImpl primaryConstructorDescriptor=descriptorResolver.resolvePrimaryConstructorDescriptor(scope,classDescriptor,classElement);
   if (primaryConstructorDescriptor != null) {
     primaryConstructorDescriptor.setReturnType(classDescriptor.getDefaultType());
     constructors.add(primaryConstructorDescriptor);
