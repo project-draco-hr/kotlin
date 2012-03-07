@@ -1,0 +1,28 @@
+{
+  IntentionAction action=LightQuickFixTestCase.findActionWithText(getAvailableActions(),text);
+  if (action == null) {
+    if (actionShouldBeAvailable) {
+      List<IntentionAction> actions=getAvailableActions();
+      List<String> texts=new ArrayList<String>();
+      for (      IntentionAction intentionAction : actions) {
+        texts.add(intentionAction.getText());
+      }
+      Collection<HighlightInfo> infos=doHighlighting();
+      fail("Action with text '" + text + "' is not available in test "+ testFullPath+ "\n"+ "Available actions ("+ texts.size()+ "): "+ texts+ "\n"+ actions+ "\n"+ "Infos:"+ infos);
+    }
+  }
+ else {
+    if (!actionShouldBeAvailable) {
+      fail("Action '" + text + "' is available (but must not) in test "+ testFullPath);
+    }
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(),getEditor(),action,action.getText());
+    UIUtil.dispatchAllInvocationEvents();
+    if (!shouldBeAvailableAfterExecution()) {
+      final IntentionAction afterAction=LightQuickFixTestCase.findActionWithText(getAvailableActions(),text);
+      if (afterAction != null) {
+        fail("Action '" + text + "' is still available after its invocation in test "+ testFullPath);
+      }
+    }
+    checkResultByFile(getCheckFileName());
+  }
+}

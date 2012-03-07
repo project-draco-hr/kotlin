@@ -16,13 +16,16 @@
         for (        Object variant : jetReference.getVariants()) {
           addReferenceVariant(result,variant,positions);
         }
-        if (result.getPrefixMatcher().getPrefix().isEmpty()) {
+        String prefix=result.getPrefixMatcher().getPrefix();
+        if (prefix.isEmpty() && parameters.getInvocationCount() < 2) {
           return;
         }
-        if (shouldRunTopLevelCompletion(parameters)) {
+        if (shouldRunTopLevelCompletion(parameters,prefix)) {
           addClasses(parameters,result);
           addJetTopLevelFunctions(result,position,positions);
-          addJetExtensionFunctions(jetReference.getExpression(),result,position);
+        }
+        if (shouldRunExtensionsCompletion(parameters,prefix)) {
+          addJetExtensions(jetReference.getExpression(),result,position);
         }
         result.stopHere();
       }

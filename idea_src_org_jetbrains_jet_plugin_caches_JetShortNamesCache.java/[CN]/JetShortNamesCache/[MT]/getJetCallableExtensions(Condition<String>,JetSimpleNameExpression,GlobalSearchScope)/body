@@ -1,0 +1,44 @@
+{
+  Collection<DeclarationDescriptor> resultDescriptors=new ArrayList<DeclarationDescriptor>();
+  if (!(expression.getContainingFile() instanceof JetFile)) {
+    return resultDescriptors;
+  }
+  JetFile jetFile=(JetFile)expression.getContainingFile();
+  BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile);
+  JetExpression receiverExpression=expression.getReceiverExpression();
+  if (receiverExpression != null) {
+    JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
+    JetScope scope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+    if (expressionType != null && scope != null) {
+      Collection<String> extensionFunctionsNames=getAllJetExtensionFunctionsNames(searchScope);
+      Set<String> functionFQNs=new java.util.HashSet<String>();
+      for (      String name : extensionFunctionsNames) {
+        if (acceptedNameCondition.value(name)) {
+          Collection<PsiElement> extensionFunctions=getJetExtensionFunctionsByName(name,searchScope);
+          for (          PsiElement extensionFunction : extensionFunctions) {
+            if (extensionFunction instanceof JetNamedFunction) {
+              functionFQNs.add(JetPsiUtil.getFQName((JetNamedFunction)extensionFunction));
+            }
+ else             if (extensionFunction instanceof PsiMethod) {
+              PsiMethod function=(PsiMethod)extensionFunction;
+              PsiClass containingClass=function.getContainingClass();
+              if (containingClass != null) {
+                String classFQN=containingClass.getQualifiedName();
+                if (classFQN != null) {
+                  String classParentFQN=QualifiedNamesUtil.withoutLastSegment(classFQN);
+                  functionFQNs.add(QualifiedNamesUtil.combine(classParentFQN,function.getName()));
+                }
+              }
+            }
+          }
+        }
+      }
+      for (      String functionFQN : functionFQNs) {
+        for (        CallableDescriptor functionDescriptor : ExpressionTypingUtils.canFindSuitableCall(functionFQN,project,receiverExpression,expressionType,scope)) {
+          resultDescriptors.add(functionDescriptor);
+        }
+      }
+    }
+  }
+  return resultDescriptors;
+}
