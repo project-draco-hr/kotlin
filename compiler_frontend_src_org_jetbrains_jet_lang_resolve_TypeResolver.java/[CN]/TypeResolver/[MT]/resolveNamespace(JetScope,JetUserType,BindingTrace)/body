@@ -1,0 +1,21 @@
+{
+  if (userType.isAbsoluteInRootNamespace()) {
+    return resolveNamespace(JetModuleUtil.getRootNamespaceType(userType).getMemberScope(),userType,trace);
+  }
+  JetUserType qualifier=userType.getQualifier();
+  NamespaceDescriptor namespace;
+  if (qualifier != null) {
+    NamespaceDescriptor domain=resolveNamespace(scope,qualifier,trace);
+    if (domain == null) {
+      return null;
+    }
+    namespace=domain.getMemberScope().getNamespace(userType.getReferencedName());
+  }
+ else {
+    namespace=scope.getNamespace(userType.getReferencedName());
+  }
+  if (namespace != null) {
+    trace.record(BindingContext.REFERENCE_TARGET,userType.getReferenceExpression(),namespace);
+  }
+  return namespace;
+}
