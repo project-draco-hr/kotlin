@@ -1,0 +1,28 @@
+{
+  if (arguments.help) {
+    usage(errStream);
+    return 0;
+  }
+  System.setProperty("java.awt.headless","true");
+  FileNameTransformer fileNameTransformer=arguments.transformNamesToJava ? ANY_EXTENSION_TO_JAVA : FileNameTransformer.IDENTITY;
+  MessageRenderer messageRenderer=arguments.tags ? MessageRenderer.TAGS : MessageRenderer.PLAIN;
+  CompileEnvironment environment=new CompileEnvironment(fileNameTransformer,messageRenderer);
+  try {
+    configureEnvironment(environment,arguments,errStream);
+    boolean noErrors;
+    if (arguments.module != null) {
+      noErrors=environment.compileModuleScript(arguments.module,arguments.jar,arguments.outputDir,arguments.includeRuntime);
+    }
+ else {
+      noErrors=environment.compileBunchOfSources(arguments.src,arguments.jar,arguments.outputDir,arguments.includeRuntime);
+    }
+    return noErrors ? 0 : 1;
+  }
+ catch (  Throwable t) {
+    errStream.println(messageRenderer.renderException(t));
+    return 1;
+  }
+ finally {
+    environment.dispose();
+  }
+}
