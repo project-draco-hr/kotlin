@@ -1,0 +1,31 @@
+{
+  if (delegationSpecifiers.isEmpty()) {
+    return Collections.emptyList();
+  }
+  Collection<JetType> result=Lists.newArrayList();
+  for (  JetDelegationSpecifier delegationSpecifier : delegationSpecifiers) {
+    JetTypeReference typeReference=delegationSpecifier.getTypeReference();
+    if (typeReference != null) {
+      result.add(resolver.resolveType(extensibleScope,typeReference,trace,checkBounds));
+      JetTypeElement typeElement=typeReference.getTypeElement();
+      while (typeElement instanceof JetNullableType) {
+        JetNullableType nullableType=(JetNullableType)typeElement;
+        trace.report(NULLABLE_SUPERTYPE.on(nullableType));
+        typeElement=nullableType.getInnerType();
+      }
+      if (typeElement instanceof JetUserType) {
+        JetUserType userType=(JetUserType)typeElement;
+        List<JetTypeProjection> typeArguments=userType.getTypeArguments();
+        for (        JetTypeProjection typeArgument : typeArguments) {
+          if (typeArgument.getProjectionKind() != JetProjectionKind.NONE) {
+            trace.report(PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE.on(typeArgument));
+          }
+        }
+      }
+    }
+ else {
+      result.add(ErrorUtils.createErrorType("No type reference"));
+    }
+  }
+  return result;
+}

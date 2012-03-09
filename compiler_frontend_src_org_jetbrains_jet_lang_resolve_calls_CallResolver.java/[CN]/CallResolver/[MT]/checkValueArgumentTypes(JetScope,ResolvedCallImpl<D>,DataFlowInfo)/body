@@ -1,0 +1,19 @@
+{
+  ResolutionStatus result=SUCCESS;
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
+    ValueParameterDescriptor parameterDescriptor=entry.getKey();
+    ResolvedValueArgument resolvedArgument=entry.getValue();
+    JetType parameterType=getEffectiveExpectedType(parameterDescriptor);
+    List<JetExpression> argumentExpressions=resolvedArgument.getArgumentExpressions();
+    for (    JetExpression argumentExpression : argumentExpressions) {
+      JetType type=expressionTypingServices.getType(scope,argumentExpression,parameterType,dataFlowInfo,candidateCall.getTrace());
+      if (type == null || ErrorUtils.isErrorType(type)) {
+        candidateCall.argumentHasNoType();
+      }
+ else       if (!typeChecker.isSubtypeOf(type,parameterType)) {
+        result=OTHER_ERROR;
+      }
+    }
+  }
+  return result;
+}

@@ -1,9 +1,9 @@
 {
   if (!context.completeAnalysisNeeded(declaration))   return;
   MutableClassDescriptor classDescriptor=(MutableClassDescriptor)descriptor.getContainingDeclaration();
-  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,trace);
-  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,trace);
-  final CallResolver callResolver=new CallResolver(context.getSemanticServices(),DataFlowInfo.EMPTY);
+  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,context.getTrace());
+  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,context.getTrace());
+  final DataFlowInfo dataFlowInfo=DataFlowInfo.EMPTY;
   PsiElement nameElement=declaration.getNameNode().getPsi();
   if (classDescriptor.getUnsubstitutedPrimaryConstructor() == null) {
     context.getTrace().report(SECONDARY_CONSTRUCTOR_BUT_NO_PRIMARY.on(nameElement));
@@ -18,12 +18,12 @@
         @Override public void visitDelegationToSuperCallSpecifier(        JetDelegatorToSuperCall call){
           JetTypeReference typeReference=call.getTypeReference();
           if (typeReference != null) {
-            callResolver.resolveCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE);
+            callResolver.resolveCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
           }
         }
         @Override public void visitDelegationToThisCall(        JetDelegatorToThisCall call){
           ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
-          callResolver.resolveCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE);
+          callResolver.resolveCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
         }
         @Override public void visitDelegationByExpressionSpecifier(        JetDelegatorByExpressionSpecifier specifier){
           context.getTrace().report(BY_IN_SECONDARY_CONSTRUCTOR.on(specifier));
@@ -44,8 +44,7 @@
   }
   JetExpression bodyExpression=declaration.getBodyExpression();
   if (bodyExpression != null) {
-    ExpressionTypingServices typeInferrer=context.getSemanticServices().getTypeInferrerServices(trace);
-    typeInferrer.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType());
+    expressionTypingServices.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType(),context.getTrace());
   }
   checkDefaultParameterValues(declaration.getValueParameters(),descriptor.getValueParameters(),scopeForConstructorBody);
 }

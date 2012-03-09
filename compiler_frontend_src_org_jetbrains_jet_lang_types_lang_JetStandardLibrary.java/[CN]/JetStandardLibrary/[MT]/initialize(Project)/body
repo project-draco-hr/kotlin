@@ -1,5 +1,19 @@
 {
   if (instance == null) {
-    instance=new JetStandardLibrary(project);
+    if (initializing) {
+      throw new IllegalStateException("builtin library initialization loop");
+    }
+    if (initializationFailed != null) {
+      throw new RuntimeException("builtin library initialization failed previously: " + initializationFailed,initializationFailed);
+    }
+    initializing=true;
+    try {
+      instance=new JetStandardLibrary(project);
+    }
+ catch (    Throwable e) {
+      initializationFailed=e;
+      throw new RuntimeException("builtin library initialization failed: " + e,e);
+    }
+    initializing=false;
   }
 }

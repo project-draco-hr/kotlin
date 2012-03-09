@@ -24,7 +24,7 @@
     JetType compareToReturnType=getTypeForBinaryCall(context.scope,"compareTo",context,expression);
     if (compareToReturnType != null) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
-      JetStandardLibrary standardLibrary=context.semanticServices.getStandardLibrary();
+      JetStandardLibrary standardLibrary=JetStandardLibrary.getInstance();
       TypeConstructor intTypeConstructor=standardLibrary.getInt().getTypeConstructor();
       if (constructor.equals(intTypeConstructor)) {
         result=standardLibrary.getBooleanType();
@@ -35,7 +35,7 @@
     }
   }
  else {
-    JetType booleanType=context.semanticServices.getStandardLibrary().getBooleanType();
+    JetType booleanType=JetStandardLibrary.getInstance().getBooleanType();
     if (OperatorConventions.EQUALS_OPERATIONS.contains(operationType)) {
       String name="equals";
       if (right != null) {
@@ -77,10 +77,10 @@
       DataFlowInfo flowInfoLeft=DataFlowUtils.extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope,context);
       WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl(context).setDebugName("Right scope of && or ||");
       JetType rightType=right == null ? null : facade.getType(right,context.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope));
-      if (leftType != null && !isBoolean(context.semanticServices,leftType)) {
+      if (leftType != null && !isBoolean(leftType)) {
         context.trace.report(TYPE_MISMATCH.on(left,booleanType,leftType));
       }
-      if (rightType != null && !isBoolean(context.semanticServices,rightType)) {
+      if (rightType != null && !isBoolean(rightType)) {
         context.trace.report(TYPE_MISMATCH.on(right,booleanType,rightType));
       }
       result=booleanType;

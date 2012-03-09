@@ -1,6 +1,10 @@
 {
   List<JetType> parameterTypeList=Arrays.asList(parameterType);
-  CallResolver callResolver=new CallResolver(JetSemanticServices.createSemanticServices(getProject()),DataFlowInfo.EMPTY);
+  CallResolver callResolver=Guice.createInjector(new TopDownAnalysisModule(getProject(),false){
+    @Override protected void configureAfter(){
+    }
+  }
+).getInstance(CallResolver.class);
   OverloadResolutionResults<FunctionDescriptor> functions=callResolver.resolveExactSignature(classDescriptor.getMemberScope(typeArguments),ReceiverDescriptor.NO_RECEIVER,name,parameterTypeList);
   for (  ResolvedCall<? extends FunctionDescriptor> resolvedCall : functions.getResultingCalls()) {
     List<ValueParameterDescriptor> unsubstitutedValueParameters=resolvedCall.getResultingDescriptor().getValueParameters();

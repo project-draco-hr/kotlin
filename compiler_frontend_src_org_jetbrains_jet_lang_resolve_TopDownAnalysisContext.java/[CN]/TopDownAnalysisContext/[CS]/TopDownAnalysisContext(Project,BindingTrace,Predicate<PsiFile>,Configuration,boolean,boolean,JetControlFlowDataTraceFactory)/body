@@ -1,0 +1,19 @@
+{
+  if (analyzingBootstrapLibrary == (jetControlFlowDataTraceFactory != null)) {
+    throw new IllegalStateException("jetControlFlowDataTraceFactory must not be passed when analyzingBootstrapLibrary and vice versa");
+  }
+  injector=Guice.createInjector(new TopDownAnalysisModule(project,analyzingBootstrapLibrary){
+    @Override protected void configureAfter(){
+      bind(TopDownAnalysisContext.class).toInstance(TopDownAnalysisContext.this);
+      bind(Configuration.class).toInstance(configuration);
+      if (jetControlFlowDataTraceFactory != null) {
+        bind(JetControlFlowDataTraceFactory.class).toInstance(jetControlFlowDataTraceFactory);
+      }
+    }
+  }
+);
+  this.trace=new ObservableBindingTrace(trace);
+  this.analyzeCompletely=analyzeCompletely;
+  this.declaredLocally=declaredLocally;
+  this.analyzingBootstrapLibrary=analyzingBootstrapLibrary;
+}
