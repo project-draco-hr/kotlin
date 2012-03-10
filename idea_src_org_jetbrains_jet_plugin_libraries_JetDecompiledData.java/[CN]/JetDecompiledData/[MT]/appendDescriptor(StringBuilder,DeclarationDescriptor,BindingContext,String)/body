@@ -1,0 +1,34 @@
+{
+  String decompiledComment="/* " + PsiBundle.message("psi.decompiled.method.body") + " */";
+  builder.append(indent);
+  int startOffset=builder.length();
+  builder.append(DescriptorRenderer.COMPACT.render(descriptor));
+  int endOffset=builder.length();
+  if (descriptor instanceof FunctionDescriptor) {
+    builder.append(" { ").append(decompiledComment).append(" }");
+    endOffset=builder.length();
+  }
+ else   if (descriptor instanceof PropertyDescriptor) {
+    builder.append(" ").append(decompiledComment);
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    builder.append(" {\n");
+    boolean firstPassed=false;
+    for (    DeclarationDescriptor member : ((ClassDescriptor)descriptor).getDefaultType().getMemberScope().getAllDescriptors()) {
+      if (member.getContainingDeclaration() == descriptor) {
+        if (firstPassed) {
+          builder.append("\n");
+        }
+ else {
+          firstPassed=true;
+        }
+        appendDescriptor(builder,member,bindingContext,indent + "    ");
+      }
+    }
+    builder.append(indent).append("}");
+    endOffset=builder.length();
+  }
+  builder.append("\n");
+  PsiElement clsMember=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
+  myClsMembersToRanges.put(clsMember,new TextRange(startOffset,endOffset));
+}
