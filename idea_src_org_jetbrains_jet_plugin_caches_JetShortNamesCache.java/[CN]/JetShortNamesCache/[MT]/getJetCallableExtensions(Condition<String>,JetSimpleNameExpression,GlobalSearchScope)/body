@@ -1,8 +1,5 @@
 {
   Collection<DeclarationDescriptor> resultDescriptors=new ArrayList<DeclarationDescriptor>();
-  if (!(expression.getContainingFile() instanceof JetFile)) {
-    return resultDescriptors;
-  }
   JetFile jetFile=(JetFile)expression.getContainingFile();
   BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile);
   JetExpression receiverExpression=expression.getReceiverExpression();
@@ -20,14 +17,9 @@
               functionFQNs.add(JetPsiUtil.getFQName((JetNamedFunction)extensionFunction));
             }
  else             if (extensionFunction instanceof PsiMethod) {
-              PsiMethod function=(PsiMethod)extensionFunction;
-              PsiClass containingClass=function.getContainingClass();
-              if (containingClass != null) {
-                String classFQN=containingClass.getQualifiedName();
-                if (classFQN != null) {
-                  String classParentFQN=QualifiedNamesUtil.withoutLastSegment(classFQN);
-                  functionFQNs.add(QualifiedNamesUtil.combine(classParentFQN,function.getName()));
-                }
+              String functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN((PsiMethod)extensionFunction);
+              if (functionFQN != null) {
+                functionFQNs.add(functionFQN);
               }
             }
           }

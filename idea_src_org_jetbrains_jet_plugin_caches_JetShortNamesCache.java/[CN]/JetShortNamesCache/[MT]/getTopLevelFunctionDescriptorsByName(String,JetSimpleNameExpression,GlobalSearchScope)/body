@@ -1,0 +1,30 @@
+{
+  HashSet<FunctionDescriptor> result=new HashSet<FunctionDescriptor>();
+  JetFile jetFile=(JetFile)expression.getContainingFile();
+  BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile);
+  JetScope jetScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
+  if (jetScope == null) {
+    return result;
+  }
+  Collection<PsiMethod> topLevelFunctionPrototypes=JetFromJavaDescriptorHelper.getTopLevelFunctionPrototypesByName(name,project,scope);
+  for (  PsiMethod method : topLevelFunctionPrototypes) {
+    String functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN(method);
+    if (functionFQN != null) {
+      JetImportDirective importDirective=JetPsiFactory.createImportDirective(project,functionFQN);
+      Collection<? extends DeclarationDescriptor> declarationDescriptors=ImportsResolver.analyseImportReference(importDirective,jetScope,new BindingTraceContext());
+      for (      DeclarationDescriptor declarationDescriptor : declarationDescriptors) {
+        if (declarationDescriptor instanceof FunctionDescriptor) {
+          result.add((FunctionDescriptor)declarationDescriptor);
+        }
+      }
+    }
+  }
+  Collection<JetNamedFunction> jetNamedFunctions=JetShortFunctionNameIndex.getInstance().get(name,project,scope);
+  for (  JetNamedFunction jetNamedFunction : jetNamedFunctions) {
+    SimpleFunctionDescriptor functionDescriptor=context.get(BindingContext.FUNCTION,jetNamedFunction);
+    if (functionDescriptor != null) {
+      result.add(functionDescriptor);
+    }
+  }
+  return result;
+}
