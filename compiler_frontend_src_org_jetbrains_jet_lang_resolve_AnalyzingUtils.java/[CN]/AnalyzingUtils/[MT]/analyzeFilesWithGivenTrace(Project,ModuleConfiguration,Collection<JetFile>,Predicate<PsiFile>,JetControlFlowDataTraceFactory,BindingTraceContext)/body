@@ -1,16 +1,10 @@
 {
-  JetScope libraryScope=JetStandardLibrary.getInstance().getLibraryScope();
   ModuleDescriptor owner=new ModuleDescriptor("<module>");
   final WritableScope scope=new WritableScopeImpl(JetScope.EMPTY,owner,new TraceBasedRedeclarationHandler(bindingTraceContext)).setDebugName("Root scope in analyzeNamespace");
-  scope.importScope(libraryScope);
   scope.changeLockLevel(WritableScope.LockLevel.BOTH);
-  final Map<String,NamespaceDescriptorImpl> declaredNamespaces=Maps.newHashMap();
-  TopDownAnalyzer.process(project,bindingTraceContext,new JetScopeAdapter(scope){
+  scope.importScope(JetStandardLibrary.getInstance().getLibraryScope());
+  scope.importScope(new JetScopeAdapter(JetScope.EMPTY){
     @Override public NamespaceDescriptor getNamespace(    @NotNull String name){
-      NamespaceDescriptor topLevelNamespace=declaredNamespaces.get(name);
-      if (topLevelNamespace != null) {
-        return topLevelNamespace;
-      }
       NamespaceDescriptor topLevelNamespaceFromConfiguration=configuration.getTopLevelNamespace(name);
       if (topLevelNamespaceFromConfiguration != null) {
         return topLevelNamespaceFromConfiguration;
@@ -18,19 +12,18 @@
       return super.getNamespace(name);
     }
     @NotNull @Override public Collection<DeclarationDescriptor> getAllDescriptors(){
-      List<DeclarationDescriptor> allDescriptors=Lists.newArrayList(super.getAllDescriptors());
-      allDescriptors.addAll(declaredNamespaces.values());
+      List<DeclarationDescriptor> allDescriptors=Lists.newArrayList();
       configuration.addAllTopLevelNamespacesTo(allDescriptors);
       return allDescriptors;
     }
   }
-,new NamespaceLike.Adapter(owner){
+);
+  TopDownAnalyzer.process(project,bindingTraceContext,scope,new NamespaceLike.Adapter(owner){
     @Override public NamespaceDescriptorImpl getNamespace(    String name){
-      return declaredNamespaces.get(name);
+      return (NamespaceDescriptorImpl)scope.getDeclaredNamespace(name);
     }
     @Override public void addNamespace(    @NotNull NamespaceDescriptor namespaceDescriptor){
       scope.addNamespace(namespaceDescriptor);
-      declaredNamespaces.put(namespaceDescriptor.getName(),(NamespaceDescriptorImpl)namespaceDescriptor);
     }
     @Override public void addClassifierDescriptor(    @NotNull MutableClassDescriptorLite classDescriptor){
       throw new IllegalStateException("A class shouldn't sit right under a module: " + classDescriptor);
