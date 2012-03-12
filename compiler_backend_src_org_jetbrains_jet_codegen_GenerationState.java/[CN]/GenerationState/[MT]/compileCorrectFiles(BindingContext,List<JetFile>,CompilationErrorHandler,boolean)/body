@@ -4,11 +4,13 @@
   bindingContexts.push(bindingContext);
   try {
     for (    JetFile namespace : files) {
+      if (namespace == null)       throw new IllegalArgumentException("A null file given for compilation");
       try {
         generateNamespace(namespace);
       }
  catch (      Throwable e) {
-        errorHandler.reportException(e,namespace.getContainingFile().getVirtualFile().getUrl());
+        VirtualFile virtualFile=namespace.getContainingFile().getVirtualFile();
+        errorHandler.reportException(e,virtualFile == null ? "no file" : virtualFile.getUrl());
         DiagnosticUtils.throwIfRunningOnServer(e);
         if (ApplicationManager.getApplication().isInternal()) {
           e.printStackTrace();
