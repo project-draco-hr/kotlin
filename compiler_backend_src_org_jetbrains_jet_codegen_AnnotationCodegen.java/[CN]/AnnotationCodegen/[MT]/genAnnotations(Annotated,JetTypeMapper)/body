@@ -1,22 +1,2 @@
 {
-  if (annotated == null)   return;
-  List<AnnotationDescriptor> annotations=annotated.getAnnotations();
-  if (annotations == null)   return;
-  for (  AnnotationDescriptor annotationDescriptor : annotations) {
-    List<CompileTimeConstant<?>> valueArguments=annotationDescriptor.getValueArguments();
-    JetType type=annotationDescriptor.getType();
-    ClassifierDescriptor classifierDescriptor=type.getConstructor().getDeclarationDescriptor();
-    RetentionPolicy rp=getRetentionPolicy(classifierDescriptor,typeMapper);
-    if (rp != RetentionPolicy.SOURCE) {
-      String internalName=typeMapper.mapType(type).getDescriptor();
-      AnnotationVisitor annotationVisitor=visitAnnotation(internalName,rp == RetentionPolicy.RUNTIME);
-      if (!valueArguments.isEmpty()) {
-        if (valueArguments.size() == 1 && "Intrinsic".equals(annotationDescriptor.getType().getConstructor().getDeclarationDescriptor().getName())) {
-          annotationVisitor.visit("value",valueArguments.get(0).getValue());
-        }
- else         throw new UnsupportedOperationException("Only annotations without values are supported by backend so far");
-      }
-      annotationVisitor.visitEnd();
-    }
-  }
 }
