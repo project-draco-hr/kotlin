@@ -1,0 +1,35 @@
+{
+  final Set<String> usedQualifiedNames=new HashSet<String>();
+  jetFile.accept(new JetVisitorVoid(){
+    @Override public void visitElement(    PsiElement element){
+      ProgressIndicatorProvider.checkCanceled();
+      element.acceptChildren(this);
+    }
+    @Override public void visitReferenceExpression(    JetReferenceExpression expression){
+      if (PsiTreeUtil.getParentOfType(expression,JetQualifiedExpression.class) == null) {
+        PsiReference reference=expression.getReference();
+        if (reference != null) {
+          List<PsiElement> references=new ArrayList<PsiElement>();
+          PsiElement resolve=reference.resolve();
+          if (resolve != null) {
+            references.add(resolve);
+          }
+          if (references.isEmpty() && reference instanceof PsiPolyVariantReference) {
+            for (            ResolveResult resolveResult : ((PsiPolyVariantReference)reference).multiResolve(true)) {
+              references.add(resolveResult.getElement());
+            }
+          }
+          for (          PsiElement psiReference : references) {
+            String fqName=getElementFQName(psiReference);
+            if (fqName != null) {
+              usedQualifiedNames.add(fqName);
+            }
+          }
+        }
+      }
+      super.visitReferenceExpression(expression);
+    }
+  }
+);
+  return usedQualifiedNames;
+}
