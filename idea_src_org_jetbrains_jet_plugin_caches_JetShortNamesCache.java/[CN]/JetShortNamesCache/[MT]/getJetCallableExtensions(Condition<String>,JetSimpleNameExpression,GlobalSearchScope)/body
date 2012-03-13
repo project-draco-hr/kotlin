@@ -8,7 +8,7 @@
     JetScope scope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
     if (expressionType != null && scope != null) {
       Collection<String> extensionFunctionsNames=getAllJetExtensionFunctionsNames(searchScope);
-      Set<String> functionFQNs=new java.util.HashSet<String>();
+      Set<FqName> functionFQNs=new java.util.HashSet<FqName>();
       for (      String name : extensionFunctionsNames) {
         if (acceptedNameCondition.value(name)) {
           Collection<PsiElement> extensionFunctions=getJetExtensionFunctionsByName(name,searchScope);
@@ -17,7 +17,7 @@
               functionFQNs.add(JetPsiUtil.getFQName((JetNamedFunction)extensionFunction));
             }
  else             if (extensionFunction instanceof PsiMethod) {
-              String functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN((PsiMethod)extensionFunction);
+              FqName functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN((PsiMethod)extensionFunction);
               if (functionFQN != null) {
                 functionFQNs.add(functionFQN);
               }
@@ -25,7 +25,7 @@
           }
         }
       }
-      for (      String functionFQN : functionFQNs) {
+      for (      FqName functionFQN : functionFQNs) {
         for (        CallableDescriptor functionDescriptor : ExpressionTypingUtils.canFindSuitableCall(functionFQN,project,receiverExpression,expressionType,scope)) {
           resultDescriptors.add(functionDescriptor);
         }

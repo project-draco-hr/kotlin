@@ -7,18 +7,18 @@
     }
     final PsiPackage javaPackage=semanticServices.getDescriptorResolver().findPackage(packageFQN);
     if (javaPackage != null) {
-      boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(javaPackage.getQualifiedName()) != null;
+      boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(new FqName(javaPackage.getQualifiedName())) != null;
       final JavaDescriptorResolver descriptorResolver=semanticServices.getDescriptorResolver();
       for (      PsiPackage psiSubPackage : javaPackage.getSubPackages()) {
-        if (semanticServices.getKotlinNamespaceDescriptor(psiSubPackage.getQualifiedName()) == null) {
-          allDescriptors.add(descriptorResolver.resolveNamespace(psiSubPackage.getQualifiedName()));
+        if (semanticServices.getKotlinNamespaceDescriptor(new FqName(psiSubPackage.getQualifiedName())) == null) {
+          allDescriptors.add(descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName())));
         }
       }
       for (      PsiClass psiClass : javaPackage.getClasses()) {
         if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
           continue;
         }
-        ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(psiClass.getQualifiedName());
+        ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(new FqName(psiClass.getQualifiedName()));
         if (kotlinClassDescriptor != null) {
           continue;
         }

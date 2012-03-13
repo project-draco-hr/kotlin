@@ -1,0 +1,15 @@
+{
+  JetImportDirective importDirective=JetPsiFactory.createImportDirective(project,callableFQN.getFqName());
+  Collection<? extends DeclarationDescriptor> declarationDescriptors=ImportsResolver.analyseImportReference(importDirective,scope,new BindingTraceContext());
+  List<CallableDescriptor> callableExtensionDescriptors=new ArrayList<CallableDescriptor>();
+  ReceiverDescriptor receiverDescriptor=new ExpressionReceiver(receiverExpression,receiverType);
+  for (  DeclarationDescriptor declarationDescriptor : declarationDescriptors) {
+    if (declarationDescriptor instanceof CallableDescriptor) {
+      CallableDescriptor callableDescriptor=(CallableDescriptor)declarationDescriptor;
+      if (checkIsExtensionCallable(receiverDescriptor,callableDescriptor)) {
+        callableExtensionDescriptors.add(callableDescriptor);
+      }
+    }
+  }
+  return callableExtensionDescriptors;
+}
