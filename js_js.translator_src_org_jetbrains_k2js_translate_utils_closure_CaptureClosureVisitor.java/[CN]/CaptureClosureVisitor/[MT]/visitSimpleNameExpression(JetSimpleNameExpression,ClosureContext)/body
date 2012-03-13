@@ -1,0 +1,20 @@
+{
+  expression.acceptChildren(this,context);
+  DeclarationDescriptor descriptor=BindingUtils.getNullableDescriptorForReferenceExpression(bindingContext,expression);
+  if (!(descriptor instanceof VariableDescriptor)) {
+    return null;
+  }
+  VariableDescriptor variableDescriptor=(VariableDescriptor)descriptor;
+  PsiElement variableDeclaration=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
+  if (variableDeclaration == null) {
+    return null;
+  }
+  if (PsiTreeUtil.isAncestor(functionElement,variableDeclaration,false)) {
+    return null;
+  }
+  boolean isLoopParameter=variableDeclaration.getNode().getElementType().equals(JetNodeTypes.LOOP_PARAMETER);
+  if (isLoopParameter) {
+    context.put(variableDescriptor);
+  }
+  return null;
+}
