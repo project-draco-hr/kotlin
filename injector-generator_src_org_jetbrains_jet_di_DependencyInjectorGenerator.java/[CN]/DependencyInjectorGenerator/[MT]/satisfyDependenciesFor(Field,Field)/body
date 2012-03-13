@@ -1,0 +1,13 @@
+{
+  if (!satisfied.add(field))   return;
+  if (backsParameter.contains(field))   return;
+  if (field.getInitialization() == null) {
+    initializeByConstructorCall(field,neededFor);
+  }
+  for (  Method method : field.getType().getDeclaredMethods()) {
+    if (method.getAnnotation(javax.inject.Inject.class) == null || !method.getName().startsWith("set") || method.getParameterTypes().length != 1)     continue;
+    Class<?> parameterType=method.getParameterTypes()[0];
+    Field dependency=findDependencyOfType(parameterType,field + ": " + method+ ": "+ fields,field);
+    field.getDependencies().add(new SetterDependency(field,method.getName(),dependency));
+  }
+}

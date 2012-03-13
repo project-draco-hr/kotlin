@@ -1,0 +1,41 @@
+{
+  String indent="        ";
+  if (parameters.isEmpty()) {
+    out.println("    public " + injectorClassName + "() {");
+  }
+ else {
+    out.println("    public " + injectorClassName + "(");
+    for (Iterator<Parameter> iterator=parameters.iterator(); iterator.hasNext(); ) {
+      Parameter parameter=iterator.next();
+      out.print(indent + parameter.getType().getSimpleName() + " "+ parameter.getName());
+      if (iterator.hasNext()) {
+        out.println(",");
+      }
+    }
+    out.println("\n    ) {");
+  }
+  if (lazy) {
+    for (    Parameter parameter : parameters) {
+      out.println(indent + "this." + parameter.getField().getName()+ " = "+ parameter.getName()+ ";");
+    }
+  }
+ else {
+    for (    Field field : fields) {
+      if (!backsParameter.contains(field) || field.isPublic()) {
+        String prefix=field.isPublic() ? "this." : field.getTypeName() + " ";
+        out.println(indent + prefix + field.getName()+ " = "+ field.getInitialization()+ ";");
+      }
+    }
+    out.println();
+    for (    Field field : fields) {
+      for (      SetterDependency dependency : field.getDependencies()) {
+        String prefix=field.isPublic() ? "this." : "";
+        out.println(indent + prefix + dependency.getDependent().getName()+ "."+ dependency.getSetterName()+ "("+ dependency.getDependency().getName()+ ");");
+      }
+      if (!field.getDependencies().isEmpty()) {
+        out.println();
+      }
+    }
+  }
+  out.println("    }");
+}
