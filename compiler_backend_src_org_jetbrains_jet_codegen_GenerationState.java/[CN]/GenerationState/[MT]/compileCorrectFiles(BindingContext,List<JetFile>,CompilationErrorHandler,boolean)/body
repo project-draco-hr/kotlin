@@ -3,14 +3,15 @@
   typeMapper=new JetTypeMapper(standardLibrary,bindingContext,closureAnnotator);
   bindingContexts.push(bindingContext);
   try {
-    for (    JetFile namespace : files) {
-      if (namespace == null)       throw new IllegalArgumentException("A null file given for compilation");
+    for (    JetFile file : files) {
+      if (file == null)       throw new IllegalArgumentException("A null file given for compilation");
+      VirtualFile vFile=file.getVirtualFile();
+      progress.log("For source: " + vFile.getPath());
       try {
-        generateNamespace(namespace);
+        generateNamespace(file);
       }
  catch (      Throwable e) {
-        VirtualFile virtualFile=namespace.getContainingFile().getVirtualFile();
-        errorHandler.reportException(e,virtualFile == null ? "no file" : virtualFile.getUrl());
+        errorHandler.reportException(e,vFile == null ? "no file" : vFile.getUrl());
         DiagnosticUtils.throwIfRunningOnServer(e);
         if (ApplicationManager.getApplication().isInternal()) {
           e.printStackTrace();
