@@ -1,0 +1,21 @@
+{
+  OverloadResolutionResultsImpl<D> results=performResolution(task);
+  EnumSet<OverloadResolutionResults.Code> someFailed=EnumSet.of(OverloadResolutionResults.Code.MANY_FAILED_CANDIDATES,OverloadResolutionResults.Code.SINGLE_CANDIDATE_ARGUMENT_MISMATCH);
+  if (someFailed.contains(results.getResultCode()) && !task.call.getFunctionLiteralArguments().isEmpty()) {
+    Collection<ResolvedCallImpl<D>> newCandidates=Lists.newArrayList();
+    for (    ResolvedCallImpl<D> candidate : task.getCandidates()) {
+      newCandidates.add(ResolvedCallImpl.create(candidate.getCandidateDescriptor()));
+    }
+    ResolutionTask<D> newContext=new ResolutionTask<D>(newCandidates,task.reference,TemporaryBindingTrace.create(task.trace),task.scope,new DelegatingCall(task.call){
+      @NotNull @Override public List<JetExpression> getFunctionLiteralArguments(){
+        return Collections.emptyList();
+      }
+    }
+,task.expectedType,task.dataFlowInfo);
+    OverloadResolutionResultsImpl<D> resultsWithFunctionLiteralsStripped=performResolution(newContext);
+    if (resultsWithFunctionLiteralsStripped.isSuccess() || resultsWithFunctionLiteralsStripped.isAmbiguity()) {
+      task.tracing.danglingFunctionLiteralArgumentSuspected(task.trace,task.call.getFunctionLiteralArguments());
+    }
+  }
+  return results;
+}
