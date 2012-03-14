@@ -1,0 +1,24 @@
+{
+  ResolutionStatus result=SUCCESS;
+  if (receiverParameter.exists() && receiverArgument.exists()) {
+    ASTNode callOperationNode=context.call.getCallOperationNode();
+    boolean safeAccess=callOperationNode != null && callOperationNode.getElementType() == JetTokens.SAFE_ACCESS;
+    JetType receiverArgumentType=receiverArgument.getType();
+    AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(context.dataFlowInfo,context.candidateCall.getTrace().getBindingContext());
+    if (!safeAccess && !receiverParameter.getType().isNullable() && !autoCastService.isNotNull(receiverArgument)) {
+      context.tracing.unsafeCall(context.candidateCall.getTrace(),receiverArgumentType);
+      result=UNSAFE_CALL_ERROR;
+    }
+ else {
+      JetType effectiveReceiverArgumentType=safeAccess ? TypeUtils.makeNotNullable(receiverArgumentType) : receiverArgumentType;
+      if (!typeChecker.isSubtypeOf(effectiveReceiverArgumentType,receiverParameter.getType())) {
+        context.tracing.wrongReceiverType(context.candidateCall.getTrace(),receiverParameter,receiverArgument);
+        result=OTHER_ERROR;
+      }
+    }
+    if (safeAccess && (receiverParameter.getType().isNullable() || !receiverArgumentType.isNullable())) {
+      context.tracing.unnecessarySafeCall(context.candidateCall.getTrace(),receiverArgumentType);
+    }
+  }
+  return result;
+}

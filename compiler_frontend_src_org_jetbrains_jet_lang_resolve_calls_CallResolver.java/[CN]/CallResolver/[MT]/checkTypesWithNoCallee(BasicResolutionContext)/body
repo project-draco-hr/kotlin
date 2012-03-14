@@ -1,0 +1,20 @@
+{
+  for (  ValueArgument valueArgument : context.call.getValueArguments()) {
+    JetExpression argumentExpression=valueArgument.getArgumentExpression();
+    if (argumentExpression != null) {
+      expressionTypingServices.getType(context.scope,argumentExpression,NO_EXPECTED_TYPE,context.trace);
+    }
+  }
+  for (  JetExpression expression : context.call.getFunctionLiteralArguments()) {
+    expressionTypingServices.getType(context.scope,expression,NO_EXPECTED_TYPE,context.trace);
+  }
+  for (  JetTypeProjection typeProjection : context.call.getTypeArguments()) {
+    JetTypeReference typeReference=typeProjection.getTypeReference();
+    if (typeReference == null) {
+      context.trace.report(Errors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.on(typeProjection));
+    }
+ else {
+      typeResolver.resolveType(context.scope,typeReference,context.trace,true);
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  OverloadResolutionResultsImpl<D> results=performResolution(context);
+  EnumSet<OverloadResolutionResults.Code> someFailed=EnumSet.of(OverloadResolutionResults.Code.MANY_FAILED_CANDIDATES,OverloadResolutionResults.Code.SINGLE_CANDIDATE_ARGUMENT_MISMATCH);
+  if (someFailed.contains(results.getResultCode()) && !context.call.getFunctionLiteralArguments().isEmpty()) {
+    Collection<ResolvedCallImpl<D>> newCandidates=Lists.newArrayList();
+    for (    ResolvedCallImpl<D> candidate : context.task.getCandidates()) {
+      newCandidates.add(ResolvedCallImpl.create(candidate.getCandidateDescriptor()));
+    }
+    ResolutionTask<D> newTask=new ResolutionTask<D>(newCandidates,new DelegatingCall(context.call){
+      @NotNull @Override public List<JetExpression> getFunctionLiteralArguments(){
+        return Collections.emptyList();
+      }
+    }
+,context.dataFlowInfo);
+    BasicResolutionContext newBasicContext=BasicResolutionContext.create(TemporaryBindingTrace.create(context.trace),context.scope,context.call,context.expectedType,context.dataFlowInfo);
+    TaskResolutionContext<D> newContext=new TaskResolutionContext<D>(newTask,context.tracing,newBasicContext);
+    OverloadResolutionResultsImpl<D> resultsWithFunctionLiteralsStripped=performResolution(newContext);
+    if (resultsWithFunctionLiteralsStripped.isSuccess() || resultsWithFunctionLiteralsStripped.isAmbiguity()) {
+      context.tracing.danglingFunctionLiteralArgumentSuspected(context.trace,context.call.getFunctionLiteralArguments());
+    }
+  }
+  return results;
+}
