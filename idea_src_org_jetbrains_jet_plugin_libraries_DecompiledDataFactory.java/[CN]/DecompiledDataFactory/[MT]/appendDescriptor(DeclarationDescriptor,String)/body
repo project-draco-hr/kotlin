@@ -1,0 +1,48 @@
+{
+  int startOffset=myBuilder.length();
+  myBuilder.append(DescriptorRenderer.COMPACT.render(descriptor));
+  int endOffset=myBuilder.length();
+  if (descriptor instanceof FunctionDescriptor || descriptor instanceof PropertyDescriptor) {
+    if (((CallableMemberDescriptor)descriptor).getModality() != Modality.ABSTRACT) {
+      if (descriptor instanceof FunctionDescriptor) {
+        myBuilder.append(" { ").append(DECOMPILED_COMMENT).append(" }");
+        endOffset=myBuilder.length();
+      }
+ else {
+        if (((PropertyDescriptor)descriptor).getModality() != Modality.ABSTRACT) {
+          myBuilder.append(" ").append(DECOMPILED_COMMENT);
+        }
+      }
+    }
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    myBuilder.append(" {\n");
+    ClassDescriptor classDescriptor=(ClassDescriptor)descriptor;
+    boolean firstPassed=false;
+    String subindent=indent + "    ";
+    if (classDescriptor.getClassObjectDescriptor() != null) {
+      firstPassed=true;
+      myBuilder.append(subindent).append("class ");
+      appendDescriptor(classDescriptor.getClassObjectDescriptor(),subindent);
+    }
+    for (    DeclarationDescriptor member : classDescriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
+      if (member.getContainingDeclaration() == descriptor) {
+        if (firstPassed) {
+          myBuilder.append("\n");
+        }
+ else {
+          firstPassed=true;
+        }
+        myBuilder.append(subindent);
+        appendDescriptor(member,subindent);
+      }
+    }
+    myBuilder.append(indent).append("}");
+    endOffset=myBuilder.length();
+  }
+  myBuilder.append("\n");
+  PsiElement clsMember=myBindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,descriptor);
+  if (clsMember != null) {
+    myClsMembersToRanges.put(clsMember,new TextRange(startOffset,endOffset));
+  }
+}
