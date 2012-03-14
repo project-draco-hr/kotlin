@@ -2,20 +2,7 @@
   final WritableScope scope=new WritableScopeImpl(JetScope.EMPTY,moduleDescriptor,new TraceBasedRedeclarationHandler(topDownAnalysisParameters.getTrace())).setDebugName("Root scope in analyzeNamespace");
   scope.changeLockLevel(WritableScope.LockLevel.BOTH);
   scope.importScope(JetStandardLibrary.getInstance().getLibraryScope());
-  scope.importScope(new JetScopeAdapter(JetScope.EMPTY){
-    @Override public NamespaceDescriptor getNamespace(    @NotNull String name){
-      NamespaceDescriptor topLevelNamespaceFromConfiguration=configuration.getTopLevelNamespace(name);
-      if (topLevelNamespaceFromConfiguration != null) {
-        return topLevelNamespaceFromConfiguration;
-      }
-      return super.getNamespace(name);
-    }
-    @NotNull @Override public Collection<DeclarationDescriptor> getAllDescriptors(){
-      List<DeclarationDescriptor> allDescriptors=Lists.newArrayList();
-      configuration.addAllTopLevelNamespacesTo(allDescriptors);
-      return allDescriptors;
-    }
-  }
-);
+  NamespaceDescriptorImpl rootNs=typeHierarchyResolver.createNamespaceDescriptorIfNeeded(null,moduleDescriptor,"<root>",true);
+  scope.importScope(rootNs.getMemberScope());
   doProcess(scope,new NamespaceLikeBuilderDummy(),files);
 }
