@@ -8,13 +8,15 @@
     return null;
   }
  else   if (propertyContainer instanceof JetClassBody) {
-    JetClass sourceClass=getSourceClass((JetClass)propertyContainer.getParent());
-    if (sourceClass != null) {
-      JetClassBody sourceClassBody=sourceClass.getBody();
-      if (sourceClassBody != null) {
-        for (        JetProperty p : sourceClassBody.getProperties()) {
-          if (propertyName.equals(p.getName())) {
-            return p;
+    Tuple2<BindingContext,ClassDescriptor> bindingContextAndClassDescriptor=getBindingContextAndClassDescriptor((JetClass)propertyContainer.getParent());
+    if (bindingContextAndClassDescriptor != null) {
+      BindingContext bindingContext=bindingContextAndClassDescriptor._1;
+      ClassDescriptor classDescriptor=bindingContextAndClassDescriptor._2;
+      for (      VariableDescriptor vd : classDescriptor.getDefaultType().getMemberScope().getProperties(propertyName)) {
+        if (vd.getContainingDeclaration() == classDescriptor) {
+          JetDeclaration property=(JetDeclaration)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,vd);
+          if (property != null) {
+            return property;
           }
         }
       }
