@@ -1,0 +1,51 @@
+{
+  String entityName=decompiledDeclaration.getName();
+  if (entityName == null) {
+    return null;
+  }
+  PsiElement declarationContainer=decompiledDeclaration.getParent();
+  if (declarationContainer instanceof JetFile) {
+    Tuple2<BindingContext,NamespaceDescriptor> bindingContextAndNamespaceDescriptor=getBindingContextAndNamespaceDescriptor((JetFile)declarationContainer);
+    if (bindingContextAndNamespaceDescriptor == null)     return null;
+    BindingContext bindingContext=bindingContextAndNamespaceDescriptor._1;
+    NamespaceDescriptor namespaceDescriptor=bindingContextAndNamespaceDescriptor._2;
+    if (receiverType == null) {
+      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityName)) {
+        if (candidate.getReceiverParameter() == ReceiverDescriptor.NO_RECEIVER) {
+          if (matcher.areSame(decompiledDeclaration,candidate)) {
+            return (JetDeclaration)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,candidate);
+          }
+        }
+      }
+    }
+ else {
+      String expectedTypeString=receiverType.getText();
+      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityName)) {
+        if (candidate.getReceiverParameter() != ReceiverDescriptor.NO_RECEIVER) {
+          String thisReceiverType=DescriptorRenderer.TEXT.renderType(candidate.getReceiverParameter().getType());
+          if (expectedTypeString.equals(thisReceiverType)) {
+            if (matcher.areSame(decompiledDeclaration,candidate)) {
+              return (JetDeclaration)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,candidate);
+            }
+          }
+        }
+      }
+    }
+  }
+ else   if (declarationContainer instanceof JetClassBody) {
+    Tuple2<BindingContext,ClassDescriptor> bindingContextAndClassDescriptor=getBindingContextAndClassDescriptor((JetClass)declarationContainer.getParent());
+    if (bindingContextAndClassDescriptor != null) {
+      BindingContext bindingContext=bindingContextAndClassDescriptor._1;
+      ClassDescriptor classDescriptor=bindingContextAndClassDescriptor._2;
+      for (      Descr candidate : matcher.getCandidatesFromScope(classDescriptor.getDefaultType().getMemberScope(),entityName)) {
+        if (candidate.getContainingDeclaration() == classDescriptor) {
+          JetDeclaration property=(JetDeclaration)bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,candidate);
+          if (property != null) {
+            return property;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
