@@ -7,22 +7,16 @@
     parseCallWithClosure();
   }
  else   if (at(LT)) {
-    int gtPos=matchTokenStreamPredicate(new FirstBefore(new At(GT),new AtSet(TYPE_ARGUMENT_LIST_STOPPERS,TokenSet.create(RPAR,RBRACE,RBRACKET)).or(new AtFirstTokenOfTokens(IDENTIFIER,LPAR))){
-      @Override public boolean isTopLevel(      int openAngleBrackets,      int openBrackets,      int openBraces,      int openParentheses){
-        return openAngleBrackets == 1 && openBrackets == 0 && openBraces == 0 && openParentheses == 0;
-      }
-      @Override public boolean handleUnmatchedClosing(      IElementType token){
-        fail();
-        return true;
-      }
-    }
-);
-    if (gtPos >= 0) {
-      myJetParsing.parseTypeArgumentList(gtPos);
+    PsiBuilder.Marker typeArgumentList=mark();
+    if (myJetParsing.tryParseTypeArgumentList(TYPE_ARGUMENT_LIST_STOPPERS)) {
+      typeArgumentList.done(TYPE_ARGUMENT_LIST);
       if (!myBuilder.newlineBeforeCurrentToken() && at(LPAR))       parseValueArgumentList();
       parseCallWithClosure();
     }
- else     return false;
+ else {
+      typeArgumentList.rollbackTo();
+      return false;
+    }
   }
  else {
     return false;
