@@ -1,0 +1,32 @@
+{
+  FqName ownerFqName=DescriptorUtils.getFQName(owner.getOwnerForChildren());
+  FqName fqName;
+  NamespaceDescriptorImpl namespaceDescriptor;
+  if (root) {
+    if (!ownerFqName.equals(FqName.ROOT) || !(owner instanceof ModuleDescriptor)) {
+      throw new IllegalStateException();
+    }
+    fqName=FqName.ROOT;
+    namespaceDescriptor=((ModuleDescriptor)owner).getRootNs();
+  }
+ else {
+    fqName=ownerFqName.child(name);
+    namespaceDescriptor=owner.getNamespace(name);
+  }
+  if (namespaceDescriptor == null) {
+    namespaceDescriptor=new NamespaceDescriptorImpl((NamespaceDescriptorParent)owner.getOwnerForChildren(),Collections.<AnnotationDescriptor>emptyList(),name);
+    context.getTrace().record(FQNAME_TO_NAMESPACE_DESCRIPTOR,fqName,namespaceDescriptor);
+    WritableScopeImpl scope=new WritableScopeImpl(JetScope.EMPTY,namespaceDescriptor,new TraceBasedRedeclarationHandler(context.getTrace())).setDebugName("Namespace member scope");
+    scope.changeLockLevel(WritableScope.LockLevel.BOTH);
+    namespaceDescriptor.initialize(scope);
+    configuration.extendNamespaceScope(context.getTrace(),namespaceDescriptor,scope);
+    owner.addNamespace(namespaceDescriptor);
+    if (file != null) {
+      context.getTrace().record(BindingContext.NAMESPACE,file,namespaceDescriptor);
+    }
+  }
+  if (file != null) {
+    context.getTrace().record(BindingContext.FILE_TO_NAMESPACE,file,namespaceDescriptor);
+  }
+  return namespaceDescriptor;
+}

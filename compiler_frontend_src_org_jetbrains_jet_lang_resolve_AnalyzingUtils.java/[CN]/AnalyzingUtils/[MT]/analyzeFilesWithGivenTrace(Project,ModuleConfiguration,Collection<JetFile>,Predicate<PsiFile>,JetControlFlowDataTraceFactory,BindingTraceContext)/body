@@ -1,5 +1,5 @@
 {
-  ModuleDescriptor owner=new ModuleDescriptor("<module>");
+  final ModuleDescriptor owner=new ModuleDescriptor("<module>");
   final WritableScope scope=new WritableScopeImpl(JetScope.EMPTY,owner,new TraceBasedRedeclarationHandler(bindingTraceContext)).setDebugName("Root scope in analyzeNamespace");
   scope.changeLockLevel(WritableScope.LockLevel.BOTH);
   scope.importScope(JetStandardLibrary.getInstance().getLibraryScope());
@@ -18,7 +18,10 @@
     }
   }
 );
-  TopDownAnalyzer.process(project,bindingTraceContext,scope,new NamespaceLike.Adapter(owner){
+  TopDownAnalyzer.process(project,bindingTraceContext,scope,new NamespaceLikeBuilder(){
+    @NotNull @Override public DeclarationDescriptor getOwnerForChildren(){
+      return owner;
+    }
     @Override public NamespaceDescriptorImpl getNamespace(    String name){
       return (NamespaceDescriptorImpl)scope.getDeclaredNamespace(name);
     }
@@ -41,6 +44,6 @@
       throw new IllegalStateException("Must be guaranteed not to happen by the parser");
     }
   }
-,files,filesToAnalyzeCompletely,flowDataTraceFactory,configuration);
+,owner,files,filesToAnalyzeCompletely,flowDataTraceFactory,configuration);
   return bindingTraceContext.getBindingContext();
 }
