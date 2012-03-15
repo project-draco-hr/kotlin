@@ -1,0 +1,31 @@
+{
+  if (QualifiedNamesUtil.getFirstSegment(importPath.fqnPart().getFqName()).equals(JavaDescriptorResolver.JAVA_ROOT)) {
+    FqName withoutJavaRoot=QualifiedNamesUtil.withoutFirstSegment(importPath.fqnPart());
+    importPath=new ImportPath(withoutJavaRoot,importPath.isAllUnder());
+  }
+  if (isImportedByDefault(importPath,aliasName,JetPsiUtil.getFQName(file))) {
+    return;
+  }
+  JetImportDirective newDirective=JetPsiFactory.createImportDirective(file.getProject(),importPath,aliasName);
+  List<JetImportDirective> importDirectives=file.getImportDirectives();
+  if (!importDirectives.isEmpty()) {
+    for (    JetImportDirective directive : importDirectives) {
+      ImportPath existentImportPath=JetPsiUtil.getImportPath(directive);
+      if (existentImportPath != null && directive.getAliasName() == null && QualifiedNamesUtil.isImported(existentImportPath,importPath)) {
+        return;
+      }
+    }
+    JetImportDirective lastDirective=importDirectives.get(importDirectives.size() - 1);
+    lastDirective.getParent().addAfter(newDirective,lastDirective);
+  }
+ else {
+    List<JetDeclaration> declarations=file.getDeclarations();
+    if (!declarations.isEmpty()) {
+      JetDeclaration firstDeclaration=declarations.iterator().next();
+      firstDeclaration.getParent().addBefore(newDirective,firstDeclaration);
+    }
+ else {
+      file.getNamespaceHeader().getParent().addAfter(newDirective,file.getNamespaceHeader());
+    }
+  }
+}

@@ -1,8 +1,44 @@
 {
   return new Runnable(){
     @Override public void run(){
-      JetFile jetFile=(JetFile)file;
-      Set<String> usedQualifiedNames=extractUsedQualifiedNames(jetFile);
+      final JetFile jetFile=(JetFile)file;
+      final Set<FqName> usedQualifiedNames=extractUsedQualifiedNames(jetFile);
+      final List<JetImportDirective> sortedDirectives=jetFile.getImportDirectives();
+      Collections.sort(sortedDirectives,new Comparator<JetImportDirective>(){
+        @Override public int compare(        JetImportDirective directive1,        JetImportDirective directive2){
+          ImportPath firstPath=JetPsiUtil.getImportPath(directive1);
+          ImportPath secondPath=JetPsiUtil.getImportPath(directive2);
+          if (firstPath == null || secondPath == null) {
+            return firstPath == null && secondPath == null ? 0 : firstPath == null ? -1 : 1;
+          }
+          if (firstPath.isAllUnder() && !secondPath.isAllUnder() && firstPath.fqnPart().equals(secondPath.fqnPart().parent())) {
+            return -1;
+          }
+          if (!firstPath.isAllUnder() && secondPath.isAllUnder() && secondPath.fqnPart().equals(firstPath.fqnPart().parent())) {
+            return 1;
+          }
+          return firstPath.getPathStr().compareTo(secondPath.getPathStr());
+        }
+      }
+);
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          List<JetImportDirective> imports=jetFile.getImportDirectives();
+          if (!imports.isEmpty()) {
+            jetFile.deleteChildRange(imports.get(0),imports.get(imports.size() - 1));
+          }
+          for (          JetImportDirective anImport : sortedDirectives) {
+            ImportPath importPath=JetPsiUtil.getImportPath(anImport);
+            if (importPath == null) {
+              continue;
+            }
+            if (isUseful(importPath,anImport.getAliasName(),usedQualifiedNames)) {
+              ImportInsertHelper.addImportDirective(importPath,anImport.getAliasName(),jetFile);
+            }
+          }
+        }
+      }
+);
     }
   }
 ;
