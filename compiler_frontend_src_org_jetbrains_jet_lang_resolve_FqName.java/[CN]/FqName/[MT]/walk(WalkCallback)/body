@@ -1,0 +1,37 @@
+{
+  if (isRoot()) {
+    return;
+  }
+  int pos=fqName.indexOf('.');
+  if (pos < 0) {
+    if (this.parent == null) {
+      this.parent=ROOT;
+    }
+    if (this.shortName == null) {
+      this.shortName=fqName;
+    }
+    callback.segment(fqName,this);
+    return;
+  }
+  String firstSegment=fqName.substring(0,pos);
+  FqName last=new FqName(firstSegment,ROOT,firstSegment);
+  callback.segment(firstSegment,last);
+  for (; ; ) {
+    int next=fqName.indexOf('.',pos + 1);
+    if (next < 0) {
+      if (this.parent == null) {
+        this.parent=last;
+      }
+      String shortName=fqName.substring(pos + 1);
+      if (this.shortName == null) {
+        this.shortName=shortName;
+      }
+      callback.segment(shortName,this);
+      return;
+    }
+    String shortName=fqName.substring(pos + 1,next);
+    last=new FqName(fqName.substring(0,next),last,shortName);
+    callback.segment(shortName,last);
+    pos=next;
+  }
+}
