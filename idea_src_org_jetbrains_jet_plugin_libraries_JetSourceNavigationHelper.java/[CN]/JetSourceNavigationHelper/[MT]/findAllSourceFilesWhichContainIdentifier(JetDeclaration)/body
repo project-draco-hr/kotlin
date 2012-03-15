@@ -1,0 +1,17 @@
+{
+  VirtualFile libraryFile=jetDeclaration.getContainingFile().getVirtualFile();
+  String name=jetDeclaration.getName();
+  if (libraryFile == null || name == null) {
+    return Collections.emptyList();
+  }
+  Project project=jetDeclaration.getProject();
+  CacheManager cacheManager=CacheManager.SERVICE.getInstance(project);
+  PsiFile[] filesWithWord=cacheManager.getFilesWithWord(name,UsageSearchContext.IN_CODE,createLibrarySourcesScopeForFile(libraryFile,project),true);
+  List<JetFile> jetFiles=new ArrayList<JetFile>();
+  for (  PsiFile psiFile : filesWithWord) {
+    if (psiFile instanceof JetFile) {
+      jetFiles.add((JetFile)psiFile);
+    }
+  }
+  return jetFiles;
+}
