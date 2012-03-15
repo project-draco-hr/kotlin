@@ -1,5 +1,5 @@
 {
-  List<Module> modules=loadModuleScript(moduleScriptFile);
+  List<Module> modules=copyEnvironment(false).loadModuleScript(moduleScriptFile);
   if (modules == null) {
     throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
   }
@@ -8,10 +8,7 @@
   }
   final String directory=new File(moduleScriptFile).getParent();
   for (  Module moduleBuilder : modules) {
-    CompileEnvironment compileEnvironment=new CompileEnvironment(myMessageRenderer,verbose);
-    compileEnvironment.setIgnoreErrors(ignoreErrors);
-    compileEnvironment.setErrorStream(myErrorStream);
-    compileEnvironment.getMyEnvironment().getCompilerPlugins().addAll(myEnvironment.getCompilerPlugins());
+    CompileEnvironment compileEnvironment=copyEnvironment(verbose);
     ClassFileFactory moduleFactory=compileEnvironment.compileModule(moduleBuilder,directory);
     if (moduleFactory == null) {
       return false;
