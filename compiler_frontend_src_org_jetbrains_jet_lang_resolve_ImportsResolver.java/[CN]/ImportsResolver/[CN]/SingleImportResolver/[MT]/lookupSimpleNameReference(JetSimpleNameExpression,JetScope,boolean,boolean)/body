@@ -1,0 +1,27 @@
+{
+  String referencedName=referenceExpression.getReferencedName();
+  if (referencedName == null) {
+    return new SuccessfulLookupResult(Collections.<DeclarationDescriptor>emptyList(),outerScope,namespaceLevel);
+  }
+  Set<DeclarationDescriptor> descriptors=Sets.newHashSet();
+  NamespaceDescriptor namespaceDescriptor=outerScope.getNamespace(referencedName);
+  if (namespaceDescriptor != null) {
+    descriptors.add(namespaceDescriptor);
+  }
+  ClassifierDescriptor classifierDescriptor=outerScope.getClassifier(referencedName);
+  if (classifierDescriptor != null) {
+    descriptors.add(classifierDescriptor);
+  }
+  if (firstPhase) {
+    descriptors.add(outerScope.getObjectDescriptor(referencedName));
+  }
+ else {
+    descriptors.addAll(outerScope.getFunctions(referencedName));
+    descriptors.addAll(outerScope.getProperties(referencedName));
+    VariableDescriptor localVariable=outerScope.getLocalVariable(referencedName);
+    if (localVariable != null) {
+      descriptors.add(localVariable);
+    }
+  }
+  return new SuccessfulLookupResult(descriptors,outerScope,namespaceLevel);
+}

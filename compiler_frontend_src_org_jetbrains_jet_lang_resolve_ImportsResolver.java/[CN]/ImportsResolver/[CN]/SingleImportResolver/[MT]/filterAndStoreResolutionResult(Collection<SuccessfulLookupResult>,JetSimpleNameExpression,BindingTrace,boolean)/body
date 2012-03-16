@@ -1,0 +1,40 @@
+{
+  Collection<DeclarationDescriptor> descriptors=Sets.newLinkedHashSet();
+  for (  SuccessfulLookupResult lookupResult : lookupResults) {
+    descriptors.addAll(lookupResult.descriptors);
+  }
+  if (firstPhase) {
+    return Collections2.filter(descriptors,new Predicate<DeclarationDescriptor>(){
+      @Override public boolean apply(      @Nullable DeclarationDescriptor descriptor){
+        return (descriptor instanceof ClassDescriptor) || (descriptor instanceof NamespaceDescriptor);
+      }
+    }
+);
+  }
+  Collection<DeclarationDescriptor> filteredDescriptors=Sets.newLinkedHashSet();
+  for (  SuccessfulLookupResult lookupResult : lookupResults) {
+    if (lookupResult.namespaceLevel) {
+      filteredDescriptors.addAll(lookupResult.descriptors);
+      continue;
+    }
+    filteredDescriptors.addAll(Collections2.filter(lookupResult.descriptors,new Predicate<DeclarationDescriptor>(){
+      @Override public boolean apply(      @Nullable DeclarationDescriptor descriptor){
+        return (descriptor instanceof NamespaceDescriptor) || (descriptor instanceof ClassDescriptor) || (descriptor instanceof VariableDescriptor && ((VariableDescriptor)descriptor).isObjectDeclaration());
+      }
+    }
+));
+  }
+  Collection<JetScope> possibleResolutionScopes=Lists.newArrayList();
+  for (  SuccessfulLookupResult lookupResult : lookupResults) {
+    if (!lookupResult.descriptors.isEmpty()) {
+      possibleResolutionScopes.add(lookupResult.resolutionScope);
+    }
+  }
+  if (possibleResolutionScopes.isEmpty()) {
+    for (    SuccessfulLookupResult lookupResult : lookupResults) {
+      possibleResolutionScopes.add(lookupResult.resolutionScope);
+    }
+  }
+  storeResolutionResult(descriptors,filteredDescriptors,referenceExpression,possibleResolutionScopes,trace);
+  return filteredDescriptors;
+}
