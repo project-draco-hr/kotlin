@@ -1,7 +1,13 @@
 {
   LibraryTable table=ProjectLibraryTable.getInstance(myProject);
-  final Library kotlinRuntime=table.getLibraryByName("KotlinRuntime");
-  if (kotlinRuntime != null)   return null;
+  Library kotlinRuntime=table.getLibraryByName("KotlinRuntime");
+  if (kotlinRuntime != null) {
+    for (    VirtualFile root : kotlinRuntime.getFiles(OrderRootType.CLASSES)) {
+      if (root.getName().equals("kotlin-runtime.jar")) {
+        return kotlinRuntime;
+      }
+    }
+  }
   File runtimePath=PathUtil.getDefaultRuntimePath();
   if (runtimePath == null) {
     Messages.showErrorDialog(myProject,"kotlin-runtime.jar is not found. Make sure plugin is properly installed.","No Runtime Found");
@@ -23,14 +29,17 @@
     Messages.showErrorDialog(myProject,"Error copying jar: " + e.getLocalizedMessage(),"Error Copying File");
     return null;
   }
-  final Library answer=table.createLibrary("KotlinRuntime");
+  if (kotlinRuntime == null) {
+    kotlinRuntime=table.createLibrary("KotlinRuntime");
+  }
+  final Library finalKotlinRuntime=kotlinRuntime;
   ApplicationManager.getApplication().runWriteAction(new Runnable(){
     public void run(){
-      Library.ModifiableModel model=answer.getModifiableModel();
+      Library.ModifiableModel model=finalKotlinRuntime.getModifiableModel();
       model.addRoot(VfsUtil.getUrlForLibraryRoot(targetJar),OrderRootType.CLASSES);
       model.commit();
     }
   }
 );
-  return answer;
+  return kotlinRuntime;
 }
