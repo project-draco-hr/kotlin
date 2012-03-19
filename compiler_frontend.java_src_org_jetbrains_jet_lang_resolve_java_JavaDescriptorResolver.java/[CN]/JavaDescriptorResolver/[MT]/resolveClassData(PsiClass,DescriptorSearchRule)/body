@@ -1,0 +1,35 @@
+{
+  FqName qualifiedName=new FqName(psiClass.getQualifiedName());
+  if (qualifiedName.getFqName().endsWith(JvmAbi.TRAIT_IMPL_SUFFIX)) {
+    return null;
+  }
+  ClassDescriptor builtinClassDescriptor=semanticServices.getKotlinBuiltinClassDescriptor(qualifiedName);
+  if (builtinClassDescriptor != null) {
+    return new ResolverSrcClassData(builtinClassDescriptor);
+  }
+  ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(qualifiedName);
+  if (kotlinClassDescriptor != null) {
+    if (searchRule == DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN) {
+      throw new IllegalStateException("class must not be found in kotlin: " + qualifiedName);
+    }
+ else     if (searchRule == DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN) {
+      return null;
+    }
+ else     if (searchRule == DescriptorSearchRule.INCLUDE_KOTLIN) {
+      return new ResolverSrcClassData(kotlinClassDescriptor);
+    }
+ else {
+      throw new IllegalStateException("unknown searchRule: " + searchRule);
+    }
+  }
+  PsiClass containingClass=psiClass.getContainingClass();
+  if (containingClass != null) {
+    resolveClass(containingClass,DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+  }
+  ResolverBinaryClassData classData=classDescriptorCache.get(qualifiedName);
+  if (classData == null) {
+    classData=createJavaClassDescriptor(psiClass);
+    classDescriptorCache.put(qualifiedName,classData);
+  }
+  return classData;
+}
