@@ -1,7 +1,10 @@
 {
   List<JsStatement> result=Lists.newArrayList();
-  for (  NamespaceTranslator translator : namespaceTranslators) {
-    result.add(translator.getInitializeStatement());
+  for (  NamespaceDescriptor descriptor : filterNonEmptyNamespaces(namespaceDescriptors)) {
+    JsNameRef initializeMethodReference=Namer.initializeMethodReference();
+    JsNameRef fqNamespaceNameRef=TranslationUtils.getQualifiedReference(context(),descriptor);
+    setQualifier(initializeMethodReference,fqNamespaceNameRef);
+    result.add(AstUtil.newInvocation(initializeMethodReference).makeStmt());
   }
   return result;
 }
