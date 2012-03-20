@@ -10,23 +10,23 @@
       boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(new FqName(javaPackage.getQualifiedName())) != null;
       final JavaDescriptorResolver descriptorResolver=semanticServices.getDescriptorResolver();
       for (      PsiPackage psiSubPackage : javaPackage.getSubPackages()) {
-        if (semanticServices.getKotlinNamespaceDescriptor(new FqName(psiSubPackage.getQualifiedName())) == null) {
-          allDescriptors.add(descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName())));
+        NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+        if (childNs != null) {
+          allDescriptors.add(childNs);
         }
       }
       for (      PsiClass psiClass : javaPackage.getClasses()) {
         if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
           continue;
         }
-        ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(new FqName(psiClass.getQualifiedName()));
-        if (kotlinClassDescriptor != null) {
+        if (psiClass instanceof JetJavaMirrorMarker) {
           continue;
         }
         if (JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
           continue;
         }
         if (psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-          ClassDescriptor classDescriptor=descriptorResolver.resolveClass(psiClass);
+          ClassDescriptor classDescriptor=descriptorResolver.resolveClass(psiClass,DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
           if (classDescriptor != null) {
             allDescriptors.add(classDescriptor);
           }
