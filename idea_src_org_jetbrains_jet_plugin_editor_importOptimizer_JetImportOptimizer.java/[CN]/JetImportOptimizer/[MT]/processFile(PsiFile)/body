@@ -25,7 +25,13 @@
         @Override public void run(){
           List<JetImportDirective> imports=jetFile.getImportDirectives();
           if (!imports.isEmpty()) {
-            jetFile.deleteChildRange(getWithPreviousWhitespaces(imports.get(0)),getWithFollowedWhitespaces(imports.get(imports.size() - 1)));
+            PsiElement firstForDelete=getWithPreviousWhitespaces(imports.get(0));
+            PsiElement lastForDelete=getWithFollowedWhitespaces(imports.get(imports.size() - 1));
+            PsiElement elementBeforeImports=firstForDelete.getPrevSibling();
+            jetFile.deleteChildRange(firstForDelete,lastForDelete);
+            if (elementBeforeImports != null) {
+              jetFile.addAfter(JetPsiFactory.createWhiteSpace(jetFile.getProject(),"\n"),elementBeforeImports);
+            }
           }
           for (          JetImportDirective anImport : sortedDirectives) {
             ImportPath importPath=JetPsiUtil.getImportPath(anImport);
