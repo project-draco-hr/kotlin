@@ -6,14 +6,14 @@
     if (classDescriptor == current)     found=true;
     if (!found)     continue;
     ClassDescriptor superclass=(i < size - 1) ? currentPath.get(i + 1) : current;
-    PsiElement psiElement=context.getTrace().get(DESCRIPTOR_TO_DECLARATION,classDescriptor);
+    PsiElement psiElement=trace.get(DESCRIPTOR_TO_DECLARATION,classDescriptor);
     PsiElement elementToMark=null;
     if (psiElement instanceof JetClassOrObject) {
       JetClassOrObject classOrObject=(JetClassOrObject)psiElement;
       for (      JetDelegationSpecifier delegationSpecifier : classOrObject.getDelegationSpecifiers()) {
         JetTypeReference typeReference=delegationSpecifier.getTypeReference();
         if (typeReference == null)         continue;
-        JetType supertype=context.getTrace().get(TYPE,typeReference);
+        JetType supertype=trace.get(TYPE,typeReference);
         if (supertype != null && supertype.getConstructor() == superclass.getTypeConstructor()) {
           elementToMark=typeReference;
         }
@@ -27,7 +27,7 @@
       }
     }
     if (elementToMark != null) {
-      context.getTrace().report(CYCLIC_INHERITANCE_HIERARCHY.on(elementToMark));
+      trace.report(CYCLIC_INHERITANCE_HIERARCHY.on(elementToMark));
     }
   }
 }

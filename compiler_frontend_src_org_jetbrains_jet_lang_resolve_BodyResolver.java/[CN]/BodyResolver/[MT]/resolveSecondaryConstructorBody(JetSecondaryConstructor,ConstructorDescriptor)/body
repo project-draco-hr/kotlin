@@ -1,35 +1,35 @@
 {
   if (!context.completeAnalysisNeeded(declaration))   return;
   MutableClassDescriptor classDescriptor=(MutableClassDescriptor)descriptor.getContainingDeclaration();
-  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,context.getTrace());
-  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,context.getTrace());
+  final JetScope scopeForSupertypeInitializers=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForSupertypeResolution(),descriptor,trace);
+  final JetScope scopeForConstructorBody=FunctionDescriptorUtil.getFunctionInnerScope(classDescriptor.getScopeForInitializers(),descriptor,trace);
   final DataFlowInfo dataFlowInfo=DataFlowInfo.EMPTY;
   PsiElement nameElement=declaration.getNameNode().getPsi();
   if (classDescriptor.getUnsubstitutedPrimaryConstructor() == null) {
-    context.getTrace().report(SECONDARY_CONSTRUCTOR_BUT_NO_PRIMARY.on(nameElement));
+    trace.report(SECONDARY_CONSTRUCTOR_BUT_NO_PRIMARY.on(nameElement));
   }
  else {
     List<JetDelegationSpecifier> initializers=declaration.getInitializers();
     if (initializers.isEmpty()) {
-      context.getTrace().report(SECONDARY_CONSTRUCTOR_NO_INITIALIZER_LIST.on(nameElement));
+      trace.report(SECONDARY_CONSTRUCTOR_NO_INITIALIZER_LIST.on(nameElement));
     }
  else {
       initializers.get(0).accept(new JetVisitorVoid(){
         @Override public void visitDelegationToSuperCallSpecifier(        JetDelegatorToSuperCall call){
           JetTypeReference typeReference=call.getTypeReference();
           if (typeReference != null) {
-            callResolver.resolveFunctionCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
+            callResolver.resolveFunctionCall(trace,scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
           }
         }
         @Override public void visitDelegationToThisCall(        JetDelegatorToThisCall call){
           ClassDescriptor classDescriptor=descriptor.getContainingDeclaration();
-          callResolver.resolveFunctionCall(context.getTrace(),scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
+          callResolver.resolveFunctionCall(trace,scopeForSupertypeInitializers,CallMaker.makeCall(ReceiverDescriptor.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,dataFlowInfo);
         }
         @Override public void visitDelegationByExpressionSpecifier(        JetDelegatorByExpressionSpecifier specifier){
-          context.getTrace().report(BY_IN_SECONDARY_CONSTRUCTOR.on(specifier));
+          trace.report(BY_IN_SECONDARY_CONSTRUCTOR.on(specifier));
         }
         @Override public void visitDelegationToSuperClassSpecifier(        JetDelegatorToSuperClass specifier){
-          context.getTrace().report(INITIALIZER_WITH_NO_ARGUMENTS.on(specifier));
+          trace.report(INITIALIZER_WITH_NO_ARGUMENTS.on(specifier));
         }
         @Override public void visitDelegationSpecifier(        JetDelegationSpecifier specifier){
           throw new IllegalStateException();
@@ -38,13 +38,13 @@
 );
       for (int i=1, initializersSize=initializers.size(); i < initializersSize; i++) {
         JetDelegationSpecifier initializer=initializers.get(i);
-        context.getTrace().report(MANY_CALLS_TO_THIS.on(initializer));
+        trace.report(MANY_CALLS_TO_THIS.on(initializer));
       }
     }
   }
   JetExpression bodyExpression=declaration.getBodyExpression();
   if (bodyExpression != null) {
-    expressionTypingServices.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType(),context.getTrace());
+    expressionTypingServices.checkFunctionReturnType(scopeForConstructorBody,declaration,descriptor,JetStandardClasses.getUnitType(),trace);
   }
   checkDefaultParameterValues(declaration.getValueParameters(),descriptor.getValueParameters(),scopeForConstructorBody);
 }
