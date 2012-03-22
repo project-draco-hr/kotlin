@@ -12,11 +12,6 @@
     return DataFlowUtils.checkType(type,expression,context);
   }
   IElementType operationType=operationSign.getReferencedNameElementType();
-  String name=OperatorConventions.UNARY_OPERATION_NAMES.get(operationType);
-  if (name == null) {
-    context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
-    return null;
-  }
   TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
   BindingTrace initialTrace=context.trace;
   context=context.replaceBindingTrace(temporaryTrace);
@@ -25,17 +20,34 @@
     temporaryTrace.commit();
     return null;
   }
+  if (operationType == JetTokens.EXCLEXCL) {
+    JetType result;
+    if (isKnownToBeNotNull(baseExpression,context)) {
+      temporaryTrace.report(UNNECESSARY_NOT_NULL_ASSERTION.on(operationSign,type));
+      result=type;
+    }
+ else {
+      result=TypeUtils.makeNotNullable(type);
+    }
+    temporaryTrace.commit();
+    return DataFlowUtils.checkType(result,expression,context);
+  }
+  String name=OperatorConventions.UNARY_OPERATION_NAMES.get(operationType);
+  if (name == null) {
+    context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
+    return null;
+  }
   if ((operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) && baseExpression instanceof JetArrayAccessExpression) {
     JetExpression stubExpression=ExpressionTypingUtils.createStubExpressionOfNecessaryType(baseExpression.getProject(),type,context.trace);
     resolveArrayAccessSetMethod((JetArrayAccessExpression)baseExpression,stubExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(TemporaryBindingTrace.create(initialTrace)),context.trace);
   }
   ExpressionReceiver receiver=new ExpressionReceiver(baseExpression,type);
-  OverloadResolutionResults<FunctionDescriptor> functionDescriptor=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
-  if (!functionDescriptor.isSuccess()) {
+  OverloadResolutionResults<FunctionDescriptor> resolutionResults=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
+  if (!resolutionResults.isSuccess()) {
     temporaryTrace.commit();
     return null;
   }
-  JetType returnType=functionDescriptor.getResultingDescriptor().getReturnType();
+  JetType returnType=resolutionResults.getResultingDescriptor().getReturnType();
   JetType result;
   if (operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) {
     if (JetTypeChecker.INSTANCE.isSubtypeOf(returnType,JetStandardClasses.getUnitType())) {
