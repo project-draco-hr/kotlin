@@ -10,13 +10,18 @@
       return;
     }
   }
- else   if (atSet(Precedence.PREFIX.getOperations())) {
-    PsiBuilder.Marker expression=mark();
-    parseOperationReference();
-    parsePrefixExpression();
-    expression.done(PREFIX_EXPRESSION);
-  }
  else {
-    parsePostfixExpression();
+    myBuilder.disableJoiningComplexTokens();
+    if (atSet(Precedence.PREFIX.getOperations())) {
+      PsiBuilder.Marker expression=mark();
+      parseOperationReference();
+      myBuilder.restoreJoiningComplexTokensState();
+      parsePrefixExpression();
+      expression.done(PREFIX_EXPRESSION);
+    }
+ else {
+      myBuilder.restoreJoiningComplexTokensState();
+      parsePostfixExpression();
+    }
   }
 }
