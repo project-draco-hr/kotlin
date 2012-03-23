@@ -1,0 +1,56 @@
+{
+  PsiType returnType=method.getReturnType();
+  if (returnType == null) {
+    return null;
+  }
+  ResolverScopeData scopeData=getResolverScopeData(owner,new PsiClassWrapper(psiClass));
+  boolean kotlin;
+  if (owner instanceof JavaNamespaceDescriptor) {
+    JavaNamespaceDescriptor javaNamespaceDescriptor=(JavaNamespaceDescriptor)owner;
+    ResolverNamespaceData namespaceData=namespaceDescriptorCacheByFqn.get(javaNamespaceDescriptor.getQualifiedName());
+    if (namespaceData == null) {
+      throw new IllegalStateException("namespaceData not found by name " + javaNamespaceDescriptor.getQualifiedName());
+    }
+    kotlin=namespaceData.kotlin;
+  }
+ else {
+    ResolverBinaryClassData classData=classDescriptorCache.get(new FqName(psiClass.getQualifiedName()));
+    if (classData == null) {
+      throw new IllegalStateException("classData not found by name " + psiClass.getQualifiedName());
+    }
+    kotlin=classData.kotlin;
+  }
+  if (method.getJetMethod().kind() == JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
+    return null;
+  }
+  if (kotlin) {
+    String ownerClassName=method.getPsiMethod().getContainingClass().getQualifiedName();
+    if (ownerClassName.equals("java.lang.Object")) {
+      return null;
+    }
+  }
+  ClassOrNamespaceDescriptor classDescriptor;
+  if (scopeData instanceof ResolverBinaryClassData) {
+    ClassDescriptor classClassDescriptor=resolveClass(method.getPsiMethod().getContainingClass(),DescriptorSearchRule.INCLUDE_KOTLIN);
+    classDescriptor=classClassDescriptor;
+  }
+ else {
+    classDescriptor=resolveNamespace(method.getPsiMethod().getContainingClass());
+  }
+  if (classDescriptor == null) {
+    return null;
+  }
+  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(owner,resolveAnnotations(method.getPsiMethod()),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
+  String context="method " + method.getName() + " in class "+ psiClass.getQualifiedName();
+  final TypeVariableResolver typeVariableResolverForParameters=TypeVariableResolvers.classTypeVariableResolver(classDescriptor,context);
+  final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl,typeVariableResolverForParameters);
+  TypeVariableResolver methodTypeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(methodTypeParameters,functionDescriptorImpl,context);
+  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),methodTypeVariableResolver);
+  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(classDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,methodTypeVariableResolver),Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()));
+  trace.record(BindingContext.FUNCTION,method.getPsiMethod(),functionDescriptorImpl);
+  FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;
+  if (method.getPsiMethod().getContainingClass() != psiClass && !method.isStatic()) {
+    throw new IllegalStateException("non-static method in subclass");
+  }
+  return (FunctionDescriptorImpl)substitutedFunctionDescriptor;
+}
