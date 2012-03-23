@@ -1,0 +1,19 @@
+{
+  FqName fqName=DescriptorUtils.getFQName(namespace).toSafe();
+  Boolean javaClassStatics=bindingContext.get(JavaBindingContext.NAMESPACE_IS_CLASS_STATICS,namespace);
+  Boolean src=bindingContext.get(BindingContext.NAMESPACE_IS_SRC,namespace);
+  if (javaClassStatics == null && src == null) {
+    throw new IllegalStateException("unknown namespace origin: " + fqName);
+  }
+  boolean classStatics;
+  if (javaClassStatics != null) {
+    if (javaClassStatics.booleanValue() && src != null) {
+      throw new IllegalStateException("conflicting namespace " + fqName + ": it is both java statics and from src");
+    }
+    classStatics=javaClassStatics.booleanValue();
+  }
+ else {
+    classStatics=false;
+  }
+  return NamespaceCodegen.getJVMClassName(fqName,!classStatics);
+}
