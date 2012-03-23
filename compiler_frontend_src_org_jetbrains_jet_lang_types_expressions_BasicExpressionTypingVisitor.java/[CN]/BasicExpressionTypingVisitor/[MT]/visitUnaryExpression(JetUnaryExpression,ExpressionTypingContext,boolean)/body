@@ -12,34 +12,40 @@
     return DataFlowUtils.checkType(type,expression,context);
   }
   IElementType operationType=operationSign.getReferencedNameElementType();
+  JetType type=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
+  if (type == null) {
+    return null;
+  }
+  if (operationType == JetTokens.EXCLEXCL) {
+    JetType result;
+    if (isKnownToBeNotNull(baseExpression,context)) {
+      context.trace.report(UNNECESSARY_NOT_NULL_ASSERTION.on(operationSign,type));
+      result=type;
+    }
+ else {
+      result=TypeUtils.makeNotNullable(type);
+    }
+    return DataFlowUtils.checkType(result,expression,context);
+  }
   String name=OperatorConventions.UNARY_OPERATION_NAMES.get(operationType);
   if (name == null) {
     context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
     return null;
   }
-  TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
-  BindingTrace initialTrace=context.trace;
-  context=context.replaceBindingTrace(temporaryTrace);
-  JetType type=facade.getType(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
-  if (type == null) {
-    temporaryTrace.commit();
-    return null;
-  }
   if ((operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) && baseExpression instanceof JetArrayAccessExpression) {
     JetExpression stubExpression=ExpressionTypingUtils.createStubExpressionOfNecessaryType(baseExpression.getProject(),type,context.trace);
-    resolveArrayAccessSetMethod((JetArrayAccessExpression)baseExpression,stubExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(TemporaryBindingTrace.create(initialTrace)),context.trace);
+    resolveArrayAccessSetMethod((JetArrayAccessExpression)baseExpression,stubExpression,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceBindingTrace(TemporaryBindingTrace.create(context.trace)),context.trace);
   }
   ExpressionReceiver receiver=new ExpressionReceiver(baseExpression,type);
-  OverloadResolutionResults<FunctionDescriptor> functionDescriptor=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
-  if (!functionDescriptor.isSuccess()) {
-    temporaryTrace.commit();
+  OverloadResolutionResults<FunctionDescriptor> resolutionResults=context.resolveCallWithGivenNameToDescriptor(CallMaker.makeCall(receiver,expression),expression.getOperationReference(),name);
+  if (!resolutionResults.isSuccess()) {
     return null;
   }
-  JetType returnType=functionDescriptor.getResultingDescriptor().getReturnType();
+  JetType returnType=resolutionResults.getResultingDescriptor().getReturnType();
   JetType result;
   if (operationType == JetTokens.PLUSPLUS || operationType == JetTokens.MINUSMINUS) {
     if (JetTypeChecker.INSTANCE.isSubtypeOf(returnType,JetStandardClasses.getUnitType())) {
-      result=JetStandardClasses.getUnitType();
+      result=ErrorUtils.createErrorType("Unit");
       context.trace.report(INC_DEC_SHOULD_NOT_RETURN_UNIT.on(operationSign));
     }
  else {
@@ -57,6 +63,5 @@
  else {
     result=returnType;
   }
-  temporaryTrace.commit();
   return DataFlowUtils.checkType(result,expression,context);
 }

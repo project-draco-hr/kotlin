@@ -1,39 +1,19 @@
 {
   extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
     @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    @NotNull CompletionResultSet result){
-      Set<LookupPositionObject> positions=new HashSet<LookupPositionObject>();
+      result.restartCompletionWhenNothingMatches();
+      CompletionSession session=new CompletionSession();
+      session.customInvocationCount=parameters.getInvocationCount();
       PsiElement position=parameters.getPosition();
       if (!(position.getContainingFile() instanceof JetFile)) {
         return;
       }
       JetSimpleNameReference jetReference=getJetReference(parameters);
       if (jetReference != null) {
-        result.stopHere();
-        if (isOnlyKeywordCompletion(position)) {
-          return;
-        }
-        if (shouldRunTypeCompletionOnly(position,jetReference)) {
-          addClasses(parameters,result);
-          return;
-        }
-        for (        Object variant : jetReference.getVariants()) {
-          addReferenceVariant(result,variant,positions);
-        }
-        String prefix=result.getPrefixMatcher().getPrefix();
-        if (prefix.isEmpty()) {
-          if (parameters.getInvocationCount() < 2) {
-            return;
-          }
-          if (PsiTreeUtil.getParentOfType(jetReference.getElement(),JetDotQualifiedExpression.class) == null) {
-            return;
-          }
-        }
-        if (shouldRunTopLevelCompletion(parameters,prefix)) {
-          addClasses(parameters,result);
-          addJetTopLevelFunctions(jetReference.getExpression(),result,position,positions);
-        }
-        if (shouldRunExtensionsCompletion(parameters,prefix)) {
-          addJetExtensions(jetReference.getExpression(),result,position);
+        completeForReference(parameters,result,position,jetReference,session);
+        if (!session.isSomethingAdded && session.customInvocationCount == 0) {
+          session.customInvocationCount=1;
+          completeForReference(parameters,result,position,jetReference,session);
         }
       }
     }
