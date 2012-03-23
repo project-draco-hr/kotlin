@@ -1,0 +1,27 @@
+{
+  if (namedMembers.functionDescriptors != null) {
+    return;
+  }
+  final Set<FunctionDescriptor> functions=new HashSet<FunctionDescriptor>();
+  Set<SimpleFunctionDescriptor> functionsFromCurrent=Sets.newHashSet();
+  for (  PsiMethodWrapper method : namedMembers.methods) {
+    FunctionDescriptorImpl function=resolveMethodToFunctionDescriptor(owner,psiClass,method,scopeData);
+    if (function != null) {
+      functionsFromCurrent.add((SimpleFunctionDescriptor)function);
+    }
+  }
+  if (owner instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)owner;
+    Set<SimpleFunctionDescriptor> functionsFromSupertypes=getFunctionsFromSupertypes(scopeData,methodName);
+    OverrideResolver.generateOverridesInFunctionGroup(methodName,functionsFromSupertypes,functionsFromCurrent,classDescriptor,new OverrideResolver.DescriptorSink(){
+      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
+        functions.add((FunctionDescriptor)fakeOverride);
+      }
+      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
+      }
+    }
+);
+  }
+  functions.addAll(functionsFromCurrent);
+  namedMembers.functionDescriptors=functions;
+}
