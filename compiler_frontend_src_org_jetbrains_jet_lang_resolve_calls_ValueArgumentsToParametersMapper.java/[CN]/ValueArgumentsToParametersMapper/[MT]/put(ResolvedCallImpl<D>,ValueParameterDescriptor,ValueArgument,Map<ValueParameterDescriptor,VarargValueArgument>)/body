@@ -6,13 +6,14 @@
       varargs.put(valueParameterDescriptor,vararg);
       candidateCall.recordValueArgument(valueParameterDescriptor,vararg);
     }
-    JetExpression expression=valueArgument.getArgumentExpression();
-    if (expression != null) {
-      vararg.getArgumentExpressions().add(expression);
-    }
+    vararg.addArgument(valueArgument);
   }
  else {
-    ResolvedValueArgument argument=new ExpressionValueArgument(valueArgument.getArgumentExpression());
+    LeafPsiElement spread=valueArgument.getSpreadElement();
+    if (spread != null) {
+      candidateCall.getTrace().report(NON_VARARG_SPREAD.on(spread));
+    }
+    ResolvedValueArgument argument=new ExpressionValueArgument(valueArgument);
     candidateCall.recordValueArgument(valueParameterDescriptor,argument);
   }
 }
