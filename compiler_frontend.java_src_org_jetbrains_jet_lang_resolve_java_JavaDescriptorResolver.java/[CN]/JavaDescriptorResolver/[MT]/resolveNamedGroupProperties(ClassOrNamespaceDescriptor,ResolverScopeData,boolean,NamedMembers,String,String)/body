@@ -3,8 +3,7 @@
     return;
   }
   if (namedMembers.propertyAccessors == null) {
-    namedMembers.propertyDescriptors=Collections.emptySet();
-    return;
+    namedMembers.propertyAccessors=Collections.emptyList();
   }
   TypeVariableResolver typeVariableResolver=TypeVariableResolvers.classTypeVariableResolver(owner,context);
 class GroupingValue {
@@ -47,7 +46,7 @@ class GroupingValue {
       throw new IllegalStateException();
     }
   }
-  Set<VariableDescriptor> r=new HashSet<VariableDescriptor>(1);
+  Set<PropertyDescriptor> propertiesFromCurrent=new HashSet<PropertyDescriptor>(1);
   int regularProperitesCount=0;
   for (  GroupingValue members : map.values()) {
     if (!members.ext) {
@@ -153,7 +152,21 @@ class GroupingValue {
       setterDescriptor.initialize(new ValueParameterDescriptorImpl(setterDescriptor,0,Collections.<AnnotationDescriptor>emptyList(),"p0",false,propertyDescriptor.getType(),false,null));
     }
     trace.record(BindingContext.VARIABLE,anyMember.getMember().psiMember,propertyDescriptor);
-    r.add(propertyDescriptor);
+    propertiesFromCurrent.add(propertyDescriptor);
   }
-  namedMembers.propertyDescriptors=r;
+  Set<PropertyDescriptor> propertiesFromSupertypes=getPropertiesFromSupertypes(scopeData,propertyName);
+  final Set<VariableDescriptor> properties=Sets.newHashSet();
+  if (owner instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)owner;
+    OverrideResolver.generateOverridesInFunctionGroup(propertyName,propertiesFromSupertypes,propertiesFromCurrent,classDescriptor,new OverrideResolver.DescriptorSink(){
+      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
+        properties.add((PropertyDescriptor)fakeOverride);
+      }
+      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
+      }
+    }
+);
+  }
+  properties.addAll(propertiesFromCurrent);
+  namedMembers.propertyDescriptors=properties;
 }
