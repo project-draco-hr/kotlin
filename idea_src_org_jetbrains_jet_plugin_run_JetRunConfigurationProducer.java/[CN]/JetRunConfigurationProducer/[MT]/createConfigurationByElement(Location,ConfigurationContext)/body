@@ -3,15 +3,9 @@
   if (module == null) {
     return null;
   }
-  PsiFile psiFile=location.getPsiElement().getContainingFile();
-  if (psiFile instanceof JetFile) {
-    JetFile jetFile=(JetFile)psiFile;
-    if (JetMainDetector.hasMain(jetFile.getDeclarations())) {
-      mySourceElement=jetFile;
-      FqName fqName=JetPsiUtil.getFQName(jetFile);
-      FqName className=fqName.child(JvmAbi.PACKAGE_CLASS);
-      return createConfigurationByQName(module,configurationContext,className);
-    }
+  FqName startClassFQName=getStartClassFQName(location);
+  if (startClassFQName == null) {
+    return null;
   }
-  return null;
+  return createConfigurationByQName(module,configurationContext,startClassFQName);
 }
