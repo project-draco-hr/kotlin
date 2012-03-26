@@ -1,0 +1,23 @@
+{
+  List<Tuple2<Integer,Integer>> numbersAndOffsets=new ArrayList<Tuple2<Integer,Integer>>();
+  for (  JetPsiReference ref : collectInterestingReferences()) {
+    PsiElement target=ref.resolve();
+    assertNotNull(target);
+    PsiElement navigationElement=target.getNavigationElement();
+    numbersAndOffsets.add(new Tuple2<Integer,Integer>(numbersAndOffsets.size() + 1,navigationElement.getTextOffset()));
+  }
+  Collections.sort(numbersAndOffsets,Collections.reverseOrder(new Comparator<Tuple2<Integer,Integer>>(){
+    @Override public int compare(    Tuple2<Integer,Integer> t1,    Tuple2<Integer,Integer> t2){
+      int offsets=t1._2.compareTo(t2._2);
+      return offsets == 0 ? t1._1.compareTo(t2._1) : offsets;
+    }
+  }
+));
+  Document document=FileDocumentManager.getInstance().getDocument(myLibrarySourceFile);
+  assertNotNull(document);
+  StringBuilder result=new StringBuilder(document.getText());
+  for (  Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
+    result.insert(numberOffset._2,String.format("<%d>",numberOffset._1));
+  }
+  return result.toString();
+}
