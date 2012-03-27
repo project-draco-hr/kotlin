@@ -2,29 +2,28 @@
   TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace);
   for (  JetFile file : context.getNamespaceDescriptors().keySet()) {
     WritableScope namespaceScope=context.getNamespaceScopes().get(file);
-    Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope,firstPhase);
-    if (!firstPhase) {
+    Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope);
+    if (!onlyClasses) {
       namespaceScope.clearImports();
     }
     Map<JetImportDirective,DeclarationDescriptor> resolvedDirectives=Maps.newHashMap();
     Collection<JetImportDirective> defaultImportDirectives=Lists.newArrayList();
-    configuration.addDefaultImports(namespaceScope,defaultImportDirectives);
+    configuration.addDefaultImports(defaultImportDirectives);
     for (    JetImportDirective defaultImportDirective : defaultImportDirectives) {
-      singleImportResolver.processImportReference(defaultImportDirective,namespaceScope,delayedImporter,temporaryTrace,firstPhase);
+      qualifiedExpressionResolver.processImportReference(defaultImportDirective,namespaceScope,delayedImporter,temporaryTrace,onlyClasses);
     }
     List<JetImportDirective> importDirectives=file.getImportDirectives();
     for (    JetImportDirective importDirective : importDirectives) {
-      Collection<? extends DeclarationDescriptor> descriptors=singleImportResolver.processImportReference(importDirective,namespaceScope,delayedImporter,trace,firstPhase);
+      Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,namespaceScope,delayedImporter,trace,onlyClasses);
       if (descriptors.size() == 1) {
         resolvedDirectives.put(importDirective,descriptors.iterator().next());
       }
     }
     delayedImporter.processImports();
-    if (firstPhase) {
-      continue;
-    }
-    for (    JetImportDirective importDirective : importDirectives) {
-      reportUselessImport(importDirective,namespaceScope,resolvedDirectives);
+    if (!onlyClasses) {
+      for (      JetImportDirective importDirective : importDirectives) {
+        reportUselessImport(importDirective,namespaceScope,resolvedDirectives);
+      }
     }
   }
 }

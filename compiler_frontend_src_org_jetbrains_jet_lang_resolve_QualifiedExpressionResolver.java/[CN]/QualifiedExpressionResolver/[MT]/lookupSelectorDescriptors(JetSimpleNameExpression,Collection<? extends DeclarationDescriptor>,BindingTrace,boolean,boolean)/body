@@ -1,0 +1,16 @@
+{
+  Set<SuccessfulLookupResult> results=Sets.newHashSet();
+  for (  DeclarationDescriptor declarationDescriptor : declarationDescriptors) {
+    if (declarationDescriptor instanceof NamespaceDescriptor) {
+      addResult(results,lookupSimpleNameReference(selector,((NamespaceDescriptor)declarationDescriptor).getMemberScope(),onlyClasses,true));
+    }
+    if (declarationDescriptor instanceof ClassDescriptor) {
+      addResult(results,lookupSimpleNameReference(selector,getAppropriateScope((ClassDescriptor)declarationDescriptor,onlyClasses),onlyClasses,false));
+      ClassDescriptor classObjectDescriptor=((ClassDescriptor)declarationDescriptor).getClassObjectDescriptor();
+      if (classObjectDescriptor != null) {
+        addResult(results,lookupSimpleNameReference(selector,getAppropriateScope(classObjectDescriptor,onlyClasses),onlyClasses,false));
+      }
+    }
+  }
+  return filterAndStoreResolutionResult(results,selector,trace,onlyClasses,storeResult);
+}

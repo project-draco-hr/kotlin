@@ -1,0 +1,16 @@
+{
+  if (userType.isAbsoluteInRootNamespace()) {
+    trace.report(Errors.UNSUPPORTED.on(userType,"package"));
+    return Collections.emptyList();
+  }
+  JetSimpleNameExpression referenceExpression=userType.getReferenceExpression();
+  if (referenceExpression == null) {
+    return Collections.emptyList();
+  }
+  JetUserType qualifier=userType.getQualifier();
+  if (qualifier == null) {
+    return lookupDescriptorsForSimpleNameReference(referenceExpression,outerScope,trace,true,false,true);
+  }
+  Collection<? extends DeclarationDescriptor> declarationDescriptors=lookupDescriptorsForUserType(qualifier,outerScope,trace);
+  return lookupSelectorDescriptors(referenceExpression,declarationDescriptors,trace,true,true);
+}
