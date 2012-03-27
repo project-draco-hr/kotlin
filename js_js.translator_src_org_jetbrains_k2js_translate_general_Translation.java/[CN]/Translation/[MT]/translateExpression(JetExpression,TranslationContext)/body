@@ -1,3 +1,11 @@
 {
-  return expression.accept(new ExpressionVisitor(),context);
+  JsName aliasForExpression=context.aliasingContext().getAliasForExpression(expression);
+  if (aliasForExpression != null) {
+    return aliasForExpression.makeRef();
+  }
+  DangerousData data=collect(expression,context);
+  if (data.shouldBeTranslated()) {
+    return DangerousTranslator.translate(data,context);
+  }
+  return doTranslateExpression(expression,context);
 }
