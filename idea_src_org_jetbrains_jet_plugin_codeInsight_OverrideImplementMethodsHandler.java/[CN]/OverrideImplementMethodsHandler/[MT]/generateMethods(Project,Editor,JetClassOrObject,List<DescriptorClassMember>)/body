@@ -3,16 +3,20 @@
   if (body == null) {
     return;
   }
+  PsiElement afterAnchor=findInsertAfterAnchor(editor,body);
+  if (afterAnchor == null) {
+    return;
+  }
   for (  DescriptorClassMember selectedElement : selectedElements) {
     final DeclarationDescriptor descriptor=selectedElement.getDescriptor();
     JetFile containingFile=(JetFile)classOrObject.getContainingFile();
     if (descriptor instanceof SimpleFunctionDescriptor) {
       JetElement target=overrideFunction(project,containingFile,(SimpleFunctionDescriptor)descriptor);
-      body.addBefore(target,body.getRBrace());
+      afterAnchor=body.addAfter(target,afterAnchor);
     }
  else     if (descriptor instanceof PropertyDescriptor) {
       JetElement target=overrideProperty(project,containingFile,(PropertyDescriptor)descriptor);
-      body.addBefore(target,body.getRBrace());
+      afterAnchor=body.addBefore(target,afterAnchor);
     }
   }
 }
