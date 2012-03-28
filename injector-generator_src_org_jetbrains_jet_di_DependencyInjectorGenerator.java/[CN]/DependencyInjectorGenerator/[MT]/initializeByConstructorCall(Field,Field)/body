@@ -1,20 +1,20 @@
 {
-  Class<?> type=field.getType();
-  if (type.isInterface()) {
-    throw new IllegalArgumentException("cannot instantiate interface: " + type.getName() + " needed for "+ neededFor);
+  DiType type=field.getType();
+  if (type.getClazz().isInterface()) {
+    throw new IllegalArgumentException("cannot instantiate interface: " + type.getClazz().getName() + " needed for "+ neededFor);
   }
-  if (Modifier.isAbstract(type.getModifiers())) {
-    throw new IllegalArgumentException("cannot instantiate abstract class: " + type.getName() + " needed for "+ neededFor);
+  if (Modifier.isAbstract(type.getClazz().getModifiers())) {
+    throw new IllegalArgumentException("cannot instantiate abstract class: " + type.getClazz().getName() + " needed for "+ neededFor);
   }
-  Constructor<?>[] constructors=type.getConstructors();
+  Constructor<?>[] constructors=type.getClazz().getConstructors();
   if (constructors.length == 0 || !Modifier.isPublic(constructors[0].getModifiers())) {
-    throw new IllegalArgumentException("No constructor: " + type.getName() + " needed for "+ neededFor);
+    throw new IllegalArgumentException("No constructor: " + type.getClazz().getName() + " needed for "+ neededFor);
   }
   Constructor<?> constructor=constructors[0];
   ConstructorCall dependency=new ConstructorCall(constructor);
-  Class<?>[] parameterTypes=constructor.getParameterTypes();
-  for (  Class<?> parameterType : parameterTypes) {
-    Field fieldForParameter=findDependencyOfType(parameterType,"constructor: " + constructor + ", parameter: "+ parameterType,field);
+  Type[] parameterTypes=constructor.getGenericParameterTypes();
+  for (  Type parameterType : parameterTypes) {
+    Field fieldForParameter=findDependencyOfType(DiType.fromReflectionType(parameterType),"constructor: " + constructor + ", parameter: "+ parameterType,field);
     dependency.getConstructorArguments().add(fieldForParameter);
   }
   field.setInitialization(dependency);

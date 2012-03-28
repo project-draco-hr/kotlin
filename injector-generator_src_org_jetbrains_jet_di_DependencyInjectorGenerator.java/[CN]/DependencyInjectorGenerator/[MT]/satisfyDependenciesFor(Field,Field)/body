@@ -4,7 +4,7 @@
   if (field.getInitialization() == null) {
     initializeByConstructorCall(field,neededFor);
   }
-  List<Method> declaredMethods=Lists.newArrayList(field.getType().getDeclaredMethods());
+  List<Method> declaredMethods=Lists.newArrayList(field.getType().getClazz().getDeclaredMethods());
   Collections.sort(declaredMethods,new Comparator<Method>(){
     @Override public int compare(    Method o1,    Method o2){
       return o1.getName().compareTo(o2.getName());
@@ -13,8 +13,8 @@
 );
   for (  Method method : declaredMethods) {
     if (method.getAnnotation(javax.inject.Inject.class) == null || !method.getName().startsWith("set") || method.getParameterTypes().length != 1)     continue;
-    Class<?> parameterType=method.getParameterTypes()[0];
-    Field dependency=findDependencyOfType(parameterType,field + ": " + method+ ": "+ fields,field);
+    Type parameterType=method.getGenericParameterTypes()[0];
+    Field dependency=findDependencyOfType(DiType.fromReflectionType(parameterType),field + ": " + method+ ": "+ fields,field);
     field.getDependencies().add(new SetterDependency(field,method.getName(),dependency));
   }
 }
