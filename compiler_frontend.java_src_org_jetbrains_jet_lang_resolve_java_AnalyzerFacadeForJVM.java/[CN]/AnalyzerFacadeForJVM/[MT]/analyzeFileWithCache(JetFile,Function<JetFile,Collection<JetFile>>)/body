@@ -1,12 +1,12 @@
 {
 synchronized (lock) {
-    CachedValue<BindingContext> bindingContextCachedValue=file.getUserData(BINDING_CONTEXT);
+    CachedValue<AnalyzeExhaust> bindingContextCachedValue=file.getUserData(BINDING_CONTEXT);
     if (bindingContextCachedValue == null) {
-      bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<BindingContext>(){
-        @Override public Result<BindingContext> compute(){
+      bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<AnalyzeExhaust>(){
+        @Override public Result<AnalyzeExhaust> compute(){
           try {
-            BindingContext bindingContext=analyzeFilesWithJavaIntegration(file.getProject(),declarationProvider.fun(file),Predicates.<PsiFile>equalTo(file),JetControlFlowDataTraceFactory.EMPTY);
-            return new Result<BindingContext>(bindingContext,PsiModificationTracker.MODIFICATION_COUNT);
+            AnalyzeExhaust bindingContext=analyzeFilesWithJavaIntegration(file.getProject(),declarationProvider.fun(file),Predicates.<PsiFile>equalTo(file),JetControlFlowDataTraceFactory.EMPTY);
+            return new Result<AnalyzeExhaust>(bindingContext,PsiModificationTracker.MODIFICATION_COUNT);
           }
  catch (          ProcessCanceledException e) {
             throw e;
@@ -16,7 +16,8 @@ catch (          Throwable e) {
             LOG.error(e);
             BindingTraceContext bindingTraceContext=new BindingTraceContext();
             bindingTraceContext.report(Errors.EXCEPTION_WHILE_ANALYZING.on(file,e));
-            return new Result<BindingContext>(bindingTraceContext.getBindingContext(),PsiModificationTracker.MODIFICATION_COUNT);
+            AnalyzeExhaust analyzeExhaust=new AnalyzeExhaust(bindingTraceContext.getBindingContext(),null);
+            return new Result<AnalyzeExhaust>(analyzeExhaust,PsiModificationTracker.MODIFICATION_COUNT);
           }
         }
       }
