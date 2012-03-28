@@ -1,11 +1,14 @@
 {
-  ClassDescriptor classDescriptorForMethod=DescriptorUtils.getClassDescriptorForMethod(getFunctionDescriptor());
-  if (classDescriptorForMethod == null) {
-    return contextForInlining;
-  }
   TranslationContext contextWithAliasForThisExpression=contextForInlining;
-  TemporaryVariable aliasForThis=contextWithAliasForThisExpression.declareTemporary(getReceiver());
-  contextWithAliasForThisExpression=contextForInlining.innerContextWithThisAliased(classDescriptorForMethod,aliasForThis.name());
-  contextWithAliasForThisExpression.addStatementToCurrentBlock(aliasForThis.assignmentExpression().makeStmt());
+  SimpleFunctionDescriptor functionDescriptor=getFunctionDescriptor();
+  CallParameters callParameters=resolveCallParameters(receiver,null,functionDescriptor,resolvedCall,contextForInlining);
+  JsExpression receiver=callParameters.getReceiver();
+  if (receiver != null) {
+    contextWithAliasForThisExpression=contextWithAlias(contextWithAliasForThisExpression,receiver,getExpectedReceiverDescriptor(functionDescriptor));
+  }
+  JsExpression thisObject=callParameters.getThisObject();
+  if (thisObject != null) {
+    contextWithAliasForThisExpression=contextWithAlias(contextWithAliasForThisExpression,thisObject,getExpectedThisDescriptor(functionDescriptor));
+  }
   return contextWithAliasForThisExpression;
 }
