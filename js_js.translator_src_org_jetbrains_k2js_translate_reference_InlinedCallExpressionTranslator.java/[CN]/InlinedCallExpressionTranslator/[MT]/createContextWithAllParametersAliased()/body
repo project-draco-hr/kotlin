@@ -1,0 +1,11 @@
+{
+  Map<DeclarationDescriptor,JsName> aliases=Maps.newHashMap();
+  for (  ValueParameterDescriptor parameterDescriptor : resolvedCall.getResultingDescriptor().getValueParameters()) {
+    ResolvedValueArgument actualArgument=resolvedCall.getValueArgumentsByIndex().get(parameterDescriptor.getIndex());
+    JsExpression translatedArgument=translateArgument(parameterDescriptor,actualArgument);
+    TemporaryVariable aliasForArgument=context().declareTemporary(translatedArgument);
+    aliases.put(parameterDescriptor,aliasForArgument.name());
+    context().addStatementToCurrentBlock(aliasForArgument.assignmentExpression().makeStmt());
+  }
+  return context().innerContextWithDescriptorsAliased(aliases);
+}
