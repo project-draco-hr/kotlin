@@ -1,4 +1,14 @@
 {
-  if (candidates.isEmpty())   return;
-  result.add(new ResolutionTask<D>(candidates,functionReference,context));
+  Collection<ResolvedCallImpl<D>> visibleCandidates=Collections2.filter(candidates,new Predicate<ResolvedCallImpl<D>>(){
+    @Override public boolean apply(    @Nullable ResolvedCallImpl<D> call){
+      if (call == null)       return false;
+      D candidateDescriptor=call.getCandidateDescriptor();
+      if (ErrorUtils.isError(candidateDescriptor))       return true;
+      Visibility visibility=candidateDescriptor.getVisibility();
+      return visibility.isVisible(candidateDescriptor,context.scope.getContainingDeclaration());
+    }
+  }
+);
+  if (visibleCandidates.isEmpty())   return;
+  result.add(new ResolutionTask<D>(visibleCandidates,functionReference,context));
 }
