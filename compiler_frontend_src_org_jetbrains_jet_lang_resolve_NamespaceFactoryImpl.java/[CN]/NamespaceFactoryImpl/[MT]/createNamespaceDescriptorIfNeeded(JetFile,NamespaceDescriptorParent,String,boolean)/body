@@ -16,7 +16,7 @@
   if (namespaceDescriptor == null) {
     namespaceDescriptor=new NamespaceDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),name);
     trace.record(FQNAME_TO_NAMESPACE_DESCRIPTOR,fqName,namespaceDescriptor);
-    WritableScopeImpl scope=new WritableScopeImpl(JetScope.EMPTY,namespaceDescriptor,new TraceBasedRedeclarationHandler(trace)).setDebugName("Namespace member scope");
+    WritableScopeImpl scope=new WritableScopeImpl(JetScope.EMPTY,namespaceDescriptor,RedeclarationHandler.DO_NOTHING).setDebugName("Namespace member scope");
     scope.changeLockLevel(WritableScope.LockLevel.BOTH);
     namespaceDescriptor.initialize(scope);
     configuration.extendNamespaceScope(trace,namespaceDescriptor,scope);
@@ -27,6 +27,12 @@
   }
   if (file != null) {
     trace.record(BindingContext.FILE_TO_NAMESPACE,file,namespaceDescriptor);
+    Collection<JetFile> files=trace.get(NAMESPACE_TO_FILES,namespaceDescriptor);
+    if (files == null) {
+      files=Sets.newIdentityHashSet();
+    }
+    files.add(file);
+    trace.record(BindingContext.NAMESPACE_TO_FILES,namespaceDescriptor,files);
   }
   return namespaceDescriptor;
 }
