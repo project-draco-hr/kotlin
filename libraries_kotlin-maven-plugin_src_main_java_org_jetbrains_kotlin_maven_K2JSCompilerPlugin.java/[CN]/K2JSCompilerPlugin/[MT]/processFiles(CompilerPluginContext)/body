@@ -1,0 +1,40 @@
+{
+  if (context != null) {
+    Project project=context.getProject();
+    BindingContext bindingContext=context.getContext();
+    List<JetFile> sources=context.getFiles();
+    if (bindingContext != null && sources != null && project != null) {
+      Config config=new Config(project){
+        @NotNull @Override public List<JetFile> getLibFiles(){
+          return null;
+        }
+      }
+;
+      K2JSTranslator translator=new K2JSTranslator(config);
+      final String code=translator.generateProgramCode(sources);
+      File file=new File(outFile);
+      File outDir=file.getParentFile();
+      if (outDir != null && !outDir.exists()) {
+        outDir.mkdirs();
+      }
+      try {
+        use(new FileWriter(file),new Function1<FileWriter,Object>(){
+          @Override public Object invoke(          FileWriter writer){
+            try {
+              writer.write(code);
+            }
+ catch (            IOException e) {
+              throw new RuntimeException(e);
+            }
+            return null;
+          }
+        }
+);
+      }
+ catch (      IOException e) {
+        System.out.println("Error: " + e);
+        e.printStackTrace();
+      }
+    }
+  }
+}
