@@ -1,8 +1,11 @@
 {
   try {
-    GenerationState state=new GenerationState(getProject(),ClassBuilderFactories.binaries(false));
     AnalyzingUtils.checkForSyntacticErrors(myFile);
-    state.compile(myFile);
+    final AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(myFile,JetControlFlowDataTraceFactory.EMPTY);
+    GenerationState state=new GenerationState(getProject(),ClassBuilderFactories.binaries(false),analyzeExhaust,Collections.singletonList(myFile));
+    AnalyzingUtils.throwExceptionOnErrors(analyzeExhaust.getBindingContext());
+    state.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+    analyzeExhaust.getBindingContext();
     return state.getFactory();
   }
  catch (  RuntimeException e) {

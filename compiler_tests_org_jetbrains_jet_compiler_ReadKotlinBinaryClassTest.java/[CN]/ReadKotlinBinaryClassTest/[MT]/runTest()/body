@@ -4,9 +4,12 @@
   LightVirtualFile virtualFile=new LightVirtualFile(testFile.getName(),JetLanguage.INSTANCE,text);
   virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
   JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
-  GenerationState state=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactories.binaries(false));
   AnalyzingUtils.checkForSyntacticErrors(psiFile);
-  BindingContext bindingContext=state.compile(psiFile);
+  final AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,JetControlFlowDataTraceFactory.EMPTY);
+  GenerationState state=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactories.binaries(false),analyzeExhaust,Collections.singletonList(psiFile));
+  AnalyzingUtils.throwExceptionOnErrors(analyzeExhaust.getBindingContext());
+  state.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
   ClassFileFactory classFileFactory=state.getFactory();
   CompileEnvironment.writeToOutputDirectory(classFileFactory,tmpdir.getPath());
   NamespaceDescriptor namespaceFromSource=(NamespaceDescriptor)bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,psiFile);

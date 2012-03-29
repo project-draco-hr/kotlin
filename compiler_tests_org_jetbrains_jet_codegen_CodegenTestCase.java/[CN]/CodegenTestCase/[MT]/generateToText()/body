@@ -1,6 +1,8 @@
 {
-  GenerationState state=new GenerationState(getProject(),ClassBuilderFactories.TEXT);
   AnalyzingUtils.checkForSyntacticErrors(myFile);
-  state.compile(myFile);
+  final AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(myFile,JetControlFlowDataTraceFactory.EMPTY);
+  GenerationState state=new GenerationState(getProject(),ClassBuilderFactories.TEXT,analyzeExhaust,Collections.singletonList(myFile));
+  AnalyzingUtils.throwExceptionOnErrors(analyzeExhaust.getBindingContext());
+  state.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
   return state.createText();
 }
