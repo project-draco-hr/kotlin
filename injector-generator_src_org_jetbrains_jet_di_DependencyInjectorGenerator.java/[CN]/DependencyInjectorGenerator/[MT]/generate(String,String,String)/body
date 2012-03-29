@@ -1,7 +1,8 @@
 {
   String outputFileName=targetSourceRoot + "/" + injectorPackageName.replace(".","/")+ "/"+ injectorClassName+ ".java";
   File file=new File(outputFileName);
-  File tmpfile=new File(outputFileName + ".tmp");
+  boolean useTmpfile=!SystemInfo.isWindows;
+  File tmpfile=useTmpfile ? new File(outputFileName + ".tmp") : file;
   File parentFile=file.getParentFile();
   if (!parentFile.exists()) {
     if (parentFile.mkdirs()) {
@@ -35,10 +36,12 @@
     generateGetters(out);
     out.println("}");
     fileOutputStream.close();
-    if (!tmpfile.renameTo(file)) {
-      throw new RuntimeException("failed to rename " + tmpfile + " to "+ file);
+    if (useTmpfile) {
+      if (!tmpfile.renameTo(file)) {
+        throw new RuntimeException("failed to rename " + tmpfile + " to "+ file);
+      }
+      System.out.println("Renamed " + tmpfile + " to "+ file);
     }
-    System.out.println("Renamed " + tmpfile + " to "+ file);
   }
   finally {
     fileOutputStream.close();
