@@ -8,13 +8,19 @@
   if (functionDescriptor == null)   return null;
   final Set<? extends FunctionDescriptor> overriddenFunctions=functionDescriptor.getOverriddenDescriptors();
   if (overriddenFunctions.size() == 0)   return null;
-  return new LineMarkerInfo<JetNamedFunction>(jetFunction,jetFunction.getTextOffset(),OVERRIDING_FUNCTION,Pass.UPDATE_ALL,new Function<JetNamedFunction,String>(){
+  boolean allOverriddenAbstract=true;
+  for (  FunctionDescriptor function : overriddenFunctions) {
+    allOverriddenAbstract&=function.getModality() == Modality.ABSTRACT;
+  }
+  final String implementsOrOverrides=allOverriddenAbstract ? "implements" : "overrides";
+  return new LineMarkerInfo<JetNamedFunction>(jetFunction,jetFunction.getTextOffset(),allOverriddenAbstract ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_ALL,new Function<JetNamedFunction,String>(){
     @Override public String fun(    JetNamedFunction jetFunction){
       StringBuilder builder=new StringBuilder();
       builder.append(DescriptorRenderer.HTML.render(functionDescriptor));
       int overrideCount=overriddenFunctions.size();
       if (overrideCount >= 1) {
-        builder.append(" overrides ").append(DescriptorRenderer.HTML.render(overriddenFunctions.iterator().next()));
+        builder.append(" ").append(implementsOrOverrides).append(" ");
+        builder.append(DescriptorRenderer.HTML.render(overriddenFunctions.iterator().next()));
       }
       if (overrideCount > 1) {
         int count=overrideCount - 1;
