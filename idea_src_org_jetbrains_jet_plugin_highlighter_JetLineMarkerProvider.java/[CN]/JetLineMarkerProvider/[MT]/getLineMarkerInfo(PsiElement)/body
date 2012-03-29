@@ -1,30 +1,30 @@
 {
   JetFile file=(JetFile)element.getContainingFile();
   if (file == null)   return null;
-  if (!(element instanceof JetNamedFunction))   return null;
-  JetNamedFunction jetFunction=(JetNamedFunction)element;
+  if (!(element instanceof JetNamedFunction || element instanceof JetProperty))   return null;
   final BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
-  final SimpleFunctionDescriptor functionDescriptor=bindingContext.get(BindingContext.FUNCTION,jetFunction);
-  if (functionDescriptor == null)   return null;
-  final Set<? extends FunctionDescriptor> overriddenFunctions=functionDescriptor.getOverriddenDescriptors();
-  if (overriddenFunctions.size() == 0)   return null;
+  final DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
+  if (!(descriptor instanceof CallableMemberDescriptor))   return null;
+  final Set<? extends CallableMemberDescriptor> overriddenMembers=((CallableMemberDescriptor)descriptor).getOverriddenDescriptors();
+  if (overriddenMembers.size() == 0)   return null;
   boolean allOverriddenAbstract=true;
-  for (  FunctionDescriptor function : overriddenFunctions) {
+  for (  CallableMemberDescriptor function : overriddenMembers) {
     allOverriddenAbstract&=function.getModality() == Modality.ABSTRACT;
   }
   final String implementsOrOverrides=allOverriddenAbstract ? "implements" : "overrides";
-  return new LineMarkerInfo<JetNamedFunction>(jetFunction,jetFunction.getTextOffset(),allOverriddenAbstract ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_ALL,new Function<JetNamedFunction,String>(){
-    @Override public String fun(    JetNamedFunction jetFunction){
+  final String memberKind=element instanceof JetNamedFunction ? "function" : "property";
+  return new LineMarkerInfo<PsiElement>(element,element.getTextOffset(),allOverriddenAbstract ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_ALL,new Function<PsiElement,String>(){
+    @Override public String fun(    PsiElement element){
       StringBuilder builder=new StringBuilder();
-      builder.append(DescriptorRenderer.HTML.render(functionDescriptor));
-      int overrideCount=overriddenFunctions.size();
+      builder.append(DescriptorRenderer.HTML.render(descriptor));
+      int overrideCount=overriddenMembers.size();
       if (overrideCount >= 1) {
         builder.append(" ").append(implementsOrOverrides).append(" ");
-        builder.append(DescriptorRenderer.HTML.render(overriddenFunctions.iterator().next()));
+        builder.append(DescriptorRenderer.HTML.render(overriddenMembers.iterator().next()));
       }
       if (overrideCount > 1) {
         int count=overrideCount - 1;
-        builder.append(" and ").append(count).append(" other function");
+        builder.append(" and ").append(count).append(" other ").append(memberKind);
         if (count > 1) {
           builder.append("s");
         }
@@ -32,12 +32,12 @@
       return builder.toString();
     }
   }
-,new GutterIconNavigationHandler<JetNamedFunction>(){
-    @Override public void navigate(    MouseEvent event,    JetNamedFunction elt){
-      if (overriddenFunctions.isEmpty())       return;
+,new GutterIconNavigationHandler<PsiElement>(){
+    @Override public void navigate(    MouseEvent event,    PsiElement elt){
+      if (overriddenMembers.isEmpty())       return;
       final List<PsiElement> list=Lists.newArrayList();
-      for (      FunctionDescriptor overriddenFunction : overriddenFunctions) {
-        PsiElement declarationPsiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,overriddenFunction);
+      for (      CallableMemberDescriptor overriddenMember : overriddenMembers) {
+        PsiElement declarationPsiElement=bindingContext.get(BindingContext.DESCRIPTOR_TO_DECLARATION,overriddenMember);
         list.add(declarationPsiElement);
       }
       if (list.isEmpty()) {
@@ -53,7 +53,7 @@
         PsiNavigateUtil.navigate(list.iterator().next());
       }
  else {
-        final JBPopup popup=NavigationUtil.getPsiElementPopup(PsiUtilBase.toPsiElementArray(list),new DefaultPsiElementCellRenderer(){
+        final JBPopup popup=NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list),new DefaultPsiElementCellRenderer(){
           @Override public String getElementText(          PsiElement element){
             if (element instanceof JetNamedFunction) {
               JetNamedFunction function=(JetNamedFunction)element;
@@ -62,7 +62,7 @@
             return super.getElementText(element);
           }
         }
-,DescriptorRenderer.HTML.render(functionDescriptor));
+,DescriptorRenderer.HTML.render(descriptor));
         if (event != null) {
           popup.show(new RelativePoint(event));
         }
