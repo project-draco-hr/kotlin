@@ -1,6 +1,7 @@
 {
-  element.accept(new SoftKeywordsHighlightingVisitor(holder));
-  element.accept(new LabelsHighlightingVisitor(holder));
+  for (  HighlightingVisitor visitor : getBeforeAnalysisVisitors(holder)) {
+    element.accept(visitor);
+  }
   if (element instanceof JetFile) {
     JetFile file=(JetFile)element;
     try {
@@ -13,8 +14,9 @@
           registerDiagnosticAnnotations(diagnostic,redeclarations,holder);
         }
       }
-      file.acceptChildren(new BackingFieldHighlightingVisitor(holder,bindingContext));
-      file.acceptChildren(new VariablesHighlightingVisitor(holder,bindingContext));
+      for (      HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
+        file.acceptChildren(visitor);
+      }
     }
  catch (    ProcessCanceledException e) {
       throw e;
