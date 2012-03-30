@@ -1,0 +1,33 @@
+{
+  ASTNode childParent=child.getTreeParent();
+  if (CODE_BLOCKS.contains(myNode.getElementType())) {
+    return indentIfNotBrace(child);
+  }
+  if (childParent != null && childParent.getElementType() == JetNodeTypes.BODY && child.getElementType() != JetNodeTypes.BLOCK) {
+    return Indent.getNormalIndent();
+  }
+  if (child.getElementType() == JetNodeTypes.WHEN_ENTRY) {
+    return Indent.getNormalIndent();
+  }
+  if (childParent != null && childParent.getElementType() == JetNodeTypes.WHEN_ENTRY) {
+    ASTNode prev=getPrevWithoutWhitespace(child);
+    if (prev != null && prev.getText().equals("->")) {
+      return indentIfNotBrace(child);
+    }
+  }
+  if (STATEMENT_PARTS.contains(myNode.getElementType()) && child.getElementType() != JetNodeTypes.BLOCK) {
+    return Indent.getNormalIndent();
+  }
+  if (childParent != null && childParent.getElementType() == JetNodeTypes.DOT_QUALIFIED_EXPRESSION) {
+    if (childParent.getFirstChildNode() != child && childParent.getLastChildNode() != child) {
+      return Indent.getContinuationWithoutFirstIndent(false);
+    }
+  }
+  if (childParent != null && (childParent.getElementType() == JetNodeTypes.VALUE_PARAMETER_LIST || childParent.getElementType() == JetNodeTypes.TYPE_PARAMETER_LIST || childParent.getElementType() == JetNodeTypes.VALUE_ARGUMENT_LIST || childParent.getElementType() == JetNodeTypes.TYPE_ARGUMENT_LIST)) {
+    if (child.getElementType() == JetTokens.RPAR) {
+      return Indent.getNoneIndent();
+    }
+    return Indent.getContinuationWithoutFirstIndent(false);
+  }
+  return Indent.getNoneIndent();
+}
