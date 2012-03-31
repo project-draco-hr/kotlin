@@ -1,0 +1,19 @@
+{
+  loadText("import java.lang.annotation.*\n" + "" + "Retention(RetentionPolicy.RUNTIME) annotation class A(val a: Array<String>)\n"+ ""+ "A(array(\"239\",\"932\")) class B()");
+  Class aClass=generateClass("A");
+  Retention annotation=(Retention)aClass.getAnnotation(Retention.class);
+  RetentionPolicy value=annotation.value();
+  assertEquals(RetentionPolicy.RUNTIME,value);
+  Method[] methods=aClass.getDeclaredMethods();
+  assertEquals(1,methods.length);
+  assertEquals("a",methods[0].getName());
+  assertEquals(String[].class,methods[0].getReturnType());
+  assertEquals(0,methods[0].getParameterTypes().length);
+  assertTrue(aClass.isAnnotation());
+  Class<?> bClass=aClass.getClassLoader().loadClass("B");
+  Annotation bClassAnnotation=bClass.getAnnotation(aClass);
+  assertNotNull(bClassAnnotation);
+  Object invoke=methods[0].invoke(bClassAnnotation);
+  assertEquals("239",((String[])invoke)[0]);
+  assertEquals("932",((String[])invoke)[1]);
+}
