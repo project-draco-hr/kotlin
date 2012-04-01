@@ -1,0 +1,20 @@
+{
+  loadText("import java.lang.annotation.*\n" + "" + "annotation class C(val c: String)\n"+ "Retention(RetentionPolicy.RUNTIME) annotation class A(val a: C)\n"+ ""+ "A(C(\"239\")) class B()");
+  Class aClass=generateClass("A");
+  Retention annotation=(Retention)aClass.getAnnotation(Retention.class);
+  RetentionPolicy value=annotation.value();
+  assertEquals(RetentionPolicy.RUNTIME,value);
+  Method[] methods=aClass.getDeclaredMethods();
+  assertEquals(1,methods.length);
+  assertEquals("a",methods[0].getName());
+  assertEquals("C",methods[0].getReturnType().getName());
+  assertEquals(0,methods[0].getParameterTypes().length);
+  assertTrue(aClass.isAnnotation());
+  Class<?> bClass=aClass.getClassLoader().loadClass("B");
+  Annotation bClassAnnotation=bClass.getAnnotation(aClass);
+  assertNotNull(bClassAnnotation);
+  Object invoke=methods[0].invoke(bClassAnnotation);
+  Class<?> cClass=invoke.getClass().getInterfaces()[0];
+  assertEquals("C",cClass.getName());
+  assertEquals("239",cClass.getDeclaredMethod("c").invoke(invoke));
+}
