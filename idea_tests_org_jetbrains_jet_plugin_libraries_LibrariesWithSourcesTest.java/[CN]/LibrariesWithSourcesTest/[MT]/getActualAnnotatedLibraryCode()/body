@@ -13,11 +13,22 @@
     }
   }
 ));
-  Document document=FileDocumentManager.getInstance().getDocument(myLibrarySourceFile);
+  Document document=FileDocumentManager.getInstance().getDocument(librarySourceFile);
   assertNotNull(document);
   StringBuilder result=new StringBuilder(document.getText());
   for (  Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
     result.insert(numberOffset._2,String.format("<%d>",numberOffset._1));
   }
-  return result.toString();
+  if (numbersAndOffsets.isEmpty()) {
+    return "";
+  }
+  int minLine=Integer.MAX_VALUE;
+  int maxLine=Integer.MIN_VALUE;
+  for (  Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
+    int lineNumber=document.getLineNumber(numberOffset._2);
+    minLine=Math.min(minLine,lineNumber);
+    maxLine=Math.max(maxLine,lineNumber);
+  }
+  Document annotated=EditorFactory.getInstance().createDocument(result);
+  return annotated.getText().substring(annotated.getLineStartOffset(minLine),annotated.getLineEndOffset(maxLine));
 }
