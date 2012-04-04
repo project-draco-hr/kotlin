@@ -27,7 +27,7 @@
       }
       if (addExpression) {
         JetExpression expression=(JetExpression)element;
-        BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacadeForJVM.SINGLE_DECLARATION_PROVIDER).getBindingContext();
+        BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacadeWithCache.SINGLE_DECLARATION_PROVIDER).getBindingContext();
         JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
         if (expressionType == null || !(expressionType instanceof NamespaceType) && !JetTypeChecker.INSTANCE.equalTypes(JetStandardLibrary.getInstance().getTuple0Type(),expressionType)) {
           expressions.add(expression);
@@ -36,7 +36,9 @@
     }
     element=element.getParent();
   }
-  if (expressions.size() == 0)   throw new IntroduceRefactoringException(JetRefactoringBundle.message("cannot.refactor.not.expression"));
+  if (expressions.size() == 0) {
+    throw new IntroduceRefactoringException(JetRefactoringBundle.message("cannot.refactor.not.expression"));
+  }
   final DefaultListModel model=new DefaultListModel();
   for (  JetExpression expression : expressions) {
     model.addElement(expression);

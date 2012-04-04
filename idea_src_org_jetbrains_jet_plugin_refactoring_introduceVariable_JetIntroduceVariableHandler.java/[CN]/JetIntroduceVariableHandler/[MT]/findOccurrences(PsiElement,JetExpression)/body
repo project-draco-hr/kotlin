@@ -8,7 +8,7 @@
   }
   final JetExpression actualExpression=expression;
   final ArrayList<JetExpression> result=new ArrayList<JetExpression>();
-  final BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacadeForJVM.SINGLE_DECLARATION_PROVIDER).getBindingContext();
+  final BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache((JetFile)expression.getContainingFile(),AnalyzerFacadeWithCache.SINGLE_DECLARATION_PROVIDER).getBindingContext();
   JetVisitorVoid visitor=new JetVisitorVoid(){
     @Override public void visitJetElement(    JetElement element){
       element.acceptChildren(this);
@@ -23,12 +23,20 @@
               JetSimpleNameExpression expr2=(JetSimpleNameExpression)element2.getParent();
               DeclarationDescriptor descr1=bindingContext.get(BindingContext.REFERENCE_TARGET,expr1);
               DeclarationDescriptor descr2=bindingContext.get(BindingContext.REFERENCE_TARGET,expr2);
-              if (descr1 != descr2)               return 1;
- else               return 0;
+              if (descr1 != descr2) {
+                return 1;
+              }
+ else {
+                return 0;
+              }
             }
           }
-          if (!element1.textMatches(element2))           return 1;
- else           return 0;
+          if (!element1.textMatches(element2)) {
+            return 1;
+          }
+ else {
+            return 0;
+          }
         }
       }
 ,null,false)) {

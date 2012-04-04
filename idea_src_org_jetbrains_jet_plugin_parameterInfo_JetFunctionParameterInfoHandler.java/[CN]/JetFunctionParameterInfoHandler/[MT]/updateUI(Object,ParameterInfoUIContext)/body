@@ -7,7 +7,7 @@
     JetValueArgumentList argumentList=(JetValueArgumentList)parameterOwner;
     if (descriptor instanceof FunctionDescriptor) {
       JetFile file=(JetFile)argumentList.getContainingFile();
-      BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache(file,AnalyzerFacadeForJVM.SINGLE_DECLARATION_PROVIDER).getBindingContext();
+      BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFileWithCache(file,AnalyzerFacadeWithCache.SINGLE_DECLARATION_PROVIDER).getBindingContext();
       FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
       StringBuilder builder=new StringBuilder();
       List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
@@ -67,7 +67,9 @@
                   JetType exprType=bindingContext.get(BindingContext.EXPRESSION_TYPE,argument.getArgumentExpression());
                   if (exprType != null && !JetTypeChecker.INSTANCE.isSubtypeOf(exprType,paramType))                   isGrey=true;
                 }
- else                 isGrey=true;
+ else {
+                  isGrey=true;
+                }
               }
               usedIndexes[i]=true;
             }
@@ -93,9 +95,13 @@
                     if (argument.getArgumentExpression() != null) {
                       JetType paramType=getActualParameterType(param);
                       JetType exprType=bindingContext.get(BindingContext.EXPRESSION_TYPE,argument.getArgumentExpression());
-                      if (exprType != null && !JetTypeChecker.INSTANCE.isSubtypeOf(exprType,paramType))                       isGrey=true;
+                      if (exprType != null && !JetTypeChecker.INSTANCE.isSubtypeOf(exprType,paramType)) {
+                        isGrey=true;
+                      }
                     }
- else                     isGrey=true;
+ else {
+                      isGrey=true;
+                    }
                   }
                   break;
                 }
@@ -116,9 +122,15 @@
         }
         if (highlightParameter)         boldEndOffset=builder.length();
       }
-      if (builder.toString().isEmpty())       context.setUIComponentEnabled(false);
- else       context.setupUIComponentPresentation(builder.toString(),boldStartOffset,boldEndOffset,isGrey,isDeprecated,false,color);
+      if (builder.toString().isEmpty()) {
+        context.setUIComponentEnabled(false);
+      }
+ else {
+        context.setupUIComponentPresentation(builder.toString(),boldStartOffset,boldEndOffset,isGrey,isDeprecated,false,color);
+      }
     }
- else     context.setUIComponentEnabled(false);
+ else {
+      context.setUIComponentEnabled(false);
+    }
   }
 }

@@ -1,0 +1,30 @@
+{
+synchronized (lock) {
+    CachedValue<AnalyzeExhaust> bindingContextCachedValue=project.getUserData(ANALYZE_EXHAUST);
+    if (bindingContextCachedValue == null) {
+      bindingContextCachedValue=CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<AnalyzeExhaust>(){
+        @Override public Result<AnalyzeExhaust> compute(){
+          try {
+            AnalyzeExhaust analyzeExhaust=facade.analyzeFiles(project,files,Predicates.<PsiFile>alwaysFalse(),JetControlFlowDataTraceFactory.EMPTY);
+            return new Result<AnalyzeExhaust>(analyzeExhaust,PsiModificationTracker.MODIFICATION_COUNT);
+          }
+ catch (          ProcessCanceledException e) {
+            throw e;
+          }
+catch (          Throwable e) {
+            handleError(e);
+            return emptyExhaust();
+          }
+        }
+        @NotNull private Result<AnalyzeExhaust> emptyExhaust(){
+          BindingTraceContext bindingTraceContext=new BindingTraceContext();
+          AnalyzeExhaust analyzeExhaust=new AnalyzeExhaust(bindingTraceContext.getBindingContext(),null);
+          return new Result<AnalyzeExhaust>(analyzeExhaust,PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      }
+,false);
+      project.putUserData(ANALYZE_EXHAUST,bindingContextCachedValue);
+    }
+    return bindingContextCachedValue.getValue();
+  }
+}
