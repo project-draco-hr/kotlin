@@ -1,12 +1,14 @@
 {
+  CommonCodeStyleSettings commonSettings=mySettings.getCommonSettings(JetLanguage.INSTANCE);
   ASTNode childParent=child.getTreeParent();
+  IElementType childType=child.getElementType();
   if (CODE_BLOCKS.contains(myNode.getElementType())) {
     return indentIfNotBrace(child);
   }
-  if (childParent != null && childParent.getElementType() == JetNodeTypes.BODY && child.getElementType() != JetNodeTypes.BLOCK) {
+  if (childParent != null && childParent.getElementType() == JetNodeTypes.BODY && childType != JetNodeTypes.BLOCK) {
     return Indent.getNormalIndent();
   }
-  if (child.getElementType() == JetNodeTypes.WHEN_ENTRY) {
+  if (childType == JetNodeTypes.WHEN_ENTRY) {
     return Indent.getNormalIndent();
   }
   if (childParent != null && childParent.getElementType() == JetNodeTypes.WHEN_ENTRY) {
@@ -15,7 +17,7 @@
       return indentIfNotBrace(child);
     }
   }
-  if (STATEMENT_PARTS.contains(myNode.getElementType()) && child.getElementType() != JetNodeTypes.BLOCK) {
+  if (STATEMENT_PARTS.contains(myNode.getElementType()) && childType != JetNodeTypes.BLOCK) {
     return Indent.getNormalIndent();
   }
   if (childParent != null && childParent.getElementType() == JetNodeTypes.DOT_QUALIFIED_EXPRESSION) {
@@ -23,11 +25,18 @@
       return Indent.getContinuationWithoutFirstIndent(false);
     }
   }
-  if (childParent != null && (childParent.getElementType() == JetNodeTypes.VALUE_PARAMETER_LIST || childParent.getElementType() == JetNodeTypes.TYPE_PARAMETER_LIST || childParent.getElementType() == JetNodeTypes.VALUE_ARGUMENT_LIST || childParent.getElementType() == JetNodeTypes.TYPE_ARGUMENT_LIST)) {
-    if (child.getElementType() == JetTokens.RPAR) {
-      return Indent.getNoneIndent();
+  if (childParent != null) {
+    IElementType parentType=childParent.getElementType();
+    if (parentType == JetNodeTypes.VALUE_PARAMETER_LIST || parentType == JetNodeTypes.VALUE_ARGUMENT_LIST) {
+      ASTNode prev=getPrevWithoutWhitespace(child);
+      if (childType == JetTokens.RPAR && (prev == null || prev.getElementType() != TokenType.ERROR_ELEMENT)) {
+        return Indent.getNoneIndent();
+      }
+      return Indent.getContinuationWithoutFirstIndent();
     }
-    return Indent.getContinuationWithoutFirstIndent(false);
+    if (parentType == JetNodeTypes.TYPE_PARAMETER_LIST || parentType == JetNodeTypes.TYPE_ARGUMENT_LIST) {
+      return Indent.getContinuationWithoutFirstIndent();
+    }
   }
   return Indent.getNoneIndent();
 }

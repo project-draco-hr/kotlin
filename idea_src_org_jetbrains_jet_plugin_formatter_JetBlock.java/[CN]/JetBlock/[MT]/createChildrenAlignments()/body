@@ -1,12 +1,12 @@
 {
   CommonCodeStyleSettings jetCommonSettings=mySettings.getCommonSettings(JetLanguage.INSTANCE);
-  AlignmentStrategy[] strategies=new AlignmentStrategy[]{AlignmentStrategy.getNullStrategy()};
+  ASTAlignmentStrategy strategy=ASTAlignmentStrategy.getNullStrategy();
   IElementType parentType=myNode.getElementType();
   if (parentType == JetNodeTypes.VALUE_PARAMETER_LIST) {
-    strategies=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS,JetNodeTypes.VALUE_PARAMETER,JetTokens.COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,JetTokens.LPAR,JetTokens.RPAR);
+    strategy=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS,JetNodeTypes.VALUE_PARAMETER,JetTokens.COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,JetTokens.LPAR,JetTokens.RPAR);
   }
  else   if (parentType == JetNodeTypes.VALUE_ARGUMENT_LIST) {
-    strategies=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,JetNodeTypes.VALUE_ARGUMENT,JetTokens.COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,JetTokens.LPAR,JetTokens.RPAR);
+    strategy=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,JetNodeTypes.VALUE_ARGUMENT,JetTokens.COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,JetTokens.LPAR,JetTokens.RPAR);
   }
   HashMap<ASTNode,Alignment> result=new HashMap<ASTNode,Alignment>();
   for (ASTNode child=myNode.getFirstChildNode(); child != null; child=child.getTreeNext()) {
@@ -15,12 +15,9 @@
     if (childType == TokenType.WHITE_SPACE) {
       continue;
     }
-    for (    AlignmentStrategy strategy : strategies) {
-      Alignment childAlignment=strategy.getAlignment(parentType,child.getElementType());
-      if (childAlignment != null) {
-        result.put(child,childAlignment);
-        break;
-      }
+    Alignment childAlignment=strategy.getAlignment(child);
+    if (childAlignment != null) {
+      result.put(child,childAlignment);
     }
   }
   return result;
