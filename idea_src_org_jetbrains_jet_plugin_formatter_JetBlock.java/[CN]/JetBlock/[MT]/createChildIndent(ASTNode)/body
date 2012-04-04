@@ -1,24 +1,17 @@
 {
-  CommonCodeStyleSettings commonSettings=mySettings.getCommonSettings(JetLanguage.INSTANCE);
   ASTNode childParent=child.getTreeParent();
   IElementType childType=child.getElementType();
-  if (CODE_BLOCKS.contains(myNode.getElementType())) {
-    return indentIfNotBrace(child);
-  }
-  if (childParent != null && childParent.getElementType() == JetNodeTypes.BODY && childType != JetNodeTypes.BLOCK) {
-    return Indent.getNormalIndent();
-  }
-  if (childType == JetNodeTypes.WHEN_ENTRY) {
-    return Indent.getNormalIndent();
+  for (  ASTIndentStrategy strategy : INDENT_RULES) {
+    Indent indent=strategy.getIndent(child);
+    if (indent != null) {
+      return indent;
+    }
   }
   if (childParent != null && childParent.getElementType() == JetNodeTypes.WHEN_ENTRY) {
     ASTNode prev=getPrevWithoutWhitespace(child);
     if (prev != null && prev.getText().equals("->")) {
       return indentIfNotBrace(child);
     }
-  }
-  if (STATEMENT_PARTS.contains(myNode.getElementType()) && childType != JetNodeTypes.BLOCK) {
-    return Indent.getNormalIndent();
   }
   if (childParent != null && childParent.getElementType() == JetNodeTypes.DOT_QUALIFIED_EXPRESSION) {
     if (childParent.getFirstChildNode() != child && childParent.getLastChildNode() != child) {
