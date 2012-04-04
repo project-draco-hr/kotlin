@@ -1,0 +1,33 @@
+{
+  for (  HighlightingVisitor visitor : getBeforeAnalysisVisitors(holder)) {
+    element.accept(visitor);
+  }
+  if (element instanceof JetFile) {
+    JetFile file=(JetFile)element;
+    try {
+      BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file).getBindingContext();
+      if (errorReportingEnabled) {
+        Collection<Diagnostic> diagnostics=Sets.newLinkedHashSet(bindingContext.getDiagnostics());
+        Set<PsiElement> redeclarations=Sets.newHashSet();
+        for (        Diagnostic diagnostic : diagnostics) {
+          if (diagnostic.getPsiFile() != file)           continue;
+          registerDiagnosticAnnotations(diagnostic,redeclarations,holder);
+        }
+      }
+      for (      HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
+        file.acceptChildren(visitor);
+      }
+    }
+ catch (    ProcessCanceledException e) {
+      throw e;
+    }
+catch (    AssertionError e) {
+      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
+      throw e;
+    }
+catch (    Throwable e) {
+      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+}

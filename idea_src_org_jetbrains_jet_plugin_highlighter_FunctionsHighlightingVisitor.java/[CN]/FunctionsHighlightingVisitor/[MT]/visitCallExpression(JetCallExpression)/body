@@ -1,0 +1,24 @@
+{
+  JetExpression callee=expression.getCalleeExpression();
+  if (callee instanceof JetReferenceExpression) {
+    DeclarationDescriptor calleeDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetReferenceExpression)callee);
+    if (calleeDescriptor != null) {
+      if (calleeDescriptor instanceof ConstructorDescriptor) {
+        JetPsiChecker.highlightName(holder,callee,JetHighlightingColors.CONSTRUCTOR_CALL);
+      }
+ else       if (calleeDescriptor instanceof FunctionDescriptor && !(calleeDescriptor instanceof VariableAsFunctionDescriptor)) {
+        FunctionDescriptor fun=(FunctionDescriptor)calleeDescriptor;
+        if (fun.getReceiverParameter() != ReceiverDescriptor.NO_RECEIVER) {
+          JetPsiChecker.highlightName(holder,callee,JetHighlightingColors.EXTENSION_FUNCTION_CALL);
+        }
+ else         if (fun.getContainingDeclaration() instanceof NamespaceDescriptor) {
+          JetPsiChecker.highlightName(holder,callee,JetHighlightingColors.NAMESPACE_FUNCTION_CALL);
+        }
+ else {
+          JetPsiChecker.highlightName(holder,callee,JetHighlightingColors.FUNCTION_CALL);
+        }
+      }
+    }
+  }
+  super.visitCallExpression(expression);
+}

@@ -1,0 +1,53 @@
+{
+  List<TextRange> textRanges=diagnostic.getTextRanges();
+  if (diagnostic.getSeverity() == Severity.ERROR) {
+    if (diagnostic.getFactory() == Errors.UNRESOLVED_IDE_TEMPLATE) {
+      return;
+    }
+    if (diagnostic instanceof UnresolvedReferenceDiagnostic) {
+      UnresolvedReferenceDiagnostic unresolvedReferenceDiagnostic=(UnresolvedReferenceDiagnostic)diagnostic;
+      JetReferenceExpression referenceExpression=unresolvedReferenceDiagnostic.getPsiElement();
+      PsiReference reference=referenceExpression.getReference();
+      if (reference instanceof MultiRangeReference) {
+        MultiRangeReference mrr=(MultiRangeReference)reference;
+        for (        TextRange range : mrr.getRanges()) {
+          Annotation annotation=holder.createErrorAnnotation(range.shiftRight(referenceExpression.getTextOffset()),diagnostic.getMessage());
+          registerQuickFix(annotation,diagnostic);
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+      }
+ else {
+        for (        TextRange textRange : textRanges) {
+          Annotation annotation=holder.createErrorAnnotation(textRange,diagnostic.getMessage());
+          registerQuickFix(annotation,diagnostic);
+          annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+      }
+      return;
+    }
+    if (diagnostic.getFactory() == Errors.ILLEGAL_ESCAPE_SEQUENCE) {
+      for (      TextRange textRange : diagnostic.getTextRanges()) {
+        Annotation annotation=holder.createErrorAnnotation(textRange,diagnostic.getMessage());
+        annotation.setTextAttributes(JetHighlightingColors.INVALID_STRING_ESCAPE);
+      }
+    }
+    if (diagnostic instanceof RedeclarationDiagnostic) {
+      RedeclarationDiagnostic redeclarationDiagnostic=(RedeclarationDiagnostic)diagnostic;
+      registerQuickFix(markRedeclaration(redeclarations,redeclarationDiagnostic,holder),diagnostic);
+      return;
+    }
+    for (    TextRange textRange : textRanges) {
+      Annotation errorAnnotation=holder.createErrorAnnotation(textRange,getMessage(diagnostic));
+      registerQuickFix(errorAnnotation,diagnostic);
+    }
+  }
+ else   if (diagnostic.getSeverity() == Severity.WARNING) {
+    for (    TextRange textRange : textRanges) {
+      Annotation annotation=holder.createWarningAnnotation(textRange,getMessage(diagnostic));
+      registerQuickFix(annotation,diagnostic);
+      if (diagnostic.getFactory() instanceof UnusedElementDiagnosticFactory) {
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      }
+    }
+  }
+}
