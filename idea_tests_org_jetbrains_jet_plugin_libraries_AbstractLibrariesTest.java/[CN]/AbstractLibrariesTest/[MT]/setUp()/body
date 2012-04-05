@@ -1,2 +1,23 @@
 {
+  super.setUp();
+  String libraryPath=FileUtil.getTempDirectory();
+  librarySourceDir=LocalFileSystem.getInstance().findFileByPath(TEST_DATA_PATH + "/library");
+  assertNotNull(librarySourceDir);
+  KotlinCompiler.ExitCode compilerExec=new KotlinCompiler().exec("-src",librarySourceDir.getPath(),"-output",libraryPath);
+  assertEquals(KotlinCompiler.ExitCode.OK,compilerExec);
+  libraryDir=LocalFileSystem.getInstance().findFileByPath(libraryPath);
+  assertNotNull(libraryDir);
+  ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    @Override public void run(){
+      ModifiableRootModel moduleModel=ModuleRootManager.getInstance(myModule).getModifiableModel();
+      Library.ModifiableModel libraryModel=moduleModel.getModuleLibraryTable().getModifiableModel().createLibrary("myKotlinLib").getModifiableModel();
+      libraryModel.addRoot(libraryDir,OrderRootType.CLASSES);
+      if (isWithSources()) {
+        libraryModel.addRoot(librarySourceDir,OrderRootType.SOURCES);
+      }
+      libraryModel.commit();
+      moduleModel.commit();
+    }
+  }
+);
 }

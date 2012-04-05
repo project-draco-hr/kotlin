@@ -1,34 +1,47 @@
 {
-  List<Tuple2<Integer,Integer>> numbersAndOffsets=new ArrayList<Tuple2<Integer,Integer>>();
+  MultiMap<PsiFile,Tuple2<Integer,Integer>> filesToNumbersAndOffsets=new MultiMap<PsiFile,Tuple2<Integer,Integer>>();
+  int refNumber=1;
   for (  JetPsiReference ref : collectInterestingReferences()) {
     PsiElement target=ref.resolve();
     assertNotNull(target);
     PsiElement navigationElement=target.getNavigationElement();
-    numbersAndOffsets.add(new Tuple2<Integer,Integer>(numbersAndOffsets.size() + 1,navigationElement.getTextOffset()));
+    Tuple2<Integer,Integer> numberAndOffset=new Tuple2<Integer,Integer>(refNumber++,navigationElement.getTextOffset());
+    filesToNumbersAndOffsets.putValue(navigationElement.getContainingFile(),numberAndOffset);
   }
-  Collections.sort(numbersAndOffsets,Collections.reverseOrder(new Comparator<Tuple2<Integer,Integer>>(){
-    @Override public int compare(    Tuple2<Integer,Integer> t1,    Tuple2<Integer,Integer> t2){
-      int offsets=t1._2.compareTo(t2._2);
-      return offsets == 0 ? t1._1.compareTo(t2._1) : offsets;
+  List<PsiFile> files=new ArrayList<PsiFile>(filesToNumbersAndOffsets.keySet());
+  Collections.sort(files,new Comparator<PsiFile>(){
+    @Override public int compare(    PsiFile o1,    PsiFile o2){
+      return getRelativePath(o1).compareTo(getRelativePath(o2));
     }
   }
+);
+  StringBuilder result=new StringBuilder();
+  for (  PsiFile file : files) {
+    List<Tuple2<Integer,Integer>> numbersAndOffsets=new ArrayList<Tuple2<Integer,Integer>>(filesToNumbersAndOffsets.get(file));
+    Collections.sort(numbersAndOffsets,Collections.reverseOrder(new Comparator<Tuple2<Integer,Integer>>(){
+      @Override public int compare(      Tuple2<Integer,Integer> t1,      Tuple2<Integer,Integer> t2){
+        int offsets=t1._2.compareTo(t2._2);
+        return offsets == 0 ? t1._1.compareTo(t2._1) : offsets;
+      }
+    }
 ));
-  Document document=FileDocumentManager.getInstance().getDocument(librarySourceFile);
-  assertNotNull(document);
-  StringBuilder result=new StringBuilder(document.getText());
-  for (  Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
-    result.insert(numberOffset._2,String.format("<%d>",numberOffset._1));
+    Document document=PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    assertNotNull(document);
+    StringBuilder resultForFile=new StringBuilder(document.getText());
+    for (    Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
+      resultForFile.insert(numberOffset._2,String.format("<%d>",numberOffset._1));
+    }
+    int minLine=Integer.MAX_VALUE;
+    int maxLine=Integer.MIN_VALUE;
+    for (    Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
+      int lineNumber=document.getLineNumber(numberOffset._2);
+      minLine=Math.min(minLine,lineNumber);
+      maxLine=Math.max(maxLine,lineNumber);
+    }
+    Document annotated=EditorFactory.getInstance().createDocument(resultForFile);
+    String filePart=annotated.getText().substring(annotated.getLineStartOffset(minLine),annotated.getLineEndOffset(maxLine));
+    result.append(" ").append(getRelativePath(file)).append("\n");
+    result.append(filePart).append("\n");
   }
-  if (numbersAndOffsets.isEmpty()) {
-    return "";
-  }
-  int minLine=Integer.MAX_VALUE;
-  int maxLine=Integer.MIN_VALUE;
-  for (  Tuple2<Integer,Integer> numberOffset : numbersAndOffsets) {
-    int lineNumber=document.getLineNumber(numberOffset._2);
-    minLine=Math.min(minLine,lineNumber);
-    maxLine=Math.max(maxLine,lineNumber);
-  }
-  Document annotated=EditorFactory.getInstance().createDocument(result);
-  return annotated.getText().substring(annotated.getLineStartOffset(minLine),annotated.getLineEndOffset(maxLine));
+  return result.toString();
 }
