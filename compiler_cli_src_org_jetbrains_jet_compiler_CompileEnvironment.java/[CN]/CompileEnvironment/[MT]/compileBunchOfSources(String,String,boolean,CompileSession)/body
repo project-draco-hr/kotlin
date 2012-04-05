@@ -1,0 +1,30 @@
+{
+  FqName mainClass=null;
+  for (  JetFile file : session.getSourceFiles()) {
+    if (JetMainDetector.hasMain(file.getDeclarations())) {
+      FqName fqName=JetPsiUtil.getFQName(file);
+      mainClass=fqName.child(JvmAbi.PACKAGE_CLASS);
+      break;
+    }
+  }
+  ensureRuntime();
+  if (!session.analyze() && !ignoreErrors) {
+    return false;
+  }
+  ClassFileFactory factory=session.generate(false).getFactory();
+  if (jar != null) {
+    try {
+      writeToJar(factory,new FileOutputStream(jar),mainClass,includeRuntime);
+    }
+ catch (    FileNotFoundException e) {
+      throw new CompileEnvironmentException("Invalid jar path " + jar,e);
+    }
+  }
+ else   if (outputDir != null) {
+    writeToOutputDirectory(factory,outputDir);
+  }
+ else {
+    throw new CompileEnvironmentException("Output directory or jar file is not specified - no files will be saved to the disk");
+  }
+  return true;
+}
