@@ -1,11 +1,30 @@
 {
   List<ResolutionTask<D>> result=Lists.newArrayList();
   ReceiverDescriptor explicitReceiver=context.call.getExplicitReceiver();
-  JetScope scope=context.scope;
+  final JetScope scope;
   if (explicitReceiver.exists() && explicitReceiver.getType() instanceof NamespaceType) {
     scope=explicitReceiver.getType().getMemberScope();
     explicitReceiver=NO_RECEIVER;
   }
-  doComputeTasks(scope,explicitReceiver,name,result,context,functionReference);
+ else {
+    scope=context.scope;
+  }
+  final Predicate<ResolvedCallImpl<D>> visibleStrategy=new Predicate<ResolvedCallImpl<D>>(){
+    @Override public boolean apply(    @Nullable ResolvedCallImpl<D> call){
+      if (call == null)       return false;
+      D candidateDescriptor=call.getCandidateDescriptor();
+      if (ErrorUtils.isError(candidateDescriptor))       return true;
+      return Visibilities.isVisible(candidateDescriptor,scope.getContainingDeclaration());
+    }
+  }
+;
+  Predicate<ResolvedCallImpl<D>> invisibleStrategy=new Predicate<ResolvedCallImpl<D>>(){
+    @Override public boolean apply(    @Nullable ResolvedCallImpl<D> call){
+      return !visibleStrategy.apply(call);
+    }
+  }
+;
+  doComputeTasks(scope,explicitReceiver,name,result,context,functionReference,visibleStrategy);
+  doComputeTasks(scope,explicitReceiver,name,result,context,functionReference,invisibleStrategy);
   return result;
 }

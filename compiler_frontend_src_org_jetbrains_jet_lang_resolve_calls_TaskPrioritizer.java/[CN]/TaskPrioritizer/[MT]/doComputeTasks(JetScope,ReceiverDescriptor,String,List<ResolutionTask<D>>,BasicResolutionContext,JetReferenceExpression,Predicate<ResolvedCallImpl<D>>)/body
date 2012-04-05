@@ -15,29 +15,29 @@
       convertWithReceivers(membersForThisVariant,Collections.singletonList(variant),Collections.singletonList(NO_RECEIVER),members);
     }
     if (getReceiverSuper(receiver) != null) {
-      addTask(result,members,context,functionReference);
-      addTask(result,locals,context,functionReference);
+      addTask(result,members,context,functionReference,filterStrategy);
+      addTask(result,locals,context,functionReference,filterStrategy);
     }
  else {
-      addTask(result,locals,context,functionReference);
-      addTask(result,members,context,functionReference);
+      addTask(result,locals,context,functionReference,filterStrategy);
+      addTask(result,members,context,functionReference,filterStrategy);
     }
     for (    ReceiverDescriptor implicitReceiver : implicitReceivers) {
       Collection<D> memberExtensions=getExtensionsByName(implicitReceiver.getType().getMemberScope(),name);
       List<ReceiverDescriptor> variantsForImplicitReceiver=autoCastService.getVariantsForReceiver(implicitReceiver);
-      addTask(result,convertWithReceivers(memberExtensions,variantsForImplicitReceiver,variantsForExplicitReceiver),context,functionReference);
+      addTask(result,convertWithReceivers(memberExtensions,variantsForImplicitReceiver,variantsForExplicitReceiver),context,functionReference,filterStrategy);
     }
-    addTask(result,nonlocals,context,functionReference);
+    addTask(result,nonlocals,context,functionReference,filterStrategy);
   }
  else {
     Collection<ResolvedCallImpl<D>> functions=convertWithImpliedThis(scope,Collections.singletonList(receiver),getNonExtensionsByName(scope,name));
     List<ResolvedCallImpl<D>> nonlocals=Lists.newArrayList();
     List<ResolvedCallImpl<D>> locals=Lists.newArrayList();
     TaskPrioritizer.<D>splitLexicallyLocalDescriptors(functions,scope.getContainingDeclaration(),locals,nonlocals);
-    addTask(result,locals,context,functionReference);
+    addTask(result,locals,context,functionReference,filterStrategy);
     for (    ReceiverDescriptor implicitReceiver : implicitReceivers) {
-      doComputeTasks(scope,implicitReceiver,name,result,context,functionReference);
+      doComputeTasks(scope,implicitReceiver,name,result,context,functionReference,filterStrategy);
     }
-    addTask(result,nonlocals,context,functionReference);
+    addTask(result,nonlocals,context,functionReference,filterStrategy);
   }
 }
