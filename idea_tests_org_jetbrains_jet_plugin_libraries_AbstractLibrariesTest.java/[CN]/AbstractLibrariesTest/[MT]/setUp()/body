@@ -1,11 +1,21 @@
 {
   super.setUp();
-  String libraryPath=FileUtil.getTempDirectory();
+  File libraryIoDir=createTempDir("libraries_");
+  VirtualFile testDataDir=LocalFileSystem.getInstance().findFileByPath(TEST_DATA_PATH);
+  assertNotNull(testDataDir);
+  VfsUtilCore.visitChildrenRecursively(testDataDir,new VirtualFileVisitor(){
+    @Override public boolean visitFile(    @NotNull VirtualFile file){
+      file.getChildren();
+      file.refresh(false,true);
+      return true;
+    }
+  }
+);
   librarySourceDir=LocalFileSystem.getInstance().findFileByPath(TEST_DATA_PATH + "/library");
   assertNotNull(librarySourceDir);
-  KotlinCompiler.ExitCode compilerExec=new KotlinCompiler().exec("-src",librarySourceDir.getPath(),"-output",libraryPath);
+  KotlinCompiler.ExitCode compilerExec=new KotlinCompiler().exec("-src",librarySourceDir.getPath(),"-output",libraryIoDir.getAbsolutePath());
   assertEquals(KotlinCompiler.ExitCode.OK,compilerExec);
-  libraryDir=LocalFileSystem.getInstance().findFileByPath(libraryPath);
+  libraryDir=LocalFileSystem.getInstance().findFileByIoFile(libraryIoDir);
   assertNotNull(libraryDir);
   ApplicationManager.getApplication().runWriteAction(new Runnable(){
     @Override public void run(){
