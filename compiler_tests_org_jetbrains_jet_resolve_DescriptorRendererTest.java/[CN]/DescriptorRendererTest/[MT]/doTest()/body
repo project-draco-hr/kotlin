@@ -1,0 +1,26 @@
+{
+  String fileName=getTestName(false) + ".kt";
+  JetFile psiFile=createPsiFile(fileName,loadFile(fileName));
+  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration((JetFile)psiFile,JetControlFlowDataTraceFactory.EMPTY);
+  final BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  final List<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
+  psiFile.acceptChildren(new JetVisitorVoid(){
+    @Override public void visitJetElement(    JetElement element){
+      DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
+      if (descriptor != null) {
+        descriptors.add(descriptor);
+      }
+      element.acceptChildren(this);
+    }
+  }
+);
+  StringBuilder renderedDescriptors=new StringBuilder();
+  for (  DeclarationDescriptor descriptor : descriptors) {
+    if (renderedDescriptors.length() != 0) {
+      renderedDescriptors.append("\n");
+    }
+    renderedDescriptors.append(DescriptorRenderer.TEXT.render(descriptor));
+  }
+  Document document=new DocumentImpl(psiFile.getText());
+  assertSameLines(JetTestUtils.getLastCommentedLines(document),renderedDescriptors.toString());
+}
