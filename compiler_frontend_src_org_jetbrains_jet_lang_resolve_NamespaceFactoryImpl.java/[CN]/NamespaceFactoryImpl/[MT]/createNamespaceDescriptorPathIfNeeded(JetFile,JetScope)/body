@@ -1,7 +1,7 @@
 {
   JetNamespaceHeader namespaceHeader=file.getNamespaceHeader();
   if (moduleDescriptor.getRootNs() == null) {
-    createNamespaceDescriptorIfNeeded(null,moduleDescriptor,"<root>",true);
+    createNamespaceDescriptorIfNeeded(null,moduleDescriptor,"<root>",true,null);
   }
   NamespaceDescriptorParent currentOwner=moduleDescriptor.getRootNs();
   if (currentOwner == null) {
@@ -9,16 +9,15 @@
   }
   for (  JetSimpleNameExpression nameExpression : namespaceHeader.getParentNamespaceNames()) {
     String namespaceName=JetPsiUtil.safeName(nameExpression.getReferencedName());
-    NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(null,currentOwner,namespaceName,false);
+    NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(null,currentOwner,namespaceName,false,nameExpression);
     trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
-    currentOwner=namespaceDescriptor;
-    trace.record(REFERENCE_TARGET,nameExpression,currentOwner);
     trace.record(RESOLUTION_SCOPE,nameExpression,outerScope);
     outerScope=namespaceDescriptor.getMemberScope();
+    currentOwner=namespaceDescriptor;
   }
   String name=JetPsiUtil.safeName(namespaceHeader.getName());
-  trace.record(RESOLUTION_SCOPE,namespaceHeader,outerScope);
-  NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,currentOwner,name,false);
+  NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,currentOwner,name,false,namespaceHeader.getLastPartExpression());
   trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
+  trace.record(RESOLUTION_SCOPE,namespaceHeader,outerScope);
   return namespaceDescriptor;
 }
