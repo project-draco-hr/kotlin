@@ -1,7 +1,23 @@
 {
   Type known=knowTypes.get(jetType);
   if (known != null) {
-    return mapKnownAsmType(jetType,known,signatureVisitor,boxPrimitive);
+    if (kind == MapTypeMode.VALUE) {
+      return mapKnownAsmType(jetType,known,signatureVisitor,false);
+    }
+ else     if (kind == MapTypeMode.TYPE_PARAMETER) {
+      return mapKnownAsmType(jetType,known,signatureVisitor,true);
+    }
+ else     if (kind == MapTypeMode.TRAIT_IMPL) {
+      throw new IllegalStateException("TRAIT_IMPL is not possible for " + jetType);
+    }
+ else     if (kind == MapTypeMode.IMPL) {
+      if (compilerSpecialMode != CompilerSpecialMode.BUILTINS) {
+        throw new IllegalStateException("must not map known type to IMPL when not compiling builtins: " + jetType);
+      }
+    }
+ else {
+      throw new IllegalStateException("unknown kind: " + kind);
+    }
   }
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
   if (ErrorUtils.isError(descriptor)) {
@@ -18,7 +34,7 @@
     JetType memberType=jetType.getArguments().get(0).getType();
     if (signatureVisitor != null) {
       signatureVisitor.writeArrayType(jetType.isNullable());
-      mapType(memberType,kind,signatureVisitor,true);
+      mapType(memberType,signatureVisitor,MapTypeMode.TYPE_PARAMETER);
       signatureVisitor.writeArrayEnd();
     }
     if (!isGenericsArray(jetType)) {
@@ -46,14 +62,14 @@
     }
  else {
       JvmClassName name=getClassFQName((ClassDescriptor)descriptor);
-      asmType=Type.getObjectType(name.getInternalName() + (kind == OwnerKind.TRAIT_IMPL ? JvmAbi.TRAIT_IMPL_SUFFIX : ""));
+      asmType=Type.getObjectType(name.getInternalName() + (kind == MapTypeMode.TRAIT_IMPL ? JvmAbi.TRAIT_IMPL_SUFFIX : ""));
       forceReal=isForceReal(name);
     }
     if (signatureVisitor != null) {
       signatureVisitor.writeClassBegin(asmType.getInternalName(),jetType.isNullable(),forceReal);
       for (      TypeProjection proj : jetType.getArguments()) {
         signatureVisitor.writeTypeArgument(proj.getProjectionKind());
-        mapType(proj.getType(),kind,signatureVisitor,true);
+        mapType(proj.getType(),signatureVisitor,MapTypeMode.TYPE_PARAMETER);
         signatureVisitor.writeTypeArgumentEnd();
       }
       signatureVisitor.writeClassEnd();

@@ -25,13 +25,14 @@
             reg+=argType.getSize();
           }
           JetType jetType=TraitImplBodyCodegen.getSuperClass(declaration,bindingContext);
-          Type type=typeMapper.mapType(jetType);
+          Type type=typeMapper.mapType(jetType,MapTypeMode.IMPL);
           if (type.getInternalName().equals("java/lang/Object")) {
             jetType=declaration.getDefaultType();
-            type=typeMapper.mapType(jetType);
+            type=typeMapper.mapType(jetType,MapTypeMode.IMPL);
           }
           String fdescriptor=functionOriginal.getDescriptor().replace("(","(" + type.getDescriptor());
-          iv.invokestatic(typeMapper.mapType(((ClassDescriptor)fun.getContainingDeclaration()).getDefaultType(),OwnerKind.TRAIT_IMPL).getInternalName(),function.getName(),fdescriptor);
+          Type type1=typeMapper.mapType(((ClassDescriptor)fun.getContainingDeclaration()).getDefaultType(),MapTypeMode.TRAIT_IMPL);
+          iv.invokestatic(type1.getInternalName(),function.getName(),fdescriptor);
           if (function.getReturnType().getSort() == Type.OBJECT) {
             iv.checkcast(function.getReturnType());
           }
