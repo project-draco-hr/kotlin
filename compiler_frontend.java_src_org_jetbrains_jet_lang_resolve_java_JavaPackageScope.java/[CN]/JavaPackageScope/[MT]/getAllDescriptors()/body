@@ -5,17 +5,16 @@
       allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveMethods(psiClass,descriptor));
       allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveFieldGroup(descriptor,psiClass,staticMembers()));
     }
-    final PsiPackage javaPackage=semanticServices.getPsiClassFinder().findPsiPackage(packageFQN);
-    if (javaPackage != null) {
-      boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(new FqName(javaPackage.getQualifiedName())) != null;
+    if (psiPackage != null) {
+      boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(packageFQN) != null;
       final JavaDescriptorResolver descriptorResolver=semanticServices.getDescriptorResolver();
-      for (      PsiPackage psiSubPackage : javaPackage.getSubPackages()) {
+      for (      PsiPackage psiSubPackage : psiPackage.getSubPackages()) {
         NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
         if (childNs != null) {
           allDescriptors.add(childNs);
         }
       }
-      for (      PsiClass psiClass : javaPackage.getClasses()) {
+      for (      PsiClass psiClass : psiPackage.getClasses()) {
         if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
           continue;
         }
