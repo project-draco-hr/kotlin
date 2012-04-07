@@ -24,6 +24,7 @@
     if (signatureVisitor != null) {
       visitAsmType(signatureVisitor,asmType,true);
     }
+    checkValidType(asmType);
     return asmType;
   }
   if (standardLibrary.getArray().equals(descriptor)) {
@@ -36,17 +37,21 @@
       mapType(memberType,signatureVisitor,MapTypeMode.TYPE_PARAMETER);
       signatureVisitor.writeArrayEnd();
     }
+    Type r;
     if (!isGenericsArray(jetType)) {
-      return Type.getType("[" + boxType(mapType(memberType,kind)).getDescriptor());
+      r=Type.getType("[" + boxType(mapType(memberType,kind)).getDescriptor());
     }
  else {
-      return ARRAY_GENERIC_TYPE;
+      r=ARRAY_GENERIC_TYPE;
     }
+    checkValidType(r);
+    return r;
   }
   if (JetStandardClasses.getAny().equals(descriptor)) {
     if (signatureVisitor != null) {
       visitAsmType(signatureVisitor,TYPE_OBJECT,jetType.isNullable());
     }
+    checkValidType(TYPE_OBJECT);
     return TYPE_OBJECT;
   }
   if (descriptor instanceof ClassDescriptor) {
@@ -73,6 +78,7 @@
       }
       signatureVisitor.writeClassEnd();
     }
+    checkValidType(asmType);
     return asmType;
   }
   if (descriptor instanceof TypeParameterDescriptor) {
@@ -81,6 +87,7 @@
       TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)jetType.getConstructor().getDeclarationDescriptor();
       signatureVisitor.writeTypeVariable(typeParameterDescriptor.getName(),jetType.isNullable(),type);
     }
+    checkValidType(type);
     return type;
   }
   throw new UnsupportedOperationException("Unknown type " + jetType);
