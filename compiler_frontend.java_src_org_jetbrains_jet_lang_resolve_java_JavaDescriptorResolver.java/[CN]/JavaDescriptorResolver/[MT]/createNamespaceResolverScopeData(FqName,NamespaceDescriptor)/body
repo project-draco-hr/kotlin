@@ -1,0 +1,20 @@
+{
+  PsiPackage psiPackage=semanticServices.getPsiClassFinder().findPsiPackage(fqName);
+  PsiClass psiClass=getPsiClassForJavaPackageScope(fqName);
+  if (psiClass == null && psiPackage == null) {
+    return null;
+  }
+  if (psiPackage != null) {
+    trace.record(JavaBindingContext.NAMESPACE_IS_CLASS_STATICS,ns,false);
+  }
+  JavaPackageScope scope=new JavaPackageScope(fqName,ns,semanticServices,psiPackage,psiClass);
+  ResolverNamespaceData namespaceData=new ResolverNamespaceData();
+  namespaceData.namespaceDescriptor=ns;
+  namespaceData.kotlin=true;
+  namespaceData.memberScope=scope;
+  ResolverNamespaceData oldValue=namespaceDescriptorCacheByFqn.put(fqName,namespaceData);
+  if (oldValue != null) {
+    throw new IllegalStateException("rewrite at " + fqName);
+  }
+  return namespaceData;
+}
