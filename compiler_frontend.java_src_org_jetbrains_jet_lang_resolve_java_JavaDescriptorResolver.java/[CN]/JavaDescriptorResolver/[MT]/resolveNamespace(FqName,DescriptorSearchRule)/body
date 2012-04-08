@@ -14,11 +14,20 @@
       throw new IllegalStateException("unknown searchRule: " + searchRule);
     }
   }
-  PsiPackage psiPackage=psiClassFinder.findPsiPackage(qualifiedName);
-  if (psiPackage == null) {
-    PsiClass psiClass=psiClassFinder.findPsiClass(qualifiedName);
-    if (psiClass == null)     return null;
-    return resolveNamespace(psiClass);
+  ResolverNamespaceData namespaceData=namespaceDescriptorCacheByFqn.get(qualifiedName);
+  if (namespaceData != null) {
+    return namespaceData.namespaceDescriptor;
   }
-  return resolveNamespace(psiPackage);
+  NamespaceDescriptorParent parentNs=resolveParentNamespace(qualifiedName);
+  if (parentNs == null) {
+    return null;
+  }
+  JavaNamespaceDescriptor ns=new JavaNamespaceDescriptor(parentNs,Collections.<AnnotationDescriptor>emptyList(),qualifiedName.isRoot() ? "<root>" : qualifiedName.shortName(),qualifiedName);
+  ResolverNamespaceData scopeData=createNamespaceResolverScopeData(qualifiedName,ns);
+  if (scopeData == null) {
+    return null;
+  }
+  trace.record(BindingContext.NAMESPACE,scopeData.getPsiPackageOrPsiClass(),ns);
+  ns.setMemberScope(scopeData.memberScope);
+  return scopeData.namespaceDescriptor;
 }

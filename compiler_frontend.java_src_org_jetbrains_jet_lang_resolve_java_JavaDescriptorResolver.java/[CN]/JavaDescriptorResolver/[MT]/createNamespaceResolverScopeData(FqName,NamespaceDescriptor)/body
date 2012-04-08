@@ -1,23 +1,22 @@
 {
   PsiPackage psiPackage;
-  psiPackage=semanticServices.getPsiClassFinder().findPsiPackage(fqName);
   PsiClass psiClass;
   lookingForPsi: {
     psiClass=getPsiClassForJavaPackageScope(fqName);
+    psiPackage=semanticServices.getPsiClassFinder().findPsiPackage(fqName);
     if (psiClass != null || psiPackage != null) {
+      trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,ns,JavaNamespaceKind.PROPER);
       break lookingForPsi;
     }
     psiClass=psiClassFinder.findPsiClass(fqName);
-    if (psiClass == null) {
-      return null;
+    if (psiClass != null) {
+      trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,ns,JavaNamespaceKind.CLASS_STATICS);
+      break lookingForPsi;
     }
-  }
-  if (psiPackage != null) {
-    trace.record(JavaBindingContext.NAMESPACE_IS_CLASS_STATICS,ns,false);
+    return null;
   }
   ResolverNamespaceData namespaceData=new ResolverNamespaceData(psiClass,psiPackage,fqName,ns);
-  JavaPackageScope scope=new JavaPackageScope(fqName,semanticServices,namespaceData);
-  namespaceData.memberScope=scope;
+  namespaceData.memberScope=new JavaPackageScope(fqName,semanticServices,namespaceData);
   ResolverNamespaceData oldValue=namespaceDescriptorCacheByFqn.put(fqName,namespaceData);
   if (oldValue != null) {
     throw new IllegalStateException("rewrite at " + fqName);
