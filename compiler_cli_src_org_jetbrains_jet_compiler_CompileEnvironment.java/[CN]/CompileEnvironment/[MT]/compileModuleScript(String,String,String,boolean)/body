@@ -1,7 +1,6 @@
 {
   CompileEnvironment moduleCompilationEnvironment=copyEnvironment(false);
   try {
-    moduleCompilationEnvironment.stdlibUrl=stdlibUrl;
     List<Module> modules=moduleCompilationEnvironment.loadModuleScript(moduleScriptFile);
     if (modules == null) {
       throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
@@ -12,6 +11,9 @@
     final String directory=new File(moduleScriptFile).getParent();
     for (    Module moduleBuilder : modules) {
       CompileEnvironment compileEnvironment=copyEnvironment(verbose);
+      if (compilerDependencies.getRuntimeJar() != null) {
+        compileEnvironment.addToClasspath(compilerDependencies.getRuntimeJar());
+      }
       try {
         ClassFileFactory moduleFactory=compileEnvironment.compileModule(moduleBuilder,directory);
         if (moduleFactory == null) {

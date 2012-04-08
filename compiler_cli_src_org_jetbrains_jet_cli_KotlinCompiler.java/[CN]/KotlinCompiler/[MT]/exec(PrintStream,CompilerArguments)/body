@@ -23,7 +23,32 @@
       throw new IllegalArgumentException("unknown compiler mode: " + arguments.mode);
     }
   }
-  CompileEnvironment environment=new CompileEnvironment(messageRenderer,arguments.verbose,mode);
+  File jdkHeadersJar;
+  if (mode.includeJdkHeaders()) {
+    if (arguments.jdkHeaders != null) {
+      jdkHeadersJar=new File(arguments.jdkHeaders);
+    }
+ else {
+      jdkHeadersJar=PathUtil.getAltHeadersPath();
+    }
+  }
+ else {
+    jdkHeadersJar=null;
+  }
+  File runtimeJar;
+  if (mode.includeKotlinRuntime()) {
+    if (arguments.stdlib != null) {
+      runtimeJar=new File(arguments.stdlib);
+    }
+ else {
+      runtimeJar=PathUtil.getDefaultRuntimePath();
+    }
+  }
+ else {
+    runtimeJar=null;
+  }
+  CompilerDependencies dependencies=new CompilerDependencies(mode,jdkHeadersJar,runtimeJar);
+  CompileEnvironment environment=new CompileEnvironment(messageRenderer,arguments.verbose,dependencies);
   try {
     configureEnvironment(environment,arguments,errStream);
     boolean noErrors;

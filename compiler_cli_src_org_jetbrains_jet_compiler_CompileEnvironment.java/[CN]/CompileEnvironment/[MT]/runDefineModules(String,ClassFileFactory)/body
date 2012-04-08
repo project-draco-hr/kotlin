@@ -1,5 +1,17 @@
 {
-  GeneratedClassLoader loader=stdlibUrl != null ? new GeneratedClassLoader(factory,new URLClassLoader(new URL[]{stdlibUrl},AllModules.class.getClassLoader())) : new GeneratedClassLoader(factory,CompileEnvironment.class.getClassLoader());
+  File stdlibJar=compilerDependencies.getRuntimeJar();
+  GeneratedClassLoader loader;
+  if (stdlibJar != null) {
+    try {
+      loader=new GeneratedClassLoader(factory,new URLClassLoader(new URL[]{stdlibJar.toURI().toURL()},AllModules.class.getClassLoader()));
+    }
+ catch (    MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+ else {
+    loader=new GeneratedClassLoader(factory,CompileEnvironment.class.getClassLoader());
+  }
   try {
     Class namespaceClass=loader.loadClass(JvmAbi.PACKAGE_CLASS);
     final Method method=namespaceClass.getDeclaredMethod("project");
