@@ -1,0 +1,27 @@
+{
+  this.jarName=jarName;
+  try {
+    File tmpDir=JetTestUtils.tmpDir("runtimejar");
+    jarFile=new File(tmpDir,"runtime.jar");
+    File classesDir=new File(tmpDir,"classes");
+    FileUtil.createParentDirs(new File(classesDir,"dummy"));
+    doCompile(classesDir);
+    FileOutputStream stdlibJar=new FileOutputStream(jarFile);
+    try {
+      JarOutputStream jarOutputStream=new JarOutputStream(stdlibJar);
+      try {
+        copyToJar(classesDir,jarOutputStream);
+      }
+  finally {
+        jarOutputStream.close();
+      }
+    }
+  finally {
+      stdlibJar.close();
+    }
+    FileUtil.delete(classesDir);
+  }
+ catch (  Throwable e) {
+    error=e;
+  }
+}
