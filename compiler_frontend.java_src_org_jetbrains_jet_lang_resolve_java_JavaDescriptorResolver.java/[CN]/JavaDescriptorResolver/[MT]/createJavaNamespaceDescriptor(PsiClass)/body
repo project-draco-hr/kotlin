@@ -1,10 +1,13 @@
 {
   checkPsiClassIsNotJet(psiClass);
   FqName fqName=new FqName(psiClass.getQualifiedName());
-  JavaNamespaceDescriptor ns=new JavaNamespaceDescriptor((NamespaceDescriptorParent)resolveParentDescriptor(psiClass),Collections.<AnnotationDescriptor>emptyList(),psiClass.getName(),fqName,false);
-  ResolverNamespaceData namespaceData=new ResolverNamespaceData(psiClass,null,fqName,ns);
-  trace.record(JavaBindingContext.NAMESPACE_IS_CLASS_STATICS,namespaceData.namespaceDescriptor,true);
-  ns.setMemberScope(new JavaClassMembersScope(semanticServices,namespaceData));
-  trace.record(BindingContext.NAMESPACE,psiClass,namespaceData.namespaceDescriptor);
-  return namespaceData;
+  JavaNamespaceDescriptor ns=new JavaNamespaceDescriptor(resolveNamespace(fqName.parent(),DescriptorSearchRule.INCLUDE_KOTLIN),Collections.<AnnotationDescriptor>emptyList(),psiClass.getName(),fqName,false);
+  ResolverNamespaceData scopeData=createNamespaceResolverScopeData(fqName,ns);
+  if (scopeData == null) {
+    throw new IllegalStateException("we have class: " + fqName);
+  }
+  ns.setMemberScope(scopeData.memberScope);
+  trace.record(BindingContext.NAMESPACE,psiClass,ns);
+  trace.record(JavaBindingContext.NAMESPACE_IS_CLASS_STATICS,ns,true);
+  return scopeData;
 }
