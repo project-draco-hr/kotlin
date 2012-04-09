@@ -1,0 +1,25 @@
+{
+  VirtualFile indicationFile=JsModuleDetector.findIndicationFileInContextRoots(project);
+  if (indicationFile == null) {
+    return null;
+  }
+  try {
+    InputStream stream=indicationFile.getInputStream();
+    String path=FileUtil.loadTextAndClose(stream);
+    String pathToLibFile=getFirstLine(path);
+    if (pathToLibFile == null) {
+      return null;
+    }
+    try {
+      URI pathToLibFileUri=new URI(pathToLibFile);
+      URI pathToIndicationFileUri=new URI(indicationFile.getPath());
+      return pathToIndicationFileUri.resolve(pathToLibFileUri).toString();
+    }
+ catch (    URISyntaxException e) {
+      return null;
+    }
+  }
+ catch (  IOException e) {
+    return null;
+  }
+}
