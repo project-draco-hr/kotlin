@@ -15,9 +15,16 @@
     outerScope=namespaceDescriptor.getMemberScope();
     currentOwner=namespaceDescriptor;
   }
-  String name=JetPsiUtil.safeName(namespaceHeader.getName());
-  NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,currentOwner,name,false,namespaceHeader.getLastPartExpression());
-  trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
-  trace.record(RESOLUTION_SCOPE,namespaceHeader,outerScope);
+  NamespaceDescriptorImpl namespaceDescriptor;
+  String name;
+  if (namespaceHeader.isRoot()) {
+    namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,moduleDescriptor,"<root>",true,null);
+  }
+ else {
+    name=namespaceHeader.getName();
+    namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,currentOwner,name,namespaceHeader.isRoot(),namespaceHeader.getLastPartExpression());
+    trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
+    trace.record(RESOLUTION_SCOPE,namespaceHeader,outerScope);
+  }
   return namespaceDescriptor;
 }
