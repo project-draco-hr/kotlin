@@ -1,0 +1,27 @@
+{
+  if (context.getFile() instanceof JetFile) {
+    final JetFile jetFile=(JetFile)context.getFile();
+    ApplicationManager.getApplication().runReadAction(new Runnable(){
+      @Override public void run(){
+        int startOffset=context.getStartOffset();
+        PsiElement element=context.getFile().findElementAt(startOffset);
+        if (element == null) {
+          return;
+        }
+        if (context.getFile() instanceof JetFile && item.getObject() instanceof JetLookupObject) {
+          final DeclarationDescriptor descriptor=((JetLookupObject)item.getObject()).getDescriptor();
+          if (descriptor != null) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable(){
+              @Override public void run(){
+                final FqName fqn=DescriptorUtils.getFQName(descriptor).toSafe();
+                ImportInsertHelper.addImportDirective(fqn,jetFile);
+              }
+            }
+);
+          }
+        }
+      }
+    }
+);
+  }
+}

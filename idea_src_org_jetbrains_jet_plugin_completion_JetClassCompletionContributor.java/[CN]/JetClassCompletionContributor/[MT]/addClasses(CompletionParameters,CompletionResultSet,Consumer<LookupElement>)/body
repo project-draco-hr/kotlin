@@ -1,9 +1,7 @@
 {
   CompletionResultSet tempResult=result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-  Project project=parameters.getPosition().getProject();
-  JetShortNamesCache namesCache=JetCacheManager.getInstance(project).getNamesCache();
-  Collection<DeclarationDescriptor> jetOnlyClasses=JetShortNamesCache.getJetOnlyTypes();
-  BindingContext bindingContext=namesCache.getResolutionContext(GlobalSearchScope.allScope(project));
+  final Collection<DeclarationDescriptor> jetOnlyClasses=JetShortNamesCache.getJetOnlyTypes();
+  final BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)parameters.getPosition().getContainingFile()).getBindingContext();
   for (  DeclarationDescriptor jetOnlyClass : jetOnlyClasses) {
     consumer.consume(DescriptorLookupConverter.createLookupElement(bindingContext,jetOnlyClass));
   }
@@ -11,9 +9,18 @@
     @Override public void consume(    LookupElement lookupElement){
       if (lookupElement instanceof JavaPsiClassReferenceElement) {
         JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
+        PsiClass object=javaPsiReferenceElement.getObject();
+        if (object instanceof JetLightClass) {
+          ClassDescriptor descriptor=bindingContext.get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,((JetLightClass)object).getFqName());
+          if (descriptor != null) {
+            LookupElement element=DescriptorLookupConverter.createLookupElement(bindingContext,descriptor);
+            consumer.consume(element);
+            return;
+          }
+        }
         javaPsiReferenceElement.setInsertHandler(JetJavaClassInsertHandler.JAVA_CLASS_INSERT_HANDLER);
+        consumer.consume(lookupElement);
       }
-      consumer.consume(lookupElement);
     }
   }
 );
