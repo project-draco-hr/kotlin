@@ -1,0 +1,35 @@
+{
+  PsiClass original=javaFacade.findClass(qualifiedName.getFqName(),javaSearchScope);
+  PsiClass altClass=altClassFinder.findClass(qualifiedName);
+  PsiClass result=original;
+  if (altClass != null) {
+    if (altClass instanceof ClsClassImpl) {
+      altClass.putUserData(ClsClassImpl.DELEGATE_KEY,original);
+    }
+    result=altClass;
+  }
+  if (result != null) {
+    FqName actualQualifiedName=new FqName(result.getQualifiedName());
+    if (!actualQualifiedName.equals(qualifiedName)) {
+    }
+  }
+  if (result instanceof JetJavaMirrorMarker) {
+    return null;
+  }
+  if (result == null) {
+    return null;
+  }
+  PsiAnnotation assertInvisibleAnnotation=result.getModifierList().findAnnotation(JvmStdlibNames.ASSERT_INVISIBLE_IN_RESOLVER.getFqName().getFqName());
+  if (assertInvisibleAnnotation != null) {
+    if (runtimeClassesHandleMode == RuntimeClassesHandleMode.IGNORE) {
+      return null;
+    }
+ else     if (runtimeClassesHandleMode == RuntimeClassesHandleMode.THROW) {
+      throw new IllegalStateException("classpath is configured incorrectly:" + " class " + qualifiedName + " from runtime must not be loaded by compiler");
+    }
+ else {
+      throw new IllegalStateException("unknown parameter value: " + runtimeClassesHandleMode);
+    }
+  }
+  return result;
+}
