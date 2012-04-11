@@ -1,2 +1,37 @@
 {
+  JetPropertyAccessor getter=property.getGetter();
+  JetPropertyAccessor setter=property.getSetter();
+  JetModifierList modifierList=property.getModifierList();
+  ASTNode abstractNode=modifierList != null ? modifierList.getModifierNode(JetTokens.ABSTRACT_KEYWORD) : null;
+  if (abstractNode != null) {
+    if (classDescriptor == null) {
+      trace.report(ABSTRACT_PROPERTY_NOT_IN_CLASS.on(property));
+      return;
+    }
+    if (!(classDescriptor.getModality() == Modality.ABSTRACT) && classDescriptor.getKind() != ClassKind.ENUM_CLASS) {
+      JetClass classElement=(JetClass)BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),classDescriptor);
+      String name=property.getName();
+      trace.report(ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.on(property,name != null ? name : "",classDescriptor,classElement));
+      return;
+    }
+    if (classDescriptor.getKind() == ClassKind.TRAIT) {
+      trace.report(ABSTRACT_MODIFIER_IN_TRAIT.on(property));
+    }
+  }
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
+    JetType returnType=propertyDescriptor.getReturnType();
+    if (returnType instanceof DeferredType) {
+      returnType=((DeferredType)returnType).getActualType();
+    }
+    JetExpression initializer=property.getInitializer();
+    if (initializer != null) {
+      trace.report(ABSTRACT_PROPERTY_WITH_INITIALIZER.on(initializer));
+    }
+    if (getter != null && getter.getBodyExpression() != null) {
+      trace.report(ABSTRACT_PROPERTY_WITH_GETTER.on(getter));
+    }
+    if (setter != null && setter.getBodyExpression() != null) {
+      trace.report(ABSTRACT_PROPERTY_WITH_SETTER.on(setter));
+    }
+  }
 }
