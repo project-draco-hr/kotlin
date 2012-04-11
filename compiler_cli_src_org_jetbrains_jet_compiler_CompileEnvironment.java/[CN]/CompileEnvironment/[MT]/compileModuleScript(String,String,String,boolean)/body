@@ -1,44 +1,32 @@
 {
-  CompileEnvironment moduleCompilationEnvironment=copyEnvironment(false);
-  try {
-    List<Module> modules=moduleCompilationEnvironment.loadModuleScript(moduleScriptFile);
-    if (modules == null) {
-      throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
+  List<Module> modules=CompileEnvironmentUtil.loadModuleScript(moduleScriptFile,messageRenderer,errorStream,verbose);
+  if (modules == null) {
+    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
+  }
+  if (modules.isEmpty()) {
+    throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
+  }
+  final String directory=new File(moduleScriptFile).getParent();
+  for (  Module moduleBuilder : modules) {
+    if (compilerDependencies.getRuntimeJar() != null) {
+      addToClasspath(compilerDependencies.getRuntimeJar());
     }
-    if (modules.isEmpty()) {
-      throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
+    ClassFileFactory moduleFactory=compileModule(moduleBuilder,directory);
+    if (moduleFactory == null) {
+      return false;
     }
-    final String directory=new File(moduleScriptFile).getParent();
-    for (    Module moduleBuilder : modules) {
-      CompileEnvironment compileEnvironment=copyEnvironment(verbose);
-      if (compilerDependencies.getRuntimeJar() != null) {
-        compileEnvironment.addToClasspath(compilerDependencies.getRuntimeJar());
-      }
-      try {
-        ClassFileFactory moduleFactory=compileEnvironment.compileModule(moduleBuilder,directory);
-        if (moduleFactory == null) {
-          return false;
-        }
-        if (outputDir != null) {
-          writeToOutputDirectory(moduleFactory,outputDir);
-        }
+    if (outputDir != null) {
+      CompileEnvironmentUtil.writeToOutputDirectory(moduleFactory,outputDir);
+    }
  else {
-          String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
-          try {
-            writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
-          }
- catch (          FileNotFoundException e) {
-            throw new CompileEnvironmentException("Invalid jar path " + path,e);
-          }
-        }
+      String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+      try {
+        CompileEnvironmentUtil.writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
       }
-  finally {
-        compileEnvironment.dispose();
+ catch (      FileNotFoundException e) {
+        throw new CompileEnvironmentException("Invalid jar path " + path,e);
       }
     }
-    return true;
   }
-  finally {
-    moduleCompilationEnvironment.dispose();
-  }
+  return true;
 }

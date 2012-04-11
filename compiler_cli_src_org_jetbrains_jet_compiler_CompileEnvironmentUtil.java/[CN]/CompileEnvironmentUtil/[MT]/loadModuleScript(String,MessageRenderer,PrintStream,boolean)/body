@@ -1,0 +1,19 @@
+{
+  Disposable disposable=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  CompilerDependencies dependencies=CompilerDependencies.compilerDependenciesForProduction(CompilerSpecialMode.REGULAR);
+  JetCoreEnvironment scriptEnvironment=new JetCoreEnvironment(disposable,dependencies);
+  ensureRuntime(scriptEnvironment,dependencies);
+  scriptEnvironment.addSources(moduleFile);
+  CompileSession scriptCompileSession=new CompileSession(scriptEnvironment,messageRenderer,errorStream,verbose,dependencies);
+  if (!scriptCompileSession.analyze()) {
+    return null;
+  }
+  ClassFileFactory factory=scriptCompileSession.generate(true).getFactory();
+  List<Module> modules=runDefineModules(dependencies,moduleFile,factory);
+  Disposer.dispose(disposable);
+  return modules;
+}
