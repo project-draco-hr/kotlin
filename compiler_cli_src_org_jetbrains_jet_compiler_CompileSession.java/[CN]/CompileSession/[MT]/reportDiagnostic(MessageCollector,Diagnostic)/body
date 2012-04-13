@@ -2,5 +2,12 @@
   DiagnosticUtils.LineAndColumn lineAndColumn=DiagnosticUtils.getLineAndColumn(diagnostic);
   VirtualFile virtualFile=diagnostic.getPsiFile().getVirtualFile();
   String path=virtualFile == null ? null : virtualFile.getPath();
-  collector.report(diagnostic.getSeverity(),DefaultDiagnosticRenderer.INSTANCE.render(diagnostic),path,lineAndColumn.getLine(),lineAndColumn.getColumn());
+  String render;
+  if (diagnostic.getFactory() == SYNTAX_ERROR_FACTORY) {
+    render=((SyntaxErrorDiagnostic)diagnostic).message;
+  }
+ else {
+    render=DefaultDiagnosticRenderer.INSTANCE.render(diagnostic);
+  }
+  collector.report(diagnostic.getSeverity(),render,path,lineAndColumn.getLine(),lineAndColumn.getColumn());
 }
