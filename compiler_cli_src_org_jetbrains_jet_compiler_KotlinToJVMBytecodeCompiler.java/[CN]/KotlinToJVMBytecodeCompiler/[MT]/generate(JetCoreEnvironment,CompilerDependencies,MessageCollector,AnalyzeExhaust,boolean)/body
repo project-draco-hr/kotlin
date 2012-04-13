@@ -1,0 +1,19 @@
+{
+  Project project=environment.getProject();
+  Progress backendProgress=new Progress(){
+    @Override public void log(    String message){
+      messageCollector.report(CompilerMessageSeverity.LOGGING,message,CompilerMessageLocation.NO_LOCATION);
+    }
+  }
+;
+  GenerationState generationState=new GenerationState(project,ClassBuilderFactories.binaries(stubs),backendProgress,exhaust,environment.getSourceFiles(),dependencies.getCompilerSpecialMode());
+  generationState.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+  List<CompilerPlugin> plugins=environment.getCompilerPlugins();
+  if (plugins != null) {
+    CompilerPluginContext context=new CompilerPluginContext(project,exhaust.getBindingContext(),environment.getSourceFiles());
+    for (    CompilerPlugin plugin : plugins) {
+      plugin.processFiles(context);
+    }
+  }
+  return generationState;
+}

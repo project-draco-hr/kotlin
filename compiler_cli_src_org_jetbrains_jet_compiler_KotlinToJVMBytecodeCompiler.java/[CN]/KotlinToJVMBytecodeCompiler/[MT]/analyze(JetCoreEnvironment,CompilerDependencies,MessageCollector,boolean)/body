@@ -1,0 +1,30 @@
+{
+  final Ref<Boolean> hasErrors=new Ref<Boolean>(false);
+  final MessageCollector messageCollectorWrapper=new MessageCollector(){
+    @Override public void report(    @NotNull CompilerMessageSeverity severity,    @NotNull String message,    @NotNull CompilerMessageLocation location){
+      if (CompilerMessageSeverity.ERRORS.contains(severity)) {
+        hasErrors.set(true);
+      }
+      messageCollector.report(severity,message,location);
+    }
+  }
+;
+  for (  JetFile file : environment.getSourceFiles()) {
+    file.accept(new PsiRecursiveElementWalkingVisitor(){
+      @Override public void visitErrorElement(      PsiErrorElement element){
+        String description=element.getErrorDescription();
+        String message=StringUtil.isEmpty(description) ? "Syntax error" : description;
+        Diagnostic diagnostic=DiagnosticFactory.create(Severity.ERROR,message).on(element);
+        reportDiagnostic(messageCollectorWrapper,diagnostic);
+      }
+    }
+);
+  }
+  Predicate<PsiFile> filesToAnalyzeCompletely=stubs ? Predicates.<PsiFile>alwaysFalse() : Predicates.<PsiFile>alwaysTrue();
+  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),filesToAnalyzeCompletely,JetControlFlowDataTraceFactory.EMPTY,dependencies);
+  for (  Diagnostic diagnostic : exhaust.getBindingContext().getDiagnostics()) {
+    reportDiagnostic(messageCollectorWrapper,diagnostic);
+  }
+  reportIncompleteHierarchies(messageCollectorWrapper,exhaust);
+  return hasErrors.get() ? null : exhaust;
+}
