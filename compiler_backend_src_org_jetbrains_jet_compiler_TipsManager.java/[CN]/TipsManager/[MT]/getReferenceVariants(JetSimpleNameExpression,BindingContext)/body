@@ -1,9 +1,23 @@
 {
   JetExpression receiverExpression=expression.getReceiverExpression();
   if (receiverExpression != null) {
-    final JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+    final JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
     final JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
     if (expressionType != null && resolutionScope != null) {
+      if (!(expressionType instanceof NamespaceType)) {
+        ExpressionReceiver receiverDescriptor=new ExpressionReceiver(receiverExpression,expressionType);
+        Set<DeclarationDescriptor> descriptors=new HashSet<DeclarationDescriptor>();
+        DataFlowInfo info=context.get(BindingContext.NON_DEFAULT_EXPRESSION_DATA_FLOW,expression);
+        if (info == null) {
+          info=DataFlowInfo.EMPTY;
+        }
+        AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(info,context);
+        List<ReceiverDescriptor> variantsForExplicitReceiver=autoCastService.getVariantsForReceiver(receiverDescriptor);
+        for (        ReceiverDescriptor descriptor : variantsForExplicitReceiver) {
+          descriptors.addAll(includeExternalCallableExtensions(excludePrivateDescriptors(descriptor.getType().getMemberScope().getAllDescriptors()),resolutionScope,descriptor));
+        }
+        return descriptors;
+      }
       return includeExternalCallableExtensions(excludePrivateDescriptors(expressionType.getMemberScope().getAllDescriptors()),resolutionScope,new ExpressionReceiver(receiverExpression,expressionType));
     }
     return Collections.emptyList();
