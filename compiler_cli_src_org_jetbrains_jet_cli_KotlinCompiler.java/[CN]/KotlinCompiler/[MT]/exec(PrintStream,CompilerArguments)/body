@@ -4,9 +4,9 @@
     return OK;
   }
   System.setProperty("java.awt.headless","true");
-  MessageRenderer messageRenderer=arguments.tags ? MessageRenderer.TAGS : MessageRenderer.PLAIN;
+  final MessageRenderer messageRenderer=arguments.tags ? MessageRenderer.TAGS : MessageRenderer.PLAIN;
   if (arguments.version) {
-    errStream.println(messageRenderer.render(Severity.INFO,"Kotlin Compiler version " + CompilerVersion.VERSION,null,-1,-1));
+    errStream.println(messageRenderer.render(CompilerMessageSeverity.INFO,"Kotlin Compiler version " + CompilerVersion.VERSION,CompilerMessageLocation.NO_LOCATION));
   }
   CompilerSpecialMode mode=parseCompilerSpecialMode(arguments);
   File jdkHeadersJar;
@@ -34,9 +34,10 @@
     runtimeJar=null;
   }
   CompilerDependencies dependencies=new CompilerDependencies(mode,jdkHeadersJar,runtimeJar);
-  CompileEnvironment environment=new CompileEnvironment(messageRenderer,arguments.verbose,dependencies);
+  PrintingMessageCollector messageCollector=new PrintingMessageCollector(errStream,messageRenderer,arguments.verbose);
+  CompileEnvironment environment=new CompileEnvironment(messageCollector,dependencies);
   try {
-    configureEnvironment(environment,arguments,errStream);
+    configureEnvironment(environment,arguments);
     boolean noErrors;
     if (arguments.module != null) {
       noErrors=environment.compileModuleScript(arguments.module,arguments.jar,arguments.outputDir,arguments.includeRuntime);
@@ -57,5 +58,6 @@
   }
  finally {
     environment.dispose();
+    messageCollector.printToErrStream();
   }
 }

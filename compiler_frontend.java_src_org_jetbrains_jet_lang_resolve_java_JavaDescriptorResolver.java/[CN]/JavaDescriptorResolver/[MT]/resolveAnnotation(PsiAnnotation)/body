@@ -1,2 +1,32 @@
 {
+  AnnotationDescriptor annotation=new AnnotationDescriptor();
+  String qname=psiAnnotation.getQualifiedName();
+  if (qname.startsWith("java.lang.annotation.") || qname.startsWith("jet.runtime.typeinfo.") || qname.equals(JvmAbi.JETBRAINS_NOT_NULL_ANNOTATION.getFqName().getFqName())) {
+    return null;
+  }
+  ClassDescriptor clazz=resolveClass(new FqName(psiAnnotation.getQualifiedName()),DescriptorSearchRule.INCLUDE_KOTLIN);
+  if (clazz == null) {
+    return null;
+  }
+  annotation.setAnnotationType(clazz.getDefaultType());
+  ArrayList<CompileTimeConstant<?>> valueArguments=new ArrayList<CompileTimeConstant<?>>();
+  PsiAnnotationParameterList parameterList=psiAnnotation.getParameterList();
+  for (  PsiNameValuePair psiNameValuePair : parameterList.getAttributes()) {
+    PsiAnnotationMemberValue value=psiNameValuePair.getValue();
+    if (!(value instanceof PsiLiteralExpression)) {
+      continue;
+    }
+    Object literalValue=((PsiLiteralExpression)value).getValue();
+    if (literalValue instanceof String)     valueArguments.add(new StringValue((String)literalValue));
+ else     if (literalValue instanceof Byte)     valueArguments.add(new ByteValue((Byte)literalValue));
+ else     if (literalValue instanceof Short)     valueArguments.add(new ShortValue((Short)literalValue));
+ else     if (literalValue instanceof Character)     valueArguments.add(new CharValue((Character)literalValue));
+ else     if (literalValue instanceof Integer)     valueArguments.add(new IntValue((Integer)literalValue));
+ else     if (literalValue instanceof Long)     valueArguments.add(new LongValue((Long)literalValue));
+ else     if (literalValue instanceof Float)     valueArguments.add(new FloatValue((Float)literalValue));
+ else     if (literalValue instanceof Double)     valueArguments.add(new DoubleValue((Double)literalValue));
+ else     if (literalValue == null)     valueArguments.add(NullValue.NULL);
+  }
+  annotation.setValueArguments(valueArguments);
+  return annotation;
 }

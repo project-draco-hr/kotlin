@@ -1,7 +1,7 @@
 {
   try {
+    PrintStream err=System.err;
     CompilerDependencies compilerDependencies=CompileCompilerDependenciesTest.compilerDependenciesForTests(CompilerSpecialMode.REGULAR);
-    CompileSession session=new CompileSession(myEnvironment,MessageRenderer.PLAIN,System.err,false,compilerDependencies);
     File junitJar=new File("libraries/lib/junit-4.9.jar");
     if (!junitJar.exists()) {
       throw new AssertionError();
@@ -11,20 +11,20 @@
     CoreLocalFileSystem localFileSystem=myEnvironment.getLocalFileSystem();
     myEnvironment.addSources(localFileSystem.findFileByPath(JetParsingTest.getTestDataDir() + "/../../libraries/stdlib/test"));
     myEnvironment.addSources(localFileSystem.findFileByPath(JetParsingTest.getTestDataDir() + "/../../libraries/kunit/src"));
-    if (!session.analyze()) {
+    GenerationState generationState=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(myEnvironment,compilerDependencies,MessageCollector.PLAIN_TEXT_TO_SYSTEM_ERR,false);
+    if (generationState == null) {
       throw new RuntimeException("There were compilation errors");
     }
-    GenerationState state=session.generate(false);
-    ClassFileFactory classFileFactory=state.getFactory();
+    ClassFileFactory classFileFactory=generationState.getFactory();
     final GeneratedClassLoader loader=new GeneratedClassLoader(classFileFactory,new URLClassLoader(new URL[]{ForTestCompileRuntime.runtimeJarForTests().toURI().toURL(),junitJar.toURI().toURL()},TestCase.class.getClassLoader()));
-    JetTypeMapper typeMapper=state.getInjector().getJetTypeMapper();
+    JetTypeMapper typeMapper=generationState.getInjector().getJetTypeMapper();
     TestSuite suite=new TestSuite("stdlib_test");
     try {
       for (      JetFile jetFile : myEnvironment.getSourceFiles()) {
         for (        JetDeclaration decl : jetFile.getDeclarations()) {
           if (decl instanceof JetClass) {
             JetClass jetClass=(JetClass)decl;
-            ClassDescriptor descriptor=(ClassDescriptor)session.getBindingContext().getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,jetClass);
+            ClassDescriptor descriptor=(ClassDescriptor)generationState.getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,jetClass);
             Set<JetType> allSuperTypes=new THashSet<JetType>();
             DescriptorUtils.addSuperTypes(descriptor.getDefaultType(),allSuperTypes);
             for (            JetType type : allSuperTypes) {
