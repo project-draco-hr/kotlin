@@ -10,16 +10,14 @@
         return;
       }
       final PsiReference ref=parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref != null) {
-        PsiElement nameIdentifier=namespaceHeader.getNameIdentifier();
-        if (nameIdentifier == null) {
+      if (ref instanceof JetSimpleNameReference) {
+        JetSimpleNameReference simpleNameReference=(JetSimpleNameReference)ref;
+        String name=simpleNameReference.getExpression().getText();
+        if (name == null) {
           return;
         }
-        if (!(nameIdentifier.getTextOffset() <= parameters.getOffset())) {
-          return;
-        }
-        int prefixLength=parameters.getOffset() - nameIdentifier.getTextOffset();
-        result=result.withPrefixMatcher(new PlainPrefixMatcher(nameIdentifier.getText().substring(0,prefixLength)));
+        int prefixLength=parameters.getOffset() - simpleNameReference.getExpression().getTextOffset();
+        result=result.withPrefixMatcher(new PlainPrefixMatcher(name.substring(0,prefixLength)));
         BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)namespaceHeader.getContainingFile()).getBindingContext();
         for (        LookupElement variant : DescriptorLookupConverter.collectLookupElements(bindingContext,TipsManager.getReferenceVariants(namespaceHeader,bindingContext))) {
           if (!variant.getLookupString().contains(DUMMY_IDENTIFIER)) {
