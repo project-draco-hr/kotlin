@@ -1,0 +1,14 @@
+{
+  BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)reference.getExpression().getContainingFile()).getBindingContext();
+  Collection<DeclarationDescriptor> descriptors=TipsManager.getReferenceVariants(reference.getExpression(),bindingContext);
+  Collection<DeclarationDescriptor> checkedDescriptors=Collections2.filter(descriptors,new Predicate<DeclarationDescriptor>(){
+    @Override public boolean apply(    @Nullable DeclarationDescriptor descriptor){
+      if (descriptor == null) {
+        return false;
+      }
+      return result.getPrefixMatcher().prefixMatches(descriptor.getName()) && isVisibleDescriptor(descriptor,session);
+    }
+  }
+);
+  return DescriptorLookupConverter.collectLookupElements(bindingContext,checkedDescriptors);
+}
