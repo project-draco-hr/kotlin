@@ -1,4 +1,6 @@
 {
+  JetExpression right=expression.getRight();
+  if (right == null)   return null;
   TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(contextWithExpectedType.trace);
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceExpectedReturnType(TypeUtils.NO_EXPECTED_TYPE).replaceBindingTrace(temporaryBindingTrace);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
@@ -7,7 +9,7 @@
   if (left == null)   return null;
   JetType leftType=facade.getType(left,context);
   if (leftType == null) {
-    facade.getType(expression.getRight(),context);
+    facade.getType(right,context);
     context.trace.report(UNRESOLVED_REFERENCE.on(operationSign));
     temporaryBindingTrace.commit();
     return null;
@@ -29,7 +31,7 @@
     for (    ResolvedCall<? extends FunctionDescriptor> call : ambiguityResolutionResults.getResultingCalls()) {
       descriptors.add(call.getResultingDescriptor());
     }
-    facade.getType(expression.getRight(),context);
+    facade.getType(right,context);
     context.trace.record(AMBIGUOUS_REFERENCE_TARGET,operationSign,descriptors);
   }
  else   if (assignmentOperationType != null) {
@@ -43,7 +45,7 @@
     context.trace.record(VARIABLE_REASSIGNMENT,expression);
     if (left instanceof JetArrayAccessExpression) {
       ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(contextWithExpectedType.trace));
-      basic.resolveArrayAccessSetMethod((JetArrayAccessExpression)left,expression.getRight(),contextForResolve,context.trace);
+      basic.resolveArrayAccessSetMethod((JetArrayAccessExpression)left,right,contextForResolve,context.trace);
     }
   }
   basic.checkLValue(context.trace,expression.getLeft());
