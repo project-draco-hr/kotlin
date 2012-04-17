@@ -1,5 +1,4 @@
 {
-  List<ResolutionTask<D>> result=Lists.newArrayList();
   ReceiverDescriptor explicitReceiver=context.call.getExplicitReceiver();
   final JetScope scope;
   if (explicitReceiver.exists() && explicitReceiver.getType() instanceof NamespaceType) {
@@ -18,13 +17,7 @@
     }
   }
 ;
-  Predicate<ResolvedCallImpl<D>> invisibleStrategy=new Predicate<ResolvedCallImpl<D>>(){
-    @Override public boolean apply(    @Nullable ResolvedCallImpl<D> call){
-      return !visibleStrategy.apply(call);
-    }
-  }
-;
-  doComputeTasks(scope,explicitReceiver,name,result,context,functionReference,visibleStrategy);
-  doComputeTasks(scope,explicitReceiver,name,result,context,functionReference,invisibleStrategy);
-  return result;
+  ResolutionTaskHolder<D> result=new ResolutionTaskHolder<D>(functionReference,context,visibleStrategy);
+  doComputeTasks(scope,explicitReceiver,name,result,context);
+  return result.getTasks();
 }

@@ -1,0 +1,24 @@
+{
+  if (tasks == null) {
+    tasks=Lists.newArrayList();
+    List<Collection<ResolvedCallImpl<D>>> candidateList=Lists.newArrayList();
+    if (TaskPrioritizer.getReceiverSuper(basicResolutionContext.call.getExplicitReceiver()) != null) {
+      candidateList.addAll(members);
+      candidateList.addAll(localExtensions);
+    }
+ else {
+      candidateList.addAll(localExtensions);
+      candidateList.addAll(members);
+    }
+    candidateList.addAll(nonLocalExtensions);
+    for (    Predicate<ResolvedCallImpl<D>> visibilityStrategy : Lists.newArrayList(visibleStrategy,Predicates.not(visibleStrategy))) {
+      for (      Collection<ResolvedCallImpl<D>> candidates : candidateList) {
+        Collection<ResolvedCallImpl<D>> filteredCandidates=Collections2.filter(candidates,visibilityStrategy);
+        if (!filteredCandidates.isEmpty()) {
+          tasks.add(new ResolutionTask<D>(filteredCandidates,reference,basicResolutionContext));
+        }
+      }
+    }
+  }
+  return tasks;
+}
