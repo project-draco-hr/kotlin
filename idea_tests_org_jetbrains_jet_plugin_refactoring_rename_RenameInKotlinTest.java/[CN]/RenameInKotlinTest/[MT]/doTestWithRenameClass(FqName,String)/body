@@ -1,7 +1,19 @@
 {
   doTest(new PerformAction(){
     @Override public void performAction(    VirtualFile rootDir,    VirtualFile rootAfter) throws Exception {
-      BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCache(getProject(),GlobalSearchScope.allScope(getProject())).getBindingContext();
+      VirtualFile child=rootDir.findChild(getTestName(false) + ".kt");
+      if (child == null) {
+        return;
+      }
+      Document document=FileDocumentManager.getInstance().getDocument(child);
+      if (document == null) {
+        return;
+      }
+      PsiFile file=PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      if (!(file instanceof JetFile)) {
+        return;
+      }
+      BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)file).getBindingContext();
       ClassDescriptor classDescriptor=bindingContext.get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,qClassName);
       assertNotNull(classDescriptor);
       PsiElement psiElement=BindingContextUtils.classDescriptorToDeclaration(bindingContext,classDescriptor);
