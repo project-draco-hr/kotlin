@@ -1,0 +1,31 @@
+{
+  if (topDownAnalysisParameters.isAnalyzingBootstrapLibrary())   return;
+  for (  CallableMemberDescriptor member : classDescriptor.getCallableMembers()) {
+    checkOverrideForMember(member,invisibleOverriddenDescriptors);
+  }
+  Set<CallableMemberDescriptor> abstractNoImpl=Sets.newLinkedHashSet();
+  Set<CallableMemberDescriptor> manyImpl=Sets.newLinkedHashSet();
+  collectMissingImplementations(classDescriptor,abstractNoImpl,manyImpl);
+  PsiElement nameIdentifier=null;
+  if (klass instanceof JetClass) {
+    nameIdentifier=((JetClass)klass).getNameIdentifier();
+  }
+ else   if (klass instanceof JetObjectDeclaration) {
+    nameIdentifier=((JetObjectDeclaration)klass).getNameIdentifier();
+    if (nameIdentifier == null) {
+      nameIdentifier=((JetObjectDeclaration)klass).getObjectKeyword();
+    }
+  }
+  if (nameIdentifier == null)   return;
+  for (  CallableMemberDescriptor memberDescriptor : manyImpl) {
+    trace.report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
+  }
+  if (classDescriptor.getModality() == Modality.ABSTRACT) {
+    return;
+  }
+  for (  CallableMemberDescriptor memberDescriptor : abstractNoImpl) {
+    trace.report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(nameIdentifier,klass,memberDescriptor));
+    break;
+  }
+}
