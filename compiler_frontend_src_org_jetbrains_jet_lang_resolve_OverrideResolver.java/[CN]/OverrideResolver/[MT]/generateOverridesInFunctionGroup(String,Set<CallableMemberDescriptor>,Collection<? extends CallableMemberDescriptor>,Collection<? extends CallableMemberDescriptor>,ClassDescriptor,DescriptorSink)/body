@@ -1,0 +1,31 @@
+{
+  List<CallableMemberDescriptor> fakeOverrideList=Lists.newArrayList();
+  for (  CallableMemberDescriptor functionFromSupertype : functionsFromSupertypes) {
+    boolean overrides=false;
+    for (    CallableMemberDescriptor functionFromCurrent : functionsFromCurrent) {
+      OverridingUtil.OverrideCompatibilityInfo.Result result=OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).getResult();
+      if (result == OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE) {
+        functionFromCurrent.addOverriddenDescriptor(functionFromSupertype);
+        overrides=true;
+      }
+ else       if (result == OverridingUtil.OverrideCompatibilityInfo.Result.CONFLICT) {
+        sink.conflict(functionFromSupertype,functionFromCurrent);
+      }
+    }
+    for (    CallableMemberDescriptor fakeOverride : fakeOverrideList) {
+      if (OverridingUtil.isOverridableBy(functionFromSupertype,fakeOverride).getResult() == OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE) {
+        fakeOverride.addOverriddenDescriptor(functionFromSupertype);
+        overrides=true;
+      }
+    }
+    if (!overrides) {
+      CallableMemberDescriptor fakeOverride=functionFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
+      fakeOverride.addOverriddenDescriptor(functionFromSupertype);
+      fakeOverrideList.add(fakeOverride);
+      if (fakeOverrides != null) {
+        fakeOverrides.add(fakeOverride);
+      }
+      sink.addToScope(fakeOverride);
+    }
+  }
+}

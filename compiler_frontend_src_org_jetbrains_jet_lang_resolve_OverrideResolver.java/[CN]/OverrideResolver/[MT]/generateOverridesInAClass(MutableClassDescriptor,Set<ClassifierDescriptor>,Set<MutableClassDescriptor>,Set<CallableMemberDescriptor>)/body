@@ -1,0 +1,40 @@
+{
+  if (!processed.add(classDescriptor)) {
+    return;
+  }
+  if (!ourClasses.contains(classDescriptor)) {
+    return;
+  }
+  for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
+    ClassDescriptor superclass=(ClassDescriptor)supertype.getConstructor().getDeclarationDescriptor();
+    if (superclass instanceof MutableClassDescriptor) {
+      generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses,fakeOverrides);
+    }
+  }
+  List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
+  MultiMap<String,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
+  MultiMap<String,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getCallableMembers());
+  Set<String> functionNames=new LinkedHashSet<String>();
+  functionNames.addAll(functionsFromSupertypesByName.keySet());
+  functionNames.addAll(functionsFromCurrentByName.keySet());
+  for (  String functionName : functionNames) {
+    generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink(){
+      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
+        if (fakeOverride instanceof PropertyDescriptor) {
+          classDescriptor.getScopeForMemberLookupAsWritableScope().addPropertyDescriptor((PropertyDescriptor)fakeOverride);
+        }
+ else         if (fakeOverride instanceof SimpleFunctionDescriptor) {
+          classDescriptor.getScopeForMemberLookupAsWritableScope().addFunctionDescriptor((SimpleFunctionDescriptor)fakeOverride);
+        }
+ else {
+          throw new IllegalStateException(fakeOverride.getClass().getName());
+        }
+      }
+      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
+        JetDeclaration jetProperty=(JetDeclaration)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),fromCurrent);
+        trace.report(Errors.CONFLICTING_OVERLOADS.on(jetProperty,fromCurrent,fromCurrent.getContainingDeclaration().getName()));
+      }
+    }
+);
+  }
+}
