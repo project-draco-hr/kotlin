@@ -1,19 +1,19 @@
 {
-  AnnotationDescriptor annotation=new AnnotationDescriptor();
+  final AnnotationDescriptor annotation=new AnnotationDescriptor();
   String qname=psiAnnotation.getQualifiedName();
   if (qname.startsWith("java.lang.annotation.") || qname.startsWith("jet.runtime.typeinfo.") || qname.equals(JvmAbi.JETBRAINS_NOT_NULL_ANNOTATION.getFqName().getFqName())) {
     return null;
   }
-  final ClassDescriptor clazz=resolveClass(new FqName(psiAnnotation.getQualifiedName()),DescriptorSearchRule.INCLUDE_KOTLIN);
+  final ClassDescriptor clazz=resolveClass(new FqName(psiAnnotation.getQualifiedName()),DescriptorSearchRule.INCLUDE_KOTLIN,taskList);
   if (clazz == null) {
     return null;
   }
-  annotation.setAnnotationType(DeferredType.create(new BindingTraceContext(),new LazyValue<JetType>(){
-    @Override protected JetType compute(){
-      return clazz.getDefaultType();
+  taskList.add(new Runnable(){
+    @Override public void run(){
+      annotation.setAnnotationType(clazz.getDefaultType());
     }
   }
-));
+);
   ArrayList<CompileTimeConstant<?>> valueArguments=new ArrayList<CompileTimeConstant<?>>();
   PsiAnnotationParameterList parameterList=psiAnnotation.getParameterList();
   for (  PsiNameValuePair psiNameValuePair : parameterList.getAttributes()) {
