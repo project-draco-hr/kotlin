@@ -6,6 +6,7 @@
     String renderedTemplate=VelocityUtils.getRenderedTemplate("template.velocity",context);
     StringBuilder result=new StringBuilder(renderedTemplate);
     result.append("<div class=\"code panel\" style=\"border-width: 1px;\">" + "<div class=\"codeContent panelContent\">" + "<div class=\"container\">");
+    result.append(addNewLineOpenTag());
     _JetLexer jetLexer=new _JetLexer(DUMMY_READER);
     jetLexer.reset(afterPreprocessing,0,afterPreprocessing.length(),_JetLexer.YYINITIAL);
     Iterator<TagData> iterator=tags.iterator();
@@ -29,7 +30,11 @@
       }
       IElementType token=jetLexer.advance();
       if (token == null)       break;
-      String yytext=jetLexer.yytext().toString().replaceAll("\n","\r\n");
+      String yytext=jetLexer.yytext().toString();
+      if (yytext.contains("\n")) {
+        addNewLines(result,yytext);
+        yytext=yytext.replaceAll("\n","");
+      }
       String style=null;
       if (token instanceof JetKeywordToken) {
         style="keyword";
@@ -53,6 +58,7 @@
       escapeHTML(result,yytext);
       result.append("</code>");
     }
+    result.append(addNewLineCloseTag());
     result.append("</div>");
     result.append("</div>");
     result.append("</div>");
