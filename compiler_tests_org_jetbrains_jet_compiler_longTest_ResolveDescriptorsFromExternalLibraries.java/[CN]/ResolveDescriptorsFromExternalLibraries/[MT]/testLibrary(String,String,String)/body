@@ -1,0 +1,50 @@
+{
+  LibFromMaven lib=new LibFromMaven(org,module,rev);
+  File jar=getLibrary(lib);
+  System.out.println("Testing library " + lib + "...");
+  System.out.println("Using file " + jar);
+  long start=System.currentTimeMillis();
+  Disposable junk=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  JetCoreEnvironment jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdk(junk);
+  jetCoreEnvironment.addToClasspath(jar);
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(compilerDependencies,jetCoreEnvironment.getProject());
+  FileInputStream is=new FileInputStream(jar);
+  try {
+    ZipInputStream zip=new ZipInputStream(is);
+    for (; ; ) {
+      ZipEntry entry=zip.getNextEntry();
+      if (entry == null) {
+        break;
+      }
+      String entryName=entry.getName();
+      if (!entryName.endsWith(".class")) {
+        continue;
+      }
+      if (entryName.matches("(.*/|)package-info\\.class")) {
+        continue;
+      }
+      if (entryName.contains("$")) {
+        continue;
+      }
+      String className=entryName.substring(0,entryName.length() - ".class".length()).replace("/",".");
+      ClassDescriptor clazz=injector.getJavaDescriptorResolver().resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+      if (clazz == null) {
+        throw new IllegalStateException("class not found by name " + className + " in "+ lib);
+      }
+      clazz.getDefaultType().getMemberScope().getAllDescriptors();
+    }
+  }
+  finally {
+    try {
+      is.close();
+    }
+ catch (    Throwable e) {
+    }
+    Disposer.dispose(junk);
+  }
+  System.out.println("Testing library " + lib + " done in "+ TimeUtils.millisecondsToSecondsString(System.currentTimeMillis() - start)+ "s");
+}

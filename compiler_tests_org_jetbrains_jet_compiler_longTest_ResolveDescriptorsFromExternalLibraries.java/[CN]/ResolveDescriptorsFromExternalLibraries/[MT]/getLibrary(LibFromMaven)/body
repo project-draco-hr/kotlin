@@ -1,0 +1,61 @@
+{
+  File userHome=new File(System.getProperty("user.home"));
+  String fileName=lib.getModule() + "-" + lib.getRev()+ ".jar";
+  File dir=new File(userHome,".kotlin-project/resolve-libraries/" + lib.getOrg() + "/"+ lib.getModule());
+  File file=new File(dir,fileName);
+  if (file.exists()) {
+    return file;
+  }
+  JetTestUtils.mkdirs(dir);
+  File tmp=new File(dir,fileName + "~");
+  String uri=url(lib);
+  GetMethod method=new GetMethod(uri);
+  FileOutputStream os=null;
+  System.out.println("Downloading library " + lib + " to "+ file);
+  MultiThreadedHttpConnectionManager connectionManager=null;
+  try {
+    connectionManager=new MultiThreadedHttpConnectionManager();
+    HttpClient httpClient=new HttpClient(connectionManager);
+    os=new FileOutputStream(tmp);
+    String userAgent=ResolveDescriptorsFromExternalLibraries.class.getName() + "/commons-httpclient";
+    method.getParams().setParameter(HttpMethodParams.USER_AGENT,userAgent);
+    int code=httpClient.executeMethod(method);
+    if (code != 200) {
+      throw new RuntimeException("failed to execute GET " + uri + ", code is "+ code);
+    }
+    InputStream responseBodyAsStream=method.getResponseBodyAsStream();
+    if (responseBodyAsStream == null) {
+      throw new RuntimeException("method is executed fine, but response is null");
+    }
+    ByteStreams.copy(responseBodyAsStream,os);
+    os.close();
+    if (!tmp.renameTo(file)) {
+      throw new RuntimeException("failed to rename file: " + tmp + " to "+ file);
+    }
+    return file;
+  }
+  finally {
+    if (method != null) {
+      try {
+        method.releaseConnection();
+      }
+ catch (      Throwable e) {
+      }
+    }
+    if (connectionManager != null) {
+      try {
+        connectionManager.shutdown();
+      }
+ catch (      Throwable e) {
+      }
+    }
+    if (os != null) {
+      try {
+        os.close();
+      }
+ catch (      Throwable e) {
+      }
+    }
+    tmp.delete();
+  }
+}

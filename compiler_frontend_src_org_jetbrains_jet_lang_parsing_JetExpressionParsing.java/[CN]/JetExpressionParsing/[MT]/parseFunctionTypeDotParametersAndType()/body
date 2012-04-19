@@ -1,0 +1,16 @@
+{
+  PsiBuilder.Marker rollbackMarker=mark();
+  boolean preferParamsToExpressions=false;
+  int lastDot=matchTokenStreamPredicate(new LastBefore(new At(DOT),new AtSet(ARROW,RPAR)));
+  if (lastDot >= 0) {
+    createTruncatedBuilder(lastDot).parseTypeRef();
+    if (at(DOT)) {
+      advance();
+      if (at(LPAR)) {
+        preferParamsToExpressions=isConfirmedParametersByComma();
+      }
+      parseFunctionLiteralParametersAndType();
+    }
+  }
+  return preferParamsToExpressions ? rollbackOrDrop(rollbackMarker,ARROW,"An -> is expected",RBRACE) : rollbackOrDropAt(rollbackMarker,ARROW);
+}
