@@ -1,0 +1,31 @@
+{
+  PsiElement position=parameters.getPosition();
+  JetFunctionLiteralExpression functionLiteral=PsiTreeUtil.getParentOfType(position,JetFunctionLiteralExpression.class);
+  if (functionLiteral != null) {
+    PsiElement expectedReference=position.getParent();
+    if (expectedReference instanceof JetSimpleNameExpression) {
+      if (PsiTreeUtil.findChildOfType(functionLiteral,JetParameterList.class) == null) {
+{
+          PsiElement expectedBlock=expectedReference.getParent();
+          if (expectedBlock instanceof JetBlockExpression) {
+            if (expectedReference.getPrevSibling() == null) {
+              return ThreeState.NO;
+            }
+          }
+        }
+{
+          PsiElement expectedParenthesized=expectedReference.getParent();
+          if (expectedParenthesized instanceof JetParenthesizedExpression) {
+            PsiElement expectedBlock=expectedParenthesized.getParent();
+            if (expectedBlock instanceof JetBlockExpression) {
+              if (expectedParenthesized.getPrevSibling() == null) {
+                return ThreeState.NO;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return ThreeState.UNSURE;
+}
