@@ -1,11 +1,14 @@
 {
-  CompileEnvironment env=new CompileEnvironment(MessageCollector.PLAIN_TEXT_TO_SYSTEM_ERR,CompilerDependencies.compilerDependenciesForProduction(CompilerSpecialMode.REGULAR));
+  CompilerDependencies dependencies=CompilerDependencies.compilerDependenciesForProduction(CompilerSpecialMode.REGULAR);
+  JetCoreEnvironment environment=new JetCoreEnvironment(CompileEnvironmentUtil.createMockDisposable(),dependencies);
+  CompileEnvironmentConfiguration env=new CompileEnvironmentConfiguration(environment,dependencies,MessageCollector.PLAIN_TEXT_TO_SYSTEM_ERR);
   if ((stdlib != null) && (stdlib.trim().length() > 0)) {
-    env.setStdlib(stdlib);
+    File file=new File(stdlib);
+    CompileEnvironmentUtil.addToClasspath(env.getEnvironment(),file);
   }
   if ((classpath != null) && (classpath.length > 0)) {
-    env.addToClasspath(classpath);
+    CompileEnvironmentUtil.addToClasspath(env.getEnvironment(),classpath);
   }
-  env.getEnvironment().getCompilerPlugins().addAll(getCompilerPlugins());
+  env.getCompilerPlugins().addAll(getCompilerPlugins());
   return env;
 }

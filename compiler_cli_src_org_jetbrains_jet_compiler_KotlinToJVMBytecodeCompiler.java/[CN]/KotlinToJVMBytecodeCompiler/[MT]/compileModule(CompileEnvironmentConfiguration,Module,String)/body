@@ -1,0 +1,24 @@
+{
+  if (moduleBuilder.getSourceFiles().isEmpty()) {
+    throw new CompileEnvironmentException("No source files where defined");
+  }
+  for (  String sourceFile : moduleBuilder.getSourceFiles()) {
+    File source=new File(sourceFile);
+    if (!source.isAbsolute()) {
+      source=new File(directory,sourceFile);
+    }
+    if (!source.exists()) {
+      throw new CompileEnvironmentException("'" + source + "' does not exist");
+    }
+    configuration.getEnvironment().addSources(source.getPath());
+  }
+  for (  String classpathRoot : moduleBuilder.getClasspathRoots()) {
+    configuration.getEnvironment().addToClasspath(new File(classpathRoot));
+  }
+  CompileEnvironmentUtil.ensureRuntime(configuration.getEnvironment(),configuration.getCompilerDependencies());
+  GenerationState generationState=analyzeAndGenerate(configuration);
+  if (generationState == null) {
+    return null;
+  }
+  return generationState.getFactory();
+}
