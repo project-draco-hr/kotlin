@@ -1,0 +1,32 @@
+{
+  List<Module> modules=CompileEnvironmentUtil.loadModuleScript(moduleScriptFile,configuration.getMessageCollector());
+  if (modules == null) {
+    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
+  }
+  if (modules.isEmpty()) {
+    throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
+  }
+  final String directory=new File(moduleScriptFile).getParent();
+  for (  Module moduleBuilder : modules) {
+    if (configuration.getCompilerDependencies().getRuntimeJar() != null) {
+      CompileEnvironmentUtil.addToClasspath(configuration.getEnvironment(),configuration.getCompilerDependencies().getRuntimeJar());
+    }
+    ClassFileFactory moduleFactory=KotlinToJVMBytecodeCompiler.compileModule(configuration,moduleBuilder,directory);
+    if (moduleFactory == null) {
+      return false;
+    }
+    if (outputDir != null) {
+      CompileEnvironmentUtil.writeToOutputDirectory(moduleFactory,outputDir);
+    }
+ else {
+      String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+      try {
+        CompileEnvironmentUtil.writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
+      }
+ catch (      FileNotFoundException e) {
+        throw new CompileEnvironmentException("Invalid jar path " + path,e);
+      }
+    }
+  }
+  return true;
+}

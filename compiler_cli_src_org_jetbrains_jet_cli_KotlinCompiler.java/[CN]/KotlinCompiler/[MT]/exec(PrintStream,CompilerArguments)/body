@@ -35,19 +35,21 @@
   }
   CompilerDependencies dependencies=new CompilerDependencies(mode,jdkHeadersJar,runtimeJar);
   PrintingMessageCollector messageCollector=new PrintingMessageCollector(errStream,messageRenderer,arguments.verbose);
-  CompileEnvironment environment=new CompileEnvironment(messageCollector,dependencies);
+  Disposable rootDisposable=CompileEnvironmentUtil.createMockDisposable();
+  JetCoreEnvironment environment=new JetCoreEnvironment(rootDisposable,dependencies);
+  CompileEnvironmentConfiguration configuration=new CompileEnvironmentConfiguration(environment,dependencies,messageCollector);
   try {
-    configureEnvironment(environment,arguments);
+    configureEnvironment(configuration,arguments);
     boolean noErrors;
     if (arguments.module != null) {
-      noErrors=environment.compileModuleScript(arguments.module,arguments.jar,arguments.outputDir,arguments.includeRuntime);
+      noErrors=KotlinToJVMBytecodeCompiler.compileModuleScript(configuration,arguments.module,arguments.jar,arguments.outputDir,arguments.includeRuntime);
     }
  else {
       if (arguments.getSourceDirs() != null) {
-        noErrors=environment.compileBunchOfSourceDirectories(arguments.getSourceDirs(),arguments.jar,arguments.outputDir,arguments.includeRuntime);
+        noErrors=KotlinToJVMBytecodeCompiler.compileBunchOfSourceDirectories(configuration,arguments.getSourceDirs(),arguments.jar,arguments.outputDir,arguments.includeRuntime);
       }
  else {
-        noErrors=environment.compileBunchOfSources(arguments.src,arguments.jar,arguments.outputDir,arguments.includeRuntime);
+        noErrors=KotlinToJVMBytecodeCompiler.compileBunchOfSources(configuration,arguments.src,arguments.jar,arguments.outputDir,arguments.includeRuntime);
       }
     }
     return noErrors ? OK : COMPILATION_ERROR;
@@ -57,7 +59,7 @@
     return INTERNAL_ERROR;
   }
  finally {
-    environment.dispose();
+    Disposer.dispose(rootDisposable);
     messageCollector.printToErrStream();
   }
 }
