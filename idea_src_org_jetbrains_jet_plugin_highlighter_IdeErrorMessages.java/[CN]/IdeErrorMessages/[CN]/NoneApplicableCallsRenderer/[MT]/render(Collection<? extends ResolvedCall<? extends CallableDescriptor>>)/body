@@ -12,11 +12,19 @@
       if (!first) {
         stringBuilder.append(", ");
       }
-      String paramType=htmlRend.renderType(parameter.getType());
-      if (parametersToHighlight.contains(parameter)) {
-        paramType=String.format(RED_TEMPLATE,paramType);
+      JetType type=parameter.getType();
+      JetType varargElementType=parameter.getVarargElementType();
+      if (varargElementType != null) {
+        type=varargElementType;
       }
-      stringBuilder.append(paramType);
+      String paramString=(varargElementType != null ? "<b>vararg</b> " : "") + htmlRend.renderType(type);
+      if (parameter.hasDefaultValue()) {
+        paramString+=" = ...";
+      }
+      if (parametersToHighlight.contains(parameter)) {
+        paramString=String.format(RED_TEMPLATE,paramString);
+      }
+      stringBuilder.append(paramString);
       first=false;
     }
     stringBuilder.append(parametersToHighlight.contains(null) ? String.format(RED_TEMPLATE,")") : ")");
