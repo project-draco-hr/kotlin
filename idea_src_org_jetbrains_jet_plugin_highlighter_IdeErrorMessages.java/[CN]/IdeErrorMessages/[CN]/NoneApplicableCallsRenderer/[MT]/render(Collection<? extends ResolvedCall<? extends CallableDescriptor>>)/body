@@ -1,0 +1,32 @@
+{
+  String RED_TEMPLATE="<font color=red><b>%s</b></font>";
+  StringBuilder stringBuilder=new StringBuilder("");
+  for (  ResolvedCall<? extends CallableDescriptor> call : calls) {
+    stringBuilder.append("<li>");
+    CallableDescriptor funDescriptor=call.getResultingDescriptor();
+    Set<ValueParameterDescriptor> parametersToHighlight=getParametersToHighlight(call);
+    stringBuilder.append(funDescriptor.getName()).append("(");
+    boolean first=true;
+    DescriptorRenderer htmlRend=DescriptorRenderer.HTML;
+    for (    ValueParameterDescriptor parameter : funDescriptor.getValueParameters()) {
+      if (!first) {
+        stringBuilder.append(", ");
+      }
+      String paramType=htmlRend.renderType(parameter.getType());
+      if (parametersToHighlight.contains(parameter)) {
+        paramType=String.format(RED_TEMPLATE,paramType);
+      }
+      stringBuilder.append(paramType);
+      first=false;
+    }
+    stringBuilder.append(parametersToHighlight.contains(null) ? String.format(RED_TEMPLATE,")") : ")");
+    stringBuilder.append(" ").append(htmlRend.renderMessage("defined in")).append(" ");
+    DeclarationDescriptor containingDeclaration=funDescriptor.getContainingDeclaration();
+    if (containingDeclaration != null) {
+      FqNameUnsafe fqName=DescriptorUtils.getFQName(containingDeclaration);
+      stringBuilder.append(FqName.ROOT.toUnsafe().equals(fqName) ? "root package" : fqName.getFqName());
+    }
+    stringBuilder.append("</li>");
+  }
+  return stringBuilder.toString();
+}
