@@ -5,10 +5,11 @@
       if (CompilerMessageSeverity.ERRORS.contains(severity)) {
         hasErrors.set(true);
       }
-      messageCollector.report(severity,message,location);
+      configuration.getMessageCollector().report(severity,message,location);
     }
   }
 ;
+  JetCoreEnvironment environment=configuration.getEnvironment();
   for (  JetFile file : environment.getSourceFiles()) {
     file.accept(new PsiRecursiveElementWalkingVisitor(){
       @Override public void visitErrorElement(      PsiErrorElement element){
@@ -21,7 +22,7 @@
 );
   }
   Predicate<PsiFile> filesToAnalyzeCompletely=stubs ? Predicates.<PsiFile>alwaysFalse() : Predicates.<PsiFile>alwaysTrue();
-  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),filesToAnalyzeCompletely,JetControlFlowDataTraceFactory.EMPTY,dependencies);
+  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),filesToAnalyzeCompletely,JetControlFlowDataTraceFactory.EMPTY,configuration.getCompilerDependencies());
   for (  Diagnostic diagnostic : exhaust.getBindingContext().getDiagnostics()) {
     reportDiagnostic(messageCollectorWrapper,diagnostic);
   }
