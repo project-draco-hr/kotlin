@@ -1,0 +1,37 @@
+{
+  ResolutionDebugInfo.Data debugInfo=ResolutionDebugInfo.create();
+  context.trace.record(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement(),debugInfo);
+  context.trace.record(RESOLUTION_SCOPE,context.call.getCalleeExpression(),context.scope);
+  if (context.dataFlowInfo.hasTypeInfoConstraints()) {
+    context.trace.record(NON_DEFAULT_EXPRESSION_DATA_FLOW,context.call.getCalleeExpression(),context.dataFlowInfo);
+  }
+  debugInfo.set(ResolutionDebugInfo.TASKS,prioritizedTasks);
+  TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
+  OverloadResolutionResultsImpl<D> resultsForFirstNonemptyCandidateSet=null;
+  for (  ResolutionTask<D> task : prioritizedTasks) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+    OverloadResolutionResultsImpl<D> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.withTrace(temporaryTrace),callTransformationStrategy);
+    if (results.isSuccess() || results.isAmbiguity()) {
+      temporaryTrace.commit();
+      if (results.isSuccess()) {
+        debugInfo.set(ResolutionDebugInfo.RESULT,results.getResultingCall());
+      }
+      return results;
+    }
+    if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty()) {
+      traceForFirstNonemptyCandidateSet=temporaryTrace;
+      resultsForFirstNonemptyCandidateSet=results;
+    }
+  }
+  if (traceForFirstNonemptyCandidateSet != null) {
+    traceForFirstNonemptyCandidateSet.commit();
+    if (resultsForFirstNonemptyCandidateSet.isSingleResult()) {
+      debugInfo.set(ResolutionDebugInfo.RESULT,resultsForFirstNonemptyCandidateSet.getResultingCall());
+    }
+  }
+ else {
+    context.trace.report(UNRESOLVED_REFERENCE.on(reference));
+    checkTypesWithNoCallee(context);
+  }
+  return resultsForFirstNonemptyCandidateSet != null ? resultsForFirstNonemptyCandidateSet : OverloadResolutionResultsImpl.<D>nameNotFound();
+}

@@ -1,11 +1,12 @@
 {
-  List<ResolvedCallImpl<FunctionDescriptor>> result=findCandidatesByExactSignature(scope,receiver,name,parameterTypes);
+  List<ResolutionCandidate<FunctionDescriptor>> candidates=findCandidatesByExactSignature(scope,receiver,name,parameterTypes);
   BindingTraceContext trace=new BindingTraceContext();
   TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(trace);
-  Set<ResolvedCallImpl<FunctionDescriptor>> candidates=Sets.newLinkedHashSet();
-  for (  ResolvedCallImpl<FunctionDescriptor> call : result) {
+  Set<ResolvedCallImpl<FunctionDescriptor>> calls=Sets.newLinkedHashSet();
+  for (  ResolutionCandidate<FunctionDescriptor> candidate : candidates) {
+    ResolvedCallImpl<FunctionDescriptor> call=ResolvedCallImpl.create(candidate);
     call.setTrace(temporaryBindingTrace);
-    candidates.add(call);
+    calls.add(call);
   }
-  return computeResultAndReportErrors(trace,TracingStrategy.EMPTY,candidates,Collections.<ResolvedCallImpl<FunctionDescriptor>>emptySet());
+  return computeResultAndReportErrors(trace,TracingStrategy.EMPTY,calls,Collections.<ResolvedCallImpl<FunctionDescriptor>>emptySet());
 }
