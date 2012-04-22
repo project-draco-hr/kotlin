@@ -1,7 +1,16 @@
 {
+  final File lib=getCompilerLib();
+  final File[] jars=lib.listFiles(new JarFilter());
+  final String classpath=StringUtil.join(jars,new Function<File,String>(){
+    @Override public String fun(    File file){
+      return file.getAbsolutePath();
+    }
+  }
+,File.pathSeparator);
   Collection<String> javaArgs=new ArrayList<String>();
-  javaArgs.add("-jar");
-  javaArgs.add(getCompilerJar().getAbsolutePath());
+  javaArgs.add("-cp");
+  javaArgs.add(classpath);
+  javaArgs.add("org.jetbrains.jet.cli.KotlinCompiler");
   Collections.addAll(javaArgs,arguments);
-  runJava(logName,ArrayUtil.toStringArray(javaArgs));
+  return runJava(logName,ArrayUtil.toStringArray(javaArgs));
 }
