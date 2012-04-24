@@ -1,31 +1,12 @@
 {
-  final Ref<Boolean> hasErrors=new Ref<Boolean>(false);
-  final MessageCollector messageCollectorWrapper=new MessageCollector(){
-    @Override public void report(    @NotNull CompilerMessageSeverity severity,    @NotNull String message,    @NotNull CompilerMessageLocation location){
-      if (CompilerMessageSeverity.ERRORS.contains(severity)) {
-        hasErrors.set(true);
-      }
-      configuration.getMessageCollector().report(severity,message,location);
+  final JetCoreEnvironment environment=configuration.getEnvironment();
+  AnalyzerWithCompilerReport analyzerWithCompilerReport=new AnalyzerWithCompilerReport(configuration.getMessageCollector());
+  final Predicate<PsiFile> filesToAnalyzeCompletely=stubs ? Predicates.<PsiFile>alwaysFalse() : Predicates.<PsiFile>alwaysTrue();
+  analyzerWithCompilerReport.analyzeAndReport(new AnalyzerWithCompilerReport.AnalyzerWrapper(){
+    @NotNull @Override public AnalyzeExhaust analyze(){
+      return AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),filesToAnalyzeCompletely,JetControlFlowDataTraceFactory.EMPTY,configuration.getCompilerDependencies());
     }
   }
-;
-  JetCoreEnvironment environment=configuration.getEnvironment();
-  for (  JetFile file : environment.getSourceFiles()) {
-    file.accept(new PsiRecursiveElementWalkingVisitor(){
-      @Override public void visitErrorElement(      PsiErrorElement element){
-        String description=element.getErrorDescription();
-        String message=StringUtil.isEmpty(description) ? "Syntax error" : description;
-        Diagnostic diagnostic=new SyntaxErrorDiagnostic(element,Severity.ERROR,message);
-        reportDiagnostic(messageCollectorWrapper,diagnostic);
-      }
-    }
-);
-  }
-  Predicate<PsiFile> filesToAnalyzeCompletely=stubs ? Predicates.<PsiFile>alwaysFalse() : Predicates.<PsiFile>alwaysTrue();
-  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),filesToAnalyzeCompletely,JetControlFlowDataTraceFactory.EMPTY,configuration.getCompilerDependencies());
-  for (  Diagnostic diagnostic : exhaust.getBindingContext().getDiagnostics()) {
-    reportDiagnostic(messageCollectorWrapper,diagnostic);
-  }
-  reportIncompleteHierarchies(messageCollectorWrapper,exhaust);
-  return hasErrors.get() ? null : exhaust;
+,environment.getSourceFiles());
+  return analyzerWithCompilerReport.hasErrors() ? null : analyzerWithCompilerReport.getAnalyzeExhaust();
 }
