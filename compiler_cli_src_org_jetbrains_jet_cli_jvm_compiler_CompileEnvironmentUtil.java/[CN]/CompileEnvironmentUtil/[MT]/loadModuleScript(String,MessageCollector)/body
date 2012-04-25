@@ -1,0 +1,24 @@
+{
+  Disposable disposable=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  CompilerDependencies dependencies=CompilerDependencies.compilerDependenciesForProduction(CompilerSpecialMode.REGULAR);
+  JetCoreEnvironment scriptEnvironment=new JetCoreEnvironment(disposable,dependencies);
+  ensureRuntime(scriptEnvironment,dependencies);
+  scriptEnvironment.addSources(moduleScriptFile);
+  GenerationState generationState=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(new CompileEnvironmentConfiguration(scriptEnvironment,dependencies,messageCollector),false);
+  if (generationState == null) {
+    return null;
+  }
+  List<Module> modules=runDefineModules(dependencies,moduleScriptFile,generationState.getFactory());
+  Disposer.dispose(disposable);
+  if (modules == null) {
+    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
+  }
+  if (modules.isEmpty()) {
+    throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
+  }
+  return modules;
+}

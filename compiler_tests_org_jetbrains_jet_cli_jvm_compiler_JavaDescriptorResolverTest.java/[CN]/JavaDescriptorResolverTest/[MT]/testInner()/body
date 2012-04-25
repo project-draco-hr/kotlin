@@ -1,0 +1,20 @@
+{
+  JavaCompiler javaCompiler=ToolProvider.getSystemJavaCompiler();
+  StandardJavaFileManager fileManager=javaCompiler.getStandardFileManager(null,Locale.ENGLISH,Charset.forName("utf-8"));
+  try {
+    File file=new File("compiler/testData/javaDescriptorResolver/inner.java");
+    Iterable<? extends JavaFileObject> javaFileObjectsFromFiles=fileManager.getJavaFileObjectsFromFiles(Collections.singleton(file));
+    List<String> options=Arrays.asList("-d",tmpdir.getPath());
+    JavaCompiler.CompilationTask task=javaCompiler.getTask(null,fileManager,null,options,null,javaFileObjectsFromFiles);
+    Assert.assertTrue(task.call());
+  }
+  finally {
+    fileManager.close();
+  }
+  JetCoreEnvironment jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdk(myTestRootDisposable,CompilerSpecialMode.JDK_HEADERS);
+  jetCoreEnvironment.addToClasspath(tmpdir);
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(CompileCompilerDependenciesTest.compilerDependenciesForTests(CompilerSpecialMode.JDK_HEADERS,true),jetCoreEnvironment.getProject());
+  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  ClassDescriptor classDescriptor=javaDescriptorResolver.resolveClass(new FqName("A"),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+  Assert.assertNotNull(classDescriptor);
+}

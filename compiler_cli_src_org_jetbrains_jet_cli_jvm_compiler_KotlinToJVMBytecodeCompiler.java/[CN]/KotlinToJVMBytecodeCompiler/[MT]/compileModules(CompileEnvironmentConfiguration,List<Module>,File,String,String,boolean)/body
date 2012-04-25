@@ -1,0 +1,24 @@
+{
+  for (  Module moduleBuilder : modules) {
+    if (configuration.getCompilerDependencies().getRuntimeJar() != null) {
+      CompileEnvironmentUtil.addToClasspath(configuration.getEnvironment(),configuration.getCompilerDependencies().getRuntimeJar());
+    }
+    ClassFileFactory moduleFactory=compileModule(configuration,moduleBuilder,directory);
+    if (moduleFactory == null) {
+      return false;
+    }
+    if (outputDir != null) {
+      CompileEnvironmentUtil.writeToOutputDirectory(moduleFactory,outputDir);
+    }
+ else {
+      String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+      try {
+        CompileEnvironmentUtil.writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
+      }
+ catch (      FileNotFoundException e) {
+        throw new CompileEnvironmentException("Invalid jar path " + path,e);
+      }
+    }
+  }
+  return true;
+}

@@ -1,0 +1,27 @@
+{
+  List<String> lines=Files.readLines(ktFile,Charset.forName("utf-8"));
+  for (int i=0; i < lines.size() - 3; ++i) {
+    Matcher methodMatcher=methodPattern.matcher(lines.get(i));
+    if (methodMatcher.matches()) {
+      Matcher jvmSignatureMatcher=jvmSignaturePattern.matcher(lines.get(i + 1));
+      Matcher genericSignatureMatcher=genericSignaturePattern.matcher(lines.get(i + 2));
+      Matcher kotlinSignatureMatcher=kotlinSignaturePattern.matcher(lines.get(i + 3));
+      if (!jvmSignatureMatcher.matches() || !genericSignatureMatcher.matches() || !kotlinSignatureMatcher.matches()) {
+        throw new AssertionError("'method:' must be followed ... bla bla ... use the source luke");
+      }
+      String className=methodMatcher.group(1);
+      String methodName=methodMatcher.group(2);
+      String jvmSignature=jvmSignatureMatcher.group(1);
+      String genericSignature=genericSignatureMatcher.group(1);
+      String kotlinSignature=kotlinSignatureMatcher.group(1);
+      if (genericSignature.equals("null")) {
+        genericSignature=null;
+      }
+      if (kotlinSignature.equals("null")) {
+        kotlinSignature=null;
+      }
+      return new Expectation(className,methodName,jvmSignature,genericSignature,kotlinSignature);
+    }
+  }
+  throw new AssertionError("test instructions not found in " + ktFile);
+}

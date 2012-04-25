@@ -1,0 +1,43 @@
+{
+  StringBuilder sb=new StringBuilder();
+  Assert.assertEquals(nsa.getName(),nsb.getName());
+  sb.append("namespace " + nsa.getName() + "\n\n");
+  Assert.assertTrue(!nsa.getMemberScope().getAllDescriptors().isEmpty());
+  Set<String> classifierNames=new HashSet<String>();
+  Set<String> propertyNames=new HashSet<String>();
+  Set<String> functionNames=new HashSet<String>();
+  for (  DeclarationDescriptor ad : nsa.getMemberScope().getAllDescriptors()) {
+    if (ad instanceof ClassifierDescriptor) {
+      classifierNames.add(ad.getName());
+    }
+ else     if (ad instanceof PropertyDescriptor) {
+      propertyNames.add(ad.getName());
+    }
+ else     if (ad instanceof FunctionDescriptor) {
+      functionNames.add(ad.getName());
+    }
+ else {
+      throw new AssertionError("unknown member: " + ad);
+    }
+  }
+  for (  String name : classifierNames) {
+    ClassifierDescriptor ca=nsa.getMemberScope().getClassifier(name);
+    ClassifierDescriptor cb=nsb.getMemberScope().getClassifier(name);
+    Assert.assertTrue(ca != null);
+    Assert.assertTrue(cb != null);
+    compareClassifiers(ca,cb,sb);
+  }
+  for (  String name : propertyNames) {
+    Set<VariableDescriptor> pa=nsa.getMemberScope().getProperties(name);
+    Set<VariableDescriptor> pb=nsb.getMemberScope().getProperties(name);
+    compareDeclarationSets(pa,pb,sb);
+    Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.getterName(name)).isEmpty());
+    Assert.assertTrue(nsb.getMemberScope().getFunctions(PropertyCodegen.setterName(name)).isEmpty());
+  }
+  for (  String name : functionNames) {
+    Set<FunctionDescriptor> fa=nsa.getMemberScope().getFunctions(name);
+    Set<FunctionDescriptor> fb=nsb.getMemberScope().getFunctions(name);
+    compareDeclarationSets(fa,fb,sb);
+  }
+  return sb.toString();
+}

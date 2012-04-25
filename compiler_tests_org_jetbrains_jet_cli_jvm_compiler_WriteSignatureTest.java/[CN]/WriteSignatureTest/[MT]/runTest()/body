@@ -1,0 +1,16 @@
+{
+  jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdk(myTestRootDisposable);
+  String text=FileUtil.loadFile(ktFile);
+  LightVirtualFile virtualFile=new LightVirtualFile(ktFile.getName(),JetLanguage.INSTANCE,text);
+  virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+  JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
+  ClassFileFactory classFileFactory=GenerationUtils.compileFileGetClassFileFactoryForTest(psiFile,CompilerSpecialMode.REGULAR);
+  CompileEnvironmentUtil.writeToOutputDirectory(classFileFactory,tmpdir.getPath());
+  Disposer.dispose(myTestRootDisposable);
+  final Expectation expectation=parseExpectations();
+  ActualSignature actualSignature=readSignature(expectation.className,expectation.methodName);
+  String template="jvm signature:     %s\n" + "generic signature: %s\n" + "kotlin signature:  %s\n"+ "";
+  String expected=String.format(template,expectation.jvmSignature,expectation.genericSignature,expectation.kotlinSignature);
+  String actual=String.format(template,actualSignature.jvmSignature,actualSignature.genericSignature,actualSignature.kotlinSignature);
+  Assert.assertEquals(expected,actual);
+}
