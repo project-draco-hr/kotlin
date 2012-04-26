@@ -6,7 +6,17 @@
     typeNameObject=type.getConstructor();
   }
  else {
-    typeNameObject=shortNamesOnly ? cd.getName() : DescriptorUtils.getFQName(cd);
+    if (shortNamesOnly) {
+      typeNameObject=cd.getName();
+      DeclarationDescriptor parent=cd.getContainingDeclaration();
+      while (parent instanceof ClassDescriptor) {
+        typeNameObject=parent.getName() + "." + typeNameObject;
+        parent=parent.getContainingDeclaration();
+      }
+    }
+ else {
+      typeNameObject=DescriptorUtils.getFQName(cd);
+    }
   }
   sb.append(typeNameObject);
   if (!type.getArguments().isEmpty()) {

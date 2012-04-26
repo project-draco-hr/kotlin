@@ -1,0 +1,31 @@
+{
+  OSProcessHandler handler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString(),commandLine.getCharset());
+  final StringBuilder outContent=new StringBuilder();
+  final StringBuilder errContent=new StringBuilder();
+  handler.addProcessListener(new ProcessAdapter(){
+    @Override public void onTextAvailable(    ProcessEvent event,    Key outputType){
+      if (outputType == ProcessOutputTypes.SYSTEM) {
+        System.out.print(event.getText());
+      }
+ else       if (outputType == ProcessOutputTypes.STDOUT) {
+        appendToContent(outContent,"OUT ",event.getText());
+      }
+ else       if (outputType == ProcessOutputTypes.STDERR) {
+        appendToContent(errContent,"ERR ",event.getText());
+      }
+    }
+    private void appendToContent(    StringBuilder content,    String prefix,    String line){
+      content.append(prefix);
+      content.append(StringUtil.trimTrailing(line));
+      content.append("\n");
+    }
+  }
+);
+  handler.startNotify();
+  handler.waitFor();
+  int exitCode=handler.getProcess().exitValue();
+  executionLog.append(outContent);
+  executionLog.append(errContent);
+  executionLog.append("Return code: ").append(exitCode).append("\n");
+  return exitCode;
+}

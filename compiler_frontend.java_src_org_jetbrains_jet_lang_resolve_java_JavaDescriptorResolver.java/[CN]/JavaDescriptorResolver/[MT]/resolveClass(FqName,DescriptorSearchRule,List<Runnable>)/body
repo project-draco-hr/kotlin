@@ -25,9 +25,13 @@
   if (classData == null) {
     PsiClass psiClass=psiClassFinder.findPsiClass(qualifiedName,PsiClassFinder.RuntimeClassesHandleMode.THROW);
     if (psiClass == null) {
+      ResolverBinaryClassData oldValue=classDescriptorCache.put(qualifiedName,ResolverBinaryClassData.NEGATIVE);
+      if (oldValue != null) {
+        throw new IllegalStateException("rewrite at " + qualifiedName);
+      }
       return null;
     }
     classData=createJavaClassDescriptor(psiClass,tasks);
   }
-  return classData.getClassDescriptor();
+  return classData.classDescriptor;
 }

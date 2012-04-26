@@ -1,11 +1,10 @@
 {
   final SimpleJavaParameters params=new SimpleJavaParameters();
   params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
-  params.setMainClass("org.jetbrains.jet.cli.KotlinCompiler");
-  params.getProgramParametersList().add("-module",scriptFile.getAbsolutePath());
-  params.getProgramParametersList().add("-output",path(outputDir));
-  params.getProgramParametersList().add("-tags");
-  params.getProgramParametersList().add("-verbose");
+  params.setMainClass("org.jetbrains.jet.cli.jvm.K2JVMCompiler");
+  for (  String arg : commandLineArguments(outputDir,scriptFile)) {
+    params.getProgramParametersList().add(arg);
+  }
   for (  File jar : kompilerClasspath(kotlinHome,compileContext)) {
     params.getClassPath().add(jar);
   }
@@ -14,16 +13,25 @@
   final GeneralCommandLine commandLine=JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),params,false);
   compileContext.addMessage(INFORMATION,"Invoking out-of-process compiler with arguments: " + commandLine,"",-1,-1);
   try {
-    final OSProcessHandler processHandler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString()){
-      @Override public Charset getCharset(){
-        return commandLine.getCharset();
+    final Process process=commandLine.createProcess();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      @Override public void run(){
+        parseCompilerMessagesFromReader(compileContext,new InputStreamReader(process.getInputStream()),collector);
       }
     }
-;
-    ProcessAdapter processListener=createProcessListener(compileContext,collector);
-    processHandler.addProcessListener(processListener);
-    processHandler.startNotify();
-    processHandler.waitFor();
+);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      @Override public void run(){
+        try {
+          FileUtil.loadBytes(process.getErrorStream());
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+);
+    int exitCode=process.waitFor();
+    handleProcessTermination(exitCode,compileContext);
   }
  catch (  Exception e) {
     compileContext.addMessage(ERROR,"[Internal Error] " + e.getLocalizedMessage(),"",-1,-1);
