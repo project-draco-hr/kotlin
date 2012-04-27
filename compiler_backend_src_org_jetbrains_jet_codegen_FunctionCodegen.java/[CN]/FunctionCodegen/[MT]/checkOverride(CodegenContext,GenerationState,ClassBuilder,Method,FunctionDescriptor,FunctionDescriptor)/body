@@ -1,21 +1,21 @@
 {
   Method method=state.getInjector().getJetTypeMapper().mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod();
-  Method overriden=state.getInjector().getJetTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction.getOriginal()).getAsmMethod();
+  Method overridden=state.getInjector().getJetTypeMapper().mapSignature(overriddenFunction.getName(),overriddenFunction.getOriginal()).getAsmMethod();
   if (overriddenFunction.getModality() == Modality.ABSTRACT) {
     Set<? extends FunctionDescriptor> overriddenFunctions=overriddenFunction.getOverriddenDescriptors();
     for (    FunctionDescriptor of : overriddenFunctions) {
       checkOverride(owner,state,v,jvmSignature,overriddenFunction,of.getOriginal());
     }
   }
-  if (differentMethods(method,overriden)) {
+  if (differentMethods(method,overridden)) {
     int flags=ACC_PUBLIC | ACC_BRIDGE;
-    final MethodVisitor mv=v.newMethod(null,flags,jvmSignature.getName(),overriden.getDescriptor(),null,null);
+    final MethodVisitor mv=v.newMethod(null,flags,jvmSignature.getName(),overridden.getDescriptor(),null,null);
     if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
       StubCodegen.generateStubCode(mv);
     }
  else     if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
       mv.visitCode();
-      Type[] argTypes=overriden.getArgumentTypes();
+      Type[] argTypes=overridden.getArgumentTypes();
       InstructionAdapter iv=new InstructionAdapter(mv);
       iv.load(0,JetTypeMapper.TYPE_OBJECT);
       for (int i=0, reg=1; i < argTypes.length; i++) {
@@ -27,9 +27,9 @@
         reg+=argType.getSize();
       }
       iv.invokevirtual(state.getInjector().getJetTypeMapper().mapType(((ClassDescriptor)owner.getContextDescriptor()).getDefaultType(),MapTypeMode.VALUE).getInternalName(),jvmSignature.getName(),jvmSignature.getDescriptor());
-      if (JetTypeMapper.isPrimitive(jvmSignature.getReturnType()) && !JetTypeMapper.isPrimitive(overriden.getReturnType()))       StackValue.valueOf(iv,jvmSignature.getReturnType());
+      if (JetTypeMapper.isPrimitive(jvmSignature.getReturnType()) && !JetTypeMapper.isPrimitive(overridden.getReturnType()))       StackValue.valueOf(iv,jvmSignature.getReturnType());
       if (jvmSignature.getReturnType() == Type.VOID_TYPE)       iv.aconst(null);
-      iv.areturn(overriden.getReturnType());
+      iv.areturn(overridden.getReturnType());
       endVisit(mv,"bridge method",BindingContextUtils.callableDescriptorToDeclaration(state.getBindingContext(),functionDescriptor));
     }
   }
