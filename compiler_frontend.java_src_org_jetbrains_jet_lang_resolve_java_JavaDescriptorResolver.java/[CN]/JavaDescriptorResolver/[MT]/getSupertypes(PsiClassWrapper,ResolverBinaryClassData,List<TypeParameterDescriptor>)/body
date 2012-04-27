@@ -1,4 +1,5 @@
 {
+  ClassDescriptor classDescriptor=classData.classDescriptor;
   final List<JetType> result=new ArrayList<JetType>();
   String context="class " + psiClass.getQualifiedName();
   if (psiClass.getJetClass().signature().length() > 0) {
@@ -34,7 +35,18 @@
     }
   }
   if (result.isEmpty()) {
-    result.add(JetStandardClasses.getAnyType());
+    if (classData.kotlin || psiClass.getQualifiedName().equals(JdkNames.JL_OBJECT.getFqName().getFqName()) || classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
+      result.add(JetStandardClasses.getAnyType());
+    }
+ else {
+      ClassDescriptor object=resolveJavaLangObject();
+      if (object != null) {
+        result.add(object.getDefaultType());
+      }
+ else {
+        result.add(JetStandardClasses.getAnyType());
+      }
+    }
   }
   return result;
 }
