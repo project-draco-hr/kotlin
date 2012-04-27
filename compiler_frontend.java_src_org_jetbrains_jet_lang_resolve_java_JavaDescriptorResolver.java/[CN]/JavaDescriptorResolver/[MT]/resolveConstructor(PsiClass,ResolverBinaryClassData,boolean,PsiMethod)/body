@@ -1,0 +1,16 @@
+{
+  PsiMethodWrapper constructor=new PsiMethodWrapper(psiConstructor);
+  if (constructor.getJetConstructor().hidden()) {
+    return;
+  }
+  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classData.classDescriptor,Collections.<AnnotationDescriptor>emptyList(),false);
+  String context="constructor of class " + psiClass.getQualifiedName();
+  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(constructorDescriptor,constructor.getParameters(),TypeVariableResolvers.classTypeVariableResolver(classData.classDescriptor,context));
+  if (valueParameterDescriptors.receiverType != null) {
+    throw new IllegalStateException();
+  }
+  constructorDescriptor.initialize(classData.classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.descriptors,resolveVisibilityFromPsiModifiers(psiConstructor),aStatic);
+  constructorDescriptor.setReturnType(classData.classDescriptor.getDefaultType());
+  classData.classDescriptor.addConstructor(constructorDescriptor,null);
+  trace.record(BindingContext.CONSTRUCTOR,psiConstructor,constructorDescriptor);
+}
