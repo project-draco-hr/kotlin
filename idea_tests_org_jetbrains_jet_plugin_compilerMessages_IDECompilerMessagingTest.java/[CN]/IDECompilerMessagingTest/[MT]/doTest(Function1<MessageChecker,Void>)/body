@@ -1,0 +1,14 @@
+{
+  String pathToTestDir=TEST_DATA_PATH + "/" + getTestName(true);
+  VirtualFile testDir=LocalFileSystem.getInstance().findFileByPath(pathToTestDir);
+  VirtualFile sampleFile=LocalFileSystem.getInstance().findFileByPath(pathToTestDir + "/src/test.kt");
+  VirtualFile outDirectory=getOutDirectory(pathToTestDir,testDir);
+  VirtualFile root=LocalFileSystem.getInstance().findFileByPath(pathToTestDir + "/src/");
+  MockCompileContext mockCompileContext=new MockCompileContext(myModule,outDirectory,root);
+  MockModuleChunk mockModuleChunk=new MockModuleChunk(myModule);
+  new JetCompiler().compile(mockCompileContext,mockModuleChunk,new VirtualFile[]{sampleFile},new MockOutputSink());
+  MessageChecker checker=new MessageChecker(mockCompileContext);
+  checkHeader(checker);
+  whatToExpect.invoke(checker);
+  checker.finish();
+}
