@@ -2,10 +2,10 @@
   final SimpleJavaParameters params=new SimpleJavaParameters();
   params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
   params.setMainClass("org.jetbrains.jet.cli.jvm.K2JVMCompiler");
-  for (  String arg : commandLineArguments(outputDir,scriptFile)) {
+  for (  String arg : commandLineArguments(environment.getOutput(),scriptFile)) {
     params.getProgramParametersList().add(arg);
   }
-  for (  File jar : kompilerClasspath(kotlinHome,compileContext)) {
+  for (  File jar : CompilerUtils.kompilerClasspath(environment.getKotlinHome(),compileContext)) {
     params.getClassPath().add(jar);
   }
   params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
@@ -16,7 +16,7 @@
     final Process process=commandLine.createProcess();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
       @Override public void run(){
-        parseCompilerMessagesFromReader(compileContext,new InputStreamReader(process.getInputStream()),collector);
+        CompilerUtils.parseCompilerMessagesFromReader(compileContext,new InputStreamReader(process.getInputStream()),collector);
       }
     }
 );
@@ -31,7 +31,7 @@
     }
 );
     int exitCode=process.waitFor();
-    handleProcessTermination(exitCode,compileContext);
+    CompilerUtils.handleProcessTermination(exitCode,compileContext);
   }
  catch (  Exception e) {
     compileContext.addMessage(ERROR,"[Internal Error] " + e.getLocalizedMessage(),"",-1,-1);

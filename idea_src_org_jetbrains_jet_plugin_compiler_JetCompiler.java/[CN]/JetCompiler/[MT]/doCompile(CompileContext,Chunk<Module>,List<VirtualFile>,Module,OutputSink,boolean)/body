@@ -1,37 +1,13 @@
 {
   if (files.isEmpty())   return;
-  VirtualFile mainOutput=compileContext.getModuleOutputDirectory(module);
-  final VirtualFile outputDir=tests ? compileContext.getModuleOutputDirectoryForTests(module) : mainOutput;
-  if (outputDir == null) {
-    compileContext.addMessage(ERROR,"[Internal Error] No output directory","",-1,-1);
+  CompilerEnvironment environment=CompilerEnvironment.getEnvironmentFor(compileContext,module,tests);
+  if (!environment.success()) {
+    environment.reportErrorsTo(compileContext);
     return;
   }
-  File kotlinHome=PathUtil.getDefaultCompilerPath();
-  if (kotlinHome == null) {
-    compileContext.addMessage(ERROR,"Cannot find kotlinc home. Make sure plugin is properly installed","",-1,-1);
-    return;
-  }
-  ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
-  String moduleName=moduleChunk.getNodes().iterator().next().getName();
-  Set<VirtualFile> outputDirectoriesToFilter=Sets.newHashSet(compileContext.getModuleOutputDirectoryForTests(module));
-  if (!tests) {
-    outputDirectoriesToFilter.add(compileContext.getModuleOutputDirectory(module));
-  }
-  CharSequence script=generateModuleScript(moduleName,chunk,files,tests,mainOutput,outputDirectoriesToFilter);
-  File scriptFile=new File(path(outputDir),"script.kts");
-  try {
-    FileUtil.writeToFile(scriptFile,script.toString());
-  }
- catch (  IOException e) {
-    compileContext.addMessage(ERROR,"[Internal Error] Cannot write script to " + scriptFile.getAbsolutePath(),"",-1,-1);
-    return;
-  }
-  OutputItemsCollectorImpl collector=new OutputItemsCollectorImpl(outputDir.getPath());
-  if (RUN_OUT_OF_PROCESS) {
-    runOutOfProcess(compileContext,collector,outputDir,kotlinHome,scriptFile);
-  }
- else {
-    runInProcess(compileContext,collector,outputDir,kotlinHome,scriptFile);
-  }
-  outputSink.add(outputDir.getPath(),collector.getOutputs(),collector.getSources().toArray(VirtualFile.EMPTY_ARRAY));
+  File scriptFile=tryToWriteScriptFile(compileContext,moduleChunk,files,module,tests,compileContext.getModuleOutputDirectory(module),environment.getOutput());
+  if (scriptFile == null)   return;
+  CompilerUtils.OutputItemsCollectorImpl collector=new CompilerUtils.OutputItemsCollectorImpl(environment.getOutput().getPath());
+  runCompiler(compileContext,environment,scriptFile,collector);
+  outputSink.add(environment.getOutput().getPath(),collector.getOutputs(),collector.getSources().toArray(VirtualFile.EMPTY_ARRAY));
 }
