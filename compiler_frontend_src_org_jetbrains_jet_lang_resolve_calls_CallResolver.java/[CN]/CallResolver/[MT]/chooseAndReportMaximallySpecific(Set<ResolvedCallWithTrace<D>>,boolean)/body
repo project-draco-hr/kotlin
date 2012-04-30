@@ -1,0 +1,35 @@
+{
+  if (candidates.size() != 1) {
+    Set<ResolvedCallWithTrace<D>> cleanCandidates=Sets.newLinkedHashSet(candidates);
+    for (Iterator<ResolvedCallWithTrace<D>> iterator=cleanCandidates.iterator(); iterator.hasNext(); ) {
+      ResolvedCallWithTrace<D> candidate=iterator.next();
+      if (candidate.isDirty()) {
+        iterator.remove();
+      }
+    }
+    if (cleanCandidates.isEmpty()) {
+      cleanCandidates=candidates;
+    }
+    ResolvedCallWithTrace<D> maximallySpecific=overloadingConflictResolver.findMaximallySpecific(cleanCandidates,false);
+    if (maximallySpecific != null) {
+      return OverloadResolutionResultsImpl.success(maximallySpecific);
+    }
+    if (discriminateGenerics) {
+      ResolvedCallWithTrace<D> maximallySpecificGenericsDiscriminated=overloadingConflictResolver.findMaximallySpecific(cleanCandidates,true);
+      if (maximallySpecificGenericsDiscriminated != null) {
+        return OverloadResolutionResultsImpl.success(maximallySpecificGenericsDiscriminated);
+      }
+    }
+    Set<ResolvedCallWithTrace<D>> noOverrides=OverridingUtil.filterOverrides(candidates,MAP_TO_RESULT);
+    return OverloadResolutionResultsImpl.ambiguity(noOverrides);
+  }
+ else {
+    ResolvedCallWithTrace<D> result=candidates.iterator().next();
+    TemporaryBindingTrace temporaryTrace=result.getTrace();
+    temporaryTrace.commit();
+    if (result instanceof VariableAsFunctionResolvedCall) {
+      ((VariableAsFunctionResolvedCall)result).getVariableCall().getTrace().commit();
+    }
+    return OverloadResolutionResultsImpl.success(result);
+  }
+}
