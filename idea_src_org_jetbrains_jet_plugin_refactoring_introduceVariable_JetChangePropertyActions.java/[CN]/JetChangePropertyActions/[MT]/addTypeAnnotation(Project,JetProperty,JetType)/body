@@ -4,13 +4,13 @@
   if (anchor == null)   return;
   anchor=anchor.getNextSibling();
   if (anchor == null || !(anchor instanceof PsiWhiteSpace))   return;
-  JetTypeReference typeReference=JetPsiFactory.createType(project,DescriptorRenderer.TEXT.renderTypeWithShortNames(exprType));
+  JetTypeReference typeReference=JetPsiFactory.createType(project,DescriptorRenderer.TEXT.renderType(exprType));
   ASTNode colon=JetPsiFactory.createColonNode(project);
   ASTNode anchorNode=anchor.getNode().getTreeNext();
   property.getNode().addChild(colon,anchorNode);
   property.getNode().addChild(JetPsiFactory.createWhiteSpace(project).getNode(),anchorNode);
   property.getNode().addChild(typeReference.getNode(),anchorNode);
   property.getNode().addChild(JetPsiFactory.createWhiteSpace(project).getNode(),anchorNode);
-  ImportInsertHelper.addImportDirectivesIfNeeded(exprType,(JetFile)property.getContainingFile());
   anchor.delete();
+  ReferenceToClassesShortening.compactReferenceToClasses(Collections.singletonList(property));
 }
