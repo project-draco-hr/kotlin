@@ -7,7 +7,12 @@
   if (afterAnchor == null) {
     return;
   }
-  for (  JetElement element : generateOverridingMembers(selectedElements,(JetFile)classOrObject.getContainingFile(),false)) {
-    afterAnchor=body.addAfter(element,afterAnchor);
+  List<JetElement> elementsToCompact=new ArrayList<JetElement>();
+  final JetFile file=(JetFile)classOrObject.getContainingFile();
+  for (  JetElement element : generateOverridingMembers(selectedElements,file)) {
+    PsiElement added=body.addAfter(element,afterAnchor);
+    afterAnchor=added;
+    elementsToCompact.add((JetElement)added);
   }
+  compactReferenceToClasses(elementsToCompact);
 }

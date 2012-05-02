@@ -15,7 +15,7 @@
       if (!upperBounds.isEmpty()) {
         boolean firstUpperBound=true;
         for (        JetType upperBound : upperBounds) {
-          String upperBoundText=" : " + DescriptorRenderer.TEXT.renderTypeWithShortNames(upperBound);
+          String upperBoundText=" : " + renderType(upperBound);
           if (upperBound != JetStandardClasses.getDefaultBound()) {
             if (firstUpperBound) {
               bodyBuilder.append(upperBoundText);
@@ -24,7 +24,6 @@
               whereRestrictions.add(param.getName() + upperBoundText);
             }
           }
-          ImportInsertHelper.addImportDirectivesIfNeeded(upperBound,file);
           firstUpperBound=false;
         }
       }
@@ -53,8 +52,7 @@
     first=false;
     bodyBuilder.append(parameterDescriptor.getName());
     bodyBuilder.append(" : ");
-    bodyBuilder.append(DescriptorRenderer.TEXT.renderTypeWithShortNames(parameterDescriptor.getType()));
-    ImportInsertHelper.addImportDirectivesIfNeeded(parameterDescriptor.getType(),file);
+    bodyBuilder.append(renderType(parameterDescriptor.getType()));
     if (!isAbstractFun) {
       delegationBuilder.append(parameterDescriptor.getName());
     }
@@ -67,8 +65,7 @@
   final JetStandardLibrary stdlib=JetStandardLibrary.getInstance();
   boolean returnsNotUnit=returnType != null && !stdlib.getTuple0Type().equals(returnType);
   if (returnsNotUnit) {
-    bodyBuilder.append(" : ").append(DescriptorRenderer.TEXT.renderTypeWithShortNames(returnType));
-    ImportInsertHelper.addImportDirectivesIfNeeded(returnType,file);
+    bodyBuilder.append(" : ").append(renderType(returnType));
   }
   if (!whereRestrictions.isEmpty()) {
     bodyBuilder.append("\n").append("where ").append(StringUtil.join(whereRestrictions,", "));
