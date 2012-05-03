@@ -24,8 +24,10 @@
   }
   InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(jetCoreEnvironment.getCompilerDependencies(),jetCoreEnvironment.getProject());
   FileInputStream is=new FileInputStream(jar);
+  boolean hasErrors;
   try {
     ZipInputStream zip=new ZipInputStream(is);
+    hasErrors=false;
     for (; ; ) {
       ZipEntry entry=zip.getNextEntry();
       if (entry == null) {
@@ -42,11 +44,18 @@
         continue;
       }
       String className=entryName.substring(0,entryName.length() - ".class".length()).replace("/",".");
-      ClassDescriptor clazz=injector.getJavaDescriptorResolver().resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
-      if (clazz == null) {
-        throw new IllegalStateException("class not found by name " + className + " in "+ libDescription);
+      try {
+        ClassDescriptor clazz=injector.getJavaDescriptorResolver().resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+        if (clazz == null) {
+          throw new IllegalStateException("class not found by name " + className + " in "+ libDescription);
+        }
+        clazz.getDefaultType().getMemberScope().getAllDescriptors();
       }
-      clazz.getDefaultType().getMemberScope().getAllDescriptors();
+ catch (      Exception e) {
+        System.err.println("failed to resolve " + className);
+        e.printStackTrace();
+        hasErrors=true;
+      }
     }
   }
   finally {
@@ -57,5 +66,6 @@
     }
     Disposer.dispose(junk);
   }
-  System.out.println("Testing library " + libDescription + " done in "+ TimeUtils.millisecondsToSecondsString(System.currentTimeMillis() - start)+ "s");
+  System.out.println("Testing library " + libDescription + " done in "+ TimeUtils.millisecondsToSecondsString(System.currentTimeMillis() - start)+ "s "+ (hasErrors ? "with" : "without")+ " errors");
+  return hasErrors;
 }
