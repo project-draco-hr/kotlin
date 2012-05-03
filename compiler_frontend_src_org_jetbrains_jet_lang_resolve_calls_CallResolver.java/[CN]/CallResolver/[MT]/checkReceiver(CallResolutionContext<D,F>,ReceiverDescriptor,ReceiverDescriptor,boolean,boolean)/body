@@ -2,11 +2,11 @@
   ResolutionStatus result=SUCCESS;
   if (receiverParameter.exists() && receiverArgument.exists()) {
     ASTNode callOperationNode=context.call.getCallOperationNode();
-    boolean safeAccess=callOperationNode != null && callOperationNode.getElementType() == JetTokens.SAFE_ACCESS;
+    boolean safeAccess=!implicitInvokeCheck && isExplicitReceiver && callOperationNode != null && callOperationNode.getElementType() == JetTokens.SAFE_ACCESS;
     JetType receiverArgumentType=receiverArgument.getType();
     AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(context.dataFlowInfo,context.candidateCall.getTrace().getBindingContext());
     if (!safeAccess && !receiverParameter.getType().isNullable() && !autoCastService.isNotNull(receiverArgument)) {
-      context.tracing.unsafeCall(context.candidateCall.getTrace(),receiverArgumentType);
+      context.tracing.unsafeCall(context.candidateCall.getTrace(),receiverArgumentType,implicitInvokeCheck);
       result=UNSAFE_CALL_ERROR;
     }
  else {
