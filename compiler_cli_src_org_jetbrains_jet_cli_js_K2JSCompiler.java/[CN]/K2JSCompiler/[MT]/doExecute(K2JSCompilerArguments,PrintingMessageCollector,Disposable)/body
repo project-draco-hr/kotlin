@@ -1,0 +1,34 @@
+{
+  if (arguments.srcdir == null) {
+    messageCollector.report(CompilerMessageSeverity.ERROR,"Specify sources location via -srcdir",NO_LOCATION);
+    return ExitCode.INTERNAL_ERROR;
+  }
+  final JetCoreEnvironment environmentForJS=JetCoreEnvironment.getCoreEnvironmentForJS(rootDisposable);
+  environmentForJS.addSources(arguments.srcdir);
+  AnalyzerWithCompilerReport analyzerWithCompilerReport=new AnalyzerWithCompilerReport(messageCollector);
+  final List<JetFile> sources=environmentForJS.getSourceFiles();
+  final Config config=Config.getEmptyConfig(environmentForJS.getProject());
+  analyzerWithCompilerReport.analyzeAndReport(new Function0<AnalyzeExhaust>(){
+    @Override public AnalyzeExhaust invoke(){
+      BindingContext context=AnalyzerFacadeForJS.analyzeFiles(sources,Predicates.<PsiFile>alwaysTrue(),config);
+      return AnalyzeExhaust.success(context,JetStandardLibrary.getInstance());
+    }
+  }
+,sources);
+  if (analyzerWithCompilerReport.hasErrors()) {
+    return ExitCode.COMPILATION_ERROR;
+  }
+  if (arguments.outputDir != null) {
+    try {
+      K2JSTranslator.translateWithCallToMainAndSaveToFile(environmentForJS.getSourceFiles(),arguments.outputDir,config,environmentForJS.getProject());
+    }
+ catch (    Exception e) {
+      return ExitCode.INTERNAL_ERROR;
+    }
+  }
+ else {
+    messageCollector.report(CompilerMessageSeverity.ERROR,"Specify output directory via -output",CompilerMessageLocation.NO_LOCATION);
+    return ExitCode.INTERNAL_ERROR;
+  }
+  return ExitCode.OK;
+}

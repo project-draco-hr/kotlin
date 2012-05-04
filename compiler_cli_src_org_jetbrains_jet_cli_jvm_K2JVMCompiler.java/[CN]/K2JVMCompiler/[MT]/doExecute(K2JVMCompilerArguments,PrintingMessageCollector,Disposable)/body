@@ -25,8 +25,6 @@
     runtimeJar=null;
   }
   CompilerDependencies dependencies=new CompilerDependencies(mode,CompilerDependencies.findRtJar(),jdkHeadersJar,runtimeJar);
-  PrintingMessageCollector messageCollector=new PrintingMessageCollector(errStream,messageRenderer,arguments.verbose);
-  Disposable rootDisposable=CompileEnvironmentUtil.createMockDisposable();
   JetCoreEnvironment environment=JetCoreEnvironment.getCoreEnvironmentForJVM(rootDisposable,dependencies);
   K2JVMCompileEnvironmentConfiguration configuration=new K2JVMCompileEnvironmentConfiguration(environment,messageCollector);
   messageCollector.report(CompilerMessageSeverity.LOGGING,"Configuring the compilation environment",CompilerMessageLocation.NO_LOCATION);
@@ -34,7 +32,10 @@
     configureEnvironment(configuration,arguments);
     boolean noErrors;
     if (arguments.module != null) {
-      List<Module> modules=CompileEnvironmentUtil.loadModuleScript(arguments.module,new PrintingMessageCollector(errStream,messageRenderer,false));
+      boolean oldVerbose=messageCollector.isVerbose();
+      messageCollector.setVerbose(false);
+      List<Module> modules=CompileEnvironmentUtil.loadModuleScript(arguments.module,messageCollector);
+      messageCollector.setVerbose(oldVerbose);
       File directory=new File(arguments.module).getParentFile();
       noErrors=KotlinToJVMBytecodeCompiler.compileModules(configuration,modules,directory,arguments.jar,arguments.outputDir,arguments.includeRuntime);
     }
@@ -55,9 +56,5 @@
 catch (  Throwable t) {
     messageCollector.report(CompilerMessageSeverity.EXCEPTION,MessageRenderer.PLAIN.renderException(t),CompilerMessageLocation.NO_LOCATION);
     return INTERNAL_ERROR;
-  }
- finally {
-    Disposer.dispose(rootDisposable);
-    messageCollector.printToErrStream();
   }
 }
