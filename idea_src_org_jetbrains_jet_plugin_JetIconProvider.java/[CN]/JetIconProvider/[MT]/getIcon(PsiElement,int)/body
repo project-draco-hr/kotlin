@@ -1,22 +1,16 @@
 {
   if (psiElement instanceof JetFile) {
     JetFile file=(JetFile)psiElement;
-    List<JetDeclaration> declarations=file.getDeclarations();
-    JetClassOrObject mostImportantClass=null;
-    String nameWithoutExtension=StringUtil.getPackageName(file.getName());
-    for (    JetDeclaration declaration : declarations) {
-      if (mostImportantClass == null && declaration instanceof JetClassOrObject) {
-        mostImportantClass=(JetClassOrObject)declaration;
-      }
- else       if (declaration instanceof JetClassOrObject) {
-        JetClassOrObject object=(JetClassOrObject)declaration;
-        if (nameWithoutExtension.equals(object.getName())) {
-          mostImportantClass=object;
-        }
+    List<JetDeclaration> classes=ContainerUtil.filter(file.getDeclarations(),new Condition<JetDeclaration>(){
+      @Override public boolean value(      JetDeclaration jetDeclaration){
+        return jetDeclaration instanceof JetClassOrObject;
       }
     }
-    if (mostImportantClass != null) {
-      return getIcon(mostImportantClass,flags);
+);
+    if (classes.size() == 1) {
+      if (StringUtil.getPackageName(file.getName()).equals(classes.get(0).getName())) {
+        return getIcon(classes.get(0),flags);
+      }
     }
     return JetIcons.FILE;
   }
