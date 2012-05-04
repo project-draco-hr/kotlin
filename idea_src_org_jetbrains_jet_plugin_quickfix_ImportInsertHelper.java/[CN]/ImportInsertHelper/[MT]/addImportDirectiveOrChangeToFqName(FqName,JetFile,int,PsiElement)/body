@@ -1,0 +1,17 @@
+{
+  PsiReference reference=file.findReferenceAt(refOffset);
+  if (reference instanceof JetPsiReference) {
+    PsiElement target=reference.resolve();
+    if (target != null) {
+      boolean same=file.getManager().areElementsEquivalent(target,targetElement);
+      same|=target instanceof PsiClass && importFqn.getFqName().equals(((PsiClass)target).getQualifiedName());
+      if (!same) {
+        Document document=PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        TextRange refRange=reference.getElement().getTextRange();
+        document.replaceString(refRange.getStartOffset(),refRange.getEndOffset(),importFqn.getFqName());
+      }
+      return;
+    }
+  }
+  addImportDirective(new ImportPath(importFqn,false),null,file);
+}

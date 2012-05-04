@@ -1,0 +1,18 @@
+{
+  ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
+  String moduleName=moduleChunk.getNodes().iterator().next().getName();
+  Set<VirtualFile> outputDirectoriesToFilter=Sets.newHashSet(compileContext.getModuleOutputDirectoryForTests(module));
+  if (!tests) {
+    outputDirectoriesToFilter.add(compileContext.getModuleOutputDirectory(module));
+  }
+  CharSequence script=generateModuleScript(moduleName,chunk,files,tests,mainOutput,outputDirectoriesToFilter);
+  File scriptFile=new File(path(outputDir),"script.kts");
+  try {
+    FileUtil.writeToFile(scriptFile,script.toString());
+  }
+ catch (  IOException e) {
+    compileContext.addMessage(ERROR,"[Internal Error] Cannot write script to " + scriptFile.getAbsolutePath(),"",-1,-1);
+    return null;
+  }
+  return scriptFile;
+}

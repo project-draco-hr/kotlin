@@ -1,0 +1,18 @@
+{
+  final JetClassBody body=classOrObject.getBody();
+  if (body == null) {
+    return;
+  }
+  PsiElement afterAnchor=findInsertAfterAnchor(editor,body);
+  if (afterAnchor == null) {
+    return;
+  }
+  List<JetElement> elementsToCompact=new ArrayList<JetElement>();
+  final JetFile file=(JetFile)classOrObject.getContainingFile();
+  for (  JetElement element : generateOverridingMembers(selectedElements,file)) {
+    PsiElement added=body.addAfter(element,afterAnchor);
+    afterAnchor=added;
+    elementsToCompact.add((JetElement)added);
+  }
+  ReferenceToClassesShortening.compactReferenceToClasses(elementsToCompact);
+}

@@ -1,2 +1,18 @@
 {
+  final IntrinsicMethod intrinsic=state.getInjector().getIntrinsics().getIntrinsic(fd);
+  if (intrinsic != null) {
+    return intrinsic;
+  }
+  CallableMethod callableMethod;
+  if (fd instanceof ExpressionAsFunctionDescriptor || (fd instanceof SimpleFunctionDescriptor && fd.getContainingDeclaration() instanceof FunctionDescriptor)) {
+    SimpleFunctionDescriptor invoke=CodegenUtil.createInvoke((FunctionDescriptor)fd);
+    callableMethod=ClosureCodegen.asCallableMethod(invoke);
+  }
+ else   if (fd instanceof FunctionDescriptor) {
+    callableMethod=typeMapper.mapToCallableMethod((FunctionDescriptor)fd,superCall,OwnerKind.IMPLEMENTATION);
+  }
+ else {
+    throw new UnsupportedOperationException("can't resolve declaration to callable: " + fd);
+  }
+  return callableMethod;
 }

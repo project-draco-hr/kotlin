@@ -13,7 +13,7 @@
   }
   List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
   MultiMap<String,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
-  MultiMap<String,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getCallableMembers());
+  MultiMap<String,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getDeclaredCallableMembers());
   Set<String> functionNames=new LinkedHashSet<String>();
   functionNames.addAll(functionsFromSupertypesByName.keySet());
   functionNames.addAll(functionsFromCurrentByName.keySet());
@@ -21,10 +21,10 @@
     generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink(){
       @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
         if (fakeOverride instanceof PropertyDescriptor) {
-          classDescriptor.getScopeForMemberLookupAsWritableScope().addPropertyDescriptor((PropertyDescriptor)fakeOverride);
+          classDescriptor.addPropertyDescriptor((PropertyDescriptor)fakeOverride);
         }
  else         if (fakeOverride instanceof SimpleFunctionDescriptor) {
-          classDescriptor.getScopeForMemberLookupAsWritableScope().addFunctionDescriptor((SimpleFunctionDescriptor)fakeOverride);
+          classDescriptor.addFunctionDescriptor((SimpleFunctionDescriptor)fakeOverride);
         }
  else {
           throw new IllegalStateException(fakeOverride.getClass().getName());

@@ -1,0 +1,71 @@
+{
+  System.out.println("Testing library " + libDescription + "...");
+  if (jar != null) {
+    System.out.println("Using file " + jar);
+  }
+ else {
+    System.out.println("Using rt.jar");
+  }
+  long start=System.currentTimeMillis();
+  Disposable junk=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  JetCoreEnvironment jetCoreEnvironment;
+  if (jar != null) {
+    jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdkAndIdeaAnnotations(junk,CompilerSpecialMode.STDLIB);
+    jetCoreEnvironment.addToClasspath(jar);
+  }
+ else {
+    CompilerDependencies compilerDependencies=CompileCompilerDependenciesTest.compilerDependenciesForTests(CompilerSpecialMode.STDLIB,false);
+    jetCoreEnvironment=JetCoreEnvironment.getCoreEnvironmentForJVM(junk,compilerDependencies);
+    jar=compilerDependencies.getJdkJar();
+  }
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(jetCoreEnvironment.getCompilerDependencies(),jetCoreEnvironment.getProject());
+  FileInputStream is=new FileInputStream(jar);
+  boolean hasErrors;
+  try {
+    ZipInputStream zip=new ZipInputStream(is);
+    hasErrors=false;
+    for (; ; ) {
+      ZipEntry entry=zip.getNextEntry();
+      if (entry == null) {
+        break;
+      }
+      String entryName=entry.getName();
+      if (!entryName.endsWith(".class")) {
+        continue;
+      }
+      if (entryName.matches("(.*/|)package-info\\.class")) {
+        continue;
+      }
+      if (entryName.contains("$")) {
+        continue;
+      }
+      String className=entryName.substring(0,entryName.length() - ".class".length()).replace("/",".");
+      try {
+        ClassDescriptor clazz=injector.getJavaDescriptorResolver().resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+        if (clazz == null) {
+          throw new IllegalStateException("class not found by name " + className + " in "+ libDescription);
+        }
+        clazz.getDefaultType().getMemberScope().getAllDescriptors();
+      }
+ catch (      Exception e) {
+        System.err.println("failed to resolve " + className);
+        e.printStackTrace();
+        hasErrors=true;
+      }
+    }
+  }
+  finally {
+    try {
+      is.close();
+    }
+ catch (    Throwable e) {
+    }
+    Disposer.dispose(junk);
+  }
+  System.out.println("Testing library " + libDescription + " done in "+ TimeUtils.millisecondsToSecondsString(System.currentTimeMillis() - start)+ "s "+ (hasErrors ? "with" : "without")+ " errors");
+  return hasErrors;
+}

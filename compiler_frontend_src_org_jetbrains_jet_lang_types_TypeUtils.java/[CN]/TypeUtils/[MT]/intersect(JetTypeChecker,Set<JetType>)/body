@@ -1,2 +1,50 @@
 {
+  if (types.isEmpty()) {
+    return JetStandardClasses.getNullableAnyType();
+  }
+  if (types.size() == 1) {
+    return types.iterator().next();
+  }
+  boolean allNullable=true;
+  boolean nothingTypePresent=false;
+  List<JetType> nullabilityStripped=Lists.newArrayList();
+  for (  JetType type : types) {
+    nothingTypePresent|=JetStandardClasses.isNothingOrNullableNothing(type);
+    allNullable&=type.isNullable();
+    nullabilityStripped.add(makeNotNullable(type));
+  }
+  if (nothingTypePresent) {
+    return allNullable ? JetStandardClasses.getNullableNothingType() : JetStandardClasses.getNothingType();
+  }
+  List<JetType> resultingTypes=Lists.newArrayList();
+  outer:   for (  JetType type : nullabilityStripped) {
+    if (!canHaveSubtypes(typeChecker,type)) {
+      for (      JetType other : nullabilityStripped) {
+        if (!TypeUnifier.mayBeEqual(type,other) && !typeChecker.isSubtypeOf(type,other) && !typeChecker.isSubtypeOf(other,type)) {
+          return null;
+        }
+      }
+      return makeNullableAsSpecified(type,allNullable);
+    }
+ else {
+      for (      JetType other : nullabilityStripped) {
+        if (!type.equals(other) && typeChecker.isSubtypeOf(other,type)) {
+          continue outer;
+        }
+      }
+    }
+    resultingTypes.add(type);
+  }
+  if (resultingTypes.size() == 1) {
+    return makeNullableAsSpecified(resultingTypes.get(0),allNullable);
+  }
+  List<AnnotationDescriptor> noAnnotations=Collections.<AnnotationDescriptor>emptyList();
+  TypeConstructor constructor=new TypeConstructorImpl(null,noAnnotations,false,makeDebugNameForIntersectionType(resultingTypes).toString(),Collections.<TypeParameterDescriptor>emptyList(),resultingTypes);
+  JetScope[] scopes=new JetScope[resultingTypes.size()];
+  int i=0;
+  for (  JetType type : resultingTypes) {
+    scopes[i]=type.getMemberScope();
+    i++;
+  }
+  return new JetTypeImpl(noAnnotations,constructor,allNullable,Collections.<TypeProjection>emptyList(),new ChainedScope(null,scopes));
 }

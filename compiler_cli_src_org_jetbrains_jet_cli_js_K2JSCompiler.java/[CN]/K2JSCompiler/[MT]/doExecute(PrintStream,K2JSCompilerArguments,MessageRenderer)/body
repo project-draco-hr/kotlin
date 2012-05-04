@@ -1,0 +1,30 @@
+{
+  PrintingMessageCollector messageCollector=new PrintingMessageCollector(stream,renderer,true);
+  if (arguments.module != null) {
+    stream.print(renderer.render(CompilerMessageSeverity.ERROR,"Module arg is not supported",NO_LOCATION));
+    return ExitCode.INTERNAL_ERROR;
+  }
+  if (arguments.srcdir == null) {
+    stream.print(renderer.render(CompilerMessageSeverity.ERROR,"Specify sources location via -srcdir",NO_LOCATION));
+    return ExitCode.INTERNAL_ERROR;
+  }
+  Disposable rootDisposable=CompileEnvironmentUtil.createMockDisposable();
+  final JetCoreEnvironment environmentForJS=JetCoreEnvironment.getCoreEnvironmentForJS(rootDisposable);
+  environmentForJS.addSources(arguments.srcdir);
+  AnalyzerWithCompilerReport analyzerWithCompilerReport=new AnalyzerWithCompilerReport(messageCollector);
+  final List<JetFile> sources=environmentForJS.getSourceFiles();
+  analyzerWithCompilerReport.analyzeAndReport(new Function0<AnalyzeExhaust>(){
+    @Override public AnalyzeExhaust invoke(){
+      BindingContext context=AnalyzerFacadeForJS.analyzeFiles(sources,Predicates.<PsiFile>alwaysTrue(),new Config(environmentForJS.getProject()){
+        @NotNull @Override protected List<JetFile> generateLibFiles(){
+          return Collections.emptyList();
+        }
+      }
+);
+      return AnalyzeExhaust.success(context,JetStandardLibrary.getInstance());
+    }
+  }
+,sources);
+  stream.print(renderer.render(CompilerMessageSeverity.ERROR,"Greeting",NO_LOCATION));
+  return ExitCode.OK;
+}

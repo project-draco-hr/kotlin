@@ -1,12 +1,8 @@
 {
-  if (descriptor.getKind().isReal()) {
-    if (descriptor.getModality() == Modality.ABSTRACT) {
-    }
-  }
- else {
-    Collection<CallableMemberDescriptor> overriddenDeclarations=OverridingUtil.getOverridenDeclarations(descriptor);
+  if (!descriptor.getKind().isReal()) {
+    Collection<CallableMemberDescriptor> overriddenDeclarations=OverridingUtil.getOverriddenDeclarations(descriptor);
     if (overriddenDeclarations.size() == 0) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("A 'fake override' must override something");
     }
  else     if (overriddenDeclarations.size() == 1) {
       CallableMemberDescriptor single=overriddenDeclarations.iterator().next();
@@ -16,7 +12,8 @@
     }
  else {
       List<CallableMemberDescriptor> nonAbstractManyImpl=Lists.newArrayList();
-      for (      CallableMemberDescriptor overridden : overriddenDeclarations) {
+      Set<CallableMemberDescriptor> filteredOverriddenDeclarations=OverridingUtil.filterOverrides(Sets.newHashSet(overriddenDeclarations));
+      for (      CallableMemberDescriptor overridden : filteredOverriddenDeclarations) {
         if (overridden.getModality() != Modality.ABSTRACT) {
           nonAbstractManyImpl.add(overridden);
         }
