@@ -1,13 +1,11 @@
 {
-  JetStandardLibrary standardLibrary=JetStandardLibrary.getInstance();
-  StaticContext staticContext=StaticContext.generateStaticContext(standardLibrary,bindingContext);
-  JsBlock block=staticContext.getProgram().getFragmentBlock(0);
-  TranslationContext context=TranslationContext.rootContext(staticContext);
-  block.getStatements().addAll(translateFiles(files,context));
-  if (mainCallParameters.shouldBeGenerated()) {
-    block.getStatements().add(generateCallToMain(context,files,mainCallParameters.arguments()));
+  try {
+    return doGenerateAst(bindingContext,files,mainCallParameters);
   }
-  JsNamer namer=new JsPrettyNamer();
-  namer.exec(context.program());
-  return context.program();
+ catch (  UnsupportedOperationException e) {
+    throw new UnsupportedFeatureException("Unsupported feature used.",e);
+  }
+catch (  Throwable e) {
+    throw new TranslationInternalException(e);
+  }
 }
