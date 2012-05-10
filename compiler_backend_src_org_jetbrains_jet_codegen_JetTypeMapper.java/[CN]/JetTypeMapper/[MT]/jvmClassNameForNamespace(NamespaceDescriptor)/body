@@ -1,19 +1,30 @@
 {
-  FqName fqName=DescriptorUtils.getFQName(namespace).toSafe();
-  JavaNamespaceKind javaNamespaceKind=bindingContext.get(JavaBindingContext.JAVA_NAMESPACE_KIND,namespace);
-  Boolean src=bindingContext.get(BindingContext.NAMESPACE_IS_SRC,namespace);
-  if (javaNamespaceKind == null && src == null) {
-    throw new IllegalStateException("unknown namespace origin: " + fqName);
-  }
-  boolean classStatics;
-  if (javaNamespaceKind != null) {
-    if (javaNamespaceKind == JavaNamespaceKind.CLASS_STATICS && src != null) {
-      throw new IllegalStateException("conflicting namespace " + fqName + ": it is both java statics and from src");
+  StringBuilder r=new StringBuilder();
+  List<DeclarationDescriptor> path=DescriptorUtils.getPathWithoutRootNsAndModule(namespace);
+  for (  DeclarationDescriptor pathElement : path) {
+    NamespaceDescriptor ns=(NamespaceDescriptor)pathElement;
+    if (r.length() > 0) {
+      JavaNamespaceKind nsKind=getNsKind((NamespaceDescriptor)ns.getContainingDeclaration());
+      if (nsKind == JavaNamespaceKind.PROPER) {
+        r.append("/");
+      }
+ else       if (nsKind == JavaNamespaceKind.CLASS_STATICS) {
+        r.append("$");
+      }
     }
-    classStatics=javaNamespaceKind == JavaNamespaceKind.CLASS_STATICS;
+    if (ns.getName().length() == 0) {
+      throw new IllegalStateException("name must not be empty at this point when generating for " + namespace);
+    }
+    r.append(ns.getName());
   }
- else {
-    classStatics=false;
+  if (getNsKind(namespace) == JavaNamespaceKind.PROPER) {
+    if (r.length() > 0) {
+      r.append("/");
+    }
+    r.append("namespace");
   }
-  return NamespaceCodegen.getJVMClassName(fqName,!classStatics);
+  if (r.length() == 0) {
+    throw new IllegalStateException("internal error: failed to generate classname for " + namespace);
+  }
+  return r.toString();
 }
