@@ -1,0 +1,25 @@
+{
+  assertRecursionDepth(recursionDepth,originalProjection,substitution);
+  JetType type=originalProjection.getType();
+  if (JetStandardClasses.isNothing(type) || ErrorUtils.isErrorType(type))   return originalProjection;
+  TypeProjection replacement=substitution.get(type.getConstructor());
+  if (replacement != null) {
+    TypeParameterDescriptor typeParameter=(TypeParameterDescriptor)type.getConstructor().getDeclarationDescriptor();
+switch (conflictType(originalProjection.getProjectionKind(),replacement.getProjectionKind())) {
+case OUT_IN_IN_POSITION:
+      throw new SubstitutionException("Out-projection in in-position");
+case IN_IN_OUT_POSITION:
+    replacement=SubstitutionUtils.makeStarProjection(typeParameter);
+  break;
+}
+boolean resultingIsNullable=type.isNullable() || replacement.getType().isNullable();
+JetType substitutedType=TypeUtils.makeNullableAsSpecified(replacement.getType(),resultingIsNullable);
+Variance resultingProjectionKind=combine(originalProjection.getProjectionKind(),replacement.getProjectionKind());
+return new TypeProjection(resultingProjectionKind,substitutedType);
+}
+ else {
+List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);
+JetType substitutedType=new JetTypeImpl(type.getAnnotations(),type.getConstructor(),type.isNullable(),substitutedArguments,new SubstitutingScope(type.getMemberScope(),this));
+return new TypeProjection(originalProjection.getProjectionKind(),substitutedType);
+}
+}

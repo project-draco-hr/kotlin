@@ -11,13 +11,15 @@
     context.tracing.invisibleMember(context.trace,candidate);
     return;
   }
-  ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall);
+  Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
+  ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
   if (!argumentMappingStatus.isSuccess()) {
     candidateCall.addStatus(OTHER_ERROR);
     if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR) {
       checkTypesWithNoCallee(context.toBasic());
       return;
     }
+    checkUnknownArgumentTypes(context.toBasic(),unmappedArguments);
   }
   List<JetTypeProjection> jetTypeArguments=context.call.getTypeArguments();
   if (jetTypeArguments.isEmpty()) {

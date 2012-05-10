@@ -1,0 +1,18 @@
+{
+  List<TypeProjection> substitutedArguments=Lists.newArrayList();
+  for (int i=0; i < typeParameters.size(); i++) {
+    TypeParameterDescriptor typeParameter=typeParameters.get(i);
+    TypeProjection typeArgument=typeArguments.get(i);
+    TypeProjection substitutedTypeArgument=unsafeSubstitute(typeArgument,recursionDepth + 1);
+switch (conflictType(typeParameter.getVariance(),substitutedTypeArgument.getProjectionKind())) {
+case OUT_IN_IN_POSITION:
+      substitutedTypeArgument=new TypeProjection(Variance.IN_VARIANCE,typeParameter.getLowerBoundsAsType());
+    break;
+case IN_IN_OUT_POSITION:
+  substitutedTypeArgument=SubstitutionUtils.makeStarProjection(typeParameter);
+break;
+}
+substitutedArguments.add(substitutedTypeArgument);
+}
+return substitutedArguments;
+}

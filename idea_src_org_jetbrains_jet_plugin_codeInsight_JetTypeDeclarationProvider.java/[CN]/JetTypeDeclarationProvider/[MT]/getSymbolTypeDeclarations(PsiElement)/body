@@ -1,0 +1,19 @@
+{
+  if (symbol instanceof JetElement && symbol.getContainingFile() instanceof JetFile) {
+    BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)symbol.getContainingFile()).getBindingContext();
+    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,symbol);
+    if (descriptor instanceof CallableDescriptor) {
+      JetType type=((CallableDescriptor)descriptor).getReturnType();
+      if (type != null) {
+        ClassifierDescriptor classifierDescriptor=type.getConstructor().getDeclarationDescriptor();
+        if (classifierDescriptor != null) {
+          PsiElement typeElement=BindingContextUtils.descriptorToDeclaration(bindingContext,classifierDescriptor);
+          if (typeElement != null) {
+            return new PsiElement[]{typeElement};
+          }
+        }
+      }
+    }
+  }
+  return new PsiElement[0];
+}

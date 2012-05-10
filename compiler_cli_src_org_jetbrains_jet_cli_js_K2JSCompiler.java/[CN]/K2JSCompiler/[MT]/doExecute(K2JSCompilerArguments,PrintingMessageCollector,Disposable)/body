@@ -1,0 +1,17 @@
+{
+  if (arguments.srcdir == null) {
+    messageCollector.report(CompilerMessageSeverity.ERROR,"Specify sources location via -srcdir",NO_LOCATION);
+    return ExitCode.INTERNAL_ERROR;
+  }
+  JetCoreEnvironment environmentForJS=getEnvironment(arguments,rootDisposable);
+  Config config=getConfig(arguments,environmentForJS.getProject());
+  if (analyzeAndReportErrors(messageCollector,environmentForJS.getSourceFiles(),config)) {
+    return ExitCode.COMPILATION_ERROR;
+  }
+  String outputFile=arguments.outputFile;
+  if (outputFile == null) {
+    messageCollector.report(CompilerMessageSeverity.ERROR,"Specify output file via -output",CompilerMessageLocation.NO_LOCATION);
+    return ExitCode.INTERNAL_ERROR;
+  }
+  return translateAndGenerateOutputFile(messageCollector,environmentForJS,config,outputFile);
+}

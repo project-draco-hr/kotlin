@@ -1,0 +1,20 @@
+{
+  final File actualFile=new File(testDataDir,baseName + ".actual");
+  final File expectedFile=new File(testDataDir,baseName + ".expected");
+  final String normalizedContent=normalizeOutput(content);
+  if (!expectedFile.isFile()) {
+    Files.write(normalizedContent,actualFile,Charsets.UTF_8);
+    fail("No .expected file " + expectedFile);
+  }
+ else {
+    final String goldContent=Files.toString(expectedFile,UTF_8);
+    try {
+      assertEquals(goldContent,normalizedContent);
+      actualFile.delete();
+    }
+ catch (    ComparisonFailure e) {
+      Files.write(normalizedContent,actualFile,Charsets.UTF_8);
+      throw e;
+    }
+  }
+}
