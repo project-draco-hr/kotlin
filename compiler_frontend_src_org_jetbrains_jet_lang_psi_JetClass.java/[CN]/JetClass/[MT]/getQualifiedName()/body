@@ -1,0 +1,16 @@
+{
+  List<String> parts=new ArrayList<String>();
+  JetClassOrObject current=this;
+  while (current != null) {
+    parts.add(current.getName());
+    current=PsiTreeUtil.getParentOfType(current,JetClassOrObject.class);
+  }
+  PsiFile file=getContainingFile();
+  if (!(file instanceof JetFile))   return null;
+  String fileQualifiedName=((JetFile)file).getNamespaceHeader().getQualifiedName();
+  if (!fileQualifiedName.isEmpty()) {
+    parts.add(fileQualifiedName);
+  }
+  Collections.reverse(parts);
+  return StringUtil.join(parts,".");
+}
