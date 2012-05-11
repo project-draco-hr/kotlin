@@ -1,0 +1,31 @@
+{
+  JetNamespaceHeader namespaceHeader=file.getNamespaceHeader();
+  if (moduleDescriptor.getRootNs() == null) {
+    createRootNamespaceDescriptorIfNeeded(null,moduleDescriptor,null,handler);
+  }
+  NamespaceDescriptorImpl currentOwner=moduleDescriptor.getRootNs();
+  if (currentOwner == null) {
+    throw new IllegalStateException("must be initialized 5 lines above");
+  }
+  for (  JetSimpleNameExpression nameExpression : namespaceHeader.getParentNamespaceNames()) {
+    String namespaceName=JetPsiUtil.safeName(nameExpression.getReferencedName());
+    NamespaceDescriptorImpl namespaceDescriptor=createNamespaceDescriptorIfNeeded(null,currentOwner,namespaceName,nameExpression,handler);
+    trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
+    trace.record(RESOLUTION_SCOPE,nameExpression,outerScope);
+    outerScope=namespaceDescriptor.getMemberScope();
+    currentOwner=namespaceDescriptor;
+  }
+  NamespaceDescriptorImpl namespaceDescriptor;
+  String name;
+  if (namespaceHeader.isRoot()) {
+    namespaceDescriptor=moduleDescriptor.getRootNs();
+    storeBindingForFileAndExpression(file,null,namespaceDescriptor);
+  }
+ else {
+    name=namespaceHeader.getName();
+    namespaceDescriptor=createNamespaceDescriptorIfNeeded(file,currentOwner,name,namespaceHeader.getLastPartExpression(),handler);
+    trace.record(BindingContext.NAMESPACE_IS_SRC,namespaceDescriptor,true);
+    trace.record(RESOLUTION_SCOPE,namespaceHeader,outerScope);
+  }
+  return namespaceDescriptor;
+}
