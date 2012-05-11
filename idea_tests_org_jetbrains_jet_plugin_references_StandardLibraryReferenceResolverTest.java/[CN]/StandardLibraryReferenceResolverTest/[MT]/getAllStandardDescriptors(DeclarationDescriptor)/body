@@ -1,0 +1,25 @@
+{
+  final ArrayList<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
+  baseDescriptor.acceptVoid(new DeclarationDescriptorVisitor<Void,Void>(){
+    private Void visitDescriptors(    Collection<? extends DeclarationDescriptor> descriptors){
+      for (      DeclarationDescriptor descriptor : descriptors) {
+        descriptor.acceptVoid(this);
+      }
+      return null;
+    }
+    @Override public Void visitClassDescriptor(    ClassDescriptor descriptor,    Void data){
+      descriptors.add(descriptor);
+      return visitDescriptors(descriptor.getDefaultType().getMemberScope().getAllDescriptors());
+    }
+    @Override public Void visitNamespaceDescriptor(    NamespaceDescriptor descriptor,    Void data){
+      descriptors.add(descriptor);
+      return visitDescriptors(descriptor.getMemberScope().getAllDescriptors());
+    }
+    @Override public Void visitDeclarationDescriptor(    DeclarationDescriptor descriptor,    Void data){
+      descriptors.add(descriptor);
+      return null;
+    }
+  }
+);
+  return descriptors;
+}
