@@ -1,7 +1,14 @@
 {
   PropertyDescriptor propertyDescriptor=getPropertyDescriptorForConstructorParameter(bindingContext(),jetParameter);
-  if (propertyDescriptor != null) {
-    JsStatement assignmentToBackingFieldExpression=assignmentToBackingField(context(),propertyDescriptor,jsParameter.getName().makeRef()).makeStmt();
+  if (propertyDescriptor == null) {
+    return;
+  }
+  final JsNameRef nameRef=jsParameter.getName().makeRef();
+  if (context().isEcma5()) {
+    propertiesDefinition.getPropertyInitializers().add(JsAstUtils.propertyDescriptor(propertyDescriptor,context(),nameRef));
+  }
+ else {
+    JsStatement assignmentToBackingFieldExpression=assignmentToBackingField(context(),propertyDescriptor,nameRef).makeStmt();
     initializerStatements.add(assignmentToBackingFieldExpression);
   }
 }
