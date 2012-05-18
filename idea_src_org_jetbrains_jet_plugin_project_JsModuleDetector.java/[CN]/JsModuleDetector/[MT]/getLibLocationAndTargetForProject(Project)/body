@@ -1,0 +1,28 @@
+{
+  VirtualFile indicationFile=findIndicationFileInContentRoots(project);
+  if (indicationFile == null) {
+    return Pair.empty();
+  }
+  try {
+    InputStream stream=indicationFile.getInputStream();
+    BufferedReader reader=new BufferedReader(new StringReader(FileUtil.loadTextAndClose(stream)));
+    try {
+      String pathToLibFile=reader.readLine();
+      if (pathToLibFile == null) {
+        return Pair.empty();
+      }
+      URI pathToLibFileUri=new URI(pathToLibFile);
+      URI pathToIndicationFileUri=new URI(indicationFile.getPath());
+      return new Pair<String,String>(pathToIndicationFileUri.resolve(pathToLibFileUri).toString(),reader.readLine());
+    }
+ catch (    URISyntaxException e) {
+      return Pair.empty();
+    }
+ finally {
+      reader.close();
+    }
+  }
+ catch (  IOException e) {
+    return Pair.empty();
+  }
+}

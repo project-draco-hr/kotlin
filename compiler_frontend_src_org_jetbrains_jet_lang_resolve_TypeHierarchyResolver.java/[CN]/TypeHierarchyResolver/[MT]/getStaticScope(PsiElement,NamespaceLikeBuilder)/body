@@ -1,0 +1,20 @@
+{
+  DeclarationDescriptor ownerDescriptor=owner.getOwnerForChildren();
+  if (ownerDescriptor instanceof NamespaceDescriptorImpl) {
+    return context.getNamespaceScopes().get(declarationElement.getContainingFile());
+  }
+  if (ownerDescriptor instanceof MutableClassDescriptor) {
+    MutableClassDescriptor classDescriptor=(MutableClassDescriptor)ownerDescriptor;
+    if (classDescriptor.getKind() == ClassKind.OBJECT) {
+      return classDescriptor.getScopeForMemberResolution();
+    }
+    DeclarationDescriptor declaration=classDescriptor.getContainingDeclaration();
+    if (declaration instanceof NamespaceDescriptorImpl) {
+      return getStaticScope(declarationElement,((NamespaceDescriptorImpl)declaration).getBuilder());
+    }
+    if (declaration instanceof MutableClassDescriptorLite) {
+      return getStaticScope(declarationElement,((MutableClassDescriptorLite)declaration).getBuilder());
+    }
+  }
+  return null;
+}
