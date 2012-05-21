@@ -1,5 +1,5 @@
 {
-  String classDescr="L" + name + ";";
+  String classDescr=name.getDescriptor();
   cv.newField(fun,ACC_PRIVATE | ACC_STATIC | ACC_FINAL,"$instance",classDescr,null,null);
   MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_STATIC,"$getInstance","()" + classDescr,null,new String[0]);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
@@ -7,16 +7,16 @@
   }
  else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
     mv.visitCode();
-    mv.visitFieldInsn(GETSTATIC,name,"$instance",classDescr);
+    mv.visitFieldInsn(GETSTATIC,name.getInternalName(),"$instance",classDescr);
     mv.visitInsn(DUP);
     Label ret=new Label();
     mv.visitJumpInsn(IFNONNULL,ret);
     mv.visitInsn(POP);
-    mv.visitTypeInsn(NEW,name);
+    mv.visitTypeInsn(NEW,name.getInternalName());
     mv.visitInsn(DUP);
-    mv.visitMethodInsn(INVOKESPECIAL,name,"<init>","()V");
+    mv.visitMethodInsn(INVOKESPECIAL,name.getInternalName(),"<init>","()V");
     mv.visitInsn(DUP);
-    mv.visitFieldInsn(PUTSTATIC,name,"$instance",classDescr);
+    mv.visitFieldInsn(PUTSTATIC,name.getInternalName(),"$instance",classDescr);
     mv.visitLabel(ret);
     mv.visitInsn(ARETURN);
     FunctionCodegen.endVisit(mv,"$getInstance",fun);
