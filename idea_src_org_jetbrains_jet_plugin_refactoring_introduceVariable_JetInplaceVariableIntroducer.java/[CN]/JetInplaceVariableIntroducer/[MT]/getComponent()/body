@@ -22,11 +22,30 @@
     myExprTypeCheckbox.setMnemonic('t');
     myExprTypeCheckbox.addActionListener(new ActionListener(){
       @Override public void actionPerformed(      ActionEvent e){
+        final Ref<Boolean> greedyToRight=new Ref<Boolean>();
         new WriteCommandAction(myProject,getCommandName(),getCommandName()){
           @Override protected void run(          Result result) throws Throwable {
             PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
             if (myExprTypeCheckbox.isSelected()) {
+              ASTNode identifier=myProperty.getNode().findChildByType(JetTokens.IDENTIFIER);
+              if (identifier != null) {
+                TextRange range=identifier.getTextRange();
+                RangeHighlighter[] highlighters=myEditor.getMarkupModel().getAllHighlighters();
+                for (                RangeHighlighter highlighter : highlighters) {
+                  if (highlighter.getStartOffset() == range.getStartOffset()) {
+                    if (highlighter.getEndOffset() == range.getEndOffset()) {
+                      greedyToRight.set(highlighter.isGreedyToRight());
+                      highlighter.setGreedyToRight(false);
+                    }
+                  }
+                }
+              }
               SpecifyTypeExplicitlyAction.addTypeAnnotation(myProject,myProperty,myExprType);
+              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+              TemplateState templateState=TemplateManagerImpl.getTemplateState(myEditor);
+              if (templateState != null) {
+                templateState.doReformat(myProperty.getTextRange());
+              }
             }
  else {
               SpecifyTypeExplicitlyAction.removeTypeAnnotation(myProperty);
@@ -34,6 +53,25 @@
           }
         }
 .execute();
+        ApplicationManager.getApplication().runReadAction(new Runnable(){
+          @Override public void run(){
+            if (myExprTypeCheckbox.isSelected()) {
+              ASTNode identifier=myProperty.getNode().findChildByType(JetTokens.IDENTIFIER);
+              if (identifier != null) {
+                TextRange range=identifier.getTextRange();
+                RangeHighlighter[] highlighters=myEditor.getMarkupModel().getAllHighlighters();
+                for (                RangeHighlighter highlighter : highlighters) {
+                  if (highlighter.getStartOffset() == range.getStartOffset()) {
+                    if (highlighter.getEndOffset() == range.getEndOffset()) {
+                      highlighter.setGreedyToRight(greedyToRight.get());
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+);
       }
     }
 );
