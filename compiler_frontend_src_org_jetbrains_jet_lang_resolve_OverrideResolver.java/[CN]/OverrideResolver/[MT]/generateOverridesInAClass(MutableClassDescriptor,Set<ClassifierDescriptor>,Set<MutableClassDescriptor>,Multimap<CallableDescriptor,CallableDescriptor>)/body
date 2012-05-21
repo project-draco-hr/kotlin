@@ -8,7 +8,7 @@
   for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
     ClassDescriptor superclass=(ClassDescriptor)supertype.getConstructor().getDeclarationDescriptor();
     if (superclass instanceof MutableClassDescriptor) {
-      generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses,fakeOverrides);
+      generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses,invisibleOverriddenDescriptors);
     }
   }
   List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
@@ -17,8 +17,9 @@
   Set<String> functionNames=new LinkedHashSet<String>();
   functionNames.addAll(functionsFromSupertypesByName.keySet());
   functionNames.addAll(functionsFromCurrentByName.keySet());
+  Set<CallableMemberDescriptor> fakeOverrides=Sets.newHashSet();
   for (  String functionName : functionNames) {
-    generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink(){
+    generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,invisibleOverriddenDescriptors,new DescriptorSink(){
       @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
         if (fakeOverride instanceof PropertyDescriptor) {
           classDescriptor.getBuilder().addPropertyDescriptor((PropertyDescriptor)fakeOverride);
@@ -36,5 +37,15 @@
       }
     }
 );
+  }
+  for (  CallableMemberDescriptor memberDescriptor : classDescriptor.getAllCallableMembers()) {
+    JetDeclaration declaration=null;
+    if (memberDescriptor.getKind() != CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+      PsiElement element=BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),memberDescriptor);
+      if (element instanceof JetDeclaration) {
+        declaration=(JetDeclaration)element;
+      }
+    }
+    resolveUnknownVisibilityForMember(declaration,memberDescriptor);
   }
 }

@@ -2,10 +2,18 @@
   List<CallableMemberDescriptor> fakeOverrideList=Lists.newArrayList();
   for (  CallableMemberDescriptor functionFromSupertype : functionsFromSupertypes) {
     boolean overrides=false;
+    boolean isVisible=Visibilities.isVisible(functionFromSupertype,current);
     for (    CallableMemberDescriptor functionFromCurrent : functionsFromCurrent) {
       OverridingUtil.OverrideCompatibilityInfo.Result result=OverridingUtil.isOverridableBy(functionFromSupertype,functionFromCurrent).getResult();
       if (result == OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE) {
-        OverridingUtil.bindOverride(functionFromCurrent,functionFromSupertype);
+        if (!isVisible) {
+          if (invisibleOverriddenDescriptors != null) {
+            invisibleOverriddenDescriptors.put(functionFromCurrent,functionFromSupertype);
+          }
+        }
+ else {
+          OverridingUtil.bindOverride(functionFromCurrent,functionFromSupertype);
+        }
         overrides=true;
       }
  else       if (result == OverridingUtil.OverrideCompatibilityInfo.Result.CONFLICT) {
@@ -19,7 +27,7 @@
       }
     }
     if (!overrides) {
-      CallableMemberDescriptor fakeOverride=functionFromSupertype.copy(current,false,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
+      CallableMemberDescriptor fakeOverride=functionFromSupertype.copy(current,false,!isVisible,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
       OverridingUtil.bindOverride(fakeOverride,functionFromSupertype);
       fakeOverrideList.add(fakeOverride);
       if (fakeOverrides != null) {
