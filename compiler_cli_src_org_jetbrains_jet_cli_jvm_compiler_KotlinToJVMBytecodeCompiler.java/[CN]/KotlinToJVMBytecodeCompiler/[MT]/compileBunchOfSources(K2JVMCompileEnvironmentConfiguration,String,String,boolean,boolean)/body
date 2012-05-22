@@ -24,6 +24,16 @@
  else     if (outputDir != null) {
       CompileEnvironmentUtil.writeToOutputDirectory(factory,outputDir);
     }
+ else     if (script) {
+      try {
+        GeneratedClassLoader classLoader=new GeneratedClassLoader(factory,new URLClassLoader(new URL[]{configuration.getEnvironment().getCompilerDependencies().getRuntimeJar().toURI().toURL()},AllModules.class.getClassLoader()));
+        Class<?> scriptClass=classLoader.loadClass("Script");
+        scriptClass.newInstance();
+      }
+ catch (      Exception e) {
+        throw new RuntimeException("Failed to evaluate script: " + e,e);
+      }
+    }
  else {
       throw new CompileEnvironmentException("Output directory or jar file is not specified - no files will be saved to the disk");
     }
