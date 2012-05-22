@@ -1,0 +1,22 @@
+{
+class Visitor extends EmptyVisitor {
+    List<LocalVariable> readVariables=new ArrayList<LocalVariable>();
+    @Override public MethodVisitor visitMethod(    int access,    String name,    final String desc,    final String signature,    String[] exceptions){
+      if (methodName.equals(name + desc)) {
+        return new EmptyVisitor(){
+          @Override public void visitLocalVariable(          String name,          String desc,          String signature,          Label start,          Label end,          int index){
+            readVariables.add(new LocalVariable(index,name,desc));
+          }
+        }
+;
+      }
+ else {
+        return super.visitMethod(access,name,desc,signature,exceptions);
+      }
+    }
+  }
+  Visitor visitor=new Visitor();
+  cr.accept(visitor,ClassReader.SKIP_FRAMES);
+  assertFalse("method not found: " + methodName,visitor.readVariables.size() == 0);
+  return visitor.readVariables;
+}
