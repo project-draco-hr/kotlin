@@ -1,0 +1,25 @@
+{
+  doTest(new PerformAction(){
+    @Override public void performAction(    VirtualFile rootDir,    VirtualFile rootAfter) throws Exception {
+      VirtualFile child=rootDir.findChild(getTestName(false) + ".kt");
+      if (child == null) {
+        return;
+      }
+      Document document=FileDocumentManager.getInstance().getDocument(child);
+      if (document == null) {
+        return;
+      }
+      PsiFile file=PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+      if (!(file instanceof JetFile)) {
+        return;
+      }
+      PsiElement psiElement=elementToRenameCallback.fun(file);
+      assertNotNull(psiElement);
+      new RenameProcessor(myProject,psiElement,newName,true,true).run();
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments();
+      VirtualFileManager.getInstance().refresh(false);
+    }
+  }
+);
+}
