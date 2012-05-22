@@ -1,6 +1,8 @@
 {
-  loadFile(filename);
-  String actual;
+  String content=loadFile(filename);
+  Matcher matcher=Pattern.compile("// expected: (.*)").matcher(content);
+  String expectedValue=matcher.find() ? matcher.group(1) : "OK";
+  Object actual;
   try {
     actual=blackBox();
   }
@@ -12,8 +14,8 @@ catch (  Throwable e) {
     System.out.println(generateToText());
     throw new RuntimeException(e);
   }
-  if (!"OK".equals(actual)) {
+  if (!Objects.equal(expectedValue,actual)) {
     System.out.println(generateToText());
   }
-  assertEquals("OK",actual);
+  assertEquals(expectedValue,actual);
 }

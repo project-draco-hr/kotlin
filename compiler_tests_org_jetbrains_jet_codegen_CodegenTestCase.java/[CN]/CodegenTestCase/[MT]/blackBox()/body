@@ -2,10 +2,20 @@
   ClassFileFactory codegens=generateClassesInFile();
   GeneratedClassLoader loader=createClassLoader(codegens);
   try {
-    String fqName=NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(myFile)).getFqName().getFqName();
-    Class<?> namespaceClass=loader.loadClass(fqName);
-    Method method=namespaceClass.getMethod("box");
-    return (String)method.invoke(null);
+    if (myFile.isScript()) {
+      Class<?> scriptClass=loader.loadClass("Script");
+      Object scriptInstance=scriptClass.newInstance();
+      Field field=scriptClass.getDeclaredField("rv");
+      field.setAccessible(true);
+      Object result=field.get(scriptInstance);
+      return result != null ? result.toString() : "null";
+    }
+ else {
+      String fqName=NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(myFile)).getFqName().getFqName();
+      Class<?> namespaceClass=loader.loadClass(fqName);
+      Method method=namespaceClass.getMethod("box");
+      return (String)method.invoke(null);
+    }
   }
   finally {
     loader.dispose();
