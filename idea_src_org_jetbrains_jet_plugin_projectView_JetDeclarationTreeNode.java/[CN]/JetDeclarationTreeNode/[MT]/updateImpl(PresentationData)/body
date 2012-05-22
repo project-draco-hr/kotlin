@@ -1,21 +1,53 @@
 {
   JetDeclaration declaration=getValue();
   if (declaration != null) {
-    BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)declaration.getContainingFile()).getBindingContext();
-    final DeclarationDescriptor descriptor=context.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
-    if (descriptor != null) {
-      String text=JetStructureViewElement.getDescriptorTreeText(descriptor);
-      if (declaration instanceof JetClassInitializer) {
-        text="<class initializer>";
-      }
-      data.setPresentableText(text);
+    String text=declaration.getName();
+    if (text == null)     return;
+    JetCodeStyleSettings settings=CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JetCodeStyleSettings.class);
+    if (declaration instanceof JetClassInitializer) {
+      text=CLASS_INITIALIZER;
     }
- else {
-      String text=declaration.getName();
-      if (declaration instanceof JetClassInitializer) {
-        text="<class initializer>";
+ else     if (declaration instanceof JetProperty) {
+      JetProperty property=(JetProperty)declaration;
+      JetTypeReference ref=property.getPropertyTypeRef();
+      if (ref != null) {
+        if (settings.SPACE_BEFORE_TYPE_COLON)         text+=" ";
+        text+=":";
+        if (settings.SPACE_AFTER_TYPE_COLON)         text+=" ";
+        text+=ref.getText();
       }
-      data.setPresentableText(text);
     }
+ else     if (declaration instanceof JetFunction) {
+      JetFunction function=(JetFunction)declaration;
+      JetTypeReference receiverTypeRef=function.getReceiverTypeRef();
+      if (receiverTypeRef != null) {
+        text=receiverTypeRef.getText() + "." + text;
+      }
+      text+="(";
+      List<JetParameter> parameters=function.getValueParameters();
+      for (      JetParameter parameter : parameters) {
+        if (parameter.getName() != null) {
+          text+=parameter.getName();
+          if (settings.SPACE_BEFORE_TYPE_COLON)           text+=" ";
+          text+=":";
+          if (settings.SPACE_AFTER_TYPE_COLON)           text+=" ";
+        }
+        JetTypeReference typeReference=parameter.getTypeReference();
+        if (typeReference != null) {
+          text+=typeReference.getText();
+        }
+        text+=", ";
+      }
+      if (parameters.size() > 0)       text=text.substring(0,text.length() - 2);
+      text+=")";
+      JetTypeReference typeReference=function.getReturnTypeRef();
+      if (typeReference != null) {
+        if (settings.SPACE_BEFORE_TYPE_COLON)         text+=" ";
+        text+=":";
+        if (settings.SPACE_AFTER_TYPE_COLON)         text+=" ";
+        text+=typeReference.getText();
+      }
+    }
+    data.setPresentableText(text);
   }
 }
