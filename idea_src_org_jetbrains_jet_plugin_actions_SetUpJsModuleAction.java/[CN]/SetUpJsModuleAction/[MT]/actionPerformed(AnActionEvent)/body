@@ -1,0 +1,25 @@
+{
+  Project project=event.getProject();
+  if (project == null) {
+    notifyFailure("Internal error: Project not found.");
+    return;
+  }
+  File jsLibPath=PathUtil.getDefaultJsLibPath();
+  if (jsLibPath == null) {
+    notifyFailure("JavaScript library not found. Make sure plugin is installed properly.");
+    return;
+  }
+  File rootDir=getRootDir(project);
+  if (!rootDir.isDirectory()) {
+    notifyFailure("Internal error: Broken content root.");
+    return;
+  }
+  if (!copyJsLib(jsLibPath,rootDir))   return;
+  File file=new File(rootDir,JsModuleDetector.INDICATION_FILE_NAME);
+  if (file.exists()) {
+    notifyInfo("File " + file.getName() + " already exists.");
+    return;
+  }
+  createIndicationFile(file);
+  refreshRootDir(project);
+}
