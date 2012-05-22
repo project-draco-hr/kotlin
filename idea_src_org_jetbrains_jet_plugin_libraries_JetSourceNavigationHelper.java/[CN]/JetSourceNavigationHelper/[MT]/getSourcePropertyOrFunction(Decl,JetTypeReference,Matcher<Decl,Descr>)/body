@@ -3,6 +3,7 @@
   if (entityName == null) {
     return null;
   }
+  Name entityNameAsName=Name.identifier(entityName);
   PsiElement declarationContainer=decompiledDeclaration.getParent();
   if (declarationContainer instanceof JetFile) {
     Tuple2<BindingContext,NamespaceDescriptor> bindingContextAndNamespaceDescriptor=getBindingContextAndNamespaceDescriptor(decompiledDeclaration);
@@ -10,7 +11,7 @@
     BindingContext bindingContext=bindingContextAndNamespaceDescriptor._1;
     NamespaceDescriptor namespaceDescriptor=bindingContextAndNamespaceDescriptor._2;
     if (receiverType == null) {
-      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityName)) {
+      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
         if (candidate.getReceiverParameter() == ReceiverDescriptor.NO_RECEIVER) {
           if (matcher.areSame(decompiledDeclaration,candidate)) {
             return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
@@ -20,7 +21,7 @@
     }
  else {
       String expectedTypeString=receiverType.getText();
-      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityName)) {
+      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
         if (candidate.getReceiverParameter() != ReceiverDescriptor.NO_RECEIVER) {
           String thisReceiverType=DescriptorRenderer.TEXT.renderType(candidate.getReceiverParameter().getType());
           if (expectedTypeString.equals(thisReceiverType)) {
@@ -52,7 +53,7 @@
         memberScope=classObjectType.getMemberScope();
       }
       ClassDescriptor expectedContainer=isClassObject ? classDescriptor.getClassObjectDescriptor() : classDescriptor;
-      for (      Descr candidate : matcher.getCandidatesFromScope(memberScope,entityName)) {
+      for (      Descr candidate : matcher.getCandidatesFromScope(memberScope,entityNameAsName)) {
         if (candidate.getContainingDeclaration() == expectedContainer) {
           JetDeclaration property=(JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
           if (property != null) {

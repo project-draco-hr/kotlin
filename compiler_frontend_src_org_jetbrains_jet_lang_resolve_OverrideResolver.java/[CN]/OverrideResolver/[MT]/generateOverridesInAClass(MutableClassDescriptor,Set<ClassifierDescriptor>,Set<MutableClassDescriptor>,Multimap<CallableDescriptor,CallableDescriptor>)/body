@@ -12,13 +12,13 @@
     }
   }
   List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
-  MultiMap<String,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
-  MultiMap<String,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getDeclaredCallableMembers());
-  Set<String> functionNames=new LinkedHashSet<String>();
+  MultiMap<Name,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
+  MultiMap<Name,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getDeclaredCallableMembers());
+  Set<Name> functionNames=new LinkedHashSet<Name>();
   functionNames.addAll(functionsFromSupertypesByName.keySet());
   functionNames.addAll(functionsFromCurrentByName.keySet());
   Set<CallableMemberDescriptor> fakeOverrides=Sets.newHashSet();
-  for (  String functionName : functionNames) {
+  for (  Name functionName : functionNames) {
     generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,invisibleOverriddenDescriptors,new DescriptorSink(){
       @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
         if (fakeOverride instanceof PropertyDescriptor) {
@@ -33,7 +33,7 @@
       }
       @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
         JetDeclaration jetProperty=(JetDeclaration)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),fromCurrent);
-        trace.report(Errors.CONFLICTING_OVERLOADS.on(jetProperty,fromCurrent,fromCurrent.getContainingDeclaration().getName()));
+        trace.report(Errors.CONFLICTING_OVERLOADS.on(jetProperty,fromCurrent,fromCurrent.getContainingDeclaration().getName().getName()));
       }
     }
 );

@@ -5,7 +5,7 @@
     Method method=typeMapper.mapSignature(bridge.getName(),bridge).getAsmMethod();
     Method originalMethod=typeMapper.mapSignature(original.getName(),original).getAsmMethod();
     Type[] argTypes=method.getArgumentTypes();
-    MethodVisitor mv=v.newMethod(null,ACC_PUBLIC | ACC_BRIDGE | ACC_FINAL,bridge.getName(),method.getDescriptor(),null,null);
+    MethodVisitor mv=v.newMethod(null,ACC_PUBLIC | ACC_BRIDGE | ACC_FINAL,bridge.getName().getName(),method.getDescriptor(),null,null);
     if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
       StubCodegen.generateStubCode(mv);
     }
@@ -39,7 +39,7 @@
         mv.visitCode();
         InstructionAdapter iv=new InstructionAdapter(mv);
         iv.load(0,JetTypeMapper.TYPE_OBJECT);
-        if (original.getVisibility() == Visibilities.PRIVATE)         iv.getfield(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),original.getName(),originalMethod.getReturnType().getDescriptor());
+        if (original.getVisibility() == Visibilities.PRIVATE)         iv.getfield(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),original.getName().getName(),originalMethod.getReturnType().getDescriptor());
  else         iv.invokespecial(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),originalMethod.getName(),originalMethod.getDescriptor());
         iv.areturn(method.getReturnType());
         FunctionCodegen.endVisit(iv,"accessor",null);
@@ -64,7 +64,7 @@
           iv.load(reg,argType);
           reg+=argType.getSize();
         }
-        if (original.getVisibility() == Visibilities.PRIVATE && original.getModality() == Modality.FINAL)         iv.putfield(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),original.getName(),originalMethod.getArgumentTypes()[0].getDescriptor());
+        if (original.getVisibility() == Visibilities.PRIVATE && original.getModality() == Modality.FINAL)         iv.putfield(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),original.getName().getName(),originalMethod.getArgumentTypes()[0].getDescriptor());
  else         iv.invokespecial(typeMapper.getOwner(original,OwnerKind.IMPLEMENTATION),originalMethod.getName(),originalMethod.getDescriptor());
         iv.areturn(method.getReturnType());
         FunctionCodegen.endVisit(iv,"accessor",null);

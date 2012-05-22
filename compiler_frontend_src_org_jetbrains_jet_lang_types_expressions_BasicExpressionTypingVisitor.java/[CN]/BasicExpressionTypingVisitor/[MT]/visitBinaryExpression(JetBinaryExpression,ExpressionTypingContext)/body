@@ -6,7 +6,7 @@
   JetType result=null;
   IElementType operationType=operationSign.getReferencedNameElementType();
   if (operationType == JetTokens.IDENTIFIER) {
-    String referencedName=operationSign.getReferencedName();
+    Name referencedName=operationSign.getReferencedNameAsName();
     if (referencedName != null) {
       result=getTypeForBinaryCall(context.scope,referencedName,context,expression);
     }
@@ -21,7 +21,7 @@
     result=visitAssignmentOperation(expression,contextWithExpectedType);
   }
  else   if (OperatorConventions.COMPARISON_OPERATIONS.contains(operationType)) {
-    JetType compareToReturnType=getTypeForBinaryCall(context.scope,"compareTo",context,expression);
+    JetType compareToReturnType=getTypeForBinaryCall(context.scope,Name.identifier("compareTo"),context,expression);
     if (compareToReturnType != null) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
       JetStandardLibrary standardLibrary=JetStandardLibrary.getInstance();
@@ -37,10 +37,10 @@
  else {
     JetType booleanType=JetStandardLibrary.getInstance().getBooleanType();
     if (OperatorConventions.EQUALS_OPERATIONS.contains(operationType)) {
-      String name="equals";
+      Name name=Name.identifier("equals");
       if (right != null) {
         ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,context.replaceScope(context.scope));
-        OverloadResolutionResults<FunctionDescriptor> resolutionResults=context.resolveExactSignature(receiver,"equals",Collections.singletonList(JetStandardClasses.getNullableAnyType()));
+        OverloadResolutionResults<FunctionDescriptor> resolutionResults=context.resolveExactSignature(receiver,name,Collections.singletonList(JetStandardClasses.getNullableAnyType()));
         if (resolutionResults.isSuccess()) {
           FunctionDescriptor equals=resolutionResults.getResultingCall().getResultingDescriptor();
           context.trace.record(REFERENCE_TARGET,operationSign,equals);
