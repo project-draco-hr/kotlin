@@ -1,0 +1,22 @@
+{
+  TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
+  OverloadResolutionResults<VariableDescriptor> resolutionResult=context.replaceBindingTrace(temporaryTrace).resolveSimpleProperty(receiver,callOperationNode,nameExpression);
+  if (!resolutionResult.isNothing()) {
+    temporaryTrace.commit();
+    checkSuper(receiver,resolutionResult,context.trace,nameExpression);
+    result[0]=true;
+    return resolutionResult.isSingleResult() ? resolutionResult.getResultingDescriptor().getReturnType() : null;
+  }
+  ExpressionTypingContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
+  JetType jetType=lookupNamespaceOrClassObject(nameExpression,nameExpression.getReferencedNameAsName(),newContext);
+  if (jetType != null) {
+    context.trace.record(RESOLUTION_SCOPE,nameExpression,context.scope);
+    if (context.dataFlowInfo.hasTypeInfoConstraints()) {
+      context.trace.record(NON_DEFAULT_EXPRESSION_DATA_FLOW,nameExpression,context.dataFlowInfo);
+    }
+    result[0]=true;
+    return jetType;
+  }
+  result[0]=false;
+  return null;
+}

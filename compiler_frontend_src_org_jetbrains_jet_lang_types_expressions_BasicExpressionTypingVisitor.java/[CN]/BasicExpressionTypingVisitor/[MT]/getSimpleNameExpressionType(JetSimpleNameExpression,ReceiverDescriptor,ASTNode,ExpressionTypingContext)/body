@@ -1,0 +1,20 @@
+{
+  boolean[] result=new boolean[1];
+  TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace);
+  JetType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
+  if (result[0]) {
+    traceForVariable.commit();
+    return type;
+  }
+  Call call=CallMaker.makeCall(nameExpression,receiver,callOperationNode,nameExpression,Collections.<ValueArgument>emptyList());
+  TemporaryBindingTrace traceForFunction=TemporaryBindingTrace.create(context.trace);
+  FunctionDescriptor functionDescriptor=getFunctionDescriptor(call,nameExpression,receiver,context,result);
+  if (result[0]) {
+    traceForFunction.commit();
+    boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
+    context.trace.report(Errors.FUNCTION_CALL_EXPECTED.on(nameExpression,nameExpression,hasValueParameters));
+    return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+  }
+  traceForVariable.commit();
+  return null;
+}

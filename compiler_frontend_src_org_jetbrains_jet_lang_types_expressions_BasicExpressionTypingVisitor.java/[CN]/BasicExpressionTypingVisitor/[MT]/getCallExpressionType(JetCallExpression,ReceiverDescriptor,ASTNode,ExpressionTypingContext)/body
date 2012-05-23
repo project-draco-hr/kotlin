@@ -1,0 +1,22 @@
+{
+  boolean[] result=new boolean[1];
+  Call call=CallMaker.makeCall(receiver,callOperationNode,callExpression);
+  TemporaryBindingTrace traceForFunction=TemporaryBindingTrace.create(context.trace);
+  FunctionDescriptor functionDescriptor=getFunctionDescriptor(call,callExpression,receiver,context.replaceBindingTrace(traceForFunction),result);
+  if (result[0]) {
+    traceForFunction.commit();
+    return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+  }
+  JetExpression calleeExpression=callExpression.getCalleeExpression();
+  if (calleeExpression instanceof JetSimpleNameExpression) {
+    TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace);
+    JetType type=getVariableType((JetSimpleNameExpression)calleeExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
+    if (result[0]) {
+      traceForVariable.commit();
+      context.trace.report(Errors.FUNCTION_EXPECTED.on((JetReferenceExpression)calleeExpression,callExpression,type != null ? type : ErrorUtils.createErrorType("")));
+      return null;
+    }
+  }
+  traceForFunction.commit();
+  return null;
+}
