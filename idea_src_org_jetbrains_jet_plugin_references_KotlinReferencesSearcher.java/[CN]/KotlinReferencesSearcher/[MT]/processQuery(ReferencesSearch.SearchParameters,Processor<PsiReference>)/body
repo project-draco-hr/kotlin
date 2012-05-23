@@ -1,0 +1,19 @@
+{
+  PsiElement element=queryParameters.getElementToSearch();
+  if (element instanceof JetClass) {
+    String className=((JetClass)element).getName();
+    if (className != null) {
+      queryParameters.getOptimizer().searchWord(className,queryParameters.getScope(),true,JetLightClass.wrapDelegate((JetClass)element));
+    }
+  }
+ else   if (element instanceof JetFunction) {
+    final JetFunction function=(JetFunction)element;
+    final String name=function.getName();
+    if (function.getParent() instanceof JetClassBody && name != null) {
+      final PsiMethod method=JetLightClass.wrapMethod(function);
+      if (method != null) {
+        queryParameters.getOptimizer().searchWord(name,queryParameters.getScope(),true,JetLightClass.wrapMethod((JetFunction)element));
+      }
+    }
+  }
+}
