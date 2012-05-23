@@ -5,15 +5,19 @@
   FunctionDescriptor functionDescriptor=getFunctionDescriptor(call,callExpression,receiver,context.replaceBindingTrace(traceForFunction),result);
   if (result[0]) {
     traceForFunction.commit();
+    if (callExpression.getValueArgumentList() == null && callExpression.getFunctionLiteralArguments().isEmpty()) {
+      boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
+      context.trace.report(FUNCTION_CALL_EXPECTED.on(callExpression,callExpression,hasValueParameters));
+    }
     return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
   }
   JetExpression calleeExpression=callExpression.getCalleeExpression();
-  if (calleeExpression instanceof JetSimpleNameExpression) {
+  if (calleeExpression instanceof JetSimpleNameExpression && callExpression.getTypeArgumentList() == null) {
     TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace);
     JetType type=getVariableType((JetSimpleNameExpression)calleeExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
     if (result[0]) {
       traceForVariable.commit();
-      context.trace.report(Errors.FUNCTION_EXPECTED.on((JetReferenceExpression)calleeExpression,callExpression,type != null ? type : ErrorUtils.createErrorType("")));
+      context.trace.report(FUNCTION_EXPECTED.on((JetReferenceExpression)calleeExpression,calleeExpression,type != null ? type : ErrorUtils.createErrorType("")));
       return null;
     }
   }
