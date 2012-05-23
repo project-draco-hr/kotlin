@@ -1,25 +1,16 @@
 {
   CompilerSpecialMode mode=parseCompilerSpecialMode(arguments);
-  File[] altHeadersClasspath;
-  if (mode.includeAltHeaders()) {
-    File path=PathUtil.getAltHeadersPath();
-    File[] defaultAltHeadersPathArray;
-    if (path != null) {
-      defaultAltHeadersPathArray=new File[]{path};
+  File jdkHeadersJar;
+  if (mode.includeJdkHeaders()) {
+    if (arguments.jdkHeaders != null) {
+      jdkHeadersJar=new File(arguments.jdkHeaders);
     }
  else {
-      defaultAltHeadersPathArray=new File[0];
-    }
-    if (arguments.altHeaders != null) {
-      File[] files=pathsToFiles(arguments.altHeaders);
-      altHeadersClasspath=ArrayUtil.mergeArrays(files,defaultAltHeadersPathArray);
-    }
- else {
-      altHeadersClasspath=defaultAltHeadersPathArray;
+      jdkHeadersJar=PathUtil.getAltHeadersPath();
     }
   }
  else {
-    altHeadersClasspath=new File[0];
+    jdkHeadersJar=null;
   }
   File runtimeJar;
   if (mode.includeKotlinRuntime()) {
@@ -33,7 +24,7 @@
  else {
     runtimeJar=null;
   }
-  CompilerDependencies dependencies=new CompilerDependencies(mode,CompilerDependencies.findRtJar(),altHeadersClasspath,runtimeJar);
+  CompilerDependencies dependencies=new CompilerDependencies(mode,CompilerDependencies.findRtJar(),jdkHeadersJar,runtimeJar);
   JetCoreEnvironment environment=JetCoreEnvironment.getCoreEnvironmentForJVM(rootDisposable,dependencies);
   K2JVMCompileEnvironmentConfiguration configuration=new K2JVMCompileEnvironmentConfiguration(environment,messageCollector);
   messageCollector.report(CompilerMessageSeverity.LOGGING,"Configuring the compilation environment",CompilerMessageLocation.NO_LOCATION);
