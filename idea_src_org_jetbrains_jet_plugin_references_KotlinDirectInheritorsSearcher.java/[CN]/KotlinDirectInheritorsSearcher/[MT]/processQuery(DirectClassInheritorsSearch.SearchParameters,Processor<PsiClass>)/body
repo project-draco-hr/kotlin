@@ -1,0 +1,24 @@
+{
+  final PsiClass clazz=queryParameters.getClassToProcess();
+  final String name=clazz.getName();
+  if (name == null || !(queryParameters.getScope() instanceof GlobalSearchScope))   return;
+  GlobalSearchScope scope=(GlobalSearchScope)queryParameters.getScope();
+  final Collection<JetClassOrObject> candidates=JetSuperClassIndex.getInstance().get(name,clazz.getProject(),scope);
+  for (  JetClassOrObject candidate : candidates) {
+    if (!(candidate instanceof JetClass))     continue;
+    final List<JetDelegationSpecifier> specifiers=candidate.getDelegationSpecifiers();
+    for (    JetDelegationSpecifier specifier : specifiers) {
+      final JetUserType type=specifier.getTypeAsUserType();
+      if (type != null) {
+        final JetSimpleNameExpression referenceExpression=type.getReferenceExpression();
+        if (referenceExpression != null) {
+          final PsiReference reference=referenceExpression.getReference();
+          final PsiElement resolved=reference != null ? reference.resolve() : null;
+          if (resolved instanceof PsiClass && resolved.isEquivalentTo(clazz)) {
+            consumer.process(JetLightClass.wrapDelegate((JetClass)candidate));
+          }
+        }
+      }
+    }
+  }
+}
