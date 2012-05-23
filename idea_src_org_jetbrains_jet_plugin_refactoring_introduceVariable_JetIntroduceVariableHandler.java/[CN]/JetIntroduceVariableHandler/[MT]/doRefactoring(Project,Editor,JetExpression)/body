@@ -22,7 +22,6 @@
   }
  else   if (expression.getParent() instanceof JetCallElement) {
     if (expression instanceof JetFunctionLiteralExpression) {
-      noTypeInference=true;
       needParentheses=true;
     }
  else {
@@ -39,6 +38,19 @@
   }
   BindingContext bindingContext=AnalyzeSingleFileUtil.getContextForSingleFile((JetFile)expression.getContainingFile());
   final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
+  JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
+  if (scope != null) {
+    DataFlowInfo dataFlowInfo=bindingContext.get(BindingContext.NON_DEFAULT_EXPRESSION_DATA_FLOW,expression);
+    if (dataFlowInfo == null) {
+      dataFlowInfo=DataFlowInfo.EMPTY;
+    }
+    ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
+    InjectorForMacros injector=new InjectorForMacros(project);
+    JetType typeNoExpectedType=injector.getExpressionTypingServices().getType(scope,expression,TypeUtils.NO_EXPECTED_TYPE,dataFlowInfo,bindingTrace);
+    if (expressionType != null && typeNoExpectedType != null && !JetTypeChecker.INSTANCE.equalTypes(expressionType,typeNoExpectedType)) {
+      noTypeInference=true;
+    }
+  }
   if (expressionType instanceof NamespaceType) {
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.namespace.expression"));
     return;
