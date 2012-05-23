@@ -1,7 +1,11 @@
 {
   return new Runnable(){
     @Override public void run(){
-      String variableText="val " + suggestedNames[0] + " = ";
+      String variableText="val " + suggestedNames[0];
+      if (noTypeInference) {
+        variableText+=": " + DescriptorRenderer.TEXT.renderType(expressionType);
+      }
+      variableText+=" = ";
       if (expression instanceof JetParenthesizedExpression) {
         JetParenthesizedExpression parenthesizedExpression=(JetParenthesizedExpression)expression;
         JetExpression innerExpression=parenthesizedExpression.getExpression();
@@ -31,8 +35,15 @@
         if (replaceOccurrence && commonContainer != null) {
           for (          JetExpression replace : allReplaces) {
             boolean isActualExpression=expression == replace;
-            JetExpression element=(JetExpression)replace.replace(JetPsiFactory.createExpression(project,suggestedNames[0]));
-            if (isActualExpression)             reference.set(element);
+            if (!needParentheses && !(replace.getParent() instanceof JetCallExpression)) {
+              JetExpression element=(JetExpression)replace.replace(JetPsiFactory.createExpression(project,suggestedNames[0]));
+              if (isActualExpression)               reference.set(element);
+            }
+ else {
+              JetValueArgumentList argumentList=JetPsiFactory.createCallArguments(project,"(" + suggestedNames[0] + ")");
+              JetValueArgumentList element=(JetValueArgumentList)replace.replace(argumentList);
+              if (isActualExpression)               reference.set(element.getArguments().get(0).getArgumentExpression());
+            }
           }
           PsiElement oldElement=commonContainer;
           if (commonContainer instanceof JetWhenEntry) {
@@ -122,15 +133,29 @@
       for (      JetExpression replace : allReplaces) {
         if (replaceOccurrence && !needBraces) {
           boolean isActualExpression=expression == replace;
-          JetExpression element=(JetExpression)replace.replace(JetPsiFactory.createExpression(project,suggestedNames[0]));
-          references.add(element);
-          if (isActualExpression)           reference.set(element);
+          if (!needParentheses && !(replace.getParent() instanceof JetCallExpression)) {
+            JetExpression element=(JetExpression)replace.replace(JetPsiFactory.createExpression(project,suggestedNames[0]));
+            references.add(element);
+            if (isActualExpression)             reference.set(element);
+          }
+ else {
+            JetValueArgumentList argumentList=JetPsiFactory.createCallArguments(project,"(" + suggestedNames[0] + ")");
+            JetValueArgumentList element=(JetValueArgumentList)replace.replace(argumentList);
+            JetExpression argumentExpression=element.getArguments().get(0).getArgumentExpression();
+            references.add(argumentExpression);
+            if (isActualExpression) {
+              reference.set(argumentExpression);
+            }
+          }
         }
  else         if (!needBraces) {
           replace.delete();
         }
       }
       propertyRef.set(property);
+      if (noTypeInference) {
+        ReferenceToClassesShortening.compactReferenceToClasses(Collections.singletonList(property));
+      }
     }
   }
 ;
