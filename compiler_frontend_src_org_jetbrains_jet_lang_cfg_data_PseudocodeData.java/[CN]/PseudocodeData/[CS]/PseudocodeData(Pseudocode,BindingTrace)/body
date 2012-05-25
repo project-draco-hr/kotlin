@@ -1,0 +1,14 @@
+{
+  this.pseudocode=pseudocode;
+  this.trace=trace;
+  collectDeclarationData(pseudocode);
+  DeclarationData declarationData=declarationDataMap.get(pseudocode);
+  final Map<Instruction,Pair<Map<VariableDescriptor,VariableInitializers>,Map<VariableDescriptor,VariableInitializers>>> variableInitializersMap=collectVariableInitializers(pseudocode,declarationData);
+  final Map<Instruction,Pair<Map<VariableDescriptor,VariableUseStatus>,Map<VariableDescriptor,VariableUseStatus>>> variableStatusMap=collectVariableStatusData();
+  JetControlFlowGraphTraverser.<Void>create(pseudocode,true,true).traverseAndAnalyzeInstructionGraph(new JetControlFlowGraphTraverser.InstructionDataAnalyzeStrategy<Void>(){
+    @Override public void execute(    @NotNull Instruction instruction,    Void enterData,    Void exitData){
+      instructionDataMap.put(instruction,new InstructionData(PseudocodeData.this,instruction,variableInitializersMap.get(instruction),variableStatusMap.get(instruction)));
+    }
+  }
+);
+}

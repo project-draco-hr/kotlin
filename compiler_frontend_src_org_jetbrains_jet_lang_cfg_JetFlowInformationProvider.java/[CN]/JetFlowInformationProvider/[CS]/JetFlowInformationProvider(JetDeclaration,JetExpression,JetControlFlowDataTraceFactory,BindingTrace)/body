@@ -1,7 +1,8 @@
 {
   this.trace=trace;
   final JetPseudocodeTrace pseudocodeTrace=flowDataTraceFactory.createTrace(declaration);
-  pseudocodeMap=new HashMap<JetElement,Pseudocode>();
+  pseudocodeMap=new LinkedHashMap<JetElement,Pseudocode>();
+  pseudocodeDataMap=new HashMap<JetElement,PseudocodeData>();
   final Map<JetElement,Instruction> representativeInstructions=new HashMap<JetElement,Instruction>();
   final Map<JetExpression,LoopInfo> loopInfo=Maps.newHashMap();
   JetPseudocodeTrace wrappedTrace=new JetPseudocodeTrace(){
@@ -19,7 +20,9 @@
     }
     @Override public void close(){
       pseudocodeTrace.close();
-      for (      Pseudocode pseudocode : pseudocodeMap.values()) {
+      List<Pseudocode> values=Lists.newArrayList(pseudocodeMap.values());
+      Collections.reverse(values);
+      for (      Pseudocode pseudocode : values) {
         pseudocode.postProcess();
       }
     }
