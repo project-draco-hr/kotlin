@@ -10,7 +10,12 @@
     final JetFunction function=(JetFunction)element;
     final String name=function.getName();
     if (function.getParent() instanceof JetClassBody && name != null) {
-      final PsiMethod method=JetLightClass.wrapMethod(function);
+      final PsiMethod method=ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>(){
+        @Override public PsiMethod compute(){
+          return JetLightClass.wrapMethod(function);
+        }
+      }
+);
       if (method != null) {
         queryParameters.getOptimizer().searchWord(name,queryParameters.getScope(),true,JetLightClass.wrapMethod((JetFunction)element));
       }
