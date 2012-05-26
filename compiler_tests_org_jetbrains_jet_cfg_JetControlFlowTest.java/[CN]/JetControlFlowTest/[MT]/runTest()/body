@@ -1,27 +1,34 @@
 {
   JetFile file=loadPsiFile(myName + ".jet");
   final Map<JetElement,Pseudocode> data=new LinkedHashMap<JetElement,Pseudocode>();
-  final JetPseudocodeTrace pseudocodeTrace=new JetPseudocodeTrace(){
-    @Override public void recordControlFlowData(    @NotNull JetElement element,    @NotNull Pseudocode pseudocode){
-      data.put(element,pseudocode);
+  AnalyzeExhaust analyzeExhaust=JetTestUtils.analyzeFile(file);
+  List<JetDeclaration> declarations=file.getDeclarations();
+  final BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  BindingTrace mockTrace=new BindingTrace(){
+    @Override public BindingContext getBindingContext(){
+      return bindingContext;
     }
-    @Override public void close(){
-      for (      Pseudocode pseudocode : data.values()) {
-        pseudocode.postProcess();
-      }
+    @Override public <K,V>void record(    WritableSlice<K,V> slice,    K key,    V value){
     }
-    @Override public void recordLoopInfo(    JetExpression expression,    LoopInfo blockInfo){
+    @Override public <K>void record(    WritableSlice<K,Boolean> slice,    K key){
     }
-    @Override public void recordRepresentativeInstruction(    @NotNull JetElement element,    @NotNull Instruction instruction){
+    @Override public <K,V>V get(    ReadOnlySlice<K,V> slice,    K key){
+      return bindingContext.get(slice,key);
+    }
+    @NotNull @Override public <K,V>Collection<K> getKeys(    WritableSlice<K,V> slice){
+      return bindingContext.getKeys(slice);
+    }
+    @Override public void report(    @NotNull Diagnostic diagnostic){
     }
   }
 ;
-  JetTestUtils.analyzeFile(file,new JetControlFlowDataTraceFactory(){
-    @NotNull @Override public JetPseudocodeTrace createTrace(    JetElement element){
-      return pseudocodeTrace;
+  for (  JetDeclaration declaration : declarations) {
+    Pseudocode pseudocode=new JetControlFlowProcessor(mockTrace).generatePseudocode(declaration);
+    data.put(declaration,pseudocode);
+    for (    Pseudocode localPseudocode : pseudocode.getLocalDeclarations()) {
+      data.put(localPseudocode.getCorrespondingElement(),localPseudocode);
     }
   }
-);
   try {
     processCFData(myName,data);
   }

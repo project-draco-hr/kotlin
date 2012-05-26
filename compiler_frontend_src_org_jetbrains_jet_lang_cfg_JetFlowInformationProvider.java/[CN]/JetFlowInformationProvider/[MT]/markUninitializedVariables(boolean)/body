@@ -1,0 +1,40 @@
+{
+  final Collection<VariableDescriptor> varWithUninitializedErrorGenerated=Sets.newHashSet();
+  final Collection<VariableDescriptor> varWithValReassignErrorGenerated=Sets.newHashSet();
+  final boolean processClassOrObject=subroutine instanceof JetClassOrObject;
+  pseudocodeData.traverseInstructionsGraph(true,true,new PseudocodeData.TraverseInstructionGraphStrategy(){
+    @Override public void execute(    @NotNull Instruction instruction,    @NotNull DeclarationData declarationData,    @NotNull InstructionData instructionData){
+      VariableDescriptor variableDescriptor=pseudocodeData.extractVariableDescriptorIfAny(instruction,true);
+      if (variableDescriptor == null)       return;
+      if (!(instruction instanceof ReadValueInstruction) && !(instruction instanceof WriteValueInstruction))       return;
+      InstructionData.EdgesData<VariableInitializers> variableInitializers=instructionData.getInitializersMap().get(variableDescriptor);
+      if (variableInitializers == null)       return;
+      if (instruction instanceof ReadValueInstruction) {
+        JetElement element=((ReadValueInstruction)instruction).getElement();
+        boolean error=checkBackingField(variableDescriptor,element);
+        if (!error && declarationData.declaredVariables.contains(variableDescriptor)) {
+          checkIsInitialized(variableDescriptor,element,variableInitializers.getOut(),varWithUninitializedErrorGenerated);
+        }
+        return;
+      }
+      JetElement element=((WriteValueInstruction)instruction).getlValue();
+      boolean error=checkBackingField(variableDescriptor,element);
+      if (!(element instanceof JetExpression))       return;
+      if (!error && !processLocalDeclaration) {
+        error=checkValReassignment(variableDescriptor,(JetExpression)element,variableInitializers.getIn(),varWithValReassignErrorGenerated);
+      }
+      if (!error && processClassOrObject) {
+        error=checkAssignmentBeforeDeclaration(variableDescriptor,(JetExpression)element,variableInitializers.getIn(),variableInitializers.getOut());
+      }
+      if (!error && processClassOrObject) {
+        checkInitializationUsingBackingField(variableDescriptor,(JetExpression)element,variableInitializers.getIn(),variableInitializers.getOut());
+      }
+    }
+  }
+);
+  Pseudocode pseudocode=pseudocodeData.getPseudocode();
+  recordInitializedVariables(pseudocodeData.getDeclarationData(pseudocode),pseudocodeData.getResultInfo(pseudocode));
+  for (  Pseudocode localPseudocode : pseudocode.getLocalDeclarations()) {
+    recordInitializedVariables(pseudocodeData.getDeclarationData(localPseudocode),pseudocodeData.getResultInfo(localPseudocode));
+  }
+}
