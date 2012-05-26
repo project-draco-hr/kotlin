@@ -1,10 +1,11 @@
 {
   Set<VariableDescriptor> usedVariables=getUsedVariables(pseudocode);
   Set<VariableDescriptor> declaredVariables=getDeclaredVariables(pseudocode);
-  final Map<VariableDescriptor,VariableInitializers> initialMapForStartInstruction=prepareInitialMapForStartInstruction(usedVariables,declaredVariables);
-  Map<Instruction,Edges<Map<VariableDescriptor,VariableInitializers>>> variableInitializersMap=PseudocodeTraverser.collectInformationFromInstructionGraph(false,true,pseudocode,Collections.<VariableDescriptor,VariableInitializers>emptyMap(),initialMapForStartInstruction,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitializers>>(){
+  Map<VariableDescriptor,VariableInitializers> initialMap=Collections.emptyMap();
+  final Map<VariableDescriptor,VariableInitializers> initialMapForStartInstruction=prepareInitializersMapForStartInstruction(usedVariables,declaredVariables);
+  Map<Instruction,Edges<Map<VariableDescriptor,VariableInitializers>>> variableInitializersMap=PseudocodeTraverser.collectInformation(pseudocode,true,false,initialMap,initialMapForStartInstruction,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitializers>>(){
     @Override public Edges<Map<VariableDescriptor,VariableInitializers>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableInitializers>> incomingEdgesData){
-      Map<VariableDescriptor,VariableInitializers> enterInstructionData=mergeIncomingEdgesData(incomingEdgesData);
+      Map<VariableDescriptor,VariableInitializers> enterInstructionData=mergeIncomingEdgesDataForInitializers(incomingEdgesData);
       Map<VariableDescriptor,VariableInitializers> exitInstructionData=addVariableInitializerFromCurrentInstructionIfAny(instruction,enterInstructionData);
       return Edges.create(enterInstructionData,exitInstructionData);
     }

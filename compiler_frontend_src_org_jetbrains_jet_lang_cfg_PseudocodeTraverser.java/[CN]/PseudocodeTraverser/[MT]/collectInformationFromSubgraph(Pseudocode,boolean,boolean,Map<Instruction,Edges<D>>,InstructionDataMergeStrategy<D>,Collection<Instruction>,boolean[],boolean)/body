@@ -15,20 +15,20 @@
     }
     if (lookInside && instruction instanceof LocalDeclarationInstruction) {
       Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
-      traverseSubGraph(lookInside,subroutinePseudocode,dataMap,instructionDataMergeStrategy,previousInstructions,directOrder,changed,true);
+      collectInformationFromSubgraph(subroutinePseudocode,directOrder,lookInside,edgesMap,instructionDataMergeStrategy,previousInstructions,changed,true);
       Instruction lastInstruction=directOrder ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
-      Edges<D> previousValue=dataMap.get(instruction);
-      Edges<D> newValue=dataMap.get(lastInstruction);
+      Edges<D> previousValue=edgesMap.get(instruction);
+      Edges<D> newValue=edgesMap.get(lastInstruction);
       if (!previousValue.equals(newValue)) {
         changed[0]=true;
-        dataMap.put(instruction,newValue);
+        edgesMap.put(instruction,newValue);
       }
       continue;
     }
-    Edges<D> previousDataValue=dataMap.get(instruction);
+    Edges<D> previousDataValue=edgesMap.get(instruction);
     Collection<D> incomingEdgesData=Sets.newHashSet();
     for (    Instruction previousInstruction : allPreviousInstructions) {
-      Edges<D> previousData=dataMap.get(previousInstruction);
+      Edges<D> previousData=edgesMap.get(previousInstruction);
       if (previousData != null) {
         incomingEdgesData.add(previousData.out);
       }
@@ -36,7 +36,7 @@
     Edges<D> mergedData=instructionDataMergeStrategy.execute(instruction,incomingEdgesData);
     if (!mergedData.equals(previousDataValue)) {
       changed[0]=true;
-      dataMap.put(instruction,mergedData);
+      edgesMap.put(instruction,mergedData);
     }
   }
 }

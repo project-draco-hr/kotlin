@@ -4,7 +4,7 @@
     for (    VariableDescriptor usedVariable : usedVariablesInEachDeclaration.get(pseudocode)) {
       sinkInstructionData.put(usedVariable,VariableUseStatus.UNUSED);
     }
-    variableStatusMap=PseudocodeTraverser.collectInformationFromInstructionGraph(true,false,pseudocode,Collections.<VariableDescriptor,VariableUseStatus>emptyMap(),sinkInstructionData,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableUseStatus>>(){
+    InstructionDataMergeStrategy<Map<VariableDescriptor,VariableUseStatus>> collectVariableUseStatusStrategy=new InstructionDataMergeStrategy<Map<VariableDescriptor,VariableUseStatus>>(){
       @Override public Edges<Map<VariableDescriptor,VariableUseStatus>> execute(      @NotNull Instruction instruction,      @NotNull Collection<Map<VariableDescriptor,VariableUseStatus>> incomingEdgesData){
         Map<VariableDescriptor,VariableUseStatus> enterResult=Maps.newHashMap();
         for (        Map<VariableDescriptor,VariableUseStatus> edgeData : incomingEdgesData) {
@@ -24,7 +24,9 @@
         }
  else {
           VariableUseStatus variableUseStatus=enterResult.get(variableDescriptor);
-          if (variableUseStatus == null)           variableUseStatus=VariableUseStatus.UNUSED;
+          if (variableUseStatus == null) {
+            variableUseStatus=VariableUseStatus.UNUSED;
+          }
 switch (variableUseStatus) {
 case UNUSED:
 case ONLY_WRITTEN_NEVER_READ:
@@ -38,7 +40,8 @@ case LAST_READ:
   return Edges.create(enterResult,exitResult);
 }
 }
-);
+;
+variableStatusMap=PseudocodeTraverser.collectInformation(pseudocode,false,true,Collections.<VariableDescriptor,VariableUseStatus>emptyMap(),sinkInstructionData,collectVariableUseStatusStrategy);
 }
 return variableStatusMap;
 }
