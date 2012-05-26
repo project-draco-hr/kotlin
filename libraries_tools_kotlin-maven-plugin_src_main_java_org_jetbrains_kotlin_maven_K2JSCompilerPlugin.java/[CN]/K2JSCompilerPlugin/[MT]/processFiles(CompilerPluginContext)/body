@@ -3,7 +3,21 @@
   BindingContext bindingContext=context.getContext();
   List<JetFile> sources=context.getFiles();
   if (bindingContext != null && sources != null && project != null) {
-    Config config=Config.getEmptyConfig(project);
+    Config config;
+    if (jsLibrarySourceDir != null) {
+      config=new JsLibrarySourceConfig(project,EcmaVersion.defaultVersion(),jsLibrarySourceDir);
+      try {
+        File parentFile=new File(outFile).getParentFile();
+        parentFile.mkdirs();
+        Files.copy(new File(jsLibrarySourceDir,"../../js.translator/testFiles/kotlin_lib.js"),new File(parentFile,"kotlin-lib.js"));
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+ else {
+      config=Config.getEmptyConfig(project);
+    }
     try {
       K2JSTranslator translator=new K2JSTranslator(config);
       final String code=translator.generateProgramCode(sources,MainCallParameters.noCall());
