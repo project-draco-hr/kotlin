@@ -3,29 +3,12 @@
   final Map<JetElement,Pseudocode> data=new LinkedHashMap<JetElement,Pseudocode>();
   AnalyzeExhaust analyzeExhaust=JetTestUtils.analyzeFile(file);
   List<JetDeclaration> declarations=file.getDeclarations();
-  final BindingContext bindingContext=analyzeExhaust.getBindingContext();
-  BindingTrace mockTrace=new BindingTrace(){
-    @Override public BindingContext getBindingContext(){
-      return bindingContext;
-    }
-    @Override public <K,V>void record(    WritableSlice<K,V> slice,    K key,    V value){
-    }
-    @Override public <K>void record(    WritableSlice<K,Boolean> slice,    K key){
-    }
-    @Override public <K,V>V get(    ReadOnlySlice<K,V> slice,    K key){
-      return bindingContext.get(slice,key);
-    }
-    @NotNull @Override public <K,V>Collection<K> getKeys(    WritableSlice<K,V> slice){
-      return bindingContext.getKeys(slice);
-    }
-    @Override public void report(    @NotNull Diagnostic diagnostic){
-    }
-  }
-;
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
   for (  JetDeclaration declaration : declarations) {
-    Pseudocode pseudocode=new JetControlFlowProcessor(mockTrace).generatePseudocode(declaration);
+    Pseudocode pseudocode=PseudocodeUtil.generatePseudocode(declaration,bindingContext);
     data.put(declaration,pseudocode);
-    for (    Pseudocode localPseudocode : pseudocode.getLocalDeclarations()) {
+    for (    LocalDeclarationInstruction instruction : pseudocode.getLocalDeclarations()) {
+      Pseudocode localPseudocode=instruction.getBody();
       data.put(localPseudocode.getCorrespondingElement(),localPseudocode);
     }
   }
