@@ -1,11 +1,10 @@
 {
-  JetControlFlowGraphTraverser<Map<VariableDescriptor,VariableUseStatus>> traverser=JetControlFlowGraphTraverser.create(pseudocode,true,false);
   Map<VariableDescriptor,VariableUseStatus> sinkInstructionData=Maps.newHashMap();
   for (  VariableDescriptor usedVariable : declarationDataMap.get(pseudocode).usedVariables) {
     sinkInstructionData.put(usedVariable,VariableUseStatus.UNUSED);
   }
-  traverser.collectInformationFromInstructionGraph(Collections.<VariableDescriptor,VariableUseStatus>emptyMap(),sinkInstructionData,new JetControlFlowGraphTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableUseStatus>>(){
-    @Override public Pair<Map<VariableDescriptor,VariableUseStatus>,Map<VariableDescriptor,VariableUseStatus>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableUseStatus>> incomingEdgesData){
+  return PseudocodeTraverser.collectInformationFromInstructionGraph(true,false,pseudocode,Collections.<VariableDescriptor,VariableUseStatus>emptyMap(),sinkInstructionData,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableUseStatus>>(){
+    @Override public Edges<Map<VariableDescriptor,VariableUseStatus>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableUseStatus>> incomingEdgesData){
       Map<VariableDescriptor,VariableUseStatus> enterResult=Maps.newHashMap();
       for (      Map<VariableDescriptor,VariableUseStatus> edgeData : incomingEdgesData) {
         for (        Map.Entry<VariableDescriptor,VariableUseStatus> entry : edgeData.entrySet()) {
@@ -16,7 +15,7 @@
       }
       VariableDescriptor variableDescriptor=extractVariableDescriptorIfAny(instruction,true);
       if (variableDescriptor == null || (!(instruction instanceof ReadValueInstruction) && !(instruction instanceof WriteValueInstruction))) {
-        return Pair.create(enterResult,enterResult);
+        return Edges.create(enterResult,enterResult);
       }
       Map<VariableDescriptor,VariableUseStatus> exitResult=Maps.newHashMap(enterResult);
       if (instruction instanceof ReadValueInstruction) {
@@ -35,9 +34,8 @@ case LAST_READ:
       exitResult.put(variableDescriptor,VariableUseStatus.LAST_WRITTEN);
   }
 }
-return Pair.create(enterResult,exitResult);
+return Edges.create(enterResult,exitResult);
 }
 }
 );
-return traverser.getDataMap();
 }

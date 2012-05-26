@@ -1,0 +1,14 @@
+{
+  this.pseudocode=pseudocode;
+  this.bindingContext=bindingContext;
+  collectDeclarationData(pseudocode);
+  DeclarationData declarationData=declarationDataMap.get(pseudocode);
+  final Map<Instruction,Edges<Map<VariableDescriptor,VariableInitializers>>> variableInitializersMap=collectVariableInitializers(pseudocode,declarationData);
+  final Map<Instruction,Edges<Map<VariableDescriptor,VariableUseStatus>>> variableStatusMap=collectVariableStatusData();
+  PseudocodeTraverser.traverseAndAnalyzeInstructionGraph(pseudocode,true,new PseudocodeTraverser.SimpleInstructionDataAnalyzeStrategy(){
+    @Override public void execute(    @NotNull Instruction instruction){
+      instructionDataMap.put(instruction,new InstructionData(PseudocodeData.this,instruction,variableInitializersMap.get(instruction),variableStatusMap.get(instruction)));
+    }
+  }
+);
+}
