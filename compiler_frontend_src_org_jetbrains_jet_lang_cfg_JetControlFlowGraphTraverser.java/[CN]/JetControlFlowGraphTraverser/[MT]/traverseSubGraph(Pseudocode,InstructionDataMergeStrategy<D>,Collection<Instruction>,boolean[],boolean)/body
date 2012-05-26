@@ -1,14 +1,11 @@
 {
-  List<Instruction> instructions=pseudocode.getInstructions();
+  List<Instruction> instructions=directOrder ? pseudocode.getInstructions() : pseudocode.getReversedInstructions();
   Instruction startInstruction=getStartInstruction(pseudocode);
-  if (!straightDirection) {
-    instructions=reverseInstructions(pseudocode);
-  }
   for (  Instruction instruction : instructions) {
-    boolean isStart=straightDirection ? instruction instanceof SubroutineEnterInstruction : instruction instanceof SubroutineSinkInstruction;
+    boolean isStart=directOrder ? instruction instanceof SubroutineEnterInstruction : instruction instanceof SubroutineSinkInstruction;
     if (!isLocal && isStart)     continue;
     Collection<Instruction> allPreviousInstructions;
-    Collection<Instruction> previousInstructions=straightDirection ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
+    Collection<Instruction> previousInstructions=directOrder ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
     if (instruction == startInstruction && !previousSubGraphInstructions.isEmpty()) {
       allPreviousInstructions=Lists.newArrayList(previousInstructions);
       allPreviousInstructions.addAll(previousSubGraphInstructions);
@@ -19,7 +16,7 @@
     if (lookInside && instruction instanceof LocalDeclarationInstruction) {
       Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
       traverseSubGraph(subroutinePseudocode,instructionDataMergeStrategy,previousInstructions,changed,true);
-      Instruction lastInstruction=straightDirection ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
+      Instruction lastInstruction=directOrder ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
       Pair<D,D> previousValue=dataMap.get(instruction);
       Pair<D,D> newValue=dataMap.get(lastInstruction);
       if (!previousValue.equals(newValue)) {
