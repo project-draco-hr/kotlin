@@ -1,0 +1,30 @@
+{
+  if (!(instruction instanceof WriteValueInstruction) && !(instruction instanceof VariableDeclarationInstruction)) {
+    return enterInstructionData;
+  }
+  VariableDescriptor variable=PseudocodeUtil.extractVariableDescriptorIfAny(instruction,false,bindingContext);
+  if (variable == null) {
+    return enterInstructionData;
+  }
+  Map<VariableDescriptor,VariableInitializers> exitInstructionData=Maps.newHashMap(enterInstructionData);
+  if (instruction instanceof WriteValueInstruction) {
+    VariableInitializers enterInitializers=enterInstructionData.get(variable);
+    VariableInitializers initializationAtThisElement=new VariableInitializers(((WriteValueInstruction)instruction).getElement(),enterInitializers);
+    exitInstructionData.put(variable,initializationAtThisElement);
+  }
+ else {
+    VariableInitializers enterInitializers=enterInstructionData.get(variable);
+    if (enterInitializers == null || !enterInitializers.isInitialized() || !enterInitializers.isDeclared()) {
+      JetElement element=((VariableDeclarationInstruction)instruction).getElement();
+      if (element instanceof JetProperty) {
+        JetProperty property=(JetProperty)element;
+        if (property.getInitializer() == null) {
+          boolean isInitialized=enterInitializers != null && enterInitializers.isInitialized();
+          VariableInitializers variableDeclarationInfo=new VariableInitializers(isInitialized,true);
+          exitInstructionData.put(variable,variableDeclarationInfo);
+        }
+      }
+    }
+  }
+  return exitInstructionData;
+}

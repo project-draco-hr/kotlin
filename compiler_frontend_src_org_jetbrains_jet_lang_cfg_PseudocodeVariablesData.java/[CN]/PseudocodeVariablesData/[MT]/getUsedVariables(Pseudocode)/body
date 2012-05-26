@@ -1,0 +1,18 @@
+{
+  Set<VariableDescriptor> usedVariables=usedVariablesInEachDeclaration.get(pseudocode);
+  if (usedVariables == null) {
+    final Set<VariableDescriptor> result=Sets.newHashSet();
+    PseudocodeTraverser.traverseAndAnalyzeInstructionGraph(pseudocode,true,new PseudocodeTraverser.SimpleInstructionDataAnalyzeStrategy(){
+      @Override public void execute(      @NotNull Instruction instruction){
+        VariableDescriptor variableDescriptor=PseudocodeUtil.extractVariableDescriptorIfAny(instruction,false,bindingContext);
+        if (variableDescriptor != null) {
+          result.add(variableDescriptor);
+        }
+      }
+    }
+);
+    usedVariables=Collections.unmodifiableSet(result);
+    usedVariablesInEachDeclaration.put(pseudocode,usedVariables);
+  }
+  return usedVariables;
+}
