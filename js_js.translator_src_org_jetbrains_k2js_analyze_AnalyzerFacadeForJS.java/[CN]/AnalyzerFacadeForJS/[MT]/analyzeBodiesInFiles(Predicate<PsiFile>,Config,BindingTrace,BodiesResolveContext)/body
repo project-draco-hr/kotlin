@@ -1,0 +1,15 @@
+{
+  Project project=config.getProject();
+  final ModuleDescriptor owner=new ModuleDescriptor(Name.special("<module>"));
+  Predicate<PsiFile> completely=Predicates.and(notLibFiles(config.getLibFiles()),filesToAnalyzeCompletely);
+  TopDownAnalysisParameters topDownAnalysisParameters=new TopDownAnalysisParameters(completely,false,false);
+  InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,new ObservableBindingTrace(traceContext),owner,JetControlFlowDataTraceFactory.EMPTY,JsConfiguration.jsLibConfiguration(project));
+  try {
+    bodiesResolveContext.setTopDownAnalysisParameters(topDownAnalysisParameters);
+    injector.getTopDownAnalyzer().doProcessForBodies(bodiesResolveContext);
+    return AnalyzeExhaust.success(traceContext.getBindingContext(),JetStandardLibrary.getInstance());
+  }
+  finally {
+    injector.destroy();
+  }
+}
