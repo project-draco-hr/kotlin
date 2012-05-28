@@ -1,27 +1,17 @@
 {
   JetFile file=loadPsiFile(myName + ".jet");
   final Map<JetElement,Pseudocode> data=new LinkedHashMap<JetElement,Pseudocode>();
-  final JetPseudocodeTrace pseudocodeTrace=new JetPseudocodeTrace(){
-    @Override public void recordControlFlowData(    @NotNull JetElement element,    @NotNull Pseudocode pseudocode){
-      data.put(element,pseudocode);
-    }
-    @Override public void close(){
-      for (      Pseudocode pseudocode : data.values()) {
-        pseudocode.postProcess();
-      }
-    }
-    @Override public void recordLoopInfo(    JetExpression expression,    LoopInfo blockInfo){
-    }
-    @Override public void recordRepresentativeInstruction(    @NotNull JetElement element,    @NotNull Instruction instruction){
+  AnalyzeExhaust analyzeExhaust=JetTestUtils.analyzeFile(file);
+  List<JetDeclaration> declarations=file.getDeclarations();
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  for (  JetDeclaration declaration : declarations) {
+    Pseudocode pseudocode=PseudocodeUtil.generatePseudocode(declaration,bindingContext);
+    data.put(declaration,pseudocode);
+    for (    LocalDeclarationInstruction instruction : pseudocode.getLocalDeclarations()) {
+      Pseudocode localPseudocode=instruction.getBody();
+      data.put(localPseudocode.getCorrespondingElement(),localPseudocode);
     }
   }
-;
-  JetTestUtils.analyzeFile(file,new JetControlFlowDataTraceFactory(){
-    @NotNull @Override public JetPseudocodeTrace createTrace(    JetElement element){
-      return pseudocodeTrace;
-    }
-  }
-);
   try {
     processCFData(myName,data);
   }

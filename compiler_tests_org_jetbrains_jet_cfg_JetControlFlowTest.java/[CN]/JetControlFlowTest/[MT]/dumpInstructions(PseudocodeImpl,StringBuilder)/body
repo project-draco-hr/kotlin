@@ -1,0 +1,46 @@
+{
+  List<Instruction> instructions=pseudocode.getAllInstructions();
+  Set<Instruction> remainedAfterPostProcessInstructions=Sets.newHashSet(pseudocode.getInstructions());
+  List<PseudocodeImpl.PseudocodeLabel> labels=pseudocode.getLabels();
+  List<PseudocodeImpl> locals=new ArrayList<PseudocodeImpl>();
+  int maxLength=0;
+  int maxNextLength=0;
+  for (  Instruction instruction : instructions) {
+    String instuctionText=instruction.toString();
+    if (instuctionText.length() > maxLength) {
+      String[] parts=instuctionText.split("\n");
+      if (parts.length > 1) {
+        for (        String part : parts) {
+          if (part.length() > maxLength) {
+            maxLength=part.length();
+          }
+        }
+      }
+ else {
+        if (instuctionText.length() > maxLength) {
+          maxLength=instuctionText.length();
+        }
+      }
+    }
+    String instructionListText=formatInstructionList(instruction.getNextInstructions());
+    if (instructionListText.length() > maxNextLength) {
+      maxNextLength=instructionListText.length();
+    }
+  }
+  for (int i=0, instructionsSize=instructions.size(); i < instructionsSize; i++) {
+    Instruction instruction=instructions.get(i);
+    if (instruction instanceof LocalDeclarationInstruction) {
+      LocalDeclarationInstruction localDeclarationInstruction=(LocalDeclarationInstruction)instruction;
+      locals.add((PseudocodeImpl)localDeclarationInstruction.getBody());
+    }
+    for (    PseudocodeImpl.PseudocodeLabel label : labels) {
+      if (label.getTargetInstructionIndex() == i) {
+        out.append(label.getName()).append(":\n");
+      }
+    }
+    out.append(formatInstruction(instruction,maxLength,remainedAfterPostProcessInstructions)).append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(instruction.getNextInstructions()))).append("    PREV:").append(formatInstructionList(instruction.getPreviousInstructions())).append("\n");
+  }
+  for (  PseudocodeImpl local : locals) {
+    dumpInstructions(local,out);
+  }
+}

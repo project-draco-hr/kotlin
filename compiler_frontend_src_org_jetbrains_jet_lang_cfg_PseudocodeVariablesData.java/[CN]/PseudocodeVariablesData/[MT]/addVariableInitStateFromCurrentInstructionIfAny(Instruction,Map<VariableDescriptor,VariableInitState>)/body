@@ -1,0 +1,24 @@
+{
+  if (!(instruction instanceof WriteValueInstruction) && !(instruction instanceof VariableDeclarationInstruction)) {
+    return enterInstructionData;
+  }
+  VariableDescriptor variable=PseudocodeUtil.extractVariableDescriptorIfAny(instruction,false,bindingContext);
+  if (variable == null) {
+    return enterInstructionData;
+  }
+  Map<VariableDescriptor,VariableInitState> exitInstructionData=Maps.newHashMap(enterInstructionData);
+  if (instruction instanceof WriteValueInstruction) {
+    VariableInitState enterInitState=enterInstructionData.get(variable);
+    VariableInitState initializationAtThisElement=VariableInitState.create(((WriteValueInstruction)instruction).getElement() instanceof JetProperty,enterInitState);
+    exitInstructionData.put(variable,initializationAtThisElement);
+  }
+ else {
+    VariableInitState enterInitState=enterInstructionData.get(variable);
+    if (enterInitState == null || !enterInitState.isInitialized || !enterInitState.isDeclared) {
+      boolean isInitialized=enterInitState != null && enterInitState.isInitialized;
+      VariableInitState variableDeclarationInfo=VariableInitState.create(isInitialized,true);
+      exitInstructionData.put(variable,variableDeclarationInfo);
+    }
+  }
+  return exitInstructionData;
+}

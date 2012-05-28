@@ -1,0 +1,45 @@
+{
+  boolean isInitializedNotHere=enterInitState.isInitialized;
+  if (expression.getParent() instanceof JetProperty && ((JetProperty)expression).getInitializer() != null) {
+    isInitializedNotHere=false;
+  }
+  boolean hasBackingField=true;
+  if (variableDescriptor instanceof PropertyDescriptor) {
+    hasBackingField=trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor);
+  }
+  if ((isInitializedNotHere || !hasBackingField) && !variableDescriptor.isVar() && !varWithValReassignErrorGenerated.contains(variableDescriptor)) {
+    boolean hasReassignMethodReturningUnit=false;
+    JetSimpleNameExpression operationReference=null;
+    PsiElement parent=expression.getParent();
+    if (parent instanceof JetBinaryExpression) {
+      operationReference=((JetBinaryExpression)parent).getOperationReference();
+    }
+ else     if (parent instanceof JetUnaryExpression) {
+      operationReference=((JetUnaryExpression)parent).getOperationReference();
+    }
+    if (operationReference != null) {
+      DeclarationDescriptor descriptor=trace.get(BindingContext.REFERENCE_TARGET,operationReference);
+      if (descriptor instanceof FunctionDescriptor) {
+        if (JetStandardClasses.isUnit(((FunctionDescriptor)descriptor).getReturnType())) {
+          hasReassignMethodReturningUnit=true;
+        }
+      }
+      if (descriptor == null) {
+        Collection<? extends DeclarationDescriptor> descriptors=trace.get(BindingContext.AMBIGUOUS_REFERENCE_TARGET,operationReference);
+        if (descriptors != null) {
+          for (          DeclarationDescriptor referenceDescriptor : descriptors) {
+            if (JetStandardClasses.isUnit(((FunctionDescriptor)referenceDescriptor).getReturnType())) {
+              hasReassignMethodReturningUnit=true;
+            }
+          }
+        }
+      }
+    }
+    if (!hasReassignMethodReturningUnit) {
+      varWithValReassignErrorGenerated.add(variableDescriptor);
+      trace.report(Errors.VAL_REASSIGNMENT.on(expression,variableDescriptor));
+      return true;
+    }
+  }
+  return false;
+}

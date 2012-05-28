@@ -1,0 +1,25 @@
+{
+  Set<VariableDescriptor> usedVariables=getUsedVariables(pseudocode);
+  Set<VariableDescriptor> declaredVariables=getDeclaredVariables(pseudocode);
+  Map<VariableDescriptor,VariableInitState> initialMap=Collections.emptyMap();
+  final Map<VariableDescriptor,VariableInitState> initialMapForStartInstruction=prepareInitializersMapForStartInstruction(usedVariables,declaredVariables);
+  Map<Instruction,Edges<Map<VariableDescriptor,VariableInitState>>> variableInitializersMap=PseudocodeTraverser.collectData(pseudocode,true,false,initialMap,initialMapForStartInstruction,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>>(){
+    @Override public Edges<Map<VariableDescriptor,VariableInitState>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableInitState>> incomingEdgesData){
+      Map<VariableDescriptor,VariableInitState> enterInstructionData=mergeIncomingEdgesDataForInitializers(incomingEdgesData);
+      Map<VariableDescriptor,VariableInitState> exitInstructionData=addVariableInitStateFromCurrentInstructionIfAny(instruction,enterInstructionData);
+      return Edges.create(enterInstructionData,exitInstructionData);
+    }
+  }
+);
+  for (  LocalDeclarationInstruction localDeclarationInstruction : pseudocode.getLocalDeclarations()) {
+    Pseudocode localPseudocode=localDeclarationInstruction.getBody();
+    Map<Instruction,Edges<Map<VariableDescriptor,VariableInitState>>> initializersForLocalDeclaration=getVariableInitializers(localPseudocode);
+    for (    Instruction instruction : initializersForLocalDeclaration.keySet()) {
+      if (!variableInitializersMap.containsKey(instruction)) {
+        variableInitializersMap.put(instruction,initializersForLocalDeclaration.get(instruction));
+      }
+    }
+    variableInitializersMap.putAll(initializersForLocalDeclaration);
+  }
+  return variableInitializersMap;
+}
