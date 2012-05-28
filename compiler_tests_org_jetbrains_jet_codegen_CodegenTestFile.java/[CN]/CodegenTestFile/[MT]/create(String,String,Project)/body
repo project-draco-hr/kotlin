@@ -1,6 +1,35 @@
 {
-  JetFile file=(JetFile)JetTestUtils.createFile(name,content,project);
+  JetFile file=(JetFile)JetTestUtils.createFile(fileName,content,project);
   Matcher matcher=Pattern.compile("// expected: (.*)").matcher(content);
   String expectedValue=matcher.find() ? matcher.group(1) : "OK";
-  return new CodegenTestFile(file,expectedValue);
+  List<AnalyzerScriptParameter> scriptParameterTypes=Lists.newArrayList();
+  List<Object> scriptParameterValues=Lists.newArrayList();
+  if (file.isScript()) {
+    Pattern scriptParametersPattern=Pattern.compile("param: (\\S+): (\\S+): (\\S.*)");
+    Matcher scriptParametersMatcher=scriptParametersPattern.matcher(file.getText());
+    while (scriptParametersMatcher.find()) {
+      String name=scriptParametersMatcher.group(1);
+      String type=scriptParametersMatcher.group(2);
+      String valueString=scriptParametersMatcher.group(3);
+      Object value;
+      if (type.equals("jet.String")) {
+        value=valueString;
+      }
+ else       if (type.equals("jet.Long")) {
+        value=Long.parseLong(valueString);
+      }
+ else       if (type.equals("jet.Int")) {
+        value=Integer.parseInt(valueString);
+      }
+ else       if (type.equals("jet.Array<jet.String>")) {
+        value=valueString.split(" ");
+      }
+ else {
+        throw new AssertionError("TODO");
+      }
+      scriptParameterTypes.add(new AnalyzerScriptParameter(Name.identifier(name),JetTypeName.parse(type)));
+      scriptParameterValues.add(value);
+    }
+  }
+  return new CodegenTestFile(file,expectedValue,scriptParameterTypes,scriptParameterValues);
 }

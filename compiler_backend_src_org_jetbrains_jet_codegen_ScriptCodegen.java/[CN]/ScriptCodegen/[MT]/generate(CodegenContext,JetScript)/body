@@ -4,14 +4,25 @@
   classBuilder.defineClass(scriptDeclaration,Opcodes.V1_6,Opcodes.ACC_PUBLIC,"Script",null,JdkNames.JL_OBJECT.getInternalName(),new String[0]);
   Type blockType=jetTypeMapper.mapType(scriptDescriptor.getReturnType(),MapTypeMode.VALUE);
   classBuilder.newField(null,Opcodes.ACC_PUBLIC,LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor(),null,null);
-  MethodVisitor mv=classBuilder.newMethod(scriptDeclaration,Opcodes.ACC_PUBLIC,"<init>","()V",null,null);
+  JvmMethodSignature jvmSignature=jetTypeMapper.mapScriptSignature(scriptDescriptor);
+  state.setScriptConstructorMethod(jvmSignature.getAsmMethod());
+  MethodVisitor mv=classBuilder.newMethod(scriptDeclaration,Opcodes.ACC_PUBLIC,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),null,null);
   mv.visitCode();
   InstructionAdapter instructionAdapter=new InstructionAdapter(mv);
   instructionAdapter.load(0,Type.getObjectType("Script"));
   instructionAdapter.invokespecial(JdkNames.JL_OBJECT.getInternalName(),"<init>","()V");
   instructionAdapter.load(0,Type.getObjectType("Script"));
-  StackValue stackValue=new ExpressionCodegen(mv,new FrameMap(),Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
+  CodegenContext context=outerContext.intoScript(scriptDescriptor);
+  FrameMap frameMap=context.prepareFrame(jetTypeMapper);
+  Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
+  int add=0;
+  for (int i=0; i < scriptDescriptor.getValueParameters().size(); i++) {
+    ValueParameterDescriptor parameter=scriptDescriptor.getValueParameters().get(i);
+    frameMap.enter(parameter,argTypes[i + add].getSize());
+  }
+  StackValue stackValue=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
   if (stackValue.type != Type.VOID_TYPE) {
+    stackValue.put(stackValue.type,instructionAdapter);
     instructionAdapter.putfield("Script",LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor());
   }
   instructionAdapter.areturn(Type.VOID_TYPE);

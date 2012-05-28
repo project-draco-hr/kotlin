@@ -1,0 +1,13 @@
+{
+  final JetCoreEnvironment environment=configuration.getEnvironment();
+  AnalyzerWithCompilerReport analyzerWithCompilerReport=new AnalyzerWithCompilerReport(configuration.getMessageCollector());
+  final Predicate<PsiFile> filesToAnalyzeCompletely=stubs ? Predicates.<PsiFile>alwaysFalse() : Predicates.<PsiFile>alwaysTrue();
+  final List<AnalyzerScriptParameter> scriptParameters=script ? CommandLineScriptUtils.scriptParameters() : Collections.<AnalyzerScriptParameter>emptyList();
+  analyzerWithCompilerReport.analyzeAndReport(new Function0<AnalyzeExhaust>(){
+    @NotNull @Override public AnalyzeExhaust invoke(){
+      return AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(environment.getProject(),environment.getSourceFiles(),scriptParameters,filesToAnalyzeCompletely,configuration.getEnvironment().getCompilerDependencies());
+    }
+  }
+,environment.getSourceFiles());
+  return analyzerWithCompilerReport.hasErrors() ? null : analyzerWithCompilerReport.getAnalyzeExhaust();
+}

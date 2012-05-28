@@ -1,10 +1,11 @@
 {
-  ClassFileFactory codegens=generateClassesInFile();
-  GeneratedClassLoader loader=createClassLoader(codegens);
+  GenerationState state=generateClassesInFileGetState();
+  GeneratedClassLoader loader=createClassLoader(state.getFactory());
   try {
     if (myFile.getPsiFile().isScript()) {
       Class<?> scriptClass=loader.loadClass("Script");
-      Object scriptInstance=scriptClass.newInstance();
+      Constructor constructor=getConstructor(scriptClass,state.getScriptConstructorMethod());
+      Object scriptInstance=constructor.newInstance(myFile.getScriptParameterValues().toArray());
       Field field=scriptClass.getDeclaredField("rv");
       field.setAccessible(true);
       Object result=field.get(scriptInstance);
