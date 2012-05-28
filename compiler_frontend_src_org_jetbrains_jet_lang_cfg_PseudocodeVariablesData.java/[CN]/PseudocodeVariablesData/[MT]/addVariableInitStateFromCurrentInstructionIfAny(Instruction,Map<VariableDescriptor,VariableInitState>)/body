@@ -9,21 +9,15 @@
   Map<VariableDescriptor,VariableInitState> exitInstructionData=Maps.newHashMap(enterInstructionData);
   if (instruction instanceof WriteValueInstruction) {
     VariableInitState enterInitState=enterInstructionData.get(variable);
-    VariableInitState initializationAtThisElement=new VariableInitState(((WriteValueInstruction)instruction).getElement() instanceof JetProperty,enterInitState);
+    VariableInitState initializationAtThisElement=VariableInitState.create(((WriteValueInstruction)instruction).getElement() instanceof JetProperty,enterInitState);
     exitInstructionData.put(variable,initializationAtThisElement);
   }
  else {
     VariableInitState enterInitState=enterInstructionData.get(variable);
     if (enterInitState == null || !enterInitState.isInitialized || !enterInitState.isDeclared) {
-      JetElement element=((VariableDeclarationInstruction)instruction).getElement();
-      if (element instanceof JetProperty) {
-        JetProperty property=(JetProperty)element;
-        if (property.getInitializer() == null) {
-          boolean isInitialized=enterInitState != null && enterInitState.isInitialized;
-          VariableInitState variableDeclarationInfo=new VariableInitState(isInitialized,true);
-          exitInstructionData.put(variable,variableDeclarationInfo);
-        }
-      }
+      boolean isInitialized=enterInitState != null && enterInitState.isInitialized;
+      VariableInitState variableDeclarationInfo=VariableInitState.create(isInitialized,true);
+      exitInstructionData.put(variable,variableDeclarationInfo);
     }
   }
   return exitInstructionData;
