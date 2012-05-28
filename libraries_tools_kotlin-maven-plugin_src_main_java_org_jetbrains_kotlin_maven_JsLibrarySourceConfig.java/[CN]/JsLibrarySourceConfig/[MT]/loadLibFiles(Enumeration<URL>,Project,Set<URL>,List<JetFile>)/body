@@ -1,0 +1,37 @@
+{
+  while (resources != null && resources.hasMoreElements()) {
+    URL url=resources.nextElement();
+    if (url != null) {
+      if (urlsLoaded.add(url)) {
+        System.out.println("Loading Kotlin JS library file: " + url);
+        BufferedReader reader=new BufferedReader(new InputStreamReader(url.openStream()));
+        try {
+          while (true) {
+            String line=reader.readLine();
+            if (line == null) {
+              break;
+            }
+ else {
+              line=line.trim();
+              if (line.length() == 0 || line.startsWith("#"))               continue;
+              InputStream stream=loadClasspathResource(line);
+              if (stream == null) {
+                System.out.println("WARNING: failed to find JS source file: " + line + " on the classpath");
+              }
+ else {
+                String text=FileUtil.loadTextAndClose(stream);
+                JetFile file=JetFileUtils.createPsiFile(line,text,project);
+                if (file != null) {
+                  libFiles.add(file);
+                }
+              }
+            }
+          }
+        }
+  finally {
+          reader.close();
+        }
+      }
+    }
+  }
+}

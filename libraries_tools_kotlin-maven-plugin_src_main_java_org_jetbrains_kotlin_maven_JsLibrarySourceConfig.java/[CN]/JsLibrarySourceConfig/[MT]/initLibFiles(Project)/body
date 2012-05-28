@@ -1,21 +1,14 @@
 {
   List<JetFile> libFiles=new ArrayList<JetFile>();
-  for (  String libFileName : LIB_FILE_NAMES) {
-    JetFile file=null;
-    try {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") InputStream stream=new FileInputStream(librarySourceDir + libFileName);
-      try {
-        String text=FileUtil.loadTextAndClose(stream);
-        file=JetFileUtils.createPsiFile(libFileName,text,project);
-      }
- catch (      IOException e) {
-        e.printStackTrace();
-      }
-      libFiles.add(file);
-    }
- catch (    Exception e) {
-      throw new IllegalStateException(e);
-    }
+  Set<URL> urlsLoaded=new HashSet<URL>();
+  try {
+    Enumeration<URL> resources=getClass().getClassLoader().getResources(LIBRARY_SOURCES_FILES);
+    loadLibFiles(resources,project,urlsLoaded,libFiles);
+    resources=Thread.currentThread().getContextClassLoader().getResources(LIBRARY_SOURCES_FILES);
+    loadLibFiles(resources,project,urlsLoaded,libFiles);
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
   }
   return libFiles;
 }
