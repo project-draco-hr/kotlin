@@ -1,13 +1,9 @@
 {
   List<CompletionProposal> proposals=new ArrayList<CompletionProposal>();
   for (  String proposalStr : InTextDirectivesUtils.findListWithPrefix(prefix,fileText)) {
-    int tailChar=proposalStr.indexOf(CompletionProposal.TAIL_FLAG);
-    if (tailChar > 0) {
-      proposals.add(new CompletionProposal(proposalStr.substring(0,tailChar),proposalStr.substring(tailChar + 1,proposalStr.length())));
-    }
- else {
-      proposals.add(new CompletionProposal(proposalStr,null));
-    }
+    Matcher matcher=CompletionProposal.PATTERN.matcher(proposalStr);
+    matcher.find();
+    proposals.add(new CompletionProposal(matcher.group(CompletionProposal.LOOKUP_STRING_GROUP_INDEX),matcher.group(CompletionProposal.PRESENTABLE_STRING_GROUP_INDEX),matcher.group(CompletionProposal.TAIL_TEXT_STRING_GROUP_INDEX)));
   }
   return ArrayUtil.toObjectArray(proposals,CompletionProposal.class);
 }

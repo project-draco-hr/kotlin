@@ -7,7 +7,13 @@
       return function.getName();
     }
     @Override public String getLocationString(){
-      return String.format("(in %s)",QualifiedNamesUtil.withoutLastSegment(JetPsiUtil.getFQName(function)));
+      FqName name=JetPsiUtil.getFQName(function);
+      if (name != null) {
+        JetTypeReference typeRef=function.getReturnTypeRef();
+        String extensionLocation=typeRef != null ? "for " + typeRef.getText() + " " : "";
+        return String.format("(%sin %s)",extensionLocation,QualifiedNamesUtil.withoutLastSegment(name));
+      }
+      return "";
     }
     @Override public Icon getIcon(    boolean open){
       return JetIconProvider.INSTANCE.getIcon(function,0);
