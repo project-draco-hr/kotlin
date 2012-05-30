@@ -1,12 +1,4 @@
 {
-  System.out.println("Testing library " + libDescription + "...");
-  if (jar != null) {
-    System.out.println("Using file " + jar);
-  }
- else {
-    System.out.println("Using rt.jar");
-  }
-  long start=System.currentTimeMillis();
   Disposable junk=new Disposable(){
     @Override public void dispose(){
     }
@@ -20,19 +12,23 @@
  else {
     CompilerDependencies compilerDependencies=CompileCompilerDependenciesTest.compilerDependenciesForTests(CompilerSpecialMode.STDLIB,false);
     jetCoreEnvironment=JetCoreEnvironment.getCoreEnvironmentForJVM(junk,compilerDependencies);
-    jar=compilerDependencies.getJdkJar();
+    if (!compilerDependencies.getJdkJar().equals(jar)) {
+      throw new RuntimeException("rt.jar mismatch: " + jar + ", "+ compilerDependencies.getJdkJar());
+    }
   }
   InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(jetCoreEnvironment.getCompilerDependencies(),jetCoreEnvironment.getProject());
-  FileInputStream is=new FileInputStream(jar);
   boolean hasErrors;
   try {
-    ZipInputStream zip=new ZipInputStream(is);
     hasErrors=false;
-    for (; ; ) {
+    for (int count=0; count < classesPerChunk; ) {
       ZipEntry entry=zip.getNextEntry();
       if (entry == null) {
         break;
       }
+      if (count == 0) {
+        System.err.println("chunk from " + entry.getName());
+      }
+      System.err.println(entry.getName());
       String entryName=entry.getName();
       if (!entryName.endsWith(".class")) {
         continue;
@@ -56,16 +52,11 @@
         e.printStackTrace();
         hasErrors=true;
       }
+      ++count;
     }
   }
   finally {
-    try {
-      is.close();
-    }
- catch (    Throwable e) {
-    }
     Disposer.dispose(junk);
   }
-  System.out.println("Testing library " + libDescription + " done in "+ TimeUtils.millisecondsToSecondsString(System.currentTimeMillis() - start)+ "s "+ (hasErrors ? "with" : "without")+ " errors");
   return hasErrors;
 }
