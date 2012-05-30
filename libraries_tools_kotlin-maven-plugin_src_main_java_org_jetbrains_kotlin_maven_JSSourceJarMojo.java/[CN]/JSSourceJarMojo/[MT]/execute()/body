@@ -4,11 +4,24 @@
   }
  else {
     try {
-      File metaInfFile=new File(outputDir,"META-INF/services/org.jetbrains.kotlin.js.librarySource");
+      File metaInfFile=new File(outputDir,ClassPathLibrarySourcesLoader.META_INF_SERVICES_FILE);
       metaInfFile.getParentFile().mkdirs();
       FileUtils.copyDirectoryStructure(librarySourceDir,outputDir);
       PrintWriter writer=new PrintWriter(new FileWriter(metaInfFile));
       appendSourceFiles(writer,outputDir.getCanonicalPath(),outputDir);
+      writer.close();
+    }
+ catch (    IOException e) {
+      throw new MojoFailureException(e.getMessage(),e);
+    }
+  }
+  if (definitionSourceDir.exists()) {
+    try {
+      File metaInfFile=new File(outputDir,ClassPathLibraryDefintionsConfig.META_INF_SERVICES_FILE);
+      metaInfFile.getParentFile().mkdirs();
+      FileUtils.copyDirectoryStructure(definitionSourceDir,outputDir);
+      PrintWriter writer=new PrintWriter(new FileWriter(metaInfFile));
+      appendSourceFiles(writer,definitionSourceDir.getCanonicalPath(),definitionSourceDir);
       writer.close();
     }
  catch (    IOException e) {

@@ -3,10 +3,31 @@
     messageCollector.report(CompilerMessageSeverity.ERROR,"Specify sources location via -srcdir",NO_LOCATION);
     return ExitCode.INTERNAL_ERROR;
   }
-  JetCoreEnvironment environmentForJS=getEnvironment(arguments,rootDisposable);
-  Config config=getConfig(arguments,environmentForJS.getProject());
+  JetCoreEnvironment environmentForJS=JetCoreEnvironment.getCoreEnvironmentForJS(rootDisposable);
+  Project project=environmentForJS.getProject();
+  Config config=getConfig(arguments,project);
   if (analyzeAndReportErrors(messageCollector,environmentForJS.getSourceFiles(),config)) {
     return ExitCode.COMPILATION_ERROR;
+  }
+  if (arguments.srcdir != null) {
+    environmentForJS.addSources(arguments.srcdir);
+  }
+  if (arguments.sourceFiles != null) {
+    for (    String sourceFile : arguments.sourceFiles) {
+      environmentForJS.addSources(sourceFile);
+    }
+  }
+  ClassPathLibrarySourcesLoader sourceLoader=new ClassPathLibrarySourcesLoader(project);
+  List<JetFile> sourceFiles=sourceLoader.findSourceFiles();
+  environmentForJS.getSourceFiles().addAll(sourceFiles);
+  if (arguments.isVerbose()) {
+    Iterable<String> fileNames=Iterables.transform(environmentForJS.getSourceFiles(),new Function<JetFile,String>(){
+      @Override public String apply(      @Nullable JetFile file){
+        return file.getName();
+      }
+    }
+);
+    System.out.println("Compiling source files: " + Joiner.on(", ").join(fileNames));
   }
   String outputFile=arguments.outputFile;
   if (outputFile == null) {
