@@ -1,0 +1,49 @@
+{
+  super.execute();
+  if (copyLibraryJS) {
+    getLog().info("Copying kotlin JS library to " + outputKotlinJSFile);
+    try {
+      File parentFile=outputKotlinJSFile.getParentFile();
+      parentFile.mkdirs();
+      final InputStream inputStream=MetaInfServices.loadClasspathResource(KOTLIN_JS_LIB);
+      if (inputStream == null) {
+        System.out.println("WARNING: Could not find " + KOTLIN_JS_LIB + " on the classpath!");
+      }
+ else {
+        InputSupplier<InputStream> inputSupplier=new InputSupplier<InputStream>(){
+          @Override public InputStream getInput() throws IOException {
+            return inputStream;
+          }
+        }
+;
+        Files.copy(inputSupplier,outputKotlinJSFile);
+      }
+    }
+ catch (    IOException e) {
+      throw new MojoExecutionException(e.getMessage(),e);
+    }
+  }
+  if (appendLibraryJS) {
+    getLog().info("Appending Kotlin Library JS to the generated file " + outputFile);
+    try {
+      final InputStream inputStream=MetaInfServices.loadClasspathResource(KOTLIN_JS_LIB);
+      if (inputStream == null) {
+        System.out.println("WARNING: Could not find " + KOTLIN_JS_LIB + " on the classpath!");
+      }
+ else {
+        InputSupplier<InputStream> inputSupplier=new InputSupplier<InputStream>(){
+          @Override public InputStream getInput() throws IOException {
+            return inputStream;
+          }
+        }
+;
+        String text="\n" + FileUtil.loadTextAndClose(inputStream);
+        Charset charset=Charset.defaultCharset();
+        Files.append(text,new File(outputFile),charset);
+      }
+    }
+ catch (    IOException e) {
+      throw new MojoExecutionException(e.getMessage(),e);
+    }
+  }
+}
