@@ -1,8 +1,21 @@
 {
   final JetCoreEnvironment environmentForJS=JetCoreEnvironment.getCoreEnvironmentForJS(rootDisposable);
-  environmentForJS.addSources(arguments.srcdir);
+  if (arguments.srcdir != null) {
+    environmentForJS.addSources(arguments.srcdir);
+  }
+  if (arguments.sourceFiles != null) {
+    for (    String sourceFile : arguments.sourceFiles) {
+      environmentForJS.addSources(sourceFile);
+    }
+  }
   if (arguments.isVerbose()) {
-    System.out.println("Compiling source files: " + environmentForJS.getSourceFiles());
+    Iterable<String> fileNames=Iterables.transform(environmentForJS.getSourceFiles(),new Function<JetFile,String>(){
+      @Override public String apply(      @Nullable JetFile file){
+        return file.getName();
+      }
+    }
+);
+    System.out.println("Compiling source files: " + Joiner.on(", ").join(fileNames));
   }
   return environmentForJS;
 }
