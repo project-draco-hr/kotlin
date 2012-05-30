@@ -1,0 +1,16 @@
+{
+  Set<VariableDescriptor> known=propertyDescriptors.get(name);
+  if (known != null)   return known;
+  if (allDescriptorsComputed)   return Collections.emptySet();
+  Set<VariableDescriptor> result=Sets.newLinkedHashSet();
+  List<JetProperty> declarations=declarationProvider.getPropertyDeclarations(name);
+  for (  JetProperty propertyDeclaration : declarations) {
+    JetScope resolutionScope=getScopeForMemberDeclarationResolution(propertyDeclaration);
+    result.add(resolveSession.getDescriptorResolver().resolvePropertyDescriptor(thisDescriptor,resolutionScope,propertyDeclaration,resolveSession.getTrace()));
+  }
+  getNonDeclaredProperties(name,result);
+  if (!result.isEmpty()) {
+    propertyDescriptors.put(name,result);
+  }
+  return result;
+}

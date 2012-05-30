@@ -1,0 +1,20 @@
+{
+  JetTypeParameter jetTypeParameter=getElement();
+  JetClassOrObject classOrObject=PsiTreeUtil.getParentOfType(jetTypeParameter,JetClassOrObject.class);
+  if (classOrObject instanceof JetClass) {
+    JetClass jetClass=(JetClass)classOrObject;
+    for (    JetTypeConstraint jetTypeConstraint : jetClass.getTypeConstaints()) {
+      if (jetTypeConstraint.isClassObjectContraint() == forClassObject)       continue;
+      JetSimpleNameExpression constrainedParameterName=jetTypeConstraint.getSubjectTypeParameterName();
+      if (constrainedParameterName != null) {
+        if (name.equals(constrainedParameterName.getReferencedNameAsName())) {
+          JetTypeReference boundTypeReference=jetTypeConstraint.getBoundTypeReference();
+          if (boundTypeReference != null) {
+            upperBounds.add(resolveBoundType(boundTypeReference));
+          }
+        }
+      }
+    }
+  }
+  return jetTypeParameter;
+}

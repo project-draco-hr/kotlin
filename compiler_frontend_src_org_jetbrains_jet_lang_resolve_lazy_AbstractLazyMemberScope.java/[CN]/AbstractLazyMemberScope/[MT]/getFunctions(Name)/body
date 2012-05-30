@@ -1,0 +1,16 @@
+{
+  Set<FunctionDescriptor> known=functionDescriptors.get(name);
+  if (known != null)   return known;
+  if (allDescriptorsComputed)   return Collections.emptySet();
+  Set<FunctionDescriptor> result=Sets.newLinkedHashSet();
+  List<JetNamedFunction> declarations=declarationProvider.getFunctionDeclarations(name);
+  for (  JetNamedFunction functionDeclaration : declarations) {
+    JetScope resolutionScope=getScopeForMemberDeclarationResolution(functionDeclaration);
+    result.add(resolveSession.getDescriptorResolver().resolveFunctionDescriptor(thisDescriptor,resolutionScope,functionDeclaration,resolveSession.getTrace()));
+  }
+  getNonDeclaredFunctions(name,result);
+  if (!result.isEmpty()) {
+    functionDescriptors.put(name,result);
+  }
+  return result;
+}

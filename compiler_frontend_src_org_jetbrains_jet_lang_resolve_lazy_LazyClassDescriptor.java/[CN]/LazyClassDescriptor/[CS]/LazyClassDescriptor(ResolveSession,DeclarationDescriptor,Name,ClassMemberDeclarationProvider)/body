@@ -1,0 +1,15 @@
+{
+  this.declarationProvider=memberDeclarationProvider;
+  this.resolveSession=resolveSession;
+  this.name=name;
+  this.containingDeclaration=containingDeclaration;
+  this.unsubstitutedMemberScope=new LazyClassMemberScope(resolveSession,memberDeclarationProvider,this);
+  this.unsubstitutedInnerClassesScope=new InnerClassesScopeWrapper(unsubstitutedMemberScope);
+  this.typeConstructor=new LazyClassTypeConstructor();
+  JetClassOrObject classOrObject=memberDeclarationProvider.getOwnerClassOrObject();
+  this.kind=getClassKind(classOrObject);
+  Modality defaultModality=kind == ClassKind.TRAIT ? Modality.ABSTRACT : Modality.FINAL;
+  JetModifierList modifierList=classOrObject.getModifierList();
+  this.modality=DescriptorResolver.resolveModalityFromModifiers(modifierList,defaultModality);
+  this.visibility=DescriptorResolver.resolveVisibilityFromModifiers(modifierList);
+}
