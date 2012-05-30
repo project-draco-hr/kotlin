@@ -2,14 +2,14 @@
   List<String> lines=Files.readLines(ktFile,Charset.forName("utf-8"));
   List<LocalVariable> expectedLocalVariables=new ArrayList<LocalVariable>();
   for (int i=lines.size() - 3; i < lines.size(); ++i) {
-    Matcher indexMatcher=namePattern.matcher(lines.get(i));
-    if (indexMatcher.matches()) {
-      Matcher nameMatcher=typePattern.matcher(lines.get(i));
-      Matcher typeMatcher=indexPattern.matcher(lines.get(i));
-      if (!nameMatcher.matches() || !typeMatcher.matches()) {
+    Matcher nameMatcher=namePattern.matcher(lines.get(i));
+    if (nameMatcher.matches()) {
+      Matcher typeMatcher=typePattern.matcher(lines.get(i));
+      Matcher indexMatcher=indexPattern.matcher(lines.get(i));
+      if (!typeMatcher.matches() || !indexMatcher.matches()) {
         throw new AssertionError("Incorrect test instructions format");
       }
-      expectedLocalVariables.add(new LocalVariable(Integer.parseInt(indexMatcher.group(1)),nameMatcher.group(1),typeMatcher.group(1)));
+      expectedLocalVariables.add(new LocalVariable(nameMatcher.group(1),typeMatcher.group(1),Integer.parseInt(indexMatcher.group(1))));
     }
   }
   if (expectedLocalVariables.size() == 0) {
