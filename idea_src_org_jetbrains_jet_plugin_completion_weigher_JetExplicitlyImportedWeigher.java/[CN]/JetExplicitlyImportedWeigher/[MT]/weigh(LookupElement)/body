@@ -1,0 +1,23 @@
+{
+  Object object=element.getObject();
+  if (object instanceof JetLookupObject) {
+    JetLookupObject lookupObject=(JetLookupObject)object;
+    DeclarationDescriptor descriptor=lookupObject.getDescriptor();
+    if (descriptor != null) {
+      FqNameUnsafe fqName=DescriptorUtils.getFQName(descriptor);
+      if (FqName.isValid(fqName.toString())) {
+        ImportPath importPath=new ImportPath(fqName.toString());
+        if (ImportInsertHelper.doNeedImport(importPath,null,file)) {
+          return MyResult.notImported;
+        }
+ else {
+          if (ImportInsertHelper.isImportedWithKotlinDefault(importPath)) {
+            return MyResult.kotlinDefaultImport;
+          }
+          return MyResult.imported;
+        }
+      }
+    }
+  }
+  return MyResult.normal;
+}
