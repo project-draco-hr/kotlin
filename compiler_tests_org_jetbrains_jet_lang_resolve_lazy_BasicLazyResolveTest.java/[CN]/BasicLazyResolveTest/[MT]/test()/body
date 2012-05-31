@@ -2,7 +2,10 @@
   JetCoreEnvironment jetCoreEnvironment=new JetCoreEnvironment(rootDisposable,CompileCompilerDependenciesTest.compilerDependenciesForTests(CompilerSpecialMode.REGULAR,true));
   ModuleDescriptor root=new ModuleDescriptor(Name.special("<root>"));
   Project project=jetCoreEnvironment.getProject();
-  ResolveSession session=new ResolveSession(project,root,new FileBasedDeclarationProviderFactory(Arrays.asList(JetPsiFactory.createFile(project,"package p; class C {fun f() {}}"),JetPsiFactory.createFile(project,"package p; open class G<T> {open fun f(): T {} fun a() {}}"),JetPsiFactory.createFile(project,"package p; class G2<E> : G<E> { fun g() : E {} override fun f() : T {}}"),JetPsiFactory.createFile(project,"package p; fun foo() {}"),JetPsiFactory.createFile(project,"package p; fun foo(a: C) {}"))));
+  ResolveSession session=new ResolveSession(project,root,new FileBasedDeclarationProviderFactory(Arrays.asList(JetPsiFactory.createFile(project,"class A {}"),JetPsiFactory.createFile(project,"package p; class C {fun f() {}}"),JetPsiFactory.createFile(project,"package p; open class G<T> {open fun f(): T {} fun a() {}}"),JetPsiFactory.createFile(project,"package p; class G2<E> : G<E> { fun g() : E {} override fun f() : T {}}"),JetPsiFactory.createFile(project,"package p; fun foo() {}"),JetPsiFactory.createFile(project,"package p; fun foo(a: C) {}"))));
+  NamespaceDescriptor rootPackage=session.getPackageDescriptorByFqName(new FqName(""));
+  assertNotNull(rootPackage);
+  assertNotNull(rootPackage.getMemberScope().getClassifier(Name.identifier("A")));
   NamespaceDescriptor packageDescriptor=session.getPackageDescriptor(Name.identifier("p"));
   assertNotNull(packageDescriptor);
   assertEquals(Name.identifier("p"),packageDescriptor.getName());
@@ -19,6 +22,12 @@
   assertTrue(typeConstructor.getParameters().isEmpty());
   assertEquals("[Any]",typeConstructor.getSupertypes().toString());
   List<FunctionDescriptor> fooFunctions=Lists.newArrayList(packageDescriptor.getMemberScope().getFunctions(FOO));
+  Collections.sort(fooFunctions,new Comparator<FunctionDescriptor>(){
+    @Override public int compare(    FunctionDescriptor o1,    FunctionDescriptor o2){
+      return o1.getValueParameters().size() - o2.getValueParameters().size();
+    }
+  }
+);
   assertEquals(2,fooFunctions.size());
   FunctionDescriptor foo1=fooFunctions.get(0);
   assertEquals(FOO,foo1.getName());
