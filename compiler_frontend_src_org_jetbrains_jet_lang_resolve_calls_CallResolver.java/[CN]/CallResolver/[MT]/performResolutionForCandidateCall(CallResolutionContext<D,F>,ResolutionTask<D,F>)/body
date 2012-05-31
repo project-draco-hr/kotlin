@@ -14,8 +14,13 @@
   Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
   ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
   if (!argumentMappingStatus.isSuccess()) {
-    candidateCall.addStatus(OTHER_ERROR);
-    if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR) {
+    if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
+      candidateCall.addStatus(STRONG_ERROR);
+    }
+ else {
+      candidateCall.addStatus(OTHER_ERROR);
+    }
+    if (argumentMappingStatus != ValueArgumentsToParametersMapper.Status.WEAK_ERROR) {
       checkTypesWithNoCallee(context.toBasic());
       return;
     }
