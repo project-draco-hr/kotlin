@@ -1,3 +1,16 @@
 {
-  visitNameExpression(expression);
+  PsiReference ref=expression.getReference();
+  if (ref == null)   return;
+  if (JetPsiChecker.isNamesHighlightingEnabled()) {
+    DeclarationDescriptor referenceTarget=bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
+    if (referenceTarget instanceof ConstructorDescriptor) {
+      referenceTarget=referenceTarget.getContainingDeclaration();
+    }
+    if (referenceTarget instanceof ClassDescriptor) {
+      highlightClassByKind((ClassDescriptor)referenceTarget,expression);
+    }
+ else     if (referenceTarget instanceof TypeParameterDescriptor) {
+      JetPsiChecker.highlightName(holder,expression,JetHighlightingColors.TYPE_PARAMETER);
+    }
+  }
 }
