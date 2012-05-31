@@ -1,0 +1,18 @@
+{
+  CallableMemberDescriptor invisibleOverride=null;
+  outer:   for (  JetType supertype : declaringClass.getTypeConstructor().getSupertypes()) {
+    Set<CallableMemberDescriptor> all=Sets.newLinkedHashSet();
+    all.addAll(supertype.getMemberScope().getFunctions(declared.getName()));
+    all.addAll((Set)supertype.getMemberScope().getProperties(declared.getName()));
+    for (    CallableMemberDescriptor fromSuper : all) {
+      if (OverridingUtil.isOverridableBy(fromSuper,declared).getResult() == OVERRIDABLE) {
+        invisibleOverride=fromSuper;
+        if (Visibilities.isVisible(fromSuper,declared)) {
+          throw new IllegalStateException("Descriptor " + fromSuper + "is overridable by "+ declared+ " and visible but does not appear in its getOverriddenDescriptors()");
+        }
+        break outer;
+      }
+    }
+  }
+  return invisibleOverride;
+}
