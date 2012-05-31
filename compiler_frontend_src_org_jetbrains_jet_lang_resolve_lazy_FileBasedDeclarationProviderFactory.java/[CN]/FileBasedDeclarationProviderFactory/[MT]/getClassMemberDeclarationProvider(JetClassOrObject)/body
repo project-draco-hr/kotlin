@@ -1,0 +1,14 @@
+{
+  createIndex();
+  ClassMemberDeclarationProvider declarationProvider=classMemberDeclarationProviders.get(jetClassOrObject);
+  if (declarationProvider != null) {
+    return declarationProvider;
+  }
+  JetFile file=(JetFile)jetClassOrObject.getContainingFile();
+  if (!filesByPackage.containsKey(new FqName(file.getNamespaceHeader().getQualifiedName()))) {
+    throw new IllegalStateException("This factory doesn't know about this class: " + jetClassOrObject);
+  }
+  ClassMemberDeclarationProvider provider=new PsiBasedClassMemberDeclarationProvider(jetClassOrObject);
+  classMemberDeclarationProviders.put(jetClassOrObject,provider);
+  return provider;
+}
