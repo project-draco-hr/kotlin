@@ -11,41 +11,5 @@
       generateOverridesInAClass((MutableClassDescriptor)superclass,processed,ourClasses);
     }
   }
-  List<CallableMemberDescriptor> functionsFromSupertypes=getDescriptorsFromSupertypes(classDescriptor);
-  MultiMap<Name,CallableMemberDescriptor> functionsFromSupertypesByName=groupDescriptorsByName(functionsFromSupertypes);
-  MultiMap<Name,CallableMemberDescriptor> functionsFromCurrentByName=groupDescriptorsByName(classDescriptor.getDeclaredCallableMembers());
-  Set<Name> functionNames=new LinkedHashSet<Name>();
-  functionNames.addAll(functionsFromSupertypesByName.keySet());
-  functionNames.addAll(functionsFromCurrentByName.keySet());
-  Set<CallableMemberDescriptor> fakeOverrides=Sets.newHashSet();
-  for (  Name functionName : functionNames) {
-    generateOverridesInFunctionGroup(functionName,fakeOverrides,functionsFromSupertypesByName.get(functionName),functionsFromCurrentByName.get(functionName),classDescriptor,new DescriptorSink(){
-      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
-        if (fakeOverride instanceof PropertyDescriptor) {
-          classDescriptor.getBuilder().addPropertyDescriptor((PropertyDescriptor)fakeOverride);
-        }
- else         if (fakeOverride instanceof SimpleFunctionDescriptor) {
-          classDescriptor.getBuilder().addFunctionDescriptor((SimpleFunctionDescriptor)fakeOverride);
-        }
- else {
-          throw new IllegalStateException(fakeOverride.getClass().getName());
-        }
-      }
-      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
-        JetDeclaration jetProperty=(JetDeclaration)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),fromCurrent);
-        trace.report(Errors.CONFLICTING_OVERLOADS.on(jetProperty,fromCurrent,fromCurrent.getContainingDeclaration().getName().getName()));
-      }
-    }
-);
-  }
-  for (  CallableMemberDescriptor memberDescriptor : classDescriptor.getAllCallableMembers()) {
-    JetDeclaration declaration=null;
-    if (memberDescriptor.getKind() != CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
-      PsiElement element=BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),memberDescriptor);
-      if (element instanceof JetDeclaration) {
-        declaration=(JetDeclaration)element;
-      }
-    }
-    resolveUnknownVisibilityForMember(declaration,memberDescriptor);
-  }
+  doGenerateOverridesInAClass(classDescriptor);
 }
