@@ -2,7 +2,7 @@
   DeclarationDescriptor containingDeclaration=functionDescriptor.getOriginal().getContainingDeclaration();
   boolean isStatic=containingDeclaration instanceof NamespaceDescriptor;
   functionDescriptor=functionDescriptor.getOriginal();
-  String owner;
+  JvmClassName owner;
   IntrinsicMethod intrinsic=state.getInjector().getIntrinsics().getIntrinsic(functionDescriptor);
   if (intrinsic != null) {
     intrinsic.generate(this,v,type,null,null,StackValue.onStack(TYPE_OBJECT),state);
@@ -18,6 +18,7 @@
     owner=typeMapper.getOwner(functionDescriptor,OwnerKind.IMPLEMENTATION);
     isInterface=CodegenUtil.isInterface(containingDeclaration);
   }
-  v.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL,owner,functionDescriptor.getName().getName(),typeMapper.mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod().getDescriptor());
+  int opcode=isStatic ? Opcodes.INVOKESTATIC : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL;
+  v.visitMethodInsn(opcode,owner.getInternalName(),functionDescriptor.getName().getName(),typeMapper.mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod().getDescriptor());
   StackValue.onStack(asmType(functionDescriptor.getReturnType())).coerce(type,v);
 }
