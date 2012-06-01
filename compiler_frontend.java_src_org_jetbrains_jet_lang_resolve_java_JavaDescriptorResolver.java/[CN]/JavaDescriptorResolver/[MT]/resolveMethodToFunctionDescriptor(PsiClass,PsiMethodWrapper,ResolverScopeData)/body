@@ -1,7 +1,7 @@
 {
   getResolverScopeData(scopeData);
-  PsiType returnType=method.getReturnType();
-  if (returnType == null) {
+  PsiType returnPsiType=method.getReturnType();
+  if (returnPsiType == null) {
     return null;
   }
   if (method.getJetMethod().kind() == JvmStdlibNames.JET_METHOD_KIND_PROPERTY) {
@@ -18,7 +18,14 @@
   final List<TypeParameterDescriptor> methodTypeParameters=resolveMethodTypeParameters(method,functionDescriptorImpl);
   TypeVariableResolver methodTypeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(methodTypeParameters,functionDescriptorImpl,context);
   ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),methodTypeVariableResolver);
-  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(scopeData.classOrNamespaceDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,makeReturnType(returnType,method,methodTypeVariableResolver),Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()),false);
+  JetType returnType=makeReturnType(returnPsiType,method,methodTypeVariableResolver);
+  String signature=method.getSignatureAnnotation().signature();
+  if (!signature.isEmpty()) {
+    JetNamedFunction altFunDeclaration=JetPsiFactory.createFunction(project,signature);
+    valueParameterDescriptors=computeAlternativeValueParameters(valueParameterDescriptors,altFunDeclaration);
+    returnType=computeAlternativeTypeFromAnnotation(altFunDeclaration.getReturnTypeRef().getTypeElement(),returnType);
+  }
+  functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(scopeData.classOrNamespaceDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,returnType,Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()),false);
   trace.record(BindingContext.FUNCTION,method.getPsiMethod(),functionDescriptorImpl);
   BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,method.getPsiMethod(),functionDescriptorImpl);
   FunctionDescriptor substitutedFunctionDescriptor=functionDescriptorImpl;

@@ -1,0 +1,15 @@
+{
+  List<ValueParameterDescriptor> parameterDescriptors=valueParameterDescriptors.descriptors;
+  List<ValueParameterDescriptor> altParamDescriptors=new ArrayList<ValueParameterDescriptor>();
+  for (int i=0, size=parameterDescriptors.size(); i < size; i++) {
+    ValueParameterDescriptor pd=parameterDescriptors.get(i);
+    JetTypeElement alternativeTypeElement=altFunDeclaration.getValueParameters().get(i).getTypeReference().getTypeElement();
+    JetType alternativeType=computeAlternativeTypeFromAnnotation(alternativeTypeElement,pd.getType());
+    altParamDescriptors.add(new ValueParameterDescriptorImpl(pd.getContainingDeclaration(),pd.getIndex(),pd.getAnnotations(),pd.getName(),pd.isVar(),alternativeType,pd.declaresDefaultValue(),pd.getVarargElementType()));
+  }
+  JetType altReceiverType=null;
+  if (valueParameterDescriptors.receiverType != null) {
+    altReceiverType=computeAlternativeTypeFromAnnotation(altFunDeclaration.getReceiverTypeRef().getTypeElement(),valueParameterDescriptors.receiverType);
+  }
+  return new ValueParameterDescriptors(altReceiverType,altParamDescriptors);
+}

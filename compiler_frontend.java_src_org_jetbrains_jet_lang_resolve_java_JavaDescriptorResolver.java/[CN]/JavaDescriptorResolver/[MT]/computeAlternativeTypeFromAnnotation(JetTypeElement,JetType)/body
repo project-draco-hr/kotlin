@@ -1,0 +1,28 @@
+{
+  return alternativeTypeElement.accept(new JetVisitor<JetType,Void>(){
+    @Override public JetType visitNullableType(    JetNullableType nullableType,    Void data){
+      return TypeUtils.makeNullable(computeAlternativeTypeFromAnnotation(nullableType.getInnerType(),autoType));
+    }
+    @Override public JetType visitFunctionType(    JetFunctionType type,    Void data){
+      return autoType;
+    }
+    @Override public JetType visitTupleType(    JetTupleType type,    Void data){
+      return autoType;
+    }
+    @Override public JetType visitUserType(    JetUserType type,    Void data){
+      List<TypeProjection> arguments=autoType.getArguments();
+      List<TypeProjection> altArguments=new ArrayList<TypeProjection>();
+      for (int i=0, size=arguments.size(); i < size; i++) {
+        JetTypeElement argumentAlternativeTypeElement=type.getTypeArgumentsAsTypes().get(i).getTypeElement();
+        TypeProjection argument=arguments.get(i);
+        JetType alternativeType=computeAlternativeTypeFromAnnotation(argumentAlternativeTypeElement,argument.getType());
+        altArguments.add(new TypeProjection(argument.getProjectionKind(),alternativeType));
+      }
+      return new JetTypeImpl(autoType.getAnnotations(),autoType.getConstructor(),false,altArguments,autoType.getMemberScope());
+    }
+    @Override public JetType visitSelfType(    JetSelfType type,    Void data){
+      throw new UnsupportedOperationException("Self-types are not supported yet");
+    }
+  }
+,null);
+}
