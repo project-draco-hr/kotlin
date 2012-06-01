@@ -1,14 +1,14 @@
 {
-  if (defaultImplOwner.length() == 0 || defaultImplParam.length() == 0) {
+  if (defaultImplOwner == null || defaultImplParam == null) {
     throw new IllegalStateException();
   }
   v.iconst(mask);
   String desc=getSignature().getAsmMethod().getDescriptor().replace(")","I)");
   if ("<init>".equals(getSignature().getAsmMethod().getName())) {
-    v.visitMethodInsn(Opcodes.INVOKESPECIAL,defaultImplOwner,"<init>",desc);
+    v.visitMethodInsn(Opcodes.INVOKESPECIAL,defaultImplOwner.getInternalName(),"<init>",desc);
   }
  else {
-    if (getInvokeOpcode() != Opcodes.INVOKESTATIC)     desc=desc.replace("(","(L" + defaultImplParam + ";");
-    v.visitMethodInsn(Opcodes.INVOKESTATIC,defaultImplOwner,getSignature().getAsmMethod().getName() + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX,desc);
+    if (getInvokeOpcode() != Opcodes.INVOKESTATIC)     desc=desc.replace("(","(" + defaultImplParam.getDescriptor());
+    v.visitMethodInsn(Opcodes.INVOKESTATIC,defaultImplOwner.getInternalName(),getSignature().getAsmMethod().getName() + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX,desc);
   }
 }
