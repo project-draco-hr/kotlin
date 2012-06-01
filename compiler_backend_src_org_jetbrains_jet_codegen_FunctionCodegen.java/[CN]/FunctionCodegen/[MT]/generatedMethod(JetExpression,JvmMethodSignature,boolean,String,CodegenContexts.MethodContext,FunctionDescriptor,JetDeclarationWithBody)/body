@@ -87,6 +87,7 @@
       if ((kind instanceof OwnerKind.DelegateKind) != (functionDescriptor.getKind() == FunctionDescriptor.Kind.DELEGATION)) {
         throw new IllegalStateException("mismatching kind in " + functionDescriptor);
       }
+      Map<Name,Label> mapLabelsToDivideLocalVarVisibilityForSharedVar=new HashMap<Name,Label>();
       if (kind instanceof OwnerKind.DelegateKind) {
         OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
         InstructionAdapter iv=new InstructionAdapter(mv);
@@ -111,6 +112,9 @@
             mv.visitMethodInsn(INVOKESPECIAL,sharedVarType.getInternalName(),"<init>","()V");
             mv.visitVarInsn(localVarType.getOpcode(ILOAD),index);
             mv.visitFieldInsn(PUTFIELD,sharedVarType.getInternalName(),"ref",StackValue.refType(localVarType).getDescriptor());
+            Label labelToDivideLocalVarForSharedVarVisibility=new Label();
+            mv.visitLabel(labelToDivideLocalVarForSharedVarVisibility);
+            mapLabelsToDivideLocalVarVisibilityForSharedVar.put(parameter.getName(),labelToDivideLocalVarForSharedVarVisibility);
             mv.visitVarInsn(sharedVarType.getOpcode(ISTORE),index);
           }
         }
@@ -118,6 +122,11 @@
       }
       Label methodEnd=new Label();
       mv.visitLabel(methodEnd);
+      Collection<String> localVariableNames=new HashSet<String>();
+      localVariableNames.addAll(codegen.getLocalVariableNamesForExpression());
+      for (      ValueParameterDescriptor parameterDescriptor : paramDescrs) {
+        localVariableNames.add(parameterDescriptor.getName().getName());
+      }
       int k=0;
       if (expectedThisObject.exists()) {
         Type type=state.getInjector().getJetTypeMapper().mapType(expectedThisObject.getType(),MapTypeMode.VALUE);
@@ -134,8 +143,20 @@
       }
       for (      ValueParameterDescriptor parameter : paramDescrs) {
         Type type=state.getInjector().getJetTypeMapper().mapType(parameter.getType(),MapTypeMode.VALUE);
-        mv.visitLocalVariable(parameter.getName().getName(),type.getDescriptor(),null,methodBegin,methodEnd,k);
-        k+=type.getSize();
+        Label divideLabel=mapLabelsToDivideLocalVarVisibilityForSharedVar.get(parameter.getName());
+        String parameterName=parameter.getName().getName();
+        if (divideLabel != null) {
+          Type sharedVarType=state.getInjector().getJetTypeMapper().getSharedVarType(parameter);
+          mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,k);
+          String nameForSharedVar=CodegenUtil.generateTmpVariableName(localVariableNames);
+          localVariableNames.add(nameForSharedVar);
+          mv.visitLocalVariable(nameForSharedVar,sharedVarType.getDescriptor(),null,divideLabel,methodEnd,k);
+          k+=Math.max(type.getSize(),sharedVarType.getSize());
+        }
+ else {
+          mv.visitLocalVariable(parameter.getName().getName(),type.getDescriptor(),null,methodBegin,methodEnd,k);
+          k+=type.getSize();
+        }
       }
       endVisit(mv,null,fun);
       mv.visitEnd();
