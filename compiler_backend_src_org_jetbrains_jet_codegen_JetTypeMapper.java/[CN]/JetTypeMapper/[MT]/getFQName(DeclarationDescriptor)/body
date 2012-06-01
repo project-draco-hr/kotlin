@@ -1,7 +1,7 @@
 {
   descriptor=descriptor.getOriginal();
   if (descriptor instanceof FunctionDescriptor) {
-    return getFQName(descriptor.getContainingDeclaration());
+    throw new IllegalStateException("requested fq name for function: " + descriptor);
   }
   if (descriptor.getContainingDeclaration() instanceof ModuleDescriptor || descriptor instanceof ScriptDescriptor) {
     return "";
@@ -24,22 +24,18 @@
     }
   }
   DeclarationDescriptor container=descriptor.getContainingDeclaration();
+  if (container == null) {
+    throw new IllegalStateException("descriptor has no container: " + descriptor);
+  }
   Name name=descriptor.getName();
-  if (JetPsiUtil.NO_NAME_PROVIDED.equals(name)) {
-    return closureAnnotator.classNameForAnonymousClass((JetElement)BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor)).getInternalName();
-  }
-  if (descriptor instanceof ClassDescriptor) {
+  if (descriptor instanceof ClassDescriptor && name.isSpecial()) {
     ClassDescriptor clazz=(ClassDescriptor)descriptor;
-    JvmClassName className=closureAnnotator.classNameForClassDescriptorIfDefined(clazz);
-    if (className != null) {
-      return className.getInternalName();
-    }
+    JvmClassName className=closureAnnotator.classNameForClassDescriptor(clazz);
+    return className.getInternalName();
   }
-  if (container != null) {
-    String baseName=getFQName(container);
-    if (!baseName.isEmpty()) {
-      return baseName + (container instanceof NamespaceDescriptor ? "/" : "$") + name.getIdentifier();
-    }
+  String baseName=getFQName(container);
+  if (!baseName.isEmpty()) {
+    return baseName + (container instanceof NamespaceDescriptor ? "/" : "$") + name.getIdentifier();
   }
   return name.getIdentifier();
 }
