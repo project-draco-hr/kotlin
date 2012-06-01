@@ -28,7 +28,13 @@
   if (JetPsiUtil.NO_NAME_PROVIDED.equals(name)) {
     return closureAnnotator.classNameForAnonymousClass((JetElement)BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor)).getInternalName();
   }
-  if (name.getName().contains("/"))   return name.getName();
+  if (descriptor instanceof ClassDescriptor) {
+    ClassDescriptor clazz=(ClassDescriptor)descriptor;
+    JvmClassName className=closureAnnotator.classNameForClassDescriptorIfDefined(clazz);
+    if (className != null) {
+      return className.getInternalName();
+    }
+  }
   if (container != null) {
     String baseName=getFQName(container);
     if (!baseName.isEmpty()) {
