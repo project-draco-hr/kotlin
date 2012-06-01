@@ -1,0 +1,33 @@
+{
+  final LookupImpl lookup=(LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup();
+  LookupElement foundElement=null;
+  if (lookup != null) {
+    final LookupElementPresentation presentation=new LookupElementPresentation();
+    for (    LookupElement lookupElement : lookup.getItems()) {
+      boolean lookupOk;
+      if (lookupString != null) {
+        lookupOk=(lookupElement.getLookupString().contains(lookupString));
+      }
+ else {
+        lookupOk=true;
+      }
+      boolean tailOk;
+      if (tailText != null) {
+        lookupElement.renderElement(presentation);
+        String itemTailText=presentation.getTailText();
+        tailOk=itemTailText != null && itemTailText.contains(tailText);
+      }
+ else {
+        tailOk=true;
+      }
+      if (lookupOk && tailOk) {
+        if (foundElement != null) {
+          Assert.fail("Several elements satisfy to completion restrictions");
+        }
+        foundElement=lookupElement;
+      }
+    }
+  }
+  Assert.assertNotNull("No element found for given constraints",foundElement);
+  return foundElement;
+}
