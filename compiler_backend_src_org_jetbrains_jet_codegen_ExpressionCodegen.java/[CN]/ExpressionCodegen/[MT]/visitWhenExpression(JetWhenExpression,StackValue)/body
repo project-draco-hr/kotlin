@@ -1,6 +1,7 @@
 {
   JetExpression expr=expression.getSubjectExpression();
-  final Type subjectType=expressionType(expr);
+  JetType subjectJetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expr);
+  final Type subjectType=subjectJetType == null ? Type.VOID_TYPE : asmType(subjectJetType);
   final Type resultType=expressionType(expression);
   final int subjectLocal=expr != null ? myFrameMap.enterTemp(subjectType.getSize()) : -1;
   if (subjectLocal != -1) {
@@ -26,7 +27,7 @@
     if (!whenEntry.isElse()) {
       final JetWhenCondition[] conditions=whenEntry.getConditions();
       for (int i=0; i < conditions.length; i++) {
-        StackValue conditionValue=generateWhenCondition(subjectType,subjectLocal,conditions[i],nextCondition);
+        StackValue conditionValue=generateWhenCondition(subjectType,subjectLocal,subjectJetType != null && subjectJetType.isNullable(),conditions[i],nextCondition);
         conditionValue.condJump(nextCondition,true,v);
         if (i < conditions.length - 1) {
           v.goTo(thisEntry);
