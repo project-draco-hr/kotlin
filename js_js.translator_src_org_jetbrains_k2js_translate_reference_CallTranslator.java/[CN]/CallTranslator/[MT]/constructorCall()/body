@@ -1,6 +1,12 @@
 {
   JsExpression constructorReference=translateAsFunctionWithNoThisObject(descriptor);
-  JsNew constructorCall=new JsNew(constructorReference);
-  setArguments(constructorCall,arguments);
+  JsExpression constructorCall;
+  if (context().isEcma5() && !AnnotationsUtils.isNativeObject(resolvedCall.getCandidateDescriptor())) {
+    constructorCall=AstUtil.newInvocation(constructorReference);
+  }
+ else {
+    constructorCall=new JsNew(constructorReference);
+  }
+  ((HasArguments)constructorCall).getArguments().addAll(arguments);
   return constructorCall;
 }

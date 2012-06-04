@@ -1,0 +1,17 @@
+{
+  List<JsExpression> arguments=translateArguments(superCall);
+  if (context().isEcma5()) {
+    JsName ref=context().jsScope().declareName("$initializer");
+    initializer.setName(ref);
+    JsInvocation call=new JsInvocation();
+    call.setQualifier(AstUtil.newNameRef(AstUtil.newNameRef(ref.makeRef(),"baseInitializer"),"call"));
+    call.getArguments().add(new JsThisRef());
+    call.getArguments().addAll(arguments);
+    initializerStatements.add(call.makeStmt());
+  }
+ else {
+    JsName superMethodName=context().jsScope().declareName(Namer.superMethodName());
+    superMethodName.setObfuscatable(false);
+    initializerStatements.add(convertToStatement(newInvocation(thisQualifiedReference(superMethodName),arguments)));
+  }
+}

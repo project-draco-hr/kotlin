@@ -1,4 +1,16 @@
 {
   CallableDescriptor hasNextFunction=getHasNextCallable(bindingContext(),getLoopRange(expression));
-  return translateMethodInvocation(iterator.reference(),hasNextFunction);
+  if (hasNextFunction instanceof FunctionDescriptor && !isJavaUtilIterator(hasNextFunction)) {
+    return translateMethodInvocation(iterator.reference(),hasNextFunction);
+  }
+  JsNameRef hasNext=new JsNameRef(Namer.getNameForAccessor("hasNext",true,context().isEcma5()));
+  hasNext.setQualifier(iterator.reference());
+  if (context().isEcma5()) {
+    return hasNext;
+  }
+ else {
+    JsInvocation invocation=new JsInvocation();
+    invocation.setQualifier(hasNext);
+    return invocation;
+  }
 }

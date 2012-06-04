@@ -1,3 +1,8 @@
 {
-  return Collections.singletonList(Translation.functionTranslator(expression,context).translateAsMethod());
+  JsPropertyInitializer o=Translation.functionTranslator(expression,context).translateAsMethod();
+  if (context.isEcma5()) {
+    final FunctionDescriptor descriptor=getFunctionDescriptor(context.bindingContext(),expression);
+    o.setValueExpr(JsAstUtils.createPropertyDataDescriptor(descriptor.getModality().isOverridable(),o.getValueExpr(),context));
+  }
+  return Collections.singletonList(o);
 }

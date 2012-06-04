@@ -1,4 +1,22 @@
 {
-  JsObjectLiteral jsClassDescription=translateClassDeclarations();
-  jsClassDeclaration.getArguments().add(jsClassDescription);
+  TranslationContext classDeclarationContext=getClassDeclarationContext();
+  JsObjectLiteral properties=new JsObjectLiteral();
+  List<JsPropertyInitializer> propertyList=properties.getPropertyInitializers();
+  if (!isTrait()) {
+    JsFunction initializer=Translation.generateClassInitializerMethod(classDeclaration,classDeclarationContext);
+    if (context().isEcma5()) {
+      jsClassDeclaration.getArguments().add(isObject() ? initializer : JsAstUtils.encloseFunction(initializer));
+    }
+ else {
+      propertyList.add(InitializerUtils.generateInitializeMethod(initializer));
+    }
+  }
+ else   if (context().isEcma5()) {
+    jsClassDeclaration.getArguments().add(context().program().getNullLiteral());
+  }
+  propertyList.addAll(translatePropertiesAsConstructorParameters(classDeclarationContext));
+  propertyList.addAll(declarationBodyVisitor.traverseClass(classDeclaration,classDeclarationContext));
+  if (!propertyList.isEmpty() || !context().isEcma5()) {
+    jsClassDeclaration.getArguments().add(properties);
+  }
 }

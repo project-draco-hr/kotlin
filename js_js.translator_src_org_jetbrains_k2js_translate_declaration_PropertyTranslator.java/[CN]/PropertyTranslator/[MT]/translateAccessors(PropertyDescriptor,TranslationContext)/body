@@ -1,7 +1,13 @@
 {
-  if (context.isEcma5()) {
+  if (context.isEcma5() && !JsDescriptorUtils.isAsPrivate(descriptor)) {
     return Collections.emptyList();
   }
   PropertyTranslator propertyTranslator=new PropertyTranslator(descriptor,context);
-  return propertyTranslator.translate();
+  List<JsPropertyInitializer> propertyInitializers=propertyTranslator.translate();
+  if (context.isEcma5() && !descriptor.getReceiverParameter().exists()) {
+    JsObjectLiteral objectLiteral=new JsObjectLiteral();
+    objectLiteral.getPropertyInitializers().addAll(propertyInitializers);
+    return Collections.singletonList(new JsPropertyInitializer(context.program().getStringLiteral(descriptor.getName().getName()),objectLiteral));
+  }
+  return propertyInitializers;
 }

@@ -1,5 +1,18 @@
 {
-  for (  JsExpression superClassReference : getSuperclassNameReferences()) {
-    jsClassDeclaration.getArguments().add(superClassReference);
+  List<JsExpression> superClassReferences=getSuperclassNameReferences();
+  List<JsExpression> expressions=jsClassDeclaration.getArguments();
+  if (context().isEcma5()) {
+    if (superClassReferences.isEmpty()) {
+      jsClassDeclaration.getArguments().add(context().program().getNullLiteral());
+      return;
+    }
+ else     if (superClassReferences.size() > 1) {
+      JsArrayLiteral arrayLiteral=new JsArrayLiteral();
+      jsClassDeclaration.getArguments().add(arrayLiteral);
+      expressions=arrayLiteral.getExpressions();
+    }
+  }
+  for (  JsExpression superClassReference : superClassReferences) {
+    expressions.add(superClassReference);
   }
 }
