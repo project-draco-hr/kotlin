@@ -4,17 +4,20 @@
     @Override public void run(){
       final JetFile file=(JetFile)sourcePosition.getFile();
       JetTypeMapper typeMapper=prepareTypeMapper(file);
-      JetClassOrObject jetClass=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetClassOrObject.class);
-      if (jetClass != null) {
-        names.addAll(typeMapper.allJvmNames(jetClass));
-      }
- else {
+      PsiElement psiElement=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetClassOrObject.class,JetFunctionLiteralExpression.class);
+      if (psiElement == null) {
         JetFile namespace=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetFile.class);
         if (namespace != null) {
           names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(namespace)).getInternalName());
         }
  else {
           names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(file)).getInternalName());
+        }
+      }
+ else {
+        if (psiElement instanceof JetClassOrObject)         names.addAll(typeMapper.allJvmNames((JetClassOrObject)psiElement));
+ else {
+          names.add(typeMapper.getClosureAnnotator().classNameForAnonymousClass((JetElement)psiElement).getInternalName());
         }
       }
     }
