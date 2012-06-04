@@ -1,3 +1,13 @@
 {
-  return getAnalyzerFacadeForProject(file.getProject());
+  VirtualFile virtualFile=file.getVirtualFile();
+  if (virtualFile == null) {
+    logErrorIfNotTests("No virtual file for " + file.getName() + " with text:\n"+ file.getText());
+    return getDefaultAnalyzerFacade();
+  }
+  Module moduleForFile=ProjectFileIndex.SERVICE.getInstance(file.getProject()).getModuleForFile(virtualFile);
+  if (moduleForFile == null) {
+    logErrorIfNotTests("File " + virtualFile.getPath() + " is not under any module. Cannot determine which facade to use.");
+    return getDefaultAnalyzerFacade();
+  }
+  return getAnalyzerFacadeForModule(moduleForFile);
 }
