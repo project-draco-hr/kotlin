@@ -2,7 +2,7 @@
   final JvmMethodSignature bridge=erasedInvokeSignature(funDescriptor);
   final Method delegate=invokeSignature(funDescriptor).getAsmMethod();
   if (bridge.getAsmMethod().getDescriptor().equals(delegate.getDescriptor()))   return;
-  final MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC,"invoke",bridge.getAsmMethod().getDescriptor(),null,new String[0]);
+  final MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_BRIDGE | ACC_VOLATILE,"invoke",bridge.getAsmMethod().getDescriptor(),null,new String[0]);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
     StubCodegen.generateStubCode(mv);
   }
@@ -23,7 +23,7 @@
       StackValue.onStack(JetTypeMapper.TYPE_OBJECT).upcast(state.getInjector().getJetTypeMapper().mapType(param.getType(),MapTypeMode.VALUE),iv);
       count++;
     }
-    iv.invokespecial(className,"invoke",delegate.getDescriptor());
+    iv.invokevirtual(className,"invoke",delegate.getDescriptor());
     StackValue.onStack(delegate.getReturnType()).put(JetTypeMapper.TYPE_OBJECT,iv);
     iv.areturn(JetTypeMapper.TYPE_OBJECT);
     FunctionCodegen.endVisit(mv,"bridge",fun);
