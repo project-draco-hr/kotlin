@@ -23,7 +23,10 @@
   if (!signature.isEmpty()) {
     JetNamedFunction altFunDeclaration=JetPsiFactory.createFunction(project,signature);
     valueParameterDescriptors=computeAlternativeValueParameters(valueParameterDescriptors,altFunDeclaration);
-    returnType=computeAlternativeTypeFromAnnotation(altFunDeclaration.getReturnTypeRef().getTypeElement(),returnType);
+    JetTypeReference returnTypeRef=altFunDeclaration.getReturnTypeRef();
+    if (returnTypeRef != null) {
+      returnType=computeAlternativeTypeFromAnnotation(returnTypeRef.getTypeElement(),returnType);
+    }
   }
   functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(scopeData.classOrNamespaceDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,returnType,Modality.convertFromFlags(method.getPsiMethod().hasModifierProperty(PsiModifier.ABSTRACT),!method.isFinal()),resolveVisibilityFromPsiModifiers(method.getPsiMethod()),false);
   trace.record(BindingContext.FUNCTION,method.getPsiMethod(),functionDescriptorImpl);
