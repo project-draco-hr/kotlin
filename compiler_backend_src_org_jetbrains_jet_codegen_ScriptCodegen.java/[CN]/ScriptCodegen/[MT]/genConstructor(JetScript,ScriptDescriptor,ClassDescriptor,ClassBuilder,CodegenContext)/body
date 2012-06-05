@@ -9,7 +9,6 @@
   instructionAdapter.load(0,Type.getObjectType("Script"));
   instructionAdapter.invokespecial(JdkNames.JL_OBJECT.getInternalName(),"<init>","()V");
   instructionAdapter.load(0,Type.getObjectType("Script"));
-  CodegenContext context=outerContext.intoScript(scriptDescriptor);
   FrameMap frameMap=context.prepareFrame(jetTypeMapper);
   Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
   int add=0;
@@ -17,6 +16,7 @@
     ValueParameterDescriptor parameter=scriptDescriptor.getValueParameters().get(i);
     frameMap.enter(parameter,argTypes[i + add].getSize());
   }
+  ImplementationBodyCodegen.generateInitializers(new ExpressionCodegen(instructionAdapter,frameMap,Type.VOID_TYPE,context,state),instructionAdapter,scriptDeclaration.getDeclarations(),bindingContext,jetTypeMapper);
   StackValue stackValue=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
   if (stackValue.type != Type.VOID_TYPE) {
     stackValue.put(stackValue.type,instructionAdapter);

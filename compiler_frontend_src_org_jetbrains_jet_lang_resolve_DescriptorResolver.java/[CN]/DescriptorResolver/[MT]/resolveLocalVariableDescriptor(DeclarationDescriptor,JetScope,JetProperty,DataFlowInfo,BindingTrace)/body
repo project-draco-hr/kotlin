@@ -1,6 +1,15 @@
 {
-  VariableDescriptorImpl variableDescriptor=resolveLocalVariableDescriptorWithType(containingDeclaration,property,null,trace);
-  JetType type=getVariableType(scope,property,dataFlowInfo,false,trace);
-  variableDescriptor.setOutType(type);
-  return variableDescriptor;
+  if (property.isScriptDeclaration()) {
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.createAnnotationStubs(property.getModifierList(),trace),Modality.FINAL,Visibilities.INTERNAL,property.isVar(),false,JetPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION);
+    JetType type=getVariableType(scope,property,dataFlowInfo,false,trace);
+    propertyDescriptor.setType(type,Collections.<TypeParameterDescriptor>emptyList(),scope.getImplicitReceiver(),(JetType)null);
+    trace.record(BindingContext.VARIABLE,property,propertyDescriptor);
+    return propertyDescriptor;
+  }
+ else {
+    VariableDescriptorImpl variableDescriptor=resolveLocalVariableDescriptorWithType(containingDeclaration,property,null,trace);
+    JetType type=getVariableType(scope,property,dataFlowInfo,false,trace);
+    variableDescriptor.setOutType(type);
+    return variableDescriptor;
+  }
 }
