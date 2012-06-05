@@ -1,16 +1,12 @@
 {
   String serialized=new NamespaceComparator(includeObject).doCompareNamespaces(nsa,nsb);
   try {
-    while (true) {
-      String expected=Files.toString(txtFile,Charset.forName("utf-8")).replace("\r\n","\n");
-      if (expected.contains("kick me")) {
-        System.err.println("generating " + txtFile);
-        Files.write(serialized,txtFile,Charset.forName("utf-8"));
-        continue;
-      }
-      Assert.assertEquals(expected,serialized);
-      break;
+    if (!txtFile.exists()) {
+      FileUtil.writeToFile(txtFile,serialized);
+      Assert.fail("Expected data file did not exist. Generating: " + txtFile);
     }
+    String expected=FileUtil.loadFile(txtFile);
+    Assert.assertEquals(expected,serialized);
   }
  catch (  IOException e) {
     throw new RuntimeException(e);
