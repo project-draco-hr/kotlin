@@ -4,6 +4,11 @@
     return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,context);
   }
   DeclarationDescriptor containingDescriptor=outerScope.getContainingDeclaration();
+  if (containingDescriptor instanceof ScriptDescriptor) {
+    if (!(expression.getParent() instanceof JetScript)) {
+      containingDescriptor=((ScriptDescriptor)containingDescriptor).getScriptCodeDescriptor();
+    }
+  }
   WritableScope scope=new WritableScopeImpl(outerScope,containingDescriptor,new TraceBasedRedeclarationHandler(context.trace)).setDebugName("getBlockReturnedType");
   scope.changeLockLevel(WritableScope.LockLevel.BOTH);
   return getBlockReturnedTypeWithWritableScope(scope,block,coercionStrategyForLastExpression,context,trace);
