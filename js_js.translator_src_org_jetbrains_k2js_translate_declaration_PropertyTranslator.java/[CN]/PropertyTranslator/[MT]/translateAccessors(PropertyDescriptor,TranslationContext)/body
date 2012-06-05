@@ -4,10 +4,8 @@
   }
   PropertyTranslator propertyTranslator=new PropertyTranslator(descriptor,context);
   List<JsPropertyInitializer> propertyInitializers=propertyTranslator.translate();
-  if (context.isEcma5() && !descriptor.getReceiverParameter().exists()) {
-    JsObjectLiteral objectLiteral=new JsObjectLiteral();
-    objectLiteral.getPropertyInitializers().addAll(propertyInitializers);
-    return Collections.singletonList(new JsPropertyInitializer(context.program().getStringLiteral(descriptor.getName().getName()),objectLiteral));
+  if (context.isEcma5() && !JsDescriptorUtils.isExtension(descriptor)) {
+    return translateAsEcma5Accessors(descriptor,propertyInitializers,context);
   }
   return propertyInitializers;
 }
