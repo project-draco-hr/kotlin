@@ -1,7 +1,12 @@
 {
   JetFile file=(JetFile)JetTestUtils.createFile(fileName,content,project);
-  Matcher matcher=Pattern.compile("// expected: (.*)").matcher(content);
-  String expectedValue=matcher.find() ? matcher.group(1) : "OK";
+  List<Pair<String,String>> expectedValues=Lists.newArrayList();
+  Matcher matcher=Pattern.compile("// expected: (\\S+): (.*)").matcher(content);
+  while (matcher.find()) {
+    String fieldName=matcher.group(1);
+    String expectedValue=matcher.group(2);
+    expectedValues.add(Pair.create(fieldName,expectedValue));
+  }
   List<AnalyzerScriptParameter> scriptParameterTypes=Lists.newArrayList();
   List<Object> scriptParameterValues=Lists.newArrayList();
   if (file.isScript()) {
@@ -31,5 +36,5 @@
       scriptParameterValues.add(value);
     }
   }
-  return new CodegenTestFile(file,expectedValue,scriptParameterTypes,scriptParameterValues);
+  return new CodegenTestFile(file,expectedValues,scriptParameterTypes,scriptParameterValues);
 }
