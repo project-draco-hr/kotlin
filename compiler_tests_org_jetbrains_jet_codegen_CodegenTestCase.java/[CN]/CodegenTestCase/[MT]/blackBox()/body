@@ -1,6 +1,7 @@
 {
   GenerationState state=generateClassesInFileGetState();
   GeneratedClassLoader loader=createClassLoader(state.getFactory());
+  String r;
   try {
     if (myFile.getPsiFile().isScript()) {
       Class<?> scriptClass=loader.loadClass("Script");
@@ -9,16 +10,28 @@
       Field field=scriptClass.getDeclaredField("rv");
       field.setAccessible(true);
       Object result=field.get(scriptInstance);
-      return result != null ? result.toString() : "null";
+      r=result != null ? result.toString() : "null";
     }
  else {
       String fqName=NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(myFile.getPsiFile())).getFqName().getFqName();
       Class<?> namespaceClass=loader.loadClass(fqName);
       Method method=namespaceClass.getMethod("box");
-      return (String)method.invoke(null);
+      r=(String)method.invoke(null);
     }
   }
-  finally {
+ catch (  NoClassDefFoundError e) {
+    System.out.println(generateToText());
+    throw e;
+  }
+catch (  Throwable e) {
+    System.out.println(generateToText());
+    throw new RuntimeException(e);
+  }
+ finally {
     loader.dispose();
   }
+  if (!Objects.equal(myFile.getExpectedValue(),r)) {
+    System.out.println(generateToText());
+  }
+  assertEquals(myFile.getExpectedValue(),r);
 }
