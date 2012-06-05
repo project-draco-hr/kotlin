@@ -1,0 +1,10 @@
+{
+  TopDownAnalysisParameters params=new TopDownAnalysisParameters(Predicates.<PsiFile>alwaysTrue(),false,false,Collections.<AnalyzerScriptParameter>emptyList());
+  ModuleDescriptor module=new ModuleDescriptor(Name.special("<test module>"));
+  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,params,new BindingTraceContext(),module,compilerDependencies);
+  injector.getTopDownAnalyzer().analyzeFiles(files,Collections.<AnalyzerScriptParameter>emptyList());
+  final BindingTrace trace=injector.getBindingTrace();
+  ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
+  ResolveSession session=new ResolveSession(project,lazyModule,new FileBasedDeclarationProviderFactory(files));
+  NamespaceComparator.compareNamespaces(lazyModule.getRootNamespace(),module.getRootNamespace(),true,new File("compiler/testData/lazyResolve/simpleClass.txt"));
+}
