@@ -1,20 +1,26 @@
 {
+  MultiMap<String,JetFile> namespaceGrouping=new MultiMap<String,JetFile>();
   for (  JetFile file : this.files) {
     if (file == null)     throw new IllegalArgumentException("A null file given for compilation");
-    VirtualFile vFile=file.getVirtualFile();
-    String path=vFile != null ? vFile.getPath() : "no_virtual_file/" + file.getName();
-    progress.log("For source: " + path);
-    try {
-      generateNamespace(file);
-    }
- catch (    ProcessCanceledException e) {
-      throw e;
-    }
-catch (    Throwable e) {
-      errorHandler.reportException(e,vFile == null ? "no file" : vFile.getUrl());
-      DiagnosticUtils.throwIfRunningOnServer(e);
-      if (ApplicationManager.getApplication().isInternal()) {
-        e.printStackTrace();
+    namespaceGrouping.putValue(JetPsiUtil.getFQName(file).getFqName(),file);
+  }
+  for (  Map.Entry<String,Collection<JetFile>> entry : namespaceGrouping.entrySet()) {
+    for (    JetFile file : entry.getValue()) {
+      VirtualFile vFile=file.getVirtualFile();
+      String path=vFile != null ? vFile.getPath() : "no_virtual_file/" + file.getName();
+      progress.log("For source: " + path + "\tFor namespace: "+ entry.getKey());
+      try {
+        generateNamespace(file);
+      }
+ catch (      ProcessCanceledException e) {
+        throw e;
+      }
+catch (      Throwable e) {
+        errorHandler.reportException(e,vFile == null ? "no file" : vFile.getUrl());
+        DiagnosticUtils.throwIfRunningOnServer(e);
+        if (ApplicationManager.getApplication().isInternal()) {
+          e.printStackTrace();
+        }
       }
     }
   }
