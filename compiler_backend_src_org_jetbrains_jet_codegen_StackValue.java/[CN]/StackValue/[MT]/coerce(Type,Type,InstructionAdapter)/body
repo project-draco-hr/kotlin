@@ -1,0 +1,42 @@
+{
+  if (toType.equals(fromType))   return;
+  if (toType.getSort() == Type.VOID && fromType.getSort() != Type.VOID) {
+    if (fromType.getSize() == 1)     v.pop();
+ else     v.pop2();
+  }
+ else   if (toType.getSort() != Type.VOID && fromType.getSort() == Type.VOID) {
+    if (toType.getSort() == Type.OBJECT) {
+      putTuple0Instance(v);
+    }
+ else     if (toType == Type.LONG_TYPE)     v.lconst(0);
+ else     if (toType == Type.FLOAT_TYPE)     v.fconst(0);
+ else     if (toType == Type.DOUBLE_TYPE)     v.dconst(0);
+ else     v.iconst(0);
+  }
+ else   if (toType.getSort() == Type.OBJECT && fromType.equals(JetTypeMapper.TYPE_OBJECT) || toType.getSort() == Type.ARRAY) {
+    v.checkcast(toType);
+  }
+ else   if (toType.getSort() == Type.OBJECT) {
+    if (fromType.getSort() == Type.OBJECT && !toType.equals(JetTypeMapper.TYPE_OBJECT)) {
+      v.checkcast(toType);
+    }
+ else     box(fromType,toType,v);
+  }
+ else   if (fromType.getSort() == Type.OBJECT && toType.getSort() <= Type.DOUBLE) {
+    if (fromType.equals(JetTypeMapper.TYPE_OBJECT)) {
+      if (toType.getSort() == Type.BOOLEAN) {
+        v.checkcast(JvmPrimitiveType.BOOLEAN.getWrapper().getAsmType());
+      }
+ else       if (toType.getSort() == Type.CHAR) {
+        v.checkcast(JvmPrimitiveType.CHAR.getWrapper().getAsmType());
+      }
+ else {
+        v.checkcast(JetTypeMapper.JL_NUMBER_TYPE);
+      }
+    }
+    unbox(toType,v);
+  }
+ else {
+    v.cast(fromType,toType);
+  }
+}
