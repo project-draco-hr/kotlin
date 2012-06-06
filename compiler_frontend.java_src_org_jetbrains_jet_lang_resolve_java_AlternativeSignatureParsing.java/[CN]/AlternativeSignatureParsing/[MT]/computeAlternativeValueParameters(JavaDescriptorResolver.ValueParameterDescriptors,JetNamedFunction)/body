@@ -4,8 +4,17 @@
   for (int i=0, size=parameterDescriptors.size(); i < size; i++) {
     ValueParameterDescriptor pd=parameterDescriptors.get(i);
     JetTypeElement alternativeTypeElement=altFunDeclaration.getValueParameters().get(i).getTypeReference().getTypeElement();
-    JetType alternativeType=computeAlternativeTypeFromAnnotation(alternativeTypeElement,pd.getType());
-    altParamDescriptors.add(new ValueParameterDescriptorImpl(pd.getContainingDeclaration(),pd.getIndex(),pd.getAnnotations(),pd.getName(),pd.isVar(),alternativeType,pd.declaresDefaultValue(),pd.getVarargElementType()));
+    JetType alternativeType;
+    JetType alternativeVarargElementType;
+    if (pd.getVarargElementType() == null) {
+      alternativeType=computeAlternativeTypeFromAnnotation(alternativeTypeElement,pd.getType());
+      alternativeVarargElementType=null;
+    }
+ else {
+      alternativeVarargElementType=computeAlternativeTypeFromAnnotation(alternativeTypeElement,pd.getVarargElementType());
+      alternativeType=JetStandardLibrary.getInstance().getArrayType(alternativeVarargElementType);
+    }
+    altParamDescriptors.add(new ValueParameterDescriptorImpl(pd.getContainingDeclaration(),pd.getIndex(),pd.getAnnotations(),pd.getName(),pd.isVar(),alternativeType,pd.declaresDefaultValue(),alternativeVarargElementType));
   }
   JetType altReceiverType=null;
   if (valueParameterDescriptors.receiverType != null) {
