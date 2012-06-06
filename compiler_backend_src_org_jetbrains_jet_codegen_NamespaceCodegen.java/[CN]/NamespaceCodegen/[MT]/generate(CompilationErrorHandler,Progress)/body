@@ -1,10 +1,21 @@
 {
+  ArrayList<Pair<JetFile,Collection<JetDeclaration>>> byFile=new ArrayList<Pair<JetFile,Collection<JetDeclaration>>>();
+  for (  JetFile file : files) {
+    ArrayList<JetDeclaration> fileFunctions=new ArrayList<JetDeclaration>();
+    for (    JetDeclaration declaration : file.getDeclarations()) {
+      if (declaration instanceof JetNamedFunction) {
+        fileFunctions.add(declaration);
+      }
+    }
+    if (fileFunctions.size() > 0)     byFile.add(new Pair<JetFile,Collection<JetDeclaration>>(file,fileFunctions));
+  }
+  boolean multiFile=byFile.size() > 1;
   for (  JetFile file : files) {
     VirtualFile vFile=file.getVirtualFile();
     try {
       String path=vFile != null ? vFile.getPath() : "no_virtual_file/" + file.getName();
       if (progress != null)       progress.log("For source: " + path);
-      generate(file);
+      generate(file,multiFile);
     }
  catch (    ProcessCanceledException e) {
       throw e;
