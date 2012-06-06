@@ -1,0 +1,29 @@
+{
+  ++lineNumber;
+  LightVirtualFile virtualFile=new LightVirtualFile("line" + lineNumber + ".ktscript",JetLanguage.INSTANCE,line);
+  virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+  JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
+  AnalyzingUtils.checkForSyntacticErrors(psiFile);
+  injector.getTopDownAnalyzer().prepareForTheNextReplLine();
+  injector.getTopDownAnalyzer().analyzeFiles(Collections.singletonList(psiFile),Collections.<AnalyzerScriptParameter>emptyList());
+  AnalyzingUtils.throwExceptionOnErrors(trace.getBindingContext());
+  Progress backendProgress=new Progress(){
+    @Override public void log(    String message){
+    }
+  }
+;
+  GenerationState generationState=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactories.binaries(false),backendProgress,AnalyzeExhaust.success(trace.getBindingContext(),JetStandardLibrary.getInstance()),Collections.singletonList(psiFile),jetCoreEnvironment.getCompilerDependencies().getCompilerSpecialMode());
+  generationState.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+  try {
+    Class<?> scriptClass=new GeneratedClassLoader(generationState.getFactory()).loadClass("Script");
+    Constructor<?> scriptInstanceConstructor=scriptClass.getConstructor(new Class<?>[0]);
+    Object scriptInstance=scriptInstanceConstructor.newInstance(new Object[0]);
+    Field rvField=scriptClass.getDeclaredField("rv");
+    rvField.setAccessible(true);
+    Object rv=rvField.get(scriptInstance);
+    return rv;
+  }
+ catch (  Exception e) {
+    throw ExceptionUtils.rethrow(e);
+  }
+}
