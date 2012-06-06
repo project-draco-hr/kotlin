@@ -1,0 +1,19 @@
+{
+  Set<String> methodNames=new HashSet<String>();
+  for (  Method method : LazyResolveComparingTestGenerated.class.getDeclaredMethods()) {
+    if (method.isAnnotationPresent(Test.class)) {
+      methodNames.add(method.getName().toLowerCase() + ".kt");
+    }
+  }
+  File[] testDataFiles=new File("compiler/testData/lazyResolve").listFiles(new FileFilter(){
+    @Override public boolean accept(    File pathname){
+      return pathname.getName().endsWith(".kt");
+    }
+  }
+);
+  for (  File testDataFile : testDataFiles) {
+    if (!methodNames.contains("test" + testDataFile.getName().toLowerCase())) {
+      Assert.fail("Test data file missing from the generated test class: " + testDataFile + "\nPlease re-run the generator: LazyResolveComparingTestGenerated");
+    }
+  }
+}

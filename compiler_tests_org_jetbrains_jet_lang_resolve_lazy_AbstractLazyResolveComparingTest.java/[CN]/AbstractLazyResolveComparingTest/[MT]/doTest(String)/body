@@ -2,9 +2,14 @@
   TopDownAnalysisParameters params=new TopDownAnalysisParameters(Predicates.<PsiFile>alwaysTrue(),false,false,Collections.<AnalyzerScriptParameter>emptyList());
   ModuleDescriptor module=new ModuleDescriptor(Name.special("<test module>"));
   InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,params,new BindingTraceContext(),module,compilerDependencies);
+  List<JetFile> files=JetTestUtils.createTestFiles(testFileName,FileUtil.loadFile(new File(testFileName)),new JetTestUtils.TestFileFactory<JetFile>(){
+    @Override public JetFile create(    String fileName,    String text){
+      return JetPsiFactory.createFile(project,fileName,text);
+    }
+  }
+);
   injector.getTopDownAnalyzer().analyzeFiles(files,Collections.<AnalyzerScriptParameter>emptyList());
-  final BindingTrace trace=injector.getBindingTrace();
   ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
   ResolveSession session=new ResolveSession(project,lazyModule,new FileBasedDeclarationProviderFactory(files));
-  NamespaceComparator.compareNamespaces(lazyModule.getRootNamespace(),module.getRootNamespace(),true,new File("compiler/testData/lazyResolve/simpleClass.txt"));
+  NamespaceComparator.compareNamespaces(module.getRootNamespace(),lazyModule.getRootNamespace(),true,new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt"));
 }
