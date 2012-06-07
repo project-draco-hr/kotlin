@@ -15,16 +15,23 @@
   JetType returnType=TypeUtils.NO_EXPECTED_TYPE;
   JetScope functionInnerScope=FunctionDescriptorUtil.getFunctionInnerScope(context.scope,functionDescriptor,context.trace);
   JetTypeReference returnTypeRef=functionLiteral.getReturnTypeRef();
+  TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
   if (returnTypeRef != null) {
     returnType=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,returnTypeRef,context.trace,true);
-    context.expressionTypingServices.checkFunctionReturnType(expression,context.replaceScope(functionInnerScope).replaceExpectedType(returnType).replaceDataFlowInfo(context.dataFlowInfo),context.trace);
+    context.expressionTypingServices.checkFunctionReturnType(expression,context.replaceScope(functionInnerScope).replaceExpectedType(returnType).replaceBindingTrace(temporaryTrace),temporaryTrace);
   }
  else {
     if (functionTypeExpected) {
       returnType=JetStandardClasses.getReturnTypeFromFunctionType(expectedType);
     }
-    returnType=context.expressionTypingServices.getBlockReturnedType(functionInnerScope,bodyExpression,CoercionStrategy.COERCION_TO_UNIT,context.replaceExpectedType(returnType),context.trace);
+    returnType=context.expressionTypingServices.getBlockReturnedType(functionInnerScope,bodyExpression,CoercionStrategy.COERCION_TO_UNIT,context.replaceExpectedType(returnType).replaceBindingTrace(temporaryTrace),temporaryTrace);
   }
+  temporaryTrace.commit(new Predicate<WritableSlice>(){
+    @Override public boolean apply(    @Nullable WritableSlice slice){
+      return (slice != BindingContext.RESOLUTION_RESULTS_FOR_FUNCTION && slice != BindingContext.RESOLUTION_RESULTS_FOR_PROPERTY && slice != BindingContext.TRACE_DELTAS_CACHE);
+    }
+  }
+,true);
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
   boolean hasDeclaredValueParameters=functionLiteral.getValueParameterList() != null;

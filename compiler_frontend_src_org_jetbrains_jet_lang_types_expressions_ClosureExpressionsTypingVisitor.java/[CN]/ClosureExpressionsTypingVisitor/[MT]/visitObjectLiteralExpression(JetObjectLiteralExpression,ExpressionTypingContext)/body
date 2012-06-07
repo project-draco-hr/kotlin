@@ -1,5 +1,12 @@
 {
+  DelegatingBindingTrace delegatingBindingTrace=context.trace.get(TRACE_DELTAS_CACHE,expression.getObjectDeclaration());
+  if (delegatingBindingTrace != null) {
+    delegatingBindingTrace.addAllMyDataTo(context.trace);
+    JetType type=context.trace.get(EXPRESSION_TYPE,expression);
+    return DataFlowUtils.checkType(type,expression,context);
+  }
   final JetType[] result=new JetType[1];
+  final TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
   ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor> handler=new ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor>(){
     @Override public void handleRecord(    WritableSlice<PsiElement,ClassDescriptor> slice,    PsiElement declaration,    final ClassDescriptor descriptor){
       if (slice == CLASS && declaration == expression.getObjectDeclaration()) {
@@ -11,15 +18,19 @@
 );
         result[0]=defaultType;
         if (!context.trace.get(PROCESSED,expression)) {
-          context.trace.record(EXPRESSION_TYPE,expression,defaultType);
-          context.trace.record(PROCESSED,expression);
+          temporaryTrace.record(EXPRESSION_TYPE,expression,defaultType);
+          temporaryTrace.record(PROCESSED,expression);
         }
       }
     }
   }
 ;
-  ObservableBindingTrace traceAdapter=new ObservableBindingTrace(context.trace);
+  ObservableBindingTrace traceAdapter=new ObservableBindingTrace(temporaryTrace);
   traceAdapter.addHandler(CLASS,handler);
   TopDownAnalyzer.processObject(context.expressionTypingServices.getProject(),traceAdapter,context.scope,context.scope.getContainingDeclaration(),expression.getObjectDeclaration());
+  DelegatingBindingTrace cloneDelta=new DelegatingBindingTrace(new BindingTraceContext().getBindingContext());
+  temporaryTrace.addAllMyDataTo(cloneDelta);
+  context.trace.record(TRACE_DELTAS_CACHE,expression.getObjectDeclaration(),cloneDelta);
+  temporaryTrace.commit();
   return DataFlowUtils.checkType(result[0],expression,context);
 }
