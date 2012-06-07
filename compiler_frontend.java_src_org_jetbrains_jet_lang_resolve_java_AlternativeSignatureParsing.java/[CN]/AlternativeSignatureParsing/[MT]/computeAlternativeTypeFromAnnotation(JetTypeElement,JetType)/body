@@ -1,7 +1,14 @@
 {
-  return alternativeTypeElement.accept(new JetVisitor<JetType,Void>(){
+  final Ref<AlternativeSignatureMismatchException> exception=new Ref<AlternativeSignatureMismatchException>();
+  JetType result=alternativeTypeElement.accept(new JetVisitor<JetType,Void>(){
     @Override public JetType visitNullableType(    JetNullableType nullableType,    Void data){
-      return TypeUtils.makeNullable(computeAlternativeTypeFromAnnotation(nullableType.getInnerType(),autoType));
+      try {
+        return TypeUtils.makeNullable(computeAlternativeTypeFromAnnotation(nullableType.getInnerType(),autoType));
+      }
+ catch (      AlternativeSignatureMismatchException e) {
+        exception.set(e);
+        return null;
+      }
     }
     @Override public JetType visitFunctionType(    JetFunctionType type,    Void data){
       return visitCommonType(type);
@@ -12,20 +19,30 @@
     @Override public JetType visitUserType(    JetUserType type,    Void data){
       return visitCommonType(type);
     }
-    public JetType visitCommonType(    JetTypeElement type){
-      List<TypeProjection> arguments=autoType.getArguments();
-      List<TypeProjection> altArguments=new ArrayList<TypeProjection>();
-      for (int i=0, size=arguments.size(); i < size; i++) {
-        JetTypeElement argumentAlternativeTypeElement=type.getTypeArgumentsAsTypes().get(i).getTypeElement();
-        TypeProjection argument=arguments.get(i);
-        JetType alternativeType=computeAlternativeTypeFromAnnotation(argumentAlternativeTypeElement,argument.getType());
-        altArguments.add(new TypeProjection(argument.getProjectionKind(),alternativeType));
+    private JetType visitCommonType(    JetTypeElement type){
+      try {
+        List<TypeProjection> arguments=autoType.getArguments();
+        List<TypeProjection> altArguments=new ArrayList<TypeProjection>();
+        for (int i=0, size=arguments.size(); i < size; i++) {
+          JetTypeElement argumentAlternativeTypeElement=type.getTypeArgumentsAsTypes().get(i).getTypeElement();
+          TypeProjection argument=arguments.get(i);
+          JetType alternativeType=computeAlternativeTypeFromAnnotation(argumentAlternativeTypeElement,argument.getType());
+          altArguments.add(new TypeProjection(argument.getProjectionKind(),alternativeType));
+        }
+        return new JetTypeImpl(autoType.getAnnotations(),autoType.getConstructor(),false,altArguments,autoType.getMemberScope());
       }
-      return new JetTypeImpl(autoType.getAnnotations(),autoType.getConstructor(),false,altArguments,autoType.getMemberScope());
+ catch (      AlternativeSignatureMismatchException e) {
+        exception.set(e);
+        return null;
+      }
     }
     @Override public JetType visitSelfType(    JetSelfType type,    Void data){
       throw new UnsupportedOperationException("Self-types are not supported yet");
     }
   }
 ,null);
+  if (exception.get() != null) {
+    throw exception.get();
+  }
+  return result;
 }
