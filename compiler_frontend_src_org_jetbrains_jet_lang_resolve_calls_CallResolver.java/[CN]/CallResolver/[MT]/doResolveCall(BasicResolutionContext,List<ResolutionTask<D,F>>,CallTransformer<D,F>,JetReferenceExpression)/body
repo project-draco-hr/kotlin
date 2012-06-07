@@ -9,17 +9,17 @@
   TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
   OverloadResolutionResultsImpl<F> resultsForFirstNonemptyCandidateSet=null;
   for (  ResolutionTask<D,F> task : prioritizedTasks) {
-    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace);
-    OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.withTrace(temporaryTrace),callTransformer);
+    TemporaryBindingTrace taskTrace=TemporaryBindingTrace.create(context.trace);
+    OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.withTrace(taskTrace),callTransformer,context.trace);
     if (results.isSuccess() || results.isAmbiguity()) {
-      temporaryTrace.commit();
+      taskTrace.commit();
       if (results.isSuccess()) {
         debugInfo.set(ResolutionDebugInfo.RESULT,results.getResultingCall());
       }
       return results;
     }
     if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty() && !results.isNothing()) {
-      traceForFirstNonemptyCandidateSet=temporaryTrace;
+      traceForFirstNonemptyCandidateSet=taskTrace;
       resultsForFirstNonemptyCandidateSet=results;
     }
   }

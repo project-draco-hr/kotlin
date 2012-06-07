@@ -1,0 +1,13 @@
+{
+  boolean canBeCached=true;
+  for (  ResolvedCall<? extends CallableDescriptor> call : results.getResultingCalls()) {
+    if (!call.getCandidateDescriptor().getTypeParameters().isEmpty()) {
+      canBeCached=false;
+    }
+  }
+  if (!canBeCached)   return;
+  PsiElement callElement=context.call.getCallElement();
+  if (!(callElement instanceof JetExpression))   return;
+  context.trace.record(resolutionResultsSlice,CallKey.create(context.call.getCallType(),(JetExpression)callElement),results);
+  context.trace.record(TRACE_DELTAS_CACHE,(JetExpression)callElement,delegatingBindingTrace);
+}
