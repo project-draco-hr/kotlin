@@ -1,0 +1,19 @@
+{
+  if (replInterpreter != null) {
+    return replInterpreter;
+  }
+synchronized (waitRepl) {
+    while (replInterpreter == null && replInitializationFailed == null) {
+      try {
+        waitRepl.wait();
+      }
+ catch (      Throwable e) {
+        throw ExceptionUtils.rethrow(e);
+      }
+    }
+    if (replInterpreter != null) {
+      return replInterpreter;
+    }
+    throw ExceptionUtils.rethrow(replInitializationFailed);
+  }
+}
