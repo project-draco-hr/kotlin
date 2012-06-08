@@ -18,6 +18,14 @@
     frameMap.enter(parameter,argTypes[i + add].getSize());
   }
   ImplementationBodyCodegen.generateInitializers(new ExpressionCodegen(instructionAdapter,frameMap,Type.VOID_TYPE,context,state),instructionAdapter,scriptDeclaration.getDeclarations(),bindingContext,jetTypeMapper);
+  int offset=1;
+  for (  ValueParameterDescriptor parameter : scriptDescriptor.getValueParameters()) {
+    Type parameterType=jetTypeMapper.mapType(parameter.getType(),MapTypeMode.VALUE);
+    instructionAdapter.load(0,className.getAsmType());
+    instructionAdapter.load(offset,parameterType);
+    offset+=parameterType.getSize();
+    instructionAdapter.putfield(className.getInternalName(),parameter.getName().getIdentifier(),parameterType.getDescriptor());
+  }
   StackValue stackValue=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
   if (stackValue.type != Type.VOID_TYPE) {
     stackValue.put(stackValue.type,instructionAdapter);
