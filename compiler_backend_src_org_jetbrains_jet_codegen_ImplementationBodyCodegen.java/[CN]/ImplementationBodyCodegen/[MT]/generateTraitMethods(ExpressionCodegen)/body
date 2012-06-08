@@ -3,12 +3,17 @@
   for (  Pair<CallableMemberDescriptor,CallableMemberDescriptor> needDelegates : getTraitImplementations(descriptor)) {
     CallableMemberDescriptor callableDescriptor=needDelegates.first;
     if (needDelegates.second instanceof SimpleFunctionDescriptor) {
-      generateDelegationToTraitImpl(codegen,(FunctionDescriptor)needDelegates.second);
+      generateDelegationToTraitImpl(codegen,(FunctionDescriptor)needDelegates.second,(FunctionDescriptor)needDelegates.first);
     }
  else     if (needDelegates.second instanceof PropertyDescriptor) {
       PropertyDescriptor property=(PropertyDescriptor)needDelegates.second;
+      List<PropertyAccessorDescriptor> inheritedAccessors=((PropertyDescriptor)needDelegates.first).getAccessors();
       for (      PropertyAccessorDescriptor accessor : property.getAccessors()) {
-        generateDelegationToTraitImpl(codegen,accessor);
+        for (        PropertyAccessorDescriptor inheritedAccessor : inheritedAccessors) {
+          if (inheritedAccessor.getClass() == accessor.getClass()) {
+            generateDelegationToTraitImpl(codegen,accessor,inheritedAccessor);
+          }
+        }
       }
     }
   }
