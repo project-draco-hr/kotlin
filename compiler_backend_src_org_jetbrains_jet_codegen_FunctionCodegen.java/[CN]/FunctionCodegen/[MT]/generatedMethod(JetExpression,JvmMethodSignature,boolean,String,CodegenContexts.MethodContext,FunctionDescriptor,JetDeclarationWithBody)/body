@@ -8,7 +8,8 @@
   if (!functionDescriptor.getValueParameters().isEmpty() && functionDescriptor.getValueParameters().get(functionDescriptor.getValueParameters().size() - 1).getVarargElementType() != null) {
     flags|=ACC_VARARGS;
   }
-  if (functionDescriptor.getModality() == Modality.FINAL) {
+  Modality modality=functionDescriptor.getModality();
+  if (modality == Modality.FINAL) {
     flags|=ACC_FINAL;
   }
   OwnerKind kind=context.getContextKind();
@@ -20,7 +21,7 @@
   if (kind != OwnerKind.TRAIT_IMPL || bodyExpressions != null) {
     boolean isStatic=kind == OwnerKind.NAMESPACE || kind instanceof OwnerKind.StaticDelegateKind;
     if (isStatic || kind == OwnerKind.TRAIT_IMPL)     flags|=ACC_STATIC;
-    boolean isAbstract=(functionDescriptor.getModality() == Modality.ABSTRACT || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
+    boolean isAbstract=(modality == Modality.ABSTRACT || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
     if (isAbstract)     flags|=ACC_ABSTRACT;
     final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
     AnnotationCodegen.forMethod(mv,state.getInjector().getJetTypeMapper()).genAnnotations(functionDescriptor);
@@ -28,14 +29,19 @@
       int start=0;
       if (needJetAnnotations) {
         if (functionDescriptor instanceof PropertyAccessorDescriptor) {
-          PropertyCodegen.generateJetPropertyAnnotation(mv,propertyTypeSignature,jvmSignature.getKotlinTypeParameter());
+          PropertyCodegen.generateJetPropertyAnnotation(mv,propertyTypeSignature,jvmSignature.getKotlinTypeParameter(),((PropertyAccessorDescriptor)functionDescriptor).getCorrespondingProperty());
         }
  else         if (functionDescriptor instanceof SimpleFunctionDescriptor) {
           if (propertyTypeSignature != null) {
             throw new IllegalStateException();
           }
           JetMethodAnnotationWriter aw=JetMethodAnnotationWriter.visitAnnotation(mv);
-          aw.writeFlags();
+          if (CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()) && modality != Modality.ABSTRACT) {
+            aw.writeFlags(modality == Modality.FINAL ? JvmStdlibNames.JET_METHOD_FLAG_FORCE_FINAL_BIT : JvmStdlibNames.JET_METHOD_FLAG_FORCE_OPEN_BIT);
+          }
+ else {
+            aw.writeFlags();
+          }
           aw.writeNullableReturnType(functionDescriptor.getReturnType().isNullable());
           aw.writeTypeParameters(jvmSignature.getKotlinTypeParameter());
           aw.writeReturnType(jvmSignature.getKotlinReturnType());
