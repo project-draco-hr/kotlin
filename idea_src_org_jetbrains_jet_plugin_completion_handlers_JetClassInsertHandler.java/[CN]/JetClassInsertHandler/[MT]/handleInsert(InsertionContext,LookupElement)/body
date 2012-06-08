@@ -12,9 +12,14 @@
           JetLookupObject lookupObject=(JetLookupObject)item.getObject();
           final DeclarationDescriptor descriptor=lookupObject.getDescriptor();
           PsiElement targetElement=lookupObject.getPsiElement();
-          if (descriptor != null && targetElement != null) {
+          if (descriptor != null) {
             final FqName fqn=DescriptorUtils.getFQName(descriptor).toSafe();
-            ImportInsertHelper.addImportDirectiveOrChangeToFqName(fqn,jetFile,context.getStartOffset(),targetElement);
+            if (targetElement != null) {
+              ImportInsertHelper.addImportDirectiveOrChangeToFqName(fqn,jetFile,context.getStartOffset(),targetElement);
+            }
+ else             if (JsModuleDetector.isJsModule(jetFile)) {
+              ImportInsertHelper.addImportDirective(fqn,jetFile);
+            }
           }
         }
       }
