@@ -6,9 +6,10 @@
   MethodVisitor mv=classBuilder.newMethod(scriptDeclaration,Opcodes.ACC_PUBLIC,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),null,null);
   mv.visitCode();
   InstructionAdapter instructionAdapter=new InstructionAdapter(mv);
-  instructionAdapter.load(0,Type.getObjectType("Script"));
+  JvmClassName className=closureAnnotator.classNameForClassDescriptor(classDescriptorForScript);
+  instructionAdapter.load(0,className.getAsmType());
   instructionAdapter.invokespecial(JdkNames.JL_OBJECT.getInternalName(),"<init>","()V");
-  instructionAdapter.load(0,Type.getObjectType("Script"));
+  instructionAdapter.load(0,className.getAsmType());
   FrameMap frameMap=context.prepareFrame(jetTypeMapper);
   Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
   int add=0;
@@ -20,7 +21,7 @@
   StackValue stackValue=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
   if (stackValue.type != Type.VOID_TYPE) {
     stackValue.put(stackValue.type,instructionAdapter);
-    instructionAdapter.putfield("Script",LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor());
+    instructionAdapter.putfield(className.getInternalName(),LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor());
   }
   instructionAdapter.areturn(Type.VOID_TYPE);
   mv.visitMaxs(-1,-1);
