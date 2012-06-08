@@ -6,7 +6,15 @@
   if (condition != null) {
     value(condition,true);
   }
-  builder.jumpOnFalse(loopInfo.getExitPoint());
+  boolean conditionIsTrueConstant=false;
+  if (condition instanceof JetConstantExpression && condition.getNode().getElementType() == JetNodeTypes.BOOLEAN_CONSTANT) {
+    if (BooleanValue.TRUE == new CompileTimeConstantResolver().getBooleanValue(condition.getText(),JetStandardLibrary.getInstance().getBooleanType())) {
+      conditionIsTrueConstant=true;
+    }
+  }
+  if (!conditionIsTrueConstant) {
+    builder.jumpOnFalse(loopInfo.getExitPoint());
+  }
   builder.bindLabel(loopInfo.getBodyEntryPoint());
   JetExpression body=expression.getBody();
   if (body != null) {
