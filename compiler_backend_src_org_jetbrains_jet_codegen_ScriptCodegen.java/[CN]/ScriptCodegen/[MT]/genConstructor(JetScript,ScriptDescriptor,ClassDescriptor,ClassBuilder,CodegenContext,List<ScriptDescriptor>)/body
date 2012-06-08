@@ -1,7 +1,7 @@
 {
   Type blockType=jetTypeMapper.mapType(scriptDescriptor.getReturnType(),MapTypeMode.VALUE);
   classBuilder.newField(null,Opcodes.ACC_PUBLIC,LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor(),null,null);
-  JvmMethodSignature jvmSignature=jetTypeMapper.mapScriptSignature(scriptDescriptor);
+  JvmMethodSignature jvmSignature=jetTypeMapper.mapScriptSignature(scriptDescriptor,importedScripts);
   state.setScriptConstructorMethod(jvmSignature.getAsmMethod());
   MethodVisitor mv=classBuilder.newMethod(scriptDeclaration,Opcodes.ACC_PUBLIC,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),null,null);
   mv.visitCode();
@@ -11,6 +11,9 @@
   instructionAdapter.invokespecial(JdkNames.JL_OBJECT.getInternalName(),"<init>","()V");
   instructionAdapter.load(0,className.getAsmType());
   FrameMap frameMap=context.prepareFrame(jetTypeMapper);
+  for (  ScriptDescriptor importedScript : importedScripts) {
+    frameMap.enter(importedScript,1);
+  }
   Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
   int add=0;
   for (int i=0; i < scriptDescriptor.getValueParameters().size(); i++) {
@@ -19,6 +22,13 @@
   }
   ImplementationBodyCodegen.generateInitializers(new ExpressionCodegen(instructionAdapter,frameMap,Type.VOID_TYPE,context,state),instructionAdapter,scriptDeclaration.getDeclarations(),bindingContext,jetTypeMapper);
   int offset=1;
+  for (  ScriptDescriptor earlierScript : importedScripts) {
+    JvmClassName earlierClassName=closureAnnotator.classNameForScriptDescriptor(earlierScript);
+    instructionAdapter.load(0,className.getAsmType());
+    instructionAdapter.load(offset,earlierClassName.getAsmType());
+    offset+=earlierClassName.getAsmType().getSize();
+    instructionAdapter.putfield(className.getInternalName(),getScriptFieldName(earlierScript),earlierClassName.getAsmType().getDescriptor());
+  }
   for (  ValueParameterDescriptor parameter : scriptDescriptor.getValueParameters()) {
     Type parameterType=jetTypeMapper.mapType(parameter.getType(),MapTypeMode.VALUE);
     instructionAdapter.load(0,className.getAsmType());

@@ -1,29 +1,46 @@
 {
   ++lineNumber;
+  JvmClassName scriptClassName=JvmClassName.byInternalName("Line" + lineNumber);
   LightVirtualFile virtualFile=new LightVirtualFile("line" + lineNumber + ".ktscript",JetLanguage.INSTANCE,line);
   virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
   JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
   AnalyzingUtils.checkForSyntacticErrors(psiFile);
   injector.getTopDownAnalyzer().prepareForTheNextReplLine();
-  injector.getTopDownAnalyzer().analyzeFiles(Collections.singletonList(psiFile),Collections.<AnalyzerScriptParameter>emptyList());
-  AnalyzingUtils.throwExceptionOnErrors(trace.getBindingContext());
+  ScriptDescriptor scriptDescriptor=doAnalyze(psiFile);
   Progress backendProgress=new Progress(){
     @Override public void log(    String message){
     }
   }
 ;
+  List<Pair<ScriptDescriptor,JvmClassName>> earierScripts=Lists.newArrayList();
+  for (  EarlierLine earlierLine : earlierLines) {
+    earierScripts.add(Pair.create(earlierLine.getScriptDescriptor(),earlierLine.getClassName()));
+  }
   GenerationState generationState=new GenerationState(jetCoreEnvironment.getProject(),ClassBuilderFactories.binaries(false),backendProgress,AnalyzeExhaust.success(trace.getBindingContext(),JetStandardLibrary.getInstance()),Collections.singletonList(psiFile),jetCoreEnvironment.getCompilerDependencies().getCompilerSpecialMode());
-  generationState.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+  generationState.compileScript(psiFile.getScript(),scriptClassName,earierScripts,CompilationErrorHandler.THROW_EXCEPTION);
+  for (  String file : generationState.getFactory().files()) {
+    classLoader.addClass(JvmClassName.byInternalName(file.replaceFirst("\\.class$","")),generationState.getFactory().asBytes(file));
+  }
   try {
-    Class<?> scriptClass=new GeneratedClassLoader(generationState.getFactory()).loadClass(ScriptCodegen.SCRIPT_DEFAULT_CLASS_NAME.getFqName().getFqName());
-    Constructor<?> scriptInstanceConstructor=scriptClass.getConstructor(new Class<?>[0]);
-    Object scriptInstance=scriptInstanceConstructor.newInstance(new Object[0]);
+    Class<?> scriptClass=classLoader.loadClass(scriptClassName.getFqName().getFqName());
+    Class<?>[] constructorParams=new Class<?>[earlierLines.size()];
+    Object[] constructorArgs=new Object[earlierLines.size()];
+    for (int i=0; i < earlierLines.size(); ++i) {
+      constructorParams[i]=earlierLines.get(i).getScriptClass();
+      constructorArgs[i]=earlierLines.get(i).getScriptInstance();
+    }
+    Constructor<?> scriptInstanceConstructor=scriptClass.getConstructor(constructorParams);
+    Object scriptInstance=scriptInstanceConstructor.newInstance(constructorArgs);
     Field rvField=scriptClass.getDeclaredField("rv");
     rvField.setAccessible(true);
     Object rv=rvField.get(scriptInstance);
+    earlierLines.add(new EarlierLine(line,scriptDescriptor,scriptClass,scriptInstance,scriptClassName));
     return rv;
   }
- catch (  Exception e) {
+ catch (  Throwable e) {
+    PrintWriter writer=new PrintWriter(System.err);
+    classLoader.dumpClasses(writer);
+    writer.flush();
     throw ExceptionUtils.rethrow(e);
   }
 }
