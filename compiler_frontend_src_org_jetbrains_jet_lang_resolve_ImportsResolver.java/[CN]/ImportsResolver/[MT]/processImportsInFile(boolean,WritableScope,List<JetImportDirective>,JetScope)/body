@@ -1,25 +1,3 @@
 {
-  Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope);
-  if (!onlyClasses) {
-    namespaceScope.clearImports();
-  }
-  Map<JetImportDirective,DeclarationDescriptor> resolvedDirectives=Maps.newHashMap();
-  Collection<JetImportDirective> defaultImportDirectives=Lists.newArrayList();
-  configuration.addDefaultImports(defaultImportDirectives);
-  for (  JetImportDirective defaultImportDirective : defaultImportDirectives) {
-    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace);
-    qualifiedExpressionResolver.processImportReference(defaultImportDirective,rootScope,namespaceScope,delayedImporter,temporaryTrace,onlyClasses);
-  }
-  for (  JetImportDirective importDirective : importDirectives) {
-    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScope,namespaceScope,delayedImporter,trace,onlyClasses);
-    if (descriptors.size() == 1) {
-      resolvedDirectives.put(importDirective,descriptors.iterator().next());
-    }
-  }
-  delayedImporter.processImports();
-  if (!onlyClasses) {
-    for (    JetImportDirective importDirective : importDirectives) {
-      reportUselessImport(importDirective,namespaceScope,resolvedDirectives);
-    }
-  }
+  processImportsInFile(classes,scope,directives,rootScope,configuration,trace,qualifiedExpressionResolver);
 }

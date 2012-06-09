@@ -1,7 +1,6 @@
 {
-  TopDownAnalysisParameters params=new TopDownAnalysisParameters(Predicates.<PsiFile>alwaysTrue(),false,false,Collections.<AnalyzerScriptParameter>emptyList());
   ModuleDescriptor module=new ModuleDescriptor(Name.special("<test module>"));
-  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,params,new BindingTraceContext(),module,compilerDependencies);
+  InjectorForTopDownAnalyzerForJvm injector=createInjectorForTDA(module);
   List<JetFile> files=JetTestUtils.createTestFiles(testFileName,FileUtil.loadFile(new File(testFileName)),new JetTestUtils.TestFileFactory<JetFile>(){
     @Override public JetFile create(    String fileName,    String text){
       return JetPsiFactory.createFile(project,fileName,text);
@@ -9,8 +8,17 @@
   }
 );
   ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
-  ResolveSession session=new ResolveSession(project,lazyModule,injector.getJavaBridgeConfiguration(),new FileBasedDeclarationProviderFactory(files));
+  ModuleDescriptor eagerModuleForLazy=new ModuleDescriptor(Name.special("<eager module for lazy>"));
+  InjectorForTopDownAnalyzerForJvm tdaInjectorForLazy=createInjectorForTDA(eagerModuleForLazy);
+  tdaInjectorForLazy.getTopDownAnalyzer().analyzeFiles(Collections.singletonList(JetPsiFactory.createFile(project,"")),Collections.<AnalyzerScriptParameter>emptyList());
+  ResolveSession session=new ResolveSession(project,lazyModule,tdaInjectorForLazy.getJavaBridgeConfiguration(),new FileBasedDeclarationProviderFactory(files));
   injector.getTopDownAnalyzer().analyzeFiles(files,Collections.<AnalyzerScriptParameter>emptyList());
   Pair<NamespaceDescriptor,NamespaceDescriptor> namespacesToCompare=transform.fun(Pair.create(module,lazyModule));
-  NamespaceComparator.compareNamespaces(namespacesToCompare.first,namespacesToCompare.second,true,new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt"));
+  Predicate<NamespaceDescriptor> filterJetNamespace=new Predicate<NamespaceDescriptor>(){
+    @Override public boolean apply(    NamespaceDescriptor namespaceDescriptor){
+      return !namespaceDescriptor.getName().equals(Name.identifier("jet"));
+    }
+  }
+;
+  NamespaceComparator.compareNamespaces(namespacesToCompare.first,namespacesToCompare.second,true,filterJetNamespace,new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt"));
 }
