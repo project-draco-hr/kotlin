@@ -23,9 +23,12 @@
         System.err.println("Namespace not found: " + namespaceDescriptorA.getQualifiedName());
       }
  else {
-        sb.append("// <namespace name=\"" + namespaceDescriptorA.getName() + "\">\n");
-        sb.append(doCompareNamespaces(namespaceDescriptorA,namespaceDescriptorB));
-        sb.append("// </namespace name=\"" + namespaceDescriptorA.getName() + "\">\n");
+        String comparison=doCompareNamespaces(namespaceDescriptorA,namespaceDescriptorB);
+        if (includeIntoOutput.apply(namespaceDescriptorA)) {
+          sb.append("// <namespace name=\"" + namespaceDescriptorA.getName() + "\">\n");
+          sb.append(comparison);
+          sb.append("// </namespace name=\"" + namespaceDescriptorA.getName() + "\">\n");
+        }
       }
     }
  else {
@@ -35,21 +38,21 @@
   for (  Name name : sorted(classifierNames)) {
     ClassifierDescriptor ca=nsa.getMemberScope().getClassifier(name);
     ClassifierDescriptor cb=nsb.getMemberScope().getClassifier(name);
-    Assert.assertTrue(ca != null);
-    Assert.assertTrue(cb != null);
+    Assert.assertTrue("Classifier not found in " + nsa + ": "+ name,ca != null);
+    Assert.assertTrue("Classifier not found in " + nsb + ": "+ name,cb != null);
     compareClassifiers(ca,cb,sb);
   }
   for (  Name name : sorted(propertyNames)) {
     Set<VariableDescriptor> pa=nsa.getMemberScope().getProperties(name);
     Set<VariableDescriptor> pb=nsb.getMemberScope().getProperties(name);
-    compareDeclarationSets(pa,pb,sb);
+    compareDeclarationSets("Properties in package " + nsa,pa,pb,sb);
     Assert.assertTrue(nsb.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.getterName(name))).isEmpty());
     Assert.assertTrue(nsb.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.setterName(name))).isEmpty());
   }
   for (  Name name : sorted(functionNames)) {
     Set<FunctionDescriptor> fa=nsa.getMemberScope().getFunctions(name);
     Set<FunctionDescriptor> fb=nsb.getMemberScope().getFunctions(name);
-    compareDeclarationSets(fa,fb,sb);
+    compareDeclarationSets("Functions in package " + nsa,fa,fb,sb);
   }
   return sb.toString();
 }
