@@ -12,11 +12,24 @@
     }
  else {
       String path=jarPath != null ? jarPath : new File(directory,moduleBuilder.getModuleName() + ".jar").getPath();
+      FileOutputStream outputStream=null;
       try {
-        CompileEnvironmentUtil.writeToJar(moduleFactory,new FileOutputStream(path),null,jarRuntime);
+        outputStream=new FileOutputStream(path);
+        CompileEnvironmentUtil.writeToJar(moduleFactory,outputStream,null,jarRuntime);
+        outputStream.close();
       }
  catch (      FileNotFoundException e) {
         throw new CompileEnvironmentException("Invalid jar path " + path,e);
+      }
+catch (      IOException e) {
+        throw ExceptionUtils.rethrow(e);
+      }
+ finally {
+        try {
+          outputStream.close();
+        }
+ catch (        Throwable e) {
+        }
       }
     }
   }
