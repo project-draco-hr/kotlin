@@ -1,17 +1,17 @@
 {
   if (!primaryConstructorResolved) {
-    if (EnumSet.of(ClassKind.CLASS,ClassKind.ANNOTATION_CLASS).contains(thisDescriptor.getKind())) {
+    if (EnumSet.of(ClassKind.CLASS,ClassKind.ANNOTATION_CLASS,ClassKind.OBJECT).contains(thisDescriptor.getKind())) {
       JetClassOrObject classOrObject=declarationProvider.getOwnerClassOrObject();
       if (classOrObject instanceof JetClass) {
         JetClass jetClass=(JetClass)classOrObject;
-        ConstructorDescriptorImpl descriptor=resolveSession.getInjector().getDescriptorResolver().resolvePrimaryConstructorDescriptor(thisDescriptor.getScopeForClassHeaderResolution(),thisDescriptor,jetClass,resolveSession.getTrace());
-        primaryConstructor=descriptor;
-        descriptor.setReturnType(DeferredType.create(resolveSession.getTrace(),new LazyValue<JetType>(){
-          @Override protected JetType compute(){
-            return thisDescriptor.getDefaultType();
-          }
-        }
-));
+        ConstructorDescriptorImpl constructor=resolveSession.getInjector().getDescriptorResolver().resolvePrimaryConstructorDescriptor(thisDescriptor.getScopeForClassHeaderResolution(),thisDescriptor,jetClass,resolveSession.getTrace());
+        primaryConstructor=constructor;
+        setDeferredReturnType(constructor);
+      }
+ else {
+        ConstructorDescriptorImpl constructor=DescriptorResolver.createPrimaryConstructorForObject(classOrObject,thisDescriptor,resolveSession.getTrace());
+        setDeferredReturnType(constructor);
+        primaryConstructor=constructor;
       }
     }
     primaryConstructorResolved=true;
