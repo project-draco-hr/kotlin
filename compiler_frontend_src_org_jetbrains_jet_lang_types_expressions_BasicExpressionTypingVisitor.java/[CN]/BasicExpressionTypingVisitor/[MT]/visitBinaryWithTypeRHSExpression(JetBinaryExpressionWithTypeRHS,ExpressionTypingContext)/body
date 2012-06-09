@@ -3,22 +3,18 @@
   JetType result=null;
   if (right != null) {
     JetType targetType=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,right,context.trace,true);
-    if (isTypeFlexible(expression.getLeft())) {
+    if (isTypeFlexible(expression.getLeft()) || expression.getOperationSign().getReferencedNameElementType() == JetTokens.COLON) {
       TemporaryBindingTrace temporaryTraceWithExpectedType=TemporaryBindingTrace.create(context.trace);
-      boolean success=checkBinaryWithTypeRHS(expression,context,targetType,targetType,temporaryTraceWithExpectedType);
+      boolean success=checkBinaryWithTypeRHS(expression,context.replaceBindingTrace(temporaryTraceWithExpectedType).replaceExpectedType(targetType),targetType);
       if (success) {
         temporaryTraceWithExpectedType.commit();
       }
  else {
-        TemporaryBindingTrace temporaryTraceWithoutExpectedType=TemporaryBindingTrace.create(context.trace);
-        checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
-        temporaryTraceWithoutExpectedType.commit();
+        checkBinaryWithTypeRHS(expression,context.replaceExpectedType(NO_EXPECTED_TYPE),targetType);
       }
     }
  else {
-      TemporaryBindingTrace temporaryTraceWithoutExpectedType=TemporaryBindingTrace.create(context.trace);
-      checkBinaryWithTypeRHS(expression,context,targetType,NO_EXPECTED_TYPE,temporaryTraceWithoutExpectedType);
-      temporaryTraceWithoutExpectedType.commit();
+      checkBinaryWithTypeRHS(expression,context.replaceExpectedType(NO_EXPECTED_TYPE),targetType);
     }
     IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
     result=operationType == JetTokens.AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
