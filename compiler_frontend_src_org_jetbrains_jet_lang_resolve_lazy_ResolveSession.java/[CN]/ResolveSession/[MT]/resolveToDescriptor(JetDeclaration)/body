@@ -1,0 +1,56 @@
+{
+  return declaration.accept(new JetVisitor<DeclarationDescriptor,Void>(){
+    @Override public DeclarationDescriptor visitClass(    JetClass klass,    Void data){
+      return getClassDescriptor(klass);
+    }
+    @Override public DeclarationDescriptor visitObjectDeclaration(    JetObjectDeclaration declaration,    Void data){
+      PsiElement parent=declaration.getParent();
+      if (parent instanceof JetClassObject) {
+        JetClassObject jetClassObject=(JetClassObject)parent;
+        return resolveToDescriptor(jetClassObject);
+      }
+      return getClassDescriptor(declaration);
+    }
+    @Override public DeclarationDescriptor visitClassObject(    JetClassObject classObject,    Void data){
+      DeclarationDescriptor containingDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(classObject).getContainingDeclaration();
+      return ((ClassDescriptor)containingDeclaration).getClassObjectDescriptor();
+    }
+    @Override public DeclarationDescriptor visitTypeParameter(    JetTypeParameter parameter,    Void data){
+      JetTypeParameterListOwner ownerElement=PsiTreeUtil.getParentOfType(parameter,JetTypeParameterListOwner.class);
+      DeclarationDescriptor ownerDescriptor=resolveToDescriptor(ownerElement);
+      List<TypeParameterDescriptor> typeParameters;
+      Name name=parameter.getNameAsName();
+      if (ownerDescriptor instanceof CallableDescriptor) {
+        CallableDescriptor callableDescriptor=(CallableDescriptor)ownerDescriptor;
+        typeParameters=callableDescriptor.getTypeParameters();
+      }
+ else       if (ownerDescriptor instanceof ClassDescriptor) {
+        ClassDescriptor classDescriptor=(ClassDescriptor)ownerDescriptor;
+        typeParameters=classDescriptor.getTypeConstructor().getParameters();
+      }
+ else {
+        throw new IllegalStateException("Unknown owner kind for a type parameter: " + ownerDescriptor);
+      }
+      for (      TypeParameterDescriptor typeParameterDescriptor : typeParameters) {
+        if (typeParameterDescriptor.getName().equals(name)) {
+          return typeParameterDescriptor;
+        }
+      }
+      throw new IllegalStateException("Type parameter " + name + " not found for "+ ownerDescriptor);
+    }
+    @Override public DeclarationDescriptor visitNamedFunction(    JetNamedFunction function,    Void data){
+      JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(function);
+      scopeForDeclaration.getFunctions(function.getNameAsName());
+      return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,function);
+    }
+    @Override public DeclarationDescriptor visitProperty(    JetProperty property,    Void data){
+      JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(property);
+      scopeForDeclaration.getProperties(property.getNameAsName());
+      return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,property);
+    }
+    @Override public DeclarationDescriptor visitJetElement(    JetElement element,    Void data){
+      throw new IllegalArgumentException("Unsupported declaration type: " + element);
+    }
+  }
+,null);
+}

@@ -6,9 +6,15 @@
   JetDeclaration parentDeclaration=PsiTreeUtil.getParentOfType(jetDeclaration,JetDeclaration.class);
   if (parentDeclaration instanceof JetClassOrObject) {
     JetClassOrObject classOrObject=(JetClassOrObject)parentDeclaration;
-    return getScopeForClassMemberResolution(classOrObject);
+    LazyClassDescriptor classDescriptor=(LazyClassDescriptor)resolveSession.getClassDescriptor(classOrObject);
+    return classDescriptor.getScopeForMemberDeclarationResolution();
+  }
+ else   if (parentDeclaration instanceof JetClassObject) {
+    JetClassObject classObject=(JetClassObject)parentDeclaration;
+    LazyClassDescriptor classObjectDescriptor=resolveSession.getClassObjectDescriptor(classObject);
+    return classObjectDescriptor.getScopeForMemberDeclarationResolution();
   }
  else {
-    throw new IllegalStateException("Don't call this method for local declarations: " + jetDeclaration);
+    throw new IllegalStateException("Don't call this method for local declarations: " + jetDeclaration + " "+ jetDeclaration.getText());
   }
 }
