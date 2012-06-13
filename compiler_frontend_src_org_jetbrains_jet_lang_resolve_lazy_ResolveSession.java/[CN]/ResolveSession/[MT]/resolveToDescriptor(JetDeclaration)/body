@@ -43,13 +43,24 @@
       scopeForDeclaration.getFunctions(function.getNameAsName());
       return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,function);
     }
+    @Override public DeclarationDescriptor visitParameter(    JetParameter parameter,    Void data){
+      PsiElement grandFather=parameter.getParent().getParent();
+      if (grandFather instanceof JetClass) {
+        JetClass jetClass=(JetClass)grandFather;
+        if (parameter.getValOrVarNode() != null) {
+          getClassDescriptor(jetClass).getDefaultType().getMemberScope().getProperties(parameter.getNameAsName());
+          return getBindingContext().get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,parameter);
+        }
+      }
+      return super.visitParameter(parameter,data);
+    }
     @Override public DeclarationDescriptor visitProperty(    JetProperty property,    Void data){
       JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(property);
       scopeForDeclaration.getProperties(property.getNameAsName());
       return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,property);
     }
     @Override public DeclarationDescriptor visitJetElement(    JetElement element,    Void data){
-      throw new IllegalArgumentException("Unsupported declaration type: " + element);
+      throw new IllegalArgumentException("Unsupported declaration type: " + element + " "+ element.getText());
     }
   }
 ,null);
