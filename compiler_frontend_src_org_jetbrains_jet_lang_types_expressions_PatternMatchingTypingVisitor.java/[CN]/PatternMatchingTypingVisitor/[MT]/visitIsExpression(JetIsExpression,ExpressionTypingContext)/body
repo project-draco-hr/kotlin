@@ -1,14 +1,15 @@
 {
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
   JetExpression leftHandSide=expression.getLeftHandSide();
-  JetType knownType=facade.safeGetType(leftHandSide,context.replaceScope(context.scope));
+  JetType knownType=facade.safeGetType(leftHandSide,context.replaceScope(context.scope)).getType();
   JetPattern pattern=expression.getPattern();
+  DataFlowInfo newDataFlowInfo=context.dataFlowInfo;
   if (pattern != null) {
     WritableScopeImpl scopeToExtend=newWritableScopeImpl(context,"Scope extended in 'is'");
     DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(leftHandSide,knownType,context.trace.getBindingContext());
-    DataFlowInfo newDataFlowInfo=checkPatternType(pattern,knownType,false,scopeToExtend,context,dataFlowValue);
+    newDataFlowInfo=checkPatternType(pattern,knownType,false,scopeToExtend,context,dataFlowValue);
     context.patternsToDataFlowInfo.put(pattern,newDataFlowInfo);
     context.patternsToBoundVariableLists.put(pattern,scopeToExtend.getDeclaredVariables());
   }
-  return DataFlowUtils.checkType(JetStandardLibrary.getInstance().getBooleanType(),expression,contextWithExpectedType);
+  return DataFlowUtils.checkType(JetStandardLibrary.getInstance().getBooleanType(),expression,contextWithExpectedType,newDataFlowInfo);
 }

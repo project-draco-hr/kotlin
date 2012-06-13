@@ -39,14 +39,14 @@
     if (bodyExpression != null) {
       ExpressionTypingContext newContext=contextWithExpectedType.replaceScope(scopeToExtend).replaceDataFlowInfo(newDataFlowInfo);
       CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
-      JetType type=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext,context.trace);
+      JetType type=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext,context.trace).getType();
       if (type != null) {
         expressionTypes.add(type);
       }
     }
   }
   if (!expressionTypes.isEmpty()) {
-    return DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement);
+    return DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement,context.dataFlowInfo);
   }
-  return null;
+  return JetTypeInfo.create(null,context.dataFlowInfo);
 }

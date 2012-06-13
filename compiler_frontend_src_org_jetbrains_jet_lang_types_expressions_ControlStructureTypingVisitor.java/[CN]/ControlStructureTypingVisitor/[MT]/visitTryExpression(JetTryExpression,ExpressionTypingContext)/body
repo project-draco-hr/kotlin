@@ -13,7 +13,7 @@
       if (catchBody != null) {
         WritableScope catchScope=newWritableScopeImpl(context,"Catch scope");
         catchScope.addVariableDescriptor(variableDescriptor);
-        JetType type=facade.getType(catchBody,context.replaceScope(catchScope));
+        JetType type=facade.getType(catchBody,context.replaceScope(catchScope)).getType();
         if (type != null) {
           types.add(type);
         }
@@ -23,14 +23,14 @@
   if (finallyBlock != null) {
     facade.getType(finallyBlock.getFinalExpression(),context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE));
   }
-  JetType type=facade.getType(tryBlock,context);
+  JetType type=facade.getType(tryBlock,context).getType();
   if (type != null) {
     types.add(type);
   }
   if (types.isEmpty()) {
-    return null;
+    return JetTypeInfo.create(null,context.dataFlowInfo);
   }
  else {
-    return CommonSupertypes.commonSupertype(types);
+    return JetTypeInfo.create(CommonSupertypes.commonSupertype(types),context.dataFlowInfo);
   }
 }

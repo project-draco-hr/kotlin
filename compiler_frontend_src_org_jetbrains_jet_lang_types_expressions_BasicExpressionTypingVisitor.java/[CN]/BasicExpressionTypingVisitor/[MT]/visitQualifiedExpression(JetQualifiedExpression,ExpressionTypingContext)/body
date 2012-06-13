@@ -2,8 +2,9 @@
   JetExpression selectorExpression=expression.getSelectorExpression();
   JetExpression receiverExpression=expression.getReceiverExpression();
   ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE);
-  JetType receiverType=facade.getType(receiverExpression,contextWithNoExpectedType.replaceNamespacesAllowed(true));
-  if (selectorExpression == null)   return null;
+  JetTypeInfo receiverTypeInfo=facade.getType(receiverExpression,contextWithNoExpectedType.replaceNamespacesAllowed(true));
+  JetType receiverType=receiverTypeInfo.getType();
+  if (selectorExpression == null)   return JetTypeInfo.create(null,context.dataFlowInfo);
   if (receiverType == null)   receiverType=ErrorUtils.createErrorType("Type for " + expression.getText());
   if (selectorExpression instanceof JetSimpleNameExpression) {
     propagateConstantValues(expression,context,(JetSimpleNameExpression)selectorExpression);
@@ -20,5 +21,5 @@
   if (result != null) {
     context.trace.record(BindingContext.EXPRESSION_TYPE,selectorExpression,result);
   }
-  return DataFlowUtils.checkType(result,expression,context);
+  return DataFlowUtils.checkType(result,expression,context,receiverTypeInfo.getDataFlowInfo());
 }
