@@ -4,7 +4,12 @@
     MutableClassDescriptor classDescriptor=entry.getValue();
     ConstructorDescriptor unsubstitutedPrimaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
     if (unsubstitutedPrimaryConstructor != null) {
-      checkDefaultParameterValues(klass.getPrimaryConstructorParameters(),unsubstitutedPrimaryConstructor.getValueParameters(),classDescriptor.getScopeForInitializers());
+      WritableScope parameterScope=new WritableScopeImpl(classDescriptor.getScopeForSupertypeResolution(),unsubstitutedPrimaryConstructor,RedeclarationHandler.DO_NOTHING,"Scope with value parameters of a constructor");
+      for (      ValueParameterDescriptor valueParameterDescriptor : unsubstitutedPrimaryConstructor.getValueParameters()) {
+        parameterScope.addVariableDescriptor(valueParameterDescriptor);
+      }
+      parameterScope.changeLockLevel(WritableScope.LockLevel.READING);
+      checkDefaultParameterValues(klass.getPrimaryConstructorParameters(),unsubstitutedPrimaryConstructor.getValueParameters(),parameterScope);
     }
   }
 }
