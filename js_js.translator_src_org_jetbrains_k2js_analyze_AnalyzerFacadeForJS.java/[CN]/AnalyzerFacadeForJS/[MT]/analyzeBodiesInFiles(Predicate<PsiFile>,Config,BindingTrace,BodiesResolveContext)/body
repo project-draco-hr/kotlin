@@ -1,14 +1,4 @@
 {
-  Project project=config.getProject();
   Predicate<PsiFile> completely=Predicates.and(notLibFiles(config.getLibFiles()),filesToAnalyzeCompletely);
-  TopDownAnalysisParameters topDownAnalysisParameters=new TopDownAnalysisParameters(completely,false,false,Collections.<AnalyzerScriptParameter>emptyList());
-  InjectorForBodyResolve injector=new InjectorForBodyResolve(project,topDownAnalysisParameters,new ObservableBindingTrace(traceContext));
-  try {
-    bodiesResolveContext.setTopDownAnalysisParameters(topDownAnalysisParameters);
-    injector.getBodyResolver().resolveBodies(bodiesResolveContext);
-    return AnalyzeExhaust.success(traceContext.getBindingContext(),JetStandardLibrary.getInstance());
-  }
-  finally {
-    injector.destroy();
-  }
+  return AnalyzerFacadeForEverything.analyzeBodiesInFilesWithJavaIntegration(config.getProject(),Collections.<AnalyzerScriptParameter>emptyList(),completely,traceContext,bodiesResolveContext);
 }
