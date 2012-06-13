@@ -72,11 +72,11 @@
       result=booleanType;
     }
  else     if (operationType == JetTokens.ANDAND || operationType == JetTokens.OROR) {
-      JetType leftType=facade.getType(left,context.replaceScope(context.scope)).getType();
+      JetType leftType=facade.getTypeInfo(left,context.replaceScope(context.scope)).getType();
       WritableScopeImpl leftScope=newWritableScopeImpl(context,"Left scope of && or ||");
       DataFlowInfo flowInfoLeft=DataFlowUtils.extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,leftScope,context);
       WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl(context,"Right scope of && or ||");
-      JetType rightType=right == null ? null : facade.getType(right,context.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope)).getType();
+      JetType rightType=right == null ? null : facade.getTypeInfo(right,context.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope)).getType();
       if (leftType != null && !isBoolean(leftType)) {
         context.trace.report(TYPE_MISMATCH.on(left,booleanType,leftType));
       }
@@ -86,8 +86,8 @@
       result=booleanType;
     }
  else     if (operationType == JetTokens.ELVIS) {
-      JetType leftType=facade.getType(left,context.replaceScope(context.scope)).getType();
-      JetType rightType=right == null ? null : facade.getType(right,contextWithExpectedType.replaceScope(context.scope)).getType();
+      JetType leftType=facade.getTypeInfo(left,context.replaceScope(context.scope)).getType();
+      JetType rightType=right == null ? null : facade.getTypeInfo(right,contextWithExpectedType.replaceScope(context.scope)).getType();
       if (leftType != null) {
         if (!leftType.isNullable()) {
           context.trace.report(USELESS_ELVIS.on(left,leftType));
