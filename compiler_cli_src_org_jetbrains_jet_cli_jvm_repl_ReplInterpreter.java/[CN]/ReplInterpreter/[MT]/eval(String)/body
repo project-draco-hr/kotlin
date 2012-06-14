@@ -4,10 +4,17 @@
   LightVirtualFile virtualFile=new LightVirtualFile("line" + lineNumber + ".ktscript",JetLanguage.INSTANCE,line);
   virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
   JetFile psiFile=(JetFile)((PsiFileFactoryImpl)PsiFileFactory.getInstance(jetCoreEnvironment.getProject())).trySetupPsiForFile(virtualFile,JetLanguage.INSTANCE,true,false);
-  AnalyzingUtils.checkForSyntacticErrors(psiFile);
+  MessageCollectorToString errorCollector=new MessageCollectorToString();
+  boolean hasErrors=AnalyzerWithCompilerReport.reportSyntaxErrors(psiFile,errorCollector);
+  if (hasErrors) {
+    return LineResult.error(errorCollector.getString());
+  }
   injector.getTopDownAnalyzer().prepareForTheNextReplLine();
   psiFile.getScript().putUserData(ScriptHeaderResolver.PRIORITY_KEY,lineNumber);
-  ScriptDescriptor scriptDescriptor=doAnalyze(psiFile);
+  ScriptDescriptor scriptDescriptor=doAnalyze(psiFile,errorCollector);
+  if (scriptDescriptor == null) {
+    return LineResult.error(errorCollector.getString());
+  }
   Progress backendProgress=new Progress(){
     @Override public void log(    String message){
     }
@@ -31,12 +38,18 @@
       constructorArgs[i]=earlierLines.get(i).getScriptInstance();
     }
     Constructor<?> scriptInstanceConstructor=scriptClass.getConstructor(constructorParams);
-    Object scriptInstance=scriptInstanceConstructor.newInstance(constructorArgs);
+    Object scriptInstance;
+    try {
+      scriptInstance=scriptInstanceConstructor.newInstance(constructorArgs);
+    }
+ catch (    Throwable e) {
+      return LineResult.error(Throwables.getStackTraceAsString(e));
+    }
     Field rvField=scriptClass.getDeclaredField("rv");
     rvField.setAccessible(true);
     Object rv=rvField.get(scriptInstance);
     earlierLines.add(new EarlierLine(line,scriptDescriptor,scriptClass,scriptInstance,scriptClassName));
-    return new LineResult(rv,scriptDescriptor.getReturnType().equals(JetStandardClasses.getUnitType()));
+    return LineResult.successful(rv,scriptDescriptor.getReturnType().equals(JetStandardClasses.getUnitType()));
   }
  catch (  Throwable e) {
     PrintWriter writer=new PrintWriter(System.err);

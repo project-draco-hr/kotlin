@@ -4,9 +4,16 @@
   ReplSessionTestFile file=ReplSessionTestFile.load(new File("compiler/testData/repl/" + relativePath));
   for (  Pair<String,String> t : file.getLines()) {
     String code=t.first;
-    String expected=t.second;
-    Object actual=repl.eval(code).getValue();
-    String actualString=actual != null ? actual.toString() : "null";
+    String expected=t.second.replaceFirst("\r?\n$","");
+    ReplInterpreter.LineResult lineResult=repl.eval(code);
+    Object actual;
+    if (lineResult.isSuccessful()) {
+      actual=lineResult.getValue();
+    }
+ else {
+      actual=lineResult.getErrorText();
+    }
+    String actualString=(actual != null ? actual.toString() : "null").replaceFirst("\r?\n$","");
     Assert.assertEquals("after evaluation of: " + code,expected,actualString);
   }
 }

@@ -1,0 +1,15 @@
+{
+  if (!diagnostic.isValid())   return false;
+  DiagnosticUtils.LineAndColumn lineAndColumn=DiagnosticUtils.getLineAndColumn(diagnostic);
+  VirtualFile virtualFile=diagnostic.getPsiFile().getVirtualFile();
+  String path=virtualFile == null ? null : virtualFile.getPath();
+  String render;
+  if (diagnostic.getFactory() == SYNTAX_ERROR_FACTORY) {
+    render=((SyntaxErrorDiagnostic)diagnostic).message;
+  }
+ else {
+    render=DefaultErrorMessages.RENDERER.render(diagnostic);
+  }
+  messageCollector.report(convertSeverity(diagnostic.getSeverity()),render,CompilerMessageLocation.create(path,lineAndColumn.getLine(),lineAndColumn.getColumn()));
+  return diagnostic.getSeverity() == Severity.ERROR;
+}
