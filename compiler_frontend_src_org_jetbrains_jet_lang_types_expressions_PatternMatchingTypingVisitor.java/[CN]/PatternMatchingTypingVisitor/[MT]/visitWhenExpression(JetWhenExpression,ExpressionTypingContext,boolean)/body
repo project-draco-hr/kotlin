@@ -4,6 +4,7 @@
   final JetType subjectType=subjectExpression != null ? context.expressionTypingServices.safeGetType(context.scope,subjectExpression,TypeUtils.NO_EXPECTED_TYPE,context.dataFlowInfo,context.trace) : ErrorUtils.createErrorType("Unknown type");
   final DataFlowValue variableDescriptor=subjectExpression != null ? DataFlowValueFactory.INSTANCE.createDataFlowValue(subjectExpression,subjectType,context.trace.getBindingContext()) : DataFlowValue.NULL;
   Set<JetType> expressionTypes=Sets.newHashSet();
+  DataFlowInfo commonDataFlowInfo=null;
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
     JetWhenCondition[] conditions=whenEntry.getConditions();
     DataFlowInfo newDataFlowInfo;
@@ -39,14 +40,24 @@
     if (bodyExpression != null) {
       ExpressionTypingContext newContext=contextWithExpectedType.replaceScope(scopeToExtend).replaceDataFlowInfo(newDataFlowInfo);
       CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
-      JetType type=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext,context.trace).getType();
+      JetTypeInfo typeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext,context.trace);
+      JetType type=typeInfo.getType();
       if (type != null) {
         expressionTypes.add(type);
       }
+      if (commonDataFlowInfo == null) {
+        commonDataFlowInfo=typeInfo.getDataFlowInfo();
+      }
+ else {
+        commonDataFlowInfo=commonDataFlowInfo.or(typeInfo.getDataFlowInfo());
+      }
     }
   }
-  if (!expressionTypes.isEmpty()) {
-    return DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement,context.dataFlowInfo);
+  if (commonDataFlowInfo == null) {
+    commonDataFlowInfo=context.dataFlowInfo;
   }
-  return JetTypeInfo.create(null,context.dataFlowInfo);
+  if (!expressionTypes.isEmpty()) {
+    return DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement,commonDataFlowInfo);
+  }
+  return JetTypeInfo.create(null,commonDataFlowInfo);
 }
