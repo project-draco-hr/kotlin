@@ -93,14 +93,22 @@ class GroupingValue {
  else {
       isVar=members.setter != null;
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal),resolveVisibilityFromPsiModifiers(anyMember.getMember().psiMember),isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
+    Visibility visibility=resolveVisibility(anyMember.getMember().psiMember,null);
+    if (members.getter.getMember() instanceof PsiMethodWrapper) {
+      visibility=resolveVisibility(anyMember.getMember().psiMember,((PsiMethodWrapper)members.getter.getMember()).getJetMethod());
+    }
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal),visibility,isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
-      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,resolveAnnotations(members.getter.getMember().psiMember),Modality.OPEN,Visibilities.PUBLIC,true,false,CallableMemberDescriptor.Kind.DECLARATION);
+      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,resolveAnnotations(members.getter.getMember().psiMember),Modality.OPEN,visibility,true,false,CallableMemberDescriptor.Kind.DECLARATION);
     }
     if (members.setter != null) {
-      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,resolveAnnotations(members.setter.getMember().psiMember),Modality.OPEN,Visibilities.PUBLIC,true,false,CallableMemberDescriptor.Kind.DECLARATION);
+      Visibility setterVisibility=resolveVisibility(members.setter.getMember().psiMember,null);
+      if (members.setter.getMember() instanceof PsiMethodWrapper) {
+        setterVisibility=resolveVisibility(members.setter.getMember().psiMember,((PsiMethodWrapper)members.setter.getMember()).getJetMethod());
+      }
+      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,resolveAnnotations(members.setter.getMember().psiMember),Modality.OPEN,setterVisibility,true,false,CallableMemberDescriptor.Kind.DECLARATION);
     }
     propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
     List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
