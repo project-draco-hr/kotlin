@@ -1,0 +1,67 @@
+{
+  InjectorForTopDownAnalyzerForJvm injectorForTopDownAnalyzer=getEagerInjectorForTopDownAnalyzer();
+  JetFile psiFile=JetPsiFactory.createFile(project,FileUtil.loadFile(new File(testFile),true));
+  Collection<JetFile> files=Lists.newArrayList(psiFile);
+  ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
+  final ResolveSession resolveSession=new ResolveSession(project,lazyModule,injectorForTopDownAnalyzer.getJavaBridgeConfiguration(),new FileBasedDeclarationProviderFactory(files));
+  final List<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
+  psiFile.accept(new JetVisitorVoid(){
+    @Override public void visitJetFile(    JetFile file){
+      String qualifiedName=file.getNamespaceHeader().getQualifiedName();
+      if (!qualifiedName.isEmpty()) {
+        NamespaceDescriptor packageDescriptor=resolveSession.getPackageDescriptorByFqName(new FqName(qualifiedName));
+        descriptors.add(packageDescriptor);
+      }
+      file.acceptChildren(this);
+    }
+    @Override public void visitClassObject(    JetClassObject classObject){
+      classObject.acceptChildren(this);
+    }
+    @Override public void visitParameter(    JetParameter parameter){
+      PsiElement declaringElement=parameter.getParent().getParent();
+      if (declaringElement instanceof JetFunctionType) {
+        return;
+      }
+      if (declaringElement instanceof JetNamedFunction) {
+        JetNamedFunction jetNamedFunction=(JetNamedFunction)declaringElement;
+        FunctionDescriptor functionDescriptor=(FunctionDescriptor)resolveSession.resolveToDescriptor(jetNamedFunction);
+        for (        ValueParameterDescriptor valueParameterDescriptor : functionDescriptor.getValueParameters()) {
+          if (valueParameterDescriptor.getName().equals(parameter.getNameAsName())) {
+            descriptors.add(valueParameterDescriptor);
+          }
+        }
+      }
+ else {
+        super.visitParameter(parameter);
+      }
+    }
+    @Override public void visitPropertyAccessor(    JetPropertyAccessor accessor){
+      JetProperty parent=(JetProperty)accessor.getParent();
+      PropertyDescriptor propertyDescriptor=(PropertyDescriptor)resolveSession.resolveToDescriptor(parent);
+      if (accessor.isGetter()) {
+        descriptors.add(propertyDescriptor.getGetter());
+      }
+ else {
+        descriptors.add(propertyDescriptor.getSetter());
+      }
+    }
+    @Override public void visitDeclaration(    JetDeclaration element){
+      DeclarationDescriptor descriptor=resolveSession.resolveToDescriptor(element);
+      descriptors.add(descriptor);
+      element.acceptChildren(this);
+    }
+    @Override public void visitJetElement(    JetElement element){
+      element.acceptChildren(this);
+    }
+  }
+);
+  StringBuilder renderedDescriptors=new StringBuilder();
+  for (  DeclarationDescriptor descriptor : descriptors) {
+    if (renderedDescriptors.length() != 0) {
+      renderedDescriptors.append("\n");
+    }
+    renderedDescriptors.append(DescriptorRenderer.TEXT.render(descriptor));
+  }
+  Document document=new DocumentImpl(psiFile.getText());
+  assertEquals(JetTestUtils.getLastCommentedLines(document),renderedDescriptors.toString());
+}
