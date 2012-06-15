@@ -12,7 +12,7 @@
       context.trace.record(BindingContext.BLOCK,function);
     }
  else {
-      facade.getType(body,context.replaceScope(context.scope));
+      facade.getTypeInfo(body,context.replaceScope(context.scope));
     }
   }
  else   if (body != null) {
@@ -29,8 +29,12 @@
   }
   JetExpression condition=expression.getCondition();
   checkCondition(conditionScope,condition,context);
+  DataFlowInfo dataFlowInfo;
   if (!containsBreak(expression,context)) {
-    facade.setResultingDataFlowInfo(DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context));
+    dataFlowInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,null,context);
   }
-  return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType);
+ else {
+    dataFlowInfo=context.dataFlowInfo;
+  }
+  return DataFlowUtils.checkType(JetStandardClasses.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
 }
