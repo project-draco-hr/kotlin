@@ -1,15 +1,16 @@
 {
-  this.declarationProvider=memberDeclarationProvider;
   this.resolveSession=resolveSession;
+  this.originalClassInfo=classLikeInfo;
+  JetClassLikeInfo classLikeInfoForMembers=classLikeInfo.getClassKind() != ClassKind.ENUM_CLASS ? classLikeInfo : noEnumEntries(classLikeInfo);
+  this.declarationProvider=resolveSession.getDeclarationProviderFactory().getClassMemberDeclarationProvider(classLikeInfoForMembers);
   this.name=name;
   this.containingDeclaration=containingDeclaration;
-  this.unsubstitutedMemberScope=new LazyClassMemberScope(resolveSession,memberDeclarationProvider,this);
+  this.unsubstitutedMemberScope=new LazyClassMemberScope(resolveSession,declarationProvider,this);
   this.unsubstitutedInnerClassesScope=new InnerClassesScopeWrapper(unsubstitutedMemberScope);
   this.typeConstructor=new LazyClassTypeConstructor();
-  JetClassLikeInfo classInfo=memberDeclarationProvider.getOwnerInfo();
-  this.kind=classInfo.getClassKind();
+  this.kind=classLikeInfo.getClassKind();
   Modality defaultModality=kind == ClassKind.TRAIT ? Modality.ABSTRACT : Modality.FINAL;
-  JetModifierList modifierList=classInfo.getModifierList();
+  JetModifierList modifierList=classLikeInfo.getModifierList();
   this.modality=DescriptorResolver.resolveModalityFromModifiers(modifierList,defaultModality);
   this.visibility=DescriptorResolver.resolveVisibilityFromModifiers(modifierList);
 }

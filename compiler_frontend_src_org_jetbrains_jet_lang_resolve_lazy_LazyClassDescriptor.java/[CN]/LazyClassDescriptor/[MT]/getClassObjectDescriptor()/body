@@ -1,19 +1,21 @@
 {
   if (!classObjectDescriptorResolved) {
     JetClassObject classObject=declarationProvider.getOwnerInfo().getClassObject();
-    ClassMemberDeclarationProvider classObjectMemberProvider=null;
+    boolean isEnum=getKind() == ClassKind.ENUM_CLASS;
+    JetClassLikeInfo classObjectInfo=null;
     if (classObject != null) {
       JetObjectDeclaration objectDeclaration=classObject.getObjectDeclaration();
       if (objectDeclaration != null) {
-        classObjectMemberProvider=resolveSession.getDeclarationProviderFactory().getClassMemberDeclarationProvider(objectDeclaration);
+        classObjectInfo=JetClassInfoUtil.createClassLikeInfo(objectDeclaration);
       }
     }
- else     if (getKind() == ClassKind.ENUM_CLASS) {
-      Collection<JetDeclaration> enumEntries=Collections2.filter(declarationProvider.getAllDeclarations(),Predicates.instanceOf(JetEnumEntry.class));
-      classObjectMemberProvider=new PsiBasedClassMemberDeclarationProvider(null);
+ else {
+      if (isEnum) {
+        classObjectInfo=onlyEnumEntries(originalClassInfo);
+      }
     }
-    if (classObjectMemberProvider != null) {
-      classObjectDescriptor=new LazyClassDescriptor(resolveSession,this,JetPsiUtil.NO_NAME_PROVIDED,classObjectMemberProvider);
+    if (classObjectInfo != null) {
+      classObjectDescriptor=new LazyClassDescriptor(resolveSession,this,isEnum ? Name.special("<class-object-for-" + getName() + ">") : JetPsiUtil.NO_NAME_PROVIDED,classObjectInfo);
     }
     classObjectDescriptorResolved=true;
   }
