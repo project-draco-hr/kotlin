@@ -1,12 +1,19 @@
 {
   if (!classObjectDescriptorResolved) {
-    JetClassObject classObject=declarationProvider.getClassObject();
+    JetClassObject classObject=declarationProvider.getOwnerInfo().getClassObject();
+    ClassMemberDeclarationProvider classObjectMemberProvider=null;
     if (classObject != null) {
       JetObjectDeclaration objectDeclaration=classObject.getObjectDeclaration();
       if (objectDeclaration != null) {
-        ClassMemberDeclarationProvider classMemberDeclarationProvider=resolveSession.getDeclarationProviderFactory().getClassMemberDeclarationProvider(objectDeclaration);
-        classObjectDescriptor=new LazyClassDescriptor(resolveSession,this,JetPsiUtil.NO_NAME_PROVIDED,classMemberDeclarationProvider);
+        classObjectMemberProvider=resolveSession.getDeclarationProviderFactory().getClassMemberDeclarationProvider(objectDeclaration);
       }
+    }
+ else     if (getKind() == ClassKind.ENUM_CLASS) {
+      Collection<JetDeclaration> enumEntries=Collections2.filter(declarationProvider.getAllDeclarations(),Predicates.instanceOf(JetEnumEntry.class));
+      classObjectMemberProvider=new PsiBasedClassMemberDeclarationProvider(null);
+    }
+    if (classObjectMemberProvider != null) {
+      classObjectDescriptor=new LazyClassDescriptor(resolveSession,this,JetPsiUtil.NO_NAME_PROVIDED,classObjectMemberProvider);
     }
     classObjectDescriptorResolved=true;
   }
