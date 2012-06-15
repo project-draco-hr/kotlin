@@ -1,2 +1,45 @@
 {
+  FqName fqName=new FqName(psiClass.getQualifiedName());
+  if (classDescriptorCache.containsKey(fqName)) {
+    throw new IllegalStateException(psiClass.getQualifiedName());
+  }
+  checkPsiClassIsNotJet(psiClass);
+  Name name=Name.identifier(psiClass.getName());
+  ClassKind kind=psiClass.isInterface() ? (psiClass.isAnnotationType() ? ClassKind.ANNOTATION_CLASS : ClassKind.TRAIT) : ClassKind.CLASS;
+  ClassOrNamespaceDescriptor containingDeclaration=resolveParentDescriptor(psiClass);
+  ResolverBinaryClassData classData=classDescriptorCache.get(fqName);
+  if (classData != null) {
+    return classData;
+  }
+  classData=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,psiClass,fqName,this).getResolverBinaryClassData();
+  classDescriptorCache.put(fqName,classData);
+  classData.classDescriptor.setName(name);
+  classData.classDescriptor.setAnnotations(resolveAnnotations(psiClass,taskList));
+  List<JetType> supertypes=new ArrayList<JetType>();
+  classData.typeParameters=createUninitializedClassTypeParameters(psiClass,classData);
+  List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>();
+  for (  TypeParameterDescriptorInitialization typeParameter : classData.typeParameters) {
+    typeParameters.add(typeParameter.descriptor);
+  }
+  classData.classDescriptor.setTypeParameterDescriptors(typeParameters);
+  classData.classDescriptor.setSupertypes(supertypes);
+  classData.classDescriptor.setVisibility(resolveVisibilityFromPsiModifiers(psiClass));
+  Modality modality;
+  if (classData.classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
+    modality=Modality.FINAL;
+  }
+ else {
+    modality=Modality.convertFromFlags(psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface(),!psiClass.hasModifierProperty(PsiModifier.FINAL));
+  }
+  classData.classDescriptor.setModality(modality);
+  classData.classDescriptor.createTypeConstructor();
+  classData.classDescriptor.setScopeForMemberLookup(new JavaClassMembersScope(semanticServices,classData));
+  initializeTypeParameters(classData.typeParameters,classData.classDescriptor,"class " + psiClass.getQualifiedName());
+  supertypes.addAll(getSupertypes(new PsiClassWrapper(psiClass),classData,classData.getTypeParameters()));
+  MutableClassDescriptorLite classObject=createClassObjectDescriptor(classData.classDescriptor,psiClass);
+  if (classObject != null) {
+    classData.classDescriptor.getBuilder().setClassObjectDescriptor(classObject);
+  }
+  trace.record(BindingContext.CLASS,psiClass,classData.classDescriptor);
+  return classData;
 }
