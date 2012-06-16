@@ -1,11 +1,16 @@
 {
-  IntrinsicMethod intrinsicMethod=myMethods.get(descriptor.getOriginal());
+  IntrinsicMethod intrinsicMethod=intrinsicsMap.getIntrinsic(descriptor);
   if (intrinsicMethod != null) {
     return intrinsicMethod;
   }
-  intrinsicMethod=intrinsicsMap.getIntrinsic(descriptor);
-  if (intrinsicMethod != null) {
-    return intrinsicMethod;
+  if (descriptor instanceof SimpleFunctionDescriptor) {
+    SimpleFunctionDescriptor functionDescriptor=(SimpleFunctionDescriptor)descriptor;
+    if (!functionDescriptor.getReceiverParameter().exists()) {
+      FqNameUnsafe ownerFqName=DescriptorUtils.getFQName(descriptor.getContainingDeclaration());
+      if (ownerFqName.equalsTo("jet.String")) {
+        return new PsiMethodCall(functionDescriptor);
+      }
+    }
   }
   List<AnnotationDescriptor> annotations=descriptor.getAnnotations();
   if (annotations != null) {
