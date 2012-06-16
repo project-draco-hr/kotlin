@@ -1,5 +1,12 @@
 {
-  Type known=knowTypes.get(jetType);
+  Type known=null;
+  ClassifierDescriptor classifier=jetType.getConstructor().getDeclarationDescriptor();
+  if (compilerSpecialMode != CompilerSpecialMode.BUILTINS) {
+    if (classifier instanceof ClassDescriptor) {
+      KnownTypeKey key=new KnownTypeKey(DescriptorUtils.getFQName(classifier),jetType.isNullable());
+      known=knowTypes.get(key);
+    }
+  }
   if (known != null) {
     if (kind == MapTypeMode.VALUE) {
       return mapKnownAsmType(jetType,known,signatureVisitor,false);
@@ -37,7 +44,7 @@
     checkValidType(asmType);
     return asmType;
   }
-  if (standardLibrary.getArray().equals(descriptor)) {
+  if (descriptor instanceof ClassDescriptor && JetStandardLibraryNames.ARRAY.is((ClassDescriptor)descriptor) && compilerSpecialMode != CompilerSpecialMode.BUILTINS) {
     if (jetType.getArguments().size() != 1) {
       throw new UnsupportedOperationException("arrays must have one type argument");
     }
@@ -67,7 +74,7 @@
   if (descriptor instanceof ClassDescriptor) {
     Type asmType;
     boolean forceReal;
-    if (standardLibrary.getComparable().equals(descriptor)) {
+    if (JetStandardLibraryNames.COMPARABLE.is((ClassDescriptor)descriptor) && compilerSpecialMode != CompilerSpecialMode.BUILTINS) {
       if (jetType.getArguments().size() != 1) {
         throw new UnsupportedOperationException("Comparable must have one type argument");
       }
