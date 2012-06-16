@@ -1,0 +1,27 @@
+{
+  getResolverScopeData(scopeData);
+  Name exact=predicate.getExact();
+  if (predicate.isAll()) {
+    return scopeData.namedMembersMap.entrySet();
+  }
+ else   if (exact != null) {
+    NamedMembers namedMembers=scopeData.namedMembersMap.get(exact);
+    if (namedMembers != null) {
+      return Collections.<Map.Entry<Name,NamedMembers>>singletonList(new AbstractMap.SimpleEntry<Name,NamedMembers>(exact,namedMembers));
+    }
+ else {
+      return null;
+    }
+  }
+ else {
+    Collection<Map.Entry<Name,NamedMembers>> r=Lists.newArrayList();
+    for (    Map.Entry<Name,NamedMembers> e : scopeData.namedMembersMap.entrySet()) {
+      Name methodName=e.getKey();
+      NamedMembers namedMembers=e.getValue();
+      if (predicate.matches(methodName)) {
+        r.add(new AbstractMap.SimpleEntry<Name,NamedMembers>(exact,namedMembers));
+      }
+    }
+    return r;
+  }
+}
