@@ -1,0 +1,20 @@
+{
+  JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
+  if (resolutionScope != null) {
+    if (expression.getParent() instanceof JetImportDirective || expression.getParent() instanceof JetNamespaceHeader) {
+      return resolutionScope.getAllDescriptors(DescriptorPredicate.namespaces(name));
+    }
+ else {
+      Collection<DeclarationDescriptor> descriptorsSet=Sets.newHashSet();
+      ArrayList<ReceiverDescriptor> result=new ArrayList<ReceiverDescriptor>();
+      resolutionScope.getImplicitReceiversHierarchy(result);
+      for (      ReceiverDescriptor receiverDescriptor : result) {
+        JetType receiverType=receiverDescriptor.getType();
+        descriptorsSet.addAll(receiverType.getMemberScope().getAllDescriptors(DescriptorPredicate.hasName(name)));
+      }
+      descriptorsSet.addAll(resolutionScope.getAllDescriptors(DescriptorPredicate.hasName(name)));
+      return excludeNotCallableExtensions(excludePrivateDescriptors(descriptorsSet),resolutionScope,name);
+    }
+  }
+  return Collections.emptyList();
+}

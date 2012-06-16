@@ -1,0 +1,21 @@
+{
+  final Set<DeclarationDescriptor> descriptorsSet=Sets.newHashSet(descriptors);
+  final ArrayList<ReceiverDescriptor> result=new ArrayList<ReceiverDescriptor>();
+  scope.getImplicitReceiversHierarchy(result);
+  descriptorsSet.removeAll(Collections2.filter(scope.getAllDescriptors(DescriptorPredicate.extension(name)),new Predicate<DeclarationDescriptor>(){
+    @Override public boolean apply(    DeclarationDescriptor declarationDescriptor){
+      CallableDescriptor callableDescriptor=(CallableDescriptor)declarationDescriptor;
+      if (!callableDescriptor.getReceiverParameter().exists()) {
+        return false;
+      }
+      for (      ReceiverDescriptor receiverDescriptor : result) {
+        if (ExpressionTypingUtils.checkIsExtensionCallable(receiverDescriptor,callableDescriptor)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+));
+  return Lists.newArrayList(descriptorsSet);
+}
