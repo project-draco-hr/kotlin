@@ -1,9 +1,43 @@
 {
   if (allDescriptors == null) {
-    if (!predicate.includeAll()) {
-      return computeAllDescriptors(predicate);
+    allDescriptors=Sets.newHashSet();
+    if (resolverScopeData.psiClass != null) {
+      allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveMethods(resolverScopeData,NamePredicate.all()));
+      allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveFieldGroup(resolverScopeData,NamePredicate.all()));
+      if (getContainingDeclaration() instanceof JavaNamespaceDescriptor) {
+        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.classOrNamespaceDescriptor,resolverScopeData.psiClass,false));
+      }
+ else {
+        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.classOrNamespaceDescriptor,resolverScopeData.psiClass,resolverScopeData.staticMembers));
+      }
     }
-    allDescriptors=computeAllDescriptors(DescriptorPredicate.all());
+    if (resolverScopeData.psiPackage != null) {
+      boolean isKotlinNamespace=semanticServices.getKotlinNamespaceDescriptor(resolverScopeData.fqName) != null;
+      final JavaDescriptorResolver descriptorResolver=semanticServices.getDescriptorResolver();
+      for (      PsiPackage psiSubPackage : resolverScopeData.psiPackage.getSubPackages()) {
+        NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+        if (childNs != null) {
+          allDescriptors.add(childNs);
+        }
+      }
+      for (      PsiClass psiClass : resolverScopeData.psiPackage.getClasses()) {
+        if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
+          continue;
+        }
+        if (psiClass instanceof JetJavaMirrorMarker) {
+          continue;
+        }
+        if (JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
+          continue;
+        }
+        if (psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+          ClassDescriptor classDescriptor=descriptorResolver.resolveClass(new FqName(psiClass.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+          if (classDescriptor != null) {
+            allDescriptors.add(classDescriptor);
+          }
+        }
+      }
+    }
   }
   return DescriptorPredicateUtils.filter(allDescriptors,predicate);
 }
