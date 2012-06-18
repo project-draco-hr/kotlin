@@ -9,7 +9,21 @@
       boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
       context.trace.report(FUNCTION_CALL_EXPECTED.on(callExpression,callExpression,hasValueParameters));
     }
-    return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+    if (functionDescriptor == null) {
+      return JetTypeInfo.create(null,context.dataFlowInfo);
+    }
+    JetType type=functionDescriptor.getReturnType();
+    DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+    JetValueArgumentList argumentList=callExpression.getValueArgumentList();
+    if (argumentList != null) {
+      for (      JetValueArgument argument : argumentList.getArguments()) {
+        JetExpression expression=argument.getArgumentExpression();
+        if (expression != null) {
+          dataFlowInfo=dataFlowInfo.and(facade.getTypeInfo(expression,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo());
+        }
+      }
+    }
+    return JetTypeInfo.create(type,dataFlowInfo);
   }
   JetExpression calleeExpression=callExpression.getCalleeExpression();
   if (calleeExpression instanceof JetSimpleNameExpression && callExpression.getTypeArgumentList() == null) {
@@ -18,9 +32,9 @@
     if (result[0]) {
       traceForVariable.commit();
       context.trace.report(FUNCTION_EXPECTED.on((JetReferenceExpression)calleeExpression,calleeExpression,type != null ? type : ErrorUtils.createErrorType("")));
-      return null;
+      return JetTypeInfo.create(null,context.dataFlowInfo);
     }
   }
   traceForFunction.commit();
-  return null;
+  return JetTypeInfo.create(null,context.dataFlowInfo);
 }
