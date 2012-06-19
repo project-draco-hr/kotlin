@@ -9,7 +9,8 @@
   if (selectorExpression instanceof JetSimpleNameExpression) {
     propagateConstantValues(expression,context,(JetSimpleNameExpression)selectorExpression);
   }
-  JetType selectorReturnType=getSelectorReturnType(new ExpressionReceiver(receiverExpression,receiverType),expression.getOperationTokenNode(),selectorExpression,context);
+  JetTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(new ExpressionReceiver(receiverExpression,receiverType),expression.getOperationTokenNode(),selectorExpression,context);
+  JetType selectorReturnType=selectorReturnTypeInfo.getType();
   if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
     if (selectorReturnType != null && !selectorReturnType.isNullable() && !JetStandardClasses.isUnit(selectorReturnType)) {
       if (receiverType.isNullable()) {
@@ -17,9 +18,8 @@
       }
     }
   }
-  JetType result=selectorReturnType;
-  if (result != null) {
-    context.trace.record(BindingContext.EXPRESSION_TYPE,selectorExpression,result);
+  if (selectorReturnType != null) {
+    context.trace.record(BindingContext.EXPRESSION_TYPE,selectorExpression,selectorReturnType);
   }
-  return DataFlowUtils.checkType(result,expression,context,receiverTypeInfo.getDataFlowInfo());
+  return DataFlowUtils.checkType(selectorReturnType,expression,context,receiverTypeInfo.getDataFlowInfo());
 }
