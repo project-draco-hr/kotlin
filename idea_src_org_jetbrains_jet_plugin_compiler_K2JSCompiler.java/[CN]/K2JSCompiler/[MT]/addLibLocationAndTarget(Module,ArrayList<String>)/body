@@ -1,0 +1,32 @@
+{
+  Pair<String[],String> libLocationAndTarget=JsModuleDetector.getLibLocationAndTargetForProject(module);
+  StringBuilder sb=StringBuilderSpinAllocator.alloc();
+  AccessToken token=ReadAction.start();
+  try {
+    THashSet<Module> modules=new THashSet<Module>();
+    collectModuleDependencies(module,modules);
+    if (!modules.isEmpty()) {
+      VirtualFile[] files=CompilerManager.getInstance(module.getProject()).createModulesCompileScope(modules.toArray(new Module[modules.size()]),false).getFiles(JetFileType.INSTANCE,true);
+      for (      VirtualFile file : files) {
+        sb.append(file.getPath()).append(',');
+      }
+    }
+    if (libLocationAndTarget.first != null) {
+      for (      String file : libLocationAndTarget.first) {
+        sb.append(file).append(',');
+      }
+    }
+    if (sb.length() > 0) {
+      args.add("-libraryFiles");
+      args.add(sb.substring(0,sb.length() - 1));
+    }
+  }
+  finally {
+    token.finish();
+    StringBuilderSpinAllocator.dispose(sb);
+  }
+  if (libLocationAndTarget.second != null) {
+    args.add("-target");
+    args.add(libLocationAndTarget.second);
+  }
+}
