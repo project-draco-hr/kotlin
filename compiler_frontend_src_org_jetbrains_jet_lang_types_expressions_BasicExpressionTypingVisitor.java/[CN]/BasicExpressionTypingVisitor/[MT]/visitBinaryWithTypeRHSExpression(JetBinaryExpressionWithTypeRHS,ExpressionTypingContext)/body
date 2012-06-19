@@ -1,26 +1,33 @@
 {
   JetTypeReference right=expression.getRight();
   JetType result=null;
+  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
   if (right != null) {
     JetType targetType=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,right,context.trace,true);
+    boolean tryWithNoExpectedType=true;
     if (isTypeFlexible(expression.getLeft()) || expression.getOperationSign().getReferencedNameElementType() == JetTokens.COLON) {
       TemporaryBindingTrace temporaryTraceWithExpectedType=TemporaryBindingTrace.create(context.trace);
-      boolean success=checkBinaryWithTypeRHS(expression,context.replaceBindingTrace(temporaryTraceWithExpectedType).replaceExpectedType(targetType),targetType);
-      if (success) {
+      ExpressionTypingContext contextWithTemporaryTrace=context.replaceBindingTrace(temporaryTraceWithExpectedType).replaceExpectedType(targetType);
+      JetTypeInfo typeInfo=facade.getTypeInfo(expression.getLeft(),contextWithTemporaryTrace);
+      if (typeInfo.getType() != null && checkBinaryWithTypeRHS(expression,contextWithTemporaryTrace,targetType,typeInfo.getType())) {
         temporaryTraceWithExpectedType.commit();
-      }
- else {
-        checkBinaryWithTypeRHS(expression,context.replaceExpectedType(NO_EXPECTED_TYPE),targetType);
+        dataFlowInfo=typeInfo.getDataFlowInfo();
+        tryWithNoExpectedType=false;
       }
     }
- else {
-      checkBinaryWithTypeRHS(expression,context.replaceExpectedType(NO_EXPECTED_TYPE),targetType);
+    if (tryWithNoExpectedType) {
+      ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE);
+      JetTypeInfo typeInfo=facade.getTypeInfo(expression.getLeft(),contextWithNoExpectedType);
+      if (typeInfo.getType() != null) {
+        checkBinaryWithTypeRHS(expression,contextWithNoExpectedType,targetType,typeInfo.getType());
+        dataFlowInfo=typeInfo.getDataFlowInfo();
+      }
     }
     IElementType operationType=expression.getOperationSign().getReferencedNameElementType();
     result=operationType == JetTokens.AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
   }
  else {
-    facade.getTypeInfo(expression.getLeft(),context.replaceExpectedType(NO_EXPECTED_TYPE));
+    dataFlowInfo=facade.getTypeInfo(expression.getLeft(),context.replaceExpectedType(NO_EXPECTED_TYPE)).getDataFlowInfo();
   }
-  return DataFlowUtils.checkType(result,expression,context,context.dataFlowInfo);
+  return DataFlowUtils.checkType(result,expression,context,dataFlowInfo);
 }

@@ -4,7 +4,7 @@
   JetType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
   if (result[0]) {
     traceForVariable.commit();
-    return type;
+    return JetTypeInfo.create(type,context.dataFlowInfo);
   }
   Call call=CallMaker.makeCall(nameExpression,receiver,callOperationNode,nameExpression,Collections.<ValueArgument>emptyList());
   TemporaryBindingTrace traceForFunction=TemporaryBindingTrace.create(context.trace);
@@ -13,8 +13,9 @@
     traceForFunction.commit();
     boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
     context.trace.report(FUNCTION_CALL_EXPECTED.on(nameExpression,nameExpression,hasValueParameters));
-    return functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+    type=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+    return JetTypeInfo.create(type,context.dataFlowInfo);
   }
   traceForVariable.commit();
-  return null;
+  return JetTypeInfo.create(null,context.dataFlowInfo);
 }
