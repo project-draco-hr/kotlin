@@ -11,16 +11,29 @@
       }
     }
     @Override public JetType visitFunctionType(    JetFunctionType type,    Void data){
-      return visitCommonType(type);
+      return visitCommonType(type.getReceiverTypeRef() == null ? JetStandardClasses.getFunction(type.getParameters().size()) : JetStandardClasses.getReceiverFunction(type.getParameters().size()),type);
     }
     @Override public JetType visitTupleType(    JetTupleType type,    Void data){
-      return visitCommonType(type);
+      return visitCommonType(JetStandardClasses.getTuple(type.getComponentTypeRefs().size()),type);
     }
     @Override public JetType visitUserType(    JetUserType type,    Void data){
-      return visitCommonType(type);
+      JetUserType qualifier=type.getQualifier();
+      String shortName=type.getReferenceExpression().getReferencedName();
+      String longName=(qualifier == null ? "" : qualifier.getText() + ".") + shortName;
+      if (JetStandardClasses.UNIT_ALIAS.getName().equals(longName)) {
+        return visitCommonType(JetStandardClasses.getTuple(0),type);
+      }
+      return visitCommonType(longName,type);
     }
-    private JetType visitCommonType(    JetTypeElement type){
+    private JetType visitCommonType(    @NotNull ClassDescriptor classDescriptor,    @NotNull JetTypeElement type){
+      return visitCommonType(DescriptorUtils.getFQName(classDescriptor).toSafe().getFqName(),type);
+    }
+    private JetType visitCommonType(    @NotNull String expectedFqNamePostfix,    @NotNull JetTypeElement type){
       try {
+        String fqName=DescriptorUtils.getFQName(autoType.getConstructor().getDeclarationDescriptor()).toSafe().getFqName();
+        if (!fqName.endsWith(expectedFqNamePostfix)) {
+          throw new AlternativeSignatureMismatchException(String.format("Alternative signature type mismatch, expected: %s, actual: %s",expectedFqNamePostfix,fqName));
+        }
         List<TypeProjection> arguments=autoType.getArguments();
         if (arguments.size() != type.getTypeArgumentsAsTypes().size()) {
           throw new AlternativeSignatureMismatchException(String.format("'%s' type in method signature has %d type arguments, while '%s' in alternative signature has %d of them",DescriptorRenderer.TEXT.renderType(autoType),arguments.size(),type.getText(),type.getTypeArgumentsAsTypes().size()));
