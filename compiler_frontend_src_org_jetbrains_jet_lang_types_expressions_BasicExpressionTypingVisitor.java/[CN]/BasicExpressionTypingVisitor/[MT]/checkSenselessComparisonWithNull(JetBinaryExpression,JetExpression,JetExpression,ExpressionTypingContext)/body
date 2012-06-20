@@ -1,0 +1,24 @@
+{
+  JetExpression expr;
+  if (left instanceof JetConstantExpression && left.getNode().getElementType() == JetNodeTypes.NULL) {
+    expr=right;
+  }
+ else   if (right instanceof JetConstantExpression && right.getNode().getElementType() == JetNodeTypes.NULL) {
+    expr=left;
+  }
+ else   return;
+  JetSimpleNameExpression operationSign=expression.getOperationReference();
+  JetType type=facade.getTypeInfo(expr,context).getType();
+  DataFlowValue value=DataFlowValueFactory.INSTANCE.createDataFlowValue(expr,type,context.trace.getBindingContext());
+  Nullability nullability=context.dataFlowInfo.getNullability(value);
+  boolean expressionIsAlways;
+  boolean equality=operationSign.getReferencedNameElementType() == JetTokens.EQEQ || operationSign.getReferencedNameElementType() == JetTokens.EQEQEQ;
+  if (nullability == Nullability.NULL) {
+    expressionIsAlways=equality;
+  }
+ else   if (nullability == Nullability.NOT_NULL) {
+    expressionIsAlways=!equality;
+  }
+ else   return;
+  context.trace.report(SENSELESS_COMPARISON.on(expression,expression,expressionIsAlways));
+}

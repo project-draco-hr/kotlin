@@ -1,17 +1,14 @@
 {
-  JetSimpleNameExpression operationSign=expression.getOperationReference();
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
-  JetType leftType=facade.getTypeInfo(left,context.replaceScope(context.scope)).getType();
+  JetType leftType=facade.getTypeInfo(left,context).getType();
   if (leftType != null && right != null) {
-    JetType rightType=facade.getTypeInfo(right,context.replaceScope(context.scope)).getType();
+    JetType rightType=facade.getTypeInfo(right,context).getType();
     if (rightType != null) {
       if (TypeUtils.isIntersectionEmpty(leftType,rightType)) {
-        context.trace.report(EQUALITY_NOT_APPLICABLE.on(expression,operationSign,leftType,rightType));
+        context.trace.report(EQUALITY_NOT_APPLICABLE.on(expression,expression.getOperationReference(),leftType,rightType));
       }
-    }
-    if (isSenselessComparisonWithNull(leftType,right) || isSenselessComparisonWithNull(rightType,left)) {
-      context.trace.report(SENSELESS_COMPARISON.on(expression,expression,operationSign.getReferencedNameElementType() == JetTokens.EXCLEQ));
+      checkSenselessComparisonWithNull(expression,left,right,context);
     }
   }
 }
