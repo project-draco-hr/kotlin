@@ -1,12 +1,18 @@
 {
 class ErrorReportingVisitor extends AnalyzingUtils.PsiErrorElementVisitor {
     boolean hasErrors=false;
+    private <E extends PsiElement>void reportDiagnostic(    E element,    SimpleDiagnosticFactory<E> factory,    String message){
+      MyDiagnostic<?> diagnostic=new MyDiagnostic<E>(element,factory,message);
+      AnalyzerWithCompilerReport.reportDiagnostic(diagnostic,messageCollector);
+      hasErrors=true;
+    }
+    @Override public void visitIdeTemplate(    JetIdeTemplate expression){
+      String placeholderText=expression.getPlaceholderText();
+      reportDiagnostic(expression,UNRESOLVED_IDE_TEMPLATE_ERROR_FACTORY,"Unresolved IDE template" + (StringUtil.isEmpty(placeholderText) ? "" : ": " + placeholderText));
+    }
     @Override public void visitErrorElement(    PsiErrorElement element){
       String description=element.getErrorDescription();
-      String message=StringUtil.isEmpty(description) ? "Syntax error" : description;
-      Diagnostic diagnostic=new SyntaxErrorDiagnostic(element,Severity.ERROR,message);
-      reportDiagnostic(diagnostic,messageCollector);
-      hasErrors=true;
+      reportDiagnostic(element,SYNTAX_ERROR_FACTORY,StringUtil.isEmpty(description) ? "Syntax error" : description);
     }
   }
   ErrorReportingVisitor visitor=new ErrorReportingVisitor();
