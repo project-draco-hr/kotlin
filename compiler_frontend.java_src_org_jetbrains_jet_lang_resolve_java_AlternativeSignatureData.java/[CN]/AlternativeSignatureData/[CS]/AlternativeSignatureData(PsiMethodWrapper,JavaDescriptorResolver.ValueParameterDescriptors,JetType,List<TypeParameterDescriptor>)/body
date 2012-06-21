@@ -1,0 +1,18 @@
+{
+  String signature=method.getSignatureAnnotation().signature();
+  if (signature.isEmpty()) {
+    none=true;
+    return;
+  }
+  Project project=method.getPsiMethod().getProject();
+  JetNamedFunction altFunDeclaration=JetPsiFactory.createFunction(project,signature);
+  try {
+    checkForSyntaxErrors(method,altFunDeclaration);
+    altValueParameters=computeValueParameters(valueParameterDescriptors,altFunDeclaration);
+    altReturnType=computeReturnType(returnType,altFunDeclaration.getReturnTypeRef());
+    altTypeParameters=computeTypeParameters(methodTypeParameters,altFunDeclaration);
+  }
+ catch (  AlternativeSignatureMismatchException e) {
+    error=e.getMessage();
+  }
+}
