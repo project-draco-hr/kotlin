@@ -1,0 +1,20 @@
+{
+  long startNano=System.nanoTime();
+  Context context=Context.enter();
+  try {
+    Scriptable scope=context.initStandardObjects();
+    script.exec(context,scope);
+    Object jsLintObj=scope.get(functionName,scope);
+    if (jsLintObj instanceof Function) {
+      Function jsLint=(Function)jsLintObj;
+      return new FunctionWithScope(jsLint,scope);
+    }
+ else {
+      throw new RuntimeException(functionName + " is undefined or not a function.");
+    }
+  }
+  finally {
+    Context.exit();
+    LOG.info(formatMessage(startNano,functionName + " function extraction"));
+  }
+}
