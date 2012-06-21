@@ -2,7 +2,7 @@
   return alternativeTypeElement.accept(new JetVisitor<JetType,Void>(){
     @Override public JetType visitNullableType(    JetNullableType nullableType,    Void data){
       if (!autoType.isNullable()) {
-        throw new AlternativeSignatureMismatchException(String.format("Auto type '%s' is not-null, while type in alternative signature is nullable: '%s'",DescriptorRenderer.TEXT.renderType(autoType),nullableType.getText()));
+        fail("Auto type '%s' is not-null, while type in alternative signature is nullable: '%s'",DescriptorRenderer.TEXT.renderType(autoType),nullableType.getText());
       }
       return TypeUtils.makeNullable(computeType(nullableType.getInnerType(),autoType));
     }
@@ -27,11 +27,11 @@
     private JetType visitCommonType(    @NotNull String expectedFqNamePostfix,    @NotNull JetTypeElement type){
       String fqName=DescriptorUtils.getFQName(autoType.getConstructor().getDeclarationDescriptor()).toSafe().getFqName();
       if (!fqName.endsWith(expectedFqNamePostfix)) {
-        throw new AlternativeSignatureMismatchException(String.format("Alternative signature type mismatch, expected: %s, actual: %s",expectedFqNamePostfix,fqName));
+        fail("Alternative signature type mismatch, expected: %s, actual: %s",expectedFqNamePostfix,fqName);
       }
       List<TypeProjection> arguments=autoType.getArguments();
       if (arguments.size() != type.getTypeArgumentsAsTypes().size()) {
-        throw new AlternativeSignatureMismatchException(String.format("'%s' type in method signature has %d type arguments, while '%s' in alternative signature has %d of them",DescriptorRenderer.TEXT.renderType(autoType),arguments.size(),type.getText(),type.getTypeArgumentsAsTypes().size()));
+        fail("'%s' type in method signature has %d type arguments, while '%s' in alternative signature has %d of them",DescriptorRenderer.TEXT.renderType(autoType),arguments.size(),type.getText(),type.getTypeArgumentsAsTypes().size());
       }
       List<TypeProjection> altArguments=new ArrayList<TypeProjection>();
       for (int i=0, size=arguments.size(); i < size; i++) {
@@ -50,11 +50,11 @@ case OUT:
         altVariance=Variance.OUT_VARIANCE;
       break;
 case STAR:
-    throw new AlternativeSignatureMismatchException("Star projection is not available in alternative signatures");
+    fail("Star projection is not available in alternative signatures");
 default :
 }
 if (altVariance != variance) {
-  throw new AlternativeSignatureMismatchException(String.format("Variance mismatch, actual: %s, in alternative signature: %s",variance,altVariance));
+  fail("Variance mismatch, actual: %s, in alternative signature: %s",variance,altVariance);
 }
 }
 altArguments.add(new TypeProjection(variance,alternativeType));
