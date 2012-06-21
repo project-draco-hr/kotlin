@@ -44,14 +44,21 @@
       JetExpression expression=pattern.getExpression();
       if (expression == null)       return;
       JetType type=facade.getTypeInfo(expression,context.replaceScope(scopeToExtend)).getType();
+      if (type == null)       return;
       if (conditionExpected) {
         JetType booleanType=JetStandardLibrary.getInstance().getBooleanType();
-        if (type != null && !JetTypeChecker.INSTANCE.equalTypes(booleanType,type)) {
+        if (!JetTypeChecker.INSTANCE.equalTypes(booleanType,type)) {
           context.trace.report(TYPE_MISMATCH_IN_CONDITION.on(pattern,type));
         }
         return;
       }
       checkTypeCompatibility(type,subjectType,pattern);
+      DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+      DataFlowValue expressionDataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,type,context.trace.getBindingContext());
+      for (      DataFlowValue subjectVariable : subjectVariables) {
+        dataFlowInfo=dataFlowInfo.equate(subjectVariable,expressionDataFlowValue);
+      }
+      result.set(dataFlowInfo);
     }
     @Override public void visitBindingPattern(    JetBindingPattern pattern){
       JetProperty variableDeclaration=pattern.getVariableDeclaration();
