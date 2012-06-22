@@ -4,7 +4,7 @@
     @Override public void run(){
       final JetFile file=(JetFile)sourcePosition.getFile();
       JetTypeMapper typeMapper=prepareTypeMapper(file);
-      PsiElement psiElement=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetClassOrObject.class,JetFunctionLiteralExpression.class);
+      PsiElement psiElement=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetClassOrObject.class,JetFunctionLiteralExpression.class,JetNamedFunction.class);
       if (psiElement == null) {
         JetFile namespace=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetFile.class);
         if (namespace != null) {
@@ -15,7 +15,31 @@
         }
       }
  else {
-        if (psiElement instanceof JetClassOrObject)         names.addAll(typeMapper.allJvmNames((JetClassOrObject)psiElement));
+        if (psiElement instanceof JetClassOrObject) {
+          names.addAll(typeMapper.allJvmNames((JetClassOrObject)psiElement));
+        }
+ else         if (psiElement instanceof JetNamedFunction) {
+          if (psiElement.getParent() instanceof JetFile) {
+            JetFile namespace=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetFile.class);
+            boolean multiFileNamespace=typeMapper.getClosureAnnotator().isMultiFileNamespace(JetPsiUtil.getFQName(namespace));
+            if (multiFileNamespace) {
+              String name=namespace.getName();
+              names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(namespace)).getInternalName() + "$src$" + name.substring(0,name.lastIndexOf('.')));
+            }
+ else {
+              names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(namespace)).getInternalName());
+            }
+          }
+ else {
+            JetFile namespace=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetFile.class);
+            if (namespace != null) {
+              names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(namespace)).getInternalName());
+            }
+ else {
+              names.add(NamespaceCodegen.getJVMClassNameForKotlinNs(JetPsiUtil.getFQName(file)).getInternalName());
+            }
+          }
+        }
  else {
           names.add(typeMapper.getClosureAnnotator().classNameForAnonymousClass((JetElement)psiElement).getInternalName());
         }
