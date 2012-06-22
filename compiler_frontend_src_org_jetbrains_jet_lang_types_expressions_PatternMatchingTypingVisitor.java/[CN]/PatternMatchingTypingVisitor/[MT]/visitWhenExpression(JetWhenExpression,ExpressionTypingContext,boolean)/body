@@ -5,35 +5,40 @@
   final DataFlowValue variableDescriptor=subjectExpression != null ? DataFlowValueFactory.INSTANCE.createDataFlowValue(subjectExpression,subjectType,context.trace.getBindingContext()) : DataFlowValue.NULL;
   Set<JetType> expressionTypes=Sets.newHashSet();
   DataFlowInfo commonDataFlowInfo=null;
+  DataFlowInfo elseDataFlowInfo=context.dataFlowInfo;
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
     JetWhenCondition[] conditions=whenEntry.getConditions();
     DataFlowInfo newDataFlowInfo;
     WritableScope scopeToExtend;
-    if (conditions.length == 1) {
+    if (whenEntry.isElse()) {
+      scopeToExtend=newWritableScopeImpl(context,"Scope extended in when-else entry");
+      newDataFlowInfo=elseDataFlowInfo;
+    }
+ else     if (conditions.length == 1) {
       scopeToExtend=newWritableScopeImpl(context,"Scope extended in when entry");
       newDataFlowInfo=context.dataFlowInfo;
       JetWhenCondition condition=conditions[0];
       if (condition != null) {
-        newDataFlowInfo=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,scopeToExtend,context,variableDescriptor);
+        Pair<DataFlowInfo,DataFlowInfo> infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,scopeToExtend,context,variableDescriptor);
+        newDataFlowInfo=infos.first;
+        elseDataFlowInfo=elseDataFlowInfo.and(infos.second);
       }
     }
  else {
       scopeToExtend=newWritableScopeImpl(context,"pattern matching");
       newDataFlowInfo=null;
       for (      JetWhenCondition condition : conditions) {
-        DataFlowInfo dataFlowInfo=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,newWritableScopeImpl(context,""),context,variableDescriptor);
+        Pair<DataFlowInfo,DataFlowInfo> infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,newWritableScopeImpl(context,""),context,variableDescriptor);
         if (newDataFlowInfo == null) {
-          newDataFlowInfo=dataFlowInfo;
+          newDataFlowInfo=infos.first;
         }
  else {
-          newDataFlowInfo=newDataFlowInfo.or(dataFlowInfo);
+          newDataFlowInfo=newDataFlowInfo.or(infos.first);
         }
+        elseDataFlowInfo=elseDataFlowInfo.and(infos.second);
       }
       if (newDataFlowInfo == null) {
         newDataFlowInfo=context.dataFlowInfo;
-      }
- else {
-        newDataFlowInfo=newDataFlowInfo.and(context.dataFlowInfo);
       }
     }
     JetExpression bodyExpression=whenEntry.getExpression();

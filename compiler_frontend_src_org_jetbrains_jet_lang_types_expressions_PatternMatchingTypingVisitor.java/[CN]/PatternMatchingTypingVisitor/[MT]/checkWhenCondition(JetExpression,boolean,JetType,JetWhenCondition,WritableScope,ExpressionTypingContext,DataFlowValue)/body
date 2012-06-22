@@ -1,5 +1,5 @@
 {
-  final DataFlowInfo[] newDataFlowInfo=new DataFlowInfo[]{context.dataFlowInfo};
+  final Ref<Pair<DataFlowInfo,DataFlowInfo>> newDataFlowInfo=new Ref<Pair<DataFlowInfo,DataFlowInfo>>(Pair.create(context.dataFlowInfo,context.dataFlowInfo));
   condition.accept(new JetVisitorVoid(){
     @Override public void visitWhenConditionInRange(    JetWhenConditionInRange condition){
       JetExpression rangeExpression=condition.getRangeExpression();
@@ -19,13 +19,19 @@
         context.trace.report(EXPECTED_CONDITION.on(condition));
       }
       if (pattern != null) {
-        newDataFlowInfo[0]=checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables);
+        Pair<DataFlowInfo,DataFlowInfo> result=checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables);
+        if (condition.isNegated()) {
+          newDataFlowInfo.set(Pair.create(result.second,result.first));
+        }
+ else {
+          newDataFlowInfo.set(result);
+        }
       }
     }
     @Override public void visitWhenConditionWithExpression(    JetWhenConditionWithExpression condition){
       JetPattern pattern=condition.getPattern();
       if (pattern != null) {
-        newDataFlowInfo[0]=checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables);
+        newDataFlowInfo.set(checkPatternType(pattern,subjectType,subjectExpression == null,scopeToExtend,context,subjectVariables));
       }
     }
     @Override public void visitJetElement(    JetElement element){
@@ -33,5 +39,5 @@
     }
   }
 );
-  return newDataFlowInfo[0];
+  return newDataFlowInfo.get();
 }
