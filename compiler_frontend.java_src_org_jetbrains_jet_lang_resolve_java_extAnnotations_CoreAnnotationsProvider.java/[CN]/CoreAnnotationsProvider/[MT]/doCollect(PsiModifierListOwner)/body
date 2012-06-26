@@ -1,0 +1,53 @@
+{
+  final List<PsiFile> files=findExternalAnnotationsFiles(listOwner);
+  if (files == null) {
+    return Collections.emptyMap();
+  }
+  final Map<String,PsiAnnotation> result=new HashMap<String,PsiAnnotation>();
+  for (  PsiFile file : files) {
+    if (!file.isValid())     continue;
+    final Document document;
+    try {
+      document=JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(file.getVirtualFile().getInputStream())));
+    }
+ catch (    IOException e) {
+      LOG.error(e);
+      continue;
+    }
+catch (    JDOMException e) {
+      LOG.error(e);
+      continue;
+    }
+    if (document == null)     continue;
+    final Element rootElement=document.getRootElement();
+    if (rootElement == null)     continue;
+    final String externalName=getExternalName(listOwner,false);
+    final String oldExternalName=getNormalizedExternalName(listOwner);
+    for (    final Element element : (List<Element>)rootElement.getChildren()) {
+      final String className=element.getAttributeValue("name");
+      if (!Comparing.strEqual(className,externalName) && !Comparing.strEqual(className,oldExternalName)) {
+        continue;
+      }
+      for (      Element annotationElement : (List<Element>)element.getChildren()) {
+        final String annotationFQN=annotationElement.getAttributeValue("name");
+        final StringBuilder buf=new StringBuilder();
+        for (        Element annotationParameter : (List<Element>)annotationElement.getChildren()) {
+          buf.append(",");
+          final String nameValue=annotationParameter.getAttributeValue("name");
+          if (nameValue != null) {
+            buf.append(nameValue).append("=");
+          }
+          buf.append(annotationParameter.getAttributeValue("val"));
+        }
+        final String annotationText="@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(),",") + ")" : "");
+        try {
+          result.put(annotationFQN,JavaPsiFacade.getInstance(listOwner.getProject()).getElementFactory().createAnnotationFromText(annotationText,null));
+        }
+ catch (        IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+  return result;
+}
