@@ -1,9 +1,13 @@
 {
 class ErrorReportingVisitor extends AnalyzingUtils.PsiErrorElementVisitor {
     boolean hasErrors=false;
+    boolean onlyErrorAtEof=false;
     private <E extends PsiElement>void reportDiagnostic(    E element,    SimpleDiagnosticFactory<E> factory,    String message){
       MyDiagnostic<?> diagnostic=new MyDiagnostic<E>(element,factory,message);
       AnalyzerWithCompilerReport.reportDiagnostic(diagnostic,messageCollector);
+      if (element.getTextRange().getStartOffset() == file.getTextRange().getEndOffset()) {
+        onlyErrorAtEof=!hasErrors;
+      }
       hasErrors=true;
     }
     @Override public void visitIdeTemplate(    JetIdeTemplate expression){
@@ -17,5 +21,5 @@ class ErrorReportingVisitor extends AnalyzingUtils.PsiErrorElementVisitor {
   }
   ErrorReportingVisitor visitor=new ErrorReportingVisitor();
   file.accept(visitor);
-  return visitor.hasErrors;
+  return new SyntaxErrorReport(visitor.hasErrors,visitor.onlyErrorAtEof);
 }
