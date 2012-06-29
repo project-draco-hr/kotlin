@@ -1,20 +1,14 @@
 {
-  Context context=Context.enter();
-  if (ecmaVersion == EcmaVersion.v5) {
-    context.setLanguageVersion(Context.VERSION_1_8);
-  }
-  Scriptable scope=context.initStandardObjects();
-  if (variables != null) {
-    Set<Map.Entry<String,Object>> entries=variables.entrySet();
-    for (    Map.Entry<String,Object> entry : entries) {
-      String name=entry.getKey();
-      Object value=entry.getValue();
-      scope.put(name,scope,value);
+  Context context=createContext(ecmaVersion);
+  try {
+    Scriptable scope=getScope(ecmaVersion,context);
+    putGlobalVariablesIntoScope(scope,variables);
+    for (    String filename : fileNames) {
+      runFileWithRhino(filename,context,scope);
     }
+    checker.runChecks(context,scope);
   }
-  for (  String filename : fileNames) {
-    runFileWithRhino(filename,context,scope);
+  finally {
+    Context.exit();
   }
-  checker.runChecks(context,scope);
-  Context.exit();
 }
