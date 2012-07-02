@@ -1,8 +1,14 @@
 {
   if (libraryContext == null) {
-    AnalyzeExhaust exhaust=AnalyzerFacadeForJS.analyzeFiles(files,Predicates.<PsiFile>alwaysFalse(),Config.getEmptyConfig(project));
+    Predicate<PsiFile> filesWithCode=new Predicate<PsiFile>(){
+      @Override public boolean apply(      @javax.annotation.Nullable PsiFile file){
+        return isFileWithCode((JetFile)file);
+      }
+    }
+;
+    AnalyzeExhaust exhaust=AnalyzerFacadeForJS.analyzeFiles(allLibFiles,filesWithCode,Config.getEmptyConfig(project));
     libraryContext=exhaust.getBindingContext();
-    AnalyzerFacadeForJS.checkForErrors(files,libraryContext);
+    AnalyzerFacadeForJS.checkForErrors(allLibFiles,libraryContext);
   }
   return libraryContext;
 }
