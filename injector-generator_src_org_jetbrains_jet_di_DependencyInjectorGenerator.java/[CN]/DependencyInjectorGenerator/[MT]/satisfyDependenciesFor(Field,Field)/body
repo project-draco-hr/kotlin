@@ -1,10 +1,12 @@
 {
   if (!satisfied.add(field))   return;
   if (backsParameter.contains(field))   return;
-  if (field.getInitialization() == null) {
+  Expression initialization=field.getInitialization();
+  if (initialization instanceof InstantiateType) {
     initializeByConstructorCall(field,neededFor);
   }
-  List<Method> declaredMethods=Lists.newArrayList(field.getType().getClazz().getDeclaredMethods());
+  DiType typeToInitialize=getEffectiveFieldType(field);
+  List<Method> declaredMethods=Lists.newArrayList(typeToInitialize.getClazz().getDeclaredMethods());
   Collections.sort(declaredMethods,new Comparator<Method>(){
     @Override public int compare(    Method o1,    Method o2){
       return o1.getName().compareTo(o2.getName());
