@@ -1,0 +1,22 @@
+{
+  JetStandardLibrary standardLibrary=JetStandardLibrary.getInstance();
+  StaticContext staticContext=StaticContext.generateStaticContext(standardLibrary,bindingContext,config.getTarget());
+  JsProgram program=staticContext.getProgram();
+  JsBlock block=program.getGlobalBlock();
+  JsFunction rootFunction=JsAstUtils.createPackage(block.getStatements(),program.getScope());
+  List<JsStatement> statements=rootFunction.getBody().getStatements();
+  statements.add(program.getStringLiteral("use strict").makeStmt());
+  TranslationContext context=TranslationContext.rootContext(staticContext);
+  statements.addAll(translateFiles(files,context));
+  defineModule(statements,context,config);
+  if (mainCallParameters.shouldBeGenerated()) {
+    JsStatement statement=generateCallToMain(context,files,mainCallParameters.arguments());
+    if (statement != null) {
+      statements.add(statement);
+    }
+  }
+  generateTestCalls(context,files,block,rawStatements);
+  JsNamer namer=new JsPrettyNamer();
+  namer.exec(context.program());
+  return context.program();
+}

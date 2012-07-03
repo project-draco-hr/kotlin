@@ -1,0 +1,15 @@
+{
+  List<JetFile> result=Lists.newArrayList();
+  Enumeration<? extends ZipEntry> zipEntries=file.entries();
+  while (zipEntries.hasMoreElements()) {
+    ZipEntry entry=zipEntries.nextElement();
+    if (!entry.isDirectory() && entry.getName().endsWith(".kt")) {
+      InputStream stream=file.getInputStream(entry);
+      String text=FileUtil.loadTextAndClose(stream);
+      JetFile jetFile=JetFileUtils.createPsiFile(entry.getName(),text,getProject());
+      jetFile.putUserData(EXTERNAL_MODULE_NAME,UNKNOWN_EXTERNAL_MODULE_NAME);
+      result.add(jetFile);
+    }
+  }
+  return result;
+}

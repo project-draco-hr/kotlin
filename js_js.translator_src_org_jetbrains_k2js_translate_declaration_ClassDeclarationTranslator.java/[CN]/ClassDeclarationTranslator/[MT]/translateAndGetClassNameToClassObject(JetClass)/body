@@ -1,0 +1,30 @@
+{
+  ClassDescriptor descriptor=getClassDescriptor(context().bindingContext(),declaration);
+  JsNameRef labelRef;
+  String label='c' + Integer.toString(localNameCounter++,36);
+  boolean isFinal=descriptor.getModality() == Modality.FINAL;
+  if (isFinal) {
+    labelRef=new JsNameRef(label);
+  }
+ else {
+    labelRef=dummyFunction.getScope().declareName(label).makeRef();
+  }
+  ListItem item=new ListItem(declaration,labelRef);
+  if (isFinal) {
+    finalList.add(item);
+  }
+ else {
+    openList.add(item);
+    openClassToItem.put(declaration,item);
+  }
+  JsNameRef qualifiedLabelRef=new JsNameRef(labelRef.getIdent());
+  qualifiedLabelRef.setQualifier(declarationsObject.makeRef());
+  JsExpression value;
+  if (context().isEcma5()) {
+    value=JsAstUtils.createDataDescriptor(qualifiedLabelRef,false,context());
+  }
+ else {
+    value=qualifiedLabelRef;
+  }
+  return new JsPropertyInitializer(context().program().getStringLiteral(descriptor.getName().getName()),value);
+}
