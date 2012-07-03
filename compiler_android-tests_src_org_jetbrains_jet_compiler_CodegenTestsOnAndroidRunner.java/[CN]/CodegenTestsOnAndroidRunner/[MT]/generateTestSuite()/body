@@ -1,0 +1,36 @@
+{
+  TestSuite suite=new TestSuite("MySuite");
+  String resultOutput=runTests();
+  final Map<String,String> resultMap=parseOutputForFailedTests(resultOutput);
+  final Statistics statistics;
+  if (resultMap.isEmpty()) {
+    FileUtil.delete(new File(pathManager.getTmpFolder()));
+    statistics=parseOutputForTestsNumberIfTestsPassed(resultOutput);
+  }
+ else {
+    statistics=parseOutputForTestsNumberIfThereIsFailedTests(resultOutput);
+    for (    final Map.Entry<String,String> entry : resultMap.entrySet()) {
+      suite.addTest(new TestCase("run"){
+        @Override public String getName(){
+          return entry.getKey();
+        }
+        @Override protected void runTest() throws Throwable {
+          Assert.fail(entry.getValue() + "See more information in log above.");
+        }
+      }
+);
+    }
+  }
+  Assert.assertNotNull("Cannot parse number of failed tests from final line",statistics);
+  Assert.assertEquals("Number of stackTraces != failed tests on the final line",resultMap.size(),statistics.failed + statistics.errors);
+  suite.addTest(new TestCase("run"){
+    @Override public String getName(){
+      return "testAll: Total: " + statistics.total + ", Failures: "+ statistics.failed+ ", Errors: "+ statistics.errors;
+    }
+    @Override protected void runTest() throws Throwable {
+      Assert.assertTrue(true);
+    }
+  }
+);
+  return suite;
+}

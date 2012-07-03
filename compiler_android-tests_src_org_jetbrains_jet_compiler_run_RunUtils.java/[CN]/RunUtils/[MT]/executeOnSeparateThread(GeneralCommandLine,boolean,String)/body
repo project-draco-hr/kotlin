@@ -1,0 +1,20 @@
+{
+  final Ref<RunResult> resultRef=new Ref<RunResult>();
+  Thread t=new Thread(new Runnable(){
+    @Override public void run(){
+      resultRef.set(RunUtils.run(commandLine,input));
+    }
+  }
+);
+  t.start();
+  if (waitForEnd) {
+    try {
+      t.wait(300000);
+      return resultRef.get();
+    }
+ catch (    InterruptedException e) {
+      new RunResult(false,getStackTrace(e));
+    }
+  }
+  return new RunResult(true,"OK");
+}

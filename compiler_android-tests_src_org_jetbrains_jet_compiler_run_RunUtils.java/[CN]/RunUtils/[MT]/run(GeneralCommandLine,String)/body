@@ -1,0 +1,57 @@
+{
+  final StringBuilder stdOut=new StringBuilder();
+  final StringBuilder stdErr=new StringBuilder();
+  final OSProcessHandler handler;
+  try {
+    handler=new OSProcessHandler(commandLine.createProcess(),commandLine.getCommandLineString(),Charsets.UTF_8);
+    if (input != null) {
+      handler.getProcessInput().write(input.getBytes());
+    }
+    close(handler.getProcessInput());
+  }
+ catch (  ExecutionException e) {
+    return new RunResult(false,getStackTrace(e));
+  }
+catch (  IOException e) {
+    return new RunResult(false,getStackTrace(e));
+  }
+  final ProcessAdapter listener=new ProcessAdapter(){
+    @Override public void onTextAvailable(    final ProcessEvent event,    final Key outputType){
+      String str=event.getText();
+      if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.SYSTEM) {
+        stdOut.append(str);
+        if (!commandLine.getCommandLineString().contains("install")) {
+          System.out.print(str);
+        }
+      }
+ else       if (outputType == ProcessOutputTypes.STDERR) {
+        stdErr.append(str);
+        System.err.print(str);
+      }
+    }
+  }
+;
+  handler.addProcessListener(listener);
+  handler.startNotify();
+  try {
+    handler.waitFor(300000);
+  }
+ catch (  ProcessCanceledException e) {
+    return new RunResult(false,getStackTrace(e));
+  }
+  if (!handler.isProcessTerminated()) {
+    return new RunResult(false,"Timeout exception: execution was terminated after 5 min.");
+  }
+  handler.removeProcessListener(listener);
+  int exitCode=handler.getProcess().exitValue();
+  if (exitCode != 0) {
+    return new RunResult(false,builderToString(stdOut) + builderToString(stdErr));
+  }
+ else {
+    String output=builderToString(stdOut) + builderToString(stdErr);
+    if (!isResultOk(output)) {
+      return new RunResult(false,output);
+    }
+    return new RunResult(true,output);
+  }
+}
