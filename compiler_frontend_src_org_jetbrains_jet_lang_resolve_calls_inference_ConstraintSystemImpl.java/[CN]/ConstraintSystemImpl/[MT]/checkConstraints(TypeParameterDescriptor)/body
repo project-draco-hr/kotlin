@@ -1,0 +1,39 @@
+{
+  if (error) {
+    return false;
+  }
+  TypeBounds typeBounds=typeParameterBounds.get(typeParameterDescriptor);
+  if (typeBounds == null || typeBounds.isEmpty())   return true;
+  JetType exactType=null;
+  if (typeBounds.getExactValues().size() > 1) {
+    return false;
+  }
+  if (typeBounds.getExactValues().size() == 1) {
+    exactType=typeBounds.getExactValues().iterator().next();
+  }
+  JetType superTypeOfLowerBounds=null;
+  if (exactType == null && !typeBounds.getLowerBounds().isEmpty()) {
+    superTypeOfLowerBounds=CommonSupertypes.commonSupertype(typeBounds.getLowerBounds());
+  }
+  JetType subTypeOfUpperBounds=null;
+  if (exactType == null && superTypeOfLowerBounds == null && !typeBounds.getUpperBounds().isEmpty()) {
+    subTypeOfUpperBounds=typeBounds.getUpperBounds().iterator().next();
+  }
+  JetType type=exactType != null ? exactType : superTypeOfLowerBounds != null ? superTypeOfLowerBounds : subTypeOfUpperBounds;
+  if (type == null) {
+    return false;
+  }
+  if (subTypeOfUpperBounds != null)   return true;
+  for (  JetType upperType : typeBounds.getUpperBounds()) {
+    if (!JetTypeChecker.INSTANCE.isSubtypeOf(type,upperType)) {
+      return false;
+    }
+  }
+  if (superTypeOfLowerBounds != null)   return true;
+  for (  JetType lowerType : typeBounds.getLowerBounds()) {
+    if (!JetTypeChecker.INSTANCE.isSubtypeOf(lowerType,type)) {
+      return false;
+    }
+  }
+  return true;
+}

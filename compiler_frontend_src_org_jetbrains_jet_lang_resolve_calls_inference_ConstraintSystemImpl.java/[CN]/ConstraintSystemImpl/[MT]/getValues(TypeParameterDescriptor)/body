@@ -1,0 +1,15 @@
+{
+  TypeBounds typeBounds=typeParameterBounds.get(typeParameter);
+  if (typeBounds == null || typeBounds.isEmpty())   return Collections.emptySet();
+  Set<JetType> values=Sets.newLinkedHashSet();
+  values.addAll(typeBounds.getExactValues());
+  if (!typeBounds.getLowerBounds().isEmpty()) {
+    JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(typeBounds.getLowerBounds());
+    for (    JetType value : values) {
+      if (!JetTypeChecker.INSTANCE.isSubtypeOf(superTypeOfLowerBounds,value)) {
+        values.add(superTypeOfLowerBounds);
+      }
+    }
+  }
+  return values;
+}

@@ -1,0 +1,52 @@
+{
+  if (exactType == DONT_CARE || expectedType == DONT_CARE || exactType == TypeUtils.NO_EXPECTED_TYPE || expectedType == TypeUtils.NO_EXPECTED_TYPE)   return;
+  DeclarationDescriptor expectedTypeDescriptor=expectedType.getConstructor().getDeclarationDescriptor();
+  DeclarationDescriptor exactTypeDescriptor=exactType.getConstructor().getDeclarationDescriptor();
+  if (expectedTypeDescriptor instanceof TypeParameterDescriptor) {
+    if (dependsOnTypeParameter(exactType,DONT_CARE.getConstructor()))     return;
+    if (expectedType.isNullable()) {
+      exactType=TypeUtils.makeNotNullable(exactType);
+    }
+    TypeParameterDescriptor typeParameter=(TypeParameterDescriptor)expectedTypeDescriptor;
+    if (constraintType == ConstraintType.SUB_TYPE) {
+      typeParameterBounds.get(typeParameter).addLowerBound(exactType);
+    }
+ else     if (constraintType == ConstraintType.SUPER_TYPE) {
+      typeParameterBounds.get(typeParameter).addUpperBound(exactType);
+    }
+ else {
+      typeParameterBounds.get(typeParameter).setExactValue(exactType);
+    }
+    return;
+  }
+  if (exactTypeDescriptor instanceof ClassDescriptor && expectedTypeDescriptor instanceof ClassDescriptor) {
+    if (constraintType != ConstraintType.SUPER_TYPE) {
+      JetType correspondingSupertype=TypeCheckingProcedure.findCorrespondingSupertype(exactType,expectedType);
+      if (correspondingSupertype != null) {
+        exactType=correspondingSupertype;
+      }
+    }
+ else {
+      JetType correspondingSupertype=TypeCheckingProcedure.findCorrespondingSupertype(expectedType,exactType);
+      if (correspondingSupertype != null) {
+        expectedType=correspondingSupertype;
+      }
+    }
+    if (exactType.getConstructor().getParameters().size() != expectedType.getConstructor().getParameters().size()) {
+      error=true;
+      return;
+    }
+    ClassDescriptor subClass=(ClassDescriptor)exactType.getConstructor().getDeclarationDescriptor();
+    ClassDescriptor superClass=(ClassDescriptor)expectedType.getConstructor().getDeclarationDescriptor();
+    if (DescriptorUtils.isSubclass(subClass,superClass)) {
+      List<TypeProjection> subArguments=exactType.getArguments();
+      List<TypeProjection> superArguments=expectedType.getArguments();
+      List<TypeParameterDescriptor> superParameters=expectedType.getConstructor().getParameters();
+      for (int i=0; i < superArguments.size(); i++) {
+        addConstraint(varianceToConstraintType(superParameters.get(i).getVariance()),subArguments.get(i).getType(),superArguments.get(i).getType());
+      }
+      return;
+    }
+  }
+  error=true;
+}
