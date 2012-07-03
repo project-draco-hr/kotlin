@@ -1,0 +1,12 @@
+{
+  for (  TypeParameterDescriptor typeParameter : call.getCandidateDescriptor().getTypeParameters()) {
+    JetType type=constraintSystem.getValue(typeParameter);
+    JetType upperBound=typeParameter.getUpperBoundsAsType();
+    JetType substitute=constraintSystem.getSubstitutor().substitute(upperBound,Variance.INVARIANT);
+    if (type != null) {
+      if (substitute == null || !JetTypeChecker.INSTANCE.isSubtypeOf(type,substitute)) {
+        context.trace.report(Errors.TYPE_INFERENCE_UPPER_BOUND_VIOLATED.on(context.call.getCallElement(),type,substitute != null ? substitute : upperBound));
+      }
+    }
+  }
+}

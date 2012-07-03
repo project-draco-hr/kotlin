@@ -20,7 +20,7 @@
  else {
       candidateCall.addStatus(OTHER_ERROR);
     }
-    if (argumentMappingStatus != ValueArgumentsToParametersMapper.Status.WEAK_ERROR) {
+    if ((argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR && candidate.getTypeParameters().isEmpty()) || argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
       checkTypesWithNoCallee(context.toBasic());
       return;
     }
@@ -29,7 +29,8 @@
   List<JetTypeProjection> jetTypeArguments=context.call.getTypeArguments();
   if (jetTypeArguments.isEmpty()) {
     if (!candidate.getTypeParameters().isEmpty()) {
-      candidateCall.addStatus(inferTypeArguments(context));
+      ResolutionStatus status=inferTypeArguments(context);
+      candidateCall.addStatus(status);
     }
  else {
       candidateCall.addStatus(checkAllValueArguments(context));

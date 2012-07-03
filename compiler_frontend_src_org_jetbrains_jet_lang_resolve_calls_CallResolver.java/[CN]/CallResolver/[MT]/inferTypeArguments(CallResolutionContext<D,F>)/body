@@ -1,2 +1,52 @@
 {
+  ResolvedCallImpl<D> candidateCall=context.candidateCall;
+  D candidate=candidateCall.getCandidateDescriptor();
+  ResolutionDebugInfo.Data debugInfo=context.trace.get(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement());
+  ConstraintSystem constraintSystem=new ConstraintSystemImpl();
+  CallableDescriptor candidateWithFreshVariables=FunctionDescriptorUtil.alphaConvertTypeParameters(candidate);
+  for (  TypeParameterDescriptor typeParameterDescriptor : candidateWithFreshVariables.getTypeParameters()) {
+    constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+  }
+  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintSystem.DONT_CARE);
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
+    ResolvedValueArgument resolvedValueArgument=entry.getValue();
+    ValueParameterDescriptor valueParameterDescriptor=candidateWithFreshVariables.getValueParameters().get(entry.getKey().getIndex());
+    for (    ValueArgument valueArgument : resolvedValueArgument.getArguments()) {
+      if (JetPsiUtil.isFunctionLiteralWithoutDeclaredParameterTypes(valueArgument.getArgumentExpression()))       continue;
+      JetType effectiveExpectedType=getEffectiveExpectedType(valueParameterDescriptor,valueArgument);
+      TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace);
+      JetExpression argumentExpression=valueArgument.getArgumentExpression();
+      JetType type=argumentExpression != null ? expressionTypingServices.getType(context.scope,argumentExpression,substituteDontCare.substitute(valueParameterDescriptor.getType(),Variance.INVARIANT),context.dataFlowInfo,traceForUnknown) : null;
+      if (type != null && !ErrorUtils.isErrorType(type)) {
+        constraintSystem.addSubtypingConstraint(type,effectiveExpectedType);
+      }
+ else {
+        candidateCall.argumentHasNoType();
+      }
+    }
+  }
+  ReceiverDescriptor receiverArgument=candidateCall.getReceiverArgument();
+  ReceiverDescriptor receiverParameter=candidateWithFreshVariables.getReceiverParameter();
+  if (receiverArgument.exists() && receiverParameter.exists()) {
+    constraintSystem.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType());
+  }
+  for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
+    candidateCall.recordTypeBounds(typeParameterDescriptor,constraintSystem.getTypeBounds(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex())));
+  }
+  if (!constraintSystem.hasContradiction()) {
+    candidateCall.setHasUnknownTypeParameters(true);
+    return SUCCESS;
+  }
+ else {
+    context.tracing.typeInferenceFailed(context.trace,new SolutionStatus(){
+      @Override public boolean isSuccessful(){
+        return false;
+      }
+      @Override public String toString(){
+        return "Type inference failed";
+      }
+    }
+);
+    return TYPE_INFERENCE_ERROR.combine(checkAllValueArguments(context));
+  }
 }

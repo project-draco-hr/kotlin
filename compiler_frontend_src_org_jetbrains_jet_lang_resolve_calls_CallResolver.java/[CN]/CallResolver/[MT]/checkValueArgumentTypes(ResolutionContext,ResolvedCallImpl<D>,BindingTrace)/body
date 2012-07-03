@@ -1,18 +1,18 @@
 {
   ResolutionStatus result=SUCCESS;
   DataFlowInfo dataFlowInfo=context.dataFlowInfo;
-  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : context.candidateCall.getValueArguments().entrySet()) {
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ValueParameterDescriptor parameterDescriptor=entry.getKey();
     ResolvedValueArgument resolvedArgument=entry.getValue();
     for (    ValueArgument argument : resolvedArgument.getArguments()) {
       JetExpression expression=argument.getArgumentExpression();
       if (expression == null)       continue;
       JetType expectedType=getEffectiveExpectedType(parameterDescriptor,argument);
-      JetTypeInfo typeInfo=expressionTypingServices.getTypeInfo(context.scope,expression,expectedType,dataFlowInfo,context.candidateCall.getTrace());
+      JetTypeInfo typeInfo=expressionTypingServices.getTypeInfo(context.scope,expression,expectedType,dataFlowInfo,trace);
       JetType type=typeInfo.getType();
       dataFlowInfo=dataFlowInfo.and(typeInfo.getDataFlowInfo());
       if (type == null || ErrorUtils.isErrorType(type)) {
-        context.candidateCall.argumentHasNoType();
+        candidateCall.argumentHasNoType();
       }
  else       if (!typeChecker.isSubtypeOf(type,expectedType)) {
         result=OTHER_ERROR;
