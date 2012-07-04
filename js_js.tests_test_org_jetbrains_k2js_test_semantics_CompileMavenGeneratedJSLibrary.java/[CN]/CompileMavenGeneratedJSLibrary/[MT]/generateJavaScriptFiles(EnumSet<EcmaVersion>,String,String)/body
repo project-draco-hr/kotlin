@@ -1,0 +1,20 @@
+{
+  List<String> files=Lists.newArrayList();
+  addAllSourceFiles(files,generatedJsLibraryDir);
+  File stdlibDir=new File(sourceDir);
+  assertTrue("Cannot find stdlib test source: " + stdlibDir,stdlibDir.exists());
+  for (  String file : stdLibFiles) {
+    files.add(new File(stdlibDir,file).getPath());
+  }
+  for (  EcmaVersion version : ecmaVersions) {
+    K2JSCompiler compiler=new K2JSCompiler();
+    K2JSCompilerArguments arguments=new K2JSCompilerArguments();
+    arguments.outputFile=getOutputFilePath(getTestName(false) + ".compiler.kt",version);
+    arguments.sourceFiles=files.toArray(new String[files.size()]);
+    arguments.verbose=true;
+    arguments.libraryDirectories=new String[]{generatedJsDefinitionsDir};
+    System.out.println("Compiling with version: " + version + " to: "+ arguments.outputFile);
+    ExitCode answer=compiler.exec(System.out,arguments);
+    assertEquals("Compile failed",ExitCode.OK,answer);
+  }
+}

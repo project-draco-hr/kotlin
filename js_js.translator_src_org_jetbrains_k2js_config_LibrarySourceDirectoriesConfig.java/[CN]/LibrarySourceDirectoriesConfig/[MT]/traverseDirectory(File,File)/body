@@ -1,0 +1,23 @@
+{
+  File[] files=dir.listFiles();
+  File[] children=dir.listFiles();
+  List<JetFile> result=Lists.newArrayList();
+  if (children != null && children.length > 0) {
+    for (    File child : children) {
+      if (child.isDirectory()) {
+        List<JetFile> childFiles=traverseDirectory(rootDir,child);
+        result.addAll(childFiles);
+      }
+ else {
+        String name=child.getName();
+        if (name.toLowerCase().endsWith(".kt")) {
+          String text=FileUtil.loadFile(child);
+          String path=child.getPath();
+          JetFile jfile=JetFileUtils.createPsiFile(path,text,getProject());
+          result.add(jfile);
+        }
+      }
+    }
+  }
+  return result;
+}
