@@ -4,7 +4,12 @@
   if (declarationProvider != null) {
     return declarationProvider;
   }
-  if (!isPackageDeclared(packageFqName))   return null;
+  if (!isPackageDeclaredExplicitly(packageFqName)) {
+    if (isPackageDeclaredExternally.apply(packageFqName)) {
+      return EmptyPackageMemberDeclarationProvider.INSTANCE;
+    }
+    return null;
+  }
   FileBasedPackageMemberDeclarationProvider provider=new FileBasedPackageMemberDeclarationProvider(packageFqName,this,filesByPackage.get(packageFqName));
   packageDeclarationProviders.put(packageFqName,provider);
   return provider;
