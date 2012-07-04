@@ -1,24 +1,19 @@
 {
   jetCoreEnvironment=new JetCoreEnvironment(disposable,compilerDependencies);
-  for (  File pathElement : extraClasspath) {
-    jetCoreEnvironment.addToClasspath(pathElement);
-  }
+  jetCoreEnvironment.configure(configuration);
   Project project=jetCoreEnvironment.getProject();
   trace=new BindingTraceContext();
   module=new ModuleDescriptor(Name.special("<repl>"));
   TopDownAnalysisParameters topDownAnalysisParameters=new TopDownAnalysisParameters(Predicates.<PsiFile>alwaysTrue(),false,true,Collections.<AnalyzerScriptParameter>emptyList());
   injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module,compilerDependencies.getCompilerSpecialMode());
   List<URL> classpath=Lists.newArrayList();
-  try {
-    if (compilerDependencies.getRuntimeJar() != null) {
-      classpath.add(compilerDependencies.getRuntimeJar().toURI().toURL());
+  for (  File file : configuration.getUserData(JVMConfigurationKeys.CLASSPATH_KEY)) {
+    try {
+      classpath.add(file.toURI().toURL());
     }
-    for (    File extra : extraClasspath) {
-      classpath.add(extra.toURI().toURL());
+ catch (    MalformedURLException e) {
+      throw ExceptionUtils.rethrow(e);
     }
-  }
- catch (  Exception e) {
-    throw ExceptionUtils.rethrow(e);
   }
   classLoader=new ReplClassLoader(new URLClassLoader(classpath.toArray(new URL[0])));
 }
