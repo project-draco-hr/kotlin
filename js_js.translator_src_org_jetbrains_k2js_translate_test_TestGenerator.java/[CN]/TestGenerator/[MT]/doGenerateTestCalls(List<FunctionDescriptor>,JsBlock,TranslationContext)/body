@@ -1,0 +1,16 @@
+{
+  for (  FunctionDescriptor functionDescriptor : functionDescriptors) {
+    ClassDescriptor classDescriptor=JsDescriptorUtils.getContainingClass(functionDescriptor);
+    if (classDescriptor == null) {
+      return;
+    }
+    JsExpression expression=ReferenceTranslator.translateAsFQReference(classDescriptor,context);
+    JsNew constructClassExpr=new JsNew(expression);
+    JsExpression functionToTestCall=CallBuilder.build(context).descriptor(functionDescriptor).receiver(constructClassExpr).translate();
+    JsNameRef qUnitTestFunRef=AstUtil.newQualifiedNameRef("QUnit.test");
+    JsFunction functionToTest=new JsFunction(context.jsScope());
+    functionToTest.setBody(newBlock(functionToTestCall.makeStmt()));
+    String testName=classDescriptor.getName() + "." + functionDescriptor.getName();
+    block.getStatements().add(AstUtil.newInvocation(qUnitTestFunRef,context.program().getStringLiteral(testName),functionToTest).makeStmt());
+  }
+}
