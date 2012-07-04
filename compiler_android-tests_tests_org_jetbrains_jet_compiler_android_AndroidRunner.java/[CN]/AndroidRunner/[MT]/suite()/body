@@ -1,0 +1,16 @@
+{
+  File tmpFolder=Files.createTempDir();
+  System.out.println("Created temporary folder for running android tests: " + tmpFolder.getAbsolutePath());
+  File rootFolder=new File("");
+  PathManager pathManager=new PathManager(rootFolder.getAbsolutePath(),tmpFolder.getAbsolutePath());
+  FileUtil.copyDir(new File(pathManager.getAndroidModuleRoot()),new File(pathManager.getTmpFolder()));
+  try {
+    CodegenTestsOnAndroidGenerator.generate(pathManager);
+  }
+ catch (  Throwable e) {
+    FileUtil.delete(new File(pathManager.getTmpFolder()));
+    throw new RuntimeException(e);
+  }
+  System.out.println("Run tests on android...");
+  return CodegenTestsOnAndroidRunner.getTestSuite(pathManager);
+}

@@ -7,11 +7,14 @@
   this.method=method;
   Project project=method.getPsiMethod().getProject();
   altFunDeclaration=JetPsiFactory.createFunction(project,signature);
+  for (  TypeParameterDescriptor tp : methodTypeParameters) {
+    originalToAltTypeParameters.put(tp,TypeParameterDescriptorImpl.createForFurtherModification(tp.getContainingDeclaration(),tp.getAnnotations(),tp.isReified(),tp.getVariance(),tp.getName(),tp.getIndex()));
+  }
   try {
     checkForSyntaxErrors();
+    computeTypeParameters(methodTypeParameters);
     computeValueParameters(valueParameterDescriptors);
     computeReturnType(returnType);
-    computeTypeParameters(methodTypeParameters);
   }
  catch (  AlternativeSignatureMismatchException e) {
     error=e.getMessage();
