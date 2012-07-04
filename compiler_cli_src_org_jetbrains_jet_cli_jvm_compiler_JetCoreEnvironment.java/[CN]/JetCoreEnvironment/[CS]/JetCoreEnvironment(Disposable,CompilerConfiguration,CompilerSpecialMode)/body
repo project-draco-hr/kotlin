@@ -1,6 +1,6 @@
 {
   super(parentDisposable);
-  this.compilerSpecialMode=compilerDependencies.getCompilerSpecialMode();
+  this.compilerSpecialMode=compilerSpecialMode;
   registerFileType(JetFileType.INSTANCE,"kt");
   registerFileType(JetFileType.INSTANCE,"kts");
   registerFileType(JetFileType.INSTANCE,"ktm");
@@ -10,19 +10,8 @@
   registerParserDefinition(new JetParserDefinition());
   myProject.registerService(JetFilesProvider.class,new CliJetFilesProvider(this));
   Extensions.getArea(myProject).getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(new JavaElementFinder(myProject));
-  CompilerSpecialMode compilerSpecialMode=compilerDependencies.getCompilerSpecialMode();
-  if (compilerSpecialMode.includeJdk()) {
-    addToClasspath(compilerDependencies.getJdkJar());
-  }
   annotationsProvider=new CoreAnnotationsProvider();
-  if (compilerSpecialMode.includeJdkAnnotations()) {
-    for (    VirtualFile root : compilerDependencies.getJdkAnnotationsRoots()) {
-      annotationsProvider.addExternalAnnotationsRoot(root);
-    }
-  }
   myProject.registerService(ExternalAnnotationsProvider.class,annotationsProvider);
-  if (compilerSpecialMode.includeKotlinRuntime()) {
-    addToClasspath(compilerDependencies.getRuntimeJar());
-  }
+  configure(configuration);
   JetStandardLibrary.initialize(getProject());
 }
