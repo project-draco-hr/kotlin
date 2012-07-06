@@ -1,0 +1,29 @@
+{
+  GeneralCommandLine commandLineForListOfDevices=new GeneralCommandLine();
+  String adbCmdName=SystemInfo.isWindows ? "adb.exe" : "adb";
+  commandLineForListOfDevices.setExePath(pathManager.getPlatformToolsFolderInAndroidSdk() + "/" + adbCmdName);
+  commandLineForListOfDevices.addParameter("devices");
+  RunResult runResult=RunUtils.execute(commandLineForListOfDevices);
+  checkResult(runResult);
+  Matcher matcher=EMULATOR_PATTERN.matcher(runResult.getOutput());
+  while (matcher.find()) {
+    System.out.println("Stopping redundant emulator...");
+    GeneralCommandLine commandLineForStoppingEmulators=new GeneralCommandLine();
+    if (SystemInfo.isWindows) {
+      commandLineForStoppingEmulators.setExePath("taskkill");
+      commandLineForStoppingEmulators.addParameter("/F");
+      commandLineForStoppingEmulators.addParameter("/IM");
+      commandLineForStoppingEmulators.addParameter("emulator-arm.exe");
+      checkResult(RunUtils.execute(commandLineForStoppingEmulators));
+      break;
+    }
+ else {
+      commandLineForStoppingEmulators.setExePath(pathManager.getPlatformToolsFolderInAndroidSdk() + "/adb");
+      commandLineForStoppingEmulators.addParameter("emu");
+      commandLineForStoppingEmulators.addParameter("kill");
+      commandLineForStoppingEmulators.addParameter("-s");
+      commandLineForStoppingEmulators.addParameter(matcher.group());
+      checkResult(RunUtils.execute(commandLineForStoppingEmulators));
+    }
+  }
+}
