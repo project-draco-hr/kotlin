@@ -18,7 +18,7 @@
       JetExpression argumentExpression=valueArgument.getArgumentExpression();
       JetType type=argumentExpression != null ? expressionTypingServices.getType(context.scope,argumentExpression,substituteDontCare.substitute(valueParameterDescriptor.getType(),Variance.INVARIANT),context.dataFlowInfo,traceForUnknown) : null;
       if (type != null && !ErrorUtils.isErrorType(type)) {
-        constraintSystem.addSubtypingConstraint(type,effectiveExpectedType);
+        constraintSystem.addSubtypingConstraint(type,effectiveExpectedType,ConstraintPosition.valueParameterPosition(valueParameterDescriptor.getIndex()));
       }
  else {
         candidateCall.argumentHasNoType();
@@ -28,25 +28,23 @@
   ReceiverDescriptor receiverArgument=candidateCall.getReceiverArgument();
   ReceiverDescriptor receiverParameter=candidateWithFreshVariables.getReceiverParameter();
   if (receiverArgument.exists() && receiverParameter.exists()) {
-    constraintSystem.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType());
+    constraintSystem.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
   }
+  ConstraintSystemImpl constraintSystemWithRightTypeParameters=new ConstraintSystemImpl(constraintSystem.hasError(),constraintSystem.getErrorConstraintPositions());
   for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
-    candidateCall.recordTypeBounds(typeParameterDescriptor,constraintSystem.getTypeBounds(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex())));
+    TypeBounds typeBounds=constraintSystem.getTypeBounds(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
+    candidateCall.recordTypeBounds(typeParameterDescriptor,typeBounds);
+    constraintSystemWithRightTypeParameters.registerTypeVariable(typeParameterDescriptor,typeBounds);
   }
   if (!constraintSystem.hasContradiction()) {
     candidateCall.setHasUnknownTypeParameters(true);
     return SUCCESS;
   }
  else {
-    context.tracing.typeInferenceFailed(context.trace,new SolutionStatus(){
-      @Override public boolean isSuccessful(){
-        return false;
-      }
-      @Override public String toString(){
-        return "Type inference failed";
-      }
-    }
-);
-    return TYPE_INFERENCE_ERROR.combine(checkAllValueArguments(context));
+    List<JetType> argumentTypes=Lists.newArrayList();
+    ResolutionStatus argumentsStatus=checkAllValueArguments(context,argumentTypes);
+    JetType receiverType=candidateCall.getReceiverArgument().exists() ? candidateCall.getReceiverArgument().getType() : null;
+    reportTypeInferenceFailed(context.trace,context.call,InferenceErrorData.create(candidate,constraintSystemWithRightTypeParameters,argumentTypes,receiverType));
+    return TYPE_INFERENCE_ERROR.combine(argumentsStatus);
   }
 }

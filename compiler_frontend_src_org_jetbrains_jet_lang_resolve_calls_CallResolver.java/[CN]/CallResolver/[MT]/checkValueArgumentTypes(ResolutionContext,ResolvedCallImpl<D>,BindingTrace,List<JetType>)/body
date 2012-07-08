@@ -8,13 +8,19 @@
       JetExpression expression=argument.getArgumentExpression();
       if (expression == null)       continue;
       JetType expectedType=getEffectiveExpectedType(parameterDescriptor,argument);
+      if (TypeUtils.dependsOnTypeParameters(expectedType,candidateCall.getCandidateDescriptor().getTypeParameters())) {
+        expectedType=NO_EXPECTED_TYPE;
+      }
       JetTypeInfo typeInfo=expressionTypingServices.getTypeInfo(context.scope,expression,expectedType,dataFlowInfo,trace);
       JetType type=typeInfo.getType();
+      if (argumentTypes != null) {
+        argumentTypes.add(type);
+      }
       dataFlowInfo=dataFlowInfo.and(typeInfo.getDataFlowInfo());
       if (type == null || ErrorUtils.isErrorType(type)) {
         candidateCall.argumentHasNoType();
       }
- else       if (!typeChecker.isSubtypeOf(type,expectedType)) {
+ else       if (expectedType != NO_EXPECTED_TYPE && !typeChecker.isSubtypeOf(type,expectedType)) {
         result=OTHER_ERROR;
       }
     }
