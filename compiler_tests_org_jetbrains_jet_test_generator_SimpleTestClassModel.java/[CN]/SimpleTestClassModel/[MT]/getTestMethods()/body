@@ -1,0 +1,24 @@
+{
+  if (!rootFile.isDirectory()) {
+    return Collections.<TestMethodModel>singletonList(new SimpleTestMethodModel(rootFile,rootFile,doTestMethodName));
+  }
+  List<TestMethodModel> result=Lists.newArrayList();
+  result.add(new TestMethodModel(){
+    @Override public String getName(){
+      return "testAllFilesPresentIn" + StringUtil.capitalize(rootFile.getName());
+    }
+    @Override public void generateBody(    @NotNull Printer p,    @NotNull String generatorClassFqName){
+      p.println("JetTestUtils.allTestsPresent(" + "this.getClass(), " + "\"",generatorClassFqName,"\", " + "new File(\"",JetTestUtils.getFilePath(rootFile) + "\"), \"",extension,"\", ",recursive,");");
+    }
+  }
+);
+  File[] listFiles=rootFile.listFiles();
+  if (listFiles != null) {
+    for (    File file : listFiles) {
+      if (!file.isDirectory() && file.getName().endsWith("." + extension)) {
+        result.add(new SimpleTestMethodModel(rootFile,file,doTestMethodName));
+      }
+    }
+  }
+  return result;
+}
