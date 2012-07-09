@@ -1,5 +1,6 @@
 {
-  if (libraryContext == null) {
+  BindingContext context=cachedLibraryContext.get();
+  if (context == null) {
     List<JetFile> allLibFiles=getAllLibFiles(project);
     Predicate<PsiFile> filesWithCode=new Predicate<PsiFile>(){
       @Override public boolean apply(      @javax.annotation.Nullable PsiFile file){
@@ -8,8 +9,9 @@
     }
 ;
     AnalyzeExhaust exhaust=AnalyzerFacadeForJS.analyzeFiles(allLibFiles,filesWithCode,Config.getEmptyConfig(project));
-    libraryContext=exhaust.getBindingContext();
-    AnalyzerFacadeForJS.checkForErrors(allLibFiles,libraryContext);
+    context=exhaust.getBindingContext();
+    AnalyzerFacadeForJS.checkForErrors(allLibFiles,context);
+    cachedLibraryContext=new SoftReference<BindingContext>(context);
   }
-  return libraryContext;
+  return context;
 }
