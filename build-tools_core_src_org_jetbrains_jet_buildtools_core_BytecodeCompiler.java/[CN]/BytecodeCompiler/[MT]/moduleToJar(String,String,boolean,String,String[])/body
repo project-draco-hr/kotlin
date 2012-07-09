@@ -1,7 +1,11 @@
 {
   try {
-    K2JVMCompileEnvironmentConfiguration env=env(stdlib,classpath);
-    List<Module> modules=CompileEnvironmentUtil.loadModuleScript(module,env.getMessageCollector());
+    List<Module> modules=CompileEnvironmentUtil.loadModuleScript(module,MessageCollector.PLAIN_TEXT_TO_SYSTEM_ERR);
+    List<String> sourcesRoots=new ArrayList<String>();
+    for (    Module m : modules) {
+      sourcesRoots.addAll(m.getSourceFiles());
+    }
+    K2JVMCompileEnvironmentConfiguration env=env(stdlib,classpath,sourcesRoots.toArray(new String[0]));
     File directory=new File(module).getParentFile();
     boolean success=KotlinToJVMBytecodeCompiler.compileModules(env,modules,directory,new File(jar),null,includeRuntime);
     if (!success) {
