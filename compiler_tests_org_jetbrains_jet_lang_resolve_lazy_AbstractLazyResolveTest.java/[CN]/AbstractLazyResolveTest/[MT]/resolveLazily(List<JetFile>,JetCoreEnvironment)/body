@@ -1,0 +1,36 @@
+{
+  ModuleDescriptor javaModule=new ModuleDescriptor(Name.special("<lazy module>"));
+  final Project project=environment.getProject();
+  InjectorForJavaDescriptorResolver injector=new InjectorForJavaDescriptorResolver(project,new BindingTraceContext(),javaModule,BuiltinsScopeExtensionMode.ALL);
+  final PsiClassFinder psiClassFinder=injector.getPsiClassFinder();
+  final JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  final FileBasedDeclarationProviderFactory declarationProviderFactory=new FileBasedDeclarationProviderFactory(files,new Predicate<FqName>(){
+    @Override public boolean apply(    FqName fqName){
+      return psiClassFinder.findPsiPackage(fqName) != null || new FqName("jet").equals(fqName);
+    }
+  }
+);
+  ModuleConfiguration moduleConfiguration=new ModuleConfiguration(){
+    @Override public void addDefaultImports(    @NotNull Collection<JetImportDirective> directives){
+      directives.add(JetPsiFactory.createImportDirective(project,new ImportPath("java.lang.*")));
+      for (      ImportPath defaultJetImport : DefaultModuleConfiguration.DEFAULT_JET_IMPORTS) {
+        directives.add(JetPsiFactory.createImportDirective(project,defaultJetImport));
+      }
+    }
+    @Override public void extendNamespaceScope(    @NotNull BindingTrace trace,    @NotNull NamespaceDescriptor namespaceDescriptor,    @NotNull WritableScope namespaceMemberScope){
+      FqName fqName=DescriptorUtils.getFQName(namespaceDescriptor).toSafe();
+      if (new FqName("jet").equals(fqName)) {
+        namespaceMemberScope.importScope(JetStandardLibrary.getInstance().getLibraryScope());
+      }
+      if (psiClassFinder.findPsiPackage(fqName) != null) {
+        System.out.println(fqName);
+        JavaPackageScope javaPackageScope=javaDescriptorResolver.getJavaPackageScope(fqName,namespaceDescriptor);
+        namespaceMemberScope.importScope(javaPackageScope);
+      }
+    }
+  }
+;
+  ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
+  ResolveSession session=new ResolveSession(project,lazyModule,moduleConfiguration,declarationProviderFactory);
+  return lazyModule;
+}
