@@ -1,16 +1,23 @@
 {
   String staticModifier=isStatic ? "static " : "";
-  generateMetadata(p,testDataSource);
-  p.println("public " + staticModifier + "class ",testDataSource.getName()," extends ",baseTestClassName," {");
+  generateMetadata(p,testClassModel);
+  p.println("public " + staticModifier + "class ",testClassModel.getName()," extends ",baseTestClassName," {");
   p.pushIndent();
-  Collection<TestMethodModel> testMethods=testDataSource.getTestMethods();
+  Collection<TestMethodModel> testMethods=testClassModel.getTestMethods();
   for (  TestMethodModel testMethodModel : testMethods) {
     generateTestMethod(p,testMethodModel);
     p.println();
   }
-  Collection<TestClassModel> innerTestClasses=testDataSource.getInnerTestClasses();
+  Collection<TestClassModel> innerTestClasses=testClassModel.getInnerTestClasses();
   for (  TestClassModel innerTestClass : innerTestClasses) {
+    if (innerTestClass.isEmpty()) {
+      continue;
+    }
     generateTestClass(p,innerTestClass,true);
+    p.println();
+  }
+  if (!innerTestClasses.isEmpty()) {
+    generateSuiteMethod(p,testClassModel);
   }
   p.popIndent();
   p.println("}");
