@@ -5,9 +5,25 @@
     values.addAll(typeBounds.getExactValues());
     if (!typeBounds.getLowerBounds().isEmpty()) {
       JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(typeBounds.getLowerBounds());
+      if (values.isEmpty()) {
+        values.add(superTypeOfLowerBounds);
+      }
       for (      JetType value : values) {
         if (!JetTypeChecker.INSTANCE.isSubtypeOf(superTypeOfLowerBounds,value)) {
           values.add(superTypeOfLowerBounds);
+          break;
+        }
+      }
+    }
+    if (!typeBounds.getUpperBounds().isEmpty()) {
+      JetType subTypeOfUpperBounds=typeBounds.getUpperBounds().iterator().next();
+      if (values.isEmpty()) {
+        values.add(subTypeOfUpperBounds);
+      }
+      for (      JetType value : values) {
+        if (!JetTypeChecker.INSTANCE.isSubtypeOf(value,subTypeOfUpperBounds)) {
+          values.add(subTypeOfUpperBounds);
+          break;
         }
       }
     }
