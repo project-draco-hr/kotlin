@@ -1,0 +1,32 @@
+{
+  File file=new File(filePath);
+  final File javaFilesDir=new File(FileUtil.getTempDirectory(),"java-files");
+  String expectedText=JetTestUtils.doLoadFile(file);
+  final Ref<Boolean> hasJavaFiles=new Ref<Boolean>(false);
+  List<TestFile> testFileFiles=JetTestUtils.createTestFiles(file.getName(),expectedText,new JetTestUtils.TestFileFactory<TestFile>(){
+    @Override public TestFile create(    String fileName,    String text){
+      if (fileName.endsWith(".java")) {
+        hasJavaFiles.set(writeJavaFile(fileName,text,javaFilesDir));
+      }
+      return new TestFile(fileName,text);
+    }
+  }
+);
+  if (hasJavaFiles.get()) {
+    myEnvironment.addToClasspath(javaFilesDir);
+  }
+  List<JetFile> jetFiles=Lists.newArrayList();
+  for (  TestFile testFileFile : testFileFiles) {
+    if (testFileFile.jetFile != null) {
+      jetFiles.add(testFileFile.jetFile);
+    }
+  }
+  BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,Collections.<AnalyzerScriptParameter>emptyList(),Predicates.<PsiFile>alwaysTrue(),BuiltinsScopeExtensionMode.ALL).getBindingContext();
+  boolean ok=true;
+  StringBuilder actualText=new StringBuilder();
+  for (  TestFile testFileFile : testFileFiles) {
+    ok&=testFileFile.getActualText(bindingContext,actualText);
+  }
+  assertEquals(expectedText,actualText.toString());
+  assertTrue("something is wrong is this test",ok);
+}
