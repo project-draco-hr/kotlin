@@ -12,27 +12,23 @@
  else {
         v.getstatic(classObjType.getInternalName(),"$classobj",exprType.getDescriptor());
       }
+      StackValue.onStack(exprType).put(type,v);
     }
  else {
-      generateThisOrOuter(classReceiverDeclarationDescriptor).put(exprType,v);
+      StackValue.thisOrOuter(this,classReceiverDeclarationDescriptor).put(type,v);
     }
-    StackValue.onStack(exprType).put(type,v);
   }
  else   if (descriptor instanceof ScriptReceiver) {
     generateScript((ScriptReceiver)descriptor);
   }
  else   if (descriptor instanceof ExtensionReceiver) {
-    Type exprType=asmType(descriptor.getType());
     ExtensionReceiver extensionReceiver=(ExtensionReceiver)descriptor;
-    generateReceiver(extensionReceiver.getDeclarationDescriptor()).put(exprType,v);
-    StackValue.onStack(exprType).put(type,v);
+    generateReceiver(extensionReceiver.getDeclarationDescriptor()).put(type,v);
   }
  else   if (descriptor instanceof ExpressionReceiver) {
     ExpressionReceiver expressionReceiver=(ExpressionReceiver)descriptor;
     JetExpression expr=expressionReceiver.getExpression();
-    Type exprType=asmType(expressionReceiver.getType());
-    gen(expr,exprType);
-    StackValue.onStack(exprType).put(type,v);
+    gen(expr,type);
   }
  else   if (descriptor instanceof AutoCastReceiver) {
     AutoCastReceiver autoCastReceiver=(AutoCastReceiver)descriptor;
