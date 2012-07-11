@@ -1,0 +1,56 @@
+{
+  if (subjectType == DONT_CARE || constrainingType == DONT_CARE || subjectType == TypeUtils.NO_EXPECTED_TYPE || constrainingType == TypeUtils.NO_EXPECTED_TYPE) {
+    return;
+  }
+  DeclarationDescriptor constrainingTypeDescriptor=constrainingType.getConstructor().getDeclarationDescriptor();
+  DeclarationDescriptor subjectTypeDescriptor=subjectType.getConstructor().getDeclarationDescriptor();
+  if (constrainingTypeDescriptor instanceof TypeParameterDescriptor) {
+    if (TypeUtils.dependsOnTypeParameterConstructors(subjectType,Collections.singleton(DONT_CARE.getConstructor())))     return;
+    if (constrainingType.isNullable()) {
+      subjectType=TypeUtils.makeNotNullable(subjectType);
+    }
+    TypeParameterDescriptor typeParameter=(TypeParameterDescriptor)constrainingTypeDescriptor;
+    if (constraintKind == ConstraintKind.SUB_TYPE) {
+      typeParameterConstraints.get(typeParameter).addLowerConstraint(subjectType);
+    }
+ else     if (constraintKind == ConstraintKind.SUPER_TYPE) {
+      typeParameterConstraints.get(typeParameter).addUpperConstraint(subjectType);
+    }
+ else {
+      typeParameterConstraints.get(typeParameter).addEqualConstraint(subjectType);
+    }
+    return;
+  }
+  if (subjectTypeDescriptor instanceof ClassDescriptor && constrainingTypeDescriptor instanceof ClassDescriptor) {
+    if (constraintKind != ConstraintKind.SUPER_TYPE) {
+      JetType correspondingSupertype=TypeCheckingProcedure.findCorrespondingSupertype(subjectType,constrainingType);
+      if (correspondingSupertype != null) {
+        subjectType=correspondingSupertype;
+      }
+    }
+ else {
+      JetType correspondingSupertype=TypeCheckingProcedure.findCorrespondingSupertype(constrainingType,subjectType);
+      if (correspondingSupertype != null) {
+        constrainingType=correspondingSupertype;
+      }
+    }
+    if (subjectType.getConstructor().getParameters().size() != constrainingType.getConstructor().getParameters().size()) {
+      errorConstraintPositions.add(constraintPosition);
+      typeConstructorMismatch=true;
+      return;
+    }
+    ClassDescriptor subClass=(ClassDescriptor)subjectType.getConstructor().getDeclarationDescriptor();
+    ClassDescriptor superClass=(ClassDescriptor)constrainingType.getConstructor().getDeclarationDescriptor();
+    if (DescriptorUtils.isSubclass(subClass,superClass)) {
+      List<TypeProjection> subArguments=subjectType.getArguments();
+      List<TypeProjection> superArguments=constrainingType.getArguments();
+      List<TypeParameterDescriptor> superParameters=constrainingType.getConstructor().getParameters();
+      for (int i=0; i < superArguments.size(); i++) {
+        addConstraint(varianceToConstraintKind(superParameters.get(i).getVariance()),subArguments.get(i).getType(),superArguments.get(i).getType(),constraintPosition);
+      }
+      return;
+    }
+  }
+  typeConstructorMismatch=true;
+  errorConstraintPositions.add(constraintPosition);
+}

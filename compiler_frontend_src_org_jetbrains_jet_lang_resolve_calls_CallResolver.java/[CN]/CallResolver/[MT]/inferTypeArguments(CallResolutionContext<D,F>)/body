@@ -2,18 +2,18 @@
   ResolvedCallImpl<D> candidateCall=context.candidateCall;
   D candidate=candidateCall.getCandidateDescriptor();
   ResolutionDebugInfo.Data debugInfo=context.trace.get(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement());
-  ConstraintsBuilder constraintsBuilder=new ConstraintsBuilderImpl();
+  ConstraintsSystem constraintsSystem=new ConstraintsSystemImpl();
   CallableDescriptor candidateWithFreshVariables=FunctionDescriptorUtil.alphaConvertTypeParameters(candidate);
   for (  TypeParameterDescriptor typeParameterDescriptor : candidateWithFreshVariables.getTypeParameters()) {
-    constraintsBuilder.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+    constraintsSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
   }
-  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintsBuilderImpl.DONT_CARE);
+  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintsSystemImpl.DONT_CARE);
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ResolvedValueArgument resolvedValueArgument=entry.getValue();
     ValueParameterDescriptor valueParameterDescriptor=candidateWithFreshVariables.getValueParameters().get(entry.getKey().getIndex());
     for (    ValueArgument valueArgument : resolvedValueArgument.getArguments()) {
       if (JetPsiUtil.isFunctionLiteralWithoutDeclaredParameterTypes(valueArgument.getArgumentExpression()))       continue;
-      boolean success=addConstraintForValueArgument(valueArgument,valueParameterDescriptor,substituteDontCare,constraintsBuilder,context);
+      boolean success=addConstraintForValueArgument(valueArgument,valueParameterDescriptor,substituteDontCare,constraintsSystem,context);
       if (!success) {
         candidateCall.argumentHasNoType();
       }
@@ -22,15 +22,15 @@
   ReceiverDescriptor receiverArgument=candidateCall.getReceiverArgument();
   ReceiverDescriptor receiverParameter=candidateWithFreshVariables.getReceiverParameter();
   if (receiverArgument.exists() && receiverParameter.exists()) {
-    constraintsBuilder.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
+    constraintsSystem.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
   }
-  ConstraintsBuilderImpl constraintsBuilderWithRightTypeParameters=new ConstraintsBuilderImpl(constraintsBuilder.hasTypeConstructorMismatch(),constraintsBuilder.getTypeConstructorMismatchConstraintPositions());
+  ConstraintsSystemImpl constraintsBuilderWithRightTypeParameters=new ConstraintsSystemImpl(constraintsSystem.hasTypeConstructorMismatch(),constraintsSystem.getTypeConstructorMismatchConstraintPositions());
   for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
-    TypeConstraints typeConstraints=constraintsBuilder.getTypeConstraints(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
+    TypeConstraints typeConstraints=constraintsSystem.getTypeConstraints(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
     constraintsBuilderWithRightTypeParameters.registerTypeVariable(typeParameterDescriptor,typeConstraints);
   }
-  candidateCall.setConstraintsBuilder(constraintsBuilderWithRightTypeParameters);
-  if (!constraintsBuilder.hasContradiction()) {
+  candidateCall.setConstraintsSystem(constraintsBuilderWithRightTypeParameters);
+  if (!constraintsSystem.hasContradiction()) {
     candidateCall.setHasUnknownTypeParameters(true);
     return SUCCESS;
   }
