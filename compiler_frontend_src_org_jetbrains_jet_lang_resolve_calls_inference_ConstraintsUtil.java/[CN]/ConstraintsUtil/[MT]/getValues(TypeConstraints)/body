@@ -1,0 +1,31 @@
+{
+  Set<JetType> values=Sets.newLinkedHashSet();
+  if (typeConstraints != null && !typeConstraints.isEmpty()) {
+    values.addAll(typeConstraints.getExactBounds());
+    if (!typeConstraints.getLowerBounds().isEmpty()) {
+      JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(typeConstraints.getLowerBounds());
+      if (values.isEmpty()) {
+        values.add(superTypeOfLowerBounds);
+      }
+      for (      JetType value : values) {
+        if (!JetTypeChecker.INSTANCE.isSubtypeOf(superTypeOfLowerBounds,value)) {
+          values.add(superTypeOfLowerBounds);
+          break;
+        }
+      }
+    }
+    if (!typeConstraints.getUpperBounds().isEmpty()) {
+      JetType subTypeOfUpperBounds=typeConstraints.getUpperBounds().iterator().next();
+      if (values.isEmpty()) {
+        values.add(subTypeOfUpperBounds);
+      }
+      for (      JetType value : values) {
+        if (!JetTypeChecker.INSTANCE.isSubtypeOf(value,subTypeOfUpperBounds)) {
+          values.add(subTypeOfUpperBounds);
+          break;
+        }
+      }
+    }
+  }
+  return values;
+}
