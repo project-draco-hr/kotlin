@@ -1,0 +1,14 @@
+{
+  List<JetFile> jetFiles=getJetFiles(files);
+  ModuleDescriptor lazyModule=LazyResolveTestUtil.resolveLazily(jetFiles,getEnvironment());
+  ModuleDescriptor eagerModule=LazyResolveTestUtil.resolveEagerly(jetFiles,getEnvironment());
+  String path=JetTestUtils.getFilePath(new File(FileUtil.getRelativePath(TEST_DATA_DIR,testDataFile)));
+  String txtFileRelativePath=path.replaceAll("\\.kt$|\\.ktscript",".txt");
+  File txtFile=new File("compiler/testData/lazyResolve/diagnostics/" + txtFileRelativePath);
+  NamespaceComparator.compareNamespaces(eagerModule.getRootNamespace(),lazyModule.getRootNamespace(),false,new Predicate<NamespaceDescriptor>(){
+    @Override public boolean apply(    NamespaceDescriptor descriptor){
+      return !Name.identifier("jet").equals(descriptor.getName());
+    }
+  }
+,txtFile);
+}
