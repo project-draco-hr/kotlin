@@ -1,2 +1,32 @@
 {
+  if (results.getResultCode() != OverloadResolutionResults.Code.DIRTY)   return results;
+  Set<ResolvedCallWithTrace<D>> successful=Sets.newLinkedHashSet();
+  Set<ResolvedCallWithTrace<D>> failed=Sets.newLinkedHashSet();
+  for (  ResolvedCall<? extends D> call : results.getResultingCalls()) {
+    if (!(call instanceof ResolvedCallImpl))     continue;
+    ResolvedCallImpl<D> resolvedCall=(ResolvedCallImpl<D>)call;
+    if (!resolvedCall.hasUnknownTypeParameters()) {
+      if (resolvedCall.getStatus().isSuccess()) {
+        successful.add(resolvedCall);
+      }
+ else {
+        failed.add(resolvedCall);
+      }
+      continue;
+    }
+    completeTypeInferenceDependentOnExpectedTypeForCall(resolvedCall,context,successful,failed);
+  }
+  if (results.getResultingCalls().size() > 1) {
+    for (    ResolvedCallWithTrace<D> call : successful) {
+      if (call instanceof ResolvedCallImpl) {
+        ((ResolvedCallImpl)call).addStatus(ResolutionStatus.OTHER_ERROR);
+        failed.add(call);
+      }
+    }
+    successful.clear();
+  }
+  if (tracing == null) {
+    return results;
+  }
+  return computeResultAndReportErrors(context.trace,tracing,successful,failed);
 }

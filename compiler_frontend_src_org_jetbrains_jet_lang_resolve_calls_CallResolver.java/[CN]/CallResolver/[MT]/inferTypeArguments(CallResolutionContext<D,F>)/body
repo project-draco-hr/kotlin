@@ -2,25 +2,19 @@
   ResolvedCallImpl<D> candidateCall=context.candidateCall;
   D candidate=candidateCall.getCandidateDescriptor();
   ResolutionDebugInfo.Data debugInfo=context.trace.get(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement());
-  ConstraintSystem constraintSystem=new ConstraintSystemImpl();
+  ConstraintsBuilder constraintsBuilder=new ConstraintsBuilderImpl();
   CallableDescriptor candidateWithFreshVariables=FunctionDescriptorUtil.alphaConvertTypeParameters(candidate);
   for (  TypeParameterDescriptor typeParameterDescriptor : candidateWithFreshVariables.getTypeParameters()) {
-    constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+    constraintsBuilder.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
   }
-  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintSystem.DONT_CARE);
+  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintsBuilderImpl.DONT_CARE);
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ResolvedValueArgument resolvedValueArgument=entry.getValue();
     ValueParameterDescriptor valueParameterDescriptor=candidateWithFreshVariables.getValueParameters().get(entry.getKey().getIndex());
     for (    ValueArgument valueArgument : resolvedValueArgument.getArguments()) {
       if (JetPsiUtil.isFunctionLiteralWithoutDeclaredParameterTypes(valueArgument.getArgumentExpression()))       continue;
-      JetType effectiveExpectedType=getEffectiveExpectedType(valueParameterDescriptor,valueArgument);
-      TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace);
-      JetExpression argumentExpression=valueArgument.getArgumentExpression();
-      JetType type=argumentExpression != null ? expressionTypingServices.getType(context.scope,argumentExpression,substituteDontCare.substitute(valueParameterDescriptor.getType(),Variance.INVARIANT),context.dataFlowInfo,traceForUnknown) : null;
-      if (type != null && !ErrorUtils.isErrorType(type)) {
-        constraintSystem.addSubtypingConstraint(type,effectiveExpectedType,ConstraintPosition.valueParameterPosition(valueParameterDescriptor.getIndex()));
-      }
- else {
+      boolean success=addConstraintForValueArgument(valueArgument,valueParameterDescriptor,substituteDontCare,constraintsBuilder,context);
+      if (!success) {
         candidateCall.argumentHasNoType();
       }
     }
@@ -28,15 +22,15 @@
   ReceiverDescriptor receiverArgument=candidateCall.getReceiverArgument();
   ReceiverDescriptor receiverParameter=candidateWithFreshVariables.getReceiverParameter();
   if (receiverArgument.exists() && receiverParameter.exists()) {
-    constraintSystem.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
+    constraintsBuilder.addSubtypingConstraint(receiverArgument.getType(),receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
   }
-  ConstraintSystemImpl constraintSystemWithRightTypeParameters=new ConstraintSystemImpl(constraintSystem.hasTypeConstructorMismatch(),constraintSystem.getErrorConstraintPositions());
+  ConstraintsBuilderImpl constraintsBuilderWithRightTypeParameters=new ConstraintsBuilderImpl(constraintsBuilder.hasTypeConstructorMismatch(),constraintsBuilder.getTypeConstructorMismatchConstraintPositions());
   for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
-    TypeBounds typeBounds=constraintSystem.getTypeBounds(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
-    candidateCall.recordTypeBounds(typeParameterDescriptor,typeBounds);
-    constraintSystemWithRightTypeParameters.registerTypeVariable(typeParameterDescriptor,typeBounds);
+    TypeConstraints typeConstraints=constraintsBuilder.getTypeConstraints(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
+    constraintsBuilderWithRightTypeParameters.registerTypeVariable(typeParameterDescriptor,typeConstraints);
   }
-  if (!constraintSystem.hasContradiction()) {
+  candidateCall.setConstraintsBuilder(constraintsBuilderWithRightTypeParameters);
+  if (!constraintsBuilder.hasContradiction()) {
     candidateCall.setHasUnknownTypeParameters(true);
     return SUCCESS;
   }
@@ -44,7 +38,7 @@
     List<JetType> argumentTypes=Lists.newArrayList();
     ResolutionStatus argumentsStatus=checkAllValueArguments(context,argumentTypes);
     JetType receiverType=candidateCall.getReceiverArgument().exists() ? candidateCall.getReceiverArgument().getType() : null;
-    reportTypeInferenceFailed(context.trace,context.call,InferenceErrorData.create(candidate,constraintSystemWithRightTypeParameters,argumentTypes,receiverType));
+    reportTypeInferenceFailed(context.trace,context.call,InferenceErrorData.create(candidate,constraintsBuilderWithRightTypeParameters,argumentTypes,receiverType));
     return TYPE_INFERENCE_ERROR.combine(argumentsStatus);
   }
 }
