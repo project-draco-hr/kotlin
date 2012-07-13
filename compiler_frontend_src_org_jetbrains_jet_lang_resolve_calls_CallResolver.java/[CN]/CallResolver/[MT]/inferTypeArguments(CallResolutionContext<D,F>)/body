@@ -2,7 +2,7 @@
   ResolvedCallImpl<D> candidateCall=context.candidateCall;
   D candidate=candidateCall.getCandidateDescriptor();
   ResolutionDebugInfo.Data debugInfo=context.trace.get(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement());
-  ConstraintsSystem constraintsSystem=new ConstraintsSystemImpl();
+  ConstraintsSystemImpl constraintsSystem=new ConstraintsSystemImpl();
   CallableDescriptor candidateWithFreshVariables=FunctionDescriptorUtil.alphaConvertTypeParameters(candidate);
   for (  TypeParameterDescriptor typeParameterDescriptor : candidateWithFreshVariables.getTypeParameters()) {
     constraintsSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
@@ -24,11 +24,11 @@
   if (receiverArgument.exists() && receiverParameter.exists()) {
     constraintsSystem.addSupertypeConstraint(receiverParameter.getType(),receiverArgument.getType(),ConstraintPosition.RECEIVER_POSITION);
   }
-  ConstraintsSystemImpl constraintsBuilderWithRightTypeParameters=new ConstraintsSystemImpl(constraintsSystem.hasTypeConstructorMismatch(),constraintsSystem.getTypeConstructorMismatchConstraintPositions());
+  Map<TypeParameterDescriptor,TypeParameterDescriptor> typeVariablesMap=Maps.newLinkedHashMap();
   for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
-    TypeConstraints typeConstraints=constraintsSystem.getTypeConstraints(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()));
-    constraintsBuilderWithRightTypeParameters.registerTypeVariable(typeParameterDescriptor,typeConstraints);
+    typeVariablesMap.put(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()),typeParameterDescriptor);
   }
+  ConstraintsSystem constraintsBuilderWithRightTypeParameters=constraintsSystem.replaceTypeVariables(typeVariablesMap);
   candidateCall.setConstraintsSystem(constraintsBuilderWithRightTypeParameters);
   if (!constraintsSystem.hasContradiction()) {
     candidateCall.setHasUnknownTypeParameters(true);
