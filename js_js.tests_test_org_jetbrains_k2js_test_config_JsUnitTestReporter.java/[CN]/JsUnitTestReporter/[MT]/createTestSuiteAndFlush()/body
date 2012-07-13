@@ -2,6 +2,23 @@
   final TestSuite suite=new TestSuite("!");
   Collection<String> newFinishedTests=getNewFinishedTests();
   for (  String test : newFinishedTests) {
+    suite.addTest(new TestCase(test){
+      @Override protected void runTest() throws Throwable {
+        Boolean result=getResult(getName());
+        if (!result) {
+          Collection<String> errorMessages=getErrors(getName());
+          StringBuilder sb=new StringBuilder();
+          for (          String error : errorMessages) {
+            sb.append(error);
+          }
+          eraseTestInfo(getName());
+          Assert.fail(sb.toString());
+        }
+        eraseTestInfo(getName());
+        Assert.assertTrue(result);
+      }
+    }
+);
   }
   processedTests.addAll(newFinishedTests);
   return suite;
