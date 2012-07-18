@@ -1,0 +1,21 @@
+{
+  try {
+    if (!(file instanceof PsiJavaFile)) {
+      return null;
+    }
+    final String eol=System.getProperty("line.separator");
+    List<PsiElement> buffer=getSelectedElements(file,startOffsets,endOffsets);
+    StringBuilder result=new StringBuilder();
+    for (    PsiElement e : buffer) {
+      String converted=new Converter().elementToKotlin(e);
+      if (!converted.isEmpty()) {
+        result.append(converted).append(eol);
+      }
+    }
+    return new ConvertedCode(StringUtil.convertLineSeparators(result.toString()));
+  }
+ catch (  Throwable t) {
+    LOG.error(t);
+  }
+  return null;
+}

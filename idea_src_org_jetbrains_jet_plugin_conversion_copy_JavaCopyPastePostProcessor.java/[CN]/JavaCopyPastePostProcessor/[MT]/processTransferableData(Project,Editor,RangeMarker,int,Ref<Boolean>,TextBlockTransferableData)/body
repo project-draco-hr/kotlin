@@ -1,0 +1,26 @@
+{
+  try {
+    final PsiFile file=PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (!(file instanceof JetFile)) {
+      return;
+    }
+    JetEditorOptions jetEditorOptions=JetEditorOptions.getInstance();
+    boolean needConvert=jetEditorOptions.isEnableJavaToKotlinConversion() && (jetEditorOptions.isDonTShowConversionDialog() || okFromDialog(project));
+    if (needConvert) {
+      if (value instanceof ConvertedCode) {
+        final String text=((ConvertedCode)value).getData();
+        ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override public void run(){
+            editor.getDocument().replaceString(bounds.getStartOffset(),bounds.getEndOffset(),text);
+            editor.getCaretModel().moveToOffset(bounds.getStartOffset() + text.length());
+            PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+          }
+        }
+);
+      }
+    }
+  }
+ catch (  Throwable t) {
+    LOG.error(t);
+  }
+}
