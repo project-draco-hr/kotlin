@@ -1,6 +1,7 @@
 {
-  ResolutionStatus result=SUCCESS;
+  ResolutionStatus resultStatus=SUCCESS;
   DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  List<JetType> argumentTypes=Lists.newArrayList();
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ValueParameterDescriptor parameterDescriptor=entry.getKey();
     ResolvedValueArgument resolvedArgument=entry.getValue();
@@ -13,17 +14,15 @@
       }
       JetTypeInfo typeInfo=expressionTypingServices.getTypeInfo(context.scope,expression,expectedType,dataFlowInfo,trace);
       JetType type=typeInfo.getType();
-      if (argumentTypes != null) {
-        argumentTypes.add(type);
-      }
+      argumentTypes.add(type);
       dataFlowInfo=dataFlowInfo.and(typeInfo.getDataFlowInfo());
       if (type == null || ErrorUtils.isErrorType(type)) {
         candidateCall.argumentHasNoType();
       }
  else       if (expectedType != NO_EXPECTED_TYPE && !typeChecker.isSubtypeOf(type,expectedType)) {
-        result=OTHER_ERROR;
+        resultStatus=OTHER_ERROR;
       }
     }
   }
-  return result;
+  return new ValueArgumentsCheckingResult(resultStatus,argumentTypes);
 }
