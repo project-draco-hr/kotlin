@@ -1,11 +1,17 @@
 {
   return new FunctionIntrinsicFactory(){
-    @NotNull @Override public Pattern getPattern(){
-      Collection<Pattern> patterns=patternToIntrinsic.keySet();
-      return PatternBuilder.any(patterns.toArray(new Pattern[patterns.size()]));
+    @NotNull @Override public Predicate<FunctionDescriptor> getPredicate(){
+      Collection<DescriptorPredicate> patterns=patternToIntrinsic.keySet();
+      final DescriptorPredicate[] patterns1=patterns.toArray(new DescriptorPredicate[patterns.size()]);
+      return new DescriptorPredicate(){
+        @Override public boolean apply(        @Nullable FunctionDescriptor descriptor){
+          return Predicates.or(patterns1).apply(descriptor);
+        }
+      }
+;
     }
     @NotNull @Override public FunctionIntrinsic getIntrinsic(    @NotNull FunctionDescriptor descriptor){
-      for (      Pattern pattern : patternToIntrinsic.keySet()) {
+      for (      DescriptorPredicate pattern : patternToIntrinsic.keySet()) {
         if (pattern.apply(descriptor)) {
           return patternToIntrinsic.get(pattern);
         }
