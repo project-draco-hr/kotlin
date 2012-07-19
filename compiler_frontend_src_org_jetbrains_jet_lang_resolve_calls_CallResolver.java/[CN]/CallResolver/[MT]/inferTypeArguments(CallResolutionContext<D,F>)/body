@@ -2,12 +2,12 @@
   ResolvedCallImpl<D> candidateCall=context.candidateCall;
   D candidate=candidateCall.getCandidateDescriptor();
   ResolutionDebugInfo.Data debugInfo=context.trace.get(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement());
-  ConstraintsSystemImpl constraintsSystem=new ConstraintsSystemImpl();
+  ConstraintSystemImpl constraintsSystem=new ConstraintSystemImpl();
   CallableDescriptor candidateWithFreshVariables=FunctionDescriptorUtil.alphaConvertTypeParameters(candidate);
   for (  TypeParameterDescriptor typeParameterDescriptor : candidateWithFreshVariables.getTypeParameters()) {
     constraintsSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
   }
-  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintsSystemImpl.DONT_CARE);
+  TypeSubstitutor substituteDontCare=ConstraintSystemWithPriorities.makeConstantSubstitutor(candidateWithFreshVariables.getTypeParameters(),ConstraintSystemImpl.DONT_CARE);
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ResolvedValueArgument resolvedValueArgument=entry.getValue();
     ValueParameterDescriptor valueParameterDescriptor=candidateWithFreshVariables.getValueParameters().get(entry.getKey().getIndex());
@@ -28,8 +28,8 @@
   for (  TypeParameterDescriptor typeParameterDescriptor : candidate.getTypeParameters()) {
     typeVariablesMap.put(candidateWithFreshVariables.getTypeParameters().get(typeParameterDescriptor.getIndex()),typeParameterDescriptor);
   }
-  ConstraintsSystem constraintsBuilderWithRightTypeParameters=constraintsSystem.replaceTypeVariables(typeVariablesMap);
-  candidateCall.setConstraintsSystem(constraintsBuilderWithRightTypeParameters);
+  ConstraintSystem constraintBuilderWithRightTypeParameters=constraintsSystem.replaceTypeVariables(typeVariablesMap);
+  candidateCall.setConstraintSystem(constraintBuilderWithRightTypeParameters);
   if (!constraintsSystem.hasTypeConstructorMismatch() && !constraintsSystem.hasConflictingConstraints()) {
     candidateCall.setHasUnknownTypeParameters(true);
     return SUCCESS;
@@ -39,7 +39,7 @@
     ResolutionStatus argumentsStatus=checkingResult.status;
     List<JetType> argumentTypes=checkingResult.argumentTypes;
     JetType receiverType=candidateCall.getReceiverArgument().exists() ? candidateCall.getReceiverArgument().getType() : null;
-    context.tracing.typeInferenceFailed(context.trace,InferenceErrorData.create(candidate,constraintsBuilderWithRightTypeParameters,argumentTypes,receiverType,context.expectedType));
+    context.tracing.typeInferenceFailed(context.trace,InferenceErrorData.create(candidate,constraintBuilderWithRightTypeParameters,argumentTypes,receiverType,context.expectedType));
     return TYPE_INFERENCE_ERROR.combine(argumentsStatus);
   }
 }
