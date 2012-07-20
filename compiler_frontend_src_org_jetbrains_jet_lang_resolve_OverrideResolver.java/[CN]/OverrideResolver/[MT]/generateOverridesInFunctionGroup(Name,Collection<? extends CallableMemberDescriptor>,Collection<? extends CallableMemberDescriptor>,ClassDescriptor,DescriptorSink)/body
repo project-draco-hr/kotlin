@@ -1,61 +1,7 @@
 {
   List<CallableMemberDescriptor> notOverridden=Lists.newArrayList(membersFromSupertypes);
   for (  CallableMemberDescriptor fromCurrent : membersFromCurrent) {
-    for (Iterator<CallableMemberDescriptor> iterator=notOverridden.iterator(); iterator.hasNext(); ) {
-      CallableMemberDescriptor fromSupertype=iterator.next();
-      OverridingUtil.OverrideCompatibilityInfo.Result result=OverridingUtil.isOverridableBy(fromSupertype,fromCurrent).getResult();
-      boolean isVisible=Visibilities.isVisible(fromSupertype,current);
-switch (result) {
-case OVERRIDABLE:
-        if (isVisible) {
-          OverridingUtil.bindOverride(fromCurrent,fromSupertype);
-        }
-      iterator.remove();
-    break;
-case CONFLICT:
-  if (isVisible) {
-    sink.conflict(fromSupertype,fromCurrent);
+    extractAndBindOverridesForMember(fromCurrent,notOverridden,current,sink);
   }
-iterator.remove();
-break;
-case INCOMPATIBLE:
-break;
-}
-}
-}
-Queue<CallableMemberDescriptor> fromSuperQueue=new LinkedList<CallableMemberDescriptor>(notOverridden);
-while (!fromSuperQueue.isEmpty()) {
-CallableMemberDescriptor aFromSuper=fromSuperQueue.remove();
-Collection<CallableMemberDescriptor> overridableByA=Lists.newArrayList();
-overridableByA.add(aFromSuper);
-for (Iterator<CallableMemberDescriptor> iterator=fromSuperQueue.iterator(); iterator.hasNext(); ) {
-CallableMemberDescriptor bFromSuper=iterator.next();
-OverridingUtil.OverrideCompatibilityInfo.Result result=OverridingUtil.isOverridableBy(bFromSuper,aFromSuper).getResult();
-switch (result) {
-case OVERRIDABLE:
-overridableByA.add(bFromSuper);
-iterator.remove();
-break;
-case CONFLICT:
-sink.conflict(aFromSuper,bFromSuper);
-iterator.remove();
-break;
-case INCOMPATIBLE:
-break;
-}
-}
-boolean isVisible=true;
-Modality modality=Modality.ABSTRACT;
-for (CallableMemberDescriptor descriptor : overridableByA) {
-isVisible&=Visibilities.isVisible(descriptor,current);
-if (descriptor.getModality().compareTo(modality) < 0) {
-modality=descriptor.getModality();
-}
-}
-CallableMemberDescriptor fakeOverride=aFromSuper.copy(current,modality,!isVisible,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
-for (CallableMemberDescriptor descriptor : overridableByA) {
-OverridingUtil.bindOverride(fakeOverride,descriptor);
-}
-sink.addToScope(fakeOverride);
-}
+  bindFakeOverrides(current,notOverridden,sink);
 }
