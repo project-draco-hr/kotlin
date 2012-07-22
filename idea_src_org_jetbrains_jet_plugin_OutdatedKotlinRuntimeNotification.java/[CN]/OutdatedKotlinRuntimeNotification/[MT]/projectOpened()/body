@@ -1,13 +1,13 @@
 {
   if (ApplicationManager.getApplication().isInternal())   return;
-  String runtimeVersion=getRuntimeVersion();
-  final String pluginVersion=getPluginVersion();
+  String runtimeVersion=getRuntimeVersion(getKotlinRuntimeJar());
   if (runtimeVersion == null)   return;
-  if ("@snapshot@".equals(pluginVersion))   return;
-  if (pluginVersion.equals(PropertiesComponent.getInstance(myProject).getValue(SUPPRESSED_PROPERTY_NAME)))   return;
-  boolean isRuntimeOutdated="snapshot".equals(runtimeVersion) || UNKNOWN_VERSION.equals(runtimeVersion) || runtimeVersion.startsWith("internal-") != pluginVersion.startsWith("internal-") || VersionComparatorUtil.compare(pluginVersion,runtimeVersion) > 0;
+  final String sdkVersion=getRuntimeVersion(getRuntimeFromSdk());
+  if (sdkVersion == null || "snapshot".equals(sdkVersion))   return;
+  if (sdkVersion.equals(PropertiesComponent.getInstance(myModule.getProject()).getValue(mySuppressedPropertyName)))   return;
+  boolean isRuntimeOutdated="snapshot".equals(runtimeVersion) || UNKNOWN_VERSION.equals(runtimeVersion) || runtimeVersion.startsWith("internal-") != sdkVersion.startsWith("internal-") || VersionComparatorUtil.compare(sdkVersion,runtimeVersion) > 0;
   if (!isRuntimeOutdated)   return;
-  String message=String.format("<p>Your version of Kotlin runtime library is %s, while plugin version is %s." + " Runtime library should be updated to avoid compatibility problems.</p>" + "<p><a href=\"update\">Update Runtime</a> <a href=\"ignore\">Ignore</a></p>",UNKNOWN_VERSION.equals(runtimeVersion) ? "older than 0.1.2296" : runtimeVersion,pluginVersion);
+  String message=String.format("<p>Your version of Kotlin runtime library in module \"%s\" is %s, while Kotlin SDK version in this module is %s." + " Runtime library should be updated to avoid compatibility problems.</p>" + "<p><a href=\"update\">Update Runtime</a> <a href=\"ignore\">Ignore</a></p>",myModule.getName(),UNKNOWN_VERSION.equals(runtimeVersion) ? "older than 0.1.2296" : runtimeVersion,sdkVersion);
   Notifications.Bus.notify(new Notification("Outdated Kotlin Runtime","Outdated Kotlin Runtime",message,NotificationType.WARNING,new NotificationListener(){
     @Override public void hyperlinkUpdate(    @NotNull Notification notification,    @NotNull HyperlinkEvent event){
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -15,7 +15,7 @@
           updateRuntime();
         }
  else         if ("ignore".equals(event.getDescription())) {
-          PropertiesComponent.getInstance(myProject).setValue(SUPPRESSED_PROPERTY_NAME,pluginVersion);
+          PropertiesComponent.getInstance(myModule.getProject()).setValue(mySuppressedPropertyName,sdkVersion);
         }
  else {
           throw new AssertionError();
@@ -24,5 +24,5 @@
       }
     }
   }
-),myProject);
+),myModule.getProject());
 }
