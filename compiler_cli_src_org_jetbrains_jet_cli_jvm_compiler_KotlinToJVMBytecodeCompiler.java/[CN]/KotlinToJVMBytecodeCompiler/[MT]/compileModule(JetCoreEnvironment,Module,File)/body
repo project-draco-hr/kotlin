@@ -1,0 +1,37 @@
+{
+  if (moduleBuilder.getSourceFiles().isEmpty()) {
+    throw new CompileEnvironmentException("No source files where defined");
+  }
+  CompilerConfiguration compilerConfiguration=environment.getConfiguration().copy();
+  for (  String sourceFile : moduleBuilder.getSourceFiles()) {
+    File source=new File(sourceFile);
+    if (!source.isAbsolute()) {
+      source=new File(directory,sourceFile);
+    }
+    if (!source.exists()) {
+      throw new CompileEnvironmentException("'" + source + "' does not exist");
+    }
+    compilerConfiguration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,source.getPath());
+  }
+  for (  String classpathRoot : moduleBuilder.getClasspathRoots()) {
+    compilerConfiguration.add(JVMConfigurationKeys.CLASSPATH_KEY,new File(classpathRoot));
+  }
+  for (  String annotationsRoot : moduleBuilder.getAnnotationsRoots()) {
+    compilerConfiguration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,new File(annotationsRoot));
+  }
+  Disposable parentDisposable=CompileEnvironmentUtil.createMockDisposable();
+  JetCoreEnvironment moduleEnvironment=null;
+  try {
+    moduleEnvironment=JetCoreEnvironment.createCoreEnvironmentForJVM(parentDisposable,compilerConfiguration);
+    GenerationState generationState=analyzeAndGenerate(moduleEnvironment);
+    if (generationState == null) {
+      return null;
+    }
+    return generationState.getFactory();
+  }
+  finally {
+    if (moduleEnvironment != null) {
+      Disposer.dispose(parentDisposable);
+    }
+  }
+}
