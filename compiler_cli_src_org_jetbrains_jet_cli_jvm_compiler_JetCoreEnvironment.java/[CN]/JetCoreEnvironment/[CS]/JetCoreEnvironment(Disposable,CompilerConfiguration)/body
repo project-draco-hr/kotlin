@@ -8,10 +8,13 @@
   registerFileType(JetFileType.INSTANCE,"jet");
   registerParserDefinition(new JavaParserDefinition());
   registerParserDefinition(new JetParserDefinition());
-  myProject.registerService(JetFilesProvider.class,new CliJetFilesProvider(this));
-  Extensions.getArea(myProject).getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(new JavaElementFinder(myProject));
+  projectEnvironment=new JavaCoreProjectEnvironment(parentDisposable,this);
+  MockProject project=projectEnvironment.getProject();
+  project.registerService(JetFilesProvider.class,new CliJetFilesProvider(this));
+  project.registerService(CoreJavaFileManager.class,(CoreJavaFileManager)ServiceManager.getService(project,JavaFileManager.class));
+  Extensions.getArea(project).getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(new JavaElementFinder(project));
   annotationsProvider=new CoreAnnotationsProvider();
-  myProject.registerService(ExternalAnnotationsProvider.class,annotationsProvider);
+  project.registerService(ExternalAnnotationsProvider.class,annotationsProvider);
   for (  File path : configuration.getList(JVMConfigurationKeys.CLASSPATH_KEY)) {
     addToClasspath(path);
   }
@@ -21,6 +24,6 @@
   for (  String path : configuration.getList(CommonConfigurationKeys.SOURCE_ROOTS_KEY)) {
     addSources(path);
   }
-  JetStandardLibrary.initialize(getProject());
+  JetStandardLibrary.initialize(project);
   initialized=true;
 }

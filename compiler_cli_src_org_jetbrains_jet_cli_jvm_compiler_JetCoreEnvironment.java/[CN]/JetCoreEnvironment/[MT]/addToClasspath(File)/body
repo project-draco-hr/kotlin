@@ -2,5 +2,14 @@
   if (initialized) {
     throw new IllegalStateException("Cannot add class path when JetCoreEnvironment is already initialized");
   }
-  super.addToClasspath(path);
+  if (path.isFile()) {
+    projectEnvironment.addJarToClassPath(path);
+  }
+ else {
+    final VirtualFile root=getLocalFileSystem().findFileByPath(path.getAbsolutePath());
+    if (root == null) {
+      throw new IllegalArgumentException("trying to add non-existing file to classpath: " + path);
+    }
+    projectEnvironment.addSourcesToClasspath(root);
+  }
 }
