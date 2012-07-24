@@ -1,0 +1,27 @@
+{
+  for (  MutableClassDescriptor classDescriptor : context.getClasses().values()) {
+    Collection<DeclarationDescriptor> allDescriptors=classDescriptor.getScopeForMemberLookup().getOwnDeclaredDescriptors();
+    MutableClassDescriptorLite classObj=classDescriptor.getClassObjectDescriptor();
+    if (classObj != null) {
+      Collection<DeclarationDescriptor> classObjDescriptors=classObj.getScopeForMemberLookup().getOwnDeclaredDescriptors();
+      if (!classObjDescriptors.isEmpty()) {
+        allDescriptors=Lists.newArrayList(allDescriptors);
+        allDescriptors.addAll(classObjDescriptors);
+      }
+    }
+    Multimap<Name,DeclarationDescriptor> descriptorMap=HashMultimap.create();
+    for (    DeclarationDescriptor desc : allDescriptors) {
+      if (desc instanceof ClassDescriptor) {
+        descriptorMap.put(desc.getName(),desc);
+      }
+    }
+    for (    Name name : descriptorMap.keySet()) {
+      Collection<DeclarationDescriptor> descriptors=descriptorMap.get(name);
+      if (descriptors.size() > 1) {
+        for (        DeclarationDescriptor descriptor : descriptors) {
+          trace.report(REDECLARATION.on(BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),(ClassDescriptor)descriptor),descriptor.getName().getName()));
+        }
+      }
+    }
+  }
+}
