@@ -3,9 +3,17 @@
     if (orderEntry instanceof LibraryOrderEntry) {
       LibraryOrderEntry libraryOrderEntry=(LibraryOrderEntry)orderEntry;
       Library library=libraryOrderEntry.getLibrary();
-      if (library != null && library.getName().equals("ktl")) {
-        model.getModuleLibraryTable().removeLibrary(library);
-        break;
+      if (library != null) {
+        String libraryName=library.getName();
+        if (libraryName != null && libraryName.equals("ktl")) {
+          Library.ModifiableModel modifiableModel=library.getModifiableModel();
+          for (          String rootUrl : library.getRootProvider().getUrls(OrderRootType.CLASSES)) {
+            modifiableModel.removeRoot(rootUrl,OrderRootType.CLASSES);
+          }
+          modifiableModel.commit();
+          model.getModuleLibraryTable().removeLibrary(library);
+          break;
+        }
       }
     }
   }
