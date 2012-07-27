@@ -3,24 +3,24 @@
   if (initial == null) {
     initial=findFile(System.getProperty("kotlinHome"));
   }
-  final FileChooserDescriptor descriptor=new FileChooserDescriptor(false,true,false,false,false,false){
-    @Override public boolean isFileSelectable(    @Nullable final VirtualFile file){
+  FileChooserDescriptor descriptor=new FileChooserDescriptor(false,true,false,false,false,false){
+    @Override public boolean isFileSelectable(    @Nullable VirtualFile file){
       return super.isFileSelectable(file) && KotlinSdkUtil.isSDKHome(file);
     }
   }
 ;
   descriptor.setTitle("Kotlin SDK");
   descriptor.setDescription("Choose a directory containing Kotlin distribution");
-  final VirtualFile sdkHomeVFile=FileChooser.chooseFile(parentComponent,descriptor,initial);
+  VirtualFile sdkHomeVFile=FileChooser.chooseFile(parentComponent,descriptor,initial);
   if (sdkHomeVFile == null)   return null;
   final File sdkHome=new File(sdkHomeVFile.getPath());
-  final String sdkVersion=KotlinSdkUtil.getSDKVersion(sdkHome);
+  String sdkVersion=KotlinSdkUtil.getSDKVersion(sdkHome);
   if (sdkVersion == null) {
     Messages.showErrorDialog(parentComponent,"Failed to find Kotlin SDK in the specified path: cannot determine Kotlin version.","Failed to Find Kotlin SDK");
     return null;
   }
   return new NewLibraryConfiguration(KotlinSdkUtil.getSDKName(sdkHome,sdkVersion)){
-    @Override public void addRoots(    @NotNull final LibraryEditor editor){
+    @Override public void addRoots(    @NotNull LibraryEditor editor){
       addSDKRoots(editor,sdkHome);
     }
   }
