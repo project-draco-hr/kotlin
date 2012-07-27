@@ -5,6 +5,11 @@
     }
   }
 );
+  ModuleDescriptor eagerModule=LazyResolveTestUtil.resolveEagerly(files,getEnvironment());
+  ModuleDescriptor lazyModule=LazyResolveTestUtil.resolveLazily(files,getEnvironment());
+  Name test=Name.identifier("test");
+  NamespaceDescriptor actual=lazyModule.getRootNamespace().getMemberScope().getNamespace(test);
+  NamespaceDescriptor expected=eagerModule.getRootNamespace().getMemberScope().getNamespace(test);
   Predicate<NamespaceDescriptor> filterJetNamespace=new Predicate<NamespaceDescriptor>(){
     @Override public boolean apply(    NamespaceDescriptor namespaceDescriptor){
       return !namespaceDescriptor.getName().equals(Name.identifier("jet"));
@@ -12,5 +17,5 @@
   }
 ;
   File serializeResultsTo=new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt");
-  doTestForGivenFiles(transform,includeMembersOfObject,files,filterJetNamespace,serializeResultsTo);
+  NamespaceComparator.compareNamespaces(expected,actual,includeMembersOfObject,filterJetNamespace,serializeResultsTo);
 }
