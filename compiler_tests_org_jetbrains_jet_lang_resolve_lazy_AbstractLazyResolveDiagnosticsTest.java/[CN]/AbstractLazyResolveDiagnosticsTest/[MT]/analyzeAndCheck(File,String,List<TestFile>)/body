@@ -3,17 +3,19 @@
   ModuleDescriptor lazyModule=LazyResolveTestUtil.resolveLazily(jetFiles,getEnvironment());
   ModuleDescriptor eagerModule=LazyResolveTestUtil.resolveEagerly(jetFiles,getEnvironment());
   String path=JetTestUtils.getFilePath(new File(FileUtil.getRelativePath(TEST_DATA_DIR,testDataFile)));
-  Set<Name> names=LazyResolveTestUtil.getTopLevelPackagesFromFileList(jetFiles);
-  for (  Name name : names) {
-    NamespaceDescriptor expected=eagerModule.getRootNamespace().getMemberScope().getNamespace(name);
-    NamespaceDescriptor actual=lazyModule.getRootNamespace().getMemberScope().getNamespace(name);
-    String txtFileRelativePath=path.replaceAll("\\.kt$|\\.ktscript","." + name.getName() + ".txt");
-    File txtFile=new File("compiler/testData/lazyResolve/diagnostics/" + txtFileRelativePath);
-    NamespaceComparator.compareNamespaces(expected,actual,NamespaceComparator.RECURSIVE.filterOutput(new Predicate<NamespaceDescriptor>(){
-      @Override public boolean apply(      NamespaceDescriptor descriptor){
-        return !Name.identifier("jet").equals(descriptor.getName());
+  NamespaceDescriptor expected=eagerModule.getRootNamespace();
+  NamespaceDescriptor actual=lazyModule.getRootNamespace();
+  String txtFileRelativePath=path.replaceAll("\\.kt$|\\.ktscript",".txt");
+  File txtFile=new File("compiler/testData/lazyResolve/diagnostics/" + txtFileRelativePath);
+  final Set<Name> names=LazyResolveTestUtil.getTopLevelPackagesFromFileList(jetFiles);
+  NamespaceComparator.compareNamespaces(expected,actual,NamespaceComparator.RECURSIVE.filterRecusion(new Predicate<FqNameUnsafe>(){
+    @Override public boolean apply(    FqNameUnsafe fqName){
+      if (fqName.isRoot())       return true;
+      if (fqName.parent().isRoot()) {
+        return names.contains(fqName.shortName());
       }
+      return true;
     }
-),txtFile);
   }
+),txtFile);
 }
