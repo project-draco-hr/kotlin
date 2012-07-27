@@ -1,16 +1,5 @@
 {
-  Set<Name> namespaceShortNames=Sets.newLinkedHashSet();
-  for (  JetFile file : files) {
-    JetNamespaceHeader header=file.getNamespaceHeader();
-    if (header != null) {
-      List<JetSimpleNameExpression> names=header.getParentNamespaceNames();
-      Name name=names.isEmpty() ? header.getNameAsName() : names.get(0).getReferencedNameAsName();
-      namespaceShortNames.add(name);
-    }
- else {
-      throw new IllegalStateException("There's a file in stdlib that declares the default package: " + file.getName());
-    }
-  }
+  Set<Name> namespaceShortNames=LazyResolveTestUtil.getTopLevelPackagesFromFileList(files);
   ModuleDescriptor module=LazyResolveTestUtil.resolveEagerly(files,stdlibEnvironment);
   ModuleDescriptor lazyModule=LazyResolveTestUtil.resolveLazily(files,stdlibEnvironment);
   for (  Name name : namespaceShortNames) {
