@@ -1,21 +1,14 @@
 {
-  GenerationState generationState=analyzeAndGenerate(configuration);
-  if (generationState == null) {
-    return false;
-  }
+  Class<?> scriptClass=compileScript(configuration,null);
+  if (scriptClass == null)   return false;
   try {
-    ClassFileFactory factory=generationState.getFactory();
-    try {
-      GeneratedClassLoader classLoader=new GeneratedClassLoader(factory,new URLClassLoader(new URL[]{CompilerPathUtil.getRuntimePath().toURI().toURL()},AllModules.class.getClassLoader()));
-      Class<?> scriptClass=classLoader.loadClass(ScriptCodegen.SCRIPT_DEFAULT_CLASS_NAME.getFqName().getFqName());
-      scriptClass.getConstructor(String[].class).newInstance(new Object[]{scriptArgs.toArray(new String[0])});
-    }
- catch (    Exception e) {
-      throw new RuntimeException("Failed to evaluate script: " + e,e);
-    }
-    return true;
+    scriptClass.getConstructor(String[].class).newInstance(new Object[]{scriptArgs.toArray(new String[0])});
   }
-  finally {
-    generationState.destroy();
+ catch (  RuntimeException e) {
+    throw e;
   }
+catch (  Exception e) {
+    throw new RuntimeException("Failed to evaluate script: " + e,e);
+  }
+  return true;
 }

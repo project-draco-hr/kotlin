@@ -1,0 +1,28 @@
+{
+  final MessageRenderer messageRenderer=MessageRenderer.PLAIN;
+  PrintingMessageCollector messageCollector=new PrintingMessageCollector(System.err,messageRenderer,false);
+  Disposable rootDisposable=CompileEnvironmentUtil.createMockDisposable();
+  try {
+    CompilerConfiguration compilerConfiguration=new CompilerConfiguration();
+    compilerConfiguration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(parentLoader));
+    compilerConfiguration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,Collections.singletonList(CompilerPathUtil.getJdkAnnotationsPath()));
+    compilerConfiguration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,scriptPath);
+    JetCoreEnvironment environment=JetCoreEnvironment.createCoreEnvironmentForJVM(rootDisposable,compilerConfiguration);
+    K2JVMCompileEnvironmentConfiguration configuration=new K2JVMCompileEnvironmentConfiguration(environment,messageCollector,scriptParameters,BuiltinsScopeExtensionMode.ALL,false,BuiltinToJavaTypesMapping.ENABLED);
+    try {
+      return compileScript(configuration,parentLoader);
+    }
+ catch (    CompilationException e) {
+      messageCollector.report(CompilerMessageSeverity.EXCEPTION,MessageRenderer.PLAIN.renderException(e),MessageUtil.psiElementToMessageLocation(e.getElement()));
+      return null;
+    }
+catch (    Throwable t) {
+      messageCollector.report(CompilerMessageSeverity.EXCEPTION,MessageRenderer.PLAIN.renderException(t),CompilerMessageLocation.NO_LOCATION);
+      return null;
+    }
+  }
+  finally {
+    messageCollector.printToErrStream();
+    Disposer.dispose(rootDisposable);
+  }
+}

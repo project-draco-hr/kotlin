@@ -1,0 +1,19 @@
+{
+  GenerationState generationState=analyzeAndGenerate(configuration);
+  if (generationState == null) {
+    return null;
+  }
+  try {
+    ClassFileFactory factory=generationState.getFactory();
+    try {
+      GeneratedClassLoader classLoader=new GeneratedClassLoader(factory,new URLClassLoader(new URL[]{CompilerPathUtil.getRuntimePath().toURI().toURL()},parentLoader == null ? AllModules.class.getClassLoader() : parentLoader));
+      return classLoader.loadClass(ScriptCodegen.SCRIPT_DEFAULT_CLASS_NAME.getFqName().getFqName());
+    }
+ catch (    Exception e) {
+      throw new RuntimeException("Failed to evaluate script: " + e,e);
+    }
+  }
+  finally {
+    generationState.destroy();
+  }
+}
