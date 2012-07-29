@@ -5,8 +5,11 @@
     WritableScope scope=context.getScriptScopes().get(declaration);
     List<ValueParameterDescriptor> valueParameters=Lists.newArrayList();
     scope.setImplicitReceiver(descriptor.getImplicitReceiver());
+    JetFile file=(JetFile)declaration.getContainingFile();
+    JetScriptDefinition scriptDefinition=JetParserDefinition.getInstance().findScriptDefinition(file);
     int index=0;
-    for (    AnalyzerScriptParameter scriptParameter : topDownAnalysisParameters.getScriptParameters()) {
+    List<AnalyzerScriptParameter> scriptParameters=!scriptDefinition.getScriptParameters().isEmpty() ? scriptDefinition.getScriptParameters() : topDownAnalysisParameters.getScriptParameters();
+    for (    AnalyzerScriptParameter scriptParameter : scriptParameters) {
       ValueParameterDescriptor parameter=resolveScriptParameter(scriptParameter,index,descriptor);
       valueParameters.add(parameter);
       scope.addVariableDescriptor(parameter);
