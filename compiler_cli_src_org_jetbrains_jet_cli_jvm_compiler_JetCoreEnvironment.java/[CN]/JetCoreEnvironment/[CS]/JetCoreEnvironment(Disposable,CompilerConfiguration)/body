@@ -10,6 +10,7 @@
   applicationEnvironment.registerParserDefinition(new JetParserDefinition());
   projectEnvironment=new JavaCoreProjectEnvironment(parentDisposable,applicationEnvironment);
   MockProject project=projectEnvironment.getProject();
+  project.registerService(JetScriptDefinitionProvider.class,new JetScriptDefinitionProvider());
   project.registerService(JetFilesProvider.class,new CliJetFilesProvider(this));
   project.registerService(CoreJavaFileManager.class,(CoreJavaFileManager)ServiceManager.getService(project,JavaFileManager.class));
   Extensions.getArea(project).getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(new JavaElementFinder(project));
@@ -24,6 +25,7 @@
   for (  String path : configuration.getList(CommonConfigurationKeys.SOURCE_ROOTS_KEY)) {
     addSources(path);
   }
+  JetScriptDefinitionProvider.getInstance(project).addScriptDefinitions(configuration.getList(CommonConfigurationKeys.SCRIPT_DEFINITIONS_KEY));
   JetStandardLibrary.initialize(project);
   initialized=true;
 }

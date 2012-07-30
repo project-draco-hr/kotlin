@@ -7,9 +7,11 @@
     compilerConfiguration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(parentLoader));
     compilerConfiguration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,Collections.singletonList(CompilerPathUtil.getJdkAnnotationsPath()));
     compilerConfiguration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,scriptPath);
+    compilerConfiguration.addAll(CommonConfigurationKeys.SCRIPT_DEFINITIONS_KEY,scriptDefinitions != null ? scriptDefinitions : Collections.<JetScriptDefinition>emptyList());
     JetCoreEnvironment environment=JetCoreEnvironment.createCoreEnvironmentForJVM(rootDisposable,compilerConfiguration);
-    K2JVMCompileEnvironmentConfiguration configuration=new K2JVMCompileEnvironmentConfiguration(environment,messageCollector,scriptParameters,BuiltinsScopeExtensionMode.ALL,false,BuiltinToJavaTypesMapping.ENABLED);
+    K2JVMCompileEnvironmentConfiguration configuration=new K2JVMCompileEnvironmentConfiguration(environment,messageCollector,scriptParameters != null ? scriptParameters : Collections.<AnalyzerScriptParameter>emptyList(),BuiltinsScopeExtensionMode.ALL,false,BuiltinToJavaTypesMapping.ENABLED);
     try {
+      JetScriptDefinitionProvider.getInstance(environment.getProject()).markFileAsScript(environment.getSourceFiles().get(0));
       return compileScript(configuration,parentLoader);
     }
  catch (    CompilationException e) {
