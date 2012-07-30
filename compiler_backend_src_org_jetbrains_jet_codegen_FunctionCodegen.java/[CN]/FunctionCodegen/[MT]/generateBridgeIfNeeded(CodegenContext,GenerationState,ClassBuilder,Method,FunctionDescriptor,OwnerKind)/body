@@ -1,9 +1,38 @@
 {
-  Set<? extends FunctionDescriptor> overriddenFunctions=functionDescriptor.getOverriddenDescriptors();
-  if (kind != OwnerKind.TRAIT_IMPL) {
-    for (    FunctionDescriptor overriddenFunction : overriddenFunctions) {
-      checkOverride(owner,state,v,jvmSignature,functionDescriptor,overriddenFunction.getOriginal());
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    return;
+  }
+  Method method=state.getInjector().getJetTypeMapper().mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod();
+  Queue<FunctionDescriptor> bfsQueue=new LinkedList<FunctionDescriptor>();
+  Set<FunctionDescriptor> visited=new HashSet<FunctionDescriptor>();
+  bfsQueue.offer(functionDescriptor.getOriginal());
+  visited.add(functionDescriptor.getOriginal());
+  for (  FunctionDescriptor overriddenDescriptor : functionDescriptor.getOverriddenDescriptors()) {
+    FunctionDescriptor orig=overriddenDescriptor.getOriginal();
+    if (!visited.contains(orig)) {
+      bfsQueue.offer(overriddenDescriptor);
+      visited.add(overriddenDescriptor);
     }
-    checkOverride(owner,state,v,jvmSignature,functionDescriptor,functionDescriptor.getOriginal());
+  }
+  Set<Method> bridgesToGenerate=new HashSet<Method>();
+  while (!bfsQueue.isEmpty()) {
+    FunctionDescriptor descriptor=bfsQueue.poll();
+    if (descriptor.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
+      Method overridden=state.getInjector().getJetTypeMapper().mapSignature(descriptor.getName(),descriptor.getOriginal()).getAsmMethod();
+      if (differentMethods(method,overridden)) {
+        bridgesToGenerate.add(overridden);
+      }
+      continue;
+    }
+    for (    FunctionDescriptor overriddenDescriptor : descriptor.getOverriddenDescriptors()) {
+      FunctionDescriptor orig=overriddenDescriptor.getOriginal();
+      if (!visited.contains(orig)) {
+        bfsQueue.offer(orig);
+        visited.add(orig);
+      }
+    }
+  }
+  for (  Method overridden : bridgesToGenerate) {
+    generateBridge(owner,state,v,jvmSignature,functionDescriptor,overridden);
   }
 }
