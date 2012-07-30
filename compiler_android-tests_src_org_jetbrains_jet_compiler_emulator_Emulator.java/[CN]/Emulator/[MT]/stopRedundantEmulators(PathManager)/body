@@ -4,8 +4,9 @@
   commandLineForListOfDevices.setExePath(pathManager.getPlatformToolsFolderInAndroidSdk() + "/" + adbCmdName);
   commandLineForListOfDevices.addParameter("devices");
   RunResult runResult=RunUtils.execute(commandLineForListOfDevices);
-  checkResult(runResult);
+  OutputUtils.checkResult(runResult);
   Matcher matcher=EMULATOR_PATTERN.matcher(runResult.getOutput());
+  boolean isDdmsStopped=false;
   while (matcher.find()) {
     System.out.println("Stopping redundant emulator...");
     GeneralCommandLine commandLineForStoppingEmulators=new GeneralCommandLine();
@@ -14,17 +15,22 @@
       commandLineForStoppingEmulators.addParameter("/F");
       commandLineForStoppingEmulators.addParameter("/IM");
       commandLineForStoppingEmulators.addParameter("emulator-arm.exe");
-      checkResult(RunUtils.execute(commandLineForStoppingEmulators));
+      OutputUtils.checkResult(RunUtils.execute(commandLineForStoppingEmulators));
       break;
     }
  else {
+      if (!isDdmsStopped && SystemInfo.isUnix) {
+        finishProcess("emulator-arm");
+        stopDdmsProcess();
+        isDdmsStopped=true;
+      }
       commandLineForStoppingEmulators.setExePath(pathManager.getPlatformToolsFolderInAndroidSdk() + "/adb");
       commandLineForStoppingEmulators.addParameter("-s");
       commandLineForStoppingEmulators.addParameter(matcher.group());
       commandLineForStoppingEmulators.addParameter("emu");
       commandLineForStoppingEmulators.addParameter("kill");
-      checkResult(RunUtils.execute(commandLineForStoppingEmulators));
+      OutputUtils.checkResult(RunUtils.execute(commandLineForStoppingEmulators));
     }
   }
-  checkResult(RunUtils.execute(commandLineForListOfDevices));
+  OutputUtils.checkResult(RunUtils.execute(commandLineForListOfDevices));
 }
