@@ -19,7 +19,7 @@
   ClassDescriptor thisDescriptor=context.getThisDescriptor();
   final Type enclosingType=thisDescriptor == null ? null : state.getInjector().getJetTypeMapper().mapType(thisDescriptor.getDefaultType(),MapTypeMode.VALUE);
   if (enclosingType == null)   captureThis=null;
-  final Method constructor=generateConstructor(funClass,fun);
+  final Method constructor=generateConstructor(funClass,fun,funDescriptor);
   if (captureThis != null) {
     cv.newField(fun,ACC_FINAL,"this$0",enclosingType.getDescriptor(),null,null);
   }
@@ -29,6 +29,9 @@
   cv.done();
   final GeneratedAnonymousClassDescriptor answer=new GeneratedAnonymousClassDescriptor(name,constructor,captureThis,captureReceiver);
   for (  DeclarationDescriptor descriptor : closure.keySet()) {
+    if (descriptor == funDescriptor) {
+      continue;
+    }
     if (descriptor instanceof VariableDescriptor) {
       final EnclosedValueDescriptor valueDescriptor=closure.get(descriptor);
       answer.addArg(valueDescriptor.getOuterValue());
