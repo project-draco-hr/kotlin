@@ -1,9 +1,11 @@
 {
   try {
-    Module module=JetPluginUtil.getModuleForKotlinFile(file,myProject);
+    if (file.getFileType() != JetFileType.INSTANCE)     return null;
+    if (CompilerManager.getInstance(myProject).isExcludedFromCompilation(file))     return null;
+    final Module module=ModuleUtil.findModuleForFile(file,myProject);
     if (module == null)     return null;
-    if (isMavenModule(module) || isJsModule(module))     return null;
-    if (!KotlinSdkUtil.isSDKConfiguredFor(module))     return null;
+    if (isMavenModule(module))     return null;
+    if (isJsModule(module))     return null;
     GlobalSearchScope scope=module.getModuleWithDependenciesAndLibrariesScope(false);
     if (JavaPsiFacade.getInstance(myProject).findClass("jet.JetObject",scope) == null) {
       return createNotificationPanel(module);
