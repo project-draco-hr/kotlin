@@ -1,0 +1,18 @@
+{
+  Comparator<Diagnostic> diagnosticComparator=new Comparator<Diagnostic>(){
+    @Override public int compare(    Diagnostic d1,    Diagnostic d2){
+      String path1=d1.getPsiFile().getViewProvider().getVirtualFile().getPath();
+      String path2=d2.getPsiFile().getViewProvider().getVirtualFile().getPath();
+      if (!path1.equals(path2))       return path1.compareTo(path2);
+      TextRange range1=d1.getTextRanges().iterator().next();
+      TextRange range2=d2.getTextRanges().iterator().next();
+      int startOffsetDiff=range1.getStartOffset() - range2.getStartOffset();
+      if (startOffsetDiff != 0)       return startOffsetDiff;
+      int endOffsetDiff=range1.getEndOffset() - range2.getEndOffset();
+      if (endOffsetDiff != 0)       return endOffsetDiff;
+      return d1.getFactory().getName().compareTo(d2.getFactory().getName());
+    }
+  }
+;
+  Collections.sort(diagnostics,diagnosticComparator);
+}
