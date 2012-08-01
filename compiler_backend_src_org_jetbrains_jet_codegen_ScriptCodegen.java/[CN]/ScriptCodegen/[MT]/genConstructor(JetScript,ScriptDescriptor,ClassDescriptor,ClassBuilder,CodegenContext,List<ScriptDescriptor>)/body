@@ -1,6 +1,6 @@
 {
   Type blockType=jetTypeMapper.mapType(scriptDescriptor.getReturnType(),MapTypeMode.VALUE);
-  classBuilder.newField(null,Opcodes.ACC_PUBLIC,LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor(),null,null);
+  classBuilder.newField(null,Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,ScriptNameUtil.LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor(),null,null);
   JvmMethodSignature jvmSignature=jetTypeMapper.mapScriptSignature(scriptDescriptor,importedScripts);
   state.setScriptConstructorMethod(jvmSignature.getAsmMethod());
   MethodVisitor mv=classBuilder.newMethod(scriptDeclaration,Opcodes.ACC_PUBLIC,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),null,null);
@@ -39,7 +39,7 @@
   StackValue stackValue=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context,state).gen(scriptDeclaration.getBlockExpression());
   if (stackValue.type != Type.VOID_TYPE) {
     stackValue.put(stackValue.type,instructionAdapter);
-    instructionAdapter.putfield(className.getInternalName(),LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor());
+    instructionAdapter.putfield(className.getInternalName(),ScriptNameUtil.LAST_EXPRESSION_VALUE_FIELD_NAME,blockType.getDescriptor());
   }
   instructionAdapter.areturn(Type.VOID_TYPE);
   mv.visitMaxs(-1,-1);

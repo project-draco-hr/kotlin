@@ -1,13 +1,17 @@
 {
-  NamespaceDescriptorImpl ns=namespaceFactory.createNamespaceDescriptorPathIfNeeded(FqName.ROOT);
+  JetFile file=(JetFile)script.getContainingFile();
+  JetNamespaceHeader namespaceHeader=file.getNamespaceHeader();
+  FqName fqName=namespaceHeader != null ? new FqName(namespaceHeader.getQualifiedName()) : FqName.ROOT;
+  NamespaceDescriptorImpl ns=namespaceFactory.createNamespaceDescriptorPathIfNeeded(fqName);
   Integer priority=script.getUserData(PRIORITY_KEY);
   if (priority == null) {
     priority=0;
   }
-  ScriptDescriptor scriptDescriptor=new ScriptDescriptor(ns,priority);
+  ScriptDescriptor scriptDescriptor=new ScriptDescriptor(ns,priority,script,outerScope);
   WritableScopeImpl scriptScope=new WritableScopeImpl(outerScope,scriptDescriptor,RedeclarationHandler.DO_NOTHING,"script");
   scriptScope.changeLockLevel(WritableScope.LockLevel.BOTH);
   context.getScriptScopes().put(script,scriptScope);
   context.getScripts().put(script,scriptDescriptor);
   trace.record(BindingContext.SCRIPT,script,scriptDescriptor);
+  ((WritableScope)outerScope).addClassifierDescriptor(scriptDescriptor.getClassDescriptor());
 }
