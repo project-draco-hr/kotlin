@@ -2,31 +2,19 @@
   JetExpression baseExpression=expression.getBaseExpression();
   if (baseExpression == null)   return JetTypeInfo.create(null,context.dataFlowInfo);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
-  if (JetTokens.LABELS.contains(operationSign.getReferencedNameElementType())) {
-    String referencedName=operationSign.getReferencedName();
-    referencedName=referencedName == null ? " <?>" : referencedName;
-    context.labelResolver.enterLabeledElement(new LabelName(referencedName.substring(1)),baseExpression);
-    JetTypeInfo typeInfo=facade.getTypeInfo(baseExpression,context,isStatement);
-    context.labelResolver.exitLabeledElement(baseExpression);
-    return DataFlowUtils.checkType(typeInfo.getType(),expression,context,typeInfo.getDataFlowInfo());
-  }
   IElementType operationType=operationSign.getReferencedNameElementType();
+  if (JetTokens.LABELS.contains(operationType)) {
+    return visitLabeledExpression(expression,context,isStatement);
+  }
+  if (operationType == JetTokens.EXCLEXCL) {
+    return visitExclExclExpression(expression,context);
+  }
   JetTypeInfo typeInfo=facade.getTypeInfo(baseExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
   JetType type=typeInfo.getType();
   if (type == null) {
     return typeInfo;
   }
   DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
-  if (operationType == JetTokens.EXCLEXCL) {
-    if (isKnownToBeNotNull(baseExpression,context)) {
-      context.trace.report(UNNECESSARY_NOT_NULL_ASSERTION.on(operationSign,type));
-    }
- else {
-      DataFlowValue value=DataFlowValueFactory.INSTANCE.createDataFlowValue(baseExpression,type,context.trace.getBindingContext());
-      dataFlowInfo=dataFlowInfo.disequate(value,DataFlowValue.NULL);
-    }
-    return DataFlowUtils.checkType(TypeUtils.makeNotNullable(type),expression,context,dataFlowInfo);
-  }
   Name name=OperatorConventions.UNARY_OPERATION_NAMES.get(operationType);
   if (name == null) {
     context.trace.report(UNSUPPORTED.on(operationSign,"visitUnaryExpression"));
