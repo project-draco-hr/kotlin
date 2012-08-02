@@ -3,12 +3,14 @@
   if (parent != null)   getClasspath(parent,files);
   if (loader instanceof URLClassLoader) {
     for (    URL url : ((URLClassLoader)loader).getURLs()) {
-      String urlFile;
-      try {
-        urlFile=url.toURI().getPath();
-      }
- catch (      URISyntaxException e) {
-        throw ExceptionUtils.rethrow(e);
+      String urlFile=url.getFile();
+      if (urlFile.contains("%")) {
+        try {
+          urlFile=url.toURI().getPath();
+        }
+ catch (        URISyntaxException e) {
+          throw ExceptionUtils.rethrow(e);
+        }
       }
       File file=new File(urlFile);
       if (file.exists() && (file.isDirectory() || file.getName().endsWith(".jar"))) {
