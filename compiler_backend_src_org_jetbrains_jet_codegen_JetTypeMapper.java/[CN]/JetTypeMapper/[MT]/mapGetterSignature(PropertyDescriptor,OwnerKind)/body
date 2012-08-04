@@ -1,2 +1,25 @@
 {
+  final DeclarationDescriptor parentDescriptor=descriptor.getContainingDeclaration();
+  boolean isAnnotation=parentDescriptor instanceof ClassDescriptor && ((ClassDescriptor)parentDescriptor).getKind() == ClassKind.ANNOTATION_CLASS;
+  String name=isAnnotation ? descriptor.getName().getName() : PropertyCodegen.getterName(descriptor.getName());
+  BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,true);
+  writeFormalTypeParameters(descriptor.getTypeParameters(),signatureWriter);
+  signatureWriter.writeParametersStart();
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    ClassDescriptor containingDeclaration=(ClassDescriptor)parentDescriptor;
+    signatureWriter.writeParameterType(JvmMethodParameterKind.THIS);
+    mapType(containingDeclaration.getDefaultType(),signatureWriter,MapTypeMode.IMPL);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  if (descriptor.getReceiverParameter().exists()) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.RECEIVER);
+    mapType(descriptor.getReceiverParameter().getType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  signatureWriter.writeParametersEnd();
+  signatureWriter.writeReturnType();
+  mapType(descriptor.getType(),signatureWriter,MapTypeMode.VALUE);
+  signatureWriter.writeReturnTypeEnd();
+  JvmMethodSignature jvmMethodSignature=signatureWriter.makeJvmMethodSignature(name);
+  return new JvmPropertyAccessorSignature(jvmMethodSignature,jvmMethodSignature.getKotlinReturnType());
 }
