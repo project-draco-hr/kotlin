@@ -5,14 +5,18 @@
     while (rangeExpression instanceof JetParenthesizedExpression) {
       rangeExpression=((JetParenthesizedExpression)rangeExpression).getExpression();
     }
+    boolean inverted=conditionInRange.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN;
     if (isIntRangeExpr(rangeExpression)) {
-      getInIntRange(new StackValue.Local(subjectLocal,subjectType),(JetBinaryExpression)rangeExpression,conditionInRange.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN);
+      getInIntRange(new StackValue.Local(subjectLocal,subjectType),(JetBinaryExpression)rangeExpression,inverted);
     }
  else {
       FunctionDescriptor op=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,conditionInRange.getOperationReference());
       genToJVMStack(rangeExpression);
       new StackValue.Local(subjectLocal,subjectType).put(TYPE_OBJECT,v);
       invokeFunctionNoParams(op,Type.BOOLEAN_TYPE,v);
+      if (inverted) {
+        invertBoolean();
+      }
     }
     return StackValue.onStack(Type.BOOLEAN_TYPE);
   }
