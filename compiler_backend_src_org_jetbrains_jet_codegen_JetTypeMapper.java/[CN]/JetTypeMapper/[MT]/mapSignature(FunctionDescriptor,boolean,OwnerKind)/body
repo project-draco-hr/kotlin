@@ -8,6 +8,11 @@
   final JetType receiverType=!receiverTypeRef.exists() ? null : receiverTypeRef.getType();
   final List<ValueParameterDescriptor> parameters=f.getValueParameters();
   signatureVisitor.writeParametersStart();
+  if (isAccessor(f)) {
+    signatureVisitor.writeParameterType(JvmMethodParameterKind.THIS);
+    mapType(((ClassifierDescriptor)f.getContainingDeclaration()).getDefaultType(),signatureVisitor,MapTypeMode.VALUE);
+    signatureVisitor.writeParameterTypeEnd();
+  }
   if (kind == OwnerKind.TRAIT_IMPL) {
     ClassDescriptor containingDeclaration=(ClassDescriptor)f.getContainingDeclaration();
     JetType jetType=TraitImplBodyCodegen.getSuperClass(containingDeclaration);
