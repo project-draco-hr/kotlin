@@ -6,24 +6,10 @@
       PropertyDescriptor propertyDescriptor=state.getBindingContext().get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,p);
       if (propertyDescriptor != null) {
         if (!isAnnotation) {
-          int accessModifiers=JetTypeMapper.getAccessModifiers(propertyDescriptor,0);
-          if ((accessModifiers & ACC_PRIVATE) == 0) {
-            propertyCodegen.generateDefaultGetter(propertyDescriptor,accessModifiers,p);
-            if (propertyDescriptor.isVar()) {
-              propertyCodegen.generateDefaultSetter(propertyDescriptor,accessModifiers,origin);
-            }
-          }
-          if (!(kind instanceof OwnerKind.DelegateKind) && state.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
-            int modifiers=accessModifiers;
-            if (!propertyDescriptor.isVar()) {
-              modifiers|=Opcodes.ACC_FINAL;
-            }
-            if (JetStandardLibrary.isVolatile(propertyDescriptor)) {
-              modifiers|=Opcodes.ACC_VOLATILE;
-            }
-            Type type=state.getInjector().getJetTypeMapper().mapType(propertyDescriptor.getType(),MapTypeMode.VALUE);
-            FieldVisitor fieldVisitor=v.newField(p,modifiers,p.getName(),type.getDescriptor(),null,null);
-            AnnotationCodegen.forField(fieldVisitor,state.getInjector().getJetTypeMapper()).genAnnotations(propertyDescriptor);
+          propertyCodegen.generateBackingField(p,propertyDescriptor);
+          propertyCodegen.generateDefaultGetter(propertyDescriptor,JetTypeMapper.getAccessModifiers(propertyDescriptor,0),p);
+          if (propertyDescriptor.isVar()) {
+            propertyCodegen.generateDefaultSetter(propertyDescriptor,JetTypeMapper.getAccessModifiers(propertyDescriptor,0),p);
           }
         }
  else {
