@@ -1,24 +1,16 @@
 {
-  expression.acceptChildren(this,context);
+  if (expression.getNode().getElementType() == JetNodeTypes.OPERATION_REFERENCE) {
+    return null;
+  }
   DeclarationDescriptor descriptor=BindingUtils.getNullableDescriptorForReferenceExpression(bindingContext,expression);
   if (!(descriptor instanceof VariableDescriptor)) {
+    if (descriptor instanceof SimpleFunctionDescriptor && !descriptor.getName().isSpecial()) {
+      checkOuterClassDescriptor(descriptor,context);
+    }
     return null;
   }
   VariableDescriptor variableDescriptor=(VariableDescriptor)descriptor;
-  PsiElement variableDeclaration=BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
-  if (variableDeclaration == null) {
-    return null;
-  }
-  if (PsiTreeUtil.isAncestor(functionElement,variableDeclaration,false)) {
-    return null;
-  }
-  boolean isProperty=variableDescriptor instanceof PropertyDescriptor;
-  if (!isProperty && !variableDescriptor.isVar() && variableDeclaration instanceof JetProperty) {
-    context.put(variableDescriptor);
-    return null;
-  }
-  boolean isLoopParameter=variableDeclaration.getNode().getElementType().equals(JetNodeTypes.LOOP_PARAMETER);
-  if (isLoopParameter) {
+  if (captured(variableDescriptor,context)) {
     context.put(variableDescriptor);
   }
   return null;
