@@ -1,24 +1,19 @@
 {
   if (descriptor.getKind().isReal())   return;
-  Collection<CallableMemberDescriptor> overriddenDeclarations=OverridingUtil.getOverriddenDeclarations(descriptor);
-  if (overriddenDeclarations.size() == 0) {
+  if (descriptor.getVisibility() == Visibilities.INVISIBLE_FAKE)   return;
+  Collection<? extends CallableMemberDescriptor> directOverridden=descriptor.getOverriddenDescriptors();
+  if (directOverridden.size() == 0) {
     throw new IllegalStateException("A 'fake override' must override something");
   }
-  List<CallableMemberDescriptor> nonAbstractManyImpl=Lists.newArrayList();
-  Set<CallableMemberDescriptor> filteredOverriddenDeclarations=OverridingUtil.filterOverrides(Sets.newHashSet(overriddenDeclarations));
-  boolean allSuperAbstract=true;
-  for (  CallableMemberDescriptor overridden : filteredOverriddenDeclarations) {
-    if (overridden.getModality() != Modality.ABSTRACT) {
-      if (descriptor.getVisibility() != Visibilities.INVISIBLE_FAKE) {
-        nonAbstractManyImpl.add(overridden);
-      }
-      allSuperAbstract=false;
-    }
+  Map<CallableMemberDescriptor,Set<CallableMemberDescriptor>> overriddenDeclarationsByDirectParent=collectOverriddenDeclarations(directOverridden);
+  List<CallableMemberDescriptor> allOverriddenDeclarations=ContainerUtil.flatten(overriddenDeclarationsByDirectParent.values());
+  Set<CallableMemberDescriptor> allFilteredOverriddenDeclarations=OverridingUtil.filterOverrides(Sets.newHashSet(allOverriddenDeclarations));
+  Set<CallableMemberDescriptor> relevantDirectlyOverridden=getRelevantDirectlyOverridden(overriddenDeclarationsByDirectParent,allFilteredOverriddenDeclarations);
+  int implCount=countImplementations(relevantDirectlyOverridden);
+  if (implCount == 0) {
+    collectDescriptorsByModality(allFilteredOverriddenDeclarations,abstractNoImpl,Modality.ABSTRACT);
   }
-  if (nonAbstractManyImpl.size() > 1) {
-    manyImpl.addAll(nonAbstractManyImpl);
-  }
- else   if (allSuperAbstract) {
-    abstractNoImpl.addAll(overriddenDeclarations);
+ else   if (implCount > 1) {
+    collectDescriptorsByModality(allFilteredOverriddenDeclarations,manyImpl,Modality.OPEN,Modality.FINAL);
   }
 }
