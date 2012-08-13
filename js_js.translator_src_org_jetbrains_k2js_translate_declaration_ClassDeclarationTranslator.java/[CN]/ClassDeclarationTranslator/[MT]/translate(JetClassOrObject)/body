@@ -1,0 +1,18 @@
+{
+  ClassDescriptor descriptor=getClassDescriptor(context().bindingContext(),declaration);
+  JsExpression value;
+  if (descriptor.getModality() == Modality.FINAL) {
+    JsInvocation invocation=context().namer().classCreateInvocation(descriptor);
+    finalList.add(new Pair<JetClassOrObject,JsInvocation>(declaration,invocation));
+    value=invocation;
+  }
+ else {
+    String label=localLabelGenerator.generate();
+    JsNameRef labelRef=dummyFunction.getScope().declareName(label).makeRef();
+    FinalListItem item=new FinalListItem((JetClass)declaration,labelRef,new JsNameRef(labelRef.getIdent(),declarationsObjectRef));
+    openList.add(item);
+    openClassDescriptorToItem.put(descriptor,item);
+    value=item.qualifiedLabel;
+  }
+  return InitializerUtils.createPropertyInitializer(descriptor,value,context());
+}

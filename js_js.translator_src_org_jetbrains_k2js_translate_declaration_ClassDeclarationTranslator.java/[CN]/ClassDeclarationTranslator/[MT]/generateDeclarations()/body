@@ -1,16 +1,14 @@
 {
-  JsObjectLiteral valueLiteral=new JsObjectLiteral();
-  JsVars vars=new JsVars();
-  List<JsPropertyInitializer> propertyInitializers=valueLiteral.getPropertyInitializers();
+  List<JsVar> vars=new SmartList<JsVar>();
+  List<JsPropertyInitializer> propertyInitializers=new SmartList<JsPropertyInitializer>();
   generateOpenClassDeclarations(vars,propertyInitializers);
-  generateFinalClassDeclarations(vars,propertyInitializers);
+  generateFinalClassDeclarations();
   if (vars.isEmpty()) {
-    classesVar.setInitExpression(valueLiteral);
+    if (!propertyInitializers.isEmpty()) {
+      classesVar.setInitExpression(new JsObjectLiteral(propertyInitializers));
+    }
     return;
   }
-  List<JsStatement> result=new ArrayList<JsStatement>();
-  result.add(vars);
-  result.add(new JsReturn(valueLiteral));
-  dummyFunction.setBody(newBlock(result));
+  dummyFunction.setBody(new JsBlock(new JsVars(vars,true),new JsReturn(new JsObjectLiteral(propertyInitializers))));
   classesVar.setInitExpression(new JsInvocation(dummyFunction));
 }

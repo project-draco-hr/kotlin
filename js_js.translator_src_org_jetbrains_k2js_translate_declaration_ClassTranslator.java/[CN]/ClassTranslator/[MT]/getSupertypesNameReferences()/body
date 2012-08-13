@@ -1,0 +1,33 @@
+{
+  Collection<? extends JetType> supertypes=descriptor.getTypeConstructor().getSupertypes();
+  if (supertypes.isEmpty()) {
+    return Collections.emptyList();
+  }
+  JsExpression base=null;
+  List<JsExpression> list=null;
+  for (  JetType type : supertypes) {
+    ClassDescriptor result=getClassDescriptorForType(type);
+    if (isNotAny(result) && !AnnotationsUtils.isNativeObject(result)) {
+switch (result.getKind()) {
+case CLASS:
+        base=getClassReference(result);
+      break;
+case TRAIT:
+    if (list == null) {
+      list=new ArrayList<JsExpression>();
+    }
+  list.add(getClassReference(result));
+break;
+default :
+throw new UnsupportedOperationException("unsupported super class kind " + result.getKind().name());
+}
+}
+}
+if (list == null) {
+return base == null ? Collections.<JsExpression>emptyList() : Collections.singletonList(base);
+}
+ else if (base != null) {
+list.add(0,base);
+}
+return list;
+}

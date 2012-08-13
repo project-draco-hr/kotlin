@@ -1,0 +1,18 @@
+{
+  JsObjectLiteral properties=new JsObjectLiteral(true);
+  List<JsPropertyInitializer> propertyList=properties.getPropertyInitializers();
+  if (!isTrait()) {
+    JsFunction initializer=Translation.generateClassInitializerMethod(classDeclaration,classDeclarationContext);
+    if (context().isEcma5()) {
+      jsClassDeclaration.getArguments().add(initializer.getBody().getStatements().isEmpty() ? JsLiteral.NULL : initializer);
+    }
+ else {
+      propertyList.add(new JsPropertyInitializer(Namer.initializeMethodReference(),initializer));
+    }
+  }
+  propertyList.addAll(translatePropertiesAsConstructorParameters(classDeclarationContext));
+  propertyList.addAll(declarationBodyVisitor.traverseClass(classDeclaration,classDeclarationContext));
+  if (!propertyList.isEmpty() || !context().isEcma5()) {
+    jsClassDeclaration.getArguments().add(properties);
+  }
+}
