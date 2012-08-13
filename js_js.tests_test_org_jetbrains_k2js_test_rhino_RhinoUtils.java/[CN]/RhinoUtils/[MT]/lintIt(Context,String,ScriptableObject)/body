@@ -1,0 +1,33 @@
+{
+  if (Boolean.valueOf(System.getProperty("test.lint.skip"))) {
+    return null;
+  }
+  Object[] args={FileUtil.loadFile(new File(fileName)),JSHINT_OPTIONS};
+  Function function=(Function)ScriptableObject.getProperty(scope.getParentScope(),"JSHINT");
+  Object status=function.call(context,scope.getParentScope(),scope.getParentScope(),args);
+  if (!(Boolean)Context.jsToJava(status,Boolean.class)) {
+    Object errors=function.get("errors",scope);
+    StringBuilder sb=new StringBuilder(fileName);
+    for (    Object errorObj : ((NativeArray)errors)) {
+      if (errorObj == null) {
+        continue;
+      }
+      NativeObject e=(NativeObject)errorObj;
+      int line=toInt(e.get("line"));
+      int character=toInt(e.get("character"));
+      if (line < 0 || character < 0) {
+        continue;
+      }
+      Object reasonObj=e.get("reason");
+      if (reasonObj instanceof String) {
+        String reason=(String)reasonObj;
+        if (IGNORED_JSHINT_WARNINGS.contains(reason) || reason.startsWith("Expected exactly one space between ')' and ") || reason.startsWith("Expected '}' to match '{' from line ")|| reason.startsWith("Expected '{' and instead saw ")) {
+          continue;
+        }
+        sb.append('\n').append(line).append(':').append(character).append(' ').append(reason);
+      }
+    }
+    return sb.length() == fileName.length() ? null : sb.toString();
+  }
+  return null;
+}
