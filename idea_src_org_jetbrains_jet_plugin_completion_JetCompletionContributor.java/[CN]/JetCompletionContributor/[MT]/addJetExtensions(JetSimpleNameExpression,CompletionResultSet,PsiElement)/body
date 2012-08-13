@@ -2,13 +2,13 @@
   final PrefixMatcher prefixMatcher=result.getPrefixMatcher();
   JetShortNamesCache namesCache=JetCacheManager.getInstance(position.getProject()).getNamesCache();
   Condition<String> matchPrefixCondition=new Condition<String>(){
-    @Override public boolean value(    String callableName){
+    @Override public boolean value(    @NotNull String callableName){
       return prefixMatcher.prefixMatches(callableName);
     }
   }
 ;
   Collection<DeclarationDescriptor> jetCallableExtensions=namesCache.getJetCallableExtensions(matchPrefixCondition,expression,GlobalSearchScope.allScope(position.getProject()));
-  BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)position.getContainingFile()).getBindingContext();
+  BindingContext context=WholeProjectAnalyzerFacade.getLazyResolveContext((JetFile)position.getContainingFile(),expression);
   for (  DeclarationDescriptor jetCallableExtension : jetCallableExtensions) {
     result.addElement(DescriptorLookupConverter.createLookupElement(context,jetCallableExtension));
   }

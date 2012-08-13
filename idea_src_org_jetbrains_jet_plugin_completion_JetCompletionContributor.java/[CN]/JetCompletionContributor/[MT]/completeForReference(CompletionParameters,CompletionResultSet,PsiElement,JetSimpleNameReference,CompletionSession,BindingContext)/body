@@ -1,0 +1,37 @@
+{
+  if (isOnlyKeywordCompletion(position)) {
+    return;
+  }
+  if (shouldRunTypeCompletionOnly(position,jetReference)) {
+    if (session.customInvocationCount > 0) {
+      addClasses(parameters,result,session,jetContext);
+    }
+ else {
+      for (      LookupElement variant : getReferenceVariants(jetReference,result,session,jetContext)) {
+        if (isTypeDeclaration(variant)) {
+          addCheckedCompletionToResult(result,variant,session);
+        }
+      }
+    }
+    return;
+  }
+  for (  LookupElement variant : getReferenceVariants(jetReference,result,session,jetContext)) {
+    addCheckedCompletionToResult(result,variant,session);
+  }
+  String prefix=result.getPrefixMatcher().getPrefix();
+  if (prefix.isEmpty()) {
+    if (session.customInvocationCount < 2) {
+      return;
+    }
+    if (PsiTreeUtil.getParentOfType(jetReference.getElement(),JetDotQualifiedExpression.class) == null) {
+      return;
+    }
+  }
+  if (shouldRunTopLevelCompletion(parameters,session)) {
+    addClasses(parameters,result,session,jetContext);
+    addJetTopLevelFunctions(jetReference.getExpression(),result,position,session);
+  }
+  if (shouldRunExtensionsCompletion(parameters,prefix,session)) {
+    addJetExtensions(jetReference.getExpression(),result,position);
+  }
+}

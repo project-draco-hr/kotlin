@@ -1,11 +1,13 @@
 {
-  HashSet<FunctionDescriptor> result=new HashSet<FunctionDescriptor>();
   JetFile jetFile=(JetFile)expression.getContainingFile();
-  BindingContext context=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile).getBindingContext();
+  final ResolveSession resolveSessionForFile=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile(jetFile);
+  LazyBindingContextUtils.getExpressionBindingContext(resolveSessionForFile,expression);
+  BindingContext context=WholeProjectAnalyzerFacade.getLazyResolveContext(jetFile,expression);
   JetScope jetScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
   if (jetScope == null) {
-    return result;
+    return Collections.emptyList();
   }
+  Set<FunctionDescriptor> result=Sets.newHashSet();
   Collection<PsiMethod> topLevelFunctionPrototypes=JetFromJavaDescriptorHelper.getTopLevelFunctionPrototypesByName(name,project,scope);
   for (  PsiMethod method : topLevelFunctionPrototypes) {
     FqName functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN(method);
@@ -21,10 +23,8 @@
   }
   Collection<JetNamedFunction> jetNamedFunctions=JetShortFunctionNameIndex.getInstance().get(name,project,scope);
   for (  JetNamedFunction jetNamedFunction : jetNamedFunctions) {
-    SimpleFunctionDescriptor functionDescriptor=context.get(BindingContext.FUNCTION,jetNamedFunction);
-    if (functionDescriptor != null) {
-      result.add(functionDescriptor);
-    }
+    FunctionDescriptor functionDescriptor=(FunctionDescriptor)resolveSessionForFile.resolveToDescriptor(jetNamedFunction);
+    result.add(functionDescriptor);
   }
   return result;
 }
