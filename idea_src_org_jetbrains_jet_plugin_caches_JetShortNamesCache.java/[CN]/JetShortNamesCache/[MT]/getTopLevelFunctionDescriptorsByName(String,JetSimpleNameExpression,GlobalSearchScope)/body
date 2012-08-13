@@ -1,7 +1,5 @@
 {
   JetFile jetFile=(JetFile)expression.getContainingFile();
-  final ResolveSession resolveSessionForFile=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile(jetFile);
-  LazyBindingContextUtils.getExpressionBindingContext(resolveSessionForFile,expression);
   BindingContext context=WholeProjectAnalyzerFacade.getLazyResolveContext(jetFile,expression);
   JetScope jetScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
   if (jetScope == null) {
@@ -23,7 +21,8 @@
   }
   Collection<JetNamedFunction> jetNamedFunctions=JetShortFunctionNameIndex.getInstance().get(name,project,scope);
   for (  JetNamedFunction jetNamedFunction : jetNamedFunctions) {
-    FunctionDescriptor functionDescriptor=(FunctionDescriptor)resolveSessionForFile.resolveToDescriptor(jetNamedFunction);
+    ResolveSession resolveSession=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile((JetFile)jetNamedFunction.getContainingFile());
+    FunctionDescriptor functionDescriptor=(FunctionDescriptor)resolveSession.resolveToDescriptor(jetNamedFunction);
     result.add(functionDescriptor);
   }
   return result;
