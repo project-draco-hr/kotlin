@@ -1,8 +1,7 @@
 {
-  JsFunction result=context().getFunctionObject(propertySetterDescriptor);
-  JsParameter defaultParameter=new JsParameter(propertyAccessContext(propertySetterDescriptor).scope().declareTemporary());
-  JsStatement assignment=assignmentToBackingField(context(),property,defaultParameter.getName().makeRef()).makeStmt();
-  setParameters(result,defaultParameter);
-  result.getBody().getStatements().add(assignment);
-  return result;
+  JsFunction fun=new JsFunction(context().getScopeForDescriptor(setterDescriptor.getContainingDeclaration()));
+  JsParameter defaultParameter=new JsParameter(propertyAccessContext(setterDescriptor).scope().declareTemporary());
+  fun.getParameters().add(defaultParameter);
+  fun.setBody(new JsBlock(assignmentToBackingField(context(),descriptor,defaultParameter.getName().makeRef()).makeStmt()));
+  return fun;
 }
