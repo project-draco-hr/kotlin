@@ -1,7 +1,10 @@
 {
-  JsInvocation callMethodInvocation=generateCallMethodInvocation();
-  List<JsExpression> parameters=Lists.<JsExpression>newArrayList(JsLiteral.NULL);
-  parameters.addAll(arguments);
-  setArguments(callMethodInvocation,parameters);
-  return callMethodInvocation;
+  JsExpression thisExpression=callParameters.getThisObject();
+  if (thisExpression == null) {
+    return new JsInvocation(callParameters.getFunctionReference(),arguments);
+  }
+  JsInvocation call=new JsInvocation(new JsNameRef("call",callParameters.getFunctionReference()));
+  call.getArguments().add(thisExpression);
+  call.getArguments().addAll(arguments);
+  return call;
 }
