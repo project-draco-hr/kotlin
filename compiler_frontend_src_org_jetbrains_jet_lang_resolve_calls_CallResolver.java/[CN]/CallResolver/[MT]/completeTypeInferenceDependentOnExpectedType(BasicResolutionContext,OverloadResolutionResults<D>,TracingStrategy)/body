@@ -1,8 +1,8 @@
 {
-  if (results.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE)   return results;
+  if (resultsWithIncompleteTypeInference.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE)   return resultsWithIncompleteTypeInference;
   Set<ResolvedCallWithTrace<D>> successful=Sets.newLinkedHashSet();
   Set<ResolvedCallWithTrace<D>> failed=Sets.newLinkedHashSet();
-  for (  ResolvedCall<? extends D> call : results.getResultingCalls()) {
+  for (  ResolvedCall<? extends D> call : resultsWithIncompleteTypeInference.getResultingCalls()) {
     if (!(call instanceof ResolvedCallImpl))     continue;
     ResolvedCallImpl<D> resolvedCall=(ResolvedCallImpl<D>)call;
     if (!resolvedCall.hasUnknownTypeParameters()) {
@@ -16,14 +16,9 @@
     }
     completeTypeInferenceDependentOnExpectedTypeForCall(resolvedCall,context,tracing,successful,failed);
   }
-  if (results.getResultingCalls().size() > 1) {
-    for (    ResolvedCallWithTrace<D> call : successful) {
-      if (call instanceof ResolvedCallImpl) {
-        ((ResolvedCallImpl)call).addStatus(ResolutionStatus.OTHER_ERROR);
-        failed.add(call);
-      }
-    }
-    successful.clear();
+  OverloadResolutionResultsImpl<D> results=computeResultAndReportErrors(context.trace,tracing,successful,failed);
+  if (!results.isSingleResult()) {
+    checkTypesWithNoCallee(context);
   }
-  return computeResultAndReportErrors(context.trace,tracing,successful,failed);
+  return results;
 }

@@ -1,0 +1,44 @@
+{
+  descriptor=descriptor.getOriginal();
+  if (descriptor instanceof FunctionDescriptor) {
+    throw new IllegalStateException("requested fq name for function: " + descriptor);
+  }
+  if (descriptor.getContainingDeclaration() instanceof ModuleDescriptor || descriptor instanceof ScriptDescriptor) {
+    return "";
+  }
+  if (descriptor instanceof ModuleDescriptor) {
+    throw new IllegalStateException("missed something");
+  }
+  if (descriptor instanceof ClassDescriptor) {
+    ClassDescriptor klass=(ClassDescriptor)descriptor;
+    if (klass.getKind() == ClassKind.OBJECT) {
+      if (klass.getContainingDeclaration() instanceof ClassDescriptor) {
+        ClassDescriptor containingKlass=(ClassDescriptor)klass.getContainingDeclaration();
+        if (containingKlass.getKind() == ClassKind.ENUM_CLASS) {
+          return getJvmInternalFQName(containingKlass);
+        }
+ else {
+          return getJvmInternalFQName(containingKlass) + JvmAbi.CLASS_OBJECT_SUFFIX;
+        }
+      }
+    }
+ else     if (klass.getKind() == ClassKind.ENUM_ENTRY) {
+      return getJvmInternalFQName(klass.getContainingDeclaration());
+    }
+  }
+  DeclarationDescriptor container=descriptor.getContainingDeclaration();
+  if (container == null) {
+    throw new IllegalStateException("descriptor has no container: " + descriptor);
+  }
+  Name name=descriptor.getName();
+  if (descriptor instanceof ClassDescriptor && name.isSpecial()) {
+    ClassDescriptor clazz=(ClassDescriptor)descriptor;
+    JvmClassName className=closureAnnotator.classNameForClassDescriptor(clazz);
+    return className.getInternalName();
+  }
+  String baseName=getJvmInternalFQName(container);
+  if (!baseName.isEmpty()) {
+    return baseName + (container instanceof NamespaceDescriptor ? "/" : "$") + name.getIdentifier();
+  }
+  return name.getIdentifier();
+}

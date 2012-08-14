@@ -1,0 +1,30 @@
+{
+  if (state.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
+    DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+    if (CodegenUtil.isInterface(containingDeclaration))     return;
+    Object value=null;
+    final JetExpression initializer=p instanceof JetProperty ? ((JetProperty)p).getInitializer() : null;
+    if (initializer != null) {
+      if (initializer instanceof JetConstantExpression) {
+        CompileTimeConstant<?> compileTimeValue=state.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,initializer);
+        value=compileTimeValue != null ? compileTimeValue.getValue() : null;
+      }
+    }
+    int modifiers;
+    if (kind == OwnerKind.NAMESPACE) {
+      modifiers=Opcodes.ACC_STATIC;
+    }
+ else {
+      modifiers=Opcodes.ACC_PRIVATE;
+    }
+    if (!propertyDescriptor.isVar()) {
+      modifiers|=Opcodes.ACC_FINAL;
+    }
+    if (JetStandardLibrary.isVolatile(propertyDescriptor)) {
+      modifiers|=Opcodes.ACC_VOLATILE;
+    }
+    Type type=state.getInjector().getJetTypeMapper().mapType(propertyDescriptor.getType(),MapTypeMode.VALUE);
+    FieldVisitor fieldVisitor=v.newField(p,modifiers,propertyDescriptor.getName().getName(),type.getDescriptor(),null,value);
+    AnnotationCodegen.forField(fieldVisitor,state.getInjector().getJetTypeMapper()).genAnnotations(propertyDescriptor);
+  }
+}
