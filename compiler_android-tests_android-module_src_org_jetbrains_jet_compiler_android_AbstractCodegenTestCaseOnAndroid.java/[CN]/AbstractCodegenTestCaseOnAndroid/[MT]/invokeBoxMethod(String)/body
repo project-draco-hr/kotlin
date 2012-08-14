@@ -3,7 +3,19 @@
     Class clazz;
     clazz=Class.forName(filePath.replaceAll("\\\\|-|\\.|/","_") + ".namespace");
     Method method;
-    method=clazz.getMethod("box");
+    try {
+      method=clazz.getMethod("box");
+    }
+ catch (    NoSuchMethodException e) {
+      try {
+        method=clazz.getMethod("main",String[].class);
+      }
+ catch (      Throwable e) {
+        throw new RuntimeException("File: " + filePath,e);
+      }
+      method.invoke(null);
+      return;
+    }
     assertEquals("OK",method.invoke(null));
   }
  catch (  Throwable e) {
