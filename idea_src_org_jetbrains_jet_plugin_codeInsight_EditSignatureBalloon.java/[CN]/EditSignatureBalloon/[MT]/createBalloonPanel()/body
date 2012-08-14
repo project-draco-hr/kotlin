@@ -2,14 +2,28 @@
   JPanel panel=new JPanel(new BorderLayout());
   panel.add(editor.getComponent(),BorderLayout.CENTER);
   JPanel toolbar=new JPanel(new FlowLayout(FlowLayout.RIGHT));
-  JButton saveButton=new JButton("Save");
+  JButton saveButton=new JButton("Save"){
+    @Override public boolean isDefaultButton(){
+      return true;
+    }
+  }
+;
   toolbar.add(saveButton);
   panel.add(toolbar,BorderLayout.SOUTH);
-  saveButton.addActionListener(new ActionListener(){
+  ActionListener saveAndHideListener=new ActionListener(){
     @Override public void actionPerformed(    ActionEvent e){
       saveAndHide();
     }
   }
-);
+;
+  ActionListener cancelActionListener=new ActionListener(){
+    @Override public void actionPerformed(    ActionEvent e){
+      balloon.hide();
+    }
+  }
+;
+  saveButton.addActionListener(saveAndHideListener);
+  panel.registerKeyboardAction(saveAndHideListener,KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),JComponent.WHEN_IN_FOCUSED_WINDOW);
+  panel.registerKeyboardAction(cancelActionListener,KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,0),JComponent.WHEN_IN_FOCUSED_WINDOW);
   return panel;
 }
