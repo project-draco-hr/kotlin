@@ -1,0 +1,16 @@
+{
+  if (aClass instanceof JetLightClass) {
+    Project project=parameters.getPosition().getProject();
+    Collection<JetClassOrObject> classOrObjects=JetFullClassNameIndex.getInstance().get(aClass.getQualifiedName(),project,GlobalSearchScope.allScope(project));
+    for (    JetClassOrObject classOrObject : classOrObjects) {
+      if (classOrObject.getContainingFile().getOriginalFile().equals(aClass.getContainingFile())) {
+        Collection<ClassDescriptor> classDescriptors=ResolveSessionUtils.getClassDescriptorsByFqName(resolveSession,((JetLightClass)aClass).getFqName());
+        for (        ClassDescriptor descriptor : classDescriptors) {
+          consumer.consume(DescriptorLookupConverter.createLookupElement(context,descriptor));
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}

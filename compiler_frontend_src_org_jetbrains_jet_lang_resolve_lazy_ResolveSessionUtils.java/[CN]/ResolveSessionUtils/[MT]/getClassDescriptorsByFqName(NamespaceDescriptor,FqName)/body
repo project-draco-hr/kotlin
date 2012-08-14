@@ -1,0 +1,29 @@
+{
+  if (path.isRoot()) {
+    return Collections.emptyList();
+  }
+  Collection<JetScope> scopes=Arrays.asList(packageDescriptor.getMemberScope());
+  List<Name> names=path.pathSegments();
+  if (names.size() > 1) {
+    for (    Name subName : path.pathSegments().subList(0,names.size() - 1)) {
+      Collection<JetScope> tempScopes=Lists.newArrayList();
+      for (      JetScope scope : scopes) {
+        ClassifierDescriptor classifier=scope.getClassifier(subName);
+        if (classifier instanceof ClassDescriptorBase) {
+          ClassDescriptorBase classDescriptor=(ClassDescriptorBase)classifier;
+          tempScopes.add(classDescriptor.getUnsubstitutedInnerClassesScope());
+        }
+      }
+      scopes=tempScopes;
+    }
+  }
+  Name shortName=path.shortName();
+  Collection<ClassDescriptor> resultClassDescriptors=Lists.newArrayList();
+  for (  JetScope scope : scopes) {
+    ClassifierDescriptor classifier=scope.getClassifier(shortName);
+    if (classifier instanceof ClassDescriptor) {
+      resultClassDescriptors.add((ClassDescriptor)classifier);
+    }
+  }
+  return resultClassDescriptors;
+}

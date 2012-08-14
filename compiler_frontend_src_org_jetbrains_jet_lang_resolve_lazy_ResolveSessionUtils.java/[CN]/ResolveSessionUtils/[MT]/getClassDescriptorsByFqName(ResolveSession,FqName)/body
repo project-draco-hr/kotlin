@@ -1,0 +1,22 @@
+{
+  if (fqName.isRoot()) {
+    return Collections.emptyList();
+  }
+  Collection<ClassDescriptor> classDescriptors=Lists.newArrayList();
+  FqName packageFqName=fqName.parent();
+  while (true) {
+    NamespaceDescriptor packageDescriptor=resolveSession.getPackageDescriptorByFqName(packageFqName);
+    if (packageDescriptor != null) {
+      FqName classInPackagePath=new FqName(QualifiedNamesUtil.tail(packageFqName,fqName));
+      Collection<ClassDescriptor> descriptors=getClassDescriptorsByFqName(packageDescriptor,classInPackagePath);
+      classDescriptors.addAll(descriptors);
+    }
+    if (packageFqName.isRoot()) {
+      break;
+    }
+ else {
+      packageFqName=packageFqName.parent();
+    }
+  }
+  return classDescriptors;
+}
