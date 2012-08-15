@@ -1,21 +1,2 @@
 {
-  receiver.put(JetTypeMapper.TYPE_OBJECT,v);
-  JetCallExpression call=(JetCallExpression)element;
-  FunctionDescriptor funDescriptor=(FunctionDescriptor)codegen.getBindingContext().get(BindingContext.REFERENCE_TARGET,(JetSimpleNameExpression)call.getCalleeExpression());
-  ClassDescriptor containingDeclaration=(ClassDescriptor)funDescriptor.getContainingDeclaration().getOriginal();
-  if (JetStandardLibraryNames.ARRAY.is(containingDeclaration)) {
-    v.invokestatic("jet/runtime/ArrayIterator","iterator","([Ljava/lang/Object;)Ljet/Iterator;");
-    return StackValue.onStack(JetTypeMapper.TYPE_ITERATOR);
-  }
- else {
-    for (    JvmPrimitiveType jvmPrimitiveType : JvmPrimitiveType.values()) {
-      PrimitiveType primitiveType=jvmPrimitiveType.getPrimitiveType();
-      if (primitiveType.getArrayClassName().is(containingDeclaration)) {
-        String methodSignature="([" + jvmPrimitiveType.getJvmLetter() + ")"+ jvmPrimitiveType.getIterator().getDescriptor();
-        v.invokestatic("jet/runtime/ArrayIterator","iterator",methodSignature);
-        return StackValue.onStack(jvmPrimitiveType.getIterator().getAsmType());
-      }
-    }
-    throw new UnsupportedOperationException(containingDeclaration.toString());
-  }
 }
