@@ -1,0 +1,18 @@
+{
+  List<JetType> supertypes=Lists.newArrayList();
+  List<JetDelegationSpecifier> delegationSpecifiers=jetClass.getDelegationSpecifiers();
+  boolean isEnum=classDescriptor.getKind() == ClassKind.ENUM_CLASS;
+  if (delegationSpecifiers.isEmpty()) {
+    if (!isEnum) {
+      supertypes.add(getDefaultSupertype(jetClass,trace));
+    }
+  }
+ else {
+    Collection<JetType> declaredSupertypes=resolveDelegationSpecifiers(scope,delegationSpecifiers,typeResolver,trace,false);
+    supertypes.addAll(declaredSupertypes);
+  }
+  if (isEnum && !containsClass(supertypes)) {
+    supertypes.add(0,JetStandardLibrary.getInstance().getEnumType(classDescriptor.getDefaultType()));
+  }
+  return supertypes;
+}
