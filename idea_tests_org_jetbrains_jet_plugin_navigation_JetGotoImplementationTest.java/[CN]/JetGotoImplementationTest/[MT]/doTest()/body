@@ -1,16 +1,20 @@
 {
   configureByFile(getTestName(false) + ".kt");
   List<String> expectedReferences=Arrays.asList(InTextDirectivesUtils.findListWithPrefix("// REF:",getEditor().getDocument().getText()));
+  Collections.sort(expectedReferences);
   GotoTargetHandler.GotoData elements=new GotoImplementationHandler().getSourceAndTargetElements(getEditor(),getFile());
   if (elements != null) {
     List<String> psiElements=Lists.transform(Arrays.asList(elements.targets),new Function<PsiElement,String>(){
       @Override public String apply(      @Nullable PsiElement element){
         assertNotNull(element);
-        return element.toString();
+        assertTrue(element instanceof NavigationItem);
+        ItemPresentation presentation=((NavigationItem)element).getPresentation();
+        assertNotNull(presentation);
+        return presentation.getPresentableText();
       }
     }
 );
-    assertOrderedEquals(expectedReferences,psiElements);
+    assertOrderedEquals(Ordering.natural().sortedCopy(psiElements),expectedReferences);
   }
  else {
     assertEmpty(expectedReferences);
