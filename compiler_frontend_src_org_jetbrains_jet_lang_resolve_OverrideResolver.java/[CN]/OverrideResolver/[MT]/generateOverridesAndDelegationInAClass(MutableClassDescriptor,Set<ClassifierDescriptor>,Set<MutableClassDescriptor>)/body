@@ -1,0 +1,14 @@
+{
+  if (!processed.add(classDescriptor)) {
+    return;
+  }
+  for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
+    ClassDescriptor superclass=(ClassDescriptor)supertype.getConstructor().getDeclarationDescriptor();
+    if (superclass instanceof MutableClassDescriptor && classesBeingAnalyzed.contains(superclass)) {
+      generateOverridesAndDelegationInAClass((MutableClassDescriptor)superclass,processed,classesBeingAnalyzed);
+    }
+  }
+  PsiElement declaration=BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),classDescriptor);
+  DelegationResolver.addDelegatedMembers(trace,(JetClassOrObject)declaration,classDescriptor);
+  generateOverridesInAClass(classDescriptor);
+}
