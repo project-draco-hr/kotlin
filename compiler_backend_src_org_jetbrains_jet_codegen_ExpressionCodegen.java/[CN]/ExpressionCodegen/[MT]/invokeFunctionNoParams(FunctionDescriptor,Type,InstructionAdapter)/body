@@ -1,24 +1,2 @@
 {
-  DeclarationDescriptor containingDeclaration=functionDescriptor.getOriginal().getContainingDeclaration();
-  boolean isStatic=containingDeclaration instanceof NamespaceDescriptor;
-  functionDescriptor=functionDescriptor.getOriginal();
-  JvmClassName owner;
-  IntrinsicMethod intrinsic=state.getInjector().getIntrinsics().getIntrinsic(functionDescriptor);
-  if (intrinsic != null) {
-    intrinsic.generate(this,v,type,null,null,StackValue.onStack(TYPE_OBJECT),state);
-    return;
-  }
-  boolean isInterface;
-  boolean isInsideClass=containingDeclaration == context.getThisDescriptor();
-  if (isInsideClass || isStatic) {
-    owner=typeMapper.getOwner(functionDescriptor,contextKind());
-    isInterface=false;
-  }
- else {
-    owner=typeMapper.getOwner(functionDescriptor,OwnerKind.IMPLEMENTATION);
-    isInterface=CodegenUtil.isInterface(containingDeclaration);
-  }
-  int opcode=isStatic ? Opcodes.INVOKESTATIC : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL;
-  v.visitMethodInsn(opcode,owner.getInternalName(),functionDescriptor.getName().getName(),typeMapper.mapSignature(functionDescriptor.getName(),functionDescriptor).getAsmMethod().getDescriptor());
-  StackValue.onStack(asmType(functionDescriptor.getReturnType())).coerce(type,v);
 }
