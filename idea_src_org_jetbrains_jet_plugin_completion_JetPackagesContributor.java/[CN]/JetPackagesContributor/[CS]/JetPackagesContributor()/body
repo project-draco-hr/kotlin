@@ -18,8 +18,9 @@
         }
         int prefixLength=parameters.getOffset() - simpleNameReference.getExpression().getTextOffset();
         result=result.withPrefixMatcher(new PlainPrefixMatcher(name.substring(0,prefixLength)));
-        BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)namespaceHeader.getContainingFile()).getBindingContext();
-        for (        LookupElement variant : DescriptorLookupConverter.collectLookupElements(bindingContext,TipsManager.getReferenceVariants(namespaceHeader,bindingContext))) {
+        ResolveSession resolveSession=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile((JetFile)simpleNameReference.getExpression().getContainingFile());
+        BindingContext bindingContext=ResolveSessionUtils.getExpressionBindingContext(resolveSession,simpleNameReference.getExpression());
+        for (        LookupElement variant : DescriptorLookupConverter.collectLookupElements(resolveSession,bindingContext,TipsManager.getPackageReferenceVariants(simpleNameReference.getExpression(),bindingContext))) {
           if (!variant.getLookupString().contains(DUMMY_IDENTIFIER)) {
             result.addElement(variant);
           }

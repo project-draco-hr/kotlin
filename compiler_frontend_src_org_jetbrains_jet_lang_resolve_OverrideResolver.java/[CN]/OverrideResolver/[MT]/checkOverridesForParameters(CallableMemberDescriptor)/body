@@ -1,15 +1,15 @@
 {
-  boolean fakeOverride=declared.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE;
-  if (!fakeOverride) {
+  boolean noDeclaration=declared.getKind() != CallableMemberDescriptor.Kind.DECLARATION;
+  if (!noDeclaration) {
     JetModifierListOwner declaration=(JetModifierListOwner)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),declared);
     if (!declaration.hasModifier(JetTokens.OVERRIDE_KEYWORD)) {
       return;
     }
   }
   for (  ValueParameterDescriptor parameterFromSubclass : declared.getValueParameters()) {
-    JetParameter parameter=fakeOverride ? null : (JetParameter)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),parameterFromSubclass);
-    JetClassOrObject classElement=fakeOverride ? (JetClassOrObject)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),declared.getContainingDeclaration()) : null;
-    if (parameterFromSubclass.declaresDefaultValue() && !fakeOverride) {
+    JetParameter parameter=noDeclaration ? null : (JetParameter)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),parameterFromSubclass);
+    JetClassOrObject classElement=noDeclaration ? (JetClassOrObject)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),declared.getContainingDeclaration()) : null;
+    if (parameterFromSubclass.declaresDefaultValue() && !noDeclaration) {
       trace.report(DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.on(parameter));
     }
     boolean superWithDefault=false;
@@ -19,7 +19,7 @@
           superWithDefault=true;
         }
  else {
-          if (fakeOverride) {
+          if (noDeclaration) {
             trace.report(MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE.on(classElement,parameterFromSubclass));
           }
  else {
@@ -29,7 +29,7 @@
         }
       }
       if (!parameterFromSuperclass.getName().equals(parameterFromSubclass.getName())) {
-        if (fakeOverride) {
+        if (noDeclaration) {
           trace.report(DIFFERENT_NAMES_FOR_THE_SAME_PARAMETER_IN_SUPERTYPES.on(classElement,declared.getOverriddenDescriptors(),parameterFromSuperclass.getIndex() + 1));
         }
  else {

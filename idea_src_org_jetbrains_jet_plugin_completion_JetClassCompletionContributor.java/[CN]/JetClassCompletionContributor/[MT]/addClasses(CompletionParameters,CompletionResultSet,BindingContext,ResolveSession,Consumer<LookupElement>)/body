@@ -1,0 +1,36 @@
+{
+  CompletionResultSet tempResult=result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+  final Collection<DeclarationDescriptor> jetOnlyClasses=JetShortNamesCache.getJetOnlyTypes();
+  for (  DeclarationDescriptor jetOnlyClass : jetOnlyClasses) {
+    consumer.consume(DescriptorLookupConverter.createLookupElement(resolveSession,jetContext,jetOnlyClass));
+  }
+  if (!JsModuleDetector.isJsModule((JetFile)parameters.getOriginalFile())) {
+    JavaClassNameCompletionContributor.addAllClasses(parameters,false,JavaCompletionSorting.addJavaSorting(parameters,tempResult).getPrefixMatcher(),new Consumer<LookupElement>(){
+      @Override public void consume(      LookupElement lookupElement){
+        if (lookupElement instanceof JavaPsiClassReferenceElement) {
+          JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
+          PsiClass psiClass=javaPsiReferenceElement.getObject();
+          if (addAsJetLookupElement(parameters,psiClass,resolveSession,jetContext,consumer)) {
+            return;
+          }
+          javaPsiReferenceElement.setInsertHandler(JetJavaClassInsertHandler.JAVA_CLASS_INSERT_HANDLER);
+          consumer.consume(lookupElement);
+        }
+      }
+    }
+);
+  }
+ else {
+    Project project=parameters.getOriginalFile().getProject();
+    JetShortNamesCache namesCache=JetCacheManager.getInstance(project).getNamesCache();
+    Collection<ClassDescriptor> descriptors=namesCache.getJetClassesDescriptors(new Condition<String>(){
+      @Override public boolean value(      String shortName){
+        return result.getPrefixMatcher().prefixMatches(shortName);
+      }
+    }
+,resolveSession);
+    for (    ClassDescriptor descriptor : descriptors) {
+      consumer.consume(DescriptorLookupConverter.createLookupElement(resolveSession,jetContext,descriptor));
+    }
+  }
+}
