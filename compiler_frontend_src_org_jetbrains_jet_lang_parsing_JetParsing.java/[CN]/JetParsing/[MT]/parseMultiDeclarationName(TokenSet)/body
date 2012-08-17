@@ -1,0 +1,27 @@
+{
+  myBuilder.disableNewlines();
+  advance();
+  TokenSet recoverySet=TokenSet.orSet(PARAMETER_NAME_RECOVERY_SET,propertyNameFollow);
+  if (!atSet(propertyNameFollow)) {
+    while (true) {
+      if (at(COMMA)) {
+        errorAndAdvance("Expecting a name");
+      }
+ else       if (at(RPAR)) {
+        error("Expecting a name");
+        break;
+      }
+      PsiBuilder.Marker property=mark();
+      expect(IDENTIFIER,"Expecting a name",recoverySet);
+      if (at(COLON)) {
+        advance();
+        parseTypeRef();
+      }
+      property.done(MULTI_VARIABLE_DECLARATION_ENTRY);
+      if (!at(COMMA))       break;
+      advance();
+    }
+  }
+  expect(RPAR,"Expecting ')'",propertyNameFollow);
+  myBuilder.restoreNewlinesState();
+}
