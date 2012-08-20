@@ -15,16 +15,11 @@
     JetType iteratorType=iteratorFunction.getReturnType();
     FunctionDescriptor hasNextFunction=checkHasNextFunctionSupport(loopRangeExpression,iteratorType,context);
     boolean hasNextFunctionSupported=hasNextFunction != null;
-    VariableDescriptor hasNextProperty=checkHasNextPropertySupport(loopRangeExpression,iteratorType,context);
-    boolean hasNextPropertySupported=hasNextProperty != null;
-    if (hasNextFunctionSupported && hasNextPropertySupported && !ErrorUtils.isErrorType(iteratorType)) {
-      context.trace.report(HAS_NEXT_PROPERTY_AND_FUNCTION_AMBIGUITY.on(loopRangeExpression));
-    }
- else     if (!hasNextFunctionSupported && !hasNextPropertySupported) {
+    if (!hasNextFunctionSupported) {
       context.trace.report(HAS_NEXT_MISSING.on(loopRangeExpression));
     }
  else {
-      context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange.getExpression(),hasNextFunctionSupported ? hasNextFunction : hasNextProperty);
+      context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange.getExpression(),hasNextFunction);
     }
     OverloadResolutionResults<FunctionDescriptor> nextResolutionResults=context.resolveExactSignature(new TransientReceiver(iteratorType),Name.identifier("next"),Collections.<JetType>emptyList());
     if (nextResolutionResults.isAmbiguity()) {
