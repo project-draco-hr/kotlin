@@ -1,3 +1,22 @@
 {
-  return mySpacingBuilder.getSpacing(this,child1,child2);
+  Spacing spacing=mySpacingBuilder.getSpacing(this,child1,child2);
+  if (spacing != null) {
+    return spacing;
+  }
+  IElementType parentType=this.getNode().getElementType();
+  IElementType child1Type=((ASTBlock)child1).getNode().getElementType();
+  IElementType child2Type=((ASTBlock)child2).getNode().getElementType();
+  if (parentType == FUNCTION_LITERAL && child1Type == LBRACE && child2Type == BLOCK) {
+    return Spacing.createDependentLFSpacing(1,1,this.getTextRange(),mySettings.KEEP_LINE_BREAKS,mySettings.KEEP_BLANK_LINES_IN_CODE);
+  }
+  if (parentType == FUNCTION_LITERAL && child1Type == ARROW && child2Type == BLOCK) {
+    return Spacing.createDependentLFSpacing(1,1,this.getTextRange(),mySettings.KEEP_LINE_BREAKS,mySettings.KEEP_BLANK_LINES_IN_CODE);
+  }
+  if (parentType == FUNCTION_LITERAL && child2Type == RBRACE) {
+    return Spacing.createDependentLFSpacing(1,1,this.getTextRange(),mySettings.KEEP_LINE_BREAKS,mySettings.KEEP_BLANK_LINES_IN_CODE);
+  }
+  if (parentType == FUNCTION_LITERAL && child1Type == LBRACE) {
+    return Spacing.createSpacing(1,1,0,mySettings.KEEP_LINE_BREAKS,mySettings.KEEP_BLANK_LINES_IN_CODE);
+  }
+  return null;
 }
