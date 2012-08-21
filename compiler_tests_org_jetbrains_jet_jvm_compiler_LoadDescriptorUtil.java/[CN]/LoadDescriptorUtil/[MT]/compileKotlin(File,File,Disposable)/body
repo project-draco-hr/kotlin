@@ -1,0 +1,14 @@
+{
+  JetCoreEnvironment jetCoreEnvironment=JetTestUtils.createEnvironmentWithMockJdkAndIdeaAnnotations(disposable,ConfigurationKind.JDK_ONLY);
+  JetFile psiFile=JetPsiFactory.createFile(jetCoreEnvironment.getProject(),FileUtil.loadFile(kotlinFile,true));
+  GenerationState state=GenerationUtils.compileFileGetGenerationStateForTest(psiFile);
+  ClassFileFactory classFileFactory=state.getFactory();
+  CompileEnvironmentUtil.writeToOutputDirectory(classFileFactory,tmpdir);
+  NamespaceDescriptor namespaceFromSource=state.getBindingContext().get(BindingContext.FILE_TO_NAMESPACE,psiFile);
+  Assert.assertEquals("test",namespaceFromSource.getName().getName());
+  Disposer.dispose(disposable);
+  jetCoreEnvironment=new JetCoreEnvironment(disposable,CompileCompilerDependenciesTest.compilerConfigurationForTests(ConfigurationKind.JDK_ONLY,TestJdkKind.MOCK_JDK,JetTestUtils.getAnnotationsJar(),tmpdir,ForTestCompileRuntime.runtimeJarForTests()));
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(BuiltinsScopeExtensionMode.ALL,jetCoreEnvironment.getProject());
+  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  return javaDescriptorResolver.resolveNamespace(FqName.topLevel(Name.identifier("test")),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+}
