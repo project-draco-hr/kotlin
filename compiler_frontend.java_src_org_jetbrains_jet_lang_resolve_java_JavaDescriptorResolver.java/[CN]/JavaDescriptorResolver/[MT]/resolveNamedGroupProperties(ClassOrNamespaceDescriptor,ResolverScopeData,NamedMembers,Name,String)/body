@@ -97,7 +97,8 @@ class GroupingValue {
     if (members.getter != null && members.getter.getMember() instanceof PsiMethodWrapper) {
       visibility=resolveVisibility(anyMember.getMember().psiMember,((PsiMethodWrapper)members.getter.getMember()).getJetMethod());
     }
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal),visibility,isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
+    DeclarationDescriptor realOwner=getRealOwner(owner,scopeData,anyMember.getMember().isStatic());
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal),visibility,isVar,false,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
@@ -148,7 +149,7 @@ class GroupingValue {
  else {
       receiverType=semanticServices.getTypeTransformer().transformToType(anyMember.getReceiverType().getPsiType(),typeVariableResolverForPropertyInternals);
     }
-    propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverType);
+    propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(realOwner),receiverType);
     if (getterDescriptor != null) {
       getterDescriptor.initialize(propertyType);
     }
