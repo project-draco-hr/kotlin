@@ -8,7 +8,8 @@
     }
     return;
   }
-  boolean inTrait=classDescriptor != null && classDescriptor.getKind() == ClassKind.TRAIT;
+  DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+  boolean inTrait=containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind() == ClassKind.TRAIT;
   JetExpression initializer=property.getInitializer();
   boolean backingFieldRequired=trace.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
   if (inTrait && backingFieldRequired && hasAccessorImplementation) {
@@ -17,7 +18,7 @@
   if (initializer == null) {
     boolean error=false;
     if (backingFieldRequired && !inTrait && !trace.getBindingContext().get(BindingContext.IS_INITIALIZED,propertyDescriptor)) {
-      if (classDescriptor == null || hasAccessorImplementation) {
+      if (!(containingDeclaration instanceof ClassDescriptor) || hasAccessorImplementation) {
         error=true;
         trace.report(MUST_BE_INITIALIZED.on(property));
       }
