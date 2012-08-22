@@ -1,0 +1,44 @@
+{
+  if (e.isConsumed() || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+    return;
+  }
+  final Editor editor=e.getEditor();
+  PsiFile psiFile=PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+  if (psiFile == null || psiFile.getLanguage() != JetLanguage.INSTANCE) {
+    return;
+  }
+  if (DumbService.getInstance(psiFile.getProject()).isDumb()) {
+    return;
+  }
+  final JetFile jetFile=(JetFile)psiFile;
+  int offset=editor.logicalPositionToOffset(editor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+  PsiElement elementAtCursor=psiFile.findElementAt(offset);
+  final JetNamedDeclaration declaration=PsiTreeUtil.getParentOfType(elementAtCursor,JetNamedDeclaration.class);
+  if (declaration != null && declaration.getNameIdentifier() == elementAtCursor) {
+    if (lastNamedDeclaration == declaration) {
+      return;
+    }
+    if (lastIndicator != null) {
+      lastIndicator.cancel();
+    }
+    lastNamedDeclaration=declaration;
+    lastIndicator=new ProgressIndicatorBase();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      @Override public void run(){
+        searchResolvedDescriptor(jetFile,declaration,editor,lastIndicator);
+      }
+    }
+);
+  }
+ else {
+    if (lastIndicator != null) {
+      lastIndicator.cancel();
+    }
+    if (lastHint != null) {
+      lastHint.hide();
+    }
+    lastHint=null;
+    lastNamedDeclaration=null;
+    lastIndicator=null;
+  }
+}
