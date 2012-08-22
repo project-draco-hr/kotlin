@@ -30,17 +30,16 @@
         return getJvmInternalFQName(klass.getContainingDeclaration());
       }
     }
+    JvmClassName name=closureAnnotator.classNameForClassDescriptor((ClassDescriptor)descriptor);
+    if (name != null) {
+      return name.getInternalName();
+    }
   }
   DeclarationDescriptor container=descriptor.getContainingDeclaration();
   if (container == null) {
     throw new IllegalStateException("descriptor has no container: " + descriptor);
   }
   Name name=descriptor.getName();
-  if (descriptor instanceof ClassDescriptor && name.isSpecial()) {
-    ClassDescriptor clazz=(ClassDescriptor)descriptor;
-    JvmClassName className=closureAnnotator.classNameForClassDescriptor(clazz);
-    return className.getInternalName();
-  }
   String baseName=getJvmInternalFQName(container);
   if (!baseName.isEmpty()) {
     return baseName + (container instanceof NamespaceDescriptor ? "/" : "$") + name.getIdentifier();
