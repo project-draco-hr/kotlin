@@ -2,8 +2,9 @@
   JetModifierList modifierList=property.getModifierList();
   boolean isVar=property.isVar();
   boolean hasBody=hasBody(property);
-  Modality defaultModality=getDefaultModality(containingDeclaration,hasBody);
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList,trace),ModifiersChecker.resolveModalityFromModifiers(property,defaultModality),ModifiersChecker.resolveVisibilityFromModifiers(property),isVar,JetPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION);
+  Modality modality=containingDeclaration instanceof ClassDescriptor ? ModifiersChecker.resolveModalityFromModifiers(property,getDefaultModality(containingDeclaration,hasBody)) : Modality.FINAL;
+  Visibility visibility=ModifiersChecker.resolveVisibilityFromModifiers(property,getDefaultVisibility(property,containingDeclaration));
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(containingDeclaration,annotationResolver.resolveAnnotations(scope,modifierList,trace),modality,visibility,isVar,JetPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION);
   List<TypeParameterDescriptorImpl> typeParameterDescriptors;
   JetScope scopeWithTypeParameters;
   JetType receiverType=null;
