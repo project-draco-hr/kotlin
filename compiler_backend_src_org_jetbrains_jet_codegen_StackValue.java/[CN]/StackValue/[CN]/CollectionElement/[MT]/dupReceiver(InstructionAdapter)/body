@@ -4,14 +4,14 @@
   }
  else {
     int size=0;
-    int lastIndex=frame.enterTemp();
-    frame.leaveTemp();
+    int lastIndex=frame.enterTemp(Type.INT_TYPE);
+    frame.leaveTemp(Type.INT_TYPE);
     List<ValueParameterDescriptor> valueParameters=resolvedGetCall.getResultingDescriptor().getValueParameters();
     int firstParamIndex=-1;
     for (int i=valueParameters.size() - 1; i >= 0; --i) {
       Type type=codegen.typeMapper.mapType(valueParameters.get(i).getType(),MapTypeMode.VALUE);
       int sz=type.getSize();
-      frame.enterTemp(sz);
+      frame.enterTemp(type);
       lastIndex+=sz;
       size+=sz;
       v.store((firstParamIndex=lastIndex) - sz,type);
@@ -20,10 +20,10 @@
     int firstTypeParamIndex=-1;
     for (int i=typeParameters.size() - 1; i >= 0; --i) {
       if (typeParameters.get(i).isReified()) {
-        frame.enterTemp();
+        frame.enterTemp(TYPE_OBJECT);
         lastIndex++;
         size++;
-        v.store(firstTypeParamIndex=lastIndex - 1,JetTypeMapper.TYPE_OBJECT);
+        v.store(firstTypeParamIndex=lastIndex - 1,TYPE_OBJECT);
       }
     }
     ReceiverDescriptor receiverParameter=resolvedGetCall.getReceiverArgument();
@@ -31,7 +31,7 @@
     if (receiverParameter.exists()) {
       Type type=codegen.typeMapper.mapType(receiverParameter.getType(),MapTypeMode.VALUE);
       int sz=type.getSize();
-      frame.enterTemp(sz);
+      frame.enterTemp(type);
       lastIndex+=sz;
       size+=sz;
       v.store((receiverIndex=lastIndex) - sz,type);
@@ -39,10 +39,10 @@
     ReceiverDescriptor thisObject=resolvedGetCall.getThisObject();
     int thisIndex=-1;
     if (thisObject.exists()) {
-      frame.enterTemp();
+      frame.enterTemp(TYPE_OBJECT);
       lastIndex++;
       size++;
-      v.store((thisIndex=lastIndex) - 1,JetTypeMapper.TYPE_OBJECT);
+      v.store((thisIndex=lastIndex) - 1,TYPE_OBJECT);
     }
     int realReceiverIndex;
     Type realReceiverType;
@@ -53,7 +53,7 @@
       }
  else {
         realReceiverIndex=thisIndex;
-        realReceiverType=JetTypeMapper.TYPE_OBJECT;
+        realReceiverType=TYPE_OBJECT;
       }
     }
  else {
@@ -67,7 +67,7 @@
     }
     if (resolvedSetCall.getThisObject().exists()) {
       if (resolvedSetCall.getReceiverArgument().exists()) {
-        codegen.generateFromResolvedCall(resolvedSetCall.getThisObject(),JetTypeMapper.TYPE_OBJECT);
+        codegen.generateFromResolvedCall(resolvedSetCall.getThisObject(),TYPE_OBJECT);
       }
       v.load(realReceiverIndex - realReceiverType.getSize(),realReceiverType);
     }
@@ -87,7 +87,7 @@
       index-=sz;
     }
     if (thisIndex != -1) {
-      v.load(thisIndex - 1,JetTypeMapper.TYPE_OBJECT);
+      v.load(thisIndex - 1,TYPE_OBJECT);
     }
     if (receiverIndex != -1) {
       Type type=codegen.typeMapper.mapType(receiverParameter.getType(),MapTypeMode.VALUE);
@@ -97,7 +97,7 @@
       index=firstTypeParamIndex;
       for (int i=0; i != typeParameters.size(); ++i) {
         if (typeParameters.get(i).isReified()) {
-          v.load(index - 1,JetTypeMapper.TYPE_OBJECT);
+          v.load(index - 1,TYPE_OBJECT);
           index--;
         }
       }
@@ -109,6 +109,8 @@
       v.load(index - sz,type);
       index-=sz;
     }
-    frame.leaveTemp(size);
+    for (int i=0; i < size; i++) {
+      frame.leaveTemp(TYPE_OBJECT);
+    }
   }
 }
