@@ -1,38 +1,30 @@
 {
   JetExpression loopRangeExpression=loopRange.getExpression();
   Name iterator=Name.identifier("iterator");
-  OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=resolveFakeCall(loopRange,context,iterator);
+  Pair<Call,OverloadResolutionResults<FunctionDescriptor>> calls=makeAndResolveFakeCall(loopRange,context,iterator);
+  Call iteratorCall=calls.getFirst();
+  OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=calls.getSecond();
   if (!iteratorResolutionResults.isSuccess()) {
     ExpressionReceiver nonNullReceiver=new ExpressionReceiver(loopRange.getExpression(),TypeUtils.makeNotNullable(loopRange.getType()));
-    OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResultsWithNonNullReceiver=resolveFakeCall(nonNullReceiver,context,iterator);
+    Pair<Call,OverloadResolutionResults<FunctionDescriptor>> callsNonNull=makeAndResolveFakeCall(nonNullReceiver,context,iterator);
+    Call iteratorCallWithNonNullReceiver=callsNonNull.getFirst();
+    OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResultsWithNonNullReceiver=callsNonNull.getSecond();
     if (iteratorResolutionResultsWithNonNullReceiver.isSuccess()) {
       iteratorResolutionResults=iteratorResolutionResultsWithNonNullReceiver;
+      iteratorCall=iteratorCallWithNonNullReceiver;
     }
   }
   if (iteratorResolutionResults.isSuccess()) {
-    FunctionDescriptor iteratorFunction=iteratorResolutionResults.getResultingCall().getResultingDescriptor();
-    context.trace.record(LOOP_RANGE_ITERATOR,loopRangeExpression,iteratorFunction);
+    ResolvedCall<FunctionDescriptor> iteratorResolvedCall=iteratorResolutionResults.getResultingCall();
+    context.trace.record(LOOP_RANGE_ITERATOR_RESOLVED_CALL,loopRangeExpression,iteratorResolvedCall);
+    context.trace.record(LOOP_RANGE_ITERATOR_CALL,loopRangeExpression,iteratorCall);
+    FunctionDescriptor iteratorFunction=iteratorResolvedCall.getResultingDescriptor();
     JetType iteratorType=iteratorFunction.getReturnType();
-    FunctionDescriptor hasNextFunction=checkHasNextFunctionSupport(loopRangeExpression,iteratorType,context);
-    boolean hasNextFunctionSupported=hasNextFunction != null;
-    if (!hasNextFunctionSupported) {
-      context.trace.report(HAS_NEXT_MISSING.on(loopRangeExpression));
+    JetType hasNextType=checkConventionForIterator(context,loopRangeExpression,iteratorType,"hasNext",HAS_NEXT_FUNCTION_AMBIGUITY,HAS_NEXT_MISSING,LOOP_RANGE_HAS_NEXT_RESOLVED_CALL);
+    if (hasNextType != null && !isBoolean(hasNextType)) {
+      context.trace.report(HAS_NEXT_FUNCTION_TYPE_MISMATCH.on(loopRangeExpression,hasNextType));
     }
- else {
-      context.trace.record(LOOP_RANGE_HAS_NEXT,loopRange.getExpression(),hasNextFunction);
-    }
-    OverloadResolutionResults<FunctionDescriptor> nextResolutionResults=context.resolveExactSignature(new TransientReceiver(iteratorType),Name.identifier("next"),Collections.<JetType>emptyList());
-    if (nextResolutionResults.isAmbiguity()) {
-      context.trace.report(NEXT_AMBIGUITY.on(loopRangeExpression));
-    }
- else     if (nextResolutionResults.isNothing()) {
-      context.trace.report(NEXT_MISSING.on(loopRangeExpression));
-    }
- else {
-      FunctionDescriptor nextFunction=nextResolutionResults.getResultingCall().getResultingDescriptor();
-      context.trace.record(LOOP_RANGE_NEXT,loopRange.getExpression(),nextFunction);
-      return nextFunction.getReturnType();
-    }
+    return checkConventionForIterator(context,loopRangeExpression,iteratorType,"next",NEXT_AMBIGUITY,NEXT_MISSING,LOOP_RANGE_NEXT_RESOLVED_CALL);
   }
  else {
     if (iteratorResolutionResults.isAmbiguity()) {
