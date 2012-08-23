@@ -1,20 +1,17 @@
 {
-  final List<JetFile> answer=new ArrayList<JetFile>();
-  final FileTypeManager fileTypeManager=FileTypeManager.getInstance();
-  List<VirtualFile> contentRoots=Arrays.asList(ProjectRootManager.getInstance(project).getContentRoots());
   final PsiManager manager=PsiManager.getInstance(project);
-  CompilerPathsEx.visitFiles(contentRoots,new CompilerPathsEx.FileVisitor(){
-    @Override protected void acceptFile(    VirtualFile file,    String fileRoot,    String filePath){
-      final FileType fileType=fileTypeManager.getFileTypeByFile(file);
-      if (fileType != JetFileType.INSTANCE)       return;
-      if (scope.accept(file)) {
-        final PsiFile psiFile=manager.findFile(file);
-        if (psiFile instanceof JetFile) {
-          answer.add((JetFile)psiFile);
-        }
+  Collection<JetFile> jetFiles=Collections2.transform(FileTypeIndex.getFiles(JetFileType.INSTANCE,scope),new com.google.common.base.Function<VirtualFile,JetFile>(){
+    @Override public JetFile apply(    @Nullable VirtualFile file){
+      if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInContent(file)) {
+        return null;
       }
+      PsiFile psiFile=manager.findFile(file);
+      if (!(psiFile instanceof JetFile)) {
+        return null;
+      }
+      return ((JetFile)psiFile);
     }
   }
 );
-  return answer;
+  return Sets.newHashSet(Collections2.filter(jetFiles,Predicates.<JetFile>notNull()));
 }
