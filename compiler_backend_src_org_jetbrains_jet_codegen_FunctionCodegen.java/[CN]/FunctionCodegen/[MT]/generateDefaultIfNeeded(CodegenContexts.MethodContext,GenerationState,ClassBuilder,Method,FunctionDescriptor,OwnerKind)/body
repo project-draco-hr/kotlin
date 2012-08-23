@@ -1,2 +1,38 @@
 {
+  DeclarationDescriptor contextClass=owner.getContextDescriptor().getContainingDeclaration();
+  if (kind != OwnerKind.TRAIT_IMPL && contextClass instanceof ClassDescriptor && ((ClassDescriptor)contextClass).getKind() == ClassKind.TRAIT) {
+    return;
+  }
+  boolean needed=isDefaultNeeded(functionDescriptor);
+  if (!needed) {
+    return;
+  }
+  ReceiverDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
+  boolean hasReceiver=receiverParameter.exists();
+  boolean isStatic=kind == OwnerKind.NAMESPACE || kind instanceof OwnerKind.StaticDelegateKind;
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    String correctedDescr="(" + jvmSignature.getDescriptor().substring(jvmSignature.getDescriptor().indexOf(";") + 1);
+    jvmSignature=new Method(jvmSignature.getName(),correctedDescr);
+  }
+  int flags=ACC_PUBLIC | ACC_SYNTHETIC;
+  JvmClassName ownerInternalName;
+  if (contextClass instanceof NamespaceDescriptor) {
+    ownerInternalName=NamespaceCodegen.getJVMClassNameForKotlinNs(DescriptorUtils.getFQName(contextClass).toSafe());
+  }
+ else {
+    ownerInternalName=JvmClassName.byType(state.getInjector().getJetTypeMapper().mapType(((ClassDescriptor)contextClass).getDefaultType(),MapTypeMode.IMPL));
+  }
+  String descriptor=jvmSignature.getDescriptor().replace(")","I)");
+  boolean isConstructor="<init>".equals(jvmSignature.getName());
+  if (!isStatic && !isConstructor) {
+    descriptor=descriptor.replace("(","(" + ownerInternalName.getDescriptor());
+  }
+  final MethodVisitor mv=v.newMethod(null,flags | (isConstructor ? 0 : ACC_STATIC),isConstructor ? "<init>" : jvmSignature.getName() + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX,descriptor,null,null);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
+    StubCodegen.generateStubCode(mv);
+  }
+ else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    generateDefaultImpl(owner,state,jvmSignature,functionDescriptor,kind,receiverParameter,hasReceiver,isStatic,ownerInternalName,isConstructor,mv,iv);
+  }
 }
