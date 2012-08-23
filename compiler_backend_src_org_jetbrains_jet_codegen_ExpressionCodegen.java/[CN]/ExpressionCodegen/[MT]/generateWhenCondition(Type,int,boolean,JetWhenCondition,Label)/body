@@ -5,14 +5,13 @@
     while (rangeExpression instanceof JetParenthesizedExpression) {
       rangeExpression=((JetParenthesizedExpression)rangeExpression).getExpression();
     }
-    boolean inverted=conditionInRange.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN;
+    JetSimpleNameExpression operationReference=conditionInRange.getOperationReference();
+    boolean inverted=operationReference.getReferencedNameElementType() == JetTokens.NOT_IN;
     if (isIntRangeExpr(rangeExpression)) {
       getInIntRange(new StackValue.Local(subjectLocal,subjectType),(JetBinaryExpression)rangeExpression,inverted);
     }
  else {
-      ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(RESOLVED_CALL,conditionInRange.getOperationReference());
-      Call call=bindingContext.get(CALL,conditionInRange.getOperationReference());
-      invokeFunction(call,StackValue.none(),resolvedCall);
+      invokeFunctionByReference(operationReference);
       if (inverted) {
         invertBoolean();
       }

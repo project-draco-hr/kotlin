@@ -1,2 +1,16 @@
 {
+  JetExpression expr=expression.getLeft();
+  boolean inverted=expression.getOperationReference().getReferencedNameElementType() == JetTokens.NOT_IN;
+  if (isIntRangeExpr(expression.getRight())) {
+    StackValue leftValue=StackValue.expression(Type.INT_TYPE,expression.getLeft(),this);
+    JetBinaryExpression rangeExpression=(JetBinaryExpression)expression.getRight();
+    getInIntRange(leftValue,rangeExpression,inverted);
+  }
+ else {
+    invokeFunctionByReference(expression.getOperationReference());
+    if (inverted) {
+      invertBoolean();
+    }
+  }
+  return StackValue.onStack(Type.BOOLEAN_TYPE);
 }
