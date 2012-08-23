@@ -1,2 +1,71 @@
 {
+  getSuperClass();
+  JvmClassSignature signature=signature();
+  boolean isAbstract=false;
+  boolean isInterface=false;
+  boolean isFinal=false;
+  boolean isStatic=false;
+  boolean isAnnotation=false;
+  boolean isEnum=false;
+  if (myClass instanceof JetClass) {
+    JetClass jetClass=(JetClass)myClass;
+    if (jetClass.hasModifier(JetTokens.ABSTRACT_KEYWORD)) {
+      isAbstract=true;
+    }
+    if (jetClass.isTrait()) {
+      isAbstract=true;
+      isInterface=true;
+    }
+ else     if (jetClass.isAnnotation()) {
+      isAbstract=true;
+      isInterface=true;
+      isAnnotation=true;
+      signature.getInterfaces().add(JdkNames.JLA_ANNOTATION.getInternalName());
+    }
+ else     if (jetClass.hasModifier(JetTokens.ENUM_KEYWORD)) {
+      isEnum=true;
+    }
+    if (!jetClass.hasModifier(JetTokens.OPEN_KEYWORD) && !isAbstract) {
+      isFinal=true;
+    }
+  }
+ else   if (myClass.getParent() instanceof JetClassObject) {
+    isStatic=true;
+  }
+  int access=0;
+  access|=ACC_PUBLIC;
+  if (isAbstract) {
+    access|=ACC_ABSTRACT;
+  }
+  if (isInterface) {
+    access|=ACC_INTERFACE;
+  }
+ else {
+    access|=ACC_SUPER;
+  }
+  if (isFinal) {
+    access|=ACC_FINAL;
+  }
+  if (isStatic) {
+    access|=ACC_STATIC;
+  }
+  if (isAnnotation) {
+    access|=ACC_ANNOTATION;
+  }
+  if (isEnum) {
+    for (    JetDeclaration declaration : myClass.getDeclarations()) {
+      if (declaration instanceof JetEnumEntry) {
+        if (state.getInjector().getClosureAnnotator().enumEntryNeedSubclass((JetEnumEntry)declaration)) {
+          access&=~ACC_FINAL;
+        }
+      }
+    }
+    access|=ACC_ENUM;
+  }
+  List<String> interfaces=signature.getInterfaces();
+  v.defineClass(myClass,V1_6,access,signature.getName(),signature.getJavaGenericSignature(),signature.getSuperclassName(),interfaces.toArray(new String[interfaces.size()]));
+  v.visitSource(myClass.getContainingFile().getName(),null);
+  writeInnerOuterClasses();
+  AnnotationCodegen.forClass(v.getVisitor(),typeMapper).genAnnotations(descriptor);
+  writeClassSignatureIfNeeded(signature);
 }
