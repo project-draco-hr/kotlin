@@ -1,20 +1,25 @@
 {
-  runWithWriteActionPriority(indicator,new Runnable(){
+  ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
     @Override public void run(){
-      DeclarationDescriptor descriptor=null;
-      try {
-        BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile).getBindingContext();
-        descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
-      }
+      runWithWriteActionPriority(indicator,new Runnable(){
+        @Override public void run(){
+          DeclarationDescriptor descriptor=null;
+          try {
+            BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(jetFile).getBindingContext();
+            descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
+          }
   finally {
-        final DeclarationDescriptor finalDescriptor=descriptor;
-        ApplicationManager.getApplication().invokeLater(new Runnable(){
-          @Override public void run(){
-            onDescriptorReady(finalDescriptor,declaration,editor,jetFile,indicator);
+            final DeclarationDescriptor finalDescriptor=descriptor;
+            ApplicationManager.getApplication().invokeLater(new Runnable(){
+              @Override public void run(){
+                onDescriptorReady(finalDescriptor,declaration,editor,jetFile,indicator);
+              }
+            }
+);
           }
         }
-);
       }
+);
     }
   }
 );
