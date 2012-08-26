@@ -4,9 +4,20 @@
       JetDelegatorByExpressionSpecifier specifier=(JetDelegatorByExpressionSpecifier)delegationSpecifier;
       JetType type=trace.get(BindingContext.TYPE,specifier.getTypeReference());
       if (type != null) {
-        @SuppressWarnings("unchecked") Collection<CallableMemberDescriptor> callableDescriptors=(Collection)Collections2.filter(type.getMemberScope().getAllDescriptors(),Predicates.instanceOf(CallableMemberDescriptor.class));
-        Collection<CallableMemberDescriptor> descriptors=generateDelegatedMembers(classDescriptor,callableDescriptors);
-        for (        CallableMemberDescriptor descriptor : descriptors) {
+        final Collection<CallableMemberDescriptor> membersToSkip=getMembersFromClassSupertype(type);
+        Collection<CallableMemberDescriptor> descriptorsToDelegate=Collections2.filter(extractCallableMembers(type),new Predicate<CallableMemberDescriptor>(){
+          @Override public boolean apply(          @Nullable CallableMemberDescriptor descriptor){
+            for (            CallableMemberDescriptor memberToSkip : membersToSkip) {
+              if (haveSameSignatures(memberToSkip,descriptor)) {
+                return false;
+              }
+            }
+            return true;
+          }
+        }
+);
+        Collection<CallableMemberDescriptor> generatedDescriptors=generateDelegatedMembers(classDescriptor,descriptorsToDelegate);
+        for (        CallableMemberDescriptor descriptor : generatedDescriptors) {
           if (descriptor instanceof PropertyDescriptor) {
             PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
             classDescriptor.getBuilder().addPropertyDescriptor(propertyDescriptor);
