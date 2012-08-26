@@ -17,7 +17,15 @@
         }
 );
         Collection<CallableMemberDescriptor> generatedDescriptors=generateDelegatedMembers(classDescriptor,descriptorsToDelegate);
-        for (        CallableMemberDescriptor descriptor : generatedDescriptors) {
+        outer:         for (        CallableMemberDescriptor descriptor : generatedDescriptors) {
+          for (          CallableMemberDescriptor existingDescriptor : classDescriptor.getAllCallableMembers()) {
+            if (OverridingUtil.isOverridableBy(existingDescriptor,descriptor).getResult() == OverridingUtil.OverrideCompatibilityInfo.Result.OVERRIDABLE) {
+              if (existingDescriptor.getKind() == CallableMemberDescriptor.Kind.DELEGATION) {
+                trace.report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(jetClass.getNameIdentifier(),jetClass,existingDescriptor));
+              }
+              continue outer;
+            }
+          }
           if (descriptor instanceof PropertyDescriptor) {
             PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
             classDescriptor.getBuilder().addPropertyDescriptor(propertyDescriptor);
