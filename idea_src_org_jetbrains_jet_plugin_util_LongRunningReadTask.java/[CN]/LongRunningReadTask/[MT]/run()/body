@@ -1,0 +1,33 @@
+{
+  ApplicationManager.getApplication().assertIsDispatchThread();
+  if (currentState != State.INITIALIZED) {
+    throw new IllegalStateException("Task should be initialized with init() method");
+  }
+  currentState=State.STARTED;
+  beforeRun();
+  progressIndicator=new ProgressIndicatorBase();
+  final RequestInfo requestInfoCopy=cloneRequestInfo(requestInfo);
+  ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+    @Override public void run(){
+      runWithWriteActionPriority(progressIndicator,new Runnable(){
+        @Override public void run(){
+          ResultData resultData=null;
+          try {
+            resultData=processRequest(requestInfoCopy);
+          }
+  finally {
+            final ResultData finalResult=resultData;
+            ApplicationManager.getApplication().invokeLater(new Runnable(){
+              @Override public void run(){
+                resultReady(finalResult);
+              }
+            }
+);
+          }
+        }
+      }
+);
+    }
+  }
+);
+}
