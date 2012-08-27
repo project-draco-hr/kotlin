@@ -1,0 +1,22 @@
+{
+  if (closure != null) {
+    if (!ignoreThisAndReceiver) {
+      final ClassDescriptor captureThis=closure.getCaptureThis();
+      if (captureThis != null) {
+        generateThisOrOuter(captureThis).put(OBJECT_TYPE,v);
+      }
+      final ClassifierDescriptor captureReceiver=closure.getCaptureReceiver();
+      if (captureReceiver != null) {
+        final Type asmType=typeMapper.mapType(captureReceiver.getDefaultType(),MapTypeMode.IMPL);
+        v.load(context.isStatic() ? 0 : 1,asmType);
+      }
+    }
+    for (    Map.Entry<DeclarationDescriptor,EnclosedValueDescriptor> entry : closure.getCaptureVariables().entrySet()) {
+      Type sharedVarType=typeMapper.getSharedVarType(entry.getKey());
+      if (sharedVarType == null) {
+        sharedVarType=typeMapper.mapType(((VariableDescriptor)entry.getKey()).getType(),MapTypeMode.VALUE);
+      }
+      entry.getValue().getOuterValue(this).put(sharedVarType,v);
+    }
+  }
+}

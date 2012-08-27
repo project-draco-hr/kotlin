@@ -1,0 +1,14 @@
+{
+  ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,expression.getObjectDeclaration());
+  if (classDescriptor == null) {
+    super.visitObjectLiteralExpression(expression);
+    return;
+  }
+  final String name=inventAnonymousClassName(expression.getObjectDeclaration());
+  recordClosure(expression.getObjectDeclaration(),classDescriptor,classStack.peek(),JvmClassName.byInternalName(name),false);
+  classStack.push(classDescriptor);
+  nameStack.push(classNameForClassDescriptor(classDescriptor).getInternalName());
+  super.visitObjectLiteralExpression(expression);
+  nameStack.pop();
+  classStack.pop();
+}

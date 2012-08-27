@@ -1,0 +1,16 @@
+{
+  if (declaration.getParent() instanceof JetObjectLiteralExpression || declaration.getParent() instanceof JetClassObject) {
+    super.visitObjectDeclaration(declaration);
+  }
+ else {
+    ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,declaration);
+    if (classDescriptor == null)     return;
+    String name=getName(classDescriptor);
+    recordClosure(declaration,classDescriptor,classStack.peek(),JvmClassName.byInternalName(name),false);
+    classStack.push(classDescriptor);
+    nameStack.push(name);
+    super.visitObjectDeclaration(declaration);
+    nameStack.pop();
+    classStack.pop();
+  }
+}

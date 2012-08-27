@@ -1,27 +1,21 @@
 {
-  ClosureCodegen closureCodegen=new ClosureCodegen(state,this,context);
-  final GeneratedAnonymousClassDescriptor closure=closureCodegen.gen(expression);
-  if (closureCodegen.isConst()) {
-    v.invokestatic(closure.getClassname().getInternalName(),"$getInstance","()" + closure.getClassname().getDescriptor());
+  final FunctionDescriptor descriptor=bindingContext.get(BindingContext.FUNCTION,expression);
+  final ClosureAnnotator closureAnnotator=state.getInjector().getClosureAnnotator();
+  final ClassDescriptor classDescriptor=closureAnnotator.classDescriptorForFunctionDescriptor(descriptor);
+  final CalculatedClosure closure=closureAnnotator.getCalculatedClosure(classDescriptor);
+  ClosureCodegen closureCodegen=new ClosureCodegen(state,(MutableClosure)closure).gen(expression,context,this);
+  final JvmClassName className=closureCodegen.name;
+  final Type asmType=className.getAsmType();
+  final String internalName=className.getInternalName();
+  if (CodegenUtil.isConst(closure)) {
+    v.invokestatic(internalName,"$getInstance","()" + className.getDescriptor());
   }
  else {
-    v.anew(closure.getClassname().getAsmType());
+    v.anew(asmType);
     v.dup();
-    final Method cons=closure.getConstructor();
-    int k=0;
-    if (closure.isCaptureThis()) {
-      k++;
-      v.load(0,OBJECT_TYPE);
-    }
-    if (closure.isCaptureReceiver()) {
-      k++;
-      v.load(context.getContextDescriptor().getContainingDeclaration() instanceof NamespaceDescriptor ? 0 : 1,typeMapper.mapType(closure.getCaptureReceiver().getDefaultType(),MapTypeMode.IMPL));
-    }
-    for (int i=0; i < closure.getArgs().size(); i++) {
-      StackValue arg=closure.getArgs().get(i);
-      arg.put(cons.getArgumentTypes()[i + k],v);
-    }
-    v.invokespecial(closure.getClassname().getInternalName(),"<init>",cons.getDescriptor());
+    final Method cons=closureCodegen.constructor;
+    pushClosureOnStack(closure,false);
+    v.invokespecial(internalName,"<init>",cons.getDescriptor());
   }
-  return StackValue.onStack(closure.getClassname().getAsmType());
+  return StackValue.onStack(asmType);
 }

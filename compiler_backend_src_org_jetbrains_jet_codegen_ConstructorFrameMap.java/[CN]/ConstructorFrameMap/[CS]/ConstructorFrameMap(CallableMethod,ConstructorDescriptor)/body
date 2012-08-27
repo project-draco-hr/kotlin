@@ -1,0 +1,23 @@
+{
+  enterTemp(JetTypeMapper.OBJECT_TYPE);
+  final List<JvmMethodParameterSignature> parameterTypes=callableMethod.getSignature().getKotlinParameterTypes();
+  if (parameterTypes != null) {
+    for (    JvmMethodParameterSignature parameterType : parameterTypes) {
+      if (parameterType.getKind() == JvmMethodParameterKind.OUTER) {
+        myOuterThisIndex=enterTemp(JetTypeMapper.OBJECT_TYPE);
+      }
+ else       if (parameterType.getKind() != JvmMethodParameterKind.VALUE) {
+        enterTemp(parameterType.getAsmType());
+      }
+ else {
+        break;
+      }
+    }
+  }
+  List<Type> explicitArgTypes=callableMethod.getValueParameterTypes();
+  List<ValueParameterDescriptor> paramDescrs=descriptor != null ? descriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
+  for (int i=0; i < paramDescrs.size(); i++) {
+    ValueParameterDescriptor parameter=paramDescrs.get(i);
+    enter(parameter,explicitArgTypes.get(i));
+  }
+}

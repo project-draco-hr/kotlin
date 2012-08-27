@@ -1,0 +1,32 @@
+{
+  FunctionDescriptor functionDescriptor=(FunctionDescriptor)bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,function);
+  if (functionDescriptor == null)   return;
+  DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
+  if (containingDeclaration instanceof ClassDescriptor) {
+    nameStack.push(nameStack.peek() + '$' + function.getName());
+    super.visitNamedFunction(function);
+    nameStack.pop();
+  }
+ else   if (containingDeclaration instanceof NamespaceDescriptor) {
+    String peek=nameStack.peek();
+    if (peek.isEmpty()) {
+      peek="namespace";
+    }
+ else {
+      peek+="/namespace";
+    }
+    nameStack.push(peek + '$' + function.getName());
+    super.visitNamedFunction(function);
+    nameStack.pop();
+  }
+ else {
+    String name=inventAnonymousClassName(function);
+    ClassDescriptor classDescriptor=classDescriptorForFunctionDescriptor(functionDescriptor);
+    recordClosure(function,classDescriptor,classStack.peek(),JvmClassName.byInternalName(name),true);
+    classStack.push(classDescriptor);
+    nameStack.push(name);
+    super.visitNamedFunction(function);
+    nameStack.pop();
+    classStack.pop();
+  }
+}

@@ -1,0 +1,65 @@
+{
+  BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD,true);
+  writeFormalTypeParameters(Collections.<TypeParameterDescriptor>emptyList(),signatureWriter);
+  signatureWriter.writeParametersStart();
+  ClassDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+  final ClassDescriptor captureThis=closure != null ? closure.getCaptureThis() : null;
+  if (captureThis != null) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.OUTER);
+    mapType(captureThis.getDefaultType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  final ClassifierDescriptor captureReceiver=closure != null ? closure.getCaptureReceiver() : null;
+  if (captureReceiver != null) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.RECEIVER);
+    mapType(captureReceiver.getDefaultType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  if (containingDeclaration.getKind() == ClassKind.ENUM_CLASS || containingDeclaration.getKind() == ClassKind.ENUM_ENTRY) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.ENUM_NAME);
+    mapType(JetStandardLibrary.getInstance().getStringType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+    signatureWriter.writeParameterType(JvmMethodParameterKind.ENUM_ORDINAL);
+    mapType(JetStandardLibrary.getInstance().getIntType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  if (closure != null) {
+    for (    Map.Entry<DeclarationDescriptor,EnclosedValueDescriptor> entry : closure.getCaptureVariables().entrySet()) {
+      if (entry.getKey() instanceof VariableDescriptor && !(entry.getKey() instanceof PropertyDescriptor)) {
+        Type sharedVarType=getSharedVarType(entry.getKey());
+        if (sharedVarType == null) {
+          sharedVarType=mapType(((VariableDescriptor)entry.getKey()).getType(),MapTypeMode.VALUE);
+        }
+        signatureWriter.writeParameterType(JvmMethodParameterKind.SHARED_VAR);
+        signatureWriter.writeAsmType(sharedVarType,false);
+        signatureWriter.writeParameterTypeEnd();
+      }
+    }
+    final JetDelegatorToSuperCall superCall=closure.getSuperCall();
+    if (superCall != null) {
+      DeclarationDescriptor superDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,superCall.getCalleeExpression().getConstructorReferenceExpression());
+      if (superDescriptor instanceof ConstructorDescriptor) {
+        final ConstructorDescriptor superConstructor=(ConstructorDescriptor)superDescriptor;
+        if (CodegenUtil.isObjectLiteral(descriptor.getContainingDeclaration(),bindingContext)) {
+          CallableMethod superCallable=mapToCallableMethod(superConstructor,getCalculatedClosure(superConstructor.getContainingDeclaration()));
+          final List<JvmMethodParameterSignature> types=superCallable.getSignature().getKotlinParameterTypes();
+          if (types != null) {
+            for (            JvmMethodParameterSignature type : types) {
+              signatureWriter.writeParameterType(JvmMethodParameterKind.SUPER_CALL_PARAM);
+              signatureWriter.writeAsmType(type.getAsmType(),false);
+              signatureWriter.writeParameterTypeEnd();
+            }
+          }
+        }
+      }
+    }
+  }
+  for (  ValueParameterDescriptor parameter : descriptor.getOriginal().getValueParameters()) {
+    signatureWriter.writeParameterType(JvmMethodParameterKind.VALUE);
+    mapType(parameter.getType(),signatureWriter,MapTypeMode.VALUE);
+    signatureWriter.writeParameterTypeEnd();
+  }
+  signatureWriter.writeParametersEnd();
+  signatureWriter.writeVoidReturn();
+  return signatureWriter.makeJvmMethodSignature("<init>");
+}

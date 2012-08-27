@@ -1,0 +1,24 @@
+{
+  final MutableClosure top=closure;
+  if (top != null) {
+    EnclosedValueDescriptor answer=closure.getCaptureVariables().get(d);
+    if (answer != null) {
+      StackValue innerValue=answer.getInnerValue();
+      return result == null ? innerValue : StackValue.composed(result,innerValue);
+    }
+    for (    LocalLookup.LocalLookupCase aCase : LocalLookup.LocalLookupCase.values()) {
+      if (aCase.isCase(d,state)) {
+        StackValue innerValue=aCase.innerValue(d,enclosingLocalLookup,state,closure);
+        if (innerValue == null) {
+          break;
+        }
+ else {
+          return result == null ? innerValue : StackValue.composed(result,innerValue);
+        }
+      }
+    }
+    StackValue outer=getOuterExpression(null,ignoreNoOuter);
+    result=result == null ? outer : StackValue.composed(result,outer);
+  }
+  return parentContext != null ? parentContext.lookupInContext(d,result,state,ignoreNoOuter) : null;
+}

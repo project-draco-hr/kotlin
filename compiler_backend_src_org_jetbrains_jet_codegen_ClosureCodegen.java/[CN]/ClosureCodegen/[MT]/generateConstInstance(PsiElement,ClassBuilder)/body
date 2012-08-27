@@ -1,0 +1,24 @@
+{
+  String classDescr=name.getDescriptor();
+  cv.newField(fun,ACC_PRIVATE | ACC_STATIC | ACC_FINAL| ACC_SYNTHETIC,"$instance",classDescr,null,null);
+  MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_STATIC | ACC_SYNTHETIC,"$getInstance","()" + classDescr,null,new String[0]);
+  if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
+    StubCodegen.generateStubCode(mv);
+  }
+ else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    mv.visitCode();
+    mv.visitFieldInsn(GETSTATIC,name.getInternalName(),"$instance",classDescr);
+    mv.visitInsn(DUP);
+    Label ret=new Label();
+    mv.visitJumpInsn(IFNONNULL,ret);
+    mv.visitInsn(POP);
+    mv.visitTypeInsn(NEW,name.getInternalName());
+    mv.visitInsn(DUP);
+    mv.visitMethodInsn(INVOKESPECIAL,name.getInternalName(),"<init>","()V");
+    mv.visitInsn(DUP);
+    mv.visitFieldInsn(PUTSTATIC,name.getInternalName(),"$instance",classDescr);
+    mv.visitLabel(ret);
+    mv.visitInsn(ARETURN);
+    FunctionCodegen.endVisit(mv,"$getInstance",fun);
+  }
+}
