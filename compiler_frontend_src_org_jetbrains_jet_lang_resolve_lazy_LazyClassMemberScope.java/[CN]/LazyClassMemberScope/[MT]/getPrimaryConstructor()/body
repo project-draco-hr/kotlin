@@ -1,21 +1,21 @@
 {
-  if (!primaryConstructorResolved) {
-    Set<ClassKind> generateConstructorsFor=EnumSet.of(ClassKind.CLASS,ClassKind.ANNOTATION_CLASS,ClassKind.OBJECT,ClassKind.ENUM_CLASS,ClassKind.ENUM_ENTRY);
-    if (generateConstructorsFor.contains(thisDescriptor.getKind())) {
-      JetClassOrObject classOrObject=declarationProvider.getOwnerInfo().getCorrespondingClassOrObject();
-      if (thisDescriptor.getKind() != ClassKind.OBJECT && !declaresObjectOrEnumConstant(classOrObject)) {
-        JetClass jetClass=(JetClass)classOrObject;
-        ConstructorDescriptorImpl constructor=resolveSession.getInjector().getDescriptorResolver().resolvePrimaryConstructorDescriptor(thisDescriptor.getScopeForClassHeaderResolution(),thisDescriptor,jetClass,resolveSession.getTrace());
-        primaryConstructor=constructor;
-        setDeferredReturnType(constructor);
-      }
- else {
-        ConstructorDescriptorImpl constructor=DescriptorResolver.createPrimaryConstructorForObject(classOrObject,thisDescriptor,resolveSession.getTrace());
-        setDeferredReturnType(constructor);
-        primaryConstructor=constructor;
-      }
-    }
-    primaryConstructorResolved=true;
+  if (primaryConstructorResolved) {
+    return primaryConstructor;
   }
+  if (GENERATE_CONSTRUCTORS_FOR.contains(thisDescriptor.getKind())) {
+    JetClassOrObject classOrObject=declarationProvider.getOwnerInfo().getCorrespondingClassOrObject();
+    if (!thisDescriptor.getKind().isObject()) {
+      JetClass jetClass=(JetClass)classOrObject;
+      ConstructorDescriptorImpl constructor=resolveSession.getInjector().getDescriptorResolver().resolvePrimaryConstructorDescriptor(thisDescriptor.getScopeForClassHeaderResolution(),thisDescriptor,jetClass,resolveSession.getTrace());
+      primaryConstructor=constructor;
+      setDeferredReturnType(constructor);
+    }
+ else {
+      ConstructorDescriptorImpl constructor=DescriptorResolver.createPrimaryConstructorForObject(classOrObject,thisDescriptor,resolveSession.getTrace());
+      setDeferredReturnType(constructor);
+      primaryConstructor=constructor;
+    }
+  }
+  primaryConstructorResolved=true;
   return primaryConstructor;
 }
