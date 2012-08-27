@@ -1,0 +1,28 @@
+{
+  ApplicationManager.getApplication().assertIsDispatchThread();
+  if (currentState != State.INITIALIZED) {
+    throw new IllegalStateException("Task should be initialized state. Call init() method.");
+  }
+  if (previousTask != null && previousTask.currentState == State.STARTED) {
+    if (requestInfo == null || !requestInfo.equals(previousTask.requestInfo)) {
+      previousTask.progressIndicator.cancel();
+    }
+  }
+  if (requestInfo == null) {
+    if (previousTask != null && (previousTask.currentState == State.FINISHED_WITH_ACTUAL_DATA || previousTask.currentState == State.FINISHED)) {
+      previousTask.hideResultOnInvalidLocation();
+    }
+    return false;
+  }
+  if (previousTask != null) {
+    if (previousTask.currentState == State.STARTED) {
+      return !requestInfo.equals(previousTask.requestInfo);
+    }
+ else     if (previousTask.currentState == State.FINISHED_WITH_ACTUAL_DATA) {
+      if (requestInfo.equals(previousTask.requestInfo)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
