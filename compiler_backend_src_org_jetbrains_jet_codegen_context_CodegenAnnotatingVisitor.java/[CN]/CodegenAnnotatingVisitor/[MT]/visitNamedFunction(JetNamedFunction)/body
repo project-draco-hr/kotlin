@@ -1,0 +1,32 @@
+{
+  FunctionDescriptor functionDescriptor=(FunctionDescriptor)bindingContext.get(DECLARATION_TO_DESCRIPTOR,function);
+  if (functionDescriptor == null)   return;
+  DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
+  if (containingDeclaration instanceof ClassDescriptor) {
+    nameStack.push(CodegenUtil.peekFromStack(nameStack) + '$' + function.getName());
+    super.visitNamedFunction(function);
+    nameStack.pop();
+  }
+ else   if (containingDeclaration instanceof NamespaceDescriptor) {
+    String peek=CodegenUtil.peekFromStack(nameStack);
+    if (peek.isEmpty()) {
+      peek="namespace";
+    }
+ else {
+      peek+="/namespace";
+    }
+    nameStack.push(peek + '$' + function.getName());
+    super.visitNamedFunction(function);
+    nameStack.pop();
+  }
+ else {
+    String name=inventAnonymousClassName(function);
+    ClassDescriptor classDescriptor=recordClassForFunction(functionDescriptor);
+    recordClosure(bindingTrace,function,classDescriptor,CodegenUtil.peekFromStack(classStack),JvmClassName.byInternalName(name),true);
+    classStack.push(classDescriptor);
+    nameStack.push(name);
+    super.visitNamedFunction(function);
+    nameStack.pop();
+    classStack.pop();
+  }
+}
