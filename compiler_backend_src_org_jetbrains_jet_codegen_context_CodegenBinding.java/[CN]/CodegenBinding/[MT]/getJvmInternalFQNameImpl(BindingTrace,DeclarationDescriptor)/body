@@ -1,5 +1,4 @@
 {
-  descriptor=descriptor.getOriginal();
   if (descriptor instanceof FunctionDescriptor) {
     throw new IllegalStateException("requested fq name for function: " + descriptor);
   }
@@ -15,22 +14,22 @@
       if (klass.getContainingDeclaration() instanceof ClassDescriptor) {
         ClassDescriptor containingKlass=(ClassDescriptor)klass.getContainingDeclaration();
         if (containingKlass.getKind() == ClassKind.ENUM_CLASS) {
-          return getJvmInternalFQName(containingKlass);
+          return getJvmInternalName(bindingTrace,containingKlass).getInternalName();
         }
  else {
-          return getJvmInternalFQName(containingKlass) + JvmAbi.CLASS_OBJECT_SUFFIX;
+          return getJvmInternalName(bindingTrace,containingKlass).getInternalName() + JvmAbi.CLASS_OBJECT_SUFFIX;
         }
       }
     }
  else     if (klass.getKind() == ClassKind.ENUM_ENTRY) {
-      if (enumEntryNeedSubclass(bindingContext,klass)) {
-        return getJvmInternalFQName(klass.getContainingDeclaration()) + "$" + klass.getName().getName();
+      if (enumEntryNeedSubclass(bindingTrace.getBindingContext(),klass)) {
+        return getJvmInternalName(bindingTrace,klass.getContainingDeclaration()).getInternalName() + "$" + klass.getName().getName();
       }
  else {
-        return getJvmInternalFQName(klass.getContainingDeclaration());
+        return getJvmInternalName(bindingTrace,klass.getContainingDeclaration()).getInternalName();
       }
     }
-    JvmClassName name=classNameForClassDescriptor(bindingContext,(ClassDescriptor)descriptor);
+    JvmClassName name=classNameForClassDescriptor(bindingTrace.getBindingContext(),(ClassDescriptor)descriptor);
     if (name != null) {
       return name.getInternalName();
     }
@@ -40,7 +39,7 @@
     throw new IllegalStateException("descriptor has no container: " + descriptor);
   }
   Name name=descriptor.getName();
-  String baseName=getJvmInternalFQName(container);
+  String baseName=getJvmInternalName(bindingTrace,container).getInternalName();
   if (!baseName.isEmpty()) {
     return baseName + (container instanceof NamespaceDescriptor ? "/" : "$") + name.getIdentifier();
   }
