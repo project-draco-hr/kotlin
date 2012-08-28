@@ -7,7 +7,7 @@
         final AnalyzeExhaust analyzeExhaust=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file);
         analyzeExhaust.throwIfError();
         List<JetFile> namespaceFiles=JetFilesProvider.getInstance(file.getProject()).allNamespaceFiles().fun(file);
-        JetTypeMapper typeMapper=new InjectorForJetTypeMapper(analyzeExhaust.getBindingContext(),namespaceFiles).getJetTypeMapper();
+        JetTypeMapper typeMapper=new InjectorForJetTypeMapper(new DelegatingBindingTrace(analyzeExhaust.getBindingContext()),namespaceFiles).getJetTypeMapper();
         typeMapper.getCodegenAnnotator().init();
         return new Result<JetTypeMapper>(typeMapper,PsiModificationTracker.MODIFICATION_COUNT);
       }

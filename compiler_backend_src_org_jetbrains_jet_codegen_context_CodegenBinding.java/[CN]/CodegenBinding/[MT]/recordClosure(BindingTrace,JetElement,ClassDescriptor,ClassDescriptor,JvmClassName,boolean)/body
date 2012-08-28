@@ -1,0 +1,16 @@
+{
+  final JetDelegatorToSuperCall superCall=CodegenUtil.findSuperCall(element,bindingTrace.getBindingContext());
+  CallableDescriptor enclosingReceiver=null;
+  if (classDescriptor.getContainingDeclaration() instanceof CallableDescriptor) {
+    enclosingReceiver=(CallableDescriptor)classDescriptor.getContainingDeclaration();
+    enclosingReceiver=enclosingReceiver instanceof PropertyAccessorDescriptor ? ((PropertyAccessorDescriptor)enclosingReceiver).getCorrespondingProperty() : enclosingReceiver;
+    if (!enclosingReceiver.getReceiverParameter().exists()) {
+      enclosingReceiver=null;
+    }
+  }
+  final MutableClosure closure=new MutableClosure(superCall,enclosing,name,enclosingReceiver);
+  bindingTrace.record(CLOSURE,classDescriptor,closure);
+  if (canHaveOuter(bindingTrace.getBindingContext(),classDescriptor) && !functionLiteral) {
+    closure.setCaptureThis();
+  }
+}
