@@ -1,0 +1,16 @@
+{
+  final HashSet<FqName> names=new HashSet<FqName>();
+  for (  JetFile file : files) {
+    if (!file.isScript()) {
+      names.add(JetPsiUtil.getFQName(file));
+    }
+  }
+  final HashSet<JetFile> answer=new HashSet<JetFile>();
+  answer.addAll(files);
+  for (  FqName name : names) {
+    final NamespaceDescriptor namespaceDescriptor=bindingContext.get(BindingContext.FQNAME_TO_NAMESPACE_DESCRIPTOR,name);
+    final Collection<JetFile> jetFiles=bindingContext.get(NAMESPACE_TO_FILES,namespaceDescriptor);
+    if (jetFiles != null)     answer.addAll(jetFiles);
+  }
+  return answer;
+}
