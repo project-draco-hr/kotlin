@@ -36,7 +36,8 @@
       return;
     }
   }
-  BindingContext bindingContext=AnalyzeSingleFileUtil.getContextForSingleFile((JetFile)expression.getContainingFile());
+  AnalyzeExhaust analyzeExhaust=AnalyzeSingleFileUtil.analyzeSingleFileWithCache((JetFile)expression.getContainingFile());
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
   final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
   JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
   if (scope != null) {
@@ -45,7 +46,7 @@
       dataFlowInfo=DataFlowInfo.EMPTY;
     }
     ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
-    InjectorForMacros injector=new InjectorForMacros(project);
+    InjectorForMacros injector=new InjectorForMacros(project,analyzeExhaust.getModuleConfiguration());
     JetType typeNoExpectedType=injector.getExpressionTypingServices().getType(scope,expression,TypeUtils.NO_EXPECTED_TYPE,dataFlowInfo,bindingTrace);
     if (expressionType != null && typeNoExpectedType != null && !JetTypeChecker.INSTANCE.equalTypes(expressionType,typeNoExpectedType)) {
       noTypeInference=true;
