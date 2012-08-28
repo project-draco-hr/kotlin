@@ -15,6 +15,16 @@
     if (descriptors.size() == 1) {
       resolvedDirectives.put(importDirective,descriptors.iterator().next());
     }
+    for (    DeclarationDescriptor descriptor : descriptors) {
+      if (descriptor instanceof ClassDescriptor && !onlyClasses) {
+        FqNameUnsafe fqName=DescriptorUtils.getFQName(descriptor);
+        Collection<ClassDescriptor> kotlinAnalogs=configuration.getKotlinAnalogs(fqName);
+        JetExpression importedReference=importDirective.getImportedReference();
+        if (importedReference != null && !kotlinAnalogs.isEmpty()) {
+          trace.report(CLASS_HAS_KOTLIN_ANALOG.on(importedReference,kotlinAnalogs));
+        }
+      }
+    }
   }
   delayedImporter.processImports();
   if (!onlyClasses) {
