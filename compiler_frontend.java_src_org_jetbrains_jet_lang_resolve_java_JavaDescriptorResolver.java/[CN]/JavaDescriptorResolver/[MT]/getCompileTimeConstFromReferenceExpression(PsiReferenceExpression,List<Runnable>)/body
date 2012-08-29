@@ -1,0 +1,32 @@
+{
+  PsiElement resolveElement=value.resolve();
+  if (resolveElement instanceof PsiEnumConstant) {
+    PsiElement psiElement=resolveElement.getParent();
+    if (psiElement instanceof PsiClass) {
+      PsiClass psiClass=(PsiClass)psiElement;
+      String fqName=psiClass.getQualifiedName();
+      if (fqName == null) {
+        return null;
+      }
+      JetScope scope;
+      ClassDescriptor classDescriptor=resolveClass(new FqName(fqName),DescriptorSearchRule.INCLUDE_KOTLIN,taskList);
+      if (classDescriptor == null) {
+        return null;
+      }
+      ClassDescriptor classObjectDescriptor=classDescriptor.getClassObjectDescriptor();
+      if (classObjectDescriptor == null) {
+        return null;
+      }
+      scope=classObjectDescriptor.getMemberScope(Lists.<TypeProjection>newArrayList());
+      Name identifier=Name.identifier(((PsiEnumConstant)resolveElement).getName());
+      Collection<VariableDescriptor> properties=scope.getProperties(identifier);
+      for (      VariableDescriptor variableDescriptor : properties) {
+        if (!variableDescriptor.getReceiverParameter().exists()) {
+          return new EnumValue((PropertyDescriptor)variableDescriptor);
+        }
+      }
+      return null;
+    }
+  }
+  return null;
+}

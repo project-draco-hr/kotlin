@@ -1,0 +1,21 @@
+{
+  File testFile=new File(PATH + "kotlinEnum.kt");
+  LoadDescriptorUtil.compileKotlinToDirAndGetAnalyzeExhaust(testFile,tmpdir,myTestRootDisposable);
+  StringBuilder builder=new StringBuilder(tmpdir.getAbsolutePath());
+  builder.append(File.pathSeparator);
+  File runtimePath=PathUtil.getDefaultRuntimePath();
+  if (runtimePath != null) {
+    builder.append(runtimePath.getAbsolutePath());
+    builder.append(File.pathSeparator);
+  }
+  File annotationsPath=PathUtil.getJdkAnnotationsPath();
+  if (annotationsPath != null) {
+    builder.append(annotationsPath.getAbsolutePath());
+  }
+  setUpJavaDescriptorResolver();
+  compileJavaFile("customAnnotationWithKotlinEnum.java",builder.toString());
+  String annotationTypeName=DEFAULT_PACKAGE + ".MyAnnotation";
+  AnnotationDescriptor annotation=getAnnotationInClassByType("testClass",annotationTypeName);
+  CompileTimeConstant<?> actualCompileTimeConstant=getCompileTimeConstant(annotation,annotationTypeName,"value");
+  checkSimpleCompileTimeConstant(actualCompileTimeConstant,DEFAULT_PACKAGE + ".MyEnum","MyEnum.ONE");
+}
