@@ -1,0 +1,29 @@
+{
+  DeclarationDescriptor containingDeclaration=memberDescriptor.getContainingDeclaration();
+  if (isInterface(containingDeclaration)) {
+    return ACC_PUBLIC;
+  }
+  Visibility memberVisibility=memberDescriptor.getVisibility();
+  if (memberVisibility != Visibilities.PRIVATE) {
+    return null;
+  }
+  if (isClassObject(containingDeclaration)) {
+    return ACC_PACKAGE_PRIVATE;
+  }
+  if (memberDescriptor instanceof ConstructorDescriptor) {
+    ClassKind kind=((ClassDescriptor)containingDeclaration).getKind();
+    if (kind == ClassKind.OBJECT) {
+      return ACC_PUBLIC;
+    }
+ else     if (kind == ClassKind.ENUM_ENTRY) {
+      return ACC_PACKAGE_PRIVATE;
+    }
+ else     if (kind == ClassKind.ENUM_CLASS) {
+      return ACC_PROTECTED;
+    }
+  }
+  if (containingDeclaration instanceof NamespaceDescriptor) {
+    return ACC_PUBLIC;
+  }
+  return null;
+}

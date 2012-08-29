@@ -25,7 +25,7 @@
     if (isStatic || kind == OwnerKind.TRAIT_IMPL) {
       flags|=ACC_STATIC;
     }
-    boolean isAbstract=(modality == Modality.ABSTRACT || CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
+    boolean isAbstract=(modality == Modality.ABSTRACT || isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
     if (isAbstract)     flags|=ACC_ABSTRACT;
     final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
     AnnotationCodegen.forMethod(mv,state.getInjector().getJetTypeMapper()).genAnnotations(functionDescriptor);
@@ -40,8 +40,8 @@
             throw new IllegalStateException();
           }
           JetMethodAnnotationWriter aw=JetMethodAnnotationWriter.visitAnnotation(mv);
-          BitSet kotlinFlags=CodegenUtil.getFlagsForVisibility(functionDescriptor.getVisibility());
-          if (CodegenUtil.isInterface(functionDescriptor.getContainingDeclaration()) && modality != Modality.ABSTRACT) {
+          BitSet kotlinFlags=getFlagsForVisibility(functionDescriptor.getVisibility());
+          if (isInterface(functionDescriptor.getContainingDeclaration()) && modality != Modality.ABSTRACT) {
             kotlinFlags.set(modality == Modality.FINAL ? JvmStdlibNames.FLAG_FORCE_FINAL_BIT : JvmStdlibNames.FLAG_FORCE_OPEN_BIT);
           }
           aw.writeFlags(kotlinFlags);
@@ -116,8 +116,8 @@
  else       if (kind instanceof OwnerKind.DelegateKind) {
         OwnerKind.DelegateKind dk=(OwnerKind.DelegateKind)kind;
         InstructionAdapter iv=new InstructionAdapter(mv);
-        iv.load(0,JetTypeMapper.OBJECT_TYPE);
-        dk.getDelegate().put(JetTypeMapper.OBJECT_TYPE,iv);
+        iv.load(0,OBJECT_TYPE);
+        dk.getDelegate().put(OBJECT_TYPE,iv);
         for (int i=0; i < argTypes.length; i++) {
           Type argType=argTypes[i];
           iv.load(i + 1,argType);
@@ -173,7 +173,7 @@
         if (divideLabel != null) {
           Type sharedVarType=state.getInjector().getJetTypeMapper().getSharedVarType(parameter);
           mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,k);
-          String nameForSharedVar=CodegenUtil.generateTmpVariableName(localVariableNames);
+          String nameForSharedVar=generateTmpVariableName(localVariableNames);
           localVariableNames.add(nameForSharedVar);
           mv.visitLocalVariable(nameForSharedVar,sharedVarType.getDescriptor(),null,divideLabel,methodEnd,k);
           k+=Math.max(type.getSize(),sharedVarType.getSize());

@@ -9,20 +9,20 @@
     Type[] argTypes=overridden.getArgumentTypes();
     Type[] originalArgTypes=jvmSignature.getArgumentTypes();
     InstructionAdapter iv=new InstructionAdapter(mv);
-    iv.load(0,JetTypeMapper.OBJECT_TYPE);
+    iv.load(0,OBJECT_TYPE);
     for (int i=0, reg=1; i < argTypes.length; i++) {
       Type argType=argTypes[i];
       iv.load(reg,argType);
       if (argType.getSort() == Type.OBJECT) {
-        StackValue.onStack(JetTypeMapper.OBJECT_TYPE).put(originalArgTypes[i],iv);
+        StackValue.onStack(OBJECT_TYPE).put(originalArgTypes[i],iv);
       }
  else       if (argType.getSort() == Type.ARRAY) {
-        StackValue.onStack(JetTypeMapper.JAVA_ARRAY_GENERIC_TYPE).put(originalArgTypes[i],iv);
+        StackValue.onStack(JAVA_ARRAY_GENERIC_TYPE).put(originalArgTypes[i],iv);
       }
       reg+=argType.getSize();
     }
     iv.invokevirtual(state.getInjector().getJetTypeMapper().mapType(((ClassDescriptor)owner.getContextDescriptor()).getDefaultType(),MapTypeMode.VALUE).getInternalName(),jvmSignature.getName(),jvmSignature.getDescriptor());
-    if (JetTypeMapper.isPrimitive(jvmSignature.getReturnType()) && !JetTypeMapper.isPrimitive(overridden.getReturnType())) {
+    if (isPrimitive(jvmSignature.getReturnType()) && !isPrimitive(overridden.getReturnType())) {
       StackValue.valueOf(iv,jvmSignature.getReturnType());
     }
     if (jvmSignature.getReturnType() == Type.VOID_TYPE) {
