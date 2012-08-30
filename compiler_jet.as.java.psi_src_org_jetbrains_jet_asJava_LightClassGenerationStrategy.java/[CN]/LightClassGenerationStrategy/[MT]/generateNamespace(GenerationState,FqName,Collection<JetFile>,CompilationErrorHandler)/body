@@ -1,0 +1,18 @@
+{
+  PsiManager manager=PsiManager.getInstance(state.getProject());
+  stubStack.push(answer);
+  answer.setPsiFactory(new ClsWrapperStubPsiFactory());
+  final ClsFileImpl fakeFile=new ClsFileImpl((PsiManagerImpl)manager,new ClassFileViewProvider(manager,theClass.getFile().getVirtualFile())){
+    @NotNull @Override public PsiClassHolderFileStub getStub(){
+      return answer;
+    }
+  }
+;
+  fakeFile.setPhysical(false);
+  answer.setPsi(fakeFile);
+  super.generateNamespace(state,fqName,namespaceFiles,errorHandler);
+  final StubElement pop=stubStack.pop();
+  if (pop != answer) {
+    LOG.error("Unbalanced stack operations: " + pop);
+  }
+}

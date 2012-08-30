@@ -3,20 +3,20 @@
   for (  JetDeclaration declaration : file.getDeclarations()) {
     if (declaration instanceof JetProperty) {
       final CodegenContext context=CodegenContext.STATIC.intoNamespace(descriptor);
-      state.getInjector().getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
+      state.getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
     }
  else     if (declaration instanceof JetNamedFunction) {
       if (!multiFile) {
         final CodegenContext context=CodegenContext.STATIC.intoNamespace(descriptor);
-        state.getInjector().getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
+        state.getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
       }
     }
  else     if (declaration instanceof JetClassOrObject) {
       final CodegenContext context=CodegenContext.STATIC.intoNamespace(descriptor);
-      state.getInjector().getClassCodegen().generate(context,(JetClassOrObject)declaration);
+      state.getClassCodegen().generate(context,(JetClassOrObject)declaration);
     }
  else     if (declaration instanceof JetScript) {
-      state.getInjector().getScriptCodegen().generate((JetScript)declaration);
+      state.getScriptCodegen().generate((JetScript)declaration);
     }
   }
   if (multiFile) {
@@ -30,18 +30,18 @@
       PsiFile containingFile=file.getContainingFile();
       String namespaceInternalName=name.child(Name.identifier(JvmAbi.PACKAGE_CLASS)).getFqName().replace('.','/');
       String className=getMultiFileNamespaceInternalName(namespaceInternalName,containingFile);
-      ClassBuilder builder=state.forNamespacepart(className);
+      ClassBuilder builder=state.getFactory().forNamespacepart(className);
       builder.defineClass(containingFile,V1_6,ACC_PUBLIC,className,null,"java/lang/Object",new String[0]);
       builder.visitSource(containingFile.getName(),null);
       for (      JetDeclaration declaration : file.getDeclarations()) {
         if (declaration instanceof JetNamedFunction) {
 {
             final CodegenContext context=CodegenContext.STATIC.intoNamespace(descriptor);
-            state.getInjector().getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,builder);
+            state.getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,builder);
           }
 {
             final CodegenContext context=CodegenContext.STATIC.intoNamespacePart(className,descriptor);
-            state.getInjector().getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
+            state.getMemberCodegen().generateFunctionOrProperty((JetTypeParameterListOwner)declaration,context,v.getClassBuilder());
           }
         }
       }

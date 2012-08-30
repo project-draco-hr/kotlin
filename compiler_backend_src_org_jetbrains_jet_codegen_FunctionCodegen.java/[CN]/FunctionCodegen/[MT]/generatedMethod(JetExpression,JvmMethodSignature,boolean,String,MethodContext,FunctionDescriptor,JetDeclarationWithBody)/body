@@ -28,7 +28,7 @@
     boolean isAbstract=(modality == Modality.ABSTRACT || isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
     if (isAbstract)     flags|=ACC_ABSTRACT;
     final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
-    AnnotationCodegen.forMethod(mv,state.getInjector().getJetTypeMapper()).genAnnotations(functionDescriptor);
+    AnnotationCodegen.forMethod(mv,state.getTypeMapper()).genAnnotations(functionDescriptor);
     if (state.getClassBuilderMode() != ClassBuilderMode.SIGNATURES) {
       int start=0;
       if (needJetAnnotations) {
@@ -65,7 +65,7 @@
         }
         for (int i=0; i != paramDescrs.size(); ++i) {
           ValueParameterDescriptor parameterDescriptor=paramDescrs.get(i);
-          AnnotationCodegen.forParameter(i,mv,state.getInjector().getJetTypeMapper()).genAnnotations(parameterDescriptor);
+          AnnotationCodegen.forParameter(i,mv,state.getTypeMapper()).genAnnotations(parameterDescriptor);
           JetValueParameterAnnotationWriter av=JetValueParameterAnnotationWriter.visitParameterAnnotation(mv,i + start);
           av.writeName(parameterDescriptor.getName().getName());
           av.writeHasDefaultValue(parameterDescriptor.declaresDefaultValue());
@@ -84,7 +84,7 @@
       mv.visitCode();
       Label methodBegin=new Label();
       mv.visitLabel(methodBegin);
-      FrameMap frameMap=context.prepareFrame(state.getInjector().getJetTypeMapper());
+      FrameMap frameMap=context.prepareFrame(state.getTypeMapper());
       ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getAsmMethod().getReturnType(),context,state);
       Type[] argTypes=jvmSignature.getAsmMethod().getArgumentTypes();
       int add=0;
@@ -127,9 +127,9 @@
       }
  else {
         for (        ValueParameterDescriptor parameter : paramDescrs) {
-          Type sharedVarType=state.getInjector().getJetTypeMapper().getSharedVarType(parameter);
+          Type sharedVarType=state.getTypeMapper().getSharedVarType(parameter);
           if (sharedVarType != null) {
-            Type localVarType=state.getInjector().getJetTypeMapper().mapType(parameter.getType(),MapTypeMode.VALUE);
+            Type localVarType=state.getTypeMapper().mapType(parameter.getType(),MapTypeMode.VALUE);
             int index=frameMap.getIndex(parameter);
             mv.visitTypeInsn(NEW,sharedVarType.getInternalName());
             mv.visitInsn(DUP);
@@ -154,24 +154,24 @@
       }
       int k=0;
       if (expectedThisObject.exists()) {
-        Type type=state.getInjector().getJetTypeMapper().mapType(expectedThisObject.getType(),MapTypeMode.VALUE);
+        Type type=state.getTypeMapper().mapType(expectedThisObject.getType(),MapTypeMode.VALUE);
         mv.visitLocalVariable("this",type.getDescriptor(),null,methodBegin,methodEnd,k++);
       }
  else       if (fun instanceof JetFunctionLiteralExpression || isLocalFun(state.getBindingContext(),functionDescriptor)) {
-        Type type=state.getInjector().getJetTypeMapper().mapType(context.getThisDescriptor().getDefaultType(),MapTypeMode.VALUE);
+        Type type=state.getTypeMapper().mapType(context.getThisDescriptor().getDefaultType(),MapTypeMode.VALUE);
         mv.visitLocalVariable("this",type.getDescriptor(),null,methodBegin,methodEnd,k++);
       }
       if (receiverParameter.exists()) {
-        Type type=state.getInjector().getJetTypeMapper().mapType(receiverParameter.getType(),MapTypeMode.VALUE);
+        Type type=state.getTypeMapper().mapType(receiverParameter.getType(),MapTypeMode.VALUE);
         mv.visitLocalVariable("this$receiver",type.getDescriptor(),null,methodBegin,methodEnd,k);
         k+=type.getSize();
       }
       for (      ValueParameterDescriptor parameter : paramDescrs) {
-        Type type=state.getInjector().getJetTypeMapper().mapType(parameter.getType(),MapTypeMode.VALUE);
+        Type type=state.getTypeMapper().mapType(parameter.getType(),MapTypeMode.VALUE);
         Label divideLabel=mapLabelsToDivideLocalVarVisibilityForSharedVar.get(parameter.getName());
         String parameterName=parameter.getName().getName();
         if (divideLabel != null) {
-          Type sharedVarType=state.getInjector().getJetTypeMapper().getSharedVarType(parameter);
+          Type sharedVarType=state.getTypeMapper().getSharedVarType(parameter);
           mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,k);
           String nameForSharedVar=generateTmpVariableName(localVariableNames);
           localVariableNames.add(nameForSharedVar);

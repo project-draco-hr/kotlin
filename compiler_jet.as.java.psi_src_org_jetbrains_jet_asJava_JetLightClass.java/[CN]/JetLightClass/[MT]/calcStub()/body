@@ -21,28 +21,9 @@
   if (context.isError()) {
     throw new IllegalStateException("failed to analyze: " + context.getError(),context.getError());
   }
-  final GenerationState state=new GenerationState(project,builderFactory,context,Collections.singletonList(file)){
-    @Override protected void generateNamespace(    FqName fqName,    Collection<JetFile> namespaceFiles,    CompilationErrorHandler errorHandler,    Progress progress){
-      PsiManager manager=PsiManager.getInstance(project);
-      stubStack.push(answer);
-      answer.setPsiFactory(new ClsWrapperStubPsiFactory());
-      final ClsFileImpl fakeFile=new ClsFileImpl((PsiManagerImpl)manager,new ClassFileViewProvider(manager,file.getVirtualFile())){
-        @NotNull @Override public PsiClassHolderFileStub getStub(){
-          return answer;
-        }
-      }
-;
-      fakeFile.setPhysical(false);
-      answer.setPsi(fakeFile);
-      super.generateNamespace(fqName,namespaceFiles,errorHandler,progress);
-      final StubElement pop=stubStack.pop();
-      if (pop != answer) {
-        LOG.error("Unbalanced stack operations: " + pop);
-      }
-    }
-  }
-;
-  state.compileCorrectFiles(CompilationErrorHandler.THROW_EXCEPTION);
+  final GenerationState state=new GenerationState(project,builderFactory,context,Collections.singletonList(file));
+  final GenerationStrategy strategy=new LightClassGenerationStrategy(this,stubStack,answer);
+  strategy.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   state.getFactory().files();
   return answer;
 }
