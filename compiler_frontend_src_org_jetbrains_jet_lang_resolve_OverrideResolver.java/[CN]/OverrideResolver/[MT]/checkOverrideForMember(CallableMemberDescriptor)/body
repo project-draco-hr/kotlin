@@ -1,4 +1,10 @@
 {
+  if (declared.getKind() == CallableMemberDescriptor.Kind.SYNTHESIZED) {
+    if (declared.getName().getName().startsWith(DescriptorResolver.COMPONENT_FUNCTION_NAME_PREFIX)) {
+      checkOverrideForComponentFunction(declared);
+    }
+    return;
+  }
   if (declared.getKind() != CallableMemberDescriptor.Kind.DECLARATION) {
     return;
   }
@@ -10,7 +16,7 @@
   final ASTNode overrideNode=modifierList != null ? modifierList.getModifierNode(JetTokens.OVERRIDE_KEYWORD) : null;
   Set<? extends CallableMemberDescriptor> overriddenDescriptors=declared.getOverriddenDescriptors();
   if (overrideNode != null) {
-    checkOverridesForMemberMarkedOverride(declared,new CheckOverrideReportStrategy(){
+    checkOverridesForMemberMarkedOverride(declared,true,new CheckOverrideReportStrategy(){
       private boolean finalOverriddenError=false;
       private boolean typeMismatchError=false;
       private boolean kindMismatchError=false;
