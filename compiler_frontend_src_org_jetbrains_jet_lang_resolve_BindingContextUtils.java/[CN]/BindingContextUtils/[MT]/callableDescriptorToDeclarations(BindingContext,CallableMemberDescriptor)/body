@@ -1,12 +1,15 @@
 {
-  if (callable.getKind() != CallableMemberDescriptor.Kind.DECLARATION) {
-    List<PsiElement> r=new ArrayList<PsiElement>();
-    Set<? extends CallableMemberDescriptor> overriddenDescriptors=callable.getOverriddenDescriptors();
-    for (    CallableMemberDescriptor overridden : overriddenDescriptors) {
-      r.addAll(callableDescriptorToDeclarations(context,overridden));
-    }
-    return r;
+  if (callable.getKind() == CallableMemberDescriptor.Kind.SYNTHESIZED) {
+    return Collections.emptyList();
   }
-  PsiElement psiElement=doGetDescriptorToDeclaration(context,callable);
-  return psiElement != null ? Lists.newArrayList(psiElement) : Lists.<PsiElement>newArrayList();
+  if (callable.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
+    PsiElement psiElement=doGetDescriptorToDeclaration(context,callable);
+    return psiElement != null ? Lists.newArrayList(psiElement) : Lists.<PsiElement>newArrayList();
+  }
+  List<PsiElement> r=new ArrayList<PsiElement>();
+  Set<? extends CallableMemberDescriptor> overriddenDescriptors=callable.getOverriddenDescriptors();
+  for (  CallableMemberDescriptor overridden : overriddenDescriptors) {
+    r.addAll(callableDescriptorToDeclarations(context,overridden));
+  }
+  return r;
 }

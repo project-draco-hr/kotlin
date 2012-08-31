@@ -1,10 +1,13 @@
 {
-  if (callable.getKind() != CallableMemberDescriptor.Kind.DECLARATION) {
-    Set<? extends CallableMemberDescriptor> overriddenDescriptors=callable.getOverriddenDescriptors();
-    if (overriddenDescriptors.size() != 1) {
-      throw new IllegalStateException("cannot find declaration: fake descriptor" + " has more then one overridden descriptor: " + callable);
-    }
-    return callableDescriptorToDeclaration(context,overriddenDescriptors.iterator().next());
+  if (callable.getKind() == CallableMemberDescriptor.Kind.SYNTHESIZED) {
+    return null;
   }
-  return doGetDescriptorToDeclaration(context,callable.getOriginal());
+  if (callable.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
+    return doGetDescriptorToDeclaration(context,callable.getOriginal());
+  }
+  Set<? extends CallableMemberDescriptor> overriddenDescriptors=callable.getOverriddenDescriptors();
+  if (overriddenDescriptors.size() != 1) {
+    throw new IllegalStateException("cannot find declaration: fake descriptor has more than one overridden descriptor: " + callable);
+  }
+  return callableDescriptorToDeclaration(context,overriddenDescriptors.iterator().next());
 }
