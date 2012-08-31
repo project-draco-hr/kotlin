@@ -1,63 +1,51 @@
 {
   PsiFile file=context.getFile();
-  if (!(file instanceof JetFile))   return null;
-  PsiElement element=file.findElementAt(context.getOffset());
-  while (element != null && !(element instanceof JetValueArgumentList)) {
-    element=element.getParent();
+  if (!(file instanceof JetFile)) {
+    return null;
   }
-  if (element == null)   return null;
-  JetValueArgumentList argumentList=(JetValueArgumentList)element;
-  JetCallElement callExpression;
-  if (element.getParent() instanceof JetCallElement) {
-    callExpression=(JetCallElement)element.getParent();
+  JetValueArgumentList argumentList=PsiTreeUtil.getParentOfType(file.findElementAt(context.getOffset()),JetValueArgumentList.class);
+  if (argumentList == null) {
+    return null;
   }
- else {
+  JetSimpleNameExpression callNameExpression=getCallSimpleNameExpression(argumentList);
+  if (callNameExpression == null) {
+    return null;
+  }
+  PsiReference[] references=callNameExpression.getReferences();
+  if (references.length == 0) {
     return null;
   }
   BindingContext bindingContext=AnalyzeSingleFileUtil.getContextForSingleFile((JetFile)file);
-  JetExpression calleeExpression=callExpression.getCalleeExpression();
-  if (calleeExpression == null)   return null;
-  JetSimpleNameExpression refExpression=null;
-  if (calleeExpression instanceof JetSimpleNameExpression) {
-    refExpression=(JetSimpleNameExpression)calleeExpression;
+  JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,callNameExpression);
+  DeclarationDescriptor placeDescriptor=null;
+  if (scope != null) {
+    placeDescriptor=scope.getContainingDeclaration();
   }
- else   if (calleeExpression instanceof JetConstructorCalleeExpression) {
-    JetConstructorCalleeExpression constructorCalleeExpression=(JetConstructorCalleeExpression)calleeExpression;
-    if (constructorCalleeExpression.getConstructorReferenceExpression() instanceof JetSimpleNameExpression) {
-      refExpression=(JetSimpleNameExpression)constructorCalleeExpression.getConstructorReferenceExpression();
-    }
-  }
-  if (refExpression != null) {
-    JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,refExpression);
-    DeclarationDescriptor placeDescriptor=null;
-    if (scope != null) {
-      placeDescriptor=scope.getContainingDeclaration();
-    }
-    Collection<DeclarationDescriptor> variants=TipsManager.getReferenceVariants(refExpression,bindingContext);
-    Name refName=refExpression.getReferencedNameAsName();
-    PsiReference[] references=refExpression.getReferences();
-    if (references.length == 0)     return null;
-    ArrayList<DeclarationDescriptor> itemsToShow=new ArrayList<DeclarationDescriptor>();
-    for (    DeclarationDescriptor variant : variants) {
-      if (variant instanceof FunctionDescriptor) {
-        FunctionDescriptor functionDescriptor=(FunctionDescriptor)variant;
-        if (functionDescriptor.getName().equals(refName)) {
-          if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,functionDescriptor))           continue;
-          itemsToShow.add(functionDescriptor);
+  Collection<DeclarationDescriptor> variants=TipsManager.getReferenceVariants(callNameExpression,bindingContext);
+  Name refName=callNameExpression.getReferencedNameAsName();
+  Collection<DeclarationDescriptor> itemsToShow=new ArrayList<DeclarationDescriptor>();
+  for (  DeclarationDescriptor variant : variants) {
+    if (variant instanceof FunctionDescriptor) {
+      FunctionDescriptor functionDescriptor=(FunctionDescriptor)variant;
+      if (functionDescriptor.getName().equals(refName)) {
+        if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,functionDescriptor)) {
+          continue;
         }
+        itemsToShow.add(functionDescriptor);
       }
- else       if (variant instanceof ClassDescriptor) {
-        ClassDescriptor classDescriptor=(ClassDescriptor)variant;
-        if (classDescriptor.getName().equals(refName)) {
-          for (          ConstructorDescriptor constructorDescriptor : classDescriptor.getConstructors()) {
-            if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,constructorDescriptor))             continue;
-            itemsToShow.add(constructorDescriptor);
+    }
+ else     if (variant instanceof ClassDescriptor) {
+      ClassDescriptor classDescriptor=(ClassDescriptor)variant;
+      if (classDescriptor.getName().equals(refName)) {
+        for (        ConstructorDescriptor constructorDescriptor : classDescriptor.getConstructors()) {
+          if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,constructorDescriptor)) {
+            continue;
           }
+          itemsToShow.add(constructorDescriptor);
         }
       }
     }
-    context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
-    return argumentList;
   }
-  return null;
+  context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
+  return argumentList;
 }
