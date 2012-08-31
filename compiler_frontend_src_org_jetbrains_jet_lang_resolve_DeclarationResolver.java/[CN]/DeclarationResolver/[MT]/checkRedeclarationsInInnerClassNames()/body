@@ -11,17 +11,10 @@
     }
     Multimap<Name,DeclarationDescriptor> descriptorMap=HashMultimap.create();
     for (    DeclarationDescriptor desc : allDescriptors) {
-      if (desc instanceof ClassDescriptor) {
+      if (desc instanceof ClassDescriptor || desc instanceof PropertyDescriptor) {
         descriptorMap.put(desc.getName(),desc);
       }
     }
-    for (    Name name : descriptorMap.keySet()) {
-      Collection<DeclarationDescriptor> descriptors=descriptorMap.get(name);
-      if (descriptors.size() > 1) {
-        for (        DeclarationDescriptor descriptor : descriptors) {
-          trace.report(REDECLARATION.on(BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),(ClassDescriptor)descriptor),descriptor.getName().getName()));
-        }
-      }
-    }
+    reportRedeclarations(descriptorMap);
   }
 }
