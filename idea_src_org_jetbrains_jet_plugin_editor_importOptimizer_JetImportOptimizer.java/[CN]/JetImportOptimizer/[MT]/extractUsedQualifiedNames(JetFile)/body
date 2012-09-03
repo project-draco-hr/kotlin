@@ -5,6 +5,18 @@
       ProgressIndicatorProvider.checkCanceled();
       element.acceptChildren(this);
     }
+    @Override public void visitUserType(    JetUserType type){
+      if (type.getQualifier() == null) {
+        super.visitUserType(type);
+      }
+ else {
+        JetTypeArgumentList argumentList=type.getTypeArgumentList();
+        if (argumentList != null) {
+          super.visitTypeArgumentList(argumentList);
+        }
+        visitUserType(type.getQualifier());
+      }
+    }
     @Override public void visitReferenceExpression(    JetReferenceExpression expression){
       if (PsiTreeUtil.getParentOfType(expression,JetImportDirective.class) == null && PsiTreeUtil.getParentOfType(expression,JetNamespaceHeader.class) == null) {
         PsiReference reference=expression.getReference();
