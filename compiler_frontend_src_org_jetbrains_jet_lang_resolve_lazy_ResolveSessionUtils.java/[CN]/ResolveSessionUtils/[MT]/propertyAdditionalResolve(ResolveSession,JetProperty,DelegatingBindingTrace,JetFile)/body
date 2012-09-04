@@ -1,0 +1,14 @@
+{
+  EmptyBodyResolveContext bodyResolveContext=new EmptyBodyResolveContext();
+  BodyResolver bodyResolver=createBodyResolver(trace,file,bodyResolveContext);
+  PropertyDescriptor descriptor=(PropertyDescriptor)resolveSession.resolveToDescriptor(jetProperty);
+  JetExpression propertyInitializer=jetProperty.getInitializer();
+  final JetScope propertyResolutionScope=resolveSession.getInjector().getScopeProvider().getResolutionScopeForDeclaration(jetProperty);
+  if (propertyInitializer != null) {
+    bodyResolver.resolvePropertyInitializer(jetProperty,descriptor,propertyInitializer,propertyResolutionScope);
+  }
+  for (  final JetPropertyAccessor propertyAccessor : jetProperty.getAccessors()) {
+    bodyResolveContext.setDeclaringScopes(ImmutableMap.<JetDeclaration,JetScope>builder().put(propertyAccessor,propertyResolutionScope).build());
+    bodyResolver.resolvePropertyAccessors(jetProperty,descriptor);
+  }
+}
