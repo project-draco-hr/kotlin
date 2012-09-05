@@ -4,16 +4,7 @@
   condition.accept(new JetVisitorVoid(){
     @Override public void visitIsExpression(    JetIsExpression expression){
       if (conditionValue && !expression.isNegated() || !conditionValue && expression.isNegated()) {
-        JetPattern pattern=expression.getPattern();
-        result.set(context.patternsToDataFlowInfo.get(pattern));
-        if (scopeToExtend != null) {
-          List<VariableDescriptor> descriptors=context.patternsToBoundVariableLists.get(pattern);
-          if (descriptors != null) {
-            for (            VariableDescriptor variableDescriptor : descriptors) {
-              scopeToExtend.addVariableDescriptor(variableDescriptor);
-            }
-          }
-        }
+        result.set(context.trace.get(BindingContext.DATAFLOW_INFO_AFTER_CONDITION,expression));
       }
     }
     @Override public void visitBinaryExpression(    JetBinaryExpression expression){

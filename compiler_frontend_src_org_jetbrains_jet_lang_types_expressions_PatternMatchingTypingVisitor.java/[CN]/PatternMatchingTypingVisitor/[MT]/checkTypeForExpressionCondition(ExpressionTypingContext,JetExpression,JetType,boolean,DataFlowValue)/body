@@ -1,0 +1,29 @@
+{
+  if (expression == null) {
+    return noChange(context);
+  }
+  JetTypeInfo typeInfo=facade.getTypeInfo(expression,context);
+  JetType type=typeInfo.getType();
+  if (type == null) {
+    return noChange(context);
+  }
+  if (conditionExpected) {
+    JetType booleanType=JetStandardLibrary.getInstance().getBooleanType();
+    if (!JetTypeChecker.INSTANCE.equalTypes(booleanType,type)) {
+      context.trace.report(TYPE_MISMATCH_IN_CONDITION.on(expression,type));
+    }
+ else {
+      DataFlowInfo ifInfo=DataFlowUtils.extractDataFlowInfoFromCondition(expression,true,null,context);
+      DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(expression,false,null,context);
+      return new DataFlowInfos(ifInfo,elseInfo);
+    }
+    return noChange(context);
+  }
+  checkTypeCompatibility(context,type,subjectType,expression);
+  DataFlowValue expressionDataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,type,context.trace.getBindingContext());
+  DataFlowInfos result=noChange(context);
+  for (  DataFlowValue subjectVariable : subjectVariables) {
+    result=new DataFlowInfos(result.thenInfo.equate(subjectVariable,expressionDataFlowValue),result.elseInfo.disequate(subjectVariable,expressionDataFlowValue));
+  }
+  return result;
+}

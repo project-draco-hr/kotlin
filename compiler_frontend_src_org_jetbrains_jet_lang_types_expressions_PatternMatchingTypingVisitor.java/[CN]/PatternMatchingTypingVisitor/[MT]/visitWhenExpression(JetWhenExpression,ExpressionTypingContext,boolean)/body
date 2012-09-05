@@ -19,23 +19,23 @@
       newDataFlowInfo=context.dataFlowInfo;
       JetWhenCondition condition=conditions[0];
       if (condition != null) {
-        Pair<DataFlowInfo,DataFlowInfo> infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,scopeToExtend,context,variableDescriptor);
-        newDataFlowInfo=infos.first;
-        elseDataFlowInfo=elseDataFlowInfo.and(infos.second);
+        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,variableDescriptor);
+        newDataFlowInfo=infos.thenInfo;
+        elseDataFlowInfo=elseDataFlowInfo.and(infos.elseInfo);
       }
     }
  else {
       scopeToExtend=newWritableScopeImpl(context,"pattern matching");
       newDataFlowInfo=null;
       for (      JetWhenCondition condition : conditions) {
-        Pair<DataFlowInfo,DataFlowInfo> infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,newWritableScopeImpl(context,""),context,variableDescriptor);
+        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,variableDescriptor);
         if (newDataFlowInfo == null) {
-          newDataFlowInfo=infos.first;
+          newDataFlowInfo=infos.thenInfo;
         }
  else {
-          newDataFlowInfo=newDataFlowInfo.or(infos.first);
+          newDataFlowInfo=newDataFlowInfo.or(infos.thenInfo);
         }
-        elseDataFlowInfo=elseDataFlowInfo.and(infos.second);
+        elseDataFlowInfo=elseDataFlowInfo.and(infos.elseInfo);
       }
       if (newDataFlowInfo == null) {
         newDataFlowInfo=context.dataFlowInfo;
