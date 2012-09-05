@@ -2,8 +2,14 @@
   JetFile file=(JetFile)getElement().getContainingFile();
   BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file).getBindingContext();
   Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,myExpression);
-  if (declarationDescriptors == null)   return ResolveResult.EMPTY_ARRAY;
-  ArrayList<ResolveResult> results=new ArrayList<ResolveResult>(declarationDescriptors.size());
+  if (declarationDescriptors == null) {
+    List<PsiElement> standardLibraryElements=resolveStandardLibrarySymbol(bindingContext);
+    if (!standardLibraryElements.isEmpty()) {
+      return PsiElementResolveResult.createResults(standardLibraryElements);
+    }
+    return ResolveResult.EMPTY_ARRAY;
+  }
+  List<ResolveResult> results=new ArrayList<ResolveResult>(declarationDescriptors.size());
   for (  DeclarationDescriptor descriptor : declarationDescriptors) {
     List<PsiElement> elements=BindingContextUtils.descriptorToDeclarations(bindingContext,descriptor);
     if (elements.isEmpty()) {

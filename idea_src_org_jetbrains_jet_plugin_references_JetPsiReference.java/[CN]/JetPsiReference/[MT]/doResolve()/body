@@ -1,18 +1,19 @@
 {
   JetFile file=(JetFile)getElement().getContainingFile();
   BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file).getBindingContext();
-  List<PsiElement> psiElement=BindingContextUtils.resolveToDeclarationPsiElements(bindingContext,myExpression);
-  if (psiElement.size() == 1) {
-    return psiElement.iterator().next();
+  List<PsiElement> psiElements=BindingContextUtils.resolveToDeclarationPsiElements(bindingContext,myExpression);
+  if (psiElements.size() == 1) {
+    return psiElements.iterator().next();
   }
-  if (psiElement.size() > 1) {
+  if (psiElements.size() > 1) {
     return null;
   }
-  if (psiElement.isEmpty()) {
-    PsiElement stdlibSymbol=myExpression.getProject().getComponent(StandardLibraryReferenceResolver.class).resolveStandardLibrarySymbol(bindingContext,myExpression);
-    if (stdlibSymbol != null) {
-      return stdlibSymbol;
-    }
+  List<PsiElement> stdlibSymbols=resolveStandardLibrarySymbol(bindingContext);
+  if (stdlibSymbols.size() == 1) {
+    return stdlibSymbols.iterator().next();
+  }
+  if (stdlibSymbols.size() > 1) {
+    return null;
   }
   Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,myExpression);
   if (declarationDescriptors != null)   return null;
