@@ -1,8 +1,14 @@
 {
-  JetScope memberScope=getMemberScope(findCurrentDescriptor(originalDescriptor.getContainingDeclaration()));
+  DeclarationDescriptor containingDeclaration=findCurrentDescriptor(originalDescriptor.getContainingDeclaration());
+  JetScope memberScope=getMemberScope(containingDeclaration);
   if (memberScope == null)   return null;
   String renderedOriginal=DescriptorRenderer.TEXT.render(originalDescriptor);
-  for (  DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+  Collection<DeclarationDescriptor> descriptors=Lists.newArrayList();
+  descriptors.addAll(memberScope.getAllDescriptors());
+  if (containingDeclaration instanceof ClassDescriptor) {
+    descriptors.addAll(((ClassDescriptor)containingDeclaration).getConstructors());
+  }
+  for (  DeclarationDescriptor member : descriptors) {
     if (renderedOriginal.equals(DescriptorRenderer.TEXT.render(member).replace(TUPLE0_FQ_NAME.getFqName(),JetStandardClasses.UNIT_ALIAS.getName()))) {
       return member;
     }
