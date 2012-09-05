@@ -1,6 +1,6 @@
 {
-  int lineY=getLineY(editor,psiElementInEditor);
-  EditorGutterComponentEx gutter=(EditorGutterComponentEx)editor.getGutter();
+  int lineY=getLineY(mainEditor,psiElementInEditor);
+  EditorGutterComponentEx gutter=(EditorGutterComponentEx)mainEditor.getGutter();
   Point adjustedPoint;
   if (point == null) {
     adjustedPoint=new Point(gutter.getIconsAreaWidth() + gutter.getLineMarkerAreaOffset(),lineY);
@@ -9,5 +9,10 @@
     adjustedPoint=new Point(point.x,Math.min(lineY,point.y));
   }
   balloon.show(new RelativePoint(gutter,adjustedPoint),Balloon.Position.above);
-  IdeFocusManager.getInstance(editor.getProject()).requestFocus(editor.getContentComponent(),false);
+  ApplicationManager.getApplication().invokeLater(new Runnable(){
+    @Override public void run(){
+      IdeFocusManager.getInstance(mainEditor.getProject()).requestFocus(editor.getContentComponent(),false);
+    }
+  }
+);
 }
