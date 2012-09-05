@@ -10,17 +10,10 @@
     @Override public void visitBinaryExpression(    JetBinaryExpression expression){
       IElementType operationToken=expression.getOperationToken();
       if (OperatorConventions.BOOLEAN_OPERATIONS.containsKey(operationToken)) {
-        WritableScope actualScopeToExtend;
-        if (operationToken == JetTokens.ANDAND) {
-          actualScopeToExtend=conditionValue ? scopeToExtend : null;
-        }
- else {
-          actualScopeToExtend=conditionValue ? null : scopeToExtend;
-        }
-        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue,actualScopeToExtend,context);
+        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue,context);
         JetExpression expressionRight=expression.getRight();
         if (expressionRight != null) {
-          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue,actualScopeToExtend,context);
+          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue,context);
           DataFlowInfo.CompositionOperator operator;
           if (operationToken == JetTokens.ANDAND) {
             operator=conditionValue ? DataFlowInfo.AND : DataFlowInfo.OR;
@@ -65,7 +58,7 @@
       if (operationTokenType == JetTokens.EXCL) {
         JetExpression baseExpression=expression.getBaseExpression();
         if (baseExpression != null) {
-          result.set(extractDataFlowInfoFromCondition(baseExpression,!conditionValue,scopeToExtend,context));
+          result.set(extractDataFlowInfoFromCondition(baseExpression,!conditionValue,context));
         }
       }
     }
