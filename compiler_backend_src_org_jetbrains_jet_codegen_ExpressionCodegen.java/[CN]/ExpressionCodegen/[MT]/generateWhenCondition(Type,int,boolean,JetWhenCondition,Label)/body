@@ -18,19 +18,16 @@
     }
     return StackValue.onStack(Type.BOOLEAN_TYPE);
   }
-  JetPattern pattern;
-  boolean isNegated;
+  StackValue.Local match=subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType);
   if (condition instanceof JetWhenConditionIsPattern) {
     JetWhenConditionIsPattern patternCondition=(JetWhenConditionIsPattern)condition;
-    pattern=patternCondition.getPattern();
-    isNegated=patternCondition.isNegated();
+    return generateIsCheck(match,patternCondition.getTypeRef(),patternCondition.isNegated());
   }
  else   if (condition instanceof JetWhenConditionWithExpression) {
-    pattern=((JetWhenConditionWithExpression)condition).getPattern();
-    isNegated=false;
+    JetExpression patternExpression=((JetWhenConditionWithExpression)condition).getExpression();
+    return generateExpressionMatch(match,patternExpression,subjectIsNullable);
   }
  else {
     throw new UnsupportedOperationException("unsupported kind of when condition");
   }
-  return generatePatternMatch(pattern,isNegated,subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType),subjectIsNullable,nextEntry);
 }
