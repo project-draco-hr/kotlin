@@ -1,2 +1,28 @@
 {
+  if (annotated == null) {
+    return;
+  }
+  if (!(annotated instanceof DeclarationDescriptor)) {
+    return;
+  }
+  PsiElement psiElement=descriptorToDeclaration(bindingContext,(DeclarationDescriptor)annotated);
+  JetModifierList modifierList=null;
+  if (annotated instanceof ConstructorDescriptor && psiElement instanceof JetClass) {
+    modifierList=((JetClass)psiElement).getPrimaryConstructorModifierList();
+  }
+ else   if (psiElement instanceof JetModifierListOwner) {
+    modifierList=((JetModifierListOwner)psiElement).getModifierList();
+  }
+  if (modifierList == null) {
+    return;
+  }
+  List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
+  for (  JetAnnotationEntry annotationEntry : annotationEntries) {
+    ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,annotationEntry.getCalleeExpression());
+    if (resolvedCall == null)     continue;
+    AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
+    if (annotationDescriptor == null)     continue;
+    JetType type=annotationDescriptor.getType();
+    genAnnotation(resolvedCall,type);
+  }
 }
