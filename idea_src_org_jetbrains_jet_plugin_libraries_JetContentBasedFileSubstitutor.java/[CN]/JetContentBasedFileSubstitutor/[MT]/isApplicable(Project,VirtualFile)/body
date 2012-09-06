@@ -1,3 +1,15 @@
 {
-  return project != null && JetDecompiledData.isKotlinFile(project,file);
+  if (project == null) {
+    return false;
+  }
+  if (DumbService.isDumb(project)) {
+    DumbService.getInstance(project).runWhenSmart(new Runnable(){
+      @Override public void run(){
+        FileDocumentManager.getInstance().reloadFiles(file);
+      }
+    }
+);
+    return false;
+  }
+  return JetDecompiledData.isKotlinFile(project,file);
 }
