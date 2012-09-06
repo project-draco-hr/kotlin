@@ -13,7 +13,7 @@
       return null;
     }
   }
-  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(scopeData.classOrNamespaceDescriptor,resolveAnnotations(method.getPsiMethod()),Name.identifier(method.getName()),CallableMemberDescriptor.Kind.DECLARATION);
+  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(scopeData.classOrNamespaceDescriptor,resolveAnnotations(method.getPsiMethod()),Name.identifier(method.getName()),DescriptorKindUtils.intToKind(method.getJetMethod().kind()));
   String context="method " + method.getName() + " in class "+ psiClass.getQualifiedName();
   List<TypeParameterDescriptor> methodTypeParameters=javaDescriptorSignatureResolver.resolveMethodTypeParameters(method,functionDescriptorImpl);
   TypeVariableResolver methodTypeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(methodTypeParameters,functionDescriptorImpl,context);
@@ -26,7 +26,9 @@
     methodTypeParameters=alternativeSignatureData.getTypeParameters();
   }
   functionDescriptorImpl.initialize(valueParameterDescriptors.receiverType,DescriptorUtils.getExpectedThisObjectIfNeeded(scopeData.classOrNamespaceDescriptor),methodTypeParameters,valueParameterDescriptors.descriptors,returnType,resolveModality(method,method.isFinal()),resolveVisibility(method.getPsiMethod(),method.getJetMethod()),false);
-  BindingContextUtils.recordFunctionDeclarationToDescriptor(tempTrace,method.getPsiMethod(),functionDescriptorImpl);
+  if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
+    BindingContextUtils.recordFunctionDeclarationToDescriptor(tempTrace,method.getPsiMethod(),functionDescriptorImpl);
+  }
   if (method.getPsiMethod().getContainingClass() != psiClass && !method.isStatic()) {
     throw new IllegalStateException("non-static method in subclass");
   }

@@ -94,12 +94,15 @@ class GroupingValue {
       isVar=members.setter != null;
     }
     Visibility visibility=resolveVisibility(anyMember.getMember().psiMember,null);
+    CallableMemberDescriptor.Kind kind=CallableMemberDescriptor.Kind.DECLARATION;
     if (members.getter != null && members.getter.getMember() instanceof PsiMethodWrapper) {
-      visibility=resolveVisibility(anyMember.getMember().psiMember,((PsiMethodWrapper)members.getter.getMember()).getJetMethod());
+      JetMethodAnnotation jetMethod=((PsiMethodWrapper)members.getter.getMember()).getJetMethod();
+      visibility=resolveVisibility(anyMember.getMember().psiMember,jetMethod);
+      kind=DescriptorKindUtils.intToKind(jetMethod.kind());
     }
     DeclarationDescriptor realOwner=getRealOwner(owner,scopeData,anyMember.getMember().isStatic());
     boolean isEnumEntry=DescriptorUtils.isEnumClassObject(realOwner);
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal || isEnumEntry),visibility,isVar,propertyName,CallableMemberDescriptor.Kind.DECLARATION);
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,resolveAnnotations(anyMember.getMember().psiMember),resolveModality(anyMember.getMember(),isFinal || isEnumEntry),visibility,isVar,propertyName,kind);
     if (isEnumEntry) {
       ClassDescriptorImpl dummyClassDescriptorForEnumEntryObject=new ClassDescriptorImpl(realOwner,Collections.<AnnotationDescriptor>emptyList(),Modality.FINAL,propertyName);
       dummyClassDescriptorForEnumEntryObject.initialize(true,Collections.<TypeParameterDescriptor>emptyList(),Collections.<JetType>emptyList(),JetScope.EMPTY,Collections.<ConstructorDescriptor>emptySet(),null);
@@ -108,14 +111,14 @@ class GroupingValue {
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
-      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,resolveAnnotations(members.getter.getMember().psiMember),Modality.OPEN,visibility,true,false,CallableMemberDescriptor.Kind.DECLARATION);
+      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,resolveAnnotations(members.getter.getMember().psiMember),Modality.OPEN,visibility,true,false,kind);
     }
     if (members.setter != null) {
       Visibility setterVisibility=resolveVisibility(members.setter.getMember().psiMember,null);
       if (members.setter.getMember() instanceof PsiMethodWrapper) {
         setterVisibility=resolveVisibility(members.setter.getMember().psiMember,((PsiMethodWrapper)members.setter.getMember()).getJetMethod());
       }
-      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,resolveAnnotations(members.setter.getMember().psiMember),Modality.OPEN,setterVisibility,true,false,CallableMemberDescriptor.Kind.DECLARATION);
+      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,resolveAnnotations(members.setter.getMember().psiMember),Modality.OPEN,setterVisibility,true,false,kind);
     }
     propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
     List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
@@ -162,7 +165,9 @@ class GroupingValue {
     if (setterDescriptor != null) {
       setterDescriptor.initialize(new ValueParameterDescriptorImpl(setterDescriptor,0,Collections.<AnnotationDescriptor>emptyList(),Name.identifier("p0"),false,propertyDescriptor.getType(),false,null));
     }
-    trace.record(BindingContext.VARIABLE,anyMember.getMember().psiMember,propertyDescriptor);
+    if (kind == CallableMemberDescriptor.Kind.DECLARATION) {
+      trace.record(BindingContext.VARIABLE,anyMember.getMember().psiMember,propertyDescriptor);
+    }
     propertiesFromCurrent.add(propertyDescriptor);
   }
   Set<PropertyDescriptor> propertiesFromSupertypes=getPropertiesFromSupertypes(scopeData,propertyName);
