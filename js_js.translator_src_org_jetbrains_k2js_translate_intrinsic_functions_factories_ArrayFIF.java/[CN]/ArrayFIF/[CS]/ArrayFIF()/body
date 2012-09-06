@@ -8,4 +8,20 @@
   add(pattern(NUMBER_ARRAY,"<init>"),new CallStandardMethodIntrinsic(new JsNameRef("numberArrayOfSize","Kotlin"),false,1));
   add(pattern(CHAR_ARRAY,"<init>"),new CallStandardMethodIntrinsic(new JsNameRef("charArrayOfSize","Kotlin"),false,1));
   add(pattern(BOOLEAN_ARRAY,"<init>"),new CallStandardMethodIntrinsic(new JsNameRef("booleanArrayOfSize","Kotlin"),false,1));
+  add(PatternBuilder.create("kotlin","array"),ARRAY_INTRINSIC);
+  add(new DescriptorPredicate(){
+    @Override public boolean apply(    @Nullable FunctionDescriptor descriptor){
+      if (descriptor == null) {
+        return false;
+      }
+      for (      PrimitiveType type : PrimitiveType.values()) {
+        if (type.getArrayTypeName().equals(descriptor.getName())) {
+          DeclarationDescriptor nsDeclaration=descriptor.getContainingDeclaration();
+          return nsDeclaration instanceof NamespaceDescriptor && DescriptorUtils.isRootNamespace((NamespaceDescriptor)nsDeclaration) && nsDeclaration.getName().asString().equals("kotlin");
+        }
+      }
+      return false;
+    }
+  }
+,ARRAY_INTRINSIC);
 }
