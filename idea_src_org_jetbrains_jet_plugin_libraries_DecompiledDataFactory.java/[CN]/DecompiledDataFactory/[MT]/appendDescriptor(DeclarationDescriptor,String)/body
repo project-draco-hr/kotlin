@@ -1,30 +1,30 @@
 {
-  int startOffset=myBuilder.length();
+  int startOffset=builder.length();
   String renderedDescriptor=DescriptorRenderer.COMPACT_WITH_MODIFIERS.render(descriptor);
   renderedDescriptor=renderedDescriptor.replace("= ...","= " + DECOMPILED_COMMENT);
-  myBuilder.append(renderedDescriptor);
-  int endOffset=myBuilder.length();
+  builder.append(renderedDescriptor);
+  int endOffset=builder.length();
   if (descriptor instanceof FunctionDescriptor || descriptor instanceof PropertyDescriptor) {
     if (((CallableMemberDescriptor)descriptor).getModality() != Modality.ABSTRACT) {
       if (descriptor instanceof FunctionDescriptor) {
-        myBuilder.append(" { ").append(DECOMPILED_COMMENT).append(" }");
-        endOffset=myBuilder.length();
+        builder.append(" { ").append(DECOMPILED_COMMENT).append(" }");
+        endOffset=builder.length();
       }
  else {
         if (((PropertyDescriptor)descriptor).getModality() != Modality.ABSTRACT) {
-          myBuilder.append(" ").append(DECOMPILED_COMMENT);
+          builder.append(" ").append(DECOMPILED_COMMENT);
         }
       }
     }
   }
  else   if (descriptor instanceof ClassDescriptor) {
-    myBuilder.append(" {\n");
+    builder.append(" {\n");
     ClassDescriptor classDescriptor=(ClassDescriptor)descriptor;
     boolean firstPassed=false;
     String subindent=indent + "    ";
     if (classDescriptor.getClassObjectDescriptor() != null) {
       firstPassed=true;
-      myBuilder.append(subindent);
+      builder.append(subindent);
       appendDescriptor(classDescriptor.getClassObjectDescriptor(),subindent);
     }
     for (    DeclarationDescriptor member : sortDeclarations(classDescriptor.getDefaultType().getMemberScope().getAllDescriptors())) {
@@ -35,20 +35,20 @@
         continue;
       }
       if (firstPassed) {
-        myBuilder.append("\n");
+        builder.append("\n");
       }
  else {
         firstPassed=true;
       }
-      myBuilder.append(subindent);
+      builder.append(subindent);
       appendDescriptor(member,subindent);
     }
-    myBuilder.append(indent).append("}");
-    endOffset=myBuilder.length();
+    builder.append(indent).append("}");
+    endOffset=builder.length();
   }
-  myBuilder.append("\n");
-  PsiElement clsMember=BindingContextUtils.descriptorToDeclaration(myBindingContext,descriptor);
+  builder.append("\n");
+  PsiElement clsMember=BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
   if (clsMember != null) {
-    myClsMembersToRanges.put(clsMember,new TextRange(startOffset,endOffset));
+    clsMembersToRanges.put(clsMember,new TextRange(startOffset,endOffset));
   }
 }
