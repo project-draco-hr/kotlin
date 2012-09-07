@@ -1,0 +1,20 @@
+{
+  final String testName=getTestName(false);
+  configureByFile(testName + ".kt");
+  int offset=getEditor().getCaretModel().getOffset();
+  final PsiReference psiReference=getFile().findReferenceAt(offset);
+  if (psiReference != null) {
+    PsiElement resolvedTo=psiReference.resolve();
+    if (resolvedTo != null) {
+      String resolvedToElementStr=ReferenceUtils.renderAsGotoImplementation(resolvedTo);
+      String notEqualMessage=String.format("Found reference to '%s', but '%s' was expected",resolvedToElementStr,referenceToString != null ? referenceToString : "<null>");
+      assertEquals(notEqualMessage,referenceToString,resolvedToElementStr);
+    }
+ else {
+      Assert.assertNull(String.format("Element %s wasn't resolved to anything, but %s was expected",psiReference,referenceToString),referenceToString);
+    }
+  }
+ else {
+    Assert.assertNull(String.format("No reference found at offset: %s, but one resolved to %s was expected",offset,referenceToString),referenceToString);
+  }
+}
