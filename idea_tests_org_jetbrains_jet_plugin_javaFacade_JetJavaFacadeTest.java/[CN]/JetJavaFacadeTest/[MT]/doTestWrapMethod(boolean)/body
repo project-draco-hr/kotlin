@@ -1,0 +1,17 @@
+{
+  myFixture.configureByFile(getTestName(true) + ".kt");
+  int offset=myFixture.getEditor().getCaretModel().getOffset();
+  PsiElement elementAt=myFixture.getFile().findElementAt(offset);
+  assertNotNull("Caret should be set for tested file",elementAt);
+  JetNamedFunction jetFunction=PsiTreeUtil.getParentOfType(elementAt,JetNamedFunction.class);
+  assertNotNull("Caret should be placed to function definition",jetFunction);
+  PsiMethod psiMethod=JetLightClass.wrapMethod(jetFunction);
+  if (shouldBeWrapped) {
+    assertNotNull(String.format("Failed to wrap jetFunction '%s' to method",jetFunction.getText()),psiMethod);
+    assertInstanceOf(psiMethod,PsiCompiledElement.class);
+    assertEquals("Invalid original element for generated method",((PsiCompiledElement)psiMethod).getMirror(),jetFunction);
+  }
+ else {
+    assertNull("There should be no wrapper for given method",psiMethod);
+  }
+}

@@ -1,0 +1,38 @@
+{
+  JetDeclaration parentDeclaration=PsiTreeUtil.getParentOfType(declaration,JetDeclaration.class);
+  JvmClassName parentClassName=parentDeclaration != null ? getPredefinedJvmClassName(parentDeclaration) : getPredefinedJvmClassName((JetFile)declaration.getContainingFile(),false);
+  if (parentClassName == null) {
+    return null;
+  }
+  if (declaration instanceof JetClassObject) {
+    return JvmClassName.byInternalName(parentClassName.getInternalName() + JvmAbi.CLASS_OBJECT_SUFFIX);
+  }
+  if (declaration instanceof JetNamedDeclaration) {
+    if (!PsiTreeUtil.instanceOf(declaration,JetClass.class,JetObjectDeclaration.class,JetNamedFunction.class,JetProperty.class) || declaration instanceof JetEnumEntry) {
+      return null;
+    }
+    JetNamedDeclaration namedDeclaration=(JetNamedDeclaration)declaration;
+    Name name=namedDeclaration.getNameAsName();
+    if (name == null) {
+      return null;
+    }
+    FqName fqName=parentClassName.getFqName();
+    if (declaration instanceof JetNamedFunction) {
+      if (parentDeclaration == null) {
+        JvmClassName packageClass=addPackageClass(parentClassName);
+        return JvmClassName.byInternalName(packageClass.getInternalName() + "$" + name.getName());
+      }
+      if (!(parentDeclaration instanceof JetClass || parentDeclaration instanceof JetObjectDeclaration)) {
+        return null;
+      }
+    }
+    if (declaration instanceof JetProperty) {
+      return JvmClassName.byInternalName(parentClassName.getInternalName() + "$" + name.getName());
+    }
+    if (fqName.isRoot()) {
+      return JvmClassName.byInternalName(name.getName());
+    }
+    return JvmClassName.byInternalName(parentDeclaration == null ? parentClassName.getInternalName() + "/" + name.getName() : parentClassName.getInternalName() + "$" + name.getName());
+  }
+  return null;
+}

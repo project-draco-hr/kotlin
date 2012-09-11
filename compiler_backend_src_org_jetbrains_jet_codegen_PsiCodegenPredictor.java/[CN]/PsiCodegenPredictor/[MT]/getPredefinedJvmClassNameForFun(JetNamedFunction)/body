@@ -1,0 +1,18 @@
+{
+  PsiElement parent=function.getParent();
+  if (parent instanceof JetFile) {
+    return getPredefinedJvmClassName((JetFile)parent,true);
+  }
+  @SuppressWarnings("unchecked") JetClass containingClass=PsiTreeUtil.getParentOfType(function,JetClass.class,true,JetDeclaration.class);
+  if (containingClass != null) {
+    return getPredefinedJvmClassName(containingClass);
+  }
+  @SuppressWarnings("unchecked") JetObjectDeclaration objectDeclaration=PsiTreeUtil.getParentOfType(function,JetObjectDeclaration.class,true,JetDeclaration.class);
+  if (objectDeclaration != null) {
+    if (objectDeclaration.getParent() instanceof JetClassObject) {
+      return getPredefinedJvmClassName((JetClassObject)objectDeclaration.getParent());
+    }
+    return getPredefinedJvmClassName(objectDeclaration);
+  }
+  return null;
+}
