@@ -1,6 +1,15 @@
 {
-  JetReferenceExpression fake=JetPsiFactory.createSimpleName(context.expressionTypingServices.getProject(),"fake");
-  BindingTrace fakeTrace=TemporaryBindingTrace.create(context.trace);
+  final JetReferenceExpression fake=JetPsiFactory.createSimpleName(context.expressionTypingServices.getProject(),"fake");
+  TemporaryBindingTrace fakeTrace=TemporaryBindingTrace.create(context.trace);
   Call call=CallMaker.makeCall(fake,receiver,null,fake,Collections.<ValueArgument>emptyList());
-  return Pair.create(call,context.replaceBindingTrace(fakeTrace).resolveCallWithGivenName(call,fake,name));
+  OverloadResolutionResults<FunctionDescriptor> results=context.replaceBindingTrace(fakeTrace).resolveCallWithGivenName(call,fake,name);
+  if (results.isSuccess()) {
+    fakeTrace.commit(new TraceEntryFilter(){
+      @Override public boolean accept(      @NotNull WritableSlice<?,?> slice,      Object key){
+        return key != fake && slice != RESOLUTION_RESULTS_FOR_FUNCTION;
+      }
+    }
+,false);
+  }
+  return Pair.create(call,results);
 }
