@@ -1,11 +1,16 @@
 {
-  LinkedList<MutableClassDescriptor> topologicalOrder=Lists.newLinkedList();
-  Set<ClassDescriptor> visited=Sets.newHashSet();
-  for (  MutableClassDescriptor mutableClassDescriptor : context.getClasses().values()) {
-    topologicallySort(mutableClassDescriptor,visited,topologicalOrder);
+  return DFS.topologicalOrder(ContainerUtil.<MutableClassDescriptor>concat(context.getClasses().values(),context.getObjects().values()),new DFS.Neighbors<MutableClassDescriptor>(){
+    @NotNull @Override public Iterable<MutableClassDescriptor> getNeighbors(    MutableClassDescriptor current){
+      List<MutableClassDescriptor> result=Lists.newArrayList();
+      for (      JetType supertype : current.getSupertypes()) {
+        DeclarationDescriptor declarationDescriptor=supertype.getConstructor().getDeclarationDescriptor();
+        if (declarationDescriptor instanceof MutableClassDescriptor) {
+          MutableClassDescriptor classDescriptor=(MutableClassDescriptor)declarationDescriptor;
+          result.add(classDescriptor);
+        }
+      }
+      return result;
+    }
   }
-  for (  MutableClassDescriptor mutableClassDescriptor : context.getObjects().values()) {
-    topologicallySort(mutableClassDescriptor,visited,topologicalOrder);
-  }
-  return topologicalOrder;
+);
 }
