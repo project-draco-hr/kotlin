@@ -4,12 +4,18 @@
   FqName packageFQN=new FqName(psiPackage.getQualifiedName());
   for (  JetFile file : filesInScope) {
     if (packageFQN.equals(JetPsiUtil.getFQName(file))) {
-      answer.add(new JetLightClass(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(JvmAbi.PACKAGE_CLASS))));
+      JetLightClass lightClass=JetLightClass.create(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(JvmAbi.PACKAGE_CLASS)));
+      if (lightClass != null) {
+        answer.add(lightClass);
+      }
       for (      JetDeclaration declaration : file.getDeclarations()) {
         if (declaration instanceof JetClassOrObject) {
           String localName=getLocalName(declaration);
           if (localName != null) {
-            answer.add(new JetLightClass(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(localName))));
+            JetLightClass aClass=JetLightClass.create(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(localName)));
+            if (aClass != null) {
+              answer.add(aClass);
+            }
           }
         }
       }
