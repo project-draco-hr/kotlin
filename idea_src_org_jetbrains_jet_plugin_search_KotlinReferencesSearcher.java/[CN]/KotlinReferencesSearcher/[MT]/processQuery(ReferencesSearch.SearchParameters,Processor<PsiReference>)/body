@@ -1,9 +1,14 @@
 {
-  PsiElement element=queryParameters.getElementToSearch();
+  final PsiElement element=queryParameters.getElementToSearch();
   if (element instanceof JetClass) {
     String className=((JetClass)element).getName();
     if (className != null) {
-      JetLightClass lightClass=JetLightClass.wrapDelegate((JetClass)element);
+      JetLightClass lightClass=ApplicationManager.getApplication().runReadAction(new Computable<JetLightClass>(){
+        @Override public JetLightClass compute(){
+          return JetLightClass.wrapDelegate((JetClass)element);
+        }
+      }
+);
       if (lightClass != null) {
         queryParameters.getOptimizer().searchWord(className,queryParameters.getScope(),true,lightClass);
       }
