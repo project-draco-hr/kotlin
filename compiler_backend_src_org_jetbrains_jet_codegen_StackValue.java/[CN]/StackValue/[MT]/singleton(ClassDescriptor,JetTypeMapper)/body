@@ -1,3 +1,14 @@
 {
-  return new Singleton(aClass,typeMapper.mapType(aClass.getDefaultType(),JetTypeMapperMode.VALUE));
+  final Type type=typeMapper.mapType(classDescriptor.getDefaultType(),JetTypeMapperMode.VALUE);
+  final ClassKind kind=classDescriptor.getKind();
+  if (kind == ClassKind.CLASS_OBJECT || kind == ClassKind.OBJECT) {
+    return field(type,JvmClassName.byInternalName(type.getInternalName()),"$instance",true);
+  }
+ else   if (kind == ClassKind.ENUM_ENTRY) {
+    final JvmClassName owner=typeMapper.getBindingContext().get(CodegenBinding.FQN,classDescriptor.getContainingDeclaration().getContainingDeclaration());
+    return field(type,owner,classDescriptor.getName().getName(),true);
+  }
+ else {
+    throw new UnsupportedOperationException();
+  }
 }
