@@ -1,0 +1,14 @@
+{
+  if (mutableClassDescriptor.getKind() == ClassKind.ENUM_CLASS) {
+    MutableClassDescriptor classObjectDescriptor=new MutableClassDescriptor(mutableClassDescriptor,outerScope,ClassKind.CLASS_OBJECT,getClassObjectName(JetPsiUtil.safeName(klass.getName())));
+    mutableClassDescriptor.getBuilder().setClassObjectDescriptor(classObjectDescriptor);
+    classObjectDescriptor.setModality(Modality.FINAL);
+    classObjectDescriptor.setVisibility(ModifiersChecker.resolveVisibilityFromModifiers(klass));
+    classObjectDescriptor.setTypeParameterDescriptors(new ArrayList<TypeParameterDescriptor>(0));
+    classObjectDescriptor.createTypeConstructor();
+    ConstructorDescriptorImpl primaryConstructorForObject=createPrimaryConstructorForObject(null,classObjectDescriptor);
+    primaryConstructorForObject.setReturnType(classObjectDescriptor.getDefaultType());
+    classObjectDescriptor.getBuilder().addFunctionDescriptor(DescriptorResolver.createEnumClassObjectValuesMethod(classObjectDescriptor,trace));
+    classObjectDescriptor.getBuilder().addFunctionDescriptor(DescriptorResolver.createEnumClassObjectValueOfMethod(classObjectDescriptor,trace));
+  }
+}
