@@ -23,6 +23,22 @@
   log.info("Classes directory is " + output);
   arguments.setOutputDir(output);
   arguments.noJdkAnnotations=true;
-  arguments.annotations=getJdkAnnotations().getPath();
-  log.debug("Using jdk annotations from " + arguments.annotations);
+  String jdkAnnotation=getJdkAnnotations().getPath();
+  arguments.annotations=jdkAnnotation;
+  List<String> list=new ArrayList<String>();
+  if (jdkAnnotation != null && jdkAnnotation.length() > 0) {
+    list.add(jdkAnnotation);
+  }
+  if (annotationPaths != null) {
+    for (    String annotationPath : annotationPaths) {
+      if (new File(annotationPath).exists()) {
+        list.add(annotationPath);
+      }
+ else {
+        log.info("annotation path " + annotationPath + " does not exist");
+      }
+    }
+  }
+  arguments.annotations=join(list,File.pathSeparator);
+  log.info("Using kotlin annotations from " + arguments.annotations);
 }
