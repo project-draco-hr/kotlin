@@ -1,5 +1,5 @@
 {
-  if (state.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
+  if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
     DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
     if (isInterface(containingDeclaration)) {
       return;
@@ -8,7 +8,7 @@
     final JetExpression initializer=p instanceof JetProperty ? ((JetProperty)p).getInitializer() : null;
     if (initializer != null) {
       if (initializer instanceof JetConstantExpression) {
-        CompileTimeConstant<?> compileTimeValue=state.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,initializer);
+        CompileTimeConstant<?> compileTimeValue=bindingContext.get(BindingContext.COMPILE_TIME_VALUE,initializer);
         value=compileTimeValue != null ? compileTimeValue.getValue() : null;
       }
     }
@@ -25,8 +25,8 @@
     if (JetStandardLibrary.getInstance().isVolatile(propertyDescriptor)) {
       modifiers|=ACC_VOLATILE;
     }
-    Type type=state.getTypeMapper().mapType(propertyDescriptor);
+    Type type=typeMapper.mapType(propertyDescriptor);
     FieldVisitor fieldVisitor=v.newField(p,modifiers,propertyDescriptor.getName().getName(),type.getDescriptor(),null,value);
-    AnnotationCodegen.forField(fieldVisitor,state.getTypeMapper()).genAnnotations(propertyDescriptor);
+    AnnotationCodegen.forField(fieldVisitor,typeMapper).genAnnotations(propertyDescriptor);
   }
 }
