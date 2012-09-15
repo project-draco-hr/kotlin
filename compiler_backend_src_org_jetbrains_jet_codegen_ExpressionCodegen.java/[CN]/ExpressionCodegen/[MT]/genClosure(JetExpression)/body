@@ -5,16 +5,15 @@
   ClosureCodegen closureCodegen=new ClosureCodegen(state,(MutableClosure)closure).gen(expression,context,this);
   final JvmClassName className=closureCodegen.name;
   final Type asmType=className.getAsmType();
-  final String internalName=className.getInternalName();
   if (isConst(closure)) {
-    v.invokestatic(internalName,"$getInstance","()" + className.getDescriptor());
+    v.getstatic(className.getInternalName(),JvmAbi.INSTANCE_FIELD,className.getDescriptor());
   }
  else {
     v.anew(asmType);
     v.dup();
     final Method cons=closureCodegen.constructor;
     pushClosureOnStack(closure,false);
-    v.invokespecial(internalName,"<init>",cons.getDescriptor());
+    v.invokespecial(className.getInternalName(),"<init>",cons.getDescriptor());
   }
   return StackValue.onStack(asmType);
 }
