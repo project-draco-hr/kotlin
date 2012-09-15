@@ -3,13 +3,18 @@
   JavaPsiFacade facade=myFixture.getJavaFacade();
   PsiClass theClass=facade.findClass("foo.TheClass",GlobalSearchScope.allScope(getProject()));
   assertNotNull(theClass);
-  PsiField classobj=theClass.findFieldByName("$classobj",false);
-  assertTrue(classobj != null && classobj.hasModifierProperty(PsiModifier.STATIC));
-  PsiType type=classobj.getType();
-  assertTrue(type instanceof PsiClassType);
-  assertEquals("foo.TheClass.ClassObject$",type.getCanonicalText());
-  PsiClass classObjectClass=((PsiClassType)type).resolve();
-  assertTrue(classObjectClass != null && classObjectClass.hasModifierProperty(PsiModifier.STATIC));
+  PsiField classobjField=theClass.findFieldByName("$classobj",false);
+  assertNull(classobjField);
+  final PsiClass classObjectClass=theClass.findInnerClassByName("ClassObject$",false);
+  assertNotNull(classObjectClass);
+  assertEquals("foo.TheClass.ClassObject$",classObjectClass.getQualifiedName());
+  assertTrue(classObjectClass.hasModifierProperty(PsiModifier.STATIC));
+  final PsiField instance=classObjectClass.findFieldByName("$instance",false);
+  assertNotNull(instance);
+  assertEquals("foo.TheClass.ClassObject$",instance.getType().getCanonicalText());
+  assertTrue(instance.hasModifierProperty(PsiModifier.PUBLIC));
+  assertTrue(instance.hasModifierProperty(PsiModifier.STATIC));
+  assertTrue(instance.hasModifierProperty(PsiModifier.FINAL));
   PsiMethod[] methods=classObjectClass.findMethodsByName("getOut",false);
   assertEquals("java.io.PrintStream",methods[0].getReturnType().getCanonicalText());
 }
