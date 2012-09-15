@@ -1,30 +1,16 @@
 {
   checkMustGenerateCode(functionDescriptor);
   List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
-  int flags=getVisibilityAccessFlag(functionDescriptor);
-  if (!functionDescriptor.getValueParameters().isEmpty() && functionDescriptor.getValueParameters().get(functionDescriptor.getValueParameters().size() - 1).getVarargElementType() != null) {
-    flags|=ACC_VARARGS;
-  }
-  Modality modality=functionDescriptor.getModality();
-  if (modality == Modality.FINAL) {
-    DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
-    if (!(containingDeclaration instanceof ClassDescriptor) || ((ClassDescriptor)containingDeclaration).getKind() != ClassKind.TRAIT) {
-      flags|=ACC_FINAL;
-    }
-  }
   OwnerKind kind=context.getContextKind();
+  boolean isStatic=isStatic(kind);
+  boolean isAbstract=isAbstract(functionDescriptor,kind);
+  int flags=getMethodAsmFlags(functionDescriptor,kind);
   if (kind == OwnerKind.TRAIT_IMPL) {
     needJetAnnotations=false;
   }
   ReceiverDescriptor expectedThisObject=functionDescriptor.getExpectedThisObject();
   ReceiverDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
   if (kind != OwnerKind.TRAIT_IMPL || bodyExpressions != null) {
-    boolean isStatic=kind == OwnerKind.NAMESPACE || kind instanceof OwnerKind.StaticDelegateKind;
-    if (isStatic || kind == OwnerKind.TRAIT_IMPL) {
-      flags|=ACC_STATIC;
-    }
-    boolean isAbstract=(modality == Modality.ABSTRACT || isInterface(functionDescriptor.getContainingDeclaration())) && !isStatic && kind != OwnerKind.TRAIT_IMPL;
-    if (isAbstract)     flags|=ACC_ABSTRACT;
     final MethodVisitor mv=v.newMethod(fun,flags,jvmSignature.getAsmMethod().getName(),jvmSignature.getAsmMethod().getDescriptor(),jvmSignature.getGenericsSignature(),null);
     AnnotationCodegen.forMethod(mv,state.getTypeMapper()).genAnnotations(functionDescriptor);
     if (state.getClassBuilderMode() != ClassBuilderMode.SIGNATURES) {
