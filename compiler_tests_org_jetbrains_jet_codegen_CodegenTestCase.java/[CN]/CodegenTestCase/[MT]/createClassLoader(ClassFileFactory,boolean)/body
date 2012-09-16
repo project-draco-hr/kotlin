@@ -1,0 +1,19 @@
+{
+  List<URL> urls=Lists.newArrayList();
+  for (  File file : myEnvironment.getConfiguration().getList(JVMConfigurationKeys.CLASSPATH_KEY)) {
+    try {
+      urls.add(file.toURI().toURL());
+    }
+ catch (    MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  final URL[] urlsArray=urls.toArray(new URL[0]);
+  if (!classPathInTheSameClassLoader) {
+    ClassLoader parentClassLoader=new URLClassLoader(urlsArray,CodegenTestCase.class.getClassLoader());
+    return new GeneratedClassLoader(codegens,parentClassLoader);
+  }
+ else {
+    return new GeneratedClassLoader(codegens,CodegenTestCase.class.getClassLoader(),urlsArray);
+  }
+}
