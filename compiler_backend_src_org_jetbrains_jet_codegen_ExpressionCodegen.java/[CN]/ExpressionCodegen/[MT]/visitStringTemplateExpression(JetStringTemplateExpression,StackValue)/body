@@ -1,6 +1,10 @@
 {
   StringBuilder constantValue=new StringBuilder("");
-  for (  JetStringTemplateEntry entry : expression.getEntries()) {
+  final JetStringTemplateEntry[] entries=expression.getEntries();
+  if (entries.length == 1 && entries[0] instanceof JetStringTemplateEntryWithExpression) {
+    return genToString(v,gen(entries[0].getExpression()));
+  }
+  for (  JetStringTemplateEntry entry : entries) {
     if (entry instanceof JetLiteralStringTemplateEntry) {
       constantValue.append(entry.getText());
     }
@@ -18,7 +22,7 @@
   }
  else {
     generateStringBuilderConstructor(v);
-    for (    JetStringTemplateEntry entry : expression.getEntries()) {
+    for (    JetStringTemplateEntry entry : entries) {
       if (entry instanceof JetStringTemplateEntryWithExpression) {
         invokeAppend(entry.getExpression());
       }
