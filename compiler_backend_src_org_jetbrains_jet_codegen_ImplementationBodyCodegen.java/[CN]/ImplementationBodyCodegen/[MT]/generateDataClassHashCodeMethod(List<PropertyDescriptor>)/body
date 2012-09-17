@@ -1,13 +1,14 @@
 {
   final MethodVisitor mv=v.getVisitor().visitMethod(ACC_PUBLIC,"hashCode","()I",null,null);
   final InstructionAdapter iv=new InstructionAdapter(mv);
+  mv.visitCode();
   boolean first=true;
   for (  PropertyDescriptor propertyDescriptor : properties) {
     if (!first) {
       iv.iconst(31);
       iv.mul(Type.INT_TYPE);
     }
-    genPropertyOnStack(iv,propertyDescriptor);
+    genPropertyOnStack(iv,propertyDescriptor,0);
     Label ifNull=null;
     if (propertyDescriptor.getType().isNullable()) {
       ifNull=new Label();
@@ -31,6 +32,5 @@
     }
   }
   mv.visitInsn(IRETURN);
-  mv.visitMaxs(-1,-1);
-  mv.visitEnd();
+  FunctionCodegen.endVisit(mv,"hashCode",myClass);
 }
