@@ -1,0 +1,48 @@
+{
+  for (  JetDeclaration declaration : file.getDeclarations()) {
+    declaration.acceptChildren(new JetVisitorVoid(){
+      @Override public void visitTupleExpression(      JetTupleExpression expression){
+        expression.acceptChildren(this);
+        int size=expression.getEntries().size();
+switch (size) {
+case 0:
+          expression.replace(JetPsiFactory.createExpression(expression.getProject(),"Unit.VALUE"));
+        return;
+case 1:
+      expression.replace(expression.getEntries().get(0));
+    return;
+case 2:
+  replaceWithExpression(expression,"Pair");
+return;
+case 3:
+replaceWithExpression(expression,"Triple");
+return;
+default :
+}
+}
+@Override public void visitTupleType(JetTupleType type){
+type.acceptChildren(this);
+int size=type.getComponentTypeRefs().size();
+switch (size) {
+case 0:
+type.replace(JetPsiFactory.createType(type.getProject(),"Unit").getTypeElement());
+return;
+case 1:
+type.replace(type.getComponentTypeRefs().get(0).getTypeElement());
+return;
+case 2:
+replaceWithType(type,"Pair");
+return;
+case 3:
+replaceWithType(type,"Triple");
+return;
+default :
+}
+}
+@Override public void visitElement(PsiElement element){
+element.acceptChildren(this);
+}
+}
+);
+}
+}
