@@ -1,19 +1,5 @@
 {
   FileBasedDeclarationProviderFactory declarationProviderFactory=new FileBasedDeclarationProviderFactory(Config.withJsLibAdded(files,config),Predicates.<FqName>alwaysFalse());
-  ModuleConfiguration moduleConfigurationJs=new ModuleConfiguration(){
-    @Override public void addDefaultImports(    @NotNull Collection<JetImportDirective> directives){
-      for (      ImportPath path : JsConfiguration.DEFAULT_IMPORT_PATHS) {
-        directives.add(JetPsiFactory.createImportDirective(config.getProject(),path));
-      }
-    }
-    @Override public void extendNamespaceScope(    @NotNull BindingTrace trace,    @NotNull NamespaceDescriptor namespaceDescriptor,    @NotNull WritableScope namespaceMemberScope){
-      namespaceMemberScope.importScope(JetStandardLibrary.getInstance().getLibraryScope());
-    }
-    @NotNull @Override public PlatformToKotlinClassMap getPlatformToKotlinClassMap(){
-      return PlatformToKotlinClassMap.EMPTY;
-    }
-  }
-;
   ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
-  return new ResolveSession(config.getProject(),lazyModule,moduleConfigurationJs,declarationProviderFactory);
+  return new ResolveSession(config.getProject(),lazyModule,new JsConfiguration(config.getProject(),null),declarationProviderFactory);
 }
