@@ -1,9 +1,16 @@
 {
   for (  ClassDescriptor innerClass : DescriptorUtils.getInnerClasses(descriptor)) {
-    writeInnerClass(innerClass);
+    if (!isEnumMovedToClassObject(innerClass)) {
+      writeInnerClass(innerClass,false);
+    }
   }
   ClassDescriptor classObjectDescriptor=descriptor.getClassObjectDescriptor();
   if (classObjectDescriptor != null) {
+    for (    ClassDescriptor innerClass : DescriptorUtils.getInnerClasses(classObjectDescriptor)) {
+      if (isEnumMovedToClassObject(innerClass)) {
+        writeInnerClass(innerClass,true);
+      }
+    }
     int innerClassAccess=ACC_PUBLIC | ACC_FINAL | ACC_STATIC;
     v.visitInnerClass(classAsmType.getInternalName() + JvmAbi.CLASS_OBJECT_SUFFIX,classAsmType.getInternalName(),JvmAbi.CLASS_OBJECT_CLASS_NAME,innerClassAccess);
   }
