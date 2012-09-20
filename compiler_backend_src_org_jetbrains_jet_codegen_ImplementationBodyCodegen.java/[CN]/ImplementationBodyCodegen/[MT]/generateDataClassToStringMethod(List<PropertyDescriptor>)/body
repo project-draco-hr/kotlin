@@ -2,7 +2,7 @@
   final MethodVisitor mv=v.getVisitor().visitMethod(ACC_PUBLIC,"toString","()Ljava/lang/String;",null,null);
   final InstructionAdapter iv=new InstructionAdapter(mv);
   mv.visitCode();
-  generateStringBuilderConstructor(iv);
+  genStringBuilderConstructor(iv);
   boolean first=true;
   for (  PropertyDescriptor propertyDescriptor : properties) {
     if (first) {
@@ -12,7 +12,7 @@
  else {
       iv.aconst(", " + propertyDescriptor.getName().getName() + "=");
     }
-    invokeAppendMethod(iv,JAVA_STRING_TYPE);
+    genInvokeAppendMethod(iv,JAVA_STRING_TYPE);
     Type type=genPropertyOnStack(iv,propertyDescriptor,0);
     if (type.getSort() == Type.ARRAY) {
       final Type elementType=correctElementType(type);
@@ -27,10 +27,10 @@
         }
       }
     }
-    invokeAppendMethod(iv,type);
+    genInvokeAppendMethod(iv,type);
   }
   iv.aconst(")");
-  invokeAppendMethod(iv,JAVA_STRING_TYPE);
+  genInvokeAppendMethod(iv,JAVA_STRING_TYPE);
   iv.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;");
   iv.areturn(JAVA_STRING_TYPE);
   FunctionCodegen.endVisit(mv,"toString",myClass);
