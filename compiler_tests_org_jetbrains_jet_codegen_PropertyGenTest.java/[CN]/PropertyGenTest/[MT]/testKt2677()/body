@@ -1,0 +1,36 @@
+{
+  createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.JDK_ONLY);
+  loadFile("regressions/kt2677.kt");
+  final Class aClass=loadImplementationClass(generateClassesInFile(),"DerivedWeatherReport");
+  final Class bClass=aClass.getSuperclass();
+  try {
+{
+      Method get=aClass.getDeclaredMethod("getForecast");
+      Type type=get.getGenericReturnType();
+      assertInstanceOf(type,ParameterizedType.class);
+      ParameterizedType parameterizedType=(ParameterizedType)type;
+      assertEquals(String.class,parameterizedType.getActualTypeArguments()[0]);
+      Method set=aClass.getDeclaredMethod("setForecast",(Class)parameterizedType.getRawType());
+      type=set.getGenericParameterTypes()[0];
+      parameterizedType=(ParameterizedType)type;
+      assertInstanceOf(type,ParameterizedType.class);
+      assertEquals(String.class,parameterizedType.getActualTypeArguments()[0]);
+    }
+{
+      Method get=bClass.getDeclaredMethod("getForecast");
+      Type type=get.getGenericReturnType();
+      assertInstanceOf(type,ParameterizedType.class);
+      ParameterizedType parameterizedType=(ParameterizedType)type;
+      assertEquals(String.class,parameterizedType.getActualTypeArguments()[0]);
+      Method set=bClass.getDeclaredMethod("setForecast",(Class)parameterizedType.getRawType());
+      type=set.getGenericParameterTypes()[0];
+      parameterizedType=(ParameterizedType)type;
+      assertInstanceOf(type,ParameterizedType.class);
+      assertEquals(String.class,parameterizedType.getActualTypeArguments()[0]);
+    }
+  }
+ catch (  Throwable e) {
+    System.out.println(generateToText());
+    throw new RuntimeException(e);
+  }
+}
