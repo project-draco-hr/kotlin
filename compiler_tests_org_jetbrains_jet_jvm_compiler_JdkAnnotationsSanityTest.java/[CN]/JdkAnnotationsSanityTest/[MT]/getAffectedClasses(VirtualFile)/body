@@ -1,0 +1,22 @@
+{
+  final Set<FqName> result=Sets.newLinkedHashSet();
+  VfsUtilCore.visitChildrenRecursively(root,new VirtualFileVisitor(){
+    @Override public boolean visitFile(    @NotNull VirtualFile file){
+      if (ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName())) {
+        try {
+          String text=StreamUtil.readText(file.getInputStream());
+          Matcher matcher=Pattern.compile("<item name=['\"]([\\w\\d\\.]+)[\\s'\"]").matcher(text);
+          while (matcher.find()) {
+            result.add(new FqName(matcher.group(1)));
+          }
+        }
+ catch (        IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return true;
+    }
+  }
+);
+  return result;
+}

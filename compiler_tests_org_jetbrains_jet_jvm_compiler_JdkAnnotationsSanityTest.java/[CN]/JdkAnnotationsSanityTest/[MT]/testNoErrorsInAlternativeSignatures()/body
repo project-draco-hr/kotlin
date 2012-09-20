@@ -1,0 +1,40 @@
+{
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(BuiltinsScopeExtensionMode.ALL,getProject());
+  final BindingContext bindingContext=injector.getBindingTrace().getBindingContext();
+  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  final Map<DeclarationDescriptor,String> errors=Maps.newHashMap();
+  Iterable<FqName> affectedClasses=getAffectedClasses(kotlinAnnotationsRoot);
+  for (  FqName affectedClass : affectedClasses) {
+    ClassDescriptor topLevelClass=javaDescriptorResolver.resolveClass(affectedClass);
+    assertNotNull("Class has annotation, but it is not found: " + affectedClass,topLevelClass);
+    topLevelClass.acceptVoid(new DeclarationDescriptorVisitorEmptyBodies<Void,Void>(){
+      @Override public Void visitClassDescriptor(      ClassDescriptor descriptor,      Void data){
+        for (        DeclarationDescriptor member : descriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
+          member.acceptVoid(this);
+        }
+        return visitDeclaration(descriptor);
+      }
+      @Override public Void visitFunctionDescriptor(      FunctionDescriptor descriptor,      Void data){
+        return visitDeclaration(descriptor);
+      }
+      @Override public Void visitPropertyDescriptor(      PropertyDescriptor descriptor,      Void data){
+        return visitDeclaration(descriptor);
+      }
+      private Void visitDeclaration(      @NotNull DeclarationDescriptor descriptor){
+        String error=bindingContext.get(BindingContext.ALTERNATIVE_SIGNATURE_DATA_ERROR,descriptor);
+        if (error != null) {
+          errors.put(descriptor,error);
+        }
+        return null;
+      }
+    }
+);
+  }
+  if (!errors.isEmpty()) {
+    StringBuilder sb=new StringBuilder("Error(s) in JDK alternative signatures: \n");
+    for (    Map.Entry<DeclarationDescriptor,String> entry : errors.entrySet()) {
+      sb.append(DescriptorRenderer.TEXT.render(entry.getKey())).append(" : ").append(entry.getValue()).append("\n");
+    }
+    fail(sb.toString());
+  }
+}
