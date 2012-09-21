@@ -1,0 +1,34 @@
+{
+  if (type.getSort() == Type.ARRAY) {
+    final Type elementType=correctElementType(type);
+    if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
+      iv.invokestatic("java/util/Arrays","hashCode","([Ljava/lang/Object;)I");
+    }
+ else {
+      iv.invokestatic("java/util/Arrays","hashCode","(" + type.getDescriptor() + ")I");
+    }
+  }
+ else   if (type.getSort() == Type.OBJECT) {
+    iv.invokevirtual("java/lang/Object","hashCode","()I");
+  }
+ else   if (type.getSort() == Type.LONG) {
+    genLongHashCode(mv,iv);
+  }
+ else   if (type.getSort() == Type.DOUBLE) {
+    iv.invokestatic("java/lang/Double","doubleToLongBits","(D)J");
+    genLongHashCode(mv,iv);
+  }
+ else   if (type.getSort() == Type.FLOAT) {
+    iv.invokestatic("java/lang/Float","floatToIntBits","(F)I");
+  }
+ else   if (type.getSort() == Type.BOOLEAN) {
+    Label end=new Label();
+    iv.dup();
+    iv.ifeq(end);
+    iv.pop();
+    iv.iconst(1);
+    iv.mark(end);
+  }
+ else {
+  }
+}

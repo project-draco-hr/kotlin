@@ -1,0 +1,19 @@
+{
+  ClassDescriptor descriptor=state.getBindingContext().get(BindingContext.CLASS,aClass);
+  if (descriptor == null || ErrorUtils.isError(descriptor) || descriptor.getName().equals(JetPsiUtil.NO_NAME_PROVIDED)) {
+    if (state.getClassBuilderMode() != ClassBuilderMode.SIGNATURES) {
+      throw new IllegalStateException("Generating bad descriptor in ClassBuilderMode = " + state.getClassBuilderMode() + ": "+ descriptor);
+    }
+    return;
+  }
+  ClassBuilder classBuilder=state.getFactory().forClassImplementation(descriptor);
+  final CodegenContext contextForInners=context.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state);
+  if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES) {
+    genImplementation(context,state,aClass,OwnerKind.IMPLEMENTATION,contextForInners.getAccessors(),classBuilder);
+  }
+  genInners(contextForInners,state,aClass);
+  if (state.getClassBuilderMode() != ClassBuilderMode.SIGNATURES) {
+    genImplementation(context,state,aClass,OwnerKind.IMPLEMENTATION,contextForInners.getAccessors(),classBuilder);
+  }
+  classBuilder.done();
+}

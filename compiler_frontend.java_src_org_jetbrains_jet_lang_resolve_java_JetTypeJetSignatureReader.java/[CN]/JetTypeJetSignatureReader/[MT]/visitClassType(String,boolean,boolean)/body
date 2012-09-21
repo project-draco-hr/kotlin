@@ -1,27 +1,4 @@
 {
-  FqName ourName=new FqName(name.replace('/','.').replace('$','.'));
-  this.classDescriptor=null;
-  if (!forceReal) {
-    classDescriptor=JavaToKotlinClassMap.getInstance().mapKotlinClass(ourName,JavaTypeTransformer.TypeUsage.MEMBER_SIGNATURE_INVARIANT);
-  }
-  if (classDescriptor == null) {
-    Matcher matcher=Pattern.compile("jet\\.Function(\\d+)").matcher(ourName.getFqName());
-    if (matcher.matches()) {
-      classDescriptor=JetStandardClasses.getFunction(Integer.parseInt(matcher.group(1)));
-    }
-  }
-  if (classDescriptor == null) {
-    Matcher matcher=Pattern.compile("jet\\.Tuple(\\d+)").matcher(ourName.getFqName());
-    if (matcher.matches()) {
-      classDescriptor=JetStandardClasses.getTuple(Integer.parseInt(matcher.group(1)));
-    }
-  }
-  if (this.classDescriptor == null) {
-    this.classDescriptor=javaDescriptorResolver.resolveClass(ourName,DescriptorSearchRule.INCLUDE_KOTLIN);
-  }
-  if (this.classDescriptor == null) {
-    this.errorType=ErrorUtils.createErrorType("class not found by name: " + ourName);
-  }
-  this.nullable=nullable;
-  this.typeArguments=new ArrayList<TypeProjection>();
+  FqName fqName=JvmClassName.bySignatureName(signatureName).getFqName();
+  enterClass(resolveClassDescriptorByFqName(fqName,forceReal),fqName.getFqName(),nullable);
 }

@@ -1,0 +1,24 @@
+{
+  Collection<CallableMemberDescriptor> bound=Lists.newArrayList();
+  for (  CallableMemberDescriptor fromSupertype : descriptorsFromSuper) {
+    OverridingUtil.OverrideCompatibilityInfo.Result result=OverridingUtil.isOverridableBy(fromSupertype,fromCurrent).getResult();
+    boolean isVisible=Visibilities.isVisible(fromSupertype,current);
+switch (result) {
+case OVERRIDABLE:
+      if (isVisible) {
+        OverridingUtil.bindOverride(fromCurrent,fromSupertype);
+      }
+    bound.add(fromSupertype);
+  break;
+case CONFLICT:
+if (isVisible) {
+  sink.conflict(fromSupertype,fromCurrent);
+}
+bound.add(fromSupertype);
+break;
+case INCOMPATIBLE:
+break;
+}
+}
+return bound;
+}
