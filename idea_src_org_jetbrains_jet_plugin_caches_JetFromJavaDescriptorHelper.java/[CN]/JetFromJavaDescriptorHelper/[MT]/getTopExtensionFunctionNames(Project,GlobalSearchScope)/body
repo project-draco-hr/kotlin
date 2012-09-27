@@ -2,14 +2,14 @@
   Set<String> extensionNames=new HashSet<String>();
   Collection<PsiAnnotation> valueParametersAnnotations=JavaAnnotationIndex.getInstance().get(JetValueParameter.class.getSimpleName(),project,scope);
   for (  PsiAnnotation parameterAnnotation : valueParametersAnnotations) {
-    String qualifiedName=parameterAnnotation.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.equals(JetValueParameter.class.getCanonicalName())) {
+    PsiParameter parameter=PsiTreeUtil.getParentOfType(parameterAnnotation,PsiParameter.class);
+    if (parameter == null) {
       continue;
     }
-    if (!new JetValueParameterAnnotation(parameterAnnotation).receiver()) {
+    if (!JetValueParameterAnnotation.get(parameter).receiver()) {
       continue;
     }
-    PsiMethod psiMethod=PsiTreeUtil.getParentOfType(parameterAnnotation,PsiMethod.class);
+    PsiMethod psiMethod=PsiTreeUtil.getParentOfType(parameter,PsiMethod.class);
     if (psiMethod != null) {
       extensionNames.add(psiMethod.getName());
     }
