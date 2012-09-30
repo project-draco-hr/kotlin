@@ -1,0 +1,41 @@
+{
+  JsBinaryOperator op=binaryOperation.getOperator();
+  JsExpression arg1=binaryOperation.getArg1();
+  boolean isExpressionEnclosed=_parenPush(binaryOperation,arg1,!op.isLeftAssociative());
+  accept(arg1);
+  if (op.isKeyword()) {
+    _parenPopOrSpace(binaryOperation,arg1,!op.isLeftAssociative());
+  }
+ else   if (op != JsBinaryOperator.COMMA) {
+    if (isExpressionEnclosed) {
+      rightParen();
+    }
+    spaceOpt();
+  }
+  p.print(op.getSymbol());
+  JsExpression arg2=binaryOperation.getArg2();
+  boolean isParenOpened;
+  if (op == JsBinaryOperator.COMMA) {
+    isParenOpened=false;
+    spaceOpt();
+  }
+ else   if (arg2 instanceof JsBinaryOperation && isBinaryOperationShouldBeEnclosed(((JsBinaryOperation)arg2).getOperator())) {
+    spaceOpt();
+    leftParen();
+    isParenOpened=true;
+  }
+ else {
+    if (spaceCalc(op,arg2)) {
+      isParenOpened=_parenPushOrSpace(binaryOperation,arg2,op.isLeftAssociative());
+    }
+ else {
+      spaceOpt();
+      isParenOpened=_parenPush(binaryOperation,arg2,op.isLeftAssociative());
+    }
+  }
+  accept(arg2);
+  if (isParenOpened) {
+    rightParen();
+  }
+  return false;
+}

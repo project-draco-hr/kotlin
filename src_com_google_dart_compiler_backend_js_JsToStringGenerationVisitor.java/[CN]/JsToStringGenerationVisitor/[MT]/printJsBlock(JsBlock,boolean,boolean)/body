@@ -1,0 +1,74 @@
+{
+  if (!lineBreakAfterBlock) {
+    finalNewline=false;
+    lineBreakAfterBlock=true;
+  }
+  boolean needBraces=!x.isGlobalBlock();
+  if (needBraces) {
+    _blockOpen();
+  }
+  int count=0;
+  Iterator<JsStatement> iterator=x.getStatements().iterator();
+  while (iterator.hasNext()) {
+    boolean isGlobal=x.isGlobalBlock() || globalBlocks.contains(x);
+    if (truncate && count > JSBLOCK_LINES_TO_PRINT) {
+      p.print("[...]");
+      newlineOpt();
+      break;
+    }
+    JsStatement statement=iterator.next();
+    if (statement instanceof JsEmpty) {
+      continue;
+    }
+    needSemi=true;
+    boolean shouldRecordPositions=isGlobal && !(statement instanceof JsBlock);
+    boolean stmtIsGlobalBlock=false;
+    if (isGlobal) {
+      if (statement instanceof JsBlock) {
+        stmtIsGlobalBlock=true;
+        globalBlocks.add((JsBlock)statement);
+      }
+    }
+    if (shouldRecordPositions) {
+      statementStarts.add(p.getPosition());
+    }
+    accept(statement);
+    if (stmtIsGlobalBlock) {
+      globalBlocks.remove(statement);
+    }
+    if (needSemi) {
+      boolean functionStmt=statement instanceof JsExprStmt && ((JsExprStmt)statement).getExpression() instanceof JsFunction;
+      boolean lastStatement=!iterator.hasNext() && needBraces && !JsRequiresSemiVisitor.exec(statement);
+      if (functionStmt) {
+        if (lastStatement) {
+          newlineOpt();
+        }
+ else {
+          _newline();
+        }
+      }
+ else {
+        if (lastStatement) {
+          semiOpt();
+        }
+ else {
+          semi();
+        }
+        newlineOpt();
+      }
+    }
+    if (shouldRecordPositions) {
+      assert(statementStarts.size() == statementEnds.size() + 1);
+      statementEnds.add(p.getPosition());
+    }
+    ++count;
+  }
+  if (needBraces) {
+    p.indentOut();
+    p.print('}');
+    if (finalNewline) {
+      newlineOpt();
+    }
+  }
+  needSemi=false;
+}

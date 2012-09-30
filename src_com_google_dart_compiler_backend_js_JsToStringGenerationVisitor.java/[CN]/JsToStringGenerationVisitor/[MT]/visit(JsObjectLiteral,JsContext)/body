@@ -1,0 +1,43 @@
+{
+  _lbrace();
+  if (objectLiteral.isMultiline()) {
+    p.indentIn();
+  }
+  boolean isNotFirst=false;
+  for (  JsPropertyInitializer item : objectLiteral.getPropertyInitializers()) {
+    if (isNotFirst) {
+      p.print(',');
+    }
+    if (objectLiteral.isMultiline()) {
+      newlineOpt();
+    }
+ else     if (isNotFirst) {
+      spaceOpt();
+    }
+    isNotFirst=true;
+    JsExpression labelExpr=item.getLabelExpr();
+    if (labelExpr instanceof JsNameRef) {
+      p.print(((JsNameRef)labelExpr).getIdent());
+    }
+ else     if (labelExpr instanceof JsStringLiteral) {
+      p.print(((JsStringLiteral)labelExpr).getValue());
+    }
+ else {
+      accept(labelExpr);
+    }
+    _colon();
+    space();
+    JsExpression valueExpr=item.getValueExpr();
+    boolean wasEnclosed=parenPushIfCommaExpression(valueExpr);
+    accept(valueExpr);
+    if (wasEnclosed) {
+      rightParen();
+    }
+  }
+  if (objectLiteral.isMultiline()) {
+    p.indentOut();
+    newlineOpt();
+  }
+  _rbrace();
+  return false;
+}
