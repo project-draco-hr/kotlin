@@ -1,0 +1,12 @@
+{
+  if (!state.isGenerateNotNullAssertions())   return;
+  JetType type=descriptor.getReturnType();
+  if (type == null || type.isNullable())   return;
+  Type asmType=state.getTypeMapper().mapReturnType(type);
+  if (asmType.getSort() == Type.OBJECT || asmType.getSort() == Type.ARRAY) {
+    v.dup();
+    v.visitLdcInsn(descriptor.getContainingDeclaration().getName().getName());
+    v.visitLdcInsn(descriptor.getName().getName());
+    v.invokestatic("jet/runtime/Intrinsics",assertMethodToCall,"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V");
+  }
+}
