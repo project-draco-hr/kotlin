@@ -1,0 +1,16 @@
+{
+  JetType propertyType;
+  if (!characteristicMember.getType().getTypeString().isEmpty()) {
+    propertyType=semanticServices.getTypeTransformer().transformToType(characteristicMember.getType().getTypeString(),typeVariableResolverForPropertyInternals);
+  }
+ else {
+    propertyType=semanticServices.getTypeTransformer().transformToType(characteristicMember.getType().getPsiType(),typeVariableResolverForPropertyInternals);
+    if (JavaDescriptorResolver.findAnnotation(characteristicMember.getType().getPsiNotNullOwner(),JvmAbi.JETBRAINS_NOT_NULL_ANNOTATION.getFqName().getFqName()) != null) {
+      propertyType=TypeUtils.makeNullableAsSpecified(propertyType,false);
+    }
+ else     if (members.getter == null && members.setter == null && members.field.getMember().isFinal() && members.field.getMember().isStatic()) {
+      propertyType=TypeUtils.makeNotNullable(propertyType);
+    }
+  }
+  return propertyType;
+}
