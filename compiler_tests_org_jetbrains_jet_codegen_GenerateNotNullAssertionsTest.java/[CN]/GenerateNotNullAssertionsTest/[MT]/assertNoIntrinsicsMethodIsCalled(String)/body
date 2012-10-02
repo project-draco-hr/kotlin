@@ -1,0 +1,15 @@
+{
+  ClassFileFactory classes=generateClassesInFile();
+  ClassReader reader=new ClassReader(classes.asBytes(className + ".class"));
+  reader.accept(new ClassVisitor(Opcodes.ASM4){
+    @Override public MethodVisitor visitMethod(    int access,    final String callerName,    final String callerDesc,    String signature,    String[] exceptions){
+      return new MethodVisitor(Opcodes.ASM4){
+        @Override public void visitMethodInsn(        int opcode,        String owner,        String name,        String desc){
+          assertFalse("jet/Intrinsics method is called: " + name + desc+ "  Caller: "+ callerName+ callerDesc,"jet/Intrinsics".equals(owner));
+        }
+      }
+;
+    }
+  }
+,0);
+}
