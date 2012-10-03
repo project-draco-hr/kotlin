@@ -6,46 +6,7 @@
   if (namedMembers.propertyAccessors == null) {
     namedMembers.propertyAccessors=Collections.emptyList();
   }
-class GroupingValue {
-    PropertyAccessorData getter;
-    PropertyAccessorData setter;
-    PropertyAccessorData field;
-    boolean ext;
-  }
-  Map<Object,GroupingValue> map=new HashMap<Object,GroupingValue>();
-  for (  PropertyAccessorData propertyAccessor : namedMembers.propertyAccessors) {
-    Object key=propertyKeyForGrouping(propertyAccessor);
-    GroupingValue value=map.get(key);
-    if (value == null) {
-      value=new GroupingValue();
-      value.ext=propertyAccessor.getReceiverType() != null;
-      map.put(key,value);
-    }
-    if (value.ext != (propertyAccessor.getReceiverType() != null)) {
-      throw new IllegalStateException("internal error, incorrect key");
-    }
-    if (propertyAccessor.isGetter()) {
-      if (value.getter != null) {
-        throw new IllegalStateException("oops, duplicate key");
-      }
-      value.getter=propertyAccessor;
-    }
- else     if (propertyAccessor.isSetter()) {
-      if (value.setter != null) {
-        throw new IllegalStateException("oops, duplicate key");
-      }
-      value.setter=propertyAccessor;
-    }
- else     if (propertyAccessor.isField()) {
-      if (value.field != null) {
-        throw new IllegalStateException("oops, duplicate key");
-      }
-      value.field=propertyAccessor;
-    }
- else {
-      throw new IllegalStateException();
-    }
-  }
+  Map<String,GroupingValue> map=collectGroupingValuesFromAccessors(namedMembers.propertyAccessors);
   Set<PropertyDescriptor> propertiesFromCurrent=new HashSet<PropertyDescriptor>(1);
   int regularProperitesCount=0;
   for (  GroupingValue members : map.values()) {
