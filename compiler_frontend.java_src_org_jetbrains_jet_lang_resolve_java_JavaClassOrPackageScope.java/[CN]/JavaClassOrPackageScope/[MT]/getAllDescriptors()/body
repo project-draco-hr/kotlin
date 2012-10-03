@@ -1,29 +1,29 @@
 {
   if (allDescriptors == null) {
     allDescriptors=Sets.newHashSet();
-    if (resolverScopeData.psiClass != null) {
+    if (resolverScopeData.getPsiClass() != null) {
       ProgressIndicatorProvider.checkCanceled();
       allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveMethods(resolverScopeData));
       ProgressIndicatorProvider.checkCanceled();
       allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveFieldGroup(resolverScopeData));
       if (getContainingDeclaration() instanceof JavaNamespaceDescriptor) {
-        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.classOrNamespaceDescriptor,resolverScopeData.psiClass,false));
+        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.getClassOrNamespaceDescriptor(),resolverScopeData.getPsiClass(),false));
       }
  else {
-        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.classOrNamespaceDescriptor,resolverScopeData.psiClass,resolverScopeData.staticMembers));
+        allDescriptors.addAll(semanticServices.getDescriptorResolver().resolveInnerClasses(resolverScopeData.getClassOrNamespaceDescriptor(),resolverScopeData.getPsiClass(),resolverScopeData.isStaticMembers()));
       }
     }
-    if (resolverScopeData.psiPackage != null) {
-      FqName packageFqName=resolverScopeData.fqName;
+    if (resolverScopeData.getPsiPackage() != null) {
+      FqName packageFqName=resolverScopeData.getFqName();
       boolean isKotlinNamespace=packageFqName != null && semanticServices.getKotlinNamespaceDescriptor(packageFqName) != null;
       final JavaDescriptorResolver descriptorResolver=semanticServices.getDescriptorResolver();
-      for (      PsiPackage psiSubPackage : resolverScopeData.psiPackage.getSubPackages()) {
+      for (      PsiPackage psiSubPackage : resolverScopeData.getPsiPackage().getSubPackages()) {
         NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
         if (childNs != null) {
           allDescriptors.add(childNs);
         }
       }
-      for (      PsiClass psiClass : resolverScopeData.psiPackage.getClasses()) {
+      for (      PsiClass psiClass : resolverScopeData.getPsiPackage().getClasses()) {
         if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
           continue;
         }
