@@ -1,0 +1,33 @@
+{
+  OwnerKind kind=context.getContextKind();
+  Method asmMethod=jvmSignature.getAsmMethod();
+  MethodVisitor mv=v.newMethod(fun,getMethodAsmFlags(functionDescriptor,kind),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
+  AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(functionDescriptor);
+  if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES)   return;
+  if (needJetAnnotations) {
+    genJetAnnotations(state,functionDescriptor,jvmSignature,propertyTypeSignature,mv);
+  }
+  if (isAbstract(functionDescriptor,kind))   return;
+  if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
+    genStubCode(mv);
+    return;
+  }
+  LocalVariablesInfo localVariablesInfo=new LocalVariablesInfo();
+  for (  ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
+    localVariablesInfo.names.add(parameter.getName().getName());
+  }
+  MethodBounds methodBounds=generateMethodBody(mv,fun,functionDescriptor,context,asmMethod,localVariablesInfo);
+  Type thisType;
+  ReceiverDescriptor expectedThisObject=functionDescriptor.getExpectedThisObject();
+  if (expectedThisObject.exists()) {
+    thisType=typeMapper.mapType(expectedThisObject.getType());
+  }
+ else   if (fun instanceof JetFunctionLiteralExpression || isLocalFun(bindingContext,functionDescriptor)) {
+    thisType=typeMapper.mapType(context.getThisDescriptor());
+  }
+ else {
+    thisType=null;
+  }
+  generateLocalVariableTable(mv,functionDescriptor,thisType,localVariablesInfo,methodBounds);
+  endVisit(mv,null,fun);
+}

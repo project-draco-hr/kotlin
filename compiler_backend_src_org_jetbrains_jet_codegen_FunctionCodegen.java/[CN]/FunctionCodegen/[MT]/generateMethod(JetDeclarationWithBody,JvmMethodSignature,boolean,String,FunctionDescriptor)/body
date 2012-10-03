@@ -1,5 +1,18 @@
 {
-  MethodContext funContext=owner.intoFunction(functionDescriptor);
-  final JetExpression bodyExpression=f.getBodyExpression();
-  generatedMethod(bodyExpression,jvmMethod,needJetAnnotations,propertyTypeSignature,funContext,functionDescriptor,f);
+  checkMustGenerateCode(functionDescriptor);
+  OwnerKind kind=owner.getContextKind();
+  if (!isStatic(kind) && (kind instanceof OwnerKind.DelegateKind) != (functionDescriptor.getKind() == FunctionDescriptor.Kind.DELEGATION)) {
+    throw new IllegalStateException("Mismatching kind in " + functionDescriptor + "; context kind: "+ kind);
+  }
+  if (kind == OwnerKind.TRAIT_IMPL) {
+    needJetAnnotations=false;
+  }
+  MethodContext context=owner.intoFunction(functionDescriptor);
+  if (kind != OwnerKind.TRAIT_IMPL || fun.getBodyExpression() != null) {
+    generateMethodHeaderAndBody(fun,jvmSignature,needJetAnnotations,propertyTypeSignature,functionDescriptor,context);
+    if (state.getClassBuilderMode() == ClassBuilderMode.FULL && !isAbstract(functionDescriptor,kind)) {
+      generateBridgeIfNeeded(owner,state,v,jvmSignature.getAsmMethod(),functionDescriptor,kind);
+    }
+  }
+  generateDefaultIfNeeded(context,state,v,jvmSignature.getAsmMethod(),functionDescriptor,kind);
 }

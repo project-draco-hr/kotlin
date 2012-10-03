@@ -1,0 +1,20 @@
+{
+  for (  ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
+    Type sharedVarType=typeMapper.getSharedVarType(parameter);
+    if (sharedVarType == null) {
+      continue;
+    }
+    Type localVarType=typeMapper.mapType(parameter);
+    int index=frameMap.getIndex(parameter);
+    mv.visitTypeInsn(NEW,sharedVarType.getInternalName());
+    mv.visitInsn(DUP);
+    mv.visitInsn(DUP);
+    mv.visitMethodInsn(INVOKESPECIAL,sharedVarType.getInternalName(),"<init>","()V");
+    mv.visitVarInsn(localVarType.getOpcode(ILOAD),index);
+    mv.visitFieldInsn(PUTFIELD,sharedVarType.getInternalName(),"ref",StackValue.refType(localVarType).getDescriptor());
+    Label labelForSharedVar=new Label();
+    mv.visitLabel(labelForSharedVar);
+    localVariablesInfo.labelsForSharedVars.put(parameter.getName(),labelForSharedVar);
+    mv.visitVarInsn(sharedVarType.getOpcode(ISTORE),index);
+  }
+}

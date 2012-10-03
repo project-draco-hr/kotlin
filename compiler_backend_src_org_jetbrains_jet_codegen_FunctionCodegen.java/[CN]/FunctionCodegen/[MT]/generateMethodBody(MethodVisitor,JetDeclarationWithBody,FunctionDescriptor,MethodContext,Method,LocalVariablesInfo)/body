@@ -1,0 +1,34 @@
+{
+  mv.visitCode();
+  Label methodBegin=new Label();
+  mv.visitLabel(methodBegin);
+  OwnerKind kind=context.getContextKind();
+  if (kind instanceof OwnerKind.StaticDelegateKind) {
+    generateStaticDelegateMethodBody(mv,asmMethod,(OwnerKind.StaticDelegateKind)kind);
+  }
+ else   if (kind instanceof OwnerKind.DelegateKind) {
+    generateDelegateMethodBody(mv,asmMethod,(OwnerKind.DelegateKind)kind);
+  }
+ else {
+    FrameMap frameMap=context.prepareFrame(typeMapper);
+    int add=0;
+    if (kind == OwnerKind.TRAIT_IMPL) {
+      add++;
+    }
+    if (functionDescriptor.getReceiverParameter().exists()) {
+      add++;
+    }
+    Type[] argTypes=asmMethod.getArgumentTypes();
+    List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+    for (int i=0; i < parameters.size(); i++) {
+      frameMap.enter(parameters.get(i),argTypes[i + add]);
+    }
+    createSharedVarsForParameters(mv,functionDescriptor,frameMap,localVariablesInfo);
+    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,asmMethod.getReturnType(),context,state);
+    codegen.returnExpression(fun.getBodyExpression());
+    localVariablesInfo.names.addAll(codegen.getLocalVariableNamesForExpression());
+  }
+  Label methodEnd=new Label();
+  mv.visitLabel(methodEnd);
+  return new MethodBounds(methodBegin,methodEnd);
+}

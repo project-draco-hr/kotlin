@@ -1,0 +1,30 @@
+{
+  Label methodBegin=methodBounds.begin;
+  Label methodEnd=methodBounds.end;
+  int k=0;
+  if (thisType != null) {
+    mv.visitLocalVariable("this",thisType.getDescriptor(),null,methodBegin,methodEnd,k++);
+  }
+  if (functionDescriptor.getReceiverParameter().exists()) {
+    Type type=typeMapper.mapType(functionDescriptor.getReceiverParameter().getType());
+    mv.visitLocalVariable(JvmAbi.RECEIVER_PARAMETER,type.getDescriptor(),null,methodBegin,methodEnd,k);
+    k+=type.getSize();
+  }
+  for (  ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
+    Type type=typeMapper.mapType(parameter);
+    Label divideLabel=localVariablesInfo.labelsForSharedVars.get(parameter.getName());
+    String parameterName=parameter.getName().getName();
+    if (divideLabel != null) {
+      mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,k);
+      String nameForSharedVar=createTmpVariableName(localVariablesInfo.names);
+      localVariablesInfo.names.add(nameForSharedVar);
+      Type sharedVarType=typeMapper.getSharedVarType(parameter);
+      mv.visitLocalVariable(nameForSharedVar,sharedVarType.getDescriptor(),null,divideLabel,methodEnd,k);
+      k+=Math.max(type.getSize(),sharedVarType.getSize());
+    }
+ else {
+      mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,methodEnd,k);
+      k+=type.getSize();
+    }
+  }
+}
