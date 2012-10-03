@@ -16,16 +16,16 @@
     boolean isFinal=isPropertyFinal(scopeData,members);
     boolean isVar=isPropertyVar(members);
     PropertyAccessorData characteristicMember=getCharacteristicMember(members);
-    Visibility visibility=JavaDescriptorResolver.resolveVisibility(characteristicMember.getMember().psiMember,null);
+    Visibility visibility=JavaDescriptorResolver.resolveVisibility(characteristicMember.getMember().getPsiMember(),null);
     CallableMemberDescriptor.Kind kind=CallableMemberDescriptor.Kind.DECLARATION;
     if (members.getter != null && members.getter.getMember() instanceof PsiMethodWrapper) {
       JetMethodAnnotation jetMethod=((PsiMethodWrapper)members.getter.getMember()).getJetMethod();
-      visibility=JavaDescriptorResolver.resolveVisibility(characteristicMember.getMember().psiMember,jetMethod);
+      visibility=JavaDescriptorResolver.resolveVisibility(characteristicMember.getMember().getPsiMember(),jetMethod);
       kind=DescriptorKindUtils.flagsToKind(jetMethod.kind());
     }
     DeclarationDescriptor realOwner=getRealOwner(owner,scopeData,characteristicMember.getMember().isStatic());
     boolean isEnumEntry=DescriptorUtils.isEnumClassObject(realOwner);
-    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,javaDescriptorResolver.resolveAnnotations(characteristicMember.getMember().psiMember),JavaDescriptorResolver.resolveModality(characteristicMember.getMember(),isFinal || isEnumEntry),visibility,isVar,propertyName,kind);
+    PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,javaDescriptorResolver.resolveAnnotations(characteristicMember.getMember().getPsiMember()),JavaDescriptorResolver.resolveModality(characteristicMember.getMember(),isFinal || isEnumEntry),visibility,isVar,propertyName,kind);
     if (isEnumEntry) {
       ClassDescriptorImpl dummyClassDescriptorForEnumEntryObject=new ClassDescriptorImpl(realOwner,Collections.<AnnotationDescriptor>emptyList(),Modality.FINAL,propertyName);
       dummyClassDescriptorForEnumEntryObject.initialize(true,Collections.<TypeParameterDescriptor>emptyList(),Collections.<JetType>emptyList(),JetScope.EMPTY,Collections.<ConstructorDescriptor>emptySet(),null);
@@ -34,14 +34,14 @@
     PropertyGetterDescriptor getterDescriptor=null;
     PropertySetterDescriptor setterDescriptor=null;
     if (members.getter != null) {
-      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,javaDescriptorResolver.resolveAnnotations(members.getter.getMember().psiMember),Modality.OPEN,visibility,true,false,kind);
+      getterDescriptor=new PropertyGetterDescriptor(propertyDescriptor,javaDescriptorResolver.resolveAnnotations(members.getter.getMember().getPsiMember()),Modality.OPEN,visibility,true,false,kind);
     }
     if (members.setter != null) {
-      Visibility setterVisibility=JavaDescriptorResolver.resolveVisibility(members.setter.getMember().psiMember,null);
+      Visibility setterVisibility=JavaDescriptorResolver.resolveVisibility(members.setter.getMember().getPsiMember(),null);
       if (members.setter.getMember() instanceof PsiMethodWrapper) {
-        setterVisibility=JavaDescriptorResolver.resolveVisibility(members.setter.getMember().psiMember,((PsiMethodWrapper)members.setter.getMember()).getJetMethod());
+        setterVisibility=JavaDescriptorResolver.resolveVisibility(members.setter.getMember().getPsiMember(),((PsiMethodWrapper)members.setter.getMember()).getJetMethod());
       }
-      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,javaDescriptorResolver.resolveAnnotations(members.setter.getMember().psiMember),Modality.OPEN,setterVisibility,true,false,kind);
+      setterDescriptor=new PropertySetterDescriptor(propertyDescriptor,javaDescriptorResolver.resolveAnnotations(members.setter.getMember().getPsiMember()),Modality.OPEN,setterVisibility,true,false,kind);
     }
     propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
     List<TypeParameterDescriptor> typeParameters=resolvePropertyTypeParameters(members,characteristicMember,propertyDescriptor);
@@ -56,7 +56,7 @@
       setterDescriptor.initialize(new ValueParameterDescriptorImpl(setterDescriptor,0,Collections.<AnnotationDescriptor>emptyList(),Name.identifier("p0"),false,propertyDescriptor.getType(),false,null));
     }
     if (kind == CallableMemberDescriptor.Kind.DECLARATION) {
-      trace.record(BindingContext.VARIABLE,characteristicMember.getMember().psiMember,propertyDescriptor);
+      trace.record(BindingContext.VARIABLE,characteristicMember.getMember().getPsiMember(),propertyDescriptor);
     }
     propertiesFromCurrent.add(propertyDescriptor);
   }
