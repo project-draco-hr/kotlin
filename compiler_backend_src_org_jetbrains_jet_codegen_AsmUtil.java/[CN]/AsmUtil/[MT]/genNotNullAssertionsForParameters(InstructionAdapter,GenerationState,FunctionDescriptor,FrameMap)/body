@@ -1,0 +1,15 @@
+{
+  if (!state.isGenerateNotNullParamAssertions())   return;
+  if (getVisibilityAccessFlag(descriptor) == ACC_PRIVATE)   return;
+  for (  ValueParameterDescriptor parameter : descriptor.getValueParameters()) {
+    JetType type=parameter.getReturnType();
+    if (type == null || type.isNullable())     continue;
+    int index=frameMap.getIndex(parameter);
+    Type asmType=state.getTypeMapper().mapReturnType(type);
+    if (asmType.getSort() == Type.OBJECT || asmType.getSort() == Type.ARRAY) {
+      v.load(index,asmType);
+      v.visitLdcInsn(descriptor.getName().getName());
+      v.invokestatic("jet/runtime/Intrinsics","checkParameterIsNotNull","(Ljava/lang/Object;Ljava/lang/String;)V");
+    }
+  }
+}
