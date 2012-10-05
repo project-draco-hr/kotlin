@@ -1,0 +1,20 @@
+{
+  String signature=field.getSignatureAnnotation().signature();
+  JetProperty altPropertyDeclaration;
+  if (signature.isEmpty()) {
+    setAnnotated(false);
+    this.field=null;
+    return;
+  }
+  setAnnotated(true);
+  this.field=field;
+  Project project=field.getPsiMember().getProject();
+  altPropertyDeclaration=JetPsiFactory.createProperty(project,signature);
+  try {
+    checkForSyntaxErrors(altPropertyDeclaration);
+    altReturnType=computeReturnType(originalReturnType,altPropertyDeclaration.getTypeRef(),new HashMap<TypeParameterDescriptor,TypeParameterDescriptorImpl>());
+  }
+ catch (  AlternativeSignatureMismatchException e) {
+    setError(e.getMessage());
+  }
+}

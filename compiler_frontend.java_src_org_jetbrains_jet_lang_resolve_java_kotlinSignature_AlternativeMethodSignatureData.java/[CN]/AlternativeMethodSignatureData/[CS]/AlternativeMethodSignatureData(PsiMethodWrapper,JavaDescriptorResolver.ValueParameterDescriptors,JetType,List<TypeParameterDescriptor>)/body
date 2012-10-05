@@ -1,0 +1,28 @@
+{
+  String signature=method.getSignatureAnnotation().signature();
+  if (signature.isEmpty()) {
+    setAnnotated(false);
+    altFunDeclaration=null;
+    this.method=null;
+    return;
+  }
+  setAnnotated(true);
+  this.method=method;
+  Project project=method.getPsiMethod().getProject();
+  altFunDeclaration=JetPsiFactory.createFunction(project,signature);
+  for (  TypeParameterDescriptor typeParameter : methodTypeParameters) {
+    originalToAltTypeParameters.put(typeParameter,TypeParameterDescriptorImpl.createForFurtherModification(typeParameter.getContainingDeclaration(),typeParameter.getAnnotations(),typeParameter.isReified(),typeParameter.getVariance(),typeParameter.getName(),typeParameter.getIndex()));
+  }
+  try {
+    checkForSyntaxErrors(altFunDeclaration);
+    checkEqualFunctionNames(altFunDeclaration,method);
+    computeTypeParameters(methodTypeParameters);
+    computeValueParameters(valueParameterDescriptors);
+    if (originalReturnType != null) {
+      altReturnType=computeReturnType(originalReturnType,altFunDeclaration.getReturnTypeRef(),originalToAltTypeParameters);
+    }
+  }
+ catch (  AlternativeSignatureMismatchException e) {
+    setError(e.getMessage());
+  }
+}
