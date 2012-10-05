@@ -1,15 +1,18 @@
 {
-  final PsiMethod method=findMethod(file,editor.getCaretModel().getOffset());
-  String signature=getDefaultSignature(project,(PsiMethod)method.getOriginalElement());
+  PsiMethod method=findMethod(file,editor.getCaretModel().getOffset());
+  PsiField field=findField(file,editor.getCaretModel().getOffset());
+  assert(method != null || field != null);
+  String signature=method != null ? getDefaultSignature(project,(PsiMethod)method.getOriginalElement()) : getDefaultSignature(project,(PsiField)field.getOriginalElement());
+  final PsiModifierListOwner annotatedElement=method != null ? method : field;
   final MessageBusConnection busConnection=project.getMessageBus().connect();
   busConnection.subscribe(ExternalAnnotationsManager.TOPIC,new ExternalAnnotationsListener.Adapter(){
     @Override public void afterExternalAnnotationChanging(    @NotNull PsiModifierListOwner owner,    @NotNull String annotationFQName,    boolean successful){
       busConnection.disconnect();
-      if (successful && owner == method && KOTLIN_SIGNATURE_ANNOTATION.equals(annotationFQName)) {
+      if (successful && owner == annotatedElement && KOTLIN_SIGNATURE_ANNOTATION.equals(annotationFQName)) {
         ApplicationManager.getApplication().invokeLater(new Runnable(){
           @Override public void run(){
             refreshMarkers(project);
-            EditSignatureAction.invokeEditSignature(method,editor,null);
+            EditSignatureAction.invokeEditSignature(annotatedElement,editor,null);
           }
         }
 ,ModalityState.NON_MODAL);
@@ -17,5 +20,5 @@
     }
   }
 );
-  createFix(method,signature).invoke(project,editor,file);
+  createFix(annotatedElement,signature).invoke(project,editor,file);
 }

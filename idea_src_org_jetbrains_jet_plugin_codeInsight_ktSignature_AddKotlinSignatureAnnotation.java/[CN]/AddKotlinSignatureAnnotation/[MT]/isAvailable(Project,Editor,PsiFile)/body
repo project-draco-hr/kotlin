@@ -1,7 +1,16 @@
 {
   PsiMethod method=findMethod(file,editor.getCaretModel().getOffset());
-  if (method == null)   return false;
-  if (findKotlinSignatureAnnotation(method) != null)   return false;
-  if (method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE))   return false;
-  return createFix(method,"").isAvailable(project,editor,file);
+  if (method != null) {
+    if (findKotlinSignatureAnnotation(method) != null)     return false;
+    if (method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE))     return false;
+    return createFix(method,"").isAvailable(project,editor,file);
+  }
+  PsiField field=findField(file,editor.getCaretModel().getOffset());
+  if (field != null) {
+    if (findKotlinSignatureAnnotation(field) != null)     return false;
+    PsiModifierList modifierList=field.getModifierList();
+    if (modifierList == null || modifierList.hasExplicitModifier(PsiModifier.PRIVATE))     return false;
+    return createFix(field,"").isAvailable(project,editor,file);
+  }
+  return false;
 }
