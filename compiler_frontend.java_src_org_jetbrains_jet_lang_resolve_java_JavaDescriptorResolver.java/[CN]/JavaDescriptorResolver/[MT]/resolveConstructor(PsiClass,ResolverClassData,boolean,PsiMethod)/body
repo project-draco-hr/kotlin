@@ -1,25 +1,3 @@
 {
-  PsiMethodWrapper constructor=new PsiMethodWrapper(psiConstructor);
-  if (constructor.getJetConstructor().hidden()) {
-    return null;
-  }
-  if (trace.get(BindingContext.CONSTRUCTOR,psiConstructor) != null) {
-    return trace.get(BindingContext.CONSTRUCTOR,psiConstructor);
-  }
-  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classData.getClassDescriptor(),Collections.<AnnotationDescriptor>emptyList(),false);
-  String context="constructor of class " + psiClass.getQualifiedName();
-  ValueParameterDescriptors valueParameterDescriptors=resolveParameterDescriptors(constructorDescriptor,constructor.getParameters(),TypeVariableResolvers.classTypeVariableResolver(classData.getClassDescriptor(),context));
-  if (valueParameterDescriptors.receiverType != null) {
-    throw new IllegalStateException();
-  }
-  AlternativeMethodSignatureData alternativeMethodSignatureData=new AlternativeMethodSignatureData(constructor,valueParameterDescriptors,null,Collections.<TypeParameterDescriptor>emptyList());
-  if (alternativeMethodSignatureData.isAnnotated() && !alternativeMethodSignatureData.hasErrors()) {
-    valueParameterDescriptors=alternativeMethodSignatureData.getValueParameters();
-  }
- else   if (alternativeMethodSignatureData.hasErrors()) {
-    trace.record(BindingContext.ALTERNATIVE_SIGNATURE_DATA_ERROR,constructorDescriptor,alternativeMethodSignatureData.getError());
-  }
-  constructorDescriptor.initialize(classData.getClassDescriptor().getTypeConstructor().getParameters(),valueParameterDescriptors.descriptors,resolveVisibility(psiConstructor,constructor.getJetConstructor()),aStatic);
-  trace.record(BindingContext.CONSTRUCTOR,psiConstructor,constructorDescriptor);
-  return constructorDescriptor;
+  return constructorResolver.resolveConstructor(psiClass,classData,aStatic,psiConstructor);
 }
