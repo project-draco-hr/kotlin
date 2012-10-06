@@ -1,33 +1,3 @@
 {
-  NamespaceDescriptor kotlinNamespaceDescriptor=semanticServices.getKotlinNamespaceDescriptor(qualifiedName);
-  if (kotlinNamespaceDescriptor != null) {
-    if (searchRule == DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN) {
-      throw new IllegalStateException("class must not be found in kotlin: " + qualifiedName);
-    }
- else     if (searchRule == DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN) {
-      return null;
-    }
- else     if (searchRule == DescriptorSearchRule.INCLUDE_KOTLIN) {
-      return kotlinNamespaceDescriptor;
-    }
- else {
-      throw new IllegalStateException("unknown searchRule: " + searchRule);
-    }
-  }
-  ResolverNamespaceData namespaceData=namespaceDescriptorCacheByFqn.get(qualifiedName);
-  if (namespaceData != null) {
-    return namespaceData.getNamespaceDescriptor();
-  }
-  NamespaceDescriptorParent parentNs=resolveParentNamespace(qualifiedName);
-  if (parentNs == null) {
-    return null;
-  }
-  JavaNamespaceDescriptor ns=new JavaNamespaceDescriptor(parentNs,Collections.<AnnotationDescriptor>emptyList(),qualifiedName);
-  ResolverNamespaceData scopeData=createNamespaceResolverScopeData(qualifiedName,ns);
-  if (scopeData == null) {
-    return null;
-  }
-  trace.record(BindingContext.NAMESPACE,scopeData.getPsiPackageOrPsiClass(),ns);
-  ns.setMemberScope(scopeData.getMemberScope());
-  return scopeData.getNamespaceDescriptor();
+  return namespaceResolver.resolveNamespace(qualifiedName,searchRule);
 }

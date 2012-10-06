@@ -1,0 +1,29 @@
+{
+  PsiPackage psiPackage;
+  PsiClass psiClass;
+  lookingForPsi: {
+    psiClass=javaDescriptorResolver.getPsiClassForJavaPackageScope(fqName);
+    psiPackage=javaDescriptorResolver.getSemanticServices().getPsiClassFinder().findPsiPackage(fqName);
+    if (psiClass != null || psiPackage != null) {
+      javaDescriptorResolver.getTrace().record(JavaBindingContext.JAVA_NAMESPACE_KIND,ns,JavaNamespaceKind.PROPER);
+      break lookingForPsi;
+    }
+    psiClass=javaDescriptorResolver.getPsiClassFinder().findPsiClass(fqName,PsiClassFinder.RuntimeClassesHandleMode.IGNORE);
+    if (psiClass != null && !psiClass.isEnum()) {
+      javaDescriptorResolver.getTrace().record(JavaBindingContext.JAVA_NAMESPACE_KIND,ns,JavaNamespaceKind.CLASS_STATICS);
+      break lookingForPsi;
+    }
+    JavaDescriptorResolveData.ResolverNamespaceData oldValue=javaDescriptorResolver.getNamespaceDescriptorCacheByFqn().put(fqName,JavaDescriptorResolveData.ResolverNamespaceData.NEGATIVE);
+    if (oldValue != null) {
+      throw new IllegalStateException("rewrite at " + fqName);
+    }
+    return null;
+  }
+  JavaDescriptorResolveData.ResolverNamespaceData namespaceData=new JavaDescriptorResolveData.ResolverNamespaceData(psiClass,psiPackage,fqName,ns);
+  namespaceData.setMemberScope(new JavaPackageScope(fqName,javaDescriptorResolver.getSemanticServices(),namespaceData));
+  JavaDescriptorResolveData.ResolverNamespaceData oldValue=javaDescriptorResolver.getNamespaceDescriptorCacheByFqn().put(fqName,namespaceData);
+  if (oldValue != null) {
+    throw new IllegalStateException("rewrite at " + fqName);
+  }
+  return namespaceData;
+}
