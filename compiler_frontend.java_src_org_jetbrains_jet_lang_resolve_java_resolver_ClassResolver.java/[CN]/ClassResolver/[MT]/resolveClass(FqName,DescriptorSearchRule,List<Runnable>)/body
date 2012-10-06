@@ -2,11 +2,11 @@
   if (qualifiedName.getFqName().endsWith(JvmAbi.TRAIT_IMPL_SUFFIX)) {
     return null;
   }
-  ClassDescriptor builtinClassDescriptor=semanticServices.getKotlinBuiltinClassDescriptor(qualifiedName);
+  ClassDescriptor builtinClassDescriptor=javaDescriptorResolver.getSemanticServices().getKotlinBuiltinClassDescriptor(qualifiedName);
   if (builtinClassDescriptor != null) {
     return builtinClassDescriptor;
   }
-  ClassDescriptor kotlinClassDescriptor=semanticServices.getKotlinClassDescriptor(qualifiedName);
+  ClassDescriptor kotlinClassDescriptor=javaDescriptorResolver.getSemanticServices().getKotlinClassDescriptor(qualifiedName);
   if (kotlinClassDescriptor != null) {
     if (searchRule == DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN) {
       throw new IllegalStateException("class must not be found in kotlin: " + qualifiedName);
@@ -21,11 +21,11 @@
       throw new IllegalStateException("unknown searchRule: " + searchRule);
     }
   }
-  ResolverClassData classData=classDescriptorCache.get(qualifiedName);
+  JavaDescriptorResolveData.ResolverClassData classData=javaDescriptorResolver.getClassDescriptorCache().get(qualifiedName);
   if (classData == null) {
-    PsiClass psiClass=psiClassFinder.findPsiClass(qualifiedName,PsiClassFinder.RuntimeClassesHandleMode.THROW);
+    PsiClass psiClass=javaDescriptorResolver.getPsiClassFinder().findPsiClass(qualifiedName,PsiClassFinder.RuntimeClassesHandleMode.THROW);
     if (psiClass == null) {
-      ResolverClassData oldValue=classDescriptorCache.put(qualifiedName,ResolverBinaryClassData.NEGATIVE);
+      JavaDescriptorResolveData.ResolverClassData oldValue=javaDescriptorResolver.getClassDescriptorCache().put(qualifiedName,JavaDescriptorResolveData.ResolverBinaryClassData.NEGATIVE);
       if (oldValue != null) {
         throw new IllegalStateException("rewrite at " + qualifiedName);
       }
