@@ -1,7 +1,5 @@
 {
-  PsiClass containingClass=fieldWrapper.getPsiField().getContainingClass();
-  String fieldLink=containingClass != null ? String.format("%s.%s",containingClass.getQualifiedName(),fieldWrapper.getName()) : fieldWrapper.getName();
-  assert(fieldLink != null);
+  String fieldLink=getFieldQualifiedName(fieldWrapper);
   if (!ComparatorUtil.equalsNullable(fieldWrapper.getName(),altProperty.getName())) {
     throw new AlternativeSignatureMismatchException("Field name mismatch, original: %s, alternative: %s",fieldLink,altProperty.getName());
   }
@@ -13,5 +11,8 @@
   }
   if (altProperty.isVar() != isVar) {
     throw new AlternativeSignatureMismatchException("Wrong mutability in annotation for field '%s'",fieldLink);
+  }
+  if (altProperty.getInitializer() != null) {
+    throw new AlternativeSignatureMismatchException("Default value is not expected in annotation for field '%s'",fieldLink);
   }
 }
