@@ -4,31 +4,15 @@
   JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
   final Map<DeclarationDescriptor,String> errors=Maps.newHashMap();
   Iterable<FqName> affectedClasses=getAffectedClasses(kotlinAnnotationsRoot);
-  for (  FqName affectedClass : affectedClasses) {
-    ClassDescriptor topLevelClass=javaDescriptorResolver.resolveClass(affectedClass);
-    assertNotNull("Class has annotation, but it is not found: " + affectedClass,topLevelClass);
-    topLevelClass.acceptVoid(new DeclarationDescriptorVisitorEmptyBodies<Void,Void>(){
-      @Override public Void visitClassDescriptor(      ClassDescriptor descriptor,      Void data){
-        for (        DeclarationDescriptor member : descriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
-          member.acceptVoid(this);
-        }
-        return visitDeclaration(descriptor);
-      }
-      @Override public Void visitFunctionDescriptor(      FunctionDescriptor descriptor,      Void data){
-        return visitDeclaration(descriptor);
-      }
-      @Override public Void visitPropertyDescriptor(      PropertyDescriptor descriptor,      Void data){
-        return visitDeclaration(descriptor);
-      }
-      private Void visitDeclaration(      @NotNull DeclarationDescriptor descriptor){
-        String error=bindingContext.get(BindingContext.ALTERNATIVE_SIGNATURE_DATA_ERROR,descriptor);
-        if (error != null) {
-          errors.put(descriptor,error);
-        }
-        return null;
-      }
+  AlternativeSignatureErrorFindingVisitor visitor=new AlternativeSignatureErrorFindingVisitor(bindingContext,errors);
+  for (  FqName javaClass : affectedClasses) {
+    ClassDescriptor topLevelClass=javaDescriptorResolver.resolveClass(javaClass);
+    NamespaceDescriptor topLevelNamespace=javaDescriptorResolver.resolveNamespace(javaClass);
+    assertNotNull("Class has annotation, but it is not found: " + javaClass,topLevelClass);
+    topLevelClass.acceptVoid(visitor);
+    if (topLevelNamespace != null) {
+      topLevelNamespace.acceptVoid(visitor);
     }
-);
   }
   if (!errors.isEmpty()) {
     StringBuilder sb=new StringBuilder("Error(s) in JDK alternative signatures: \n");
