@@ -1,0 +1,17 @@
+{
+  PsiClass containingClass=fieldWrapper.getPsiField().getContainingClass();
+  String fieldLink=containingClass != null ? String.format("%s.%s",containingClass.getQualifiedName(),fieldWrapper.getName()) : fieldWrapper.getName();
+  assert(fieldLink != null);
+  if (!ComparatorUtil.equalsNullable(fieldWrapper.getName(),altProperty.getName())) {
+    throw new AlternativeSignatureMismatchException("Field name mismatch, original: %s, alternative: %s",fieldLink,altProperty.getName());
+  }
+  if (altProperty.getTypeRef() == null) {
+    throw new AlternativeSignatureMismatchException("Field annotation for '%s' shouldn't have type reference",fieldLink);
+  }
+  if (altProperty.getGetter() != null || altProperty.getSetter() != null) {
+    throw new AlternativeSignatureMismatchException("Field annotation for '%s' shouldn't have getters and setters",fieldLink);
+  }
+  if (altProperty.isVar() != isVar) {
+    throw new AlternativeSignatureMismatchException("Wrong mutability in annotation for field '%s'",fieldLink);
+  }
+}
