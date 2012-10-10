@@ -1,5 +1,5 @@
 {
-  if (qualifiedName.getFqName().endsWith(JvmAbi.TRAIT_IMPL_SUFFIX)) {
+  if (isTraitImplementation(qualifiedName)) {
     return null;
   }
   ClassDescriptor builtinClassDescriptor=semanticServices.getKotlinBuiltinClassDescriptor(qualifiedName);
@@ -11,16 +11,8 @@
     return searchRule.processFoundInKotlin(kotlinClassDescriptor);
   }
   ResolverClassData classData=classDescriptorCache.get(qualifiedName);
-  if (classData == null) {
-    PsiClass psiClass=psiClassFinder.findPsiClass(qualifiedName,PsiClassFinder.RuntimeClassesHandleMode.THROW);
-    if (psiClass == null) {
-      ResolverClassData oldValue=classDescriptorCache.put(qualifiedName,ResolverBinaryClassData.NEGATIVE);
-      if (oldValue != null) {
-        throw new IllegalStateException("rewrite at " + qualifiedName);
-      }
-      return null;
-    }
-    classData=createJavaClassDescriptor(psiClass,tasks);
+  if (classData != null) {
+    return classData.getClassDescriptor();
   }
-  return classData.getClassDescriptor();
+  return doResolveClass(qualifiedName,tasks);
 }

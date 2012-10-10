@@ -1,0 +1,27 @@
+{
+  JetClassAnnotation jetClassAnnotation=JetClassAnnotation.get(psiClass);
+  ClassKind kind=getClassKind(psiClass,jetClassAnnotation);
+  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,psiClass,fqName,javaDescriptorResolver);
+  ResolverClassData classData=classDescriptor.getResolverBinaryClassData();
+  classDescriptorCache.put(fqName,classData);
+  classDescriptor.setName(Name.identifier(psiClass.getName()));
+  List<JavaDescriptorSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=signatureResolver.createUninitializedClassTypeParameters(psiClass,classData);
+  classDescriptor.setTypeParameterDescriptors(getTypeParametersDescriptors(typeParameterDescriptorInitializations));
+  List<JetType> supertypes=Lists.newArrayList();
+  classDescriptor.setSupertypes(supertypes);
+  classDescriptor.setVisibility(DescriptorResolverUtils.resolveVisibility(psiClass,jetClassAnnotation));
+  classDescriptor.setModality(resolveModality(psiClass,classData));
+  classDescriptor.createTypeConstructor();
+  classDescriptor.setScopeForMemberLookup(new JavaClassMembersScope(semanticServices,classData));
+  String context="class " + psiClass.getQualifiedName();
+  signatureResolver.initializeTypeParameters(typeParameterDescriptorInitializations,classDescriptor,context);
+  List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
+  supertypes.addAll(getSupertypes(new PsiClassWrapper(psiClass),classData,classTypeParameters));
+  MutableClassDescriptorLite classObject=createClassObjectDescriptor(classDescriptor,psiClass);
+  if (classObject != null) {
+    classDescriptor.getBuilder().setClassObjectDescriptor(classObject);
+  }
+  classDescriptor.setAnnotations(annotationResolver.resolveAnnotations(psiClass,taskList));
+  trace.record(BindingContext.CLASS,psiClass,classDescriptor);
+  return classData;
+}
