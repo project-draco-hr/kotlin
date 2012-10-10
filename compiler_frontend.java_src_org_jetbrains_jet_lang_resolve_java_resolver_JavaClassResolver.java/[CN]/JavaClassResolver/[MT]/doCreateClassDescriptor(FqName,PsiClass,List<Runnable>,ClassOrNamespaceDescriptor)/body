@@ -17,9 +17,11 @@
   signatureResolver.initializeTypeParameters(typeParameterDescriptorInitializations,classDescriptor,context);
   List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
   supertypes.addAll(getSupertypes(new PsiClassWrapper(psiClass),classData,classTypeParameters));
-  MutableClassDescriptorLite classObject=createClassObjectDescriptor(classDescriptor,psiClass);
-  if (classObject != null) {
-    classDescriptor.getBuilder().setClassObjectDescriptor(classObject);
+  ResolverClassData classObjectData=classObjectResolver.createClassObjectDescriptor(classDescriptor,psiClass);
+  classDescriptorCache.put(DescriptorResolverUtils.getFqNameForClassObject(psiClass),classObjectData);
+  if (classObjectData != null) {
+    ClassDescriptorFromJvmBytecode classObjectDescriptor=classObjectData.getClassDescriptor();
+    classDescriptor.getBuilder().setClassObjectDescriptor(classObjectDescriptor);
   }
   classDescriptor.setAnnotations(annotationResolver.resolveAnnotations(psiClass,taskList));
   trace.record(BindingContext.CLASS,psiClass,classDescriptor);
