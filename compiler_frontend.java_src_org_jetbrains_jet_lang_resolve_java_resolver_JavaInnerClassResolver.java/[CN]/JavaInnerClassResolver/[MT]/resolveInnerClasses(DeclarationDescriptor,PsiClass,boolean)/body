@@ -3,19 +3,13 @@
     return resolveInnerClassesOfClassObject(owner,psiClass);
   }
   PsiClass[] innerPsiClasses=psiClass.getInnerClasses();
-  List<ClassDescriptor> r=new ArrayList<ClassDescriptor>(innerPsiClasses.length);
+  List<ClassDescriptor> result=new ArrayList<ClassDescriptor>(innerPsiClasses.length);
   for (  PsiClass innerPsiClass : innerPsiClasses) {
-    if (innerPsiClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      continue;
-    }
-    if (innerPsiClass.getName().equals(JvmAbi.CLASS_OBJECT_CLASS_NAME)) {
-      continue;
-    }
-    if (DescriptorResolverUtils.isInnerEnum(innerPsiClass,owner)) {
+    if (shouldBeIgnored(owner,innerPsiClass)) {
       continue;
     }
     ClassDescriptor classDescriptor=resolveInnerClass(innerPsiClass);
-    r.add(classDescriptor);
+    result.add(classDescriptor);
   }
-  return r;
+  return result;
 }
