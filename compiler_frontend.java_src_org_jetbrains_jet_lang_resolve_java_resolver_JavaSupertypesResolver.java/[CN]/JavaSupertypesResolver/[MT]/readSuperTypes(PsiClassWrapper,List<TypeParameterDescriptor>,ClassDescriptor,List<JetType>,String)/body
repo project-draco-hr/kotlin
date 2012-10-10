@@ -1,0 +1,22 @@
+{
+  final TypeVariableResolver typeVariableResolver=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,classDescriptor,context);
+  new JetSignatureReader(psiClass.getJetClass().signature()).accept(new JetSignatureExceptionsAdapter(){
+    @Override public JetSignatureVisitor visitFormalTypeParameter(    String name,    TypeInfoVariance variance,    boolean reified){
+      return new JetSignatureAdapter();
+    }
+    @Override public JetSignatureVisitor visitSuperclass(){
+      return new JetTypeJetSignatureReader(semanticServices,JetStandardLibrary.getInstance(),typeVariableResolver){
+        @Override protected void done(        @NotNull JetType jetType){
+          if (!jetType.equals(JetStandardClasses.getAnyType())) {
+            result.add(jetType);
+          }
+        }
+      }
+;
+    }
+    @Override public JetSignatureVisitor visitInterface(){
+      return visitSuperclass();
+    }
+  }
+);
+}

@@ -1,0 +1,18 @@
+{
+  ClassDescriptor classDescriptor=classData.getClassDescriptor();
+  final List<JetType> result=new ArrayList<JetType>();
+  String context="class " + psiClass.getQualifiedName();
+  if (psiClass.getJetClass().signature().length() > 0) {
+    readSuperTypes(psiClass,typeParameters,classDescriptor,result,context);
+  }
+ else {
+    TypeVariableResolver typeVariableResolverForSupertypes=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,classDescriptor,context);
+    transformSupertypeList(result,psiClass.getPsiClass().getExtendsListTypes(),typeVariableResolverForSupertypes);
+    transformSupertypeList(result,psiClass.getPsiClass().getImplementsListTypes(),typeVariableResolverForSupertypes);
+  }
+  reportIncompleteHierarchyForErrorTypes(classDescriptor,result);
+  if (result.isEmpty()) {
+    addBaseClass(psiClass,classData,classDescriptor,result);
+  }
+  return result;
+}
