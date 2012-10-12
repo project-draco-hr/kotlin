@@ -1,0 +1,16 @@
+{
+  super.visitReferenceExpression(expression);
+  ResolvedCall resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,expression);
+  if (resolvedCall != null && resolvedCall instanceof VariableAsFunctionResolvedCall) {
+    JetCallExpression parent=PsiTreeUtil.getParentOfType(expression,JetCallExpression.class);
+    if (parent != null && isDeprecated(resolvedCall.getResultingDescriptor().getAnnotations())) {
+      reportAnnotation(parent,resolvedCall.getResultingDescriptor(),true);
+    }
+  }
+  if (expression.getNode().getElementType() == JetNodeTypes.OPERATION_REFERENCE) {
+    checkDeprecatedForOperations(expression);
+  }
+ else {
+    checkDeprecatedForReferenceExpression(expression);
+  }
+}
