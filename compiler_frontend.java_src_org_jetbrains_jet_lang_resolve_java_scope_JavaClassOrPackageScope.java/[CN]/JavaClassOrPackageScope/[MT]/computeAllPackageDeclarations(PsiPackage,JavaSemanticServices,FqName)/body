@@ -1,0 +1,30 @@
+{
+  Collection<DeclarationDescriptor> result=Sets.newHashSet();
+  boolean isKotlinNamespace=packageFqName != null && javaSemanticServices.getKotlinNamespaceDescriptor(packageFqName) != null;
+  final JavaDescriptorResolver descriptorResolver=javaSemanticServices.getDescriptorResolver();
+  for (  PsiPackage psiSubPackage : psiPackage.getSubPackages()) {
+    NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+    if (childNs != null) {
+      result.add(childNs);
+    }
+  }
+  for (  PsiClass psiClass : psiPackage.getClasses()) {
+    if (isKotlinNamespace && JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
+      continue;
+    }
+    if (psiClass instanceof JetJavaMirrorMarker) {
+      continue;
+    }
+    if (JvmAbi.PACKAGE_CLASS.equals(psiClass.getName())) {
+      continue;
+    }
+    if (psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+      ProgressIndicatorProvider.checkCanceled();
+      ClassDescriptor classDescriptor=descriptorResolver.resolveClass(new FqName(psiClass.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
+      if (classDescriptor != null) {
+        result.add(classDescriptor);
+      }
+    }
+  }
+  return result;
+}
