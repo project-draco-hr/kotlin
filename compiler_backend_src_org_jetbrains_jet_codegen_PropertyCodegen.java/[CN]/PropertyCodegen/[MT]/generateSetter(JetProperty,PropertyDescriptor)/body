@@ -6,8 +6,15 @@
   }
  else   if (isExternallyAccessible(propertyDescriptor) && propertyDescriptor.isVar()) {
     PropertySetterDescriptor setterDescriptor=propertyDescriptor.getSetter();
-    int flags=setterDescriptor == null ? getVisibilityAccessFlag(propertyDescriptor) : getVisibilityAccessFlag(setterDescriptor);
-    flags|=getModalityAccessFlag(propertyDescriptor);
+    int flags=getModalityAccessFlag(propertyDescriptor);
+    if (setterDescriptor == null) {
+      flags|=getVisibilityAccessFlag(propertyDescriptor);
+      flags|=getDeprecatedAccessFlag(propertyDescriptor);
+    }
+ else {
+      flags|=getVisibilityAccessFlag(setterDescriptor);
+      flags|=getDeprecatedAccessFlag(setterDescriptor);
+    }
     generateDefaultSetter(propertyDescriptor,flags,p);
   }
 }

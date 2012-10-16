@@ -1,12 +1,14 @@
 {
   JetPropertyAccessor getter=p.getGetter();
+  PropertyGetterDescriptor getterDescriptor=propertyDescriptor.getGetter();
   if (getter != null && getter.getBodyExpression() != null) {
     JvmPropertyAccessorSignature signature=typeMapper.mapGetterSignature(propertyDescriptor,kind);
-    functionCodegen.generateMethod(getter,signature.getJvmMethodSignature(),true,signature.getPropertyTypeKotlinSignature(),propertyDescriptor.getGetter());
+    functionCodegen.generateMethod(getter,signature.getJvmMethodSignature(),true,signature.getPropertyTypeKotlinSignature(),getterDescriptor);
   }
  else   if (isExternallyAccessible(propertyDescriptor)) {
     int flags=getVisibilityAccessFlag(propertyDescriptor);
     flags|=getModalityAccessFlag(propertyDescriptor);
+    flags|=getterDescriptor == null ? getDeprecatedAccessFlag(propertyDescriptor) : getDeprecatedAccessFlag(getterDescriptor);
     generateDefaultGetter(propertyDescriptor,flags,p);
   }
 }
