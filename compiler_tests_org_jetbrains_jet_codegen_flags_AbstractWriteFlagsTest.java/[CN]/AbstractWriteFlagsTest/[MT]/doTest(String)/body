@@ -1,0 +1,24 @@
+{
+  File ktFile=new File(path);
+  assertTrue("Cannot find a file " + ktFile.getAbsolutePath(),ktFile.exists());
+  String fileText=FileUtil.loadFile(ktFile);
+  JetFile psiFile=JetTestUtils.createFile(ktFile.getName(),fileText,jetCoreEnvironment.getProject());
+  assertTrue("Cannot create JetFile from text",psiFile != null);
+  final ClassFileFactory factory=GenerationUtils.compileFileGetClassFileFactoryForTest(psiFile);
+  TestedObject testedObject=parseExpectedTestedObject(fileText);
+  boolean isClassFound=false;
+  for (  String filename : factory.files()) {
+    if (filename.equals(testedObject.containingClass + ".class")) {
+      isClassFound=true;
+      ClassReader cr=new ClassReader(factory.asBytes(filename));
+      TestClassVisitor classVisitor;
+      classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
+      cr.accept(classVisitor,ClassReader.SKIP_CODE);
+      int expectedAccess=getExpectedFlags(fileText);
+      assertEquals("Wrong access flag",expectedAccess,classVisitor.getAccess());
+    }
+  }
+  if (!isClassFound) {
+    throw new AssertionError("Couldn't find a class file with name " + testedObject.containingClass);
+  }
+}
