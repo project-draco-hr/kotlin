@@ -1,0 +1,23 @@
+{
+  List<String> searchTextList=InTextDirectivesUtils.findListWithPrefix("// SEARCH_TEXT:",editor.getDocument().getText());
+  Assert.assertFalse("There's no search text in test data file given. Use '// SEARCH_TEXT:' directive",searchTextList.isEmpty());
+  List<String> expectedReferences=InTextDirectivesUtils.findListWithPrefix("// REF:",editor.getDocument().getText());
+  String searchText=searchTextList.get(0);
+  List<Object> elementsByName=new ArrayList<Object>();
+  GotoSymbolModel2 model=new GotoSymbolModel2(project);
+  String[] names=model.getNames(false);
+  for (  String name : names) {
+    if (name != null && name.startsWith(searchText)) {
+      elementsByName.addAll(Arrays.asList(model.getElementsByName(name,false,name + "*",new ProgressIndicatorBase())));
+    }
+  }
+  List<String> renderedElements=Lists.transform(elementsByName,new Function<Object,String>(){
+    @Override public String apply(    @Nullable Object element){
+      Assert.assertNotNull(element);
+      Assert.assertTrue(element instanceof PsiElement);
+      return ReferenceUtils.renderAsGotoImplementation((PsiElement)element);
+    }
+  }
+);
+  UsefulTestCase.assertOrderedEquals(Ordering.natural().sortedCopy(renderedElements),expectedReferences);
+}
