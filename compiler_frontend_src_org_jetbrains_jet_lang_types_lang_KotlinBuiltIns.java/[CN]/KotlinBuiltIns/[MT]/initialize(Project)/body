@@ -1,0 +1,22 @@
+{
+  if (instance == null) {
+    if (initializationFailed != null) {
+      throw new RuntimeException("builtin library initialization failed previously: " + initializationFailed,initializationFailed);
+    }
+    if (initializing) {
+      throw new IllegalStateException("builtin library initialization loop");
+    }
+    initializing=true;
+    try {
+      instance=new KotlinBuiltIns(project);
+      instance.initialize();
+    }
+ catch (    Throwable e) {
+      initializationFailed=e;
+      throw new RuntimeException("builtin library initialization failed: " + e,e);
+    }
+ finally {
+      initializing=false;
+    }
+  }
+}
