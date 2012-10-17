@@ -3,7 +3,7 @@
   JetBlockExpression bodyExpression=functionLiteral.getBodyExpression();
   if (bodyExpression == null)   return null;
   JetType expectedType=context.expectedType;
-  boolean functionTypeExpected=expectedType != TypeUtils.NO_EXPECTED_TYPE && JetStandardClasses.isFunctionType(expectedType);
+  boolean functionTypeExpected=expectedType != TypeUtils.NO_EXPECTED_TYPE && KotlinBuiltIns.getInstance().isFunctionType(expectedType);
   SimpleFunctionDescriptorImpl functionDescriptor=createFunctionDescriptor(expression,context,functionTypeExpected);
   List<JetType> parameterTypes=Lists.newArrayList();
   List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
@@ -22,7 +22,7 @@
   }
  else {
     if (functionTypeExpected) {
-      returnType=JetStandardClasses.getReturnTypeFromFunctionType(expectedType);
+      returnType=KotlinBuiltIns.getInstance().getReturnTypeFromFunctionType(expectedType);
     }
     returnType=context.expressionTypingServices.getBlockReturnedType(functionInnerScope,bodyExpression,CoercionStrategy.COERCION_TO_UNIT,context.replaceExpectedType(returnType).replaceBindingTrace(temporaryTrace),temporaryTrace).getType();
   }
@@ -35,11 +35,11 @@
   JetType safeReturnType=returnType == null ? ErrorUtils.createErrorType("<return type>") : returnType;
   functionDescriptor.setReturnType(safeReturnType);
   if (!functionLiteral.hasDeclaredReturnType() && functionTypeExpected) {
-    JetType expectedReturnType=JetStandardClasses.getReturnTypeFromFunctionType(expectedType);
-    if (JetStandardClasses.isUnit(expectedReturnType)) {
-      functionDescriptor.setReturnType(JetStandardClasses.getUnitType());
-      return DataFlowUtils.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,parameterTypes,JetStandardClasses.getUnitType()),expression,context,context.dataFlowInfo);
+    JetType expectedReturnType=KotlinBuiltIns.getInstance().getReturnTypeFromFunctionType(expectedType);
+    if (KotlinBuiltIns.getInstance().isUnit(expectedReturnType)) {
+      functionDescriptor.setReturnType(KotlinBuiltIns.getInstance().getUnitType());
+      return DataFlowUtils.checkType(KotlinBuiltIns.getInstance().getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,parameterTypes,KotlinBuiltIns.getInstance().getUnitType()),expression,context,context.dataFlowInfo);
     }
   }
-  return DataFlowUtils.checkType(JetStandardClasses.getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,parameterTypes,safeReturnType),expression,context,context.dataFlowInfo);
+  return DataFlowUtils.checkType(KotlinBuiltIns.getInstance().getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,parameterTypes,safeReturnType),expression,context,context.dataFlowInfo);
 }
