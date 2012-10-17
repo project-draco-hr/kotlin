@@ -1,0 +1,19 @@
+{
+  for (  PsiMethod ownMethod : psiClass.getPsiClass().getMethods()) {
+    PsiMethodWrapper method=new PsiMethodWrapper(ownMethod);
+    if (!includeMember(method)) {
+      continue;
+    }
+    PropertyParseResult propertyParseResult=PropertyNameUtils.parseMethodToProperty(method.getName());
+    if (propertyParseResult != null && propertyParseResult.isGetter()) {
+      processGetter(ownMethod,method,propertyParseResult);
+    }
+ else     if (propertyParseResult != null && !propertyParseResult.isGetter()) {
+      processSetter(method,propertyParseResult);
+    }
+    if (!method.getJetMethod().hasPropertyFlag()) {
+      NamedMembers namedMembers=cache.getOrCreateEmpty(Name.identifier(method.getName()));
+      namedMembers.addMethod(method);
+    }
+  }
+}
