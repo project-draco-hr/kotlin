@@ -1,12 +1,12 @@
 {
   StringBuilder sb=new StringBuilder();
-  deferred.assertEquals(nsa.getName(),nsb.getName());
-  sb.append("namespace " + nsa.getName() + "\n\n");
+  deferred.assertEquals(expectedNamespace.getName(),actualNamespace.getName());
+  sb.append("namespace " + expectedNamespace.getName() + "\n\n");
   Set<Name> classifierNames=Sets.newHashSet();
   Set<Name> propertyNames=Sets.newHashSet();
   Set<Name> functionNames=Sets.newHashSet();
   Set<Name> objectNames=Sets.newHashSet();
-  for (  DeclarationDescriptor ad : nsa.getMemberScope().getAllDescriptors()) {
+  for (  DeclarationDescriptor ad : expectedNamespace.getMemberScope().getAllDescriptors()) {
     if (ad instanceof ClassifierDescriptor) {
       classifierNames.add(ad.getName());
     }
@@ -19,7 +19,7 @@
  else     if (ad instanceof NamespaceDescriptor) {
       if (conf.recurseIntoPackage.apply(DescriptorUtils.getFQName(ad))) {
         NamespaceDescriptor namespaceDescriptorA=(NamespaceDescriptor)ad;
-        NamespaceDescriptor namespaceDescriptorB=nsb.getMemberScope().getNamespace(namespaceDescriptorA.getName());
+        NamespaceDescriptor namespaceDescriptorB=actualNamespace.getMemberScope().getNamespace(namespaceDescriptorA.getName());
         if (namespaceDescriptorB == null) {
           System.err.println("Namespace not found: " + namespaceDescriptorA.getQualifiedName());
         }
@@ -37,38 +37,38 @@
       throw new AssertionError("unknown member: " + ad);
     }
   }
-  for (  ClassDescriptor objectDescriptor : nsa.getMemberScope().getObjectDescriptors()) {
+  for (  ClassDescriptor objectDescriptor : expectedNamespace.getMemberScope().getObjectDescriptors()) {
     objectNames.add(objectDescriptor.getName());
   }
   for (  Name name : sorted(classifierNames)) {
-    ClassifierDescriptor ca=nsa.getMemberScope().getClassifier(name);
-    ClassifierDescriptor cb=nsb.getMemberScope().getClassifier(name);
-    deferred.assertTrue("Classifier not found in " + nsa + ": "+ name,ca != null);
-    deferred.assertTrue("Classifier not found in " + nsb + ": "+ name,cb != null);
+    ClassifierDescriptor ca=expectedNamespace.getMemberScope().getClassifier(name);
+    ClassifierDescriptor cb=actualNamespace.getMemberScope().getClassifier(name);
+    deferred.assertTrue("Classifier not found in " + expectedNamespace + ": "+ name,ca != null);
+    deferred.assertTrue("Classifier not found in " + actualNamespace + ": "+ name,cb != null);
     if (ca != null && cb != null) {
       compareClassifiers(ca,cb,sb);
     }
   }
   for (  Name name : sorted(objectNames)) {
-    ClassifierDescriptor ca=nsa.getMemberScope().getObjectDescriptor(name);
-    ClassifierDescriptor cb=nsb.getMemberScope().getObjectDescriptor(name);
-    deferred.assertTrue("Object not found in " + nsa + ": "+ name,ca != null);
-    deferred.assertTrue("Object not found in " + nsb + ": "+ name,cb != null);
+    ClassifierDescriptor ca=expectedNamespace.getMemberScope().getObjectDescriptor(name);
+    ClassifierDescriptor cb=actualNamespace.getMemberScope().getObjectDescriptor(name);
+    deferred.assertTrue("Object not found in " + expectedNamespace + ": "+ name,ca != null);
+    deferred.assertTrue("Object not found in " + actualNamespace + ": "+ name,cb != null);
     if (ca != null && cb != null) {
       compareClassifiers(ca,cb,sb);
     }
   }
   for (  Name name : sorted(propertyNames)) {
-    Collection<VariableDescriptor> pa=nsa.getMemberScope().getProperties(name);
-    Collection<VariableDescriptor> pb=nsb.getMemberScope().getProperties(name);
-    compareDeclarationSets("Properties in package " + nsa,pa,pb,sb);
-    deferred.assertTrue(nsb.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.getterName(name))).isEmpty());
-    deferred.assertTrue(nsb.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.setterName(name))).isEmpty());
+    Collection<VariableDescriptor> pa=expectedNamespace.getMemberScope().getProperties(name);
+    Collection<VariableDescriptor> pb=actualNamespace.getMemberScope().getProperties(name);
+    compareDeclarationSets("Properties in package " + expectedNamespace,pa,pb,sb);
+    deferred.assertTrue(actualNamespace.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.getterName(name))).isEmpty());
+    deferred.assertTrue(actualNamespace.getMemberScope().getFunctions(Name.identifier(PropertyCodegen.setterName(name))).isEmpty());
   }
   for (  Name name : sorted(functionNames)) {
-    Collection<FunctionDescriptor> fa=nsa.getMemberScope().getFunctions(name);
-    Collection<FunctionDescriptor> fb=nsb.getMemberScope().getFunctions(name);
-    compareDeclarationSets("Functions in package " + nsa,fa,fb,sb);
+    Collection<FunctionDescriptor> fa=expectedNamespace.getMemberScope().getFunctions(name);
+    Collection<FunctionDescriptor> fb=actualNamespace.getMemberScope().getFunctions(name);
+    compareDeclarationSets("Functions in package " + expectedNamespace,fa,fb,sb);
   }
   return sb.toString();
 }
