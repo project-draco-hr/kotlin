@@ -1,4 +1,7 @@
 {
+  if (LightClassUtil.belongsToKotlinBuiltIns(file)) {
+    logErrorWithOSInfo(null);
+  }
   final PsiJavaFileStubImpl answer=new PsiJavaFileStubImpl(JetPsiUtil.getFQName(file).getFqName(),true);
   final Project project=getProject();
   final Stack<StubElement> stubStack=new Stack<StubElement>();
@@ -21,9 +24,18 @@
   if (context.isError()) {
     throw new IllegalStateException("failed to analyze: " + context.getError(),context.getError());
   }
-  final GenerationState state=new GenerationState(project,builderFactory,context,Collections.singletonList(file));
-  final GenerationStrategy strategy=new LightClassGenerationStrategy(this,stubStack,answer);
-  strategy.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
-  state.getFactory().files();
+  try {
+    GenerationState state=new GenerationState(project,builderFactory,context,Collections.singletonList(file));
+    GenerationStrategy strategy=new LightClassGenerationStrategy(this,stubStack,answer);
+    strategy.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
+    state.getFactory().files();
+  }
+ catch (  ProcessCanceledException e) {
+    throw e;
+  }
+catch (  RuntimeException e) {
+    logErrorWithOSInfo(e);
+    throw e;
+  }
   return answer;
 }
