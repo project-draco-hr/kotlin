@@ -21,7 +21,7 @@
             result[0]=ErrorUtils.createErrorType("?");
           }
  else {
-            result[0]=new JetTypeImpl(annotations,typeParameterDescriptor.getTypeConstructor(),nullable || TypeUtils.hasNullableLowerBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),scopeForTypeParameter);
+            result[0]=new JetTypeImpl(annotations,typeParameterDescriptor.getTypeConstructor(),TypeUtils.hasNullableLowerBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),scopeForTypeParameter);
           }
           resolveTypeProjections(scope,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments(),trace,checkBounds);
         }
@@ -46,7 +46,7 @@
               }
             }
  else {
-              result[0]=new JetTypeImpl(annotations,typeConstructor,nullable,arguments,classDescriptor.getMemberScope(arguments));
+              result[0]=new JetTypeImpl(annotations,typeConstructor,false,arguments,classDescriptor.getMemberScope(arguments));
               if (checkBounds) {
                 TypeSubstitutor substitutor=TypeSubstitutor.create(result[0]);
                 for (int i=0, parametersSize=parameters.size(); i < parametersSize; i++) {
@@ -63,7 +63,11 @@
         }
       }
       @Override public void visitNullableType(      JetNullableType nullableType){
-        result[0]=resolveTypeElement(scope,annotations,nullableType.getInnerType(),true,trace,checkBounds);
+        JetType baseType=resolveTypeElement(scope,annotations,nullableType.getInnerType(),trace,checkBounds);
+        if (baseType.isNullable()) {
+          trace.report(REDUNDANT_NULLABLE.on(nullableType));
+        }
+        result[0]=TypeUtils.makeNullable(baseType);
       }
       @Override public void visitTupleType(      JetTupleType type){
         if (type.getComponentTypeRefs().size() <= 3) {
@@ -99,9 +103,6 @@
   }
   if (result[0] == null) {
     return ErrorUtils.createErrorType(typeElement == null ? "No type element" : typeElement.getText());
-  }
-  if (nullable) {
-    return TypeUtils.makeNullable(result[0]);
   }
   return result[0];
 }
