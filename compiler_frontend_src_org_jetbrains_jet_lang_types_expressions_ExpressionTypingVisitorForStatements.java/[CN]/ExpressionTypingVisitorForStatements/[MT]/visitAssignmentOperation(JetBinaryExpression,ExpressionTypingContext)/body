@@ -1,7 +1,7 @@
 {
   JetExpression right=expression.getRight();
   if (right == null)   return null;
-  TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(contextWithExpectedType.trace);
+  TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(contextWithExpectedType.trace,"trace to resolve array set method for binary expression",expression);
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceBindingTrace(temporaryBindingTrace);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   IElementType operationType=operationSign.getReferencedNameElementType();
@@ -16,11 +16,11 @@
   }
   ExpressionReceiver receiver=new ExpressionReceiver(left,leftType);
   Name name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
-  TemporaryBindingTrace assignmentOperationTrace=TemporaryBindingTrace.create(context.trace);
+  TemporaryBindingTrace assignmentOperationTrace=TemporaryBindingTrace.create(context.trace,"trace to check assignment operation like '+=' for",expression);
   OverloadResolutionResults<FunctionDescriptor> assignmentOperationDescriptors=basic.getResolutionResultsForBinaryCall(scope,name,context.replaceBindingTrace(assignmentOperationTrace),expression,receiver);
   JetType assignmentOperationType=OverloadResolutionResultsUtil.getResultType(assignmentOperationDescriptors);
   Name counterpartName=OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
-  TemporaryBindingTrace binaryOperationTrace=TemporaryBindingTrace.create(context.trace);
+  TemporaryBindingTrace binaryOperationTrace=TemporaryBindingTrace.create(context.trace,"trace to check binary operation like '+' for",expression);
   OverloadResolutionResults<FunctionDescriptor> binaryOperationDescriptors=basic.getResolutionResultsForBinaryCall(scope,counterpartName,context.replaceBindingTrace(binaryOperationTrace),expression,receiver);
   JetType binaryOperationType=OverloadResolutionResultsUtil.getResultType(binaryOperationDescriptors);
   JetType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
@@ -44,7 +44,7 @@
     binaryOperationTrace.commit();
     context.trace.record(VARIABLE_REASSIGNMENT,expression);
     if (left instanceof JetArrayAccessExpression) {
-      ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(contextWithExpectedType.trace));
+      ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(contextWithExpectedType.trace,"trace to resolve array set method for assignment",expression));
       basic.resolveArrayAccessSetMethod((JetArrayAccessExpression)left,right,contextForResolve,context.trace);
     }
   }

@@ -1,8 +1,14 @@
 {
   JetType effectiveExpectedType=getEffectiveExpectedType(valueParameterDescriptor,valueArgument);
-  TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace);
   JetExpression argumentExpression=valueArgument.getArgumentExpression();
-  JetType type=argumentExpression != null ? expressionTypingServices.getType(context.scope,argumentExpression,substitutor.substitute(effectiveExpectedType,Variance.INVARIANT),context.dataFlowInfo,traceForUnknown) : null;
+  JetType type;
+  if (argumentExpression != null) {
+    TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace,"transient trace to resolve argument",argumentExpression);
+    type=expressionTypingServices.getType(context.scope,argumentExpression,substitutor.substitute(effectiveExpectedType,Variance.INVARIANT),context.dataFlowInfo,traceForUnknown);
+  }
+ else {
+    type=null;
+  }
   constraintSystem.addSupertypeConstraint(effectiveExpectedType,type,ConstraintPosition.getValueParameterPosition(valueParameterDescriptor.getIndex()));
   if (type == null || ErrorUtils.isErrorType(type))   return false;
   return true;
