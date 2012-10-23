@@ -1,0 +1,22 @@
+{
+  ResolutionCandidate<D> candidate=ResolutionCandidate.create(call.getCandidateDescriptor(),call.getThisObject(),call.getReceiverArgument(),call.getExplicitReceiverKind(),call.isSafeCall());
+  TemporaryBindingTrace trace=TemporaryBindingTrace.create(context.trace,call.getTrace().toString() + "(copy)");
+  ResolvedCallImpl<D> copy=ResolvedCallImpl.create(candidate,trace);
+  call.getTrace().addAllMyDataTo(trace);
+  trace.record(BindingContext.RESOLVED_CALL,context.call.getCalleeExpression(),copy);
+  if (call.isDirty()) {
+    copy.argumentHasNoType();
+  }
+  copy.setHasUnknownTypeParameters(call.hasUnknownTypeParameters());
+  ConstraintSystem constraintSystem=call.getConstraintSystem();
+  if (constraintSystem != null) {
+    copy.setConstraintSystem(constraintSystem.copy());
+  }
+  for (  Map.Entry<TypeParameterDescriptor,JetType> entry : call.getTypeArguments().entrySet()) {
+    copy.recordTypeArgument(entry.getKey(),entry.getValue());
+  }
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : call.getValueArguments().entrySet()) {
+    copy.recordValueArgument(entry.getKey(),entry.getValue());
+  }
+  return copy;
+}
