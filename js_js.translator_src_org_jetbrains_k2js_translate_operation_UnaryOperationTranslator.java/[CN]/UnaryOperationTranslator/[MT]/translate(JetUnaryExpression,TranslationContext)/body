@@ -1,13 +1,14 @@
 {
-  if (isExclExcl(expression)) {
-    return translateExclExclOperator(expression,context);
+  IElementType operationToken=expression.getOperationReference().getReferencedNameElementType();
+  if (operationToken == JetTokens.EXCLEXCL) {
+    return sure(translateAsExpression(getBaseExpression(expression),context),context);
   }
-  if (IncrementTranslator.isIncrement(expression)) {
+  if (IncrementTranslator.isIncrement(operationToken)) {
     return IncrementTranslator.translate(expression,context);
   }
   JsExpression baseExpression=TranslationUtils.translateBaseExpression(context,expression);
   if (isExclForBinaryEqualLikeExpr(expression,baseExpression)) {
     return translateExclForBinaryEqualLikeExpr((JsBinaryOperation)baseExpression);
   }
-  return translateAsCall(expression,context,baseExpression);
+  return CallBuilder.build(context).receiver(TranslationUtils.translateBaseExpression(context,expression)).resolvedCall(getResolvedCall(context.bindingContext(),expression.getOperationReference())).translate();
 }
