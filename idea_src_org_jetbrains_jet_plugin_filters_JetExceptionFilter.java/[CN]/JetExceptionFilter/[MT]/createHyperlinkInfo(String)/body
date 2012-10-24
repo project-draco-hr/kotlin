@@ -1,3 +1,26 @@
 {
+  Project project=searchScope.getProject();
+  if (project == null)   return null;
+  final StackTraceElement element=parseStackTraceLine(line);
+  if (element == null)   return null;
+  String fullyQualifiedName=element.getClassName();
+  int lastDot=fullyQualifiedName.lastIndexOf('.');
+  String classNameWithInners=fullyQualifiedName.substring(lastDot + 1);
+  final String packageName=lastDot >= 0 ? fullyQualifiedName.substring(0,lastDot) : "";
+  if (!classNameWithInners.equals(JvmAbi.PACKAGE_CLASS) && !classNameWithInners.startsWith(JvmAbi.PACKAGE_CLASS + "$")) {
+    return null;
+  }
+  Collection<JetFile> files=Collections2.filter(JetFilesProvider.getInstance(project).allInScope(searchScope),new Predicate<JetFile>(){
+    @Override public boolean apply(    @Nullable JetFile file){
+      return file != null && file.getName().equals(element.getFileName()) && JetPsiUtil.getFQName(file).getFqName().equals(packageName);
+    }
+  }
+);
+  if (files.isEmpty())   return null;
+  if (files.size() == 1) {
+    JetFile file=files.iterator().next();
+    VirtualFile virtualFile=file.getVirtualFile();
+    return virtualFile == null ? null : new OpenFileHyperlinkInfo(project,virtualFile,element.getLineNumber() - 1);
+  }
   return null;
 }
