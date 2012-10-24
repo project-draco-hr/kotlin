@@ -1,14 +1,13 @@
 {
+  String sourceName;
   try {
-    final String sourceName=location.sourceName();
-    final Project project=myDebugProcess.getProject();
-    final PsiFile[] files=FilenameIndex.getFilesByName(project,sourceName,ProjectScope.getAllScope(project));
-    if (files.length == 1 && files[0] instanceof JetFile) {
-      return files[0];
-    }
+    sourceName=location.sourceName();
   }
  catch (  AbsentInformationException e) {
-    throw new NoDataException();
+    return null;
   }
-  throw new NoDataException();
+  String referenceFqName=location.declaringType().name();
+  String referenceInternalName=referenceFqName.replace('.','/');
+  JvmClassName className=JvmClassName.byInternalName(referenceInternalName);
+  return DebuggerUtils.findSourceFileForClass(GlobalSearchScope.allScope(myDebugProcess.getProject()),className,sourceName);
 }
