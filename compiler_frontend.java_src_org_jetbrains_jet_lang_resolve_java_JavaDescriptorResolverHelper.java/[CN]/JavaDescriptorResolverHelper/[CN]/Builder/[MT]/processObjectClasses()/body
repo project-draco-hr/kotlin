@@ -1,0 +1,17 @@
+{
+  PsiClass[] classes=psiPackage != null ? psiPackage.getClasses() : psiClass.getPsiClass().getInnerClasses();
+  for (  PsiClass psiClass : classes) {
+    if (!psiClass.isPhysical()) {
+      continue;
+    }
+    if (JetClassAnnotation.get(psiClass).kind() != JvmStdlibNames.FLAG_CLASS_KIND_OBJECT) {
+      continue;
+    }
+    PsiField instanceField=psiClass.findFieldByName(JvmAbi.INSTANCE_FIELD,false);
+    if (instanceField != null) {
+      NamedMembers namedMembers=getNamedMembers(Name.identifier(psiClass.getName()));
+      TypeSource type=new TypeSource("",instanceField.getType(),instanceField);
+      namedMembers.addPropertyAccessor(new PropertyAccessorData(new PsiFieldWrapper(instanceField),type,null));
+    }
+  }
+}
