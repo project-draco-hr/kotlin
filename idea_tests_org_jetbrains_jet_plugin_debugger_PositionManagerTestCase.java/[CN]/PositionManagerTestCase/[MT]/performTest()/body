@@ -1,22 +1,12 @@
 {
-  final List<JetFile> files=Lists.newArrayList();
+  List<JetFile> files=Lists.newArrayList(JetFilesProvider.getInstance(getProject()).allInScope(GlobalSearchScope.allScope(getProject())));
   final List<Breakpoint> breakpoints=Lists.newArrayList();
-  for (  String filename : filenames) {
-    File file=new File(filename);
-    String fileContent;
-    try {
-      fileContent=FileUtil.loadFile(file);
-    }
- catch (    IOException e) {
-      throw ExceptionUtils.rethrow(e);
-    }
-    final JetFile jetFile=JetTestUtils.createFile(file.getAbsolutePath(),fileContent,getProject());
-    files.add(jetFile);
-    breakpoints.addAll(extractBreakpointsInfo(jetFile,fileContent));
+  for (  JetFile file : files) {
+    breakpoints.addAll(extractBreakpointsInfo(file,file.getText()));
   }
   GenerationState state=GenerationUtils.compileManyFilesGetGenerationStateForTest(getProject(),files);
   Map<String,ReferenceType> referencesByName=getReferenceMap(state.getFactory());
-  final DebugProcess debugProcess=createDebugProcess(referencesByName);
+  DebugProcess debugProcess=createDebugProcess(referencesByName);
   final PositionManager positionManager=createPositionManager(debugProcess,files,state);
   ApplicationManager.getApplication().runReadAction(new Runnable(){
     public void run(){
