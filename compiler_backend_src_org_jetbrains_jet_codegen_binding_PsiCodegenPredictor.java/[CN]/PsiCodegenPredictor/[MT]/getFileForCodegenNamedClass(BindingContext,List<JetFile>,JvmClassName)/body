@@ -1,0 +1,16 @@
+{
+  final Ref<DeclarationDescriptor> resultingDescriptor=Ref.create();
+  DelegatingBindingTrace trace=new DelegatingBindingTrace(context){
+    @Override public <K,V>void record(    WritableSlice<K,V> slice,    K key,    V value){
+      super.record(slice,key,value);
+      if (slice == CodegenBinding.FQN && key instanceof DeclarationDescriptor) {
+        if (className.equals(value)) {
+          resultingDescriptor.set((DeclarationDescriptor)key);
+        }
+      }
+    }
+  }
+;
+  CodegenBinding.initTrace(trace,allNamespaceFiles);
+  return resultingDescriptor.isNull() ? null : BindingContextUtils.getContainingFile(trace.getBindingContext(),resultingDescriptor.get());
+}
