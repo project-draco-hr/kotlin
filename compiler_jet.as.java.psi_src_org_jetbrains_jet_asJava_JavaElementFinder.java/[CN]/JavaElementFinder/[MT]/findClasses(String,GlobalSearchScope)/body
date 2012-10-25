@@ -3,16 +3,13 @@
     return PsiClass.EMPTY_ARRAY;
   }
   FqName qualifiedName=new FqName(qualifiedNameString);
-  String internalNameUnsafe=qualifiedNameString.replace('.','/');
   if (qualifiedName.getFqName().startsWith("java."))   return PsiClass.EMPTY_ARRAY;
   List<PsiClass> answer=new SmartList<PsiClass>();
   final Collection<JetFile> filesInScope=collectProjectJetFiles(project,scope);
   for (  JetFile file : filesInScope) {
     final FqName packageName=JetPsiUtil.getFQName(file);
     if (packageName != null && qualifiedName.getFqName().startsWith(packageName.getFqName())) {
-      String packageInternalName=NamespaceCodegen.getJVMClassNameForKotlinNs(packageName).getInternalName();
-      String multiFileNamespaceInternalName=NamespaceCodegen.getNamespacePartInternalName(file);
-      if (multiFileNamespaceInternalName.equals(internalNameUnsafe) || (packageInternalName.equals(internalNameUnsafe) && NamespaceCodegen.shouldGenerateNSClass(Arrays.asList(file)))) {
+      if (qualifiedName.equals(QualifiedNamesUtil.combine(packageName,Name.identifier(JvmAbi.PACKAGE_CLASS))) && NamespaceCodegen.shouldGenerateNSClass(Arrays.asList(file))) {
         JetLightClass lightClass=JetLightClass.create(psiManager,file,qualifiedName);
         if (lightClass != null) {
           answer.add(lightClass);
