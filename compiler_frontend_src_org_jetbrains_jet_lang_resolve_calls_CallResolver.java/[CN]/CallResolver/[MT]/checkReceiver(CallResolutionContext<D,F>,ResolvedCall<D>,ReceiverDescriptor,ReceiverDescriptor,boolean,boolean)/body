@@ -1,9 +1,10 @@
 {
+  BindingContext bindingContext=context.candidateCall.getTrace().getBindingContext();
   ResolutionStatus result=SUCCESS;
   if (receiverParameter.exists() && receiverArgument.exists()) {
     boolean safeAccess=isExplicitReceiver && !implicitInvokeCheck && candidateCall.isSafeCall();
     JetType receiverArgumentType=receiverArgument.getType();
-    AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(context.dataFlowInfo,context.candidateCall.getTrace().getBindingContext());
+    AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(context.dataFlowInfo,bindingContext);
     if (!safeAccess && !receiverParameter.getType().isNullable() && !autoCastService.isNotNull(receiverArgument)) {
       context.tracing.unsafeCall(context.candidateCall.getTrace(),receiverArgumentType,implicitInvokeCheck);
       result=UNSAFE_CALL_ERROR;
@@ -15,7 +16,8 @@
         result=OTHER_ERROR;
       }
     }
-    if (safeAccess && !receiverArgumentType.isNullable()) {
+    DataFlowValue receiverValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(receiverArgument,bindingContext);
+    if (safeAccess && !context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
       context.tracing.unnecessarySafeCall(context.candidateCall.getTrace(),receiverArgumentType);
     }
   }
