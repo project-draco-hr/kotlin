@@ -1,0 +1,34 @@
+{
+  _if();
+  spaceOpt();
+  leftParen();
+  accept(x.getIfExpression());
+  rightParen();
+  JsStatement thenStmt=x.getThenStatement();
+  _nestedPush(thenStmt);
+  accept(thenStmt);
+  _nestedPop(thenStmt);
+  JsStatement elseStatement=x.getElseStatement();
+  if (elseStatement != null) {
+    if (needSemi) {
+      semi();
+      newlineOpt();
+    }
+ else {
+      spaceOpt();
+      needSemi=true;
+    }
+    p.print(CHARS_ELSE);
+    boolean elseIf=elseStatement instanceof JsIf;
+    if (!elseIf) {
+      _nestedPush(elseStatement);
+    }
+ else {
+      space();
+    }
+    accept(elseStatement);
+    if (!elseIf) {
+      _nestedPop(elseStatement);
+    }
+  }
+}
