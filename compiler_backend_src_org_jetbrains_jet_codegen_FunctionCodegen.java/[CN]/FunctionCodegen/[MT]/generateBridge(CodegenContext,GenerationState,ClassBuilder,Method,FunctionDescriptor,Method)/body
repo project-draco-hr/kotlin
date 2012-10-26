@@ -11,15 +11,8 @@
     InstructionAdapter iv=new InstructionAdapter(mv);
     iv.load(0,OBJECT_TYPE);
     for (int i=0, reg=1; i < argTypes.length; i++) {
-      Type argType=argTypes[i];
-      iv.load(reg,argType);
-      if (argType.getSort() == Type.OBJECT) {
-        StackValue.onStack(OBJECT_TYPE).put(originalArgTypes[i],iv);
-      }
- else       if (argType.getSort() == Type.ARRAY) {
-        StackValue.onStack(JAVA_ARRAY_GENERIC_TYPE).put(originalArgTypes[i],iv);
-      }
-      reg+=argType.getSize();
+      StackValue.local(reg,argTypes[i]).put(originalArgTypes[i],iv);
+      reg+=argTypes[i].getSize();
     }
     iv.invokevirtual(state.getTypeMapper().mapType((ClassDescriptor)owner.getContextDescriptor()).getInternalName(),jvmSignature.getName(),jvmSignature.getDescriptor());
     if (isPrimitive(jvmSignature.getReturnType()) && !isPrimitive(overridden.getReturnType())) {
