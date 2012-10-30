@@ -1,18 +1,18 @@
 {
-  ReceiverDescriptor callReceiver=callableDescriptor.getReceiverParameter();
-  if (!expectedReceiver.exists() && !callReceiver.exists()) {
+  ReceiverParameterDescriptor receiverParameter=callableDescriptor.getReceiverParameter();
+  if (!receiverArgument.exists() && !receiverParameter.exists()) {
     return true;
   }
-  if (!(expectedReceiver.exists() && callReceiver.exists())) {
+  if (!(receiverArgument.exists() && receiverParameter.exists())) {
     return false;
   }
-  Set<Name> typeNamesInReceiver=collectUsedTypeNames(callReceiver.getType());
+  Set<Name> typeNamesInReceiver=collectUsedTypeNames(receiverParameter.getType());
   ConstraintSystem constraintSystem=new ConstraintSystemImpl();
   for (  TypeParameterDescriptor typeParameterDescriptor : callableDescriptor.getTypeParameters()) {
     if (typeNamesInReceiver.contains(typeParameterDescriptor.getName())) {
       constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
     }
   }
-  constraintSystem.addSubtypeConstraint(callReceiver.getType(),receiverType,ConstraintPosition.RECEIVER_POSITION);
+  constraintSystem.addSubtypeConstraint(receiverParameter.getType(),receiverType,ConstraintPosition.RECEIVER_POSITION);
   return constraintSystem.isSuccessful() && ConstraintsUtil.checkBoundsAreSatisfied(constraintSystem);
 }
