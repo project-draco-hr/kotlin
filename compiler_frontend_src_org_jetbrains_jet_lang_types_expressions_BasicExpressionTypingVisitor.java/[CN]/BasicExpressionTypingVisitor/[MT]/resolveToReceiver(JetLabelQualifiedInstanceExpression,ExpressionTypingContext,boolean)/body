@@ -5,21 +5,23 @@
     thisReceiver=context.labelResolver.resolveThisLabel(expression.getInstanceReference(),expression.getTargetLabel(),context,thisReceiver,new LabelName(labelName));
   }
  else {
+    List<ReceiverParameterDescriptor> receivers=JetScopeUtils.getImplicitReceiversHierarchy(context.scope);
     if (onlyClassReceivers) {
-      List<ReceiverDescriptor> receivers=Lists.newArrayList();
-      context.scope.getImplicitReceiversHierarchy(receivers);
-      for (      ReceiverDescriptor receiver : receivers) {
-        if (receiver instanceof ClassReceiver) {
+      for (      ReceiverParameterDescriptor receiver : receivers) {
+        if (receiver.getContainingDeclaration() instanceof ClassDescriptor) {
           thisReceiver=receiver;
           break;
         }
       }
     }
- else {
-      thisReceiver=context.scope.getImplicitReceiver();
+ else     if (!receivers.isEmpty()) {
+      thisReceiver=receivers.get(0);
     }
-    if (thisReceiver instanceof ThisReceiverDescriptor) {
-      context.trace.record(REFERENCE_TARGET,expression.getInstanceReference(),((ThisReceiverDescriptor)thisReceiver).getDeclarationDescriptor());
+ else {
+      thisReceiver=ReceiverParameterDescriptor.NO_RECEIVER_PARAMETER;
+    }
+    if (thisReceiver != null && thisReceiver.exists()) {
+      context.trace.record(REFERENCE_TARGET,expression.getInstanceReference(),thisReceiver.getContainingDeclaration());
     }
   }
   return thisReceiver;
