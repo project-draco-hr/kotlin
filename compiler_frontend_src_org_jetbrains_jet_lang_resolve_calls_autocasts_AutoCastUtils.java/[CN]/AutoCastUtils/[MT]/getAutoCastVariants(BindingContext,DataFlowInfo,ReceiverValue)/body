@@ -1,0 +1,28 @@
+{
+  return receiverToCast.accept(new ReceiverValueVisitor<List<ReceiverValue>,Object>(){
+    @Override public List<ReceiverValue> visitNoReceiver(    ReceiverValue noReceiver,    Object data){
+      return Collections.emptyList();
+    }
+    @Override public List<ReceiverValue> visitTransientReceiver(    TransientReceiver receiver,    Object data){
+      return Collections.emptyList();
+    }
+    @Override public List<ReceiverValue> visitExtensionReceiver(    ExtensionReceiver receiver,    Object data){
+      return castThis(dataFlowInfo,receiver);
+    }
+    @Override public List<ReceiverValue> visitClassReceiver(    ClassReceiver receiver,    Object data){
+      return castThis(dataFlowInfo,receiver);
+    }
+    @Override public List<ReceiverValue> visitScriptReceiver(    ScriptReceiver receiver,    Object data){
+      return Collections.emptyList();
+    }
+    @Override public List<ReceiverValue> visitExpressionReceiver(    ExpressionReceiver receiver,    Object data){
+      DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(receiver.getExpression(),receiver.getType(),bindingContext);
+      List<ReceiverValue> result=Lists.newArrayList();
+      for (      JetType possibleType : dataFlowInfo.getPossibleTypes(dataFlowValue)) {
+        result.add(new AutoCastReceiver(receiver,possibleType,dataFlowValue.isStableIdentifier()));
+      }
+      return result;
+    }
+  }
+,null);
+}
