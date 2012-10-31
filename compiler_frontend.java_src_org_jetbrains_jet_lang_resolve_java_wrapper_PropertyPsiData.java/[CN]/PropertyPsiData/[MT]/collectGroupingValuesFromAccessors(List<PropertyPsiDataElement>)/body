@@ -1,0 +1,37 @@
+{
+  Map<String,PropertyPsiData> map=new HashMap<String,PropertyPsiData>();
+  for (  PropertyPsiDataElement propertyAccessor : propertyAccessors) {
+    String key=propertyKeyForGrouping(propertyAccessor);
+    PropertyPsiData value=map.get(key);
+    if (value == null) {
+      value=new PropertyPsiData();
+      value.isExtension=propertyAccessor.getReceiverType() != null;
+      map.put(key,value);
+    }
+    if (value.isExtension && (propertyAccessor.getReceiverType() == null)) {
+      throw new IllegalStateException("internal error, incorrect key");
+    }
+    if (propertyAccessor.isGetter()) {
+      if (value.getter != null) {
+        throw new IllegalStateException("oops, duplicate key");
+      }
+      value.getter=propertyAccessor;
+    }
+ else     if (propertyAccessor.isSetter()) {
+      if (value.setter != null) {
+        throw new IllegalStateException("oops, duplicate key");
+      }
+      value.setter=propertyAccessor;
+    }
+ else     if (propertyAccessor.isField()) {
+      if (value.field != null) {
+        throw new IllegalStateException("oops, duplicate key");
+      }
+      value.field=propertyAccessor;
+    }
+ else {
+      throw new IllegalStateException();
+    }
+  }
+  return map;
+}
