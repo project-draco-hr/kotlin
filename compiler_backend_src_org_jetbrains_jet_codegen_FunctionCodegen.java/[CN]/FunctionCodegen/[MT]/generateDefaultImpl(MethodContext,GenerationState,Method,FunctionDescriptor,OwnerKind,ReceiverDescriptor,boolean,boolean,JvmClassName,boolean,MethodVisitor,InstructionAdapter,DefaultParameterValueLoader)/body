@@ -1,0 +1,80 @@
+{
+  mv.visitCode();
+  FrameMap frameMap=owner.prepareFrame(state.getTypeMapper());
+  if (kind instanceof OwnerKind.StaticDelegateKind) {
+    frameMap.leaveTemp(OBJECT_TYPE);
+  }
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),owner,state);
+  int var=0;
+  if (!aStatic) {
+    var++;
+  }
+  Type receiverType;
+  if (hasReceiver) {
+    receiverType=state.getTypeMapper().mapType(receiverParameter.getType());
+    var+=receiverType.getSize();
+  }
+ else {
+    receiverType=Type.DOUBLE_TYPE;
+  }
+  Type[] argTypes=jvmSignature.getArgumentTypes();
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  for (int i=0; i < paramDescrs.size(); i++) {
+    Type argType=argTypes[i + (hasReceiver ? 1 : 0)];
+    int size=argType.getSize();
+    frameMap.enter(paramDescrs.get(i),argType);
+    var+=size;
+  }
+  int maskIndex=var;
+  var=0;
+  if (!aStatic) {
+    mv.visitVarInsn(ALOAD,var++);
+  }
+  if (hasReceiver) {
+    iv.load(var,receiverType);
+    var+=receiverType.getSize();
+  }
+  int extra=hasReceiver ? 1 : 0;
+  for (int index=0; index < paramDescrs.size(); index++) {
+    ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
+    Type t=argTypes[extra + index];
+    if (frameMap.getIndex(parameterDescriptor) < 0) {
+      frameMap.enter(parameterDescriptor,t);
+    }
+    if (parameterDescriptor.declaresDefaultValue()) {
+      iv.load(maskIndex,Type.INT_TYPE);
+      iv.iconst(1 << index);
+      iv.and(Type.INT_TYPE);
+      Label loadArg=new Label();
+      iv.ifeq(loadArg);
+      loadStrategy.putValueOnStack(parameterDescriptor,codegen);
+      int ind=frameMap.getIndex(parameterDescriptor);
+      iv.store(ind,t);
+      iv.mark(loadArg);
+    }
+    iv.load(var,t);
+    var+=t.getSize();
+  }
+  final String internalName=ownerInternalName.getInternalName();
+  final String jvmSignatureName=jvmSignature.getName();
+  final String jvmSignatureDescriptor=jvmSignature.getDescriptor();
+  if (!aStatic) {
+    if (kind == OwnerKind.TRAIT_IMPL) {
+      iv.invokeinterface(internalName,jvmSignatureName,jvmSignatureDescriptor);
+    }
+ else {
+      if (!constructor) {
+        iv.invokevirtual(internalName,jvmSignatureName,jvmSignatureDescriptor);
+      }
+ else {
+        iv.invokespecial(internalName,jvmSignatureName,jvmSignatureDescriptor);
+      }
+    }
+  }
+ else {
+    iv.invokestatic(internalName,jvmSignatureName,jvmSignatureDescriptor);
+  }
+  iv.areturn(jvmSignature.getReturnType());
+  endVisit(mv,"default method",callableDescriptorToDeclaration(state.getBindingContext(),functionDescriptor));
+  mv.visitEnd();
+}
