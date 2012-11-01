@@ -3,15 +3,18 @@
   List<TypeParameterDescriptor> substitutedTypeParameters=Lists.newArrayList();
   TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(getTypeParameters(),originalSubstitutor,substitutedDescriptor,substitutedTypeParameters);
   JetType substitutedReceiverParameterType=null;
-  if (receiverParameter.exists()) {
+  if (receiverParameter != null) {
     substitutedReceiverParameterType=substitutor.substitute(getReceiverParameter().getType(),Variance.IN_VARIANCE);
     if (substitutedReceiverParameterType == null) {
       return null;
     }
   }
-  ReceiverParameterDescriptor substitutedExpectedThis=expectedThisObject.substitute(substitutor);
-  if (substitutedExpectedThis == null) {
-    return null;
+  ReceiverParameterDescriptor substitutedExpectedThis=null;
+  if (expectedThisObject != null) {
+    substitutedExpectedThis=expectedThisObject.substitute(substitutor);
+    if (substitutedExpectedThis == null) {
+      return null;
+    }
   }
   List<ValueParameterDescriptor> substitutedValueParameters=FunctionDescriptorUtil.getSubstitutedValueParameters(substitutedDescriptor,this,substitutor);
   if (substitutedValueParameters == null) {
