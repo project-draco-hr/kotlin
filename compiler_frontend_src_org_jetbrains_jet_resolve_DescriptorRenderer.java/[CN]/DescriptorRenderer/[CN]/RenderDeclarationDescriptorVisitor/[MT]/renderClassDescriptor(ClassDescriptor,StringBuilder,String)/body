@@ -1,13 +1,18 @@
 {
-  if (descriptor.getKind() != ClassKind.CLASS_OBJECT) {
-    renderVisibility(descriptor.getVisibility(),builder);
+  boolean isNotClassObject=descriptor.getKind() != ClassKind.CLASS_OBJECT;
+  if (!shouldStartsFromName()) {
+    if (isNotClassObject) {
+      renderVisibility(descriptor.getVisibility(),builder);
+      if (descriptor.getKind() != ClassKind.TRAIT && descriptor.getKind() != ClassKind.OBJECT) {
+        renderModality(descriptor.getModality(),builder);
+      }
+    }
+    builder.append(renderKeyword(keyword));
+    if (isNotClassObject) {
+      builder.append(" ");
+    }
   }
-  if (descriptor.getKind() != ClassKind.TRAIT && descriptor.getKind() != ClassKind.OBJECT && descriptor.getKind() != ClassKind.CLASS_OBJECT) {
-    renderModality(descriptor.getModality(),builder);
-  }
-  builder.append(renderKeyword(keyword));
-  if (descriptor.getKind() != ClassKind.CLASS_OBJECT) {
-    builder.append(" ");
+  if (isNotClassObject) {
     renderName(descriptor,builder);
     renderTypeParameters(descriptor.getTypeConstructor().getParameters(),builder);
   }
