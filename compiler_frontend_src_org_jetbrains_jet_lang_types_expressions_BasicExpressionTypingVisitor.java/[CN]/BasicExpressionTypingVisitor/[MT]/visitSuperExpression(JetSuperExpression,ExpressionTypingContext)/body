@@ -3,74 +3,19 @@
     context.trace.report(SUPER_IS_NOT_AN_EXPRESSION.on(expression,expression.getText()));
     return JetTypeInfo.create(null,context.dataFlowInfo);
   }
-  JetType result=null;
-  ReceiverParameterDescriptor thisReceiver=resolveToReceiver(expression,context,true);
-  if (thisReceiver == null)   return JetTypeInfo.create(null,context.dataFlowInfo);
-  if (!thisReceiver.exists()) {
-    context.trace.report(SUPER_NOT_AVAILABLE.on(expression));
-  }
- else {
-    JetType thisType=thisReceiver.getType();
-    Collection<? extends JetType> supertypes=thisType.getConstructor().getSupertypes();
-    TypeSubstitutor substitutor=TypeSubstitutor.create(thisType);
-    JetTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
-    if (superTypeQualifier != null) {
-      JetTypeElement typeElement=superTypeQualifier.getTypeElement();
-      DeclarationDescriptor classifierCandidate=null;
-      JetType supertype=null;
-      PsiElement redundantTypeArguments=null;
-      if (typeElement instanceof JetUserType) {
-        JetUserType userType=(JetUserType)typeElement;
-        if (userType.getTypeArguments().isEmpty()) {
-          classifierCandidate=context.expressionTypingServices.getTypeResolver().resolveClass(context.scope,userType,context.trace);
-        }
- else {
-          supertype=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,superTypeQualifier,context.trace,true);
-          redundantTypeArguments=userType.getTypeArgumentList();
-        }
-      }
- else {
-        supertype=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,superTypeQualifier,context.trace,true);
-      }
-      if (supertype != null) {
-        if (supertypes.contains(supertype)) {
-          result=supertype;
-        }
-      }
- else       if (classifierCandidate instanceof ClassDescriptor) {
-        ClassDescriptor superclass=(ClassDescriptor)classifierCandidate;
-        for (        JetType declaredSupertype : supertypes) {
-          if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
-            result=substitutor.safeSubstitute(declaredSupertype,Variance.INVARIANT);
-            break;
-          }
-        }
-      }
-      boolean validClassifier=classifierCandidate != null && !ErrorUtils.isError(classifierCandidate);
-      boolean validType=supertype != null && !ErrorUtils.isErrorType(supertype);
-      if (result == null && (validClassifier || validType)) {
-        context.trace.report(NOT_A_SUPERTYPE.on(superTypeQualifier));
-      }
- else       if (redundantTypeArguments != null) {
-        context.trace.report(TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER.on(redundantTypeArguments));
-      }
-    }
- else {
-      if (supertypes.size() > 1) {
-        context.trace.report(AMBIGUOUS_SUPER.on(expression));
-      }
- else {
-        JetType type=supertypes.isEmpty() ? KotlinBuiltIns.getInstance().getAnyType() : supertypes.iterator().next();
-        result=substitutor.substitute(type,Variance.INVARIANT);
-      }
-    }
-    if (result != null) {
-      context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
-      context.trace.record(BindingContext.REFERENCE_TARGET,expression.getInstanceReference(),result.getConstructor().getDeclarationDescriptor());
-      if (superTypeQualifier != null) {
-        context.trace.record(BindingContext.TYPE_RESOLUTION_SCOPE,superTypeQualifier,context.scope);
-      }
-    }
-  }
-  return DataFlowUtils.checkType(result,expression,context,context.dataFlowInfo);
+  LabelResolver.LabeledReceiverResolutionResult resolutionResult=resolveToReceiver(expression,context,true);
+switch (resolutionResult.getCode()) {
+case LABEL_RESOLUTION_ERROR:
+    return JetTypeInfo.create(null,context.dataFlowInfo);
+case NO_THIS:
+  context.trace.report(SUPER_NOT_AVAILABLE.on(expression));
+return JetTypeInfo.create(null,context.dataFlowInfo);
+case SUCCESS:
+JetType result=checkPossiblyQualifiedSuper(expression,context,resolutionResult.getReceiverParameterDescriptor());
+if (result != null) {
+context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
+}
+return DataFlowUtils.checkType(result,expression,context,context.dataFlowInfo);
+}
+throw new IllegalStateException("Unknown code: " + resolutionResult.getCode());
 }

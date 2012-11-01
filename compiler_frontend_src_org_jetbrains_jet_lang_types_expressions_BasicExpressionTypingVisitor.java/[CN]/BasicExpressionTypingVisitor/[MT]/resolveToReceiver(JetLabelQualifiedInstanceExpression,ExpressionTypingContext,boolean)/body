@@ -1,28 +1,25 @@
 {
-  ReceiverParameterDescriptor thisReceiver=null;
   String labelName=expression.getLabelName();
   if (labelName != null) {
-    thisReceiver=context.labelResolver.resolveThisLabel(expression.getInstanceReference(),expression.getTargetLabel(),context,thisReceiver,new LabelName(labelName));
+    return context.labelResolver.resolveThisLabel(expression.getInstanceReference(),expression.getTargetLabel(),context,new LabelName(labelName));
   }
  else {
+    ReceiverParameterDescriptor result=NO_RECEIVER_PARAMETER;
     List<ReceiverParameterDescriptor> receivers=context.scope.getImplicitReceiversHierarchy();
     if (onlyClassReceivers) {
       for (      ReceiverParameterDescriptor receiver : receivers) {
         if (receiver.getContainingDeclaration() instanceof ClassDescriptor) {
-          thisReceiver=receiver;
+          result=receiver;
           break;
         }
       }
     }
  else     if (!receivers.isEmpty()) {
-      thisReceiver=receivers.get(0);
+      result=receivers.get(0);
     }
- else {
-      thisReceiver=ReceiverParameterDescriptor.NO_RECEIVER_PARAMETER;
+    if (result.exists()) {
+      context.trace.record(REFERENCE_TARGET,expression.getInstanceReference(),result.getContainingDeclaration());
     }
-    if (thisReceiver != null && thisReceiver.exists()) {
-      context.trace.record(REFERENCE_TARGET,expression.getInstanceReference(),thisReceiver.getContainingDeclaration());
-    }
+    return LabelResolver.LabeledReceiverResolutionResult.labelResolutionSuccess(result);
   }
-  return thisReceiver;
 }

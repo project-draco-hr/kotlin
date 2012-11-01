@@ -1,14 +1,16 @@
 {
   JetType result=null;
-  ReceiverParameterDescriptor thisReceiver=resolveToReceiver(expression,context,false);
-  if (thisReceiver != null) {
-    if (!thisReceiver.exists()) {
-      context.trace.report(NO_THIS.on(expression));
-    }
- else {
-      result=thisReceiver.getType();
-      context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
-    }
-  }
-  return DataFlowUtils.checkType(result,expression,context,context.dataFlowInfo);
+  LabelResolver.LabeledReceiverResolutionResult resolutionResult=resolveToReceiver(expression,context,false);
+switch (resolutionResult.getCode()) {
+case LABEL_RESOLUTION_ERROR:
+    break;
+case NO_THIS:
+  context.trace.report(NO_THIS.on(expression));
+break;
+case SUCCESS:
+result=resolutionResult.getReceiverParameterDescriptor().getType();
+context.trace.record(BindingContext.EXPRESSION_TYPE,expression.getInstanceReference(),result);
+break;
+}
+return DataFlowUtils.checkType(result,expression,context,context.dataFlowInfo);
 }
