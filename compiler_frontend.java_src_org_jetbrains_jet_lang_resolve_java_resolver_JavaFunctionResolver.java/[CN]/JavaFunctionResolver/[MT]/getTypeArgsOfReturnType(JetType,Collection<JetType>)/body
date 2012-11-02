@@ -1,0 +1,22 @@
+{
+  TypeConstructor typeConstructor=autoType.getConstructor();
+  List<TypeProjection> autoTypeArguments=autoType.getArguments();
+  for (  JetType typeFromSuper : typesFromSuper) {
+    if (!TypeUtils.equalClasses(autoType,typeFromSuper)) {
+      return autoTypeArguments;
+    }
+  }
+  List<TypeProjection> resultArguments=Lists.newArrayList();
+  for (int i=0; i < autoTypeArguments.size(); i++) {
+    TypeProjection argument=autoTypeArguments.get(i);
+    JetType argType=argument.getType();
+    Variance varianceInClass=typeConstructor.getParameters().get(i).getVariance();
+    List<JetType> argTypesFromSuper=Lists.newArrayList();
+    for (    JetType typeFromSuper : typesFromSuper) {
+      argTypesFromSuper.add(typeFromSuper.getArguments().get(i).getType());
+    }
+    JetType type=modifyReturnTypeAccordingToSuperMethods(argType,argTypesFromSuper,varianceInClass == Variance.OUT_VARIANCE);
+    resultArguments.add(new TypeProjection(argument.getProjectionKind(),type));
+  }
+  return resultArguments;
+}

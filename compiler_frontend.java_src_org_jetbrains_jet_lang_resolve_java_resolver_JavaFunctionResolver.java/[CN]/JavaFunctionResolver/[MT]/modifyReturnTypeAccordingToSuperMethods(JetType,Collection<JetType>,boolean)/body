@@ -1,0 +1,16 @@
+{
+  if (ErrorUtils.isErrorType(autoType)) {
+    return autoType;
+  }
+  boolean resultNullable=returnTypeMustBeNullable(autoType,typesFromSuper,covariantPosition);
+  List<TypeProjection> resultArguments=getTypeArgsOfReturnType(autoType,typesFromSuper);
+  JetScope resultScope;
+  ClassifierDescriptor classifierDescriptor=autoType.getConstructor().getDeclarationDescriptor();
+  if (classifierDescriptor instanceof ClassDescriptor) {
+    resultScope=((ClassDescriptor)classifierDescriptor).getMemberScope(resultArguments);
+  }
+ else {
+    resultScope=autoType.getMemberScope();
+  }
+  return new JetTypeImpl(autoType.getAnnotations(),autoType.getConstructor(),resultNullable,resultArguments,resultScope);
+}
