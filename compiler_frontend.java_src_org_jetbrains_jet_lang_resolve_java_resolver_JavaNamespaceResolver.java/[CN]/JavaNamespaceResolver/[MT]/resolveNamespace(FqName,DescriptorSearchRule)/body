@@ -3,9 +3,12 @@
   if (kotlinNamespaceDescriptor != null) {
     return searchRule.processFoundInKotlin(kotlinNamespaceDescriptor);
   }
-  ResolverNamespaceData namespaceData=lookUpCache(qualifiedName);
-  if (namespaceData != null) {
-    return namespaceData.getNamespaceDescriptor();
+  if (unresolvedCache.contains(qualifiedName)) {
+    return null;
+  }
+  JavaPackageScope scope=resolvedNamespaceCache.get(qualifiedName);
+  if (scope != null) {
+    return (NamespaceDescriptor)scope.getContainingDeclaration();
   }
   NamespaceDescriptorParent parentNs=resolveParentNamespace(qualifiedName);
   if (parentNs == null) {

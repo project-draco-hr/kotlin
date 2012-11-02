@@ -1,16 +1,18 @@
 {
   FqName fqName=DescriptorUtils.getFQName(namespaceDescriptor).toSafe();
-  ResolverNamespaceData resolverNamespaceData=lookUpCache(fqName);
-  if (resolverNamespaceData == null) {
-    resolverNamespaceData=createNamespaceResolverScopeData(fqName,namespaceDescriptor);
-  }
-  if (resolverNamespaceData == null) {
-    return null;
-  }
-  if (resolverNamespaceData == ResolverNamespaceData.NEGATIVE) {
+  if (unresolvedCache.contains(fqName)) {
     throw new IllegalStateException("This means that we are trying to create a Java package, but have a package with the same FQN defined in Kotlin: " + fqName);
   }
-  JavaPackageScope scope=resolverNamespaceData.getMemberScope();
+  JavaPackageScope alreadyResolvedScope=resolvedNamespaceCache.get(fqName);
+  if (alreadyResolvedScope != null) {
+    return alreadyResolvedScope;
+  }
+  ResolverNamespaceData data;
+  data=createNamespaceResolverScopeData(fqName,namespaceDescriptor);
+  if (data == null) {
+    return null;
+  }
+  JavaPackageScope scope=data.getMemberScope();
   if (scope == null) {
     throw new IllegalStateException("fqn: " + fqName);
   }
