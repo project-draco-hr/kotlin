@@ -1,4 +1,24 @@
 {
-  List<TypeProjection> typeArguments=Collections.emptyList();
-  return standardFunction(classDescriptor,typeArguments,name,parameterType);
+  List<JetType> parameterTypeList=Arrays.asList(parameterTypes);
+  TemporaryBindingTrace traceWithFakeArgumentInfo=TemporaryBindingTrace.create(new BindingTraceContext(),"trace to store fake argument for",name);
+  int index=0;
+  List<JetExpression> valueArguments=Lists.newArrayList();
+  for (  JetType type : parameterTypeList) {
+    final JetReferenceExpression fakeArgument=JetPsiFactory.createSimpleName(getProject(),"fakeArgument" + index++);
+    valueArguments.add(fakeArgument);
+    traceWithFakeArgumentInfo.record(EXPRESSION_TYPE,fakeArgument,type);
+  }
+  ExpressionTypingServices expressionTypingServices=new InjectorForTests(getProject()).getExpressionTypingServices();
+  ExpressionTypingContext context=ExpressionTypingContext.newContext(expressionTypingServices,traceWithFakeArgumentInfo,classDescriptor.getDefaultType().getMemberScope(),DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE,false);
+  OverloadResolutionResults<FunctionDescriptor> functions=resolveFakeCall(ReceiverValue.NO_RECEIVER,context,valueArguments,Name.identifier(name));
+  for (  ResolvedCall<? extends FunctionDescriptor> resolvedCall : functions.getResultingCalls()) {
+    List<ValueParameterDescriptor> unsubstitutedValueParameters=resolvedCall.getResultingDescriptor().getValueParameters();
+    for (int i=0, unsubstitutedValueParametersSize=unsubstitutedValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
+      ValueParameterDescriptor unsubstitutedValueParameter=unsubstitutedValueParameters.get(i);
+      if (unsubstitutedValueParameter.getType().equals(parameterTypes[i])) {
+        return resolvedCall.getResultingDescriptor();
+      }
+    }
+  }
+  throw new IllegalArgumentException("Not found: kotlin::" + classDescriptor.getName() + "."+ name+ "("+ parameterTypeList+ ")");
 }
