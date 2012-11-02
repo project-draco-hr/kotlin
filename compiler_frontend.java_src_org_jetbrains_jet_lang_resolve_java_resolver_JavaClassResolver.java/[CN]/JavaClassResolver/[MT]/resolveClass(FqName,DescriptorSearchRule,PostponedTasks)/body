@@ -10,9 +10,13 @@
   if (kotlinClassDescriptor != null) {
     return searchRule.processFoundInKotlin(kotlinClassDescriptor);
   }
-  ResolverClassData classData=classDescriptorCache.get(javaClassToKotlinFqName(qualifiedName));
-  if (classData != null) {
-    return classData.getClassDescriptor();
+  FqNameUnsafe fqName=javaClassToKotlinFqName(qualifiedName);
+  ClassDescriptor cachedDescriptor=classDescriptorCache.get(fqName);
+  if (cachedDescriptor != null) {
+    return cachedDescriptor;
+  }
+  if (unresolvedCache.contains(fqName)) {
+    return null;
   }
   return doResolveClass(qualifiedName,tasks);
 }

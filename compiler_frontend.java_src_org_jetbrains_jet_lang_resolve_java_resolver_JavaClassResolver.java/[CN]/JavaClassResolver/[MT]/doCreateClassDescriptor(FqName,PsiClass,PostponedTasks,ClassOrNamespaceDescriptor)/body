@@ -3,7 +3,7 @@
   ClassKind kind=getClassKind(psiClass,jetClassAnnotation);
   ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,psiClass,fqName,javaDescriptorResolver);
   ResolverClassData classData=classDescriptor.getResolverBinaryClassData();
-  classDescriptorCache.put(javaClassToKotlinFqName(fqName),classData);
+  cache(javaClassToKotlinFqName(fqName),classDescriptor);
   classDescriptor.setName(Name.identifier(psiClass.getName()));
   List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=signatureResolver.createUninitializedClassTypeParameters(psiClass,classData);
   classDescriptor.setTypeParameterDescriptors(getTypeParametersDescriptors(typeParameterDescriptorInitializations));
@@ -18,7 +18,7 @@
   List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
   supertypes.addAll(supertypesResolver.getSupertypes(new PsiClassWrapper(psiClass),classData,classTypeParameters));
   ResolverClassData classObjectData=classObjectResolver.createClassObjectDescriptor(classDescriptor,psiClass);
-  classDescriptorCache.put(DescriptorResolverUtils.getFqNameForClassObject(psiClass),classObjectData);
+  cache(DescriptorResolverUtils.getFqNameForClassObject(psiClass),classObjectData != null ? classObjectData.getClassDescriptor() : null);
   if (classObjectData != null) {
     ClassDescriptorFromJvmBytecode classObjectDescriptor=classObjectData.getClassDescriptor();
     classDescriptor.getBuilder().setClassObjectDescriptor(classObjectDescriptor);
