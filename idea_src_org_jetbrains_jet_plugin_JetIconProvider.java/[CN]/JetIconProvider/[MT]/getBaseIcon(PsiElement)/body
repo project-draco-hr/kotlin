@@ -1,0 +1,56 @@
+{
+  if (psiElement instanceof JetNamespaceHeader) {
+    return PlatformIcons.PACKAGE_ICON;
+  }
+  if (psiElement instanceof JetNamedFunction) {
+    if (((JetFunction)psiElement).getReceiverTypeRef() != null) {
+      return JetIcons.EXTENSION_FUNCTION;
+    }
+    if (PsiTreeUtil.getParentOfType(psiElement,JetNamedDeclaration.class) instanceof JetClass) {
+      if (isAbstract((JetFunction)psiElement)) {
+        return PlatformIcons.ABSTRACT_METHOD_ICON;
+      }
+ else {
+        return PlatformIcons.METHOD_ICON;
+      }
+    }
+ else {
+      return JetIcons.FUNCTION;
+    }
+  }
+  if (psiElement instanceof JetClass) {
+    JetClass jetClass=(JetClass)psiElement;
+    if (jetClass.isTrait()) {
+      return JetIcons.TRAIT;
+    }
+    Icon icon=jetClass.hasModifier(JetTokens.ENUM_KEYWORD) ? PlatformIcons.ENUM_ICON : JetIcons.CLASS;
+    if (jetClass instanceof JetEnumEntry) {
+      JetEnumEntry enumEntry=(JetEnumEntry)jetClass;
+      if (enumEntry.getPrimaryConstructorParameterList() == null) {
+        icon=PlatformIcons.ENUM_ICON;
+      }
+    }
+    return icon;
+  }
+  if (psiElement instanceof JetObjectDeclaration || psiElement instanceof JetClassObject) {
+    return JetIcons.OBJECT;
+  }
+  if (psiElement instanceof JetParameter) {
+    JetParameter parameter=(JetParameter)psiElement;
+    if (parameter.getValOrVarNode() != null) {
+      JetParameterList parameterList=PsiTreeUtil.getParentOfType(psiElement,JetParameterList.class);
+      if (parameterList != null && parameterList.getParent() instanceof JetClass) {
+        return parameter.isMutable() ? JetIcons.FIELD_VAR : JetIcons.FIELD_VAL;
+      }
+    }
+    return JetIcons.PARAMETER;
+  }
+  if (psiElement instanceof JetProperty) {
+    JetProperty property=(JetProperty)psiElement;
+    return property.isVar() ? JetIcons.FIELD_VAR : JetIcons.FIELD_VAL;
+  }
+  if (psiElement instanceof JetLightClass) {
+    return JetIcons.CLASS;
+  }
+  return null;
+}
