@@ -1,2 +1,19 @@
 {
+  PsiPackage psiPackage;
+  PsiClass psiClass;
+  lookingForPsi: {
+    psiClass=getPsiClassForJavaPackageScope(fqName);
+    psiPackage=psiClassFinder.findPsiPackage(fqName);
+    if (psiClass != null || psiPackage != null) {
+      trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
+      break lookingForPsi;
+    }
+    psiClass=psiClassFinder.findPsiClass(fqName,PsiClassFinder.RuntimeClassesHandleMode.IGNORE);
+    if (psiClass != null && !psiClass.isEnum()) {
+      trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.CLASS_STATICS);
+      break lookingForPsi;
+    }
+    return null;
+  }
+  return ResolverNamespaceData.createDeclarationProviderForPackage(psiPackage,psiClass,fqName);
 }
