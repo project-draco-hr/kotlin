@@ -1,0 +1,36 @@
+{
+  if (isOnlyKeywordCompletion(getPosition())) {
+    return;
+  }
+  if (shouldRunOnlyTypeCompletion()) {
+    if (customInvocationCount >= 1) {
+      JetTypesCompletionHelper.addJetTypes(parameters,jetResult);
+    }
+ else {
+      addReferenceVariants(new Condition<DeclarationDescriptor>(){
+        @Override public boolean value(        DeclarationDescriptor descriptor){
+          return isPartOfTypeDeclaration(descriptor);
+        }
+      }
+);
+    }
+    return;
+  }
+  addReferenceVariants(Conditions.<DeclarationDescriptor>alwaysTrue());
+  String prefix=jetResult.getResult().getPrefixMatcher().getPrefix();
+  if (prefix.isEmpty()) {
+    if (customInvocationCount < 2) {
+      return;
+    }
+    if (PsiTreeUtil.getParentOfType(jetReference.getExpression(),JetDotQualifiedExpression.class) == null) {
+      return;
+    }
+  }
+  if (shouldRunTopLevelCompletion()) {
+    JetTypesCompletionHelper.addJetTypes(parameters,jetResult);
+    addJetTopLevelFunctions();
+  }
+  if (shouldRunExtensionsCompletion()) {
+    addJetExtensions();
+  }
+}

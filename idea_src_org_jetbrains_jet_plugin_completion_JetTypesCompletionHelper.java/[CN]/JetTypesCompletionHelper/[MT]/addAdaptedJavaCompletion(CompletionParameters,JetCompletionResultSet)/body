@@ -1,0 +1,17 @@
+{
+  CompletionResultSet tempResult=jetCompletionResult.getResult().withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+  JavaClassNameCompletionContributor.addAllClasses(parameters,false,JavaCompletionSorting.addJavaSorting(parameters,tempResult).getPrefixMatcher(),new Consumer<LookupElement>(){
+    @Override public void consume(    LookupElement lookupElement){
+      if (lookupElement instanceof JavaPsiClassReferenceElement) {
+        JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
+        PsiClass psiClass=javaPsiReferenceElement.getObject();
+        if (addJavaClassAsJetLookupElement(psiClass)) {
+          return;
+        }
+        javaPsiReferenceElement.setInsertHandler(JetJavaClassInsertHandler.JAVA_CLASS_INSERT_HANDLER);
+        jetCompletionResult.addElement(javaPsiReferenceElement);
+      }
+    }
+  }
+);
+}

@@ -1,26 +1,18 @@
 {
   extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
     @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    @NotNull CompletionResultSet result){
-      result.restartCompletionWhenNothingMatches();
-      result=JetCompletionSorting.addJetSorting(parameters,result);
-      CompletionSession session=new CompletionSession();
-      session.customInvocationCount=parameters.getInvocationCount();
       PsiElement position=parameters.getPosition();
       if (!(position.getContainingFile() instanceof JetFile)) {
         return;
       }
       JetSimpleNameReference jetReference=getJetReference(parameters);
       if (jetReference != null) {
-        session.resolveSession=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile((JetFile)position.getContainingFile());
-        session.expressionBindingContext=ResolveSessionUtils.resolveToExpression(session.resolveSession,jetReference.getExpression());
-        JetScope scope=session.expressionBindingContext.get(BindingContext.RESOLUTION_SCOPE,jetReference.getExpression());
-        session.inDescriptor=scope != null ? scope.getContainingDeclaration() : null;
-        completeForReference(parameters,result,position,jetReference,session);
-        if (!session.isSomethingAdded && session.customInvocationCount == 0) {
-          session.customInvocationCount=1;
-          session.resolveSession=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile((JetFile)position.getContainingFile());
-          session.expressionBindingContext=ResolveSessionUtils.resolveToExpression(session.resolveSession,jetReference.getExpression());
-          completeForReference(parameters,result,position,jetReference,session);
+        result.restartCompletionWhenNothingMatches();
+        CompletionSession session=new CompletionSession(parameters,result,jetReference,position);
+        session.completeForReference();
+        if (!session.getJetResult().isSomethingAdded() && session.getCustomInvocationCount() == 0) {
+          session=new CompletionSession(parameters,result,jetReference,position,1);
+          session.completeForReference();
         }
       }
       result.stopHere();
