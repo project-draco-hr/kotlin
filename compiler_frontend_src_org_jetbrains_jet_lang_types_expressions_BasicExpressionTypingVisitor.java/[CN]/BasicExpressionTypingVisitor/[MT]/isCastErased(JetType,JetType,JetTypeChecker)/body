@@ -1,44 +1,44 @@
 {
-  if (!(targetType.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor)) {
+  if (!(subtype.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor)) {
     return false;
   }
-  if (ErrorUtils.isErrorType(actualType) || ErrorUtils.isErrorType(targetType)) {
+  if (ErrorUtils.isErrorType(supertype) || ErrorUtils.isErrorType(subtype)) {
     return false;
   }
-  List<TypeParameterDescriptor> actualTypeParameters=actualType.getConstructor().getParameters();
+  List<TypeParameterDescriptor> superTypeParameters=supertype.getConstructor().getParameters();
 {
-    Multimap<TypeConstructor,TypeProjection> typeSubstitutionMap=SubstitutionUtils.buildDeepSubstitutionMultimap(targetType);
-    for (int i=0; i < actualTypeParameters.size(); i++) {
-      TypeProjection actualTypeArgument=actualType.getArguments().get(i);
-      TypeParameterDescriptor actualTypeParameter=actualTypeParameters.get(i);
-      if (actualTypeParameter.isReified()) {
+    Multimap<TypeConstructor,TypeProjection> subtypeSubstitutionMap=SubstitutionUtils.buildDeepSubstitutionMultimap(subtype);
+    for (int i=0; i < superTypeParameters.size(); i++) {
+      TypeProjection superTypeArgument=supertype.getArguments().get(i);
+      TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
+      if (superTypeParameter.isReified()) {
         continue;
       }
-      Collection<TypeProjection> substituted=typeSubstitutionMap.get(actualTypeParameter.getTypeConstructor());
+      Collection<TypeProjection> substituted=subtypeSubstitutionMap.get(superTypeParameter.getTypeConstructor());
       for (      TypeProjection substitutedProjection : substituted) {
-        if (!typeChecker.isSubtypeOf(actualTypeArgument.getType(),substitutedProjection.getType())) {
+        if (!typeChecker.isSubtypeOf(superTypeArgument.getType(),substitutedProjection.getType())) {
           return true;
         }
       }
     }
   }
 {
-    JetType targetTypeCleared=TypeUtils.makeUnsubstitutedType((ClassDescriptor)targetType.getConstructor().getDeclarationDescriptor(),null);
-    Multimap<TypeConstructor,TypeProjection> clearTypeSubstitutionMap=SubstitutionUtils.buildDeepSubstitutionMultimap(targetTypeCleared);
+    JetType subtypeCleared=TypeUtils.makeUnsubstitutedType((ClassDescriptor)subtype.getConstructor().getDeclarationDescriptor(),null);
+    Multimap<TypeConstructor,TypeProjection> clearTypeSubstitutionMap=SubstitutionUtils.buildDeepSubstitutionMultimap(subtypeCleared);
     Set<JetType> clearSubstituted=new HashSet<JetType>();
-    for (    TypeParameterDescriptor actualTypeParameter : actualTypeParameters) {
-      Collection<TypeProjection> substituted=clearTypeSubstitutionMap.get(actualTypeParameter.getTypeConstructor());
+    for (    TypeParameterDescriptor superTypeParameter : superTypeParameters) {
+      Collection<TypeProjection> substituted=clearTypeSubstitutionMap.get(superTypeParameter.getTypeConstructor());
       for (      TypeProjection substitutedProjection : substituted) {
         clearSubstituted.add(substitutedProjection.getType());
       }
     }
-    List<TypeParameterDescriptor> targetTypeParameters=targetType.getConstructor().getParameters();
-    for (int i=0; i < targetTypeParameters.size(); i++) {
-      TypeParameterDescriptor typeParameter=targetTypeParameters.get(i);
+    List<TypeParameterDescriptor> subTypeParameters=subtype.getConstructor().getParameters();
+    for (int i=0; i < subTypeParameters.size(); i++) {
+      TypeParameterDescriptor typeParameter=subTypeParameters.get(i);
       if (typeParameter.isReified()) {
         continue;
       }
-      TypeProjection typeArgument=targetType.getArguments().get(i);
+      TypeProjection typeArgument=subtype.getArguments().get(i);
       if (typeArgument.equals(SubstitutionUtils.makeStarProjection(typeParameter))) {
         continue;
       }
