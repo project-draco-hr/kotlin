@@ -1,0 +1,17 @@
+{
+  PsiPackage psiPackage=psiClassFinder.findPsiPackage(fqName);
+  if (psiPackage != null) {
+    PsiClass psiClass=getPsiClassForJavaPackageScope(fqName);
+    trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
+    if (psiClass == null) {
+      return new JavaPackageScopeWithoutMembers(namespaceDescriptor,createDeclarationProviderForNamespaceWithoutMembers(psiPackage),fqName,javaSemanticServices);
+    }
+    return new JavaScopeForKotlinNamespace(namespaceDescriptor,createDeclarationForKotlinNamespace(psiPackage,psiClass,fqName),fqName,javaSemanticServices);
+  }
+  PsiClass psiClass=psiClassFinder.findPsiClass(fqName,PsiClassFinder.RuntimeClassesHandleMode.IGNORE);
+  if (psiClass != null && !psiClass.isEnum()) {
+    trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.CLASS_STATICS);
+    return new JavaClassStaticMembersScope(namespaceDescriptor,createDeclarationProviderForClassStaticMembers(psiClass),fqName,javaSemanticServices);
+  }
+  return null;
+}
