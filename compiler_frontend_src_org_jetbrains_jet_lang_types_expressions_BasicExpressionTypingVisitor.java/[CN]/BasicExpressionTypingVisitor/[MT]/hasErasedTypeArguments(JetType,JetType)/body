@@ -1,0 +1,27 @@
+{
+  JetType subtypeCleared=TypeUtils.makeUnsubstitutedType((ClassDescriptor)subtype.getConstructor().getDeclarationDescriptor(),null);
+  Multimap<TypeConstructor,TypeProjection> clearTypeSubstitutionMap=SubstitutionUtils.buildDeepSubstitutionMultimap(subtypeCleared);
+  Set<JetType> clearSubstituted=new HashSet<JetType>();
+  List<TypeParameterDescriptor> superParameters=supertype.getConstructor().getParameters();
+  for (  TypeParameterDescriptor superTypeParameter : superParameters) {
+    Collection<TypeProjection> substituted=clearTypeSubstitutionMap.get(superTypeParameter.getTypeConstructor());
+    for (    TypeProjection substitutedProjection : substituted) {
+      clearSubstituted.add(substitutedProjection.getType());
+    }
+  }
+  List<TypeParameterDescriptor> subTypeParameters=subtype.getConstructor().getParameters();
+  for (int i=0; i < subTypeParameters.size(); i++) {
+    TypeParameterDescriptor typeParameter=subTypeParameters.get(i);
+    if (typeParameter.isReified()) {
+      continue;
+    }
+    TypeProjection typeArgument=subtype.getArguments().get(i);
+    if (typeArgument.equals(SubstitutionUtils.makeStarProjection(typeParameter))) {
+      continue;
+    }
+    if (!clearSubstituted.contains(typeParameter.getDefaultType())) {
+      return true;
+    }
+  }
+  return false;
+}
