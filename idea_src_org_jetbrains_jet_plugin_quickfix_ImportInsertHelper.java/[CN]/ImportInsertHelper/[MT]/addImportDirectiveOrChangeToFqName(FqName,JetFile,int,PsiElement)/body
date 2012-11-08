@@ -4,7 +4,15 @@
     PsiElement target=reference.resolve();
     if (target != null) {
       boolean same=file.getManager().areElementsEquivalent(target,targetElement);
-      same|=target instanceof PsiClass && importFqn.getFqName().equals(((PsiClass)target).getQualifiedName());
+      if (!same) {
+        same=target instanceof PsiClass && importFqn.getFqName().equals(((PsiClass)target).getQualifiedName());
+      }
+      if (!same) {
+        if (target instanceof PsiMethod) {
+          PsiMethod method=(PsiMethod)target;
+          same=(method.isConstructor() && file.getManager().areElementsEquivalent(method.getContainingClass(),targetElement));
+        }
+      }
       if (!same) {
         Document document=PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
         TextRange refRange=reference.getElement().getTextRange();
