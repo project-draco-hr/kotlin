@@ -5,7 +5,7 @@
   for (  String arg : commandLineArguments(environment.getOutput(),scriptFile)) {
     params.getProgramParametersList().add(arg);
   }
-  for (  File jar : CompilerUtils.kompilerClasspath(environment.getKotlinHome(),messageCollector)) {
+  for (  File jar : CompilerRunnerUtil.kompilerClasspath(environment.getKotlinHome(),messageCollector)) {
     params.getClassPath().add(jar);
   }
   params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
@@ -16,7 +16,7 @@
     final Process process=commandLine.createProcess();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
       @Override public void run(){
-        CompilerUtils.parseCompilerMessagesFromReader(messageCollector,new InputStreamReader(process.getInputStream()),itemCollector);
+        CompilerRunnerUtil.parseCompilerMessagesFromReader(messageCollector,new InputStreamReader(process.getInputStream()),itemCollector);
       }
     }
 );
@@ -31,7 +31,7 @@
     }
 );
     int exitCode=process.waitFor();
-    CompilerUtils.handleProcessTermination(exitCode,messageCollector);
+    CompilerRunnerUtil.handleProcessTermination(exitCode,messageCollector);
   }
  catch (  Exception e) {
     messageCollector.report(CompilerMessageSeverity.ERROR,"[Internal Error] " + e.getLocalizedMessage(),CompilerMessageLocation.NO_LOCATION);
