@@ -2,7 +2,7 @@
   JetClassAnnotation jetClassAnnotation=JetClassAnnotation.get(psiClass);
   ClassKind kind=getClassKind(psiClass,jetClassAnnotation);
   ClassPsiDeclarationProvider classData=PsiDeclarationProviderFactory.createBinaryClassData(psiClass);
-  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,javaDescriptorResolver,classData);
+  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind);
   cache(javaClassToKotlinFqName(fqName),classDescriptor);
   classDescriptor.setName(Name.identifier(psiClass.getName()));
   List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=signatureResolver.createUninitializedClassTypeParameters(psiClass,classDescriptor);
@@ -12,7 +12,9 @@
   classDescriptor.setVisibility(DescriptorResolverUtils.resolveVisibility(psiClass,jetClassAnnotation));
   classDescriptor.setModality(resolveModality(psiClass,classDescriptor));
   classDescriptor.createTypeConstructor();
-  classDescriptor.setScopeForMemberLookup(new JavaClassNonStaticMembersScope(classDescriptor,classData,semanticServices));
+  JavaClassNonStaticMembersScope membersScope=new JavaClassNonStaticMembersScope(classDescriptor,classData,semanticServices);
+  classDescriptor.setScopeForMemberLookup(membersScope);
+  classDescriptor.setScopeForConstructorResolve(membersScope);
   String context="class " + psiClass.getQualifiedName();
   signatureResolver.initializeTypeParameters(typeParameterDescriptorInitializations,classDescriptor,context);
   List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
