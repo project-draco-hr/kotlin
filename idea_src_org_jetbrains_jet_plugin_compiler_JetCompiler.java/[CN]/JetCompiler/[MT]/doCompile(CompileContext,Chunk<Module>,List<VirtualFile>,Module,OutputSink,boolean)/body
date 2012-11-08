@@ -1,13 +1,14 @@
 {
   if (files.isEmpty())   return;
-  CompilerEnvironment environment=CompilerEnvironment.getEnvironmentFor(compileContext,module,tests);
+  MessageCollector messageCollector=new MessageCollectorAdapter(compileContext);
+  CompilerEnvironment environment=CompilerUtils.getEnvironmentFor(compileContext,module,tests);
   if (!environment.success()) {
-    environment.reportErrorsTo(compileContext);
+    environment.reportErrorsTo(messageCollector);
     return;
   }
   File scriptFile=tryToWriteScriptFile(compileContext,moduleChunk,files,module,tests,compileContext.getModuleOutputDirectory(module),environment.getOutput());
   if (scriptFile == null)   return;
   CompilerUtils.OutputItemsCollectorImpl collector=new CompilerUtils.OutputItemsCollectorImpl(environment.getOutput().getPath());
-  runCompiler(compileContext,environment,scriptFile,collector);
+  runCompiler(messageCollector,environment,scriptFile,collector);
   outputSink.add(environment.getOutput().getPath(),collector.getOutputs(),collector.getSources().toArray(VirtualFile.EMPTY_ARRAY));
 }

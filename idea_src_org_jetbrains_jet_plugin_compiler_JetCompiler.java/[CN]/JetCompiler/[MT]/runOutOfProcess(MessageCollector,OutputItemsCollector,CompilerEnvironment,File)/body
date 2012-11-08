@@ -1,0 +1,40 @@
+{
+  final SimpleJavaParameters params=new SimpleJavaParameters();
+  params.setJdk(new SimpleJavaSdkType().createJdk("tmp",SystemProperties.getJavaHome()));
+  params.setMainClass("org.jetbrains.jet.cli.jvm.K2JVMCompiler");
+  for (  String arg : commandLineArguments(environment.getOutput(),scriptFile)) {
+    params.getProgramParametersList().add(arg);
+  }
+  for (  File jar : CompilerUtils.kompilerClasspath(environment.getKotlinHome(),messageCollector)) {
+    params.getClassPath().add(jar);
+  }
+  params.getVMParametersList().addParametersString("-Djava.awt.headless=true -Xmx512m");
+  Sdk sdk=params.getJdk();
+  final GeneralCommandLine commandLine=JdkUtil.setupJVMCommandLine(((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),params,false);
+  messageCollector.report(CompilerMessageSeverity.INFO,"Invoking out-of-process compiler with arguments: " + commandLine,CompilerMessageLocation.NO_LOCATION);
+  try {
+    final Process process=commandLine.createProcess();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      @Override public void run(){
+        CompilerUtils.parseCompilerMessagesFromReader(messageCollector,new InputStreamReader(process.getInputStream()),itemCollector);
+      }
+    }
+);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+      @Override public void run(){
+        try {
+          FileUtil.loadBytes(process.getErrorStream());
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+);
+    int exitCode=process.waitFor();
+    CompilerUtils.handleProcessTermination(exitCode,messageCollector);
+  }
+ catch (  Exception e) {
+    messageCollector.report(CompilerMessageSeverity.ERROR,"[Internal Error] " + e.getLocalizedMessage(),CompilerMessageLocation.NO_LOCATION);
+    return;
+  }
+}

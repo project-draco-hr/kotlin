@@ -3,21 +3,20 @@
     return;
   }
   String qNameLowerCase=qName.toLowerCase();
-  CompilerMessageCategory category=CATEGORIES.get(qNameLowerCase);
+  CompilerMessageSeverity category=CATEGORIES.get(qNameLowerCase);
   if (category == null) {
-    compileContext.addMessage(ERROR,"Unknown compiler message tag: " + qName,null,-1,-1);
-    category=INFORMATION;
+    messageCollector.report(ERROR,"Unknown compiler message tag: " + qName,NO_LOCATION);
+    category=INFO;
   }
   String text=message.toString();
   if ("exception".equals(qNameLowerCase)) {
     LOG.error(text);
   }
-  if (category == STATISTICS) {
-    compileContext.getProgressIndicator().setText(text);
+  if (category == LOGGING) {
     collector.learn(text);
   }
  else {
-    compileContext.addMessage(category,text,path,line,column);
+    messageCollector.report(category,text,CompilerMessageLocation.create(path,line,column));
   }
   tags.pop();
 }
