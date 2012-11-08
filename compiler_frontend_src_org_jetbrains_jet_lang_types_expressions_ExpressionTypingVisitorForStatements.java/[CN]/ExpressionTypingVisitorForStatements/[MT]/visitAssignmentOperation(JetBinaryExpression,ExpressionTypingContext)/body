@@ -3,18 +3,20 @@
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceBindingTrace(temporaryBindingTrace);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   IElementType operationType=operationSign.getReferencedNameElementType();
-  JetType leftType=facade.getTypeInfo(expression.getLeft(),context).getType();
+  JetTypeInfo leftInfo=facade.getTypeInfo(expression.getLeft(),context);
+  JetType leftType=leftInfo.getType();
+  DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
   JetExpression right=expression.getRight();
   JetExpression left=JetPsiUtil.deparenthesizeWithNoTypeResolution(expression.getLeft());
   if (right == null || left == null) {
     temporaryBindingTrace.commit();
-    return null;
+    return JetTypeInfo.create(null,dataFlowInfo);
   }
   if (leftType == null) {
-    facade.getTypeInfo(right,context);
+    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
     context.trace.report(UNRESOLVED_REFERENCE.on(operationSign));
     temporaryBindingTrace.commit();
-    return null;
+    return JetTypeInfo.create(null,dataFlowInfo);
   }
   ExpressionReceiver receiver=new ExpressionReceiver(left,leftType);
   Name name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
@@ -33,7 +35,7 @@
     for (    ResolvedCall<? extends FunctionDescriptor> call : ambiguityResolutionResults.getResultingCalls()) {
       descriptors.add(call.getResultingDescriptor());
     }
-    facade.getTypeInfo(right,context);
+    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
     context.trace.record(AMBIGUOUS_REFERENCE_TARGET,operationSign,descriptors);
   }
  else   if (assignmentOperationType != null) {
@@ -49,8 +51,9 @@
       ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(contextWithExpectedType.trace,"trace to resolve array set method for assignment",expression));
       basic.resolveArrayAccessSetMethod((JetArrayAccessExpression)left,right,contextForResolve,context.trace);
     }
+    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
   }
   basic.checkLValue(context.trace,expression.getLeft());
   temporaryBindingTrace.commit();
-  return checkAssignmentType(type,expression,contextWithExpectedType);
+  return JetTypeInfo.create(checkAssignmentType(type,expression,contextWithExpectedType),dataFlowInfo);
 }
