@@ -1,20 +1,23 @@
 {
-  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceScope(scope);
   JetExpression left=context.expressionTypingServices.deparenthesize(expression.getLeft(),context);
   JetExpression right=expression.getRight();
   if (left instanceof JetArrayAccessExpression) {
     JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
-    if (right == null)     return null;
-    JetType assignmentType=basic.resolveArrayAccessSetMethod(arrayAccessExpression,right,context.replaceScope(scope),context.trace);
+    if (right == null)     return JetTypeInfo.create(null,context.dataFlowInfo);
+    JetType assignmentType=basic.resolveArrayAccessSetMethod(arrayAccessExpression,right,context,context.trace);
     basic.checkLValue(context.trace,arrayAccessExpression);
-    return checkAssignmentType(assignmentType,expression,contextWithExpectedType);
+    return JetTypeInfo.create(checkAssignmentType(assignmentType,expression,contextWithExpectedType),context.dataFlowInfo);
   }
-  JetType leftType=facade.getTypeInfo(expression.getLeft(),context.replaceScope(scope)).getType();
+  JetTypeInfo leftInfo=facade.getTypeInfo(expression.getLeft(),context);
+  JetType leftType=leftInfo.getType();
+  DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
   if (right != null) {
-    JetType rightType=facade.getTypeInfo(right,context.replaceExpectedType(leftType).replaceScope(scope)).getType();
+    JetTypeInfo rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
+    dataFlowInfo=rightInfo.getDataFlowInfo();
   }
   if (leftType != null) {
     basic.checkLValue(context.trace,expression.getLeft());
   }
-  return DataFlowUtils.checkStatementType(expression,contextWithExpectedType);
+  return DataFlowUtils.checkStatementType(expression,contextWithExpectedType,dataFlowInfo);
 }
