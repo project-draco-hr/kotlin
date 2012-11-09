@@ -1,14 +1,14 @@
 {
-  ArrayList<String> sourceFilePaths=ContainerUtil.newArrayList(paths(files));
+  List<File> sourceFiles=ContainerUtil.newArrayList(ioFiles(files));
   ModuleChunk chunk=new ModuleChunk((CompileContextEx)compileContext,moduleChunk,Collections.<Module,List<VirtualFile>>emptyMap());
   String moduleName=moduleChunk.getNodes().iterator().next().getName();
-  String outputDirectoryForTests=path(compileContext.getModuleOutputDirectoryForTests(module));
-  String moduleOutputDirectory=path(compileContext.getModuleOutputDirectory(module));
-  Set<String> outputDirectoriesToFilter=ContainerUtil.newHashSet(outputDirectoryForTests);
+  File outputDirectoryForTests=ioFile(compileContext.getModuleOutputDirectoryForTests(module));
+  File moduleOutputDirectory=ioFile(compileContext.getModuleOutputDirectory(module));
+  Set<File> outputDirectoriesToFilter=ContainerUtil.newHashSet(outputDirectoryForTests);
   if (!tests) {
     outputDirectoriesToFilter.add(moduleOutputDirectory);
   }
-  CharSequence script=KotlinModuleScriptGenerator.generateModuleScript(moduleName,getDependencyProvider(chunk,tests,mainOutput),sourceFilePaths,tests,outputDirectoriesToFilter);
+  CharSequence script=KotlinModuleScriptGenerator.generateModuleScript(moduleName,getDependencyProvider(chunk,tests,mainOutput),sourceFiles,tests,outputDirectoriesToFilter);
   File scriptFile=new File(outputDir,"script.kts");
   try {
     FileUtil.writeToFile(scriptFile,script.toString());

@@ -9,24 +9,24 @@
   script.append("import kotlin.modules.*\n");
   script.append("fun project() {\n");
   script.append("    module(\"" + moduleName + "\") {\n");
-  for (  String sourceFile : sourceFilePaths) {
-    script.append("        sources += \"" + sourceFile + "\"\n");
+  for (  File sourceFile : sourceFiles) {
+    script.append("        sources += \"" + sourceFile.getPath() + "\"\n");
   }
   dependencyProvider.processClassPath(new DependencyProcessor(){
-    @Override public void processClassPathSection(    @NotNull String sectionDescription,    @NotNull Collection<String> paths){
+    @Override public void processClassPathSection(    @NotNull String sectionDescription,    @NotNull Collection<File> files){
       script.append("        // " + sectionDescription + "\n");
-      for (      String path : paths) {
-        if (directoriesToFilterOut.contains(path)) {
+      for (      File file : files) {
+        if (directoriesToFilterOut.contains(file)) {
           script.append("        // Output directory, commented out\n");
           script.append("        // ");
         }
-        script.append("        classpath += \"" + path + "\"\n");
+        script.append("        classpath += \"" + file.getPath() + "\"\n");
       }
     }
-    @Override public void processAnnotationRoots(    @NotNull List<String> paths){
+    @Override public void processAnnotationRoots(    @NotNull List<File> files){
       script.append("        // External annotations\n");
-      for (      String path : paths) {
-        script.append("        annotationsPath += \"").append(path).append("\"\n");
+      for (      File file : files) {
+        script.append("        annotationsPath += \"").append(file.getPath()).append("\"\n");
       }
     }
   }
