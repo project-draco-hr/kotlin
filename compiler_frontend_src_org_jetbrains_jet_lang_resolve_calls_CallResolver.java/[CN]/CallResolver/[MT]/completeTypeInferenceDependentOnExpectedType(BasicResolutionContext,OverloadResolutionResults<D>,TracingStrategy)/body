@@ -1,22 +1,37 @@
 {
-  if (resultsWithIncompleteTypeInference.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE)   return resultsWithIncompleteTypeInference;
-  Set<ResolvedCallWithTrace<D>> successful=Sets.newLinkedHashSet();
-  Set<ResolvedCallWithTrace<D>> failed=Sets.newLinkedHashSet();
-  for (  ResolvedCall<? extends D> call : resultsWithIncompleteTypeInference.getResultingCalls()) {
-    if (!(call instanceof ResolvedCallImpl))     continue;
-    ResolvedCallImpl<D> resolvedCall=CallResolverUtil.copy((ResolvedCallImpl<D>)call,context);
-    if (!resolvedCall.hasUnknownTypeParameters()) {
-      if (resolvedCall.getStatus().isSuccess()) {
-        successful.add(resolvedCall);
-      }
- else {
-        failed.add(resolvedCall);
-      }
-      continue;
-    }
-    candidateResolver.completeTypeInferenceDependentOnExpectedTypeForCall(CallResolutionContext.create(context,tracing,resolvedCall),successful,failed);
+  if (resultsWithIncompleteTypeInference.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE) {
+    return resultsWithIncompleteTypeInference;
   }
-  OverloadResolutionResultsImpl<D> results=ResolutionResultsHandler.INSTANCE.computeResultAndReportErrors(context.trace,tracing,successful,failed);
+  Set<ResolvedCallWithTrace<D>> candidates=Sets.newLinkedHashSet();
+  Set<ResolvedCallWithTrace<D>> incompleteCalls=Sets.newLinkedHashSet();
+  for (  ResolvedCall<? extends D> cachedCall : resultsWithIncompleteTypeInference.getResultingCalls()) {
+    if (cachedCall instanceof ResolvedCallImpl) {
+      ResolvedCallImpl<D> resolvedCall=(ResolvedCallImpl<D>)cachedCall;
+      if (resolvedCall.hasUnknownTypeParameters()) {
+        ResolvedCallImpl<D> copy=CallResolverUtil.copy(resolvedCall,context);
+        incompleteCalls.add(copy);
+        candidates.add(copy);
+        continue;
+      }
+    }
+    candidates.add((ResolvedCallWithTrace<D>)cachedCall);
+  }
+  ResolvedCallWithTrace<D> maximallySpecific=OverloadingConflictResolver.INSTANCE.findMaximallySpecific(incompleteCalls,false);
+  if (maximallySpecific != null) {
+    candidateResolver.completeTypeInferenceDependentOnExpectedTypeForCall(CallResolutionContext.create(context,tracing,(ResolvedCallImpl<D>)maximallySpecific));
+    for (    ResolvedCallWithTrace<D> callWithUnknownTypeParameters : incompleteCalls) {
+      if (callWithUnknownTypeParameters != maximallySpecific) {
+        ((ResolvedCallImpl<D>)callWithUnknownTypeParameters).addStatus(ResolutionStatus.OTHER_ERROR);
+      }
+    }
+  }
+ else {
+    for (    ResolvedCallWithTrace<D> callWithUnknownTypeParameters : incompleteCalls) {
+      ResolvedCallImpl<D> resolvedCall=(ResolvedCallImpl<D>)callWithUnknownTypeParameters;
+      resolvedCall.addStatus(ResolutionStatus.INCOMPLETE_TYPE_INFERENCE);
+    }
+  }
+  OverloadResolutionResultsImpl<D> results=ResolutionResultsHandler.INSTANCE.computeResultAndReportErrors(context.trace,tracing,candidates);
   if (!results.isSingleResult()) {
     candidateResolver.checkTypesWithNoCallee(context);
   }
