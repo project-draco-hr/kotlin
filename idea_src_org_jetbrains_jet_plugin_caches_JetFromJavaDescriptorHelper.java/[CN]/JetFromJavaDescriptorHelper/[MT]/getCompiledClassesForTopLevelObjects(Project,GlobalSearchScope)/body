@@ -1,0 +1,16 @@
+{
+  Set<PsiClass> jetObjectClasses=Sets.newHashSet();
+  Collection<PsiAnnotation> annotations=JavaAnnotationIndex.getInstance().get(JetClass.class.getSimpleName(),project,scope);
+  for (  PsiAnnotation annotation : annotations) {
+    PsiModifierList modifierList=(PsiModifierList)annotation.getParent();
+    final PsiElement owner=modifierList.getParent();
+    if (owner instanceof PsiClass) {
+      PsiClass psiClass=(PsiClass)owner;
+      JetClassAnnotation jetAnnotation=JetClassAnnotation.get(psiClass);
+      if (psiClass.getContainingClass() == null && jetAnnotation.kind() == JvmStdlibNames.FLAG_CLASS_KIND_OBJECT) {
+        jetObjectClasses.add(psiClass);
+      }
+    }
+  }
+  return jetObjectClasses;
+}

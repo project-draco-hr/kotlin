@@ -1,0 +1,20 @@
+{
+  BindingContext context=ResolveSessionUtils.resolveToExpression(resolveSession,expression);
+  JetScope jetScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
+  if (jetScope == null) {
+    return Collections.emptyList();
+  }
+  Set<ClassDescriptor> result=Sets.newHashSet();
+  Collection<JetObjectDeclaration> topObjects=JetTopLevelShortObjectNameIndex.getInstance().get(name,project,scope);
+  for (  JetObjectDeclaration objectDeclaration : topObjects) {
+    result.add(resolveSession.getClassDescriptor(objectDeclaration));
+  }
+  for (  PsiClass psiClass : JetFromJavaDescriptorHelper.getCompiledClassesForTopLevelObjects(project,GlobalSearchScope.allScope(project))) {
+    String qualifiedName=psiClass.getQualifiedName();
+    if (qualifiedName != null) {
+      FqName fqName=new FqName(qualifiedName);
+      result.addAll(ResolveSessionUtils.getClassDescriptorsByFqName(resolveSession,fqName));
+    }
+  }
+  return result;
+}
