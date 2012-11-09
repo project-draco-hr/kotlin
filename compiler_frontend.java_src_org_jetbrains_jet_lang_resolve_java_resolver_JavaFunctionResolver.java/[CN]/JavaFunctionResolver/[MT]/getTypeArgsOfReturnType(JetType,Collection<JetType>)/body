@@ -1,21 +1,18 @@
 {
   TypeConstructor typeConstructor=autoType.getConstructor();
-  List<TypeProjection> autoTypeArguments=autoType.getArguments();
-  for (  JetType typeFromSuper : typesFromSuper) {
-    if (!TypeUtils.equalClasses(autoType,typeFromSuper)) {
-      return autoTypeArguments;
-    }
+  List<TypeProjection> autoArguments=autoType.getArguments();
+  if (!(typeConstructor.getDeclarationDescriptor() instanceof ClassDescriptor)) {
+    return autoArguments;
   }
+  List<List<JetType>> typeArgumentsFromSuper=calculateTypeArgumentsFromSuper(autoType,typesFromSuper);
   List<TypeProjection> resultArguments=Lists.newArrayList();
-  for (int i=0; i < autoTypeArguments.size(); i++) {
-    TypeProjection argument=autoTypeArguments.get(i);
-    JetType argType=argument.getType();
-    Variance varianceInClass=typeConstructor.getParameters().get(i).getVariance();
-    List<JetType> argTypesFromSuper=Lists.newArrayList();
-    for (    JetType typeFromSuper : typesFromSuper) {
-      argTypesFromSuper.add(typeFromSuper.getArguments().get(i).getType());
-    }
-    JetType type=modifyReturnTypeAccordingToSuperMethods(argType,argTypesFromSuper,varianceInClass == Variance.OUT_VARIANCE);
+  for (int i=0; i < autoArguments.size(); i++) {
+    TypeProjection argument=autoArguments.get(i);
+    TypeCheckingProcedure.EnrichedProjectionKind effectiveProjectionKind=TypeCheckingProcedure.getEffectiveProjectionKind(typeConstructor.getParameters().get(i),argument);
+    JetType argumentType=argument.getType();
+    Collection<JetType> argumentTypesFromSuper=typeArgumentsFromSuper.get(i);
+    boolean covariantPosition=effectiveProjectionKind == TypeCheckingProcedure.EnrichedProjectionKind.OUT;
+    JetType type=modifyReturnTypeAccordingToSuperMethods(argumentType,argumentTypesFromSuper,covariantPosition);
     resultArguments.add(new TypeProjection(argument.getProjectionKind(),type));
   }
   return resultArguments;

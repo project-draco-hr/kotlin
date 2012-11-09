@@ -1,0 +1,22 @@
+{
+  ClassDescriptor klass=(ClassDescriptor)autoType.getConstructor().getDeclarationDescriptor();
+  Multimap<TypeConstructor,TypeProjection> substitution=SubstitutionUtils.buildDeepSubstitutionMultimap(TypeUtils.makeUnsubstitutedType(klass,null));
+  List<List<JetType>> parameterToArgTypesFromSuper=Lists.newArrayList();
+  for (  TypeProjection ignored : autoType.getArguments()) {
+    parameterToArgTypesFromSuper.add(new ArrayList<JetType>());
+  }
+  for (  JetType typeFromSuper : typesFromSuper) {
+    List<TypeParameterDescriptor> typeFromSuperParameters=typeFromSuper.getConstructor().getParameters();
+    for (int i=0; i < typeFromSuperParameters.size(); i++) {
+      TypeParameterDescriptor typeFromSuperParam=typeFromSuperParameters.get(i);
+      JetType typeFromSuperArgType=typeFromSuper.getArguments().get(i).getType();
+      for (      TypeProjection projection : substitution.get(typeFromSuperParam.getTypeConstructor())) {
+        ClassifierDescriptor classifier=projection.getType().getConstructor().getDeclarationDescriptor();
+        if (classifier instanceof TypeParameterDescriptor && classifier.getContainingDeclaration() == klass) {
+          parameterToArgTypesFromSuper.get(((TypeParameterDescriptor)classifier).getIndex()).add(typeFromSuperArgType);
+        }
+      }
+    }
+  }
+  return parameterToArgTypesFromSuper;
+}
