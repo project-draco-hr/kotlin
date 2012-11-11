@@ -9,9 +9,12 @@
     return new JavaScopeForKotlinNamespace(namespaceDescriptor,createDeclarationForKotlinNamespace(psiPackage,psiClass),fqName,javaSemanticServices);
   }
   PsiClass psiClass=psiClassFinder.findPsiClass(fqName,PsiClassFinder.RuntimeClassesHandleMode.IGNORE);
-  if (psiClass != null && !psiClass.isEnum()) {
-    trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.CLASS_STATICS);
-    return new JavaClassStaticMembersScope(namespaceDescriptor,createDeclarationProviderForClassStaticMembers(psiClass),fqName,javaSemanticServices);
+  if (psiClass == null) {
+    return null;
   }
-  return null;
+  if (psiClass.isEnum()) {
+    return null;
+  }
+  trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.CLASS_STATICS);
+  return new JavaClassStaticMembersScope(namespaceDescriptor,createDeclarationProviderForClassStaticMembers(psiClass),fqName,javaSemanticServices);
 }
