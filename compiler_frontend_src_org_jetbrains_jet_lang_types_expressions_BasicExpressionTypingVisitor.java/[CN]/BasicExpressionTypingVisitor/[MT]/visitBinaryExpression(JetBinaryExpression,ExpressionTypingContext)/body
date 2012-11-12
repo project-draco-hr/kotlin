@@ -3,16 +3,21 @@
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
-  JetType result=null;
   IElementType operationType=operationSign.getReferencedNameElementType();
+  JetType result=null;
+  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
   if (operationType == JetTokens.IDENTIFIER) {
     Name referencedName=operationSign.getReferencedNameAsName();
     if (referencedName != null) {
-      result=getTypeForBinaryCall(context.scope,referencedName,context,expression);
+      JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,referencedName,context,expression);
+      result=typeInfo.getType();
+      dataFlowInfo=typeInfo.getDataFlowInfo();
     }
   }
  else   if (OperatorConventions.BINARY_OPERATION_NAMES.containsKey(operationType)) {
-    result=getTypeForBinaryCall(context.scope,OperatorConventions.BINARY_OPERATION_NAMES.get(operationType),context,expression);
+    JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,OperatorConventions.BINARY_OPERATION_NAMES.get(operationType),context,expression);
+    result=typeInfo.getType();
+    dataFlowInfo=typeInfo.getDataFlowInfo();
   }
  else   if (operationType == JetTokens.EQ) {
     result=visitAssignment(expression,contextWithExpectedType);
@@ -21,7 +26,9 @@
     result=visitAssignmentOperation(expression,contextWithExpectedType);
   }
  else   if (OperatorConventions.COMPARISON_OPERATIONS.contains(operationType)) {
-    JetType compareToReturnType=getTypeForBinaryCall(context.scope,Name.identifier("compareTo"),context,expression);
+    JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,Name.identifier("compareTo"),context,expression);
+    dataFlowInfo=typeInfo.getDataFlowInfo();
+    JetType compareToReturnType=typeInfo.getType();
     if (compareToReturnType != null && !ErrorUtils.isErrorType(compareToReturnType)) {
       TypeConstructor constructor=compareToReturnType.getConstructor();
       KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
@@ -67,7 +74,7 @@
  else     if (OperatorConventions.IN_OPERATIONS.contains(operationType)) {
       if (right == null) {
         result=ErrorUtils.createErrorType("No right argument");
-        return JetTypeInfo.create(null,context.dataFlowInfo);
+        return JetTypeInfo.create(null,dataFlowInfo);
       }
       checkInExpression(expression,expression.getOperationReference(),expression.getLeft(),expression.getRight(),context);
       result=booleanType;
@@ -95,7 +102,7 @@
         }
         if (rightType != null) {
           DataFlowUtils.checkType(TypeUtils.makeNullableAsSpecified(leftType,rightType.isNullable()),left,contextWithExpectedType);
-          return JetTypeInfo.create(TypeUtils.makeNullableAsSpecified(CommonSupertypes.commonSupertype(Arrays.asList(leftType,rightType)),rightType.isNullable()),context.dataFlowInfo);
+          return JetTypeInfo.create(TypeUtils.makeNullableAsSpecified(CommonSupertypes.commonSupertype(Arrays.asList(leftType,rightType)),rightType.isNullable()),dataFlowInfo);
         }
       }
     }
@@ -103,5 +110,5 @@
       context.trace.report(UNSUPPORTED.on(operationSign,"Unknown operation"));
     }
   }
-  return DataFlowUtils.checkType(result,expression,contextWithExpectedType,context.dataFlowInfo);
+  return DataFlowUtils.checkType(result,expression,contextWithExpectedType,dataFlowInfo);
 }

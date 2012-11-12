@@ -1,0 +1,13 @@
+{
+  ExpressionTypingContext context=contextWithOldScope.replaceScope(scope);
+  JetExpression left=binaryExpression.getLeft();
+  DataFlowInfo dataFlowInfo=facade.getTypeInfo(left,context).getDataFlowInfo();
+  ExpressionReceiver receiver=safeGetExpressionReceiver(facade,left,context);
+  ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
+  OverloadResolutionResults<FunctionDescriptor> resolutionResults=getResolutionResultsForBinaryCall(scope,name,contextWithDataFlow,binaryExpression,receiver);
+  JetExpression right=binaryExpression.getRight();
+  if (right != null) {
+    dataFlowInfo=facade.getTypeInfo(right,contextWithDataFlow).getDataFlowInfo();
+  }
+  return JetTypeInfo.create(OverloadResolutionResultsUtil.getResultType(resolutionResults),dataFlowInfo);
+}
