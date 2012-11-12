@@ -6,9 +6,16 @@
     environment.reportErrorsTo(messageCollector);
     return;
   }
-  File scriptFile=tryToWriteScriptFile(compileContext,moduleChunk,files,module,tests,compileContext.getModuleOutputDirectory(module),environment.getOutput());
+  final File outputDir=environment.getOutput();
+  File scriptFile=tryToWriteScriptFile(compileContext,moduleChunk,files,module,tests,compileContext.getModuleOutputDirectory(module),outputDir);
   if (scriptFile == null)   return;
-  CompilerUtils.OutputItemsCollectorImpl collector=new CompilerUtils.OutputItemsCollectorImpl(environment.getOutput().getPath());
+  OutputItemsCollectorImpl collector=new OutputItemsCollectorImpl(outputDir){
+    @Override public void add(    Collection<File> sourceFiles,    File outputFile){
+      super.add(sourceFiles,outputFile);
+      compileContext.getProgressIndicator().setText("Emitting: " + outputFile);
+    }
+  }
+;
   runCompiler(messageCollector,environment,scriptFile,collector);
-  outputSink.add(environment.getOutput().getPath(),collector.getOutputs(),collector.getSources().toArray(VirtualFile.EMPTY_ARRAY));
+  CompilerUtils.reportOutputs(outputSink,outputDir,collector);
 }
