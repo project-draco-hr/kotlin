@@ -1,8 +1,14 @@
 {
+  ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE);
+  DataFlowInfo dataFlowInfo=facade.getTypeInfo(right,contextWithNoExpectedType).getDataFlowInfo();
   Name name=Name.identifier("contains");
-  ExpressionReceiver receiver=safeGetExpressionReceiver(facade,right,context.replaceExpectedType(NO_EXPECTED_TYPE));
-  OverloadResolutionResults<FunctionDescriptor> resolutionResult=context.resolveCallWithGivenName(CallMaker.makeCallWithExpressions(callElement,receiver,null,operationSign,Collections.singletonList(left)),operationSign,name);
+  ExpressionReceiver receiver=safeGetExpressionReceiver(facade,right,contextWithNoExpectedType);
+  ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
+  OverloadResolutionResults<FunctionDescriptor> resolutionResult=contextWithDataFlow.resolveCallWithGivenName(CallMaker.makeCallWithExpressions(callElement,receiver,null,operationSign,Collections.singletonList(left)),operationSign,name);
   JetType containsType=OverloadResolutionResultsUtil.getResultType(resolutionResult);
   ensureBooleanResult(operationSign,name,containsType,context);
-  return resolutionResult.isSuccess();
+  if (left != null) {
+    dataFlowInfo=facade.getTypeInfo(left,contextWithDataFlow).getDataFlowInfo();
+  }
+  return Pair.create(resolutionResult.isSuccess(),dataFlowInfo);
 }
