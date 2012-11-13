@@ -1,13 +1,13 @@
 {
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
   JetExpression condition=expression.getCondition();
-  checkCondition(context.scope,condition,context);
+  DataFlowInfo conditionDataFlowInfo=checkCondition(context.scope,condition,context);
   JetExpression elseBranch=expression.getElse();
   JetExpression thenBranch=expression.getThen();
   WritableScopeImpl thenScope=newWritableScopeImpl(context,"Then scope");
   WritableScopeImpl elseScope=newWritableScopeImpl(context,"Else scope");
-  DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,context);
-  DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,context);
+  DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,context).and(conditionDataFlowInfo);
+  DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,context).and(conditionDataFlowInfo);
   if (elseBranch == null) {
     if (thenBranch != null) {
       JetTypeInfo typeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(thenInfo),context.trace);
