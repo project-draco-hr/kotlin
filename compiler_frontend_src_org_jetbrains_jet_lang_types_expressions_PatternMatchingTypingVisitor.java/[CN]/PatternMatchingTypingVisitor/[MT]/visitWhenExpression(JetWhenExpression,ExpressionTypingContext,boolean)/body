@@ -1,7 +1,15 @@
 {
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
   final JetExpression subjectExpression=expression.getSubjectExpression();
-  final JetType subjectType=subjectExpression != null ? context.expressionTypingServices.safeGetType(context.scope,subjectExpression,TypeUtils.NO_EXPECTED_TYPE,context.dataFlowInfo,context.trace) : ErrorUtils.createErrorType("Unknown type");
+  final JetType subjectType;
+  if (subjectExpression == null) {
+    subjectType=ErrorUtils.createErrorType("Unknown type");
+  }
+ else {
+    JetTypeInfo typeInfo=facade.safeGetTypeInfo(subjectExpression,context);
+    subjectType=typeInfo.getType();
+    context=context.replaceDataFlowInfo(typeInfo.getDataFlowInfo());
+  }
   final DataFlowValue variableDescriptor=subjectExpression != null ? DataFlowValueFactory.INSTANCE.createDataFlowValue(subjectExpression,subjectType,context.trace.getBindingContext()) : DataFlowValue.NULL;
   Set<JetType> expressionTypes=Sets.newHashSet();
   DataFlowInfo commonDataFlowInfo=null;

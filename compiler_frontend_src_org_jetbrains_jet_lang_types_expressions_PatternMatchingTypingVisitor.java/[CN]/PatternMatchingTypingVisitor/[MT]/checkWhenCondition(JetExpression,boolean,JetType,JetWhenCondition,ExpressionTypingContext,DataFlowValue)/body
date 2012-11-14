@@ -6,10 +6,14 @@
       if (rangeExpression == null)       return;
       if (expectedCondition) {
         context.trace.report(EXPECTED_CONDITION.on(condition));
-        facade.getTypeInfo(rangeExpression,context);
+        DataFlowInfo dataFlowInfo=facade.getTypeInfo(rangeExpression,context).getDataFlowInfo();
+        newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
         return;
       }
-      if (!facade.checkInExpression(condition,condition.getOperationReference(),subjectExpression,rangeExpression,context)) {
+      JetTypeInfo typeInfo=facade.checkInExpression(condition,condition.getOperationReference(),subjectExpression,rangeExpression,context);
+      DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
+      newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
+      if (!KotlinBuiltIns.getInstance().getBooleanType().equals(typeInfo.getType())) {
         context.trace.report(TYPE_MISMATCH_IN_RANGE.on(condition));
       }
     }
