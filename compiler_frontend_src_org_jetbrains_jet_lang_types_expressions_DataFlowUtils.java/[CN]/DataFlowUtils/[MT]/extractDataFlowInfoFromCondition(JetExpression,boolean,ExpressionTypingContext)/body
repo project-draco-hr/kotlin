@@ -14,14 +14,13 @@
         JetExpression expressionRight=expression.getRight();
         if (expressionRight != null) {
           DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue,context);
-          DataFlowInfo.CompositionOperator operator;
-          if (operationToken == JetTokens.ANDAND) {
-            operator=conditionValue ? DataFlowInfo.AND : DataFlowInfo.OR;
+          boolean and=operationToken == JetTokens.ANDAND;
+          if (and == conditionValue) {
+            dataFlowInfo=dataFlowInfo.and(rightInfo);
           }
  else {
-            operator=conditionValue ? DataFlowInfo.OR : DataFlowInfo.AND;
+            dataFlowInfo=dataFlowInfo.or(rightInfo);
           }
-          dataFlowInfo=operator.compose(dataFlowInfo,rightInfo);
         }
         result.set(dataFlowInfo);
       }
