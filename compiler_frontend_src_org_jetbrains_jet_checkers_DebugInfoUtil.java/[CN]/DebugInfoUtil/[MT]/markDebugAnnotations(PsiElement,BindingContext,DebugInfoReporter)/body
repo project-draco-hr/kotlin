@@ -1,0 +1,70 @@
+{
+  final Map<JetReferenceExpression,AbstractDiagnosticFactory> markedWithErrorElements=Maps.newHashMap();
+  for (  Diagnostic diagnostic : bindingContext.getDiagnostics()) {
+    AbstractDiagnosticFactory factory=diagnostic.getFactory();
+    if (factory instanceof UnresolvedReferenceDiagnosticFactory) {
+      markedWithErrorElements.put((JetReferenceExpression)diagnostic.getPsiElement(),factory);
+    }
+ else     if (factory == Errors.SUPER_IS_NOT_AN_EXPRESSION || factory == Errors.SUPER_NOT_AVAILABLE) {
+      JetSuperExpression superExpression=(JetSuperExpression)diagnostic.getPsiElement();
+      markedWithErrorElements.put(superExpression.getInstanceReference(),factory);
+    }
+  }
+  root.acceptChildren(new JetTreeVisitorVoid(){
+    @Override public void visitReferenceExpression(    JetReferenceExpression expression){
+      if (expression instanceof JetSimpleNameExpression) {
+        JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)expression;
+        IElementType elementType=expression.getNode().getElementType();
+        if (elementType == JetNodeTypes.OPERATION_REFERENCE) {
+          IElementType referencedNameElementType=nameExpression.getReferencedNameElementType();
+          if (EXCLUDED.contains(referencedNameElementType)) {
+            return;
+          }
+          if (JetTokens.LABELS.contains(referencedNameElementType))           return;
+        }
+ else         if (nameExpression.getReferencedNameElementType() == JetTokens.THIS_KEYWORD) {
+          return;
+        }
+      }
+      String target=null;
+      DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,expression);
+      if (declarationDescriptor != null) {
+        target=declarationDescriptor.toString();
+      }
+      if (target == null) {
+        PsiElement labelTarget=bindingContext.get(LABEL_TARGET,expression);
+        if (labelTarget != null) {
+          target=labelTarget.getText();
+        }
+      }
+      if (target == null) {
+        Collection<? extends DeclarationDescriptor> declarationDescriptors=bindingContext.get(AMBIGUOUS_REFERENCE_TARGET,expression);
+        if (declarationDescriptors != null) {
+          target="[" + declarationDescriptors.size() + " descriptors]";
+        }
+      }
+      if (target == null) {
+        Collection<? extends PsiElement> labelTargets=bindingContext.get(AMBIGUOUS_LABEL_TARGET,expression);
+        if (labelTargets != null) {
+          target="[" + labelTargets.size() + " elements]";
+        }
+      }
+      boolean resolved=target != null;
+      boolean markedWithError=markedWithErrorElements.containsKey(expression);
+      JetType expressionType=bindingContext.get(EXPRESSION_TYPE,expression);
+      if (declarationDescriptor != null && !ApplicationManager.getApplication().isUnitTestMode() && (ErrorUtils.isError(declarationDescriptor) || ErrorUtils.containsErrorType(expressionType))) {
+        debugInfoReporter.reportErrorElement(expression);
+      }
+      if (resolved && markedWithError) {
+        AbstractDiagnosticFactory factory=markedWithErrorElements.get(expression);
+        if (factory instanceof UnresolvedReferenceDiagnosticFactory) {
+          debugInfoReporter.reportUnresolvedWithTarget(expression,target);
+        }
+      }
+ else       if (!resolved && !markedWithError) {
+        debugInfoReporter.reportMissingUnresolved(expression);
+      }
+    }
+  }
+);
+}
