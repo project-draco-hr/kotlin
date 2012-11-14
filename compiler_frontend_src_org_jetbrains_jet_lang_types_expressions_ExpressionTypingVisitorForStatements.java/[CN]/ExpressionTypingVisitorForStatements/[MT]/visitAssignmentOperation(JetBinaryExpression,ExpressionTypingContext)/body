@@ -1,13 +1,15 @@
 {
-  JetExpression right=expression.getRight();
-  if (right == null)   return null;
   TemporaryBindingTrace temporaryBindingTrace=TemporaryBindingTrace.create(contextWithExpectedType.trace,"trace to resolve array set method for binary expression",expression);
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceBindingTrace(temporaryBindingTrace);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   IElementType operationType=operationSign.getReferencedNameElementType();
+  JetType leftType=facade.getTypeInfo(expression.getLeft(),context).getType();
+  JetExpression right=expression.getRight();
   JetExpression left=JetPsiUtil.deparenthesize(expression.getLeft());
-  if (left == null)   return null;
-  JetType leftType=facade.getTypeInfo(left,context).getType();
+  if (right == null || left == null) {
+    temporaryBindingTrace.commit();
+    return null;
+  }
   if (leftType == null) {
     facade.getTypeInfo(right,context);
     context.trace.report(UNRESOLVED_REFERENCE.on(operationSign));
