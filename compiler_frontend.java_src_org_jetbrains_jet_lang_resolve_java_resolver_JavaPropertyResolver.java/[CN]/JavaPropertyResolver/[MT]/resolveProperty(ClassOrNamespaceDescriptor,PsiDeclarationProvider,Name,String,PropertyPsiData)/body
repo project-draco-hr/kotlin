@@ -10,11 +10,10 @@
     visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi(),methodAnnotation);
     kind=DescriptorKindUtils.flagsToKind(methodAnnotation.kind());
   }
-  DeclarationDescriptor realOwner=getRealOwner(owner,scopeData,psiData.isStatic());
-  boolean isEnumEntry=DescriptorUtils.isEnumClassObject(realOwner);
-  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(realOwner,annotationResolver.resolveAnnotations(psiData.getCharacteristicPsi()),DescriptorResolverUtils.resolveModality(characteristicMember.getMember(),isFinal || isEnumEntry || psiData.isPropertyForNamedObject()),visibility,isVar,propertyName,kind);
+  boolean isEnumEntry=DescriptorUtils.isEnumClassObject(owner);
+  PropertyDescriptor propertyDescriptor=new PropertyDescriptor(owner,annotationResolver.resolveAnnotations(psiData.getCharacteristicPsi()),DescriptorResolverUtils.resolveModality(characteristicMember.getMember(),isFinal || isEnumEntry || psiData.isPropertyForNamedObject()),visibility,isVar,propertyName,kind);
   if (isEnumEntry) {
-    ClassDescriptorImpl dummyClassDescriptorForEnumEntryObject=new ClassDescriptorImpl(realOwner,Collections.<AnnotationDescriptor>emptyList(),Modality.FINAL,propertyName);
+    ClassDescriptorImpl dummyClassDescriptorForEnumEntryObject=new ClassDescriptorImpl(owner,Collections.<AnnotationDescriptor>emptyList(),Modality.FINAL,propertyName);
     dummyClassDescriptorForEnumEntryObject.initialize(true,Collections.<TypeParameterDescriptor>emptyList(),Collections.<JetType>emptyList(),JetScope.EMPTY,Collections.<ConstructorDescriptor>emptySet(),null);
     trace.record(BindingContext.OBJECT_DECLARATION_CLASS,propertyDescriptor,dummyClassDescriptorForEnumEntryObject);
   }
@@ -26,12 +25,12 @@
   JetType propertyType=getPropertyType(psiData,characteristicMember,typeVariableResolverForPropertyInternals);
   JetType receiverType=getReceiverType(characteristicMember,typeVariableResolverForPropertyInternals);
   propertyType=getAlternativeSignatureData(isVar,characteristicMember,propertyDescriptor,propertyType);
-  propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(realOwner),receiverType);
+  propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverType);
   initializeSetterAndGetter(propertyDescriptor,getterDescriptor,setterDescriptor,propertyType);
   if (kind == CallableMemberDescriptor.Kind.DECLARATION) {
     trace.record(BindingContext.VARIABLE,psiData.getCharacteristicPsi(),propertyDescriptor);
   }
-  recordObjectDeclarationClassIfNeeded(psiData,realOwner,propertyDescriptor,propertyType);
+  recordObjectDeclarationClassIfNeeded(psiData,owner,propertyDescriptor,propertyType);
   if (scopeData.getDeclarationOrigin() == JAVA) {
     trace.record(BindingContext.IS_DECLARED_IN_JAVA,propertyDescriptor);
   }
