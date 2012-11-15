@@ -10,7 +10,7 @@
     subjectType=typeInfo.getType();
     context=context.replaceDataFlowInfo(typeInfo.getDataFlowInfo());
   }
-  final DataFlowValue variableDescriptor=subjectExpression != null ? DataFlowValueFactory.INSTANCE.createDataFlowValue(subjectExpression,subjectType,context.trace.getBindingContext()) : DataFlowValue.NULL;
+  final DataFlowValue subjectDataFlowValue=subjectExpression != null ? DataFlowValueFactory.INSTANCE.createDataFlowValue(subjectExpression,subjectType,context.trace.getBindingContext()) : DataFlowValue.NULL;
   Set<JetType> expressionTypes=Sets.newHashSet();
   DataFlowInfo commonDataFlowInfo=null;
   DataFlowInfo elseDataFlowInfo=context.dataFlowInfo;
@@ -27,7 +27,7 @@
       newDataFlowInfo=context.dataFlowInfo;
       JetWhenCondition condition=conditions[0];
       if (condition != null) {
-        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,variableDescriptor);
+        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,subjectDataFlowValue);
         newDataFlowInfo=infos.thenInfo;
         elseDataFlowInfo=elseDataFlowInfo.and(infos.elseInfo);
       }
@@ -36,7 +36,7 @@
       scopeToExtend=newWritableScopeImpl(context,"pattern matching");
       newDataFlowInfo=null;
       for (      JetWhenCondition condition : conditions) {
-        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,variableDescriptor);
+        DataFlowInfos infos=checkWhenCondition(subjectExpression,subjectExpression == null,subjectType,condition,context,subjectDataFlowValue);
         if (newDataFlowInfo == null) {
           newDataFlowInfo=infos.thenInfo;
         }
