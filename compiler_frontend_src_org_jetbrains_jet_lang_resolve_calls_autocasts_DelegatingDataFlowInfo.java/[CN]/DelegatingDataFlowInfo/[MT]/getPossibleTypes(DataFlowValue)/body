@@ -1,0 +1,22 @@
+{
+  List<JetType> types=typeInfo.get(key);
+  if (getNullability(key).canBeNull()) {
+    if (parent != null) {
+      types=Lists.newArrayList(types);
+      addAllUnique(types,parent.getPossibleTypes(key));
+    }
+    return types;
+  }
+  List<JetType> enrichedTypes=Lists.newArrayListWithCapacity(types.size() + 1);
+  JetType originalType=key.getType();
+  if (originalType.isNullable()) {
+    enrichedTypes.add(TypeUtils.makeNotNullable(originalType));
+  }
+  for (  JetType type : types) {
+    enrichedTypes.add(TypeUtils.makeNotNullable(type));
+  }
+  if (parent != null) {
+    addAllUnique(enrichedTypes,parent.getPossibleTypes(key));
+  }
+  return enrichedTypes;
+}
