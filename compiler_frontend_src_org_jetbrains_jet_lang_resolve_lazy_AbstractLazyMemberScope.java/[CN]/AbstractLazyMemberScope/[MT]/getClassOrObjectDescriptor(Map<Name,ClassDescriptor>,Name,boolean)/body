@@ -2,13 +2,17 @@
   ClassDescriptor known=cache.get(name);
   if (known != null)   return known;
   if (allDescriptorsComputed)   return null;
-  JetClassOrObject classOrObjectDeclaration=declarationProvider.getClassOrObjectDeclaration(name);
-  if (classOrObjectDeclaration == null)   return null;
-  if (object != declaresObjectOrEnumConstant(classOrObjectDeclaration))   return null;
-  ClassDescriptor classDescriptor=new LazyClassDescriptor(resolveSession,thisDescriptor,name,JetClassInfoUtil.createClassLikeInfo(classOrObjectDeclaration));
-  cache.put(name,classDescriptor);
-  if (!object) {
-    allDescriptors.add(classDescriptor);
+  Collection<JetClassOrObject> classOrObjectDeclarations=declarationProvider.getClassOrObjectDeclarations(name);
+  if (classOrObjectDeclarations.isEmpty())   return null;
+  ClassDescriptor result=null;
+  for (  JetClassOrObject classOrObjectDeclaration : classOrObjectDeclarations) {
+    if (object != declaresObjectOrEnumConstant(classOrObjectDeclaration))     continue;
+    ClassDescriptor classDescriptor=new LazyClassDescriptor(resolveSession,thisDescriptor,name,JetClassInfoUtil.createClassLikeInfo(classOrObjectDeclaration));
+    cache.put(name,classDescriptor);
+    if (!object) {
+      allDescriptors.add(classDescriptor);
+    }
+    result=classDescriptor;
   }
-  return classDescriptor;
+  return result;
 }

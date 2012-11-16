@@ -8,14 +8,16 @@
     JetScope resolutionScope=getScopeForMemberDeclarationResolution(propertyDeclaration);
     result.add(resolveSession.getInjector().getDescriptorResolver().resolvePropertyDescriptor(thisDescriptor,resolutionScope,propertyDeclaration,resolveSession.getTrace()));
   }
-  JetClassOrObject classOrObjectDeclaration=declarationProvider.getClassOrObjectDeclaration(name);
-  if (declaresObjectOrEnumConstant(classOrObjectDeclaration)) {
-    ClassDescriptor classifier=getObjectDescriptor(name);
-    if (classifier == null) {
-      throw new IllegalStateException("Object declaration " + name + " found in the DeclarationProvider "+ declarationProvider+ " but not in the scope "+ this);
+  Collection<JetClassOrObject> classOrObjectDeclarations=declarationProvider.getClassOrObjectDeclarations(name);
+  for (  JetClassOrObject classOrObjectDeclaration : classOrObjectDeclarations) {
+    if (declaresObjectOrEnumConstant(classOrObjectDeclaration)) {
+      ClassDescriptor classifier=getObjectDescriptor(name);
+      if (classifier == null) {
+        throw new IllegalStateException("Object declaration " + name + " found in the DeclarationProvider "+ declarationProvider+ " but not in the scope "+ this);
+      }
+      VariableDescriptor propertyDescriptor=resolveSession.getInjector().getDescriptorResolver().resolveObjectDeclaration(thisDescriptor,classOrObjectDeclaration,classifier,resolveSession.getTrace());
+      result.add(propertyDescriptor);
     }
-    VariableDescriptor propertyDescriptor=resolveSession.getInjector().getDescriptorResolver().resolveObjectDeclaration(thisDescriptor,classOrObjectDeclaration,classifier,resolveSession.getTrace());
-    result.add(propertyDescriptor);
   }
   getNonDeclaredProperties(name,result);
   if (!result.isEmpty()) {
