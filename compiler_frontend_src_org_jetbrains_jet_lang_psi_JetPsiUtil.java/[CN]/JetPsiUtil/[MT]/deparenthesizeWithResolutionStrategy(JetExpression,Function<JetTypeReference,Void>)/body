@@ -1,0 +1,26 @@
+{
+  if (expression instanceof JetBinaryExpressionWithTypeRHS) {
+    JetBinaryExpressionWithTypeRHS binaryExpression=(JetBinaryExpressionWithTypeRHS)expression;
+    JetSimpleNameExpression operationSign=binaryExpression.getOperationSign();
+    if (JetTokens.COLON.equals(operationSign.getReferencedNameElementType())) {
+      expression=binaryExpression.getLeft();
+      JetTypeReference typeReference=binaryExpression.getRight();
+      if (typeResolutionStrategy != null && typeReference != null) {
+        typeResolutionStrategy.apply(typeReference);
+      }
+    }
+  }
+ else   if (expression instanceof JetPrefixExpression) {
+    if (JetTokens.LABELS.contains(((JetPrefixExpression)expression).getOperationReference().getReferencedNameElementType())) {
+      JetExpression baseExpression=((JetPrefixExpression)expression).getBaseExpression();
+      if (baseExpression != null) {
+        expression=baseExpression;
+      }
+    }
+  }
+  if (expression instanceof JetParenthesizedExpression) {
+    JetExpression innerExpression=((JetParenthesizedExpression)expression).getExpression();
+    return innerExpression != null ? deparenthesizeWithResolutionStrategy(innerExpression,typeResolutionStrategy) : null;
+  }
+  return expression;
+}
