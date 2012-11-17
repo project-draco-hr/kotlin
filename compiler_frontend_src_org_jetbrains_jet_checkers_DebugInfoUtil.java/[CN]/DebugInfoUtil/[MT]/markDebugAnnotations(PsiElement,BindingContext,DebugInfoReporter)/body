@@ -52,11 +52,13 @@
       boolean resolved=target != null;
       boolean markedWithError=markedWithErrorElements.containsKey(expression);
       JetType expressionType=bindingContext.get(EXPRESSION_TYPE,expression);
-      if (declarationDescriptor != null && !ApplicationManager.getApplication().isUnitTestMode() && (ErrorUtils.isError(declarationDescriptor) || ErrorUtils.containsErrorType(expressionType))) {
-        debugInfoReporter.reportErrorElement(expression);
+      AbstractDiagnosticFactory factory=markedWithErrorElements.get(expression);
+      if (declarationDescriptor != null && (ErrorUtils.isError(declarationDescriptor) || ErrorUtils.containsErrorType(expressionType))) {
+        if (factory != Errors.EXPRESSION_EXPECTED_NAMESPACE_FOUND) {
+          debugInfoReporter.reportElementWithErrorType(expression);
+        }
       }
       if (resolved && markedWithError) {
-        AbstractDiagnosticFactory factory=markedWithErrorElements.get(expression);
         if (factory instanceof UnresolvedReferenceDiagnosticFactory) {
           debugInfoReporter.reportUnresolvedWithTarget(expression,target);
         }
