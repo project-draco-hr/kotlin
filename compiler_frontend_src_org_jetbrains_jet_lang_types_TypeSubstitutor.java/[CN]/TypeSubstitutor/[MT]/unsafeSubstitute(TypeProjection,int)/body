@@ -9,13 +9,15 @@ switch (conflictType(originalProjection.getProjectionKind(),replacement.getProje
 case OUT_IN_IN_POSITION:
       throw new SubstitutionException("Out-projection in in-position");
 case IN_IN_OUT_POSITION:
-    replacement=SubstitutionUtils.makeStarProjection(typeParameter);
-  break;
-}
-boolean resultingIsNullable=type.isNullable() || replacement.getType().isNullable();
+    return SubstitutionUtils.makeStarProjection(typeParameter);
+case NO_CONFLICT:
+  boolean resultingIsNullable=type.isNullable() || replacement.getType().isNullable();
 JetType substitutedType=TypeUtils.makeNullableAsSpecified(replacement.getType(),resultingIsNullable);
 Variance resultingProjectionKind=combine(originalProjection.getProjectionKind(),replacement.getProjectionKind());
 return new TypeProjection(resultingProjectionKind,substitutedType);
+default :
+throw new IllegalStateException();
+}
 }
  else {
 List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);

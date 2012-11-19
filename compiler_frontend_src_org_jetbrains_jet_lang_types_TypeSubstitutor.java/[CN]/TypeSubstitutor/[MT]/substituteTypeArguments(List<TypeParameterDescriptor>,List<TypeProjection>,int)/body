@@ -5,9 +5,12 @@
     TypeProjection typeArgument=typeArguments.get(i);
     TypeProjection substitutedTypeArgument=unsafeSubstitute(typeArgument,recursionDepth + 1);
 switch (conflictType(typeParameter.getVariance(),substitutedTypeArgument.getProjectionKind())) {
-case OUT_IN_IN_POSITION:
-      substitutedTypeArgument=new TypeProjection(Variance.IN_VARIANCE,typeParameter.getLowerBoundsAsType());
+case NO_CONFLICT:
+      if (typeParameter.getVariance() != Variance.INVARIANT) {
+        substitutedTypeArgument=new TypeProjection(Variance.INVARIANT,substitutedTypeArgument.getType());
+      }
     break;
+case OUT_IN_IN_POSITION:
 case IN_IN_OUT_POSITION:
   substitutedTypeArgument=SubstitutionUtils.makeStarProjection(typeParameter);
 break;
