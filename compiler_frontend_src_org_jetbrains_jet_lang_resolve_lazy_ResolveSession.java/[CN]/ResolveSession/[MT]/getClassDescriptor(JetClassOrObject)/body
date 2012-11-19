@@ -1,2 +1,17 @@
 {
+  if (classOrObject.getParent() instanceof JetClassObject) {
+    return getClassObjectDescriptor((JetClassObject)classOrObject.getParent());
+  }
+  JetScope resolutionScope=getInjector().getScopeProvider().getResolutionScopeForDeclaration(classOrObject);
+  Name name=safeNameForLazyResolve(classOrObject.getNameAsName());
+  resolutionScope.getClassifier(name);
+  DeclarationDescriptor declaration=getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,classOrObject);
+  if (declaration == null) {
+    resolutionScope.getObjectDescriptor(name);
+    declaration=getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,classOrObject);
+  }
+  if (declaration == null) {
+    throw new IllegalArgumentException("Could not find a classifier for " + classOrObject + " "+ classOrObject.getText());
+  }
+  return (ClassDescriptor)declaration;
 }

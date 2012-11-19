@@ -40,7 +40,7 @@
     }
     @Override public DeclarationDescriptor visitNamedFunction(    JetNamedFunction function,    Void data){
       JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(function);
-      scopeForDeclaration.getFunctions(function.getNameAsName());
+      scopeForDeclaration.getFunctions(safeNameForLazyResolve(function));
       return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,function);
     }
     @Override public DeclarationDescriptor visitParameter(    JetParameter parameter,    Void data){
@@ -48,7 +48,7 @@
       if (grandFather instanceof JetClass) {
         JetClass jetClass=(JetClass)grandFather;
         if (parameter.getValOrVarNode() != null) {
-          getClassDescriptor(jetClass).getDefaultType().getMemberScope().getProperties(parameter.getNameAsName());
+          getClassDescriptor(jetClass).getDefaultType().getMemberScope().getProperties(safeNameForLazyResolve(parameter));
           return getBindingContext().get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,parameter);
         }
       }
@@ -56,12 +56,12 @@
     }
     @Override public DeclarationDescriptor visitProperty(    JetProperty property,    Void data){
       JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(property);
-      scopeForDeclaration.getProperties(property.getNameAsName());
+      scopeForDeclaration.getProperties(safeNameForLazyResolve(property));
       return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,property);
     }
     @Override public DeclarationDescriptor visitObjectDeclarationName(    JetObjectDeclarationName declarationName,    Void data){
-      JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration((JetDeclaration)declarationName.getParent());
-      scopeForDeclaration.getProperties(declarationName.getNameAsName());
+      JetScope scopeForDeclaration=getInjector().getScopeProvider().getResolutionScopeForDeclaration(declarationName.getParent());
+      scopeForDeclaration.getProperties(safeNameForLazyResolve(declarationName));
       return getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,declarationName);
     }
     @Override public DeclarationDescriptor visitJetElement(    JetElement element,    Void data){
