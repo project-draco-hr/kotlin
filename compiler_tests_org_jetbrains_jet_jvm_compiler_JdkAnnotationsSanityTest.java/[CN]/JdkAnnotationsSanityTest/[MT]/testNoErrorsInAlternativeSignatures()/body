@@ -2,7 +2,7 @@
   InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(getProject());
   final BindingContext bindingContext=injector.getBindingTrace().getBindingContext();
   JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
-  final Map<DeclarationDescriptor,String> errors=Maps.newHashMap();
+  final Map<DeclarationDescriptor,List<String>> errors=Maps.newHashMap();
   Iterable<FqName> affectedClasses=getAffectedClasses(kotlinAnnotationsRoot);
   AlternativeSignatureErrorFindingVisitor visitor=new AlternativeSignatureErrorFindingVisitor(bindingContext,errors);
   for (  FqName javaClass : affectedClasses) {
@@ -16,7 +16,7 @@
   }
   if (!errors.isEmpty()) {
     StringBuilder sb=new StringBuilder("Error(s) in JDK alternative signatures: \n");
-    for (    Map.Entry<DeclarationDescriptor,String> entry : errors.entrySet()) {
+    for (    Map.Entry<DeclarationDescriptor,List<String>> entry : errors.entrySet()) {
       sb.append(DescriptorRenderer.TEXT.render(entry.getKey())).append(" : ").append(entry.getValue()).append("\n");
     }
     fail(sb.toString());
