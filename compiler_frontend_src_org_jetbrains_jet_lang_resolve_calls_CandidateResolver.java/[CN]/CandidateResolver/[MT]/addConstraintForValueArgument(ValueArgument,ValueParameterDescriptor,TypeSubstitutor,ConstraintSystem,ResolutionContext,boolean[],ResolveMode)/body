@@ -1,0 +1,11 @@
+{
+  JetType effectiveExpectedType=getEffectiveExpectedType(valueParameterDescriptor,valueArgument);
+  JetExpression argumentExpression=valueArgument.getArgumentExpression();
+  TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace,"transient trace to resolve argument",argumentExpression);
+  JetType expectedType=substitutor.substitute(effectiveExpectedType,Variance.INVARIANT);
+  JetType type=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,traceForUnknown,context.scope,context.dataFlowInfo,expectedType != null ? expectedType : NO_EXPECTED_TYPE,resolveFunctionArgumentBodies).getType();
+  constraintSystem.addSubtypeConstraint(effectiveExpectedType,type,ConstraintPosition.getValueParameterPosition(valueParameterDescriptor.getIndex()));
+  if (isErrorType != null) {
+    isErrorType[0]=type == null || ErrorUtils.isErrorType(type);
+  }
+}

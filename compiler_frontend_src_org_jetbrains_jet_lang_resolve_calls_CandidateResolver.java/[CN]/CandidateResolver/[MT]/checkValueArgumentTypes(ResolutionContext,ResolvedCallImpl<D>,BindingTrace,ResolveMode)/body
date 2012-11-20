@@ -12,16 +12,16 @@
       if (TypeUtils.dependsOnTypeParameters(expectedType,candidateCall.getCandidateDescriptor().getTypeParameters())) {
         expectedType=NO_EXPECTED_TYPE;
       }
-      JetTypeInfo typeInfo=expressionTypingServices.getTypeInfo(context.scope,expression,expectedType,dataFlowInfo,trace);
+      JetTypeInfo typeInfo=argumentTypeResolver.getArgumentTypeInfo(expression,trace,context.scope,dataFlowInfo,expectedType,resolveFunctionArgumentBodies);
       JetType type=typeInfo.getType();
       dataFlowInfo=dataFlowInfo.and(typeInfo.getDataFlowInfo());
-      if (type == null || ErrorUtils.isErrorType(type)) {
+      if (type == null || (ErrorUtils.isErrorType(type) && type != PLACEHOLDER_FUNCTION_TYPE)) {
         candidateCall.argumentHasNoType();
         argumentTypes.add(type);
       }
  else {
         JetType resultingType;
-        if (expectedType == NO_EXPECTED_TYPE || typeChecker.isSubtypeOf(type,expectedType)) {
+        if (expectedType == NO_EXPECTED_TYPE || argumentTypeResolver.isSubtypeOfForArgumentType(type,expectedType)) {
           resultingType=type;
         }
  else {
