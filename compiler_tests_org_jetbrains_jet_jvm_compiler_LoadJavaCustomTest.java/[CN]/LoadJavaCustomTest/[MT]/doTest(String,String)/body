@@ -1,12 +1,15 @@
 {
-  Collection<File> files=Collections2.transform(Arrays.asList(javaFileNames),new Function<String,File>(){
-    @Override public File apply(    String s){
+  List<File> files=ContainerUtil.map(Arrays.asList(javaFileNames),new Function<String,File>(){
+    @Override public File fun(    String s){
       return new File(s);
     }
   }
 );
+  files.add(ExpectedLoadErrorsUtil.ANNOTATION_SOURCE_FILE);
   File expected=new File(expectedFileName);
   File tmpDir=JetTestUtils.tmpDir(expected.getName());
-  NamespaceDescriptor javaNamespaceDescriptor=compileJavaAndLoadTestNamespaceFromBinary(files,tmpDir,getTestRootDisposable(),ConfigurationKind.JDK_ONLY);
-  NamespaceComparator.compareNamespaces(javaNamespaceDescriptor,javaNamespaceDescriptor,NamespaceComparator.DONT_INCLUDE_METHODS_OF_OBJECT,expected);
+  Pair<NamespaceDescriptor,BindingContext> javaNamespaceAndBindingContext=compileJavaAndLoadTestNamespaceAndBindingContextFromBinary(files,tmpDir,getTestRootDisposable(),ConfigurationKind.JDK_ONLY);
+  NamespaceDescriptor javaNamespace=javaNamespaceAndBindingContext.first;
+  NamespaceComparator.compareNamespaces(javaNamespace,javaNamespace,NamespaceComparator.DONT_INCLUDE_METHODS_OF_OBJECT,expected);
+  ExpectedLoadErrorsUtil.checkForLoadErrors(javaNamespace,javaNamespaceAndBindingContext.second);
 }
