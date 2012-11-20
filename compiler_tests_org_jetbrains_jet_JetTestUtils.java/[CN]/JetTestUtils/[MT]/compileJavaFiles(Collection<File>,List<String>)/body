@@ -1,10 +1,11 @@
 {
   JavaCompiler javaCompiler=ToolProvider.getSystemJavaCompiler();
-  StandardJavaFileManager fileManager=javaCompiler.getStandardFileManager(null,Locale.ENGLISH,Charset.forName("utf-8"));
+  DiagnosticCollector<JavaFileObject> diagnosticCollector=new DiagnosticCollector<JavaFileObject>();
+  StandardJavaFileManager fileManager=javaCompiler.getStandardFileManager(diagnosticCollector,Locale.ENGLISH,Charset.forName("utf-8"));
   try {
     Iterable<? extends JavaFileObject> javaFileObjectsFromFiles=fileManager.getJavaFileObjectsFromFiles(files);
-    JavaCompiler.CompilationTask task=javaCompiler.getTask(null,fileManager,null,options,null,javaFileObjectsFromFiles);
-    Assert.assertTrue(task.call());
+    JavaCompiler.CompilationTask task=javaCompiler.getTask(new StringWriter(),fileManager,diagnosticCollector,options,null,javaFileObjectsFromFiles);
+    Assert.assertTrue(errorsToString(diagnosticCollector),task.call());
   }
   finally {
     fileManager.close();
