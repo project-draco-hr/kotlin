@@ -1,0 +1,15 @@
+{
+  List<ValueParameterDescriptor> resultParameters=Lists.newArrayList();
+  for (  final ValueParameterDescriptor originalParam : parameters.getDescriptors()) {
+    final int index=originalParam.getIndex();
+    List<JetType> typesFromSuperMethods=ContainerUtil.map(superFunctions,new Function<FunctionDescriptor,JetType>(){
+      @Override public JetType fun(      FunctionDescriptor superFunction){
+        return superFunction.getValueParameters().get(index).getType();
+      }
+    }
+);
+    JetType altType=modifyTypeAccordingToSuperMethods(originalParam.getType(),typesFromSuperMethods,false,reportError);
+    resultParameters.add(new ValueParameterDescriptorImpl(originalParam.getContainingDeclaration(),index,originalParam.getAnnotations(),originalParam.getName(),originalParam.isVar(),altType,originalParam.declaresDefaultValue(),originalParam.getVarargElementType()));
+  }
+  return new JavaDescriptorResolver.ValueParameterDescriptors(parameters.getReceiverType(),resultParameters);
+}
