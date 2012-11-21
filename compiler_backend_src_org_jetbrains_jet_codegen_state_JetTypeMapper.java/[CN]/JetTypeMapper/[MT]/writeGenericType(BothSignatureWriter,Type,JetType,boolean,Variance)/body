@@ -1,0 +1,16 @@
+{
+  if (signatureVisitor != null) {
+    String kotlinTypeName=getKotlinTypeNameForSignature(jetType,asmType);
+    signatureVisitor.writeClassBegin(asmType.getInternalName(),jetType.isNullable(),forceReal,kotlinTypeName);
+    List<TypeProjection> arguments=jetType.getArguments();
+    for (    TypeParameterDescriptor parameter : jetType.getConstructor().getParameters()) {
+      TypeProjection argument=arguments.get(parameter.getIndex());
+      Variance projectionKindForKotlin=argument.getProjectionKind();
+      Variance projectionKindForJava=getEffectiveVariance(parameter.getVariance(),projectionKindForKotlin,howThisTypeIsUsed);
+      signatureVisitor.writeTypeArgument(projectionKindForKotlin,projectionKindForJava);
+      mapType(argument.getType(),signatureVisitor,JetTypeMapperMode.TYPE_PARAMETER);
+      signatureVisitor.writeTypeArgumentEnd();
+    }
+    signatureVisitor.writeClassEnd();
+  }
+}
