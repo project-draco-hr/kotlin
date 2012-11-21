@@ -1,0 +1,33 @@
+{
+  Disposable disposable=new Disposable(){
+    @Override public void dispose(){
+    }
+  }
+;
+  CompilerConfiguration configuration=new CompilerConfiguration();
+  File runtimePath=paths.getRuntimePath();
+  if (runtimePath.exists()) {
+    configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,runtimePath);
+  }
+  configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,PathUtil.findRtJar());
+  File jdkAnnotationsPath=paths.getJdkAnnotationsPath();
+  if (jdkAnnotationsPath.exists()) {
+    configuration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,jdkAnnotationsPath);
+  }
+  configuration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,moduleScriptFile);
+  configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,messageCollector);
+  JetCoreEnvironment scriptEnvironment=new JetCoreEnvironment(disposable,configuration);
+  GenerationState generationState=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(scriptEnvironment,false);
+  if (generationState == null) {
+    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " analyze failed:\n"+ loadModuleScriptText(moduleScriptFile));
+  }
+  List<Module> modules=runDefineModules(paths,moduleScriptFile,generationState.getFactory());
+  Disposer.dispose(disposable);
+  if (modules == null) {
+    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
+  }
+  if (modules.isEmpty()) {
+    throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
+  }
+  return modules;
+}
