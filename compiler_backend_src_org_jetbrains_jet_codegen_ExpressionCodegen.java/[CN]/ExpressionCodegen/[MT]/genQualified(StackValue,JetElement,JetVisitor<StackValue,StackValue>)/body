@@ -5,6 +5,13 @@
   if (!(selector instanceof JetBlockExpression)) {
     markLineNumber(selector);
   }
+  if (selector instanceof JetExpression) {
+    JetExpression expression=(JetExpression)selector;
+    CompileTimeConstant<?> constant=bindingContext.get(BindingContext.COMPILE_TIME_VALUE,expression);
+    if (constant != null) {
+      return StackValue.constant(constant.getValue(),expressionType(expression));
+    }
+  }
   try {
     return selector.accept(visitor,receiver);
   }
