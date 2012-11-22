@@ -1,0 +1,56 @@
+{
+  JetExpression expr=expression.getSubjectExpression();
+  JetType subjectJetType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expr);
+  final Type subjectType=asmTypeOrVoid(subjectJetType);
+  final Type resultType=isStatement ? Type.VOID_TYPE : expressionType(expression);
+  final int subjectLocal=expr != null ? myFrameMap.enterTemp(subjectType) : -1;
+  if (subjectLocal != -1) {
+    gen(expr,subjectType);
+    tempVariables.put(expr,StackValue.local(subjectLocal,subjectType));
+    v.store(subjectLocal,subjectType);
+  }
+  Label end=new Label();
+  boolean hasElse=false;
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    if (whenEntry.isElse()) {
+      hasElse=true;
+      break;
+    }
+  }
+  Label nextCondition=null;
+  for (  JetWhenEntry whenEntry : expression.getEntries()) {
+    if (nextCondition != null) {
+      v.mark(nextCondition);
+    }
+    nextCondition=new Label();
+    FrameMap.Mark mark=myFrameMap.mark();
+    Label thisEntry=new Label();
+    if (!whenEntry.isElse()) {
+      final JetWhenCondition[] conditions=whenEntry.getConditions();
+      for (int i=0; i < conditions.length; i++) {
+        StackValue conditionValue=generateWhenCondition(subjectType,subjectLocal,subjectJetType != null && subjectJetType.isNullable(),conditions[i],nextCondition);
+        conditionValue.condJump(nextCondition,true,v);
+        if (i < conditions.length - 1) {
+          v.goTo(thisEntry);
+          v.mark(nextCondition);
+          nextCondition=new Label();
+        }
+      }
+    }
+    v.visitLabel(thisEntry);
+    gen(whenEntry.getExpression(),resultType);
+    mark.dropTo();
+    if (!whenEntry.isElse()) {
+      v.goTo(end);
+    }
+  }
+  if (!hasElse && nextCondition != null) {
+    v.mark(nextCondition);
+    throwNewException(CLASS_NO_PATTERN_MATCHED_EXCEPTION);
+  }
+  markLineNumber(expression);
+  v.mark(end);
+  myFrameMap.leaveTemp(subjectType);
+  tempVariables.remove(expr);
+  return StackValue.onStack(resultType);
+}
