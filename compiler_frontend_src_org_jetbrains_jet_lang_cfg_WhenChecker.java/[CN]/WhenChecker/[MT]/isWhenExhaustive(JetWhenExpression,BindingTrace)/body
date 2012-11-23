@@ -1,27 +1,2 @@
 {
-  JetExpression subjectExpression=expression.getSubjectExpression();
-  if (subjectExpression == null)   return false;
-  JetType type=trace.get(BindingContext.EXPRESSION_TYPE,subjectExpression);
-  if (type == null)   return false;
-  DeclarationDescriptor declarationDescriptor=type.getConstructor().getDeclarationDescriptor();
-  if (!(declarationDescriptor instanceof ClassDescriptor))   return false;
-  ClassDescriptor classDescriptor=(ClassDescriptor)declarationDescriptor;
-  if (classDescriptor.getKind() != ClassKind.ENUM_CLASS || classDescriptor.getModality().isOverridable())   return false;
-  ClassDescriptor classObjectDescriptor=classDescriptor.getClassObjectDescriptor();
-  if (classObjectDescriptor == null) {
-    return false;
-  }
-  JetScope memberScope=classObjectDescriptor.getMemberScope(Collections.<TypeProjection>emptyList());
-  Collection<ClassDescriptor> objectDescriptors=memberScope.getObjectDescriptors();
-  boolean isExhaust=true;
-  boolean notEmpty=false;
-  for (  ClassDescriptor descriptor : objectDescriptors) {
-    if (descriptor.getKind() == ClassKind.ENUM_ENTRY) {
-      notEmpty=true;
-      if (!containsEnumEntryCase(expression,descriptor,trace)) {
-        isExhaust=false;
-      }
-    }
-  }
-  return isExhaust && notEmpty;
 }
