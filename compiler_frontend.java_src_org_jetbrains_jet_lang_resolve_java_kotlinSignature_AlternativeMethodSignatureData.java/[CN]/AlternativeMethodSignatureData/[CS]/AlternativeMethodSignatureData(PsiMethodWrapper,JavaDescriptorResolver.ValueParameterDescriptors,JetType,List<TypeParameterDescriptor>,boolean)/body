@@ -3,11 +3,9 @@
   if (signature.isEmpty()) {
     setAnnotated(false);
     altFunDeclaration=null;
-    this.method=null;
     return;
   }
   setAnnotated(true);
-  this.method=method;
   Project project=method.getPsiMethod().getProject();
   altFunDeclaration=JetPsiFactory.createFunction(project,signature);
   for (  TypeParameterDescriptor typeParameter : methodTypeParameters) {
@@ -18,6 +16,9 @@
     checkEqualFunctionNames(altFunDeclaration,method);
     computeTypeParameters(methodTypeParameters);
     computeValueParameters(valueParameterDescriptors);
+    if (hasSuperMethods) {
+      checkSameParameterTypes(valueParameterDescriptors,methodTypeParameters);
+    }
     if (originalReturnType != null) {
       altReturnType=computeReturnType(originalReturnType,altFunDeclaration.getReturnTypeRef(),originalToAltTypeParameters);
     }
