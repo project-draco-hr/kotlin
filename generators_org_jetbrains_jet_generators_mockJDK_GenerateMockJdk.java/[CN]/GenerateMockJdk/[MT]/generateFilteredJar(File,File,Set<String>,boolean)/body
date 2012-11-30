@@ -1,0 +1,27 @@
+{
+  JarFile sourceJar=new JarFile(source);
+  JarOutputStream targetJar=new JarOutputStream(new FileOutputStream(target));
+  List<String> foundEntries=Lists.newArrayList();
+  List<JarEntry> sourceList=Collections.list(sourceJar.entries());
+  for (  JarEntry entry : sourceList) {
+    String name=entry.getName();
+    if (entryNamesToInclude.contains(name)) {
+      targetJar.putNextEntry(entry);
+      FileUtil.copy(sourceJar.getInputStream(entry),(int)entry.getSize(),targetJar);
+      foundEntries.add(name);
+    }
+  }
+  targetJar.close();
+  sourceJar.close();
+  if (assertAllFound) {
+    HashSet<String> notFound=Sets.newHashSet(entryNamesToInclude);
+    notFound.removeAll(foundEntries);
+    if (!notFound.isEmpty()) {
+      System.err.println("Not found:");
+      for (      String entry : notFound) {
+        System.err.println(entry);
+      }
+      throw new AssertionError("See errors above");
+    }
+  }
+}
