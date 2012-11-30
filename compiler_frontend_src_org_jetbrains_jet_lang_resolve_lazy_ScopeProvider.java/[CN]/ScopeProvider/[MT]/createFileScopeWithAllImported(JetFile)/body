@@ -1,0 +1,13 @@
+{
+  JetScope scopeWithImportedClasses=getFileScopeWithImportedClasses(file);
+  NamespaceDescriptor packageDescriptor=getFilePackageDescriptor(file);
+  NamespaceDescriptor rootPackageDescriptor=resolveSession.getPackageDescriptorByFqName(FqName.ROOT);
+  if (rootPackageDescriptor == null) {
+    throw new IllegalStateException("Root package not found");
+  }
+  WritableScope fileMemberScope=new WritableScopeImpl(JetScope.EMPTY,packageDescriptor,RedeclarationHandler.DO_NOTHING,"File scope for members declaration resolution with non-class imports");
+  fileMemberScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  ImportsResolver.processImportsInFile(false,fileMemberScope,Lists.newArrayList(file.getImportDirectives()),rootPackageDescriptor.getMemberScope(),resolveSession.getModuleConfiguration(),resolveSession.getTrace(),resolveSession.getInjector().getQualifiedExpressionResolver());
+  fileMemberScope.changeLockLevel(WritableScope.LockLevel.READING);
+  return new ChainedScope(packageDescriptor,scopeWithImportedClasses,fileMemberScope);
+}
