@@ -1,14 +1,19 @@
 {
-  IntentionAction action=LightQuickFixTestCase.findActionWithText(getAvailableActions(),text);
+  List<IntentionAction> availableActions=getAvailableActions();
+  IntentionAction action=LightQuickFixTestCase.findActionWithText(availableActions,text);
   if (action == null) {
     if (actionShouldBeAvailable) {
-      List<IntentionAction> actions=getAvailableActions();
-      List<String> texts=new ArrayList<String>();
-      for (      IntentionAction intentionAction : actions) {
-        texts.add(intentionAction.getText());
-      }
+      List<String> texts=getActionsTexts(availableActions);
       Collection<HighlightInfo> infos=doHighlighting();
-      fail("Action with text '" + text + "' is not available in test "+ testFullPath+ "\n"+ "Available actions ("+ texts.size()+ "): "+ texts+ "\n"+ actions+ "\n"+ "Infos:"+ infos);
+      fail("Action with text '" + text + "' is not available in test "+ testFullPath+ "\n"+ "Available actions ("+ texts.size()+ "): "+ texts+ "\n"+ availableActions+ "\n"+ "Infos:"+ infos);
+    }
+ else {
+      Set<String> validActions=Sets.newHashSet(InTextDirectivesUtils.findLinesWithPrefixRemoved("// ACTION:",getFile().getText()));
+      for (      IntentionAction availableAction : availableActions) {
+        if (!validActions.contains(availableAction.getText())) {
+          fail(String.format("Unexpected action available at current position: %s. Use // ACTION: directive",availableAction.getText()));
+        }
+      }
     }
   }
  else {
