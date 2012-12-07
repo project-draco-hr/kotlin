@@ -1,9 +1,13 @@
 {
-  Set<Instruction> allowedDeadStartInstructions=prepareAllowedDeadInstructions();
-  Set<Instruction> stopAllowDeadInstructions=prepareStopAllowedDeadInstructions();
+  Map<Instruction,Label> allowDeadStarters=prepareAllowDeadStarters();
+  Map<Instruction,Collection<Label>> allowDeadStoppers=prepareAllowDeadStoppers();
   Set<Instruction> allowedDeadInstructions=Sets.newHashSet();
-  for (  Instruction allowedDeadStartInstruction : allowedDeadStartInstructions) {
-    collectAllowedDeadInstructions(allowedDeadStartInstruction,allowedDeadInstructions,stopAllowDeadInstructions);
+  for (  Map.Entry<Instruction,Label> entry : allowDeadStarters.entrySet()) {
+    Instruction starter=entry.getKey();
+    Set<Instruction> allowedDeadFromThisInstruction=Sets.newHashSet();
+    Label starterLabel=entry.getValue();
+    collectAllowedDeadInstructions(starter,starterLabel,allowedDeadFromThisInstruction,allowDeadStoppers);
+    allowedDeadInstructions.addAll(allowedDeadFromThisInstruction);
   }
   return allowedDeadInstructions;
 }

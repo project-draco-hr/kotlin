@@ -6,6 +6,7 @@
   boolean hasElseOrIrrefutableBranch=false;
   Label doneLabel=builder.createUnboundLabel();
   Label nextLabel=null;
+  Collection<Label> allowDeadLabels=Lists.newArrayList();
   for (Iterator<JetWhenEntry> iterator=expression.getEntries().iterator(); iterator.hasNext(); ) {
     JetWhenEntry whenEntry=iterator.next();
     builder.read(whenEntry);
@@ -34,7 +35,7 @@
     }
     builder.bindLabel(bodyLabel);
     value(whenEntry.getExpression(),inCondition);
-    builder.allowDead();
+    builder.createAllowDeadLabel(allowDeadLabels);
     builder.jump(doneLabel);
     if (!isIrrefutable) {
       builder.bindLabel(nextLabel);
@@ -45,5 +46,5 @@
   if (!hasElseOrIrrefutableBranch && !isWhenExhaust) {
     trace.report(NO_ELSE_IN_WHEN.on(expression));
   }
-  builder.stopAllowDead();
+  builder.stopAllowDead(allowDeadLabels);
 }

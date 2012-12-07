@@ -26,8 +26,9 @@
     builder.nondeterministicJump(onExceptionToFinallyBlock);
   }
   value(expression.getTryBlock(),inCondition);
+  Collection<Label> allowDeadLabels=Lists.newArrayList();
   if (hasCatches) {
-    builder.allowDead();
+    builder.createAllowDeadLabel(allowDeadLabels);
     Label afterCatches=builder.createUnboundLabel("afterCatches");
     builder.jump(afterCatches);
     builder.bindLabel(onException);
@@ -54,13 +55,13 @@
       if (catchBody != null) {
         value(catchBody,false);
       }
-      builder.allowDead();
+      builder.createAllowDeadLabel(allowDeadLabels);
       builder.jump(afterCatches);
     }
     builder.bindLabel(afterCatches);
   }
  else {
-    builder.allowDead();
+    builder.createAllowDeadLabel(allowDeadLabels);
   }
   if (finallyBlock != null) {
     builder.exitTryFinally();
@@ -72,5 +73,5 @@
     builder.bindLabel(skipFinallyToErrorBlock);
     value(finallyBlock.getFinalExpression(),inCondition);
   }
-  builder.stopAllowDead();
+  builder.stopAllowDead(allowDeadLabels);
 }
