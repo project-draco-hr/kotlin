@@ -1,0 +1,34 @@
+{
+  boolean someSupersNotCovariantNullable=false;
+  boolean someSupersCovariantNullable=false;
+  boolean someSupersNotNull=false;
+  for (  TypeAndVariance typeFromSuper : typesFromSuper) {
+    if (!typeFromSuper.type.isNullable()) {
+      someSupersNotNull=true;
+    }
+ else {
+      if (typeFromSuper.varianceOfPosition == Variance.OUT_VARIANCE) {
+        someSupersCovariantNullable=true;
+      }
+ else {
+        someSupersNotCovariantNullable=true;
+      }
+    }
+  }
+  if (someSupersNotNull && someSupersNotCovariantNullable) {
+    reportError("Incompatible types in superclasses: " + typesFromSuper);
+    return autoType.isNullable();
+  }
+ else   if (someSupersNotNull) {
+    return false;
+  }
+ else   if (someSupersNotCovariantNullable || someSupersCovariantNullable) {
+    boolean annotatedAsNotNull=howThisTypeIsUsed != TYPE_ARGUMENT && !autoType.isNullable();
+    if (annotatedAsNotNull && someSupersNotCovariantNullable) {
+      reportError("In superclass type is nullable: " + typesFromSuper + ", in subclass it is not: "+ autoType);
+      return true;
+    }
+    return !annotatedAsNotNull;
+  }
+  return autoType.isNullable();
+}
