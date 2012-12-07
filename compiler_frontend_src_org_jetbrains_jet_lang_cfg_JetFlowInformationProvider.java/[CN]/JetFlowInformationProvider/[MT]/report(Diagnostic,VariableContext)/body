@@ -1,0 +1,30 @@
+{
+  Instruction instruction=ctxt.instruction;
+  if (instruction.getCopies().isEmpty()) {
+    trace.report(diagnostic);
+    return;
+  }
+  Map<Instruction,AbstractDiagnosticFactory> previouslyReported=ctxt.reportedDiagnosticMap;
+  previouslyReported.put(instruction,diagnostic.getFactory());
+  boolean alreadyReported=false;
+  boolean sameErrorForAllCopies=true;
+  for (  Instruction copy : instruction.getCopies()) {
+    AbstractDiagnosticFactory previouslyReportedErrorFactory=previouslyReported.get(copy);
+    if (previouslyReportedErrorFactory != null) {
+      alreadyReported=true;
+    }
+    if (previouslyReportedErrorFactory != diagnostic.getFactory()) {
+      sameErrorForAllCopies=false;
+    }
+  }
+  if (mustBeReportedOnAllCopies(diagnostic.getFactory())) {
+    if (sameErrorForAllCopies) {
+      trace.report(diagnostic);
+    }
+  }
+ else {
+    if (!alreadyReported) {
+      trace.report(diagnostic);
+    }
+  }
+}

@@ -1,9 +1,10 @@
 {
-  boolean isInitializedNotHere=enterInitState.isInitialized;
+  boolean isInitializedNotHere=ctxt.enterInitState.isInitialized;
   if (expression.getParent() instanceof JetProperty && ((JetProperty)expression).getInitializer() != null) {
     isInitializedNotHere=false;
   }
   boolean hasBackingField=true;
+  VariableDescriptor variableDescriptor=ctxt.variableDescriptor;
   if (variableDescriptor instanceof PropertyDescriptor) {
     hasBackingField=trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor);
   }
@@ -11,7 +12,7 @@
     DeclarationDescriptor descriptor=BindingContextUtils.getEnclosingDescriptor(trace.getBindingContext(),expression);
     PropertySetterDescriptor setterDescriptor=((PropertyDescriptor)variableDescriptor).getSetter();
     if (Visibilities.isVisible(variableDescriptor,descriptor) && !Visibilities.isVisible(setterDescriptor,descriptor) && setterDescriptor != null) {
-      trace.report(Errors.INVISIBLE_SETTER.on(expression,variableDescriptor,setterDescriptor.getVisibility(),variableDescriptor.getContainingDeclaration()));
+      report(Errors.INVISIBLE_SETTER.on(expression,variableDescriptor,setterDescriptor.getVisibility(),variableDescriptor.getContainingDeclaration()),ctxt);
       return true;
     }
   }
@@ -45,7 +46,7 @@
     }
     if (!hasReassignMethodReturningUnit) {
       varWithValReassignErrorGenerated.add(variableDescriptor);
-      trace.report(Errors.VAL_REASSIGNMENT.on(expression,variableDescriptor));
+      report(Errors.VAL_REASSIGNMENT.on(expression,variableDescriptor),ctxt);
       return true;
     }
   }

@@ -1,20 +1,21 @@
 {
+  VariableDescriptor variableDescriptor=cxtx.variableDescriptor;
   boolean[] error=new boolean[1];
-  if (isBackingFieldReference((JetElement)element.getParent(),error,false))   return false;
-  if (!isBackingFieldReference(element,error,true))   return false;
+  if (isBackingFieldReference((JetElement)element.getParent(),cxtx,error,false))   return false;
+  if (!isBackingFieldReference(element,cxtx,error,true))   return false;
   if (error[0])   return true;
   if (!(variableDescriptor instanceof PropertyDescriptor)) {
-    trace.report(Errors.NOT_PROPERTY_BACKING_FIELD.on(element));
+    report(Errors.NOT_PROPERTY_BACKING_FIELD.on(element),cxtx);
     return true;
   }
   PsiElement property=BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),variableDescriptor);
   boolean insideSelfAccessors=PsiTreeUtil.isAncestor(property,element,false);
   if (!trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor) && !insideSelfAccessors) {
     if (((PropertyDescriptor)variableDescriptor).getModality() == Modality.ABSTRACT) {
-      trace.report(NO_BACKING_FIELD_ABSTRACT_PROPERTY.on(element));
+      report(NO_BACKING_FIELD_ABSTRACT_PROPERTY.on(element),cxtx);
     }
  else {
-      trace.report(NO_BACKING_FIELD_CUSTOM_ACCESSORS.on(element));
+      report(NO_BACKING_FIELD_CUSTOM_ACCESSORS.on(element),cxtx);
     }
     return true;
   }
@@ -24,6 +25,6 @@
   if ((containingDeclaration instanceof ClassDescriptor) && DescriptorUtils.isAncestor(containingDeclaration,declarationDescriptor,false)) {
     return false;
   }
-  trace.report(Errors.INACCESSIBLE_BACKING_FIELD.on(element));
+  report(Errors.INACCESSIBLE_BACKING_FIELD.on(element),cxtx);
   return true;
 }
