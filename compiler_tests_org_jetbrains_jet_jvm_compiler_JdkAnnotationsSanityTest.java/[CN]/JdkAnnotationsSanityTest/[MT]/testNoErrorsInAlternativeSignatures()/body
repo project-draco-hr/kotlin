@@ -1,25 +1,35 @@
 {
-  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(getProject());
-  final BindingContext bindingContext=injector.getBindingTrace().getBindingContext();
-  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
-  final Map<DeclarationDescriptor,List<String>> errors=Maps.newHashMap();
-  Iterable<FqName> affectedClasses=getAffectedClasses(kotlinAnnotationsRoot);
-  AlternativeSignatureErrorFindingVisitor visitor=new AlternativeSignatureErrorFindingVisitor(bindingContext,errors);
-  for (  FqName javaClass : affectedClasses) {
-    ClassDescriptor topLevelClass=javaDescriptorResolver.resolveClass(javaClass);
-    NamespaceDescriptor topLevelNamespace=javaDescriptorResolver.resolveNamespace(javaClass);
-    if (topLevelClass == null) {
-      continue;
+  List<FqName> affectedClasses=getAffectedClasses("file://jdk-annotations");
+  final Map<String,List<String>> errors=Maps.newHashMap();
+  for (int chunkIndex=0; chunkIndex < affectedClasses.size() / CLASSES_IN_CHUNK + 1; chunkIndex++) {
+    Disposable parentDisposable=CompileEnvironmentUtil.createMockDisposable();
+    try {
+      JetCoreEnvironment commonEnvironment=createEnvironment(parentDisposable);
+      InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(commonEnvironment.getProject());
+      BindingContext bindingContext=injector.getBindingTrace().getBindingContext();
+      JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+      AlternativeSignatureErrorFindingVisitor visitor=new AlternativeSignatureErrorFindingVisitor(bindingContext,errors);
+      int chunkStart=chunkIndex * CLASSES_IN_CHUNK;
+      for (      FqName javaClass : affectedClasses.subList(chunkStart,Math.min(chunkStart + CLASSES_IN_CHUNK,affectedClasses.size()))) {
+        ClassDescriptor topLevelClass=javaDescriptorResolver.resolveClass(javaClass);
+        NamespaceDescriptor topLevelNamespace=javaDescriptorResolver.resolveNamespace(javaClass);
+        if (topLevelClass == null) {
+          continue;
+        }
+        topLevelClass.acceptVoid(visitor);
+        if (topLevelNamespace != null) {
+          topLevelNamespace.acceptVoid(visitor);
+        }
+      }
     }
-    topLevelClass.acceptVoid(visitor);
-    if (topLevelNamespace != null) {
-      topLevelNamespace.acceptVoid(visitor);
+  finally {
+      Disposer.dispose(parentDisposable);
     }
   }
   if (!errors.isEmpty()) {
     StringBuilder sb=new StringBuilder("Error(s) in JDK alternative signatures: \n");
-    for (    Map.Entry<DeclarationDescriptor,List<String>> entry : errors.entrySet()) {
-      sb.append(DescriptorRenderer.TEXT.render(entry.getKey())).append(" : ").append(entry.getValue()).append("\n");
+    for (    Map.Entry<String,List<String>> entry : errors.entrySet()) {
+      sb.append(entry.getKey()).append(" : ").append(entry.getValue()).append("\n");
     }
     fail(sb.toString());
   }
