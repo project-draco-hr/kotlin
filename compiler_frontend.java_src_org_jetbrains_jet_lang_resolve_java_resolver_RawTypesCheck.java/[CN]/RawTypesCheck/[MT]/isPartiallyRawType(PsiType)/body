@@ -1,0 +1,29 @@
+{
+  return type.accept(new PsiTypeVisitor<Boolean>(){
+    @Nullable @Override public Boolean visitPrimitiveType(    PsiPrimitiveType primitiveType){
+      return false;
+    }
+    @Nullable @Override public Boolean visitClassType(    PsiClassType classType){
+      if (classType.isRaw()) {
+        return true;
+      }
+      for (      PsiType argument : classType.getParameters()) {
+        if (argument.accept(this)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    @Nullable @Override public Boolean visitArrayType(    PsiArrayType arrayType){
+      return arrayType.getComponentType().accept(this);
+    }
+    @Nullable @Override public Boolean visitWildcardType(    PsiWildcardType wildcardType){
+      PsiType bound=wildcardType.getBound();
+      return bound == null ? false : bound.accept(this);
+    }
+    @Nullable @Override public Boolean visitType(    PsiType type){
+      throw new IllegalStateException(type.getClass().getSimpleName() + " is unexpected");
+    }
+  }
+);
+}
