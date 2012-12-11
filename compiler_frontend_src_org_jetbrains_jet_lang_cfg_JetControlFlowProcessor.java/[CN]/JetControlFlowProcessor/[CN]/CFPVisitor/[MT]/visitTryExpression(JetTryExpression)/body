@@ -1,13 +1,14 @@
 {
   builder.read(expression);
   final JetFinallySection finallyBlock=expression.getFinallyBlock();
+  final FinallyBlockGenerator finallyBlockGenerator=new FinallyBlockGenerator(finallyBlock);
   if (finallyBlock != null) {
     builder.enterTryFinally(new GenerationTrigger(){
       private boolean working=false;
       @Override public void generate(){
         if (working)         return;
         working=true;
-        value(finallyBlock.getFinalExpression(),inCondition);
+        finallyBlockGenerator.generate();
         working=false;
       }
     }
@@ -68,10 +69,10 @@
     Label skipFinallyToErrorBlock=builder.createUnboundLabel("skipFinallyToErrorBlock");
     builder.jump(skipFinallyToErrorBlock);
     builder.bindLabel(onExceptionToFinallyBlock);
-    value(finallyBlock.getFinalExpression(),inCondition);
+    finallyBlockGenerator.generate();
     builder.jumpToError();
     builder.bindLabel(skipFinallyToErrorBlock);
-    value(finallyBlock.getFinalExpression(),inCondition);
+    finallyBlockGenerator.generate();
   }
   builder.stopAllowDead(allowDeadLabels);
 }
