@@ -1,20 +1,3 @@
 {
-  AnalyzeExhaust exhaust=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile((JetFile)getFile());
-  Collection<Diagnostic> diagnostics=exhaust.getBindingContext().getDiagnostics();
-  if (diagnostics.size() != 0) {
-    List<String> expectedErrorStrings=InTextDirectivesUtils.findLinesWithPrefixRemoved("// ERROR:",getFile().getText());
-    Collection<String> expectedErrors=new HashSet<String>(expectedErrorStrings);
-    StringBuilder builder=new StringBuilder();
-    boolean hasErrors=false;
-    for (    Diagnostic diagnostic : diagnostics) {
-      if (diagnostic.getSeverity() == Severity.ERROR) {
-        String errorText=IdeErrorMessages.RENDERER.render(diagnostic);
-        if (!expectedErrors.contains(errorText)) {
-          hasErrors=true;
-          builder.append("// ERROR: ").append(errorText).append("\n");
-        }
-      }
-    }
-    Assert.assertFalse("There should be no unexpected errors after applying fix (Use \"// ERROR:\" directive): \n" + builder.toString(),hasErrors);
-  }
+  QuickFixActionsUtils.checkForUnexpectedErrors((JetFile)getFile());
 }
