@@ -1,0 +1,23 @@
+{
+  myFixture.configureByFiles("findWithFilteringImports/Test.kt","findWithFilteringImports/Usages.kt");
+  JetClass clazz=PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(),JetClass.class,false);
+  final Collection<UsageInfo> usageInfos=myFixture.findUsages(clazz);
+  assertEquals(2,usageInfos.size());
+  Collection<Usage> usages=Collections2.transform(usageInfos,new Function<UsageInfo,Usage>(){
+    @Override public Usage apply(    @Nullable UsageInfo usageInfo){
+      assert(usageInfo != null);
+      return new UsageInfo2UsageAdapter(usageInfo);
+    }
+  }
+);
+  final JetImportFilteringRule importFilteringRule=new JetImportFilteringRule();
+  Collection<Usage> filteredUsages=Collections2.filter(usages,new Predicate<Usage>(){
+    @Override public boolean apply(    @Nullable Usage usage){
+      assert(usage != null);
+      return importFilteringRule.isVisible(usage);
+    }
+  }
+);
+  assertEquals(1,filteredUsages.size());
+  assertEquals("Invalid usage:","(5: 9) |val| |a| |=| |Test|(|)",filteredUsages.iterator().next().toString());
+}
