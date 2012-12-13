@@ -1,11 +1,11 @@
 {
-  List<Instruction> instructions=directOrder ? pseudocode.getInstructions() : pseudocode.getReversedInstructions();
-  Instruction startInstruction=getStartInstruction(pseudocode,directOrder);
+  List<Instruction> instructions=getInstructions(pseudocode,traversalOrder);
+  Instruction startInstruction=getStartInstruction(pseudocode,traversalOrder);
   for (  Instruction instruction : instructions) {
-    boolean isStart=directOrder ? instruction instanceof SubroutineEnterInstruction : instruction instanceof SubroutineSinkInstruction;
+    boolean isStart=isStartInstruction(instruction,traversalOrder);
     if (!isLocal && isStart)     continue;
     Collection<Instruction> allPreviousInstructions;
-    Collection<Instruction> previousInstructions=directOrder ? instruction.getPreviousInstructions() : instruction.getNextInstructions();
+    Collection<Instruction> previousInstructions=getPreviousInstruction(instruction,traversalOrder);
     if (instruction == startInstruction && !previousSubGraphInstructions.isEmpty()) {
       allPreviousInstructions=Lists.newArrayList(previousInstructions);
       allPreviousInstructions.addAll(previousSubGraphInstructions);
@@ -15,8 +15,8 @@
     }
     if (lookInside && instruction instanceof LocalDeclarationInstruction) {
       Pseudocode subroutinePseudocode=((LocalDeclarationInstruction)instruction).getBody();
-      collectDataFromSubgraph(subroutinePseudocode,directOrder,lookInside,edgesMap,instructionDataMergeStrategy,previousInstructions,changed,true);
-      Instruction lastInstruction=directOrder ? subroutinePseudocode.getSinkInstruction() : subroutinePseudocode.getEnterInstruction();
+      collectDataFromSubgraph(subroutinePseudocode,traversalOrder,lookInside,edgesMap,instructionDataMergeStrategy,previousInstructions,changed,true);
+      Instruction lastInstruction=getLastInstruction(subroutinePseudocode,traversalOrder);
       Edges<D> previousValue=edgesMap.get(instruction);
       Edges<D> newValue=edgesMap.get(lastInstruction);
       if (!previousValue.equals(newValue)) {
