@@ -1,0 +1,19 @@
+{
+  String fileName="htmlTabledRenderer.kt";
+  JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
+  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  List<Diagnostic> diagnostics=ContainerUtil.filter(bindingContext.getDiagnostics(),new Condition<Diagnostic>(){
+    @Override public boolean value(    Diagnostic diagnostic){
+      return diagnostic.getFactory() == Errors.TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS;
+    }
+  }
+);
+  assertEquals(diagnostics.size(),2);
+  int index=1;
+  for (  Diagnostic diagnostic : diagnostics) {
+    String readableDiagnosticHtml=IdeErrorMessages.RENDERER.render(diagnostic).replaceAll(">",">\n");
+    assertSameLinesWithFile(getTestDataPath() + "/diagnostic" + index+ ".html",readableDiagnosticHtml);
+    index++;
+  }
+}
