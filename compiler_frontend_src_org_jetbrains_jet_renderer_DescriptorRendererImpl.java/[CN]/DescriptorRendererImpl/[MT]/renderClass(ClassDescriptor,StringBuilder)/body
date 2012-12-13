@@ -1,23 +1,34 @@
 {
-  String keyword;
-switch (descriptor.getKind()) {
-case TRAIT:
-    keyword="trait";
-  break;
-case ENUM_CLASS:
-keyword="enum class";
-break;
-case OBJECT:
-keyword="object";
-break;
-case ANNOTATION_CLASS:
-keyword="annotation class";
-break;
-case CLASS_OBJECT:
-keyword="class object";
-break;
-default :
-keyword="class";
-}
-renderClass(descriptor,builder,keyword);
+  boolean isNotClassObject=descriptor.getKind() != ClassKind.CLASS_OBJECT;
+  if (!startFromName) {
+    if (isNotClassObject) {
+      renderVisibility(descriptor.getVisibility(),builder);
+      if (descriptor.getKind() != ClassKind.TRAIT && descriptor.getKind() != ClassKind.OBJECT) {
+        renderModality(descriptor.getModality(),builder);
+      }
+    }
+    builder.append(renderKeyword(getClassKindPrefix(descriptor)));
+    if (isNotClassObject) {
+      builder.append(" ");
+    }
+  }
+  if (isNotClassObject) {
+    renderName(descriptor,builder);
+    renderTypeParameters(descriptor.getTypeConstructor().getParameters(),builder);
+  }
+  if (!descriptor.equals(KotlinBuiltIns.getInstance().getNothing())) {
+    Collection<JetType> supertypes=descriptor.getTypeConstructor().getSupertypes();
+    if (supertypes.isEmpty() || supertypes.size() == 1 && KotlinBuiltIns.getInstance().isAny(supertypes.iterator().next())) {
+    }
+ else {
+      builder.append(" : ");
+      for (Iterator<JetType> iterator=supertypes.iterator(); iterator.hasNext(); ) {
+        JetType supertype=iterator.next();
+        builder.append(renderType(supertype));
+        if (iterator.hasNext()) {
+          builder.append(", ");
+        }
+      }
+    }
+  }
 }
