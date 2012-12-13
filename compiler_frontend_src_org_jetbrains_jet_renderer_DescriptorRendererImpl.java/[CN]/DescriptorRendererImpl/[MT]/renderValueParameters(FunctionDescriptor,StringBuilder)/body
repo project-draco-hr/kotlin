@@ -1,8 +1,21 @@
 {
-  if (descriptor.getValueParameters().isEmpty()) {
-    renderEmptyValueParameters(builder);
+  if (handler != null) {
+    handler.appendBeforeValueParameters(function,builder);
+    for (    ValueParameterDescriptor parameter : function.getValueParameters()) {
+      handler.appendBeforeValueParameter(parameter,builder);
+      parameter.accept(subVisitor,builder);
+      handler.appendAfterValueParameter(parameter,builder);
+    }
+    handler.appendAfterValueParameters(function,builder);
   }
-  for (Iterator<ValueParameterDescriptor> iterator=descriptor.getValueParameters().iterator(); iterator.hasNext(); ) {
-    renderValueParameter(iterator.next(),!iterator.hasNext(),builder);
+ else {
+    builder.append("(");
+    for (    ValueParameterDescriptor parameter : function.getValueParameters()) {
+      parameter.accept(subVisitor,builder);
+      if (parameter.getIndex() != function.getValueParameters().size() - 1) {
+        builder.append(", ");
+      }
+    }
+    builder.append(")");
   }
 }
