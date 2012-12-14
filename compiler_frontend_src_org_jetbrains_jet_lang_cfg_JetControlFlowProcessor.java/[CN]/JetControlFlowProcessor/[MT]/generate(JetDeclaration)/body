@@ -1,8 +1,8 @@
 {
   builder.enterSubroutine(subroutine);
+  CFPVisitor cfpVisitor=new CFPVisitor(false);
   if (subroutine instanceof JetDeclarationWithBody) {
     JetDeclarationWithBody declarationWithBody=(JetDeclarationWithBody)subroutine;
-    CFPVisitor cfpVisitor=new CFPVisitor(false);
     List<JetParameter> valueParameters=declarationWithBody.getValueParameters();
     for (    JetParameter valueParameter : valueParameters) {
       valueParameter.accept(cfpVisitor);
@@ -12,8 +12,14 @@
       bodyExpression.accept(cfpVisitor);
     }
   }
+ else   if (subroutine instanceof JetProperty) {
+    JetExpression initializer=((JetProperty)subroutine).getInitializer();
+    if (initializer != null) {
+      initializer.accept(cfpVisitor);
+    }
+  }
  else {
-    subroutine.accept(new CFPVisitor(false));
+    subroutine.accept(cfpVisitor);
   }
   return builder.exitSubroutine(subroutine);
 }
