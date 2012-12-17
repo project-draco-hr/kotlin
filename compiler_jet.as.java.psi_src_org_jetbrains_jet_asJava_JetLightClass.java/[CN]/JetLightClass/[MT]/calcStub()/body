@@ -20,12 +20,13 @@
     }
   }
 ;
-  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.shallowAnalyzeFiles(JetFilesProvider.getInstance(project).sampleToAllFilesInModule().fun(file));
-  if (exhaust.isError()) {
-    throw new IllegalStateException("failed to analyze: " + exhaust.getError(),exhaust.getError());
+  LightClassConstructionContext context=LightClassGenerationSupport.getInstance(project).analyzeRelevantCode(file);
+  Throwable error=context.getError();
+  if (error != null) {
+    throw new IllegalStateException("failed to analyze: " + error,error);
   }
   try {
-    GenerationState state=new GenerationState(project,builderFactory,exhaust.getBindingContext(),Collections.singletonList(file));
+    GenerationState state=new GenerationState(project,builderFactory,context.getBindingContext(),Collections.singletonList(file));
     GenerationStrategy strategy=new LightClassGenerationStrategy(this,stubStack,answer);
     strategy.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
     state.getFactory().files();
