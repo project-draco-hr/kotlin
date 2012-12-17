@@ -1,6 +1,6 @@
 {
   if (!klass.getAnnotations().isEmpty()) {
-    new Serializer(sb).serializeSeparated(klass.getAnnotations()," ");
+    new Serializer(checkPrimaryConstructors,sb).serializeSeparated(klass.getAnnotations()," ");
     sb.append(" ");
   }
   serialize(klass.getVisibility());
@@ -10,7 +10,7 @@
   serialize(klass.getKind());
   sb.append(" ");
   sb.append("!");
-  new Serializer(sb).serialize(klass);
+  new Serializer(checkPrimaryConstructors,sb).serialize(klass);
   if (!klass.getTypeConstructor().getParameters().isEmpty()) {
     sb.append("<");
     serializeCommaSeparated(klass.getTypeConstructor().getParameters());
@@ -28,7 +28,7 @@
   List<String> memberStrings=new ArrayList<String>();
   for (  ConstructorDescriptor constructor : klass.getConstructors()) {
     StringBuilder constructorSb=new StringBuilder();
-    new Serializer(constructorSb).serialize(constructor);
+    new Serializer(checkPrimaryConstructors,constructorSb).serialize(constructor);
     memberStrings.add(constructorSb.toString());
   }
   JetScope memberScope=klass.getMemberScope(typeArguments);
@@ -39,12 +39,12 @@
       }
     }
     StringBuilder memberSb=new StringBuilder();
-    new FullContentSerialier(memberSb).serialize(member);
+    new FullContentSerialier(checkPrimaryConstructors,memberSb).serialize(member);
     memberStrings.add(memberSb.toString());
   }
   for (  DeclarationDescriptor object : memberScope.getObjectDescriptors()) {
     StringBuilder objectSb=new StringBuilder();
-    new FullContentSerialier(objectSb).serialize(object);
+    new FullContentSerialier(checkPrimaryConstructors,objectSb).serialize(object);
     memberStrings.add(objectSb.toString());
   }
   Collections.sort(memberStrings,new MemberComparator());

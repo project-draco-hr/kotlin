@@ -5,7 +5,7 @@
   sb.append(" ");
   List<AnnotationDescriptor> annotations=filterAnnotations(fun.getAnnotations());
   if (!annotations.isEmpty()) {
-    new Serializer(sb).serializeSeparated(annotations," ");
+    new Serializer(checkPrimaryConstructors,sb).serializeSeparated(annotations," ");
     sb.append(" ");
   }
   if (!fun.getOverriddenDescriptors().isEmpty()) {
@@ -13,16 +13,21 @@
   }
   if (fun.getKind() != CallableMemberDescriptor.Kind.DECLARATION) {
     sb.append("/*");
-    new Serializer(sb).serialize(fun.getKind());
+    new Serializer(checkPrimaryConstructors,sb).serialize(fun.getKind());
     sb.append("*/ ");
   }
   if (fun instanceof ConstructorDescriptor) {
-    sb.append("/*constructor*/ ");
+    if (((ConstructorDescriptor)fun).isPrimary() && checkPrimaryConstructors) {
+      sb.append("/*primary constructor*/ ");
+    }
+ else {
+      sb.append("/*constructor*/ ");
+    }
   }
   sb.append("fun ");
   if (!fun.getTypeParameters().isEmpty()) {
     sb.append("<");
-    new Serializer(sb).serializeCommaSeparated(fun.getTypeParameters());
+    new Serializer(checkPrimaryConstructors,sb).serializeCommaSeparated(fun.getTypeParameters());
     sb.append(">");
   }
   sb.append("!");
