@@ -30,7 +30,8 @@
   for (  EarlierLine earlierLine : earlierLines) {
     earierScripts.add(Pair.create(earlierLine.getScriptDescriptor(),earlierLine.getClassName()));
   }
-  GenerationState generationState=new GenerationState(psiFile.getProject(),ClassBuilderFactories.binaries(false),AnalyzeExhaust.success(trace.getBindingContext(),injector.getModuleConfiguration()),Collections.singletonList(psiFile));
+  BindingContext bindingContext=AnalyzeExhaust.success(trace.getBindingContext(),injector.getModuleConfiguration()).getBindingContext();
+  GenerationState generationState=new GenerationState(psiFile.getProject(),ClassBuilderFactories.binaries(false),bindingContext,Collections.singletonList(psiFile));
   generationState.getScriptCodegen().compileScript(psiFile.getScript(),scriptClassName,earierScripts,CompilationErrorHandler.THROW_EXCEPTION);
   for (  String file : generationState.getFactory().files()) {
     classLoader.addClass(JvmClassName.byInternalName(file.replaceFirst("\\.class$","")),generationState.getFactory().asBytes(file));
