@@ -1,2 +1,30 @@
 {
+synchronized (lock) {
+    CachedValue<AnalyzeExhaust> bindingContextCachedValue=file.getUserData(ANALYZE_EXHAUST_FULL);
+    if (bindingContextCachedValue == null) {
+      bindingContextCachedValue=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<AnalyzeExhaust>(){
+        @Override public Result<AnalyzeExhaust> compute(){
+          try {
+            if (DumbService.isDumb(file.getProject())) {
+              return new Result<AnalyzeExhaust>(emptyExhaust(),PsiModificationTracker.MODIFICATION_COUNT);
+            }
+            ApplicationUtils.warnTimeConsuming(LOG);
+            AnalyzeExhaust analyzeExhaustHeaders=analyzeHeadersWithCacheOnFile(file,declarationProvider);
+            AnalyzeExhaust exhaust=analyzeBodies(analyzeExhaustHeaders,file);
+            return new Result<AnalyzeExhaust>(exhaust,PsiModificationTracker.MODIFICATION_COUNT);
+          }
+ catch (          ProcessCanceledException e) {
+            throw e;
+          }
+catch (          Throwable e) {
+            handleError(e);
+            return emptyExhaustWithDiagnosticOnFile(file,e);
+          }
+        }
+      }
+,false);
+      file.putUserData(ANALYZE_EXHAUST_FULL,bindingContextCachedValue);
+    }
+    return bindingContextCachedValue.getValue();
+  }
 }
