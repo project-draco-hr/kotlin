@@ -2,24 +2,11 @@
   if (!FqName.isValid(qualifiedNameString)) {
     return PsiClass.EMPTY_ARRAY;
   }
-  FqName qualifiedName=new FqName(qualifiedNameString);
   List<PsiClass> answer=new SmartList<PsiClass>();
-  final Collection<JetFile> filesInScope=collectProjectJetFiles(project,scope);
-  for (  JetFile file : filesInScope) {
-    final FqName packageName=JetPsiUtil.getFQName(file);
-    if (packageName != null && qualifiedName.getFqName().startsWith(packageName.getFqName())) {
-      if (qualifiedName.equals(QualifiedNamesUtil.combine(packageName,Name.identifier(JvmAbi.PACKAGE_CLASS))) && NamespaceCodegen.shouldGenerateNSClass(Arrays.asList(file))) {
-        JetLightClass lightClass=JetLightClass.create(psiManager,file,qualifiedName);
-        if (lightClass != null) {
-          answer.add(lightClass);
-        }
-      }
- else {
-        for (        JetDeclaration declaration : file.getDeclarations()) {
-          scanClasses(answer,declaration,qualifiedName,packageName,file);
-        }
-      }
-    }
+  FqName qualifiedName=new FqName(qualifiedNameString);
+  findClassesAndObjects(qualifiedName,scope,answer);
+  if (JvmAbi.PACKAGE_CLASS.equals(qualifiedName.shortName().getName())) {
+    findPackageClass(qualifiedName.parent(),scope,answer);
   }
   return answer.toArray(new PsiClass[answer.size()]);
 }
