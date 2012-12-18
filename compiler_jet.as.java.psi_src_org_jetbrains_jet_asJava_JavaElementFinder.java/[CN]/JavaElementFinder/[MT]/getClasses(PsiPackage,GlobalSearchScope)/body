@@ -1,23 +1,14 @@
 {
   List<PsiClass> answer=new SmartList<PsiClass>();
-  final Collection<JetFile> filesInScope=collectProjectJetFiles(project,scope);
   FqName packageFQN=new FqName(psiPackage.getQualifiedName());
-  for (  JetFile file : filesInScope) {
-    if (packageFQN.equals(JetPsiUtil.getFQName(file))) {
-      JetLightClass lightClass=JetLightClass.create(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(JvmAbi.PACKAGE_CLASS)));
-      if (lightClass != null) {
-        answer.add(lightClass);
-      }
-      for (      JetDeclaration declaration : file.getDeclarations()) {
-        if (declaration instanceof JetClassOrObject) {
-          String localName=getLocalName(declaration);
-          if (localName != null) {
-            JetLightClass aClass=JetLightClass.create(psiManager,file,QualifiedNamesUtil.combine(packageFQN,Name.identifier(localName)));
-            if (aClass != null) {
-              answer.add(aClass);
-            }
-          }
-        }
+  findPackageClass(packageFQN,scope,answer);
+  Collection<JetClassOrObject> declarations=lightClassGenerationSupport.findClassOrObjectDeclarationsInPackage(packageFQN,scope);
+  for (  JetClassOrObject declaration : declarations) {
+    String localName=getLocalName(declaration);
+    if (localName != null) {
+      JetLightClass aClass=JetLightClass.create(psiManager,(JetFile)declaration.getContainingFile(),QualifiedNamesUtil.combine(packageFQN,Name.identifier(localName)));
+      if (aClass != null) {
+        answer.add(aClass);
       }
     }
   }

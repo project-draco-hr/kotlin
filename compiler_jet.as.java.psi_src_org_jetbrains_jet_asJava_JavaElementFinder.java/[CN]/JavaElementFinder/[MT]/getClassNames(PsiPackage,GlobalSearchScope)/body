@@ -1,14 +1,12 @@
 {
-  Set<String> answer=new HashSet<String>();
   FqName packageFQN=new FqName(psiPackage.getQualifiedName());
-  for (  JetFile psiFile : collectProjectJetFiles(project,GlobalSearchScope.allScope(project))) {
-    if (packageFQN.equals(JetPsiUtil.getFQName(psiFile))) {
-      answer.add(JvmAbi.PACKAGE_CLASS);
-      for (      JetDeclaration declaration : psiFile.getDeclarations()) {
-        if (declaration instanceof JetClassOrObject) {
-          answer.add(getLocalName(declaration));
-        }
-      }
+  Collection<JetClassOrObject> declarations=lightClassGenerationSupport.findClassOrObjectDeclarationsInPackage(packageFQN,scope);
+  Set<String> answer=Sets.newHashSet();
+  answer.add(JvmAbi.PACKAGE_CLASS);
+  for (  JetClassOrObject declaration : declarations) {
+    String name=declaration.getName();
+    if (name != null) {
+      answer.add(name);
     }
   }
   return answer;
