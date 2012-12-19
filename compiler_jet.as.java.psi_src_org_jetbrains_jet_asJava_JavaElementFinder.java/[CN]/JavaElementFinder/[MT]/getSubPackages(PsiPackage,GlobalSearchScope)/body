@@ -1,12 +1,11 @@
 {
-  final Collection<JetFile> psiFiles=collectProjectJetFiles(project,GlobalSearchScope.allScope(project));
-  Set<PsiPackage> answer=new HashSet<PsiPackage>();
-  for (  JetFile psiFile : psiFiles) {
-    FqName jetRootNamespace=JetPsiUtil.getFQName(psiFile);
-    final FqName subPackageFQN=QualifiedNamesUtil.plusOneSegment(new FqName(psiPackage.getQualifiedName()),jetRootNamespace);
-    if (subPackageFQN != null) {
-      answer.add(new JetLightPackage(psiManager,subPackageFQN,scope));
+  FqName packageFQN=new FqName(psiPackage.getQualifiedName());
+  Collection<FqName> subpackages=lightClassGenerationSupport.getSubPackages(packageFQN,scope);
+  Collection<PsiPackage> answer=Collections2.transform(subpackages,new Function<FqName,PsiPackage>(){
+    @Override public PsiPackage apply(    @Nullable FqName input){
+      return new JetLightPackage(psiManager,input,scope);
     }
   }
+);
   return answer.toArray(new PsiPackage[answer.size()]);
 }
