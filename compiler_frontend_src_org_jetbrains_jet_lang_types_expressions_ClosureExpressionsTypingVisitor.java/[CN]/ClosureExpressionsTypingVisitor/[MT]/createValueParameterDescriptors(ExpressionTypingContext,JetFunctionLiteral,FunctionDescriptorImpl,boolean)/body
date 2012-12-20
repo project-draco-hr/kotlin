@@ -2,7 +2,8 @@
   List<ValueParameterDescriptor> valueParameterDescriptors=Lists.newArrayList();
   List<JetParameter> declaredValueParameters=functionLiteral.getValueParameters();
   List<ValueParameterDescriptor> expectedValueParameters=(functionTypeExpected) ? KotlinBuiltIns.getInstance().getValueParameters(functionDescriptor,context.expectedType) : null;
-  boolean hasDeclaredValueParameters=functionLiteral.getValueParameterList() != null;
+  JetParameterList valueParameterList=functionLiteral.getValueParameterList();
+  boolean hasDeclaredValueParameters=valueParameterList != null;
   if (functionTypeExpected && !hasDeclaredValueParameters && expectedValueParameters.size() == 1) {
     ValueParameterDescriptor valueParameterDescriptor=expectedValueParameters.get(0);
     ValueParameterDescriptor it=new ValueParameterDescriptorImpl(functionDescriptor,0,Collections.<AnnotationDescriptor>emptyList(),Name.identifier("it"),false,valueParameterDescriptor.getType(),valueParameterDescriptor.hasDefaultValue(),valueParameterDescriptor.getVarargElementType());
@@ -10,16 +11,35 @@
     context.trace.record(AUTO_CREATED_IT,it);
   }
  else {
+    if (expectedValueParameters != null && declaredValueParameters.size() != expectedValueParameters.size()) {
+      List<JetType> expectedParameterTypes=Lists.newArrayList();
+      for (      ValueParameterDescriptor parameter : expectedValueParameters) {
+        expectedParameterTypes.add(parameter.getType());
+      }
+      context.trace.report(EXPECTED_PARAMETERS_NUMBER_MISMATCH.on(functionLiteral,expectedParameterTypes.size(),expectedParameterTypes));
+    }
     for (int i=0; i < declaredValueParameters.size(); i++) {
       JetParameter declaredParameter=declaredValueParameters.get(i);
       JetTypeReference typeReference=declaredParameter.getTypeReference();
+      JetType expectedType;
+      if (expectedValueParameters != null && i < expectedValueParameters.size()) {
+        expectedType=expectedValueParameters.get(i).getType();
+      }
+ else {
+        expectedType=null;
+      }
       JetType type;
       if (typeReference != null) {
         type=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,typeReference,context.trace,true);
+        if (expectedType != null) {
+          if (!JetTypeChecker.INSTANCE.isSubtypeOf(type,expectedType)) {
+            context.trace.report(EXPECTED_PARAMETER_TYPE_MISMATCH.on(declaredParameter,expectedType));
+          }
+        }
       }
  else {
-        if (expectedValueParameters != null && i < expectedValueParameters.size()) {
-          type=expectedValueParameters.get(i).getType();
+        if (expectedType != null) {
+          type=expectedType;
         }
  else {
           context.trace.report(CANNOT_INFER_PARAMETER_TYPE.on(declaredParameter));
