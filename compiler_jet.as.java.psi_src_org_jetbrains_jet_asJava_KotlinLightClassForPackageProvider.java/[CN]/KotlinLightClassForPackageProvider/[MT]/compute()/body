@@ -1,0 +1,34 @@
+{
+  checkForBuiltIns();
+  final PsiJavaFileStubImpl javaFileStub=new PsiJavaFileStubImpl(fqName.getFqName(),true);
+  final Stack<StubElement> stubStack=new Stack<StubElement>();
+  final ClassBuilderFactory builderFactory=new KotlinLightClassBuilderFactory(stubStack);
+  LightClassConstructionContext context=LightClassGenerationSupport.getInstance(project).analyzeRelevantCode(files);
+  Throwable error=context.getError();
+  if (error != null) {
+    throw new IllegalStateException("failed to analyze: " + error,error);
+  }
+  try {
+    GenerationState state=new GenerationState(project,builderFactory,context.getBindingContext(),Lists.newArrayList(files));
+    GenerationStrategy strategy=new LightClassGenerationStrategy(new LightVirtualFile(),stubStack,javaFileStub);
+    strategy.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
+    state.getFactory().files();
+  }
+ catch (  ProcessCanceledException e) {
+    throw e;
+  }
+catch (  RuntimeException e) {
+    LightClassUtil.logErrorWithOSInfo(e,fqName,null);
+    throw e;
+  }
+  FqName packageClassFqName=fqName.child(Name.identifier(JvmAbi.PACKAGE_CLASS));
+  for (  StubElement child : javaFileStub.getChildrenStubs()) {
+    if (child instanceof PsiClassStub && Comparing.equal(packageClassFqName.getFqName(),((PsiClassStub)child).getQualifiedName())) {
+      PsiClass result=(PsiClass)child.getPsi();
+      List<Object> dependencies=Lists.<Object>newArrayList(files);
+      dependencies.add(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return Result.create(result,files);
+    }
+  }
+  throw new IllegalStateException("Namespace class was not found " + packageClassFqName + " for files "+ files);
+}
