@@ -4,9 +4,15 @@
   if (kind instanceof OwnerKind.StaticDelegateKind) {
     frameMap.leaveTemp(OBJECT_TYPE);
   }
+  if (hasOuter) {
+    frameMap.enterTemp(OBJECT_TYPE);
+  }
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),owner,state);
   int var=0;
   if (!aStatic) {
+    var++;
+  }
+  if (hasOuter) {
     var++;
   }
   Type receiverType;
@@ -20,7 +26,7 @@
   Type[] argTypes=jvmSignature.getArgumentTypes();
   List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
   for (int i=0; i < paramDescrs.size(); i++) {
-    Type argType=argTypes[i + (hasReceiver ? 1 : 0)];
+    Type argType=argTypes[i + ((hasReceiver || hasOuter) ? 1 : 0)];
     int size=argType.getSize();
     frameMap.enter(paramDescrs.get(i),argType);
     var+=size;
@@ -30,11 +36,15 @@
   if (!aStatic) {
     mv.visitVarInsn(ALOAD,var++);
   }
+  if (hasOuter) {
+    iv.load(var,ownerInternalName.getAsmType());
+    var++;
+  }
   if (hasReceiver) {
     iv.load(var,receiverType);
     var+=receiverType.getSize();
   }
-  int extra=hasReceiver ? 1 : 0;
+  int extra=(hasReceiver || hasOuter) ? 1 : 0;
   for (int index=0; index < paramDescrs.size(); index++) {
     ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
     Type t=argTypes[extra + index];
