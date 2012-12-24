@@ -1,6 +1,10 @@
 {
   PsiMethodWrapper constructor=new PsiMethodWrapper(psiConstructor);
-  if (constructor.getJetConstructorAnnotation().hidden()) {
+  JetConstructorAnnotation constructorAnnotation=constructor.getJetConstructorAnnotation();
+  if (constructorAnnotation.hidden()) {
+    return null;
+  }
+  if (DescriptorResolverUtils.isKotlinClass(psiClass) && !constructorAnnotation.isDefined()) {
     return null;
   }
   if (trace.get(BindingContext.CONSTRUCTOR,psiConstructor) != null) {
@@ -20,7 +24,7 @@
  else   if (alternativeMethodSignatureData.hasErrors()) {
     trace.record(BindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,constructorDescriptor,Collections.singletonList(alternativeMethodSignatureData.getError()));
   }
-  constructorDescriptor.initialize(classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor,constructor.getJetConstructorAnnotation()),aStatic);
+  constructorDescriptor.initialize(classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor,constructorAnnotation),aStatic);
   trace.record(BindingContext.CONSTRUCTOR,psiConstructor,constructorDescriptor);
   return constructorDescriptor;
 }
