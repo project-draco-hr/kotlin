@@ -1,14 +1,14 @@
 {
   checkForBuiltIns();
-  PsiJavaFileStubImpl javaFileStub=new PsiJavaFileStubImpl(fqName.getFqName(),true);
-  Stack<StubElement> stubStack=new Stack<StubElement>();
-  ClassBuilderFactory builderFactory=new KotlinLightClassBuilderFactory(stubStack);
   LightClassConstructionContext context=LightClassGenerationSupport.getInstance(project).analyzeRelevantCode(files);
   Throwable error=context.getError();
   if (error != null) {
     throw new IllegalStateException("failed to analyze: " + error,error);
   }
+  PsiJavaFileStubImpl javaFileStub=new PsiJavaFileStubImpl(fqName.getFqName(),true);
   try {
+    Stack<StubElement> stubStack=new Stack<StubElement>();
+    ClassBuilderFactory builderFactory=new KotlinLightClassBuilderFactory(stubStack);
     GenerationState state=new GenerationState(project,builderFactory,Progress.DEAF,context.getBindingContext(),Lists.newArrayList(files),BuiltinToJavaTypesMapping.ENABLED,false,false,false);
     GenerationStrategy strategy=new LightClassGenerationStrategy(new LightVirtualFile(),stubStack,javaFileStub);
     KotlinCodegenFacade.compileCorrectFiles(state,strategy,CompilationErrorHandler.THROW_EXCEPTION);
