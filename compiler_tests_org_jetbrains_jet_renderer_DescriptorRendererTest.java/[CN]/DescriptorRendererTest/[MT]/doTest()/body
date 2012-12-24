@@ -1,7 +1,7 @@
 {
   String fileName=getTestName(false) + ".kt";
   JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
-  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration((JetFile)psiFile,Collections.<AnalyzerScriptParameter>emptyList());
+  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   final BindingContext bindingContext=analyzeExhaust.getBindingContext();
   final List<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
   psiFile.acceptChildren(new JetVisitorVoid(){
@@ -9,6 +9,9 @@
       DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
       if (descriptor != null) {
         descriptors.add(descriptor);
+        if (descriptor instanceof ClassDescriptor) {
+          descriptors.addAll(((ClassDescriptor)descriptor).getConstructors());
+        }
       }
       element.acceptChildren(this);
     }
