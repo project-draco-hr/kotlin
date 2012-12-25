@@ -1,3 +1,13 @@
 {
-  return createImportDirective(project,importPath,null);
+  if (importPath.fqnPart().isRoot()) {
+    throw new IllegalArgumentException("import path must not be empty");
+  }
+  StringBuilder importDirectiveBuilder=new StringBuilder("import ");
+  importDirectiveBuilder.append(importPath.getPathStr());
+  Name alias=importPath.getAlias();
+  if (alias != null) {
+    importDirectiveBuilder.append(" as ").append(alias.getName());
+  }
+  JetFile namespace=createFile(project,importDirectiveBuilder.toString());
+  return namespace.getImportDirectives().iterator().next();
 }

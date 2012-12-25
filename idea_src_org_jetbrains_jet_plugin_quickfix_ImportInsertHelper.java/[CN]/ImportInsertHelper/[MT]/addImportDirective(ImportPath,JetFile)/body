@@ -1,0 +1,18 @@
+{
+  if (!doNeedImport(importPath,file)) {
+    return;
+  }
+  JetImportDirective newDirective=JetPsiFactory.createImportDirective(file.getProject(),importPath);
+  List<JetImportDirective> importDirectives=file.getImportDirectives();
+  if (!importDirectives.isEmpty()) {
+    JetImportDirective lastDirective=importDirectives.get(importDirectives.size() - 1);
+    lastDirective.getParent().addAfter(newDirective,lastDirective);
+  }
+ else {
+    JetNamespaceHeader header=file.getNamespaceHeader();
+    if (header == null) {
+      throw new IllegalStateException("Scripts are not supported: " + file.getName());
+    }
+    header.getParent().addAfter(newDirective,file.getNamespaceHeader());
+  }
+}
