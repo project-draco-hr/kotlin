@@ -1,19 +1,20 @@
 {
-  String fileName="htmlTabledRenderer.kt";
+  String fileName=name + ".kt";
   JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
   AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  final Set<AbstractDiagnosticFactory> factoriesSet=Sets.newHashSet(diagnosticFactories);
   List<Diagnostic> diagnostics=ContainerUtil.filter(bindingContext.getDiagnostics(),new Condition<Diagnostic>(){
     @Override public boolean value(    Diagnostic diagnostic){
-      return diagnostic.getFactory() == Errors.TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS;
+      return factoriesSet.contains(diagnostic.getFactory());
     }
   }
 );
-  assertEquals(diagnostics.size(),2);
+  assertEquals("Expected diagnostics number mismatch:",diagnosticNumber,diagnostics.size());
   int index=1;
   for (  Diagnostic diagnostic : diagnostics) {
-    String readableDiagnosticHtml=IdeErrorMessages.RENDERER.render(diagnostic).replaceAll(">",">\n");
-    assertSameLinesWithFile(getTestDataPath() + "/diagnostic" + index+ ".html",readableDiagnosticHtml);
+    String readableDiagnosticHtml="<!-- " + name + index+ " -->\n"+ IdeErrorMessages.RENDERER.render(diagnostic).replaceAll(">",">\n");
+    assertSameLinesWithFile(getTestDataPath() + "/" + name+ index+ ".html",readableDiagnosticHtml);
     index++;
   }
 }
