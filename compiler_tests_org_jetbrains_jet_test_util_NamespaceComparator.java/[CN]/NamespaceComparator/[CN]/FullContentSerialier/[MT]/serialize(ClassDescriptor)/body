@@ -32,7 +32,9 @@
     memberStrings.add(constructorSb.toString());
   }
   JetScope memberScope=klass.getMemberScope(typeArguments);
-  for (  DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+  ArrayList<DeclarationDescriptor> members=Lists.newArrayList(memberScope.getAllDescriptors());
+  ContainerUtil.sort(members,MemberComparator.INSTANCE);
+  for (  DeclarationDescriptor member : members) {
     if (!conf.includeObject) {
       if (member.getName().getName().matches("equals|hashCode|finalize|wait|notify(All)?|toString|clone|getClass")) {
         continue;
@@ -47,7 +49,6 @@
     new FullContentSerialier(checkPrimaryConstructors,objectSb).serialize(object);
     memberStrings.add(objectSb.toString());
   }
-  Collections.sort(memberStrings,new MemberComparator());
   for (  String memberString : memberStrings) {
     sb.append(indent(memberString));
   }
