@@ -5,11 +5,7 @@
   JetType expectedType=context.expectedType;
   boolean functionTypeExpected=expectedType != NO_EXPECTED_TYPE && KotlinBuiltIns.getInstance().isFunctionType(expectedType);
   SimpleFunctionDescriptorImpl functionDescriptor=createFunctionDescriptor(expression,context,functionTypeExpected);
-  List<JetType> parameterTypes=Lists.newArrayList();
   List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
-  for (  ValueParameterDescriptor valueParameter : valueParameters) {
-    parameterTypes.add(valueParameter.getType());
-  }
   ReceiverParameterDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
   JetType receiver=DescriptorUtils.getReceiverParameterType(receiverParameter);
   JetType returnType=NO_EXPECTED_TYPE;
@@ -45,7 +41,7 @@
     }
   }
   functionDescriptor.setReturnType(safeReturnType);
-  JetType resultType=KotlinBuiltIns.getInstance().getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,parameterTypes,safeReturnType);
+  JetType resultType=KotlinBuiltIns.getInstance().getFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiver,DescriptorUtils.getValueParametersTypes(valueParameters),safeReturnType);
   if (expectedType != NO_EXPECTED_TYPE && KotlinBuiltIns.getInstance().isFunctionType(expectedType)) {
     return JetTypeInfo.create(resultType,context.dataFlowInfo);
   }
