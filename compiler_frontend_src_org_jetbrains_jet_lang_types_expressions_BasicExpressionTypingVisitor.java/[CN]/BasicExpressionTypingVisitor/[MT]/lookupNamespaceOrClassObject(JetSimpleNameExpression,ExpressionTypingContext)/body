@@ -1,22 +1,28 @@
 {
+  Name referencedName=expression.getReferencedNameAsName();
   ClassifierDescriptor classifier=context.scope.getClassifier(referencedName);
   if (classifier != null) {
     JetType classObjectType=classifier.getClassObjectType();
-    JetType result=null;
     if (classObjectType != null) {
-      if (context.namespacesAllowed || classifier.isClassObjectAValue()) {
+      context.trace.record(REFERENCE_TARGET,expression,classifier);
+      JetType result;
+      if (context.namespacesAllowed && classifier instanceof ClassDescriptor) {
+        JetScope scope=new ChainedScope(classifier,classObjectType.getMemberScope(),getStaticNestedClassesScope((ClassDescriptor)classifier));
+        result=new NamespaceType(referencedName,scope);
+      }
+ else       if (context.namespacesAllowed || classifier.isClassObjectAValue()) {
         result=classObjectType;
       }
  else {
         context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
+        result=null;
       }
-      context.trace.record(REFERENCE_TARGET,expression,classifier);
       return DataFlowUtils.checkType(result,expression,context);
     }
   }
   JetType[] result=new JetType[1];
   TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace,"trace for namespace/class object lookup of name",referencedName);
-  if (furtherNameLookup(expression,referencedName,result,context.replaceBindingTrace(temporaryTrace))) {
+  if (furtherNameLookup(expression,result,context.replaceBindingTrace(temporaryTrace))) {
     temporaryTrace.commit();
     return DataFlowUtils.checkType(result[0],expression,context);
   }

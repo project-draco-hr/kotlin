@@ -1,0 +1,17 @@
+{
+  Name name=expression.getReferencedNameAsName();
+  NamespaceDescriptor namespace=context.scope.getNamespace(name);
+  if (namespace == null) {
+    return null;
+  }
+  context.trace.record(REFERENCE_TARGET,expression,namespace);
+  JetScope scope;
+  ClassifierDescriptor classifier=context.scope.getClassifier(name);
+  if (classifier instanceof ClassDescriptor) {
+    scope=new ChainedScope(namespace,namespace.getMemberScope(),getStaticNestedClassesScope((ClassDescriptor)classifier));
+  }
+ else {
+    scope=namespace.getMemberScope();
+  }
+  return new NamespaceType(name,scope);
+}
