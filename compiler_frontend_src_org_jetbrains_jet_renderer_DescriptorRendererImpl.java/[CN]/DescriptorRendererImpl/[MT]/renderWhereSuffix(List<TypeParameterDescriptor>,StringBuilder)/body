@@ -1,21 +1,15 @@
 {
-  boolean first=true;
+  List<String> upperBoundStrings=Lists.newArrayList();
   for (  TypeParameterDescriptor typeParameter : typeParameters) {
     if (typeParameter.getUpperBounds().size() > 1) {
       for (      JetType upperBound : typeParameter.getUpperBounds()) {
-        if (first) {
-          builder.append(" ");
-          builder.append(renderKeyword("where"));
-          builder.append(" ");
-        }
- else {
-          builder.append(", ");
-        }
-        builder.append(typeParameter.getName());
-        builder.append(" : ");
-        builder.append(escape(renderType(upperBound)));
-        first=false;
+        upperBoundStrings.add(typeParameter.getName() + " : " + escape(renderType(upperBound)));
       }
     }
+  }
+  Collections.sort(upperBoundStrings);
+  if (!upperBoundStrings.isEmpty()) {
+    builder.append(" ").append(renderKeyword("where")).append(" ");
+    builder.append(StringUtil.join(upperBoundStrings,", "));
   }
 }
