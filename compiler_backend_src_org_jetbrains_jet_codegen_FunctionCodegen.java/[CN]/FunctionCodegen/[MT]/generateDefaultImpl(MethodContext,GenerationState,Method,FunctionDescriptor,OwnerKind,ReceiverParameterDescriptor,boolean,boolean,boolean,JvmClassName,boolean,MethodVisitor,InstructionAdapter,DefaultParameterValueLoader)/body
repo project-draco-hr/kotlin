@@ -1,5 +1,6 @@
 {
   mv.visitCode();
+  boolean isEnumConstructor=functionDescriptor instanceof ConstructorDescriptor && DescriptorUtils.isEnumClass(functionDescriptor.getContainingDeclaration());
   FrameMap frameMap=owner.prepareFrame(state.getTypeMapper());
   if (kind instanceof OwnerKind.StaticDelegateKind) {
     frameMap.leaveTemp(OBJECT_TYPE);
@@ -7,47 +8,32 @@
   if (hasOuter) {
     frameMap.enterTemp(OBJECT_TYPE);
   }
+  if (isEnumConstructor) {
+    frameMap.enterTemp(OBJECT_TYPE);
+    frameMap.enterTemp(Type.INT_TYPE);
+  }
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),owner,state);
-  int var=0;
-  if (!aStatic) {
-    var++;
-  }
-  if (hasOuter) {
-    var++;
-  }
-  Type receiverType;
+  Type receiverType=null;
   if (hasReceiver) {
     receiverType=state.getTypeMapper().mapType(receiverParameter.getType());
-    var+=receiverType.getSize();
   }
- else {
-    receiverType=Type.DOUBLE_TYPE;
-  }
+  final int extraInLocalVariablesTable=getSizeOfExplicitArgumentsInLocalVariablesTable(aStatic,hasOuter,isEnumConstructor,receiverType);
+  final int countOfExtraVarsInMethodArgs=getCountOfExplicitArgumentsInMethodArguments(hasOuter,hasReceiver,isEnumConstructor);
   Type[] argTypes=jvmSignature.getArgumentTypes();
   List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  int paramSizeInLocalVariablesTable=0;
   for (int i=0; i < paramDescrs.size(); i++) {
-    Type argType=argTypes[i + ((hasReceiver || hasOuter) ? 1 : 0)];
+    Type argType=argTypes[i + countOfExtraVarsInMethodArgs];
     int size=argType.getSize();
     frameMap.enter(paramDescrs.get(i),argType);
-    var+=size;
+    paramSizeInLocalVariablesTable+=size;
   }
-  int maskIndex=var;
-  var=0;
-  if (!aStatic) {
-    mv.visitVarInsn(ALOAD,var++);
-  }
-  if (hasOuter) {
-    iv.load(var,ownerInternalName.getAsmType());
-    var++;
-  }
-  if (hasReceiver) {
-    iv.load(var,receiverType);
-    var+=receiverType.getSize();
-  }
-  int extra=(hasReceiver || hasOuter) ? 1 : 0;
+  final int maskIndex=extraInLocalVariablesTable + paramSizeInLocalVariablesTable;
+  loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,receiverType,ownerInternalName.getAsmType(),aStatic,hasOuter,isEnumConstructor);
+  int indexInLocalVariablesTable=extraInLocalVariablesTable;
   for (int index=0; index < paramDescrs.size(); index++) {
     ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
-    Type t=argTypes[extra + index];
+    Type t=argTypes[countOfExtraVarsInMethodArgs + index];
     if (frameMap.getIndex(parameterDescriptor) < 0) {
       frameMap.enter(parameterDescriptor,t);
     }
@@ -62,8 +48,8 @@
       iv.store(ind,t);
       iv.mark(loadArg);
     }
-    iv.load(var,t);
-    var+=t.getSize();
+    iv.load(indexInLocalVariablesTable,t);
+    indexInLocalVariablesTable+=t.getSize();
   }
   final String internalName=ownerInternalName.getInternalName();
   final String jvmSignatureName=jvmSignature.getName();
