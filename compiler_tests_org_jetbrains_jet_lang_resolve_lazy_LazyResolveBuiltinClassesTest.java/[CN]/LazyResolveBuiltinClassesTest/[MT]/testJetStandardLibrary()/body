@@ -1,15 +1,4 @@
 {
-  List<JetFile> files=Lists.newArrayList();
-  addJetFilesFromDir(files,new File("compiler/frontend/src/jet"));
-  final Map<FqName,Name> aliases=ImmutableMap.<FqName,Name>builder().put(new FqName("jet.Unit"),Name.identifier("Tuple0")).build();
-  ModuleDescriptor lazyModule=new ModuleDescriptor(Name.special("<lazy module>"));
-  ResolveSession session=new ResolveSession(getProject(),lazyModule,new SpecialModuleConfiguration(),new FileBasedDeclarationProviderFactory(files),new Function<FqName,Name>(){
-    @Override public Name fun(    FqName name){
-      return aliases.get(name);
-    }
-  }
-,Predicates.in(Sets.newHashSet(new FqNameUnsafe("jet.Any"),new FqNameUnsafe("jet.Nothing"))),new BindingTraceContext());
-  NamespaceDescriptor jetNamespaceFromJSL=(NamespaceDescriptor)KotlinBuiltIns.getInstance().getInt().getContainingDeclaration();
-  NamespaceDescriptor jetNamespaceFromLazy=lazyModule.getRootNamespace().getMemberScope().getNamespace(jetNamespaceFromJSL.getName());
-  NamespaceComparator.compareNamespaces(jetNamespaceFromJSL,jetNamespaceFromLazy,NamespaceComparator.RECURSIVE,new File("compiler/testData/builtin-classes.txt"));
+  NamespaceDescriptor builtInsPackage=KotlinBuiltIns.getInstance().getBuiltInsPackage();
+  NamespaceComparator.compareNamespaces(builtInsPackage,builtInsPackage,NamespaceComparator.RECURSIVE,new File("compiler/testData/builtin-classes.txt"));
 }
