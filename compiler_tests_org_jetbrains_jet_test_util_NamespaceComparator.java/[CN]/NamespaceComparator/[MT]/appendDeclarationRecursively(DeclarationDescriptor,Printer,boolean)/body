@@ -1,0 +1,51 @@
+{
+  if (descriptor instanceof ClassOrNamespaceDescriptor && !topLevel) {
+    printer.println();
+  }
+  boolean isPrimaryConstructor=descriptor instanceof ConstructorDescriptor && ((ConstructorDescriptor)descriptor).isPrimary();
+  printer.print(isPrimaryConstructor && conf.checkPrimaryConstructors ? "/*primary*/ " : "",RENDERER.render(descriptor));
+  if (descriptor instanceof ClassOrNamespaceDescriptor) {
+    if (topLevel) {
+      printer.println();
+      printer.println();
+    }
+ else {
+      printer.printlnWithNoIndent(" {").pushIndent();
+    }
+    List<DeclarationDescriptor> subDescriptors=Lists.newArrayList();
+    if (descriptor instanceof ClassDescriptor) {
+      ClassDescriptor klass=(ClassDescriptor)descriptor;
+      JetScope memberScope=klass.getDefaultType().getMemberScope();
+      subDescriptors.addAll(klass.getConstructors());
+      subDescriptors.addAll(memberScope.getAllDescriptors());
+      subDescriptors.addAll(memberScope.getObjectDescriptors());
+      ContainerUtil.addIfNotNull(subDescriptors,klass.getClassObjectDescriptor());
+    }
+ else     if (descriptor instanceof NamespaceDescriptor) {
+      JetScope memberScope=((NamespaceDescriptor)descriptor).getMemberScope();
+      subDescriptors.addAll(memberScope.getAllDescriptors());
+      subDescriptors.addAll(memberScope.getObjectDescriptors());
+    }
+ else {
+      throw new IllegalStateException("Should be class or namespace: " + descriptor.getClass());
+    }
+    Collections.sort(subDescriptors,MemberComparator.INSTANCE);
+    for (    DeclarationDescriptor subDescriptor : subDescriptors) {
+      if (!conf.includeObject) {
+        if (subDescriptor.getName().getName().matches("equals|hashCode|finalize|wait|notify(All)?|toString|clone|getClass")) {
+          continue;
+        }
+      }
+      if (subDescriptor instanceof NamespaceDescriptor && !conf.recurseIntoPackage.apply(DescriptorUtils.getFQName(subDescriptor))) {
+        continue;
+      }
+      appendDeclarationRecursively(subDescriptor,printer,false);
+    }
+    if (!topLevel) {
+      printer.popIndent().println("}");
+    }
+  }
+ else {
+    printer.printlnWithNoIndent();
+  }
+}
