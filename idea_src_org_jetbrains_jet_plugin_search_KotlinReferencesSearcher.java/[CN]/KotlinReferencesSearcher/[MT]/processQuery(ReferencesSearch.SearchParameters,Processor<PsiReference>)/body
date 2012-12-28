@@ -3,14 +3,14 @@
   if (element instanceof JetClass) {
     String className=((JetClass)element).getName();
     if (className != null) {
-      JetLightClass lightClass=ApplicationManager.getApplication().runReadAction(new Computable<JetLightClass>(){
-        @Override public JetLightClass compute(){
-          return JetLightClass.wrapDelegate((JetClass)element);
+      PsiClass lightClass=ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>(){
+        @Override public PsiClass compute(){
+          return LightClassUtil.createLightClass((JetClass)element);
         }
       }
 );
       if (lightClass != null) {
-        queryParameters.getOptimizer().searchWord(className,queryParameters.getScope(),true,lightClass);
+        queryParameters.getOptimizer().searchWord(className,queryParameters.getEffectiveSearchScope(),true,lightClass);
       }
     }
   }
@@ -20,12 +20,12 @@
     if (name != null) {
       final PsiMethod method=ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>(){
         @Override public PsiMethod compute(){
-          return JetLightClass.wrapMethod(function);
+          return LightClassUtil.getLightClassMethod(function);
         }
       }
 );
       if (method != null) {
-        queryParameters.getOptimizer().searchWord(name,queryParameters.getScope(),true,method);
+        queryParameters.getOptimizer().searchWord(name,queryParameters.getEffectiveSearchScope(),true,method);
       }
     }
   }
