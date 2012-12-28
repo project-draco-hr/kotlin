@@ -11,9 +11,9 @@
     BindingContext bindingContext=bindingContextAndNamespaceDescriptor.first;
     NamespaceDescriptor namespaceDescriptor=bindingContextAndNamespaceDescriptor.second;
     if (receiverType == null) {
-      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
+      for (      Descr candidate : navigationStrategy.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
         if (candidate.getReceiverParameter() == null) {
-          if (matcher.areSame(decompiledDeclaration,candidate)) {
+          if (navigationStrategy.declarationAndDescriptorMatch(decompiledDeclaration,candidate)) {
             return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
           }
         }
@@ -21,12 +21,12 @@
     }
  else {
       String expectedTypeString=receiverType.getText();
-      for (      Descr candidate : matcher.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
+      for (      Descr candidate : navigationStrategy.getCandidatesFromScope(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
         ReceiverParameterDescriptor receiverParameter=candidate.getReceiverParameter();
         if (receiverParameter != null) {
           String thisReceiverType=DescriptorRenderer.TEXT.renderType(receiverParameter.getType());
           if (expectedTypeString.equals(thisReceiverType)) {
-            if (matcher.areSame(decompiledDeclaration,candidate)) {
+            if (navigationStrategy.declarationAndDescriptorMatch(decompiledDeclaration,candidate)) {
               return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
             }
           }
@@ -54,7 +54,7 @@
         memberScope=classObjectType.getMemberScope();
       }
       ClassDescriptor expectedContainer=isClassObject ? classDescriptor.getClassObjectDescriptor() : classDescriptor;
-      for (      Descr candidate : matcher.getCandidatesFromScope(memberScope,entityNameAsName)) {
+      for (      Descr candidate : navigationStrategy.getCandidatesFromScope(memberScope,entityNameAsName)) {
         if (candidate.getContainingDeclaration() == expectedContainer) {
           JetDeclaration property=(JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
           if (property != null) {
