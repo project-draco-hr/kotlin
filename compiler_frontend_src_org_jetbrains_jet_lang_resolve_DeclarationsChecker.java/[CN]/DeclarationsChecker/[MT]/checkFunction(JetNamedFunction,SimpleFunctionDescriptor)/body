@@ -8,17 +8,20 @@
     boolean inTrait=classDescriptor.getKind() == ClassKind.TRAIT;
     boolean inEnum=classDescriptor.getKind() == ClassKind.ENUM_CLASS;
     boolean inAbstractClass=classDescriptor.getModality() == Modality.ABSTRACT;
-    if (hasAbstractModifier && !inAbstractClass && !inTrait&& !inEnum) {
-      JetClass classElement=(JetClass)BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),classDescriptor);
+    if (hasAbstractModifier && !inAbstractClass && !inEnum) {
       trace.report(ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS.on(function,functionDescriptor.getName().getName(),classDescriptor));
     }
     if (hasAbstractModifier && inTrait) {
       trace.report(ABSTRACT_MODIFIER_IN_TRAIT.on(function));
     }
-    if (function.getBodyExpression() != null && hasAbstractModifier) {
+    boolean hasBody=function.getBodyExpression() != null;
+    if (hasBody && hasAbstractModifier) {
       trace.report(ABSTRACT_FUNCTION_WITH_BODY.on(function,functionDescriptor));
     }
-    if (function.getBodyExpression() == null && !hasAbstractModifier && !inTrait) {
+    if (!hasBody && function.hasModifier(JetTokens.FINAL_KEYWORD) && inTrait) {
+      trace.report(FINAL_FUNCTION_WITH_NO_BODY.on(function,functionDescriptor));
+    }
+    if (!hasBody && !hasAbstractModifier && !inTrait) {
       trace.report(NON_ABSTRACT_FUNCTION_WITH_NO_BODY.on(function,functionDescriptor));
     }
     return;
