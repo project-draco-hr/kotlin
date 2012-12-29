@@ -1,0 +1,29 @@
+{
+  Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope);
+  if (lookupMode == LookupMode.EVERYTHING) {
+    namespaceScope.clearImports();
+  }
+  for (  ImportPath defaultImportPath : configuration.getDefaultImports()) {
+    TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace,"transient trace to resolve default imports");
+    JetImportDirective defaultImportDirective=psiBuilder.createImportDirective(defaultImportPath);
+    qualifiedExpressionResolver.processImportReference(defaultImportDirective,rootScope,namespaceScope,delayedImporter,temporaryTrace,configuration,lookupMode);
+  }
+  Map<JetImportDirective,DeclarationDescriptor> resolvedDirectives=Maps.newHashMap();
+  for (  JetImportDirective importDirective : importDirectives) {
+    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScope,namespaceScope,delayedImporter,trace,configuration,lookupMode);
+    if (descriptors.size() == 1) {
+      resolvedDirectives.put(importDirective,descriptors.iterator().next());
+    }
+    for (    DeclarationDescriptor descriptor : descriptors) {
+      JetExpression importedReference=importDirective.getImportedReference();
+      if (lookupMode == LookupMode.ONLY_CLASSES || importedReference == null)       continue;
+      reportPlatformClassMappedToKotlin(configuration,trace,importedReference,descriptor);
+    }
+  }
+  delayedImporter.processImports();
+  if (lookupMode == LookupMode.EVERYTHING) {
+    for (    JetImportDirective importDirective : importDirectives) {
+      reportUselessImport(importDirective,namespaceScope,resolvedDirectives,trace);
+    }
+  }
+}
