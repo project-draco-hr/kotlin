@@ -11,27 +11,9 @@
     if (bindingContextAndNamespaceDescriptor == null)     return null;
     BindingContext bindingContext=bindingContextAndNamespaceDescriptor.first;
     NamespaceDescriptor namespaceDescriptor=bindingContextAndNamespaceDescriptor.second;
-    if (receiverType == null) {
-      for (      Descr candidate : navigationStrategy.getCandidateDescriptors(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
-        if (candidate.getReceiverParameter() == null) {
-          if (navigationStrategy.declarationAndDescriptorMatch(decompiledDeclaration,candidate)) {
-            return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
-          }
-        }
-      }
-    }
- else {
-      String expectedTypeString=receiverType.getText();
-      for (      Descr candidate : navigationStrategy.getCandidateDescriptors(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
-        ReceiverParameterDescriptor receiverParameter=candidate.getReceiverParameter();
-        if (receiverParameter != null) {
-          String thisReceiverType=DescriptorRenderer.TEXT.renderType(receiverParameter.getType());
-          if (expectedTypeString.equals(thisReceiverType)) {
-            if (navigationStrategy.declarationAndDescriptorMatch(decompiledDeclaration,candidate)) {
-              return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
-            }
-          }
-        }
+    for (    Descr candidate : navigationStrategy.getCandidateDescriptors(namespaceDescriptor.getMemberScope(),entityNameAsName)) {
+      if (receiversMatch(receiverType,candidate.getReceiverParameter()) && navigationStrategy.declarationAndDescriptorMatch(decompiledDeclaration,candidate)) {
+        return (JetDeclaration)BindingContextUtils.descriptorToDeclaration(bindingContext,candidate);
       }
     }
   }
