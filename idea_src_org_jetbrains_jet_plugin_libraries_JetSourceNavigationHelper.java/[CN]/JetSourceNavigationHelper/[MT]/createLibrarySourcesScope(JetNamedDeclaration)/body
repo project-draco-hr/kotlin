@@ -1,6 +1,16 @@
 {
   JetFile containingFile=(JetFile)decompiledDeclaration.getContainingFile();
   VirtualFile libraryFile=containingFile.getVirtualFile();
+  if (libraryFile == null) {
+    return GlobalSearchScope.EMPTY_SCOPE;
+  }
   Project project=decompiledDeclaration.getProject();
-  return libraryFile == null ? GlobalSearchScope.EMPTY_SCOPE : createLibrarySourcesScopeForFile(libraryFile,project);
+  ProjectFileIndex projectFileIndex=ProjectFileIndex.SERVICE.getInstance(project);
+  GlobalSearchScope resultScope=GlobalSearchScope.EMPTY_SCOPE;
+  for (  OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(libraryFile)) {
+    for (    VirtualFile sourceDir : orderEntry.getFiles(OrderRootType.SOURCES)) {
+      resultScope=resultScope.uniteWith(GlobalSearchScopes.directoryScope(project,sourceDir,true));
+    }
+  }
+  return resultScope;
 }
