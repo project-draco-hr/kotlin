@@ -1,25 +1,2 @@
 {
-  if (PsiTreeUtil.getParentOfType(function,JetFunction.class,JetProperty.class) != null) {
-    return null;
-  }
-  Project project=function.getProject();
-  JvmClassName jvmClassName=PsiCodegenPredictor.getPredefinedJvmClassNameForFun(function);
-  if (jvmClassName == null)   return null;
-  String fqName=jvmClassName.getFqName().getFqName();
-  PsiClass psiClass=JavaElementFinder.getInstance(project).findClass(fqName,GlobalSearchScope.allScope(project));
-  if (psiClass == null)   return null;
-  for (  PsiMethod method : psiClass.getMethods()) {
-    try {
-      if (method instanceof PsiCompiledElement && ((PsiCompiledElement)method).getMirror() == function) {
-        return method;
-      }
-    }
- catch (    ProcessCanceledException e) {
-      throw e;
-    }
-catch (    Throwable e) {
-      throw new IllegalStateException("Error while wrapping function " + function.getName() + "Context\n:"+ String.format("=== In file ===\n" + "%s\n" + "===On element===\n"+ "%s\n"+ "===WrappedElement===\n"+ "%s\n",function.getContainingFile().getText(),function.getText(),method.toString()),e);
-    }
-  }
-  return null;
 }
