@@ -1,0 +1,9 @@
+{
+  JetCoreEnvironment environment=getEnvironment(ktFile);
+  Project project=environment.getProject();
+  List<JetFile> jetFiles=Collections.singletonList(JetTestUtils.loadJetFile(project,ktFile));
+  BindingContext bindingContext=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(project,jetFiles,Collections.<AnalyzerScriptParameter>emptyList(),Predicates.<PsiFile>alwaysTrue()).getBindingContext();
+  NamespaceDescriptor namespaceDescriptor=bindingContext.get(BindingContext.FQNAME_TO_NAMESPACE_DESCRIPTOR,namespaceFqn);
+  assertNotNull("Failed to find namespace: " + namespaceFqn,namespaceDescriptor);
+  compareNamespaceWithFile(namespaceDescriptor,NamespaceComparator.DONT_INCLUDE_METHODS_OF_OBJECT,expectedFile);
+}
