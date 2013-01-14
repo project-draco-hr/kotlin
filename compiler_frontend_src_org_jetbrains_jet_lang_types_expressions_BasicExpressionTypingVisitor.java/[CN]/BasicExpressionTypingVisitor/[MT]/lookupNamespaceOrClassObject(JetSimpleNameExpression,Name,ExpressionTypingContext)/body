@@ -21,9 +21,12 @@
     return DataFlowUtils.checkType(result[0],expression,context);
   }
   if (classifier != null) {
-    context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
+    if (!context.namespacesAllowed) {
+      context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
+    }
     context.trace.record(REFERENCE_TARGET,expression,classifier);
-    return classifier.getDefaultType();
+    JetScope scopeForStaticMembersResolution=classifier instanceof ClassDescriptor ? getStaticNestedClassesScope((ClassDescriptor)classifier) : JetScope.EMPTY;
+    return new NamespaceType(referencedName,scopeForStaticMembersResolution);
   }
   temporaryTrace.commit();
   return result[0];
