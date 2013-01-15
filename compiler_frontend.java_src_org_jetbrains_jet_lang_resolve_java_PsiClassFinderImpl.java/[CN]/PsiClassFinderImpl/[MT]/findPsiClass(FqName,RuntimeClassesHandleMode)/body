@@ -1,8 +1,9 @@
 {
   PsiClass original=javaFacade.findClass(qualifiedName.getFqName(),javaSearchScope);
   if (original != null) {
-    FqName actualQualifiedName=new FqName(original.getQualifiedName());
-    if (!actualQualifiedName.equals(qualifiedName)) {
+    String classQualifiedName=original.getQualifiedName();
+    FqName actualQualifiedName=classQualifiedName != null ? new FqName(classQualifiedName) : null;
+    if (!qualifiedName.equals(actualQualifiedName)) {
       throw new IllegalStateException("requested " + qualifiedName + ", got "+ actualQualifiedName);
     }
   }
@@ -12,7 +13,7 @@
   if (original == null) {
     return null;
   }
-  if ("jet".equals(qualifiedName.parent().getFqName())) {
+  if (KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.equals(qualifiedName.parent())) {
     PsiAnnotation assertInvisibleAnnotation=JavaAnnotationResolver.findOwnAnnotation(original,JvmStdlibNames.ASSERT_INVISIBLE_IN_RESOLVER.getFqName().getFqName());
     if (assertInvisibleAnnotation != null) {
       if (runtimeClassesHandleMode == RuntimeClassesHandleMode.IGNORE) {
