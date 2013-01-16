@@ -1,10 +1,7 @@
 {
   boolean isStatic=isStatic(kind);
   boolean isAbstract=isAbstract(functionDescriptor,kind);
-  int flags=getVisibilityAccessFlag(functionDescriptor);
-  if (!functionDescriptor.getValueParameters().isEmpty() && functionDescriptor.getValueParameters().get(functionDescriptor.getValueParameters().size() - 1).getVarargElementType() != null) {
-    flags|=ACC_VARARGS;
-  }
+  int flags=getCommonCallableFlags(functionDescriptor);
   if (functionDescriptor.getModality() == Modality.FINAL) {
     DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
     if (!(containingDeclaration instanceof ClassDescriptor) || ((ClassDescriptor)containingDeclaration).getKind() != ClassKind.TRAIT) {
@@ -15,8 +12,5 @@
     flags|=ACC_STATIC;
   }
   if (isAbstract)   flags|=ACC_ABSTRACT;
-  if (KotlinBuiltIns.getInstance().isDeprecated(functionDescriptor)) {
-    flags|=ACC_DEPRECATED;
-  }
   return flags;
 }
