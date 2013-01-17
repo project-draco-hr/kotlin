@@ -10,10 +10,11 @@
     JetTypeReference typeReference=annotationEntry.getTypeReference();
     if (typeReference == null)     continue;
     JetTypeElement typeElement=typeReference.getTypeElement();
-    if (typeElement == null)     continue;
-    String text=typeElement.getText();
-    if (deprecatedFqName.getFqName().equals(text))     return true;
-    if (deprecatedName.equals(text))     return true;
+    if (!(typeElement instanceof JetUserType))     continue;
+    FqName fqName=JetPsiUtil.toQualifiedName((JetUserType)typeElement);
+    if (fqName == null)     continue;
+    if (deprecatedFqName.equals(fqName.toUnsafe()))     return true;
+    if (deprecatedName.equals(fqName.getFqName()))     return true;
   }
   return false;
 }
