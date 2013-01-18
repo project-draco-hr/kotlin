@@ -1,0 +1,19 @@
+{
+  if (context.expressionPosition == ExpressionPosition.LHS_OF_DOT && classifier instanceof ClassDescriptor) {
+    List<JetScope> scopes=new ArrayList<JetScope>(3);
+    scopes.add(classObjectType.getMemberScope());
+    scopes.add(getStaticNestedClassesScope((ClassDescriptor)classifier));
+    NamespaceDescriptor namespace=context.scope.getNamespace(referencedName);
+    if (namespace != null) {
+      scopes.add(namespace.getMemberScope());
+    }
+    JetScope scope=new ChainedScope(classifier,scopes.toArray(new JetScope[scopes.size()]));
+    return new NamespaceType(referencedName,scope);
+  }
+ else   if (context.expressionPosition == ExpressionPosition.LHS_OF_DOT || classifier.isClassObjectAValue()) {
+    return classObjectType;
+  }
+ else {
+    return null;
+  }
+}
