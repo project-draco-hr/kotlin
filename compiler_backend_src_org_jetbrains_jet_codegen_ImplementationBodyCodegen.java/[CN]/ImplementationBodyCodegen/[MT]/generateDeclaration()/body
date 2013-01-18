@@ -32,6 +32,7 @@
     if (!jetClass.hasModifier(JetTokens.OPEN_KEYWORD) && !isAbstract) {
       isFinal=true;
     }
+    isStatic=!jetClass.isInner();
   }
  else {
     isStatic=myClass.getParent() instanceof JetClassObject;
@@ -40,6 +41,9 @@
   int access=0;
   if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES && !DescriptorUtils.isTopLevelDeclaration(descriptor)) {
     access|=getVisibilityAccessFlag(descriptor);
+    if (isStatic) {
+      access|=ACC_STATIC;
+    }
   }
  else {
     access|=getVisibilityAccessFlagForClass(descriptor);
@@ -55,9 +59,6 @@
   }
   if (isFinal) {
     access|=ACC_FINAL;
-  }
-  if (isStatic) {
-    access|=ACC_STATIC;
   }
   if (isAnnotation) {
     access|=ACC_ANNOTATION;
