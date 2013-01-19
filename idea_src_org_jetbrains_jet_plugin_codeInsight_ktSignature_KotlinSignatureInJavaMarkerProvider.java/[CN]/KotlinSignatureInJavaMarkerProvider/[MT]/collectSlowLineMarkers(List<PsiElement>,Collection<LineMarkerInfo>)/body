@@ -1,2 +1,28 @@
 {
+  if (elements.isEmpty()) {
+    return;
+  }
+  Project project=elements.get(0).getProject();
+  if (!isMarkersEnabled(project)) {
+    return;
+  }
+  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(project);
+  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  BindingContext bindingContext=injector.getBindingTrace().getBindingContext();
+  for (  PsiElement element : elements) {
+    if (!(element instanceof PsiMember)) {
+      continue;
+    }
+    PsiMember member=(PsiMember)element;
+    if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+      continue;
+    }
+    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,bindingContext);
+    if (memberDescriptor == null)     continue;
+    List<String> errors=bindingContext.get(BindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
+    boolean hasSignatureAnnotation=findKotlinSignatureAnnotation(element) != null;
+    if (errors != null || hasSignatureAnnotation) {
+      result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
+    }
+  }
 }
