@@ -1,0 +1,24 @@
+{
+  if (!super.isAvailable(project,editor,file)) {
+    return false;
+  }
+  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject(project).getBindingContext();
+  ClassDescriptor childClassDescriptor=context.get(BindingContext.CLASS,childClass);
+  if (childClassDescriptor == null) {
+    return false;
+  }
+  for (  JetType supertype : childClassDescriptor.getTypeConstructor().getSupertypes()) {
+    ClassDescriptor superClassDescriptor=(ClassDescriptor)supertype.getConstructor().getDeclarationDescriptor();
+    if (superClassDescriptor == null) {
+      continue;
+    }
+    PsiElement declaration=BindingContextUtils.descriptorToDeclaration(context,superClassDescriptor);
+    if (declaration instanceof JetClass) {
+      superClass=(JetClass)declaration;
+      if (!superClass.isTrait() && !superClass.isEnum() && superClass.getContainingFile().isWritable()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
