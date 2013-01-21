@@ -1,4 +1,7 @@
 {
+  if (initializedClassLoader != null) {
+    fail("Double initialization of class loader in same test");
+  }
   List<URL> urls=Lists.newArrayList();
   for (  File file : myEnvironment.getConfiguration().getList(JVMConfigurationKeys.CLASSPATH_KEY)) {
     try {
@@ -8,12 +11,13 @@
       throw new RuntimeException(e);
     }
   }
-  final URL[] urlsArray=urls.toArray(new URL[0]);
+  final URL[] urlsArray=urls.toArray(new URL[urls.size()]);
   if (!classPathInTheSameClassLoader) {
     ClassLoader parentClassLoader=new URLClassLoader(urlsArray,CodegenTestCase.class.getClassLoader());
-    return new GeneratedClassLoader(codegens,parentClassLoader);
+    initializedClassLoader=new GeneratedClassLoader(codegens,parentClassLoader);
   }
  else {
-    return new GeneratedClassLoader(codegens,CodegenTestCase.class.getClassLoader(),urlsArray);
+    initializedClassLoader=new GeneratedClassLoader(codegens,CodegenTestCase.class.getClassLoader(),urlsArray);
   }
+  return initializedClassLoader;
 }

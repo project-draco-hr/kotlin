@@ -9,4 +9,41 @@
   configuration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,JetParsingTest.getTestDataDir() + "/../../libraries/kunit/src");
   configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,MessageCollectorPlainTextToStream.PLAIN_TEXT_TO_SYSTEM_ERR);
   myEnvironment=new JetCoreEnvironment(getTestRootDisposable(),configuration);
+  generationState=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(myEnvironment,false);
+  if (generationState == null) {
+    throw new RuntimeException("There were compilation errors");
+  }
+  ClassFileFactory classFileFactory=generationState.getFactory();
+  classLoader=new GeneratedClassLoader(classFileFactory,new URLClassLoader(new URL[]{ForTestCompileRuntime.runtimeJarForTests().toURI().toURL(),junitJar.toURI().toURL()},TestCase.class.getClassLoader()));
+  typeMapper=generationState.getTypeMapper();
+  for (  JetFile jetFile : myEnvironment.getSourceFiles()) {
+    for (    JetDeclaration decl : jetFile.getDeclarations()) {
+      if (decl instanceof JetClass) {
+        JetClass jetClass=(JetClass)decl;
+        ClassDescriptor descriptor=(ClassDescriptor)generationState.getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,jetClass);
+        assertNotNull("Descriptor for declaration " + jetClass + " shouldn't be null",descriptor);
+        Set<JetType> allSuperTypes=new THashSet<JetType>();
+        DescriptorUtils.addSuperTypes(descriptor.getDefaultType(),allSuperTypes);
+        for (        JetType type : allSuperTypes) {
+          String internalName=typeMapper.mapType(type,JetTypeMapperMode.IMPL).getInternalName();
+          if (internalName.equals("junit/framework/Test")) {
+            String name=typeMapper.mapType(descriptor.getDefaultType(),JetTypeMapperMode.IMPL).getInternalName();
+            System.out.println(name);
+            @SuppressWarnings("unchecked") Class<TestCase> aClass=(Class<TestCase>)classLoader.loadClass(name.replace('/','.'));
+            if ((aClass.getModifiers() & Modifier.ABSTRACT) == 0 && (aClass.getModifiers() & Modifier.PUBLIC) != 0) {
+              try {
+                Constructor<TestCase> constructor=aClass.getConstructor();
+                if ((constructor.getModifiers() & Modifier.PUBLIC) != 0) {
+                  suite.addTestSuite(aClass);
+                }
+              }
+ catch (              NoSuchMethodException e) {
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
 }
