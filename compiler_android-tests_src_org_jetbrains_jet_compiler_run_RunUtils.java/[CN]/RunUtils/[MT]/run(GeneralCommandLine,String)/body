@@ -1,4 +1,5 @@
 {
+  System.out.println("RUN COMMAND: " + commandLine.getCommandLineString());
   final StringBuilder stdOut=new StringBuilder();
   final StringBuilder stdErr=new StringBuilder();
   final OSProcessHandler handler;
@@ -15,23 +16,22 @@
 catch (  IOException e) {
     return new RunResult(false,getStackTrace(e));
   }
-  final ProcessAdapter listener=new ProcessAdapter(){
-    @Override public void onTextAvailable(    final ProcessEvent event,    final Key outputType){
+  handler.addProcessListener(new ProcessAdapter(){
+    @Override public void onTextAvailable(    ProcessEvent event,    Key outputType){
       String str=event.getText();
       if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.SYSTEM) {
-        stdOut.append(str);
-        if (!commandLine.getCommandLineString().contains("install")) {
-          System.out.print(str);
-        }
+        appendToContent(stdOut,str);
       }
  else       if (outputType == ProcessOutputTypes.STDERR) {
-        stdErr.append(str);
-        System.err.print(str);
+        appendToContent(stdErr,str);
       }
     }
+    private synchronized void appendToContent(    StringBuilder content,    String line){
+      content.append(StringUtil.trimTrailing(line));
+      content.append("\n");
+    }
   }
-;
-  handler.addProcessListener(listener);
+);
   handler.startNotify();
   try {
     handler.waitFor(300000);
@@ -42,7 +42,6 @@ catch (  IOException e) {
   if (!handler.isProcessTerminated()) {
     return new RunResult(false,"Timeout exception: execution was terminated after 5 min.");
   }
-  handler.removeProcessListener(listener);
   int exitCode=handler.getProcess().exitValue();
   if (exitCode != 0) {
     return new RunResult(false,builderToString(stdOut) + builderToString(stdErr));
@@ -51,6 +50,9 @@ catch (  IOException e) {
     String output=builderToString(stdOut) + builderToString(stdErr);
     if (OutputUtils.isBuildFailed(output)) {
       return new RunResult(false,output);
+    }
+    if (!commandLine.getCommandLineString().contains("install")) {
+      System.out.print(output);
     }
     return new RunResult(true,output);
   }

@@ -1,14 +1,16 @@
 {
-  GeneralCommandLine pidOfProcess=new GeneralCommandLine();
-  pidOfProcess.setExePath("pidof");
-  pidOfProcess.addParameter(processName);
-  RunResult runResult=RunUtils.execute(pidOfProcess);
-  String processIdsStr=runResult.getOutput().substring(("pidof " + processName).length());
-  List<String> processIds=StringUtil.getWordsIn(processIdsStr);
-  for (  String pid : processIds) {
-    GeneralCommandLine killCommand=new GeneralCommandLine();
-    killCommand.setExePath("kill");
-    killCommand.addParameter(pid);
-    OutputUtils.checkResult(RunUtils.execute(killCommand));
+  if (SystemInfo.isUnix) {
+    GeneralCommandLine pidOfProcess=new GeneralCommandLine();
+    pidOfProcess.setExePath("pidof");
+    pidOfProcess.addParameter(processName);
+    RunResult runResult=RunUtils.execute(pidOfProcess);
+    String processIdsStr=runResult.getOutput().substring(("pidof " + processName).length());
+    List<String> processIds=StringUtil.getWordsIn(processIdsStr);
+    for (    String pid : processIds) {
+      GeneralCommandLine killCommand=new GeneralCommandLine();
+      killCommand.setExePath("kill");
+      killCommand.addParameter(pid);
+      RunUtils.execute(killCommand);
+    }
   }
 }
