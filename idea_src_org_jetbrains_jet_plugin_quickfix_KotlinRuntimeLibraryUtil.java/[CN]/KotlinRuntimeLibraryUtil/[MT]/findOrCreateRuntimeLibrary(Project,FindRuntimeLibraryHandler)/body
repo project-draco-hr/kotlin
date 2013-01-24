@@ -1,5 +1,5 @@
 {
-  LibraryTable table=ProjectLibraryTable.getInstance(myProject);
+  LibraryTable table=ProjectLibraryTable.getInstance(project);
   Library kotlinRuntime=table.getLibraryByName(LIBRARY_NAME);
   if (kotlinRuntime != null) {
     for (    VirtualFile root : kotlinRuntime.getFiles(OrderRootType.CLASSES)) {
@@ -10,14 +10,11 @@
   }
   File runtimePath=PathUtil.getKotlinPathsForIdeaPlugin().getRuntimePath();
   if (!runtimePath.exists()) {
-    Messages.showErrorDialog(myProject,"kotlin-runtime.jar is not found. Make sure plugin is properly installed.","No Runtime Found");
+    handler.runtimePathDoesNotExist(runtimePath);
     return null;
   }
-  ChoosePathDialog dlg=new ChoosePathDialog(myProject);
-  dlg.show();
-  if (!dlg.isOK())   return null;
-  String path=dlg.getPath();
-  final File targetJar=new File(path,"kotlin-runtime.jar");
+  final File targetJar=handler.getRuntimeJarPath();
+  if (targetJar == null)   return null;
   try {
     FileUtil.copy(runtimePath,targetJar);
     VirtualFile jarVfs=LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetJar);
@@ -26,7 +23,7 @@
     }
   }
  catch (  IOException e) {
-    Messages.showErrorDialog(myProject,"Error copying jar: " + e.getLocalizedMessage(),"Error Copying File");
+    handler.ioExceptionOnCopyingJar(e);
     return null;
   }
   if (kotlinRuntime == null) {
@@ -34,7 +31,7 @@
   }
   final Library finalKotlinRuntime=kotlinRuntime;
   ApplicationManager.getApplication().runWriteAction(new Runnable(){
-    public void run(){
+    @Override public void run(){
       Library.ModifiableModel model=finalKotlinRuntime.getModifiableModel();
       model.addRoot(VfsUtil.getUrlForLibraryRoot(targetJar),OrderRootType.CLASSES);
       model.addRoot(VfsUtil.getUrlForLibraryRoot(targetJar) + "src",OrderRootType.SOURCES);
