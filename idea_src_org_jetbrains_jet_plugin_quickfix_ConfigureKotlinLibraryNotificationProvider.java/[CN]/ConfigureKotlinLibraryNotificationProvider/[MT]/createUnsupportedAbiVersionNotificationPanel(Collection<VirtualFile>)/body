@@ -1,0 +1,35 @@
+{
+  final EditorNotificationPanel answer=new ErrorNotificationPanel();
+  VirtualFile kotlinRuntimeJar=KotlinRuntimeLibraryUtil.getLocalKotlinRuntimeJar(myProject);
+  if (kotlinRuntimeJar != null && badRoots.contains(kotlinRuntimeJar)) {
+    int otherBadRootsCount=badRoots.size() - 1;
+    String kotlinRuntimeJarName=kotlinRuntimeJar.getPresentableName();
+    String text=MessageFormat.format("<html>Kotlin <b>runtime library</b> jar <b>''{0}''</b> " + "{1,choice,0#|1# and one other jar|1< and {1} other jars} " + "{1,choice,0#has|0<have} an unsupported format</html>",kotlinRuntimeJarName,otherBadRootsCount);
+    answer.setText(text);
+    answer.createActionLabel("Update " + kotlinRuntimeJarName,new Runnable(){
+      @Override public void run(){
+        KotlinRuntimeLibraryUtil.updateRuntime(myProject,OutdatedKotlinRuntimeNotification.showRuntimeJarNotFoundDialog(myProject));
+      }
+    }
+);
+    if (otherBadRootsCount > 0) {
+      createShowPathsActionLabel(answer,"Show all");
+    }
+  }
+ else   if (badRoots.size() == 1) {
+    final VirtualFile root=badRoots.iterator().next();
+    String presentableName=root.getPresentableName();
+    answer.setText("<html>Kotlin library <b>'" + presentableName + "'</b> "+ "has an unsupported format. Please update the library or the plugin</html>");
+    answer.createActionLabel("Go to " + presentableName,new Runnable(){
+      @Override public void run(){
+        navigateToLibraryRoot(myProject,root);
+      }
+    }
+);
+  }
+ else {
+    answer.setText("Some Kotlin libraries attached to this project have unsupported format. Please update the libraries or the plugin");
+    createShowPathsActionLabel(answer,"Show paths");
+  }
+  return answer;
+}

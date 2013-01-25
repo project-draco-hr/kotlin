@@ -5,12 +5,18 @@
     final Module module=ModuleUtilCore.findModuleForFile(file,myProject);
     if (module == null)     return null;
     if (!KotlinRuntimeLibraryUtil.isModuleAlreadyConfigured(module)) {
-      return createNotificationPanel(module);
+      return createConfigureRuntimeLibraryNotificationPanel(module);
+    }
+    Collection<VirtualFile> badRoots=KotlinRuntimeLibraryUtil.getLibraryRootsWithAbiIncompatibleKotlinClasses(myProject);
+    if (!badRoots.isEmpty()) {
+      return createUnsupportedAbiVersionNotificationPanel(badRoots);
     }
   }
  catch (  ProcessCanceledException e) {
   }
 catch (  IndexNotReadyException e) {
+    DumbService.getInstance(myProject).runWhenSmart(updateNotifications);
+    return null;
   }
   return null;
 }
