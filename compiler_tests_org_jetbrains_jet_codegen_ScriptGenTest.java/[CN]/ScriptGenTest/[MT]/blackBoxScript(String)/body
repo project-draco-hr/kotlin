@@ -1,11 +1,11 @@
 {
   loadFile(filename);
-  GenerationState state=generateClassesInFileGetState();
-  GeneratedClassLoader loader=createClassLoader(state.getFactory(),false);
+  ClassFileFactory factory=generateClassesInFile();
+  GeneratedClassLoader loader=createClassLoader(factory);
   String scriptClassName=ScriptNameUtil.classNameForScript(myFiles.getPsiFile());
   try {
     Class<?> scriptClass=loader.loadClass(scriptClassName);
-    Constructor constructor=getConstructor(scriptClass,state.getScriptCodegen().getScriptConstructorMethod());
+    Constructor constructor=getConstructor(scriptClass,factory.getState().getScriptCodegen().getScriptConstructorMethod());
     scriptInstance=constructor.newInstance(myFiles.getScriptParameterValues().toArray());
     assertFalse("expecting at least one expectation",myFiles.getExpectedValues().isEmpty());
     for (    Pair<String,String> nameValue : myFiles.getExpectedValues()) {
