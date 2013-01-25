@@ -1,6 +1,6 @@
 {
-  LibraryTable table=ProjectLibraryTable.getInstance(project);
-  Library kotlinRuntime=table.getLibraryByName(LIBRARY_NAME);
+  final LibraryTable table=ProjectLibraryTable.getInstance(project);
+  final Library kotlinRuntime=table.getLibraryByName(LIBRARY_NAME);
   if (kotlinRuntime != null) {
     for (    VirtualFile root : kotlinRuntime.getFiles(OrderRootType.CLASSES)) {
       if (root.getName().equals(KOTLIN_RUNTIME_JAR)) {
@@ -26,18 +26,15 @@
     handler.ioExceptionOnCopyingJar(e);
     return null;
   }
-  if (kotlinRuntime == null) {
-    kotlinRuntime=table.createLibrary("KotlinRuntime");
-  }
-  final Library finalKotlinRuntime=kotlinRuntime;
-  ApplicationManager.getApplication().runWriteAction(new Runnable(){
-    @Override public void run(){
-      Library.ModifiableModel model=finalKotlinRuntime.getModifiableModel();
+  return ApplicationManager.getApplication().runWriteAction(new Computable<Library>(){
+    @Override public Library compute(){
+      Library result=kotlinRuntime == null ? table.createLibrary("KotlinRuntime") : kotlinRuntime;
+      Library.ModifiableModel model=result.getModifiableModel();
       model.addRoot(VfsUtil.getUrlForLibraryRoot(targetJar),OrderRootType.CLASSES);
       model.addRoot(VfsUtil.getUrlForLibraryRoot(targetJar) + "src",OrderRootType.SOURCES);
       model.commit();
+      return result;
     }
   }
 );
-  return kotlinRuntime;
 }
