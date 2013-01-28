@@ -1,13 +1,11 @@
 {
-  Collection<FqName> subPackages=new HashSet<FqName>();
-  for (  JetFile file : getJetFiles()) {
-    String packageName=file.getPackageName();
-    if (packageName != null) {
-      FqName packageFqName=new FqName(packageName);
-      if (!packageFqName.isRoot() && packageFqName.parent().equalsTo(fqName)) {
-        subPackages.add(packageFqName);
-      }
+  Collection<String> allPackagesInProject=JetAllPackagesIndex.getInstance().getAllKeys(project);
+  return ContainerUtil.mapNotNull(allPackagesInProject,new Function<String,FqName>(){
+    @Override public FqName fun(    String packageFqName){
+      Collection<JetFile> files=JetAllPackagesIndex.getInstance().get(packageFqName,project,searchScope);
+      if (files.isEmpty())       return null;
+      return new FqName(packageFqName);
     }
   }
-  return subPackages;
+);
 }
