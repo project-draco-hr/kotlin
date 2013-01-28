@@ -1,0 +1,19 @@
+{
+  if (expression == null) {
+    return JetTypeInfo.create(null,context.dataFlowInfo);
+  }
+  if (expression instanceof JetFunctionLiteralExpression && resolveFunctionArgumentBodies == SKIP_FUNCTION_ARGUMENTS) {
+    JetType type=getFunctionLiteralType((JetFunctionLiteralExpression)expression,context.scope,context.trace);
+    return JetTypeInfo.create(type,context.dataFlowInfo);
+  }
+  CallExpressionResolver callExpressionResolver=expressionTypingServices.getCallExpressionResolver();
+  if (expression instanceof JetCallExpression) {
+    JetTypeInfo typeInfo=callExpressionResolver.getCallExpressionTypeInfo((JetCallExpression)expression,ReceiverValue.NO_RECEIVER,null,context);
+    return recordExpressionType(expression,context,typeInfo);
+  }
+  if (expression instanceof JetQualifiedExpression) {
+    JetTypeInfo typeInfo=callExpressionResolver.getQualifiedExpressionTypeInfo((JetQualifiedExpression)expression,context);
+    return recordExpressionType(expression,context,typeInfo);
+  }
+  return expressionTypingServices.getTypeInfo(context.scope,expression,context.expectedType,context.dataFlowInfo,context.trace);
+}

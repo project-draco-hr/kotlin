@@ -11,7 +11,8 @@
       if (TypeUtils.dependsOnTypeParameters(expectedType,candidateCall.getCandidateDescriptor().getTypeParameters())) {
         expectedType=NO_EXPECTED_TYPE;
       }
-      JetTypeInfo typeInfo=argumentTypeResolver.getArgumentTypeInfo(expression,trace,context.scope,candidateCall.getDataFlowInfo(),expectedType,resolveFunctionArgumentBodies);
+      CallResolutionContext newContext=context.replaceDataFlowInfo(candidateCall.getDataFlowInfo()).replaceBindingTrace(trace).replaceExpectedType(expectedType);
+      JetTypeInfo typeInfo=argumentTypeResolver.getArgumentTypeInfo(expression,newContext,resolveFunctionArgumentBodies);
       JetType type=typeInfo.getType();
       candidateCall.addDataFlowInfo(typeInfo.getDataFlowInfo());
       if (type == null || (ErrorUtils.isErrorType(type) && type != PLACEHOLDER_FUNCTION_TYPE)) {

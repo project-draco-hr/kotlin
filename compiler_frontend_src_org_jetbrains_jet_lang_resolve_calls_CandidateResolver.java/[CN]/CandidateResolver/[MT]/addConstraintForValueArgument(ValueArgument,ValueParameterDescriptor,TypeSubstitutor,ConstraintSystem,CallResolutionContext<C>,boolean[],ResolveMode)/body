@@ -3,7 +3,8 @@
   JetExpression argumentExpression=valueArgument.getArgumentExpression();
   TemporaryBindingTrace traceForUnknown=TemporaryBindingTrace.create(context.trace,"transient trace to resolve argument",argumentExpression);
   JetType expectedType=substitutor.substitute(effectiveExpectedType,Variance.INVARIANT);
-  JetType type=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,traceForUnknown,context.scope,context.dataFlowInfo,expectedType != null ? expectedType : NO_EXPECTED_TYPE,resolveFunctionArgumentBodies).getType();
+  CallResolutionContext newContext=context.replaceBindingTrace(traceForUnknown).replaceExpectedType(expectedType != null ? expectedType : NO_EXPECTED_TYPE);
+  JetType type=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,newContext,resolveFunctionArgumentBodies).getType();
   constraintSystem.addSubtypeConstraint(type,effectiveExpectedType,ConstraintPosition.getValueParameterPosition(valueParameterDescriptor.getIndex()));
   BindingContextUtils.commitResolutionCacheData(traceForUnknown,context.trace);
   if (isErrorType != null) {
