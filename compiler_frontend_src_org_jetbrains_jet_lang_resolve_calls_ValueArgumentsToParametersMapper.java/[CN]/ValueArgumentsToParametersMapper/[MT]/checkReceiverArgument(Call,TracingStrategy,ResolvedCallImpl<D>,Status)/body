@@ -1,0 +1,20 @@
+{
+  DelegatingBindingTrace traceForCall=candidateCall.getTrace();
+  D candidate=candidateCall.getCandidateDescriptor();
+  ReceiverParameterDescriptor receiverParameter=candidate.getReceiverParameter();
+  ReceiverValue receiverArgument=candidateCall.getReceiverArgument();
+  if (receiverParameter != null && !receiverArgument.exists()) {
+    tracing.missingReceiver(traceForCall,receiverParameter);
+    status=ERROR;
+  }
+  if (receiverParameter == null && receiverArgument.exists()) {
+    tracing.noReceiverAllowed(traceForCall);
+    if (call.getCalleeExpression() instanceof JetSimpleNameExpression) {
+      status=STRONG_ERROR;
+    }
+ else {
+      status=ERROR;
+    }
+  }
+  return status;
+}

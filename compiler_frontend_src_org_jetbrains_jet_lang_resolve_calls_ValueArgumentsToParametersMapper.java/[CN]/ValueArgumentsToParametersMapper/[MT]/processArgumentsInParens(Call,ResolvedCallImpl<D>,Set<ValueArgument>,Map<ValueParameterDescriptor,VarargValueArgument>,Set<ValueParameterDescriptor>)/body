@@ -1,0 +1,74 @@
+{
+  DelegatingBindingTrace traceForCall=candidateCall.getTrace();
+  D candidate=candidateCall.getCandidateDescriptor();
+  List<ValueParameterDescriptor> valueParameters=candidate.getValueParameters();
+  Map<Name,ValueParameterDescriptor> parameterByName=Maps.newHashMap();
+  for (  ValueParameterDescriptor valueParameter : valueParameters) {
+    parameterByName.put(valueParameter.getName(),valueParameter);
+  }
+  List<? extends ValueArgument> valueArguments=call.getValueArguments();
+  Status status=OK;
+  boolean someNamed=false;
+  boolean somePositioned=false;
+  for (int i=0; i < valueArguments.size(); i++) {
+    ValueArgument valueArgument=valueArguments.get(i);
+    if (valueArgument.isNamed()) {
+      someNamed=true;
+      JetSimpleNameExpression nameReference=valueArgument.getArgumentName().getReferenceExpression();
+      ValueParameterDescriptor valueParameterDescriptor=parameterByName.get(nameReference.getReferencedNameAsName());
+      if (valueParameterDescriptor == null) {
+        traceForCall.report(NAMED_PARAMETER_NOT_FOUND.on(nameReference));
+        unmappedArguments.add(valueArgument);
+        status=WEAK_ERROR;
+      }
+ else {
+        traceForCall.record(REFERENCE_TARGET,nameReference,valueParameterDescriptor);
+        if (!usedParameters.add(valueParameterDescriptor)) {
+          traceForCall.report(ARGUMENT_PASSED_TWICE.on(nameReference));
+          unmappedArguments.add(valueArgument);
+          status=WEAK_ERROR;
+        }
+ else {
+          status=status.compose(put(candidateCall,valueParameterDescriptor,valueArgument,varargs));
+        }
+      }
+      if (somePositioned) {
+        traceForCall.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(nameReference));
+        status=WEAK_ERROR;
+      }
+    }
+ else {
+      somePositioned=true;
+      if (someNamed) {
+        traceForCall.report(MIXING_NAMED_AND_POSITIONED_ARGUMENTS.on(valueArgument.asElement()));
+        status=WEAK_ERROR;
+      }
+ else {
+        int parameterCount=valueParameters.size();
+        if (i < parameterCount) {
+          ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(i);
+          usedParameters.add(valueParameterDescriptor);
+          status=status.compose(put(candidateCall,valueParameterDescriptor,valueArgument,varargs));
+        }
+ else         if (!valueParameters.isEmpty()) {
+          ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(valueParameters.size() - 1);
+          if (valueParameterDescriptor.getVarargElementType() != null) {
+            status=status.compose(put(candidateCall,valueParameterDescriptor,valueArgument,varargs));
+            usedParameters.add(valueParameterDescriptor);
+          }
+ else {
+            traceForCall.report(TOO_MANY_ARGUMENTS.on(valueArgument.asElement(),candidate));
+            unmappedArguments.add(valueArgument);
+            status=WEAK_ERROR;
+          }
+        }
+ else {
+          traceForCall.report(TOO_MANY_ARGUMENTS.on(valueArgument.asElement(),candidate));
+          unmappedArguments.add(valueArgument);
+          status=ERROR;
+        }
+      }
+    }
+  }
+  return status;
+}

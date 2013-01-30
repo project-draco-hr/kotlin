@@ -1,0 +1,43 @@
+{
+  D candidate=candidateCall.getCandidateDescriptor();
+  DelegatingBindingTrace traceForCall=candidateCall.getTrace();
+  List<ValueParameterDescriptor> valueParameters=candidate.getValueParameters();
+  List<JetExpression> functionLiteralArguments=call.getFunctionLiteralArguments();
+  if (!functionLiteralArguments.isEmpty()) {
+    JetExpression possiblyLabeledFunctionLiteral=functionLiteralArguments.get(0);
+    if (valueParameters.isEmpty()) {
+      traceForCall.report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
+      status=ERROR;
+    }
+ else {
+      JetFunctionLiteralExpression functionLiteral;
+      if (possiblyLabeledFunctionLiteral instanceof JetLabelQualifiedExpression) {
+        JetLabelQualifiedExpression labeledFunctionLiteral=(JetLabelQualifiedExpression)possiblyLabeledFunctionLiteral;
+        functionLiteral=(JetFunctionLiteralExpression)labeledFunctionLiteral.getLabeledExpression();
+      }
+ else {
+        functionLiteral=(JetFunctionLiteralExpression)possiblyLabeledFunctionLiteral;
+      }
+      ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(valueParameters.size() - 1);
+      if (valueParameterDescriptor.getVarargElementType() != null) {
+        traceForCall.report(VARARG_OUTSIDE_PARENTHESES.on(possiblyLabeledFunctionLiteral));
+        status=ERROR;
+      }
+ else {
+        if (!usedParameters.add(valueParameterDescriptor)) {
+          traceForCall.report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
+          status=WEAK_ERROR;
+        }
+ else {
+          status=status.compose(put(candidateCall,valueParameterDescriptor,CallMaker.makeValueArgument(functionLiteral),varargs));
+        }
+      }
+    }
+    for (int i=1; i < functionLiteralArguments.size(); i++) {
+      JetExpression argument=functionLiteralArguments.get(i);
+      traceForCall.report(MANY_FUNCTION_LITERAL_ARGUMENTS.on(argument));
+      status=WEAK_ERROR;
+    }
+  }
+  return status;
+}
