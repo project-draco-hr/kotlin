@@ -1,0 +1,15 @@
+{
+  ExpressionTypingServices expressionTypingServices=new InjectorForTests(project).getExpressionTypingServices();
+  ExpressionTypingContext context=ExpressionTypingContext.newContext(expressionTypingServices,new BindingTraceContext(),classDescriptor.getDefaultType().getMemberScope(),DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE,false);
+  OverloadResolutionResults<FunctionDescriptor> functions=resolveFakeCall(context,ReceiverValue.NO_RECEIVER,Name.identifier(name),parameterTypes);
+  for (  ResolvedCall<? extends FunctionDescriptor> resolvedCall : functions.getResultingCalls()) {
+    List<ValueParameterDescriptor> unsubstitutedValueParameters=resolvedCall.getResultingDescriptor().getValueParameters();
+    for (int i=0, unsubstitutedValueParametersSize=unsubstitutedValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
+      ValueParameterDescriptor unsubstitutedValueParameter=unsubstitutedValueParameters.get(i);
+      if (unsubstitutedValueParameter.getType().equals(parameterTypes[i])) {
+        return resolvedCall.getResultingDescriptor();
+      }
+    }
+  }
+  throw new IllegalArgumentException("Not found: kotlin::" + classDescriptor.getName() + "."+ name+ "("+ Arrays.toString(parameterTypes)+ ")");
+}
