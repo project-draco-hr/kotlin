@@ -1,0 +1,18 @@
+{
+  if (expression == null) {
+    return null;
+  }
+  if (expression instanceof JetDotQualifiedExpression) {
+    JetDotQualifiedExpression dotQualifiedExpression=(JetDotQualifiedExpression)expression;
+    FqName parentFqn=getFQName(dotQualifiedExpression.getReceiverExpression());
+    Name child=getName(dotQualifiedExpression.getSelectorExpression());
+    return parentFqn != null && child != null ? parentFqn.child(child) : null;
+  }
+ else   if (expression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression simpleNameExpression=(JetSimpleNameExpression)expression;
+    return FqName.topLevel(simpleNameExpression.getReferencedNameAsName());
+  }
+ else {
+    throw new IllegalArgumentException("Can't construct fqn for: " + expression.getClass().toString());
+  }
+}

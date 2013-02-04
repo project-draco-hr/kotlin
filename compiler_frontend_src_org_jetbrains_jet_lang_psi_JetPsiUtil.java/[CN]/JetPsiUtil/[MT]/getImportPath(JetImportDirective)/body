@@ -1,11 +1,15 @@
 {
-  final JetExpression importedReference=importDirective.getImportedReference();
-  if (importedReference == null) {
+  if (PsiTreeUtil.hasErrorElements(importDirective)) {
     return null;
   }
-  if (PsiTreeUtil.hasErrorElements(importedReference)) {
+  FqName importFqn=getFQName(importDirective.getImportedReference());
+  if (importFqn == null) {
     return null;
   }
-  final String text=importedReference.getText();
-  return new ImportPath(text.replaceAll(" ","") + (importDirective.isAllUnder() ? ".*" : ""));
+  Name alias=null;
+  String aliasName=importDirective.getAliasName();
+  if (aliasName != null) {
+    alias=Name.identifier(aliasName);
+  }
+  return new ImportPath(importFqn,importDirective.isAllUnder(),alias);
 }

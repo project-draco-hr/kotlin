@@ -1,0 +1,19 @@
+{
+  if (importPath.fqnPart().firstSegmentIs(JavaDescriptorResolver.JAVA_ROOT)) {
+    FqName withoutJavaRoot=QualifiedNamesUtil.withoutFirstSegment(importPath.fqnPart());
+    importPath=new ImportPath(withoutJavaRoot,importPath.isAllUnder(),importPath.getAlias());
+  }
+  if (isImportedByDefault(importPath,JetPsiUtil.getFQName(file))) {
+    return false;
+  }
+  List<JetImportDirective> importDirectives=file.getImportDirectives();
+  if (!importDirectives.isEmpty()) {
+    for (    JetImportDirective directive : importDirectives) {
+      ImportPath existentImportPath=JetPsiUtil.getImportPath(directive);
+      if (existentImportPath != null && QualifiedNamesUtil.isImported(existentImportPath,importPath)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

@@ -1,0 +1,19 @@
+{
+  ImportResolveStatus status=importedScopes.get(directive);
+  if (status != null && (lookupMode == status.lookupMode || status.lookupMode == LookupMode.EVERYTHING)) {
+    return status.scope;
+  }
+  WritableScope directiveImportScope=new WritableScopeImpl(JetScope.EMPTY,packageDescriptor,RedeclarationHandler.DO_NOTHING,"Scope for import '" + directive.getText() + "' resolve in "+ toString());
+  directiveImportScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  Importer.StandardImporter importer=new Importer.StandardImporter(directiveImportScope);
+  directiveUnderResolve=directive;
+  try {
+    resolveSession.getInjector().getQualifiedExpressionResolver().processImportReference(directive,rootScope,packageDescriptor.getMemberScope(),importer,traceForImportResolve,resolveSession.getModuleConfiguration(),lookupMode);
+  }
+  finally {
+    directiveUnderResolve=null;
+    directiveImportScope.changeLockLevel(WritableScope.LockLevel.READING);
+    importedScopes.put(directive,new ImportResolveStatus(lookupMode,directiveImportScope));
+  }
+  return directiveImportScope;
+}
