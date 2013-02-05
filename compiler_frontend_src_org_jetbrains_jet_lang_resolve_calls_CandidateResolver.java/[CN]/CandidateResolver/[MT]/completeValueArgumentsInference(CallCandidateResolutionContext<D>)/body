@@ -1,0 +1,23 @@
+{
+  ResolvedCallImpl<D> resolvedCall=context.candidateCall;
+  ConstraintSystem constraintSystem=context.candidateCall.getConstraintSystem();
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
+    ValueParameterDescriptor parameterDescriptor=entry.getKey();
+    ResolvedValueArgument resolvedArgument=entry.getValue();
+    for (    ValueArgument argument : resolvedArgument.getArguments()) {
+      JetExpression expression=argument.getArgumentExpression();
+      if (expression == null)       continue;
+      JetType effectiveExpectedType=getEffectiveExpectedType(parameterDescriptor,argument);
+      JetType expectedType=constraintSystem != null ? constraintSystem.getCurrentSubstitutor().substitute(effectiveExpectedType,Variance.INVARIANT) : effectiveExpectedType;
+      CallCandidateResolutionContext<FunctionDescriptor> storedContextForArgument=resolvedCall.getDeferredComputationForArgument(argument);
+      if (storedContextForArgument == null)       continue;
+      CallCandidateResolutionContext<FunctionDescriptor> contextForArgument=storedContextForArgument.replaceResolveMode(ResolveMode.NORMAL).replaceBindingTrace(context.trace).replaceExpectedType(expectedType);
+      if (contextForArgument.candidateCall.hasUnknownTypeParameters()) {
+        completeTypeInferenceDependentOnExpectedTypeForCall(contextForArgument);
+      }
+ else {
+        completeValueArgumentsInference(contextForArgument);
+      }
+    }
+  }
+}

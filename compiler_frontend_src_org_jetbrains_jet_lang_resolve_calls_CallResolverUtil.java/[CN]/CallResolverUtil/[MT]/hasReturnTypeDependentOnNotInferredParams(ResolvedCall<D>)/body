@@ -1,0 +1,18 @@
+{
+  if (!(resolvedCall instanceof ResolvedCallImpl))   return false;
+  ResolvedCallImpl call=(ResolvedCallImpl)resolvedCall;
+  ConstraintSystem constraintSystem=call.getConstraintSystem();
+  if (constraintSystem == null)   return false;
+  CallableDescriptor candidateDescriptor=call.getCandidateDescriptor();
+  JetType returnType=candidateDescriptor.getReturnType();
+  if (returnType == null)   return false;
+  for (  TypeParameterDescriptor typeVariable : constraintSystem.getTypeVariables()) {
+    JetType inferredValueForTypeVariable=ConstraintsUtil.getValue(constraintSystem.getTypeConstraints(typeVariable));
+    if (inferredValueForTypeVariable == null) {
+      if (TypeUtils.dependsOnTypeParameters(returnType,Collections.singleton(typeVariable))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

@@ -1,21 +1,9 @@
 {
-  if (resultsWithIncompleteTypeInference.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE) {
-    return resultsWithIncompleteTypeInference;
+  if (results.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE)   return;
+  if (!results.isSingleResult() || !(results.getResultingCall() instanceof ResolvedCallImpl)) {
+    argumentTypeResolver.checkTypesWithNoCallee(context,RESOLVE_FUNCTION_ARGUMENTS);
+    return;
   }
-  Set<ResolvedCallWithTrace<D>> candidates=Sets.newLinkedHashSet((Collection<? extends ResolvedCallWithTrace<D>>)resultsWithIncompleteTypeInference.getResultingCalls());
-  ResolvedCallWithTrace<D> maximallySpecific=OverloadingConflictResolver.INSTANCE.findMaximallySpecific(candidates,false);
-  if (maximallySpecific != null && maximallySpecific instanceof ResolvedCallImpl) {
-    candidateResolver.completeTypeInferenceDependentOnFunctionLiteralsForCall(CallCandidateResolutionContext.createForCallBeingAnalyzed((ResolvedCallImpl<D>)maximallySpecific,context,tracing));
-    for (    ResolvedCallWithTrace<D> callWithUnknownTypeParameters : candidates) {
-      if (callWithUnknownTypeParameters != maximallySpecific) {
-        ((ResolvedCallImpl<D>)callWithUnknownTypeParameters).addStatus(ResolutionStatus.OTHER_ERROR);
-      }
-    }
-    return OverloadResolutionResultsImpl.incompleteTypeInference(Collections.singleton(maximallySpecific));
-  }
-  for (  ResolvedCallWithTrace<D> callWithUnknownTypeParameters : candidates) {
-    ResolvedCallImpl<D> resolvedCall=(ResolvedCallImpl<D>)callWithUnknownTypeParameters;
-    resolvedCall.addStatus(ResolutionStatus.INCOMPLETE_TYPE_INFERENCE);
-  }
-  return OverloadResolutionResultsImpl.incompleteTypeInference(candidates);
+  CallCandidateResolutionContext<D> candidateContext=CallCandidateResolutionContext.createForCallBeingAnalyzed((ResolvedCallImpl<D>)results.getResultingCall(),context,tracing);
+  candidateResolver.completeTypeInferenceDependentOnFunctionLiteralsForCall(candidateContext);
 }

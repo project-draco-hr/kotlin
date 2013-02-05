@@ -1,22 +1,23 @@
 {
-  if (resultsWithIncompleteTypeInference.getResultCode() != OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE) {
-    return resultsWithIncompleteTypeInference;
-  }
-  Set<ResolvedCallWithTrace<D>> resultingCalls=null;
-  if (resultsWithIncompleteTypeInference.isSingleResult()) {
-    ResolvedCallWithTrace<D> resolvedCall=(ResolvedCallWithTrace<D>)resultsWithIncompleteTypeInference.getResultingCall();
-    if (resolvedCall.hasUnknownTypeParameters() && resolvedCall instanceof ResolvedCallImpl) {
-      ResolvedCallImpl<D> copy=CallResolverUtil.copy((ResolvedCallImpl<D>)resolvedCall,context);
-      candidateResolver.completeTypeInferenceDependentOnExpectedTypeForCall(CallCandidateResolutionContext.createForCallBeingAnalyzed(copy,context,tracing));
-      resultingCalls=Collections.<ResolvedCallWithTrace<D>>singleton(copy);
+  if (results.isSingleResult()) {
+    ResolvedCall<D> call=results.getResultingCall();
+    if (call instanceof ResolvedCallImpl) {
+      argumentTypeResolver.checkUnmappedArgumentTypes(context,((ResolvedCallImpl<D>)call).getUnmappedArguments());
     }
   }
-  if (resultingCalls == null) {
-    resultingCalls=(Set<ResolvedCallWithTrace<D>>)resultsWithIncompleteTypeInference.getResultingCalls();
+  if (!results.isSingleResult())   return results;
+  ResolvedCallWithTrace<D> resolvedCall=(ResolvedCallWithTrace<D>)results.getResultingCall();
+  if (!(resolvedCall instanceof ResolvedCallImpl))   return results;
+  if (!resolvedCall.hasUnknownTypeParameters()) {
+    CallCandidateResolutionContext<D> callCandidateResolutionContext=CallCandidateResolutionContext.createForCallBeingAnalyzed((ResolvedCallImpl<D>)resolvedCall,context,tracing);
+    candidateResolver.completeValueArgumentsInference(callCandidateResolutionContext);
+    return results;
   }
-  OverloadResolutionResultsImpl<D> results=ResolutionResultsHandler.INSTANCE.computeResultAndReportErrors(context.trace,tracing,resultingCalls);
-  if (!results.isSingleResult()) {
-    argumentTypeResolver.checkTypesWithNoCallee(context,RESOLVE_FUNCTION_ARGUMENTS);
+  ResolvedCallImpl<D> copy=CallResolverUtil.copy((ResolvedCallImpl<D>)resolvedCall,context);
+  CallCandidateResolutionContext<D> callCandidateResolutionContext=CallCandidateResolutionContext.createForCallBeingAnalyzed(copy,context,tracing);
+  candidateResolver.completeTypeInferenceDependentOnExpectedTypeForCall(callCandidateResolutionContext);
+  if (copy.getStatus().isSuccess()) {
+    return OverloadResolutionResultsImpl.success(copy);
   }
-  return results;
+  return OverloadResolutionResultsImpl.incompleteTypeInference(copy);
 }
