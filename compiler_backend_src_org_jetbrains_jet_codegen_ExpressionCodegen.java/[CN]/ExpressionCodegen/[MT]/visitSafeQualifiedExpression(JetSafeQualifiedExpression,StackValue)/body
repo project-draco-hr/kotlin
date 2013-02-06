@@ -1,2 +1,28 @@
 {
+  JetExpression expr=expression.getReceiverExpression();
+  Type receiverType=expressionType(expr);
+  gen(expr,receiverType);
+  if (isPrimitive(receiverType)) {
+    StackValue propValue=genQualified(StackValue.onStack(receiverType),expression.getSelectorExpression());
+    Type type=boxType(propValue.type);
+    propValue.put(type,v);
+    return StackValue.onStack(type);
+  }
+ else {
+    Label ifnull=new Label();
+    Label end=new Label();
+    v.dup();
+    v.ifnull(ifnull);
+    StackValue propValue=genQualified(StackValue.onStack(receiverType),expression.getSelectorExpression());
+    Type type=boxType(propValue.type);
+    propValue.put(type,v);
+    v.goTo(end);
+    v.mark(ifnull);
+    v.pop();
+    if (!type.equals(Type.VOID_TYPE)) {
+      v.aconst(null);
+    }
+    v.mark(end);
+    return StackValue.onStack(type);
+  }
 }
