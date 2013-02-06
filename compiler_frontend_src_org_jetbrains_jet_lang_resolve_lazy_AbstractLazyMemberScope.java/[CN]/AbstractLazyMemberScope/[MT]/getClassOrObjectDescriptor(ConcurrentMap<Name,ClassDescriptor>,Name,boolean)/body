@@ -8,9 +8,10 @@
   for (  JetClassOrObject classOrObjectDeclaration : classOrObjectDeclarations) {
     if (object != declaresObjectOrEnumConstant(classOrObjectDeclaration))     continue;
     ClassDescriptor classDescriptor=new LazyClassDescriptor(resolveSession,thisDescriptor,name,JetClassInfoUtil.createClassLikeInfo(classOrObjectDeclaration));
-    cache.put(name,classDescriptor);
+    ClassDescriptor oldValue=cache.putIfAbsent(name,classDescriptor);
+    if (oldValue != null)     return oldValue;
     if (!object) {
-      allDescriptors.add(classDescriptor);
+      registerDescriptor(classDescriptor);
     }
     result=classDescriptor;
   }
