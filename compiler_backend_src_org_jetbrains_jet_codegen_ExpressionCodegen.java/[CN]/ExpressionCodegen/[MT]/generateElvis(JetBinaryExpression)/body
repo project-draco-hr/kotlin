@@ -1,2 +1,19 @@
 {
+  Type exprType=expressionType(expression);
+  Type leftType=expressionType(expression.getLeft());
+  gen(expression.getLeft(),leftType);
+  if (isPrimitive(leftType)) {
+    return StackValue.onStack(leftType);
+  }
+  v.dup();
+  Label ifNull=new Label();
+  v.ifnull(ifNull);
+  StackValue.onStack(leftType).put(exprType,v);
+  Label end=new Label();
+  v.goTo(end);
+  v.mark(ifNull);
+  v.pop();
+  gen(expression.getRight(),exprType);
+  v.mark(end);
+  return StackValue.onStack(exprType);
 }
