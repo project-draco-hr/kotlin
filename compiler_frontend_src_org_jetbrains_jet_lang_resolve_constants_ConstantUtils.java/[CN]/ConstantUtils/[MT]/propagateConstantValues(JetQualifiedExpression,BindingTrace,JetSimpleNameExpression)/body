@@ -1,0 +1,30 @@
+{
+  JetExpression receiverExpression=expression.getReceiverExpression();
+  CompileTimeConstant<?> receiverValue=trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,receiverExpression);
+  CompileTimeConstant<?> wholeExpressionValue=trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,expression);
+  DeclarationDescriptor declarationDescriptor=trace.getBindingContext().get(BindingContext.REFERENCE_TARGET,selectorExpression);
+  if (wholeExpressionValue == null && receiverValue != null && !(receiverValue instanceof ErrorValue) && receiverValue.getValue() instanceof Number && KotlinBuiltIns.getInstance().getNumber() == declarationDescriptor) {
+    Number value=(Number)receiverValue.getValue();
+    Name referencedName=selectorExpression.getReferencedNameAsName();
+    if (OperatorConventions.NUMBER_CONVERSIONS.contains(referencedName)) {
+      if (DOUBLE.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new DoubleValue(value.doubleValue()));
+      }
+ else       if (FLOAT.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new FloatValue(value.floatValue()));
+      }
+ else       if (LONG.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new LongValue(value.longValue()));
+      }
+ else       if (SHORT.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ShortValue(value.shortValue()));
+      }
+ else       if (BYTE.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new ByteValue(value.byteValue()));
+      }
+ else       if (INT.equals(referencedName)) {
+        trace.record(BindingContext.COMPILE_TIME_VALUE,expression,new IntValue(value.intValue()));
+      }
+    }
+  }
+}
