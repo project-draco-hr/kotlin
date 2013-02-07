@@ -1,0 +1,27 @@
+{
+  if (withExtraFile) {
+    configureByFiles(null,beforeFileName,beforeFileName.replace(".Main.",".Data.Sample."));
+  }
+ else {
+    configureByFiles(null,beforeFileName);
+  }
+  CommandProcessor.getInstance().executeCommand(getProject(),new Runnable(){
+    @Override public void run(){
+      try {
+        final Pair<String,Boolean> pair=LightQuickFixTestCase.parseActionHint(getFile(),FileUtil.loadFile(new File(getTestDataPath() + beforeFileName)));
+        final String text=pair.getFirst();
+        final boolean actionShouldBeAvailable=pair.getSecond();
+        QuickFixActionsUtils.checkForUnexpectedErrors((JetFile)getFile());
+        doAction(text,actionShouldBeAvailable,beforeFileName);
+      }
+ catch (      ComparisonFailure e) {
+        throw e;
+      }
+catch (      Throwable e) {
+        e.printStackTrace();
+        fail(getTestName(true));
+      }
+    }
+  }
+,"","");
+}
