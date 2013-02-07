@@ -1,23 +1,24 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
-    return getCallExpressionTypeInfoWithoutFinalTypeCheck((JetCallExpression)selectorExpression,receiver,callOperationNode,context);
+    return getCallExpressionExtendedTypeInfoWithoutFinalTypeCheck((JetCallExpression)selectorExpression,receiver,callOperationNode,context);
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
-    return getSimpleNameExpressionTypeInfo((JetSimpleNameExpression)selectorExpression,receiver,callOperationNode,context);
+    return TypeInfoForCall.create(getSimpleNameExpressionTypeInfo((JetSimpleNameExpression)selectorExpression,receiver,callOperationNode,context));
   }
  else   if (selectorExpression instanceof JetQualifiedExpression) {
     JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)selectorExpression;
     JetExpression newReceiverExpression=qualifiedExpression.getReceiverExpression();
-    JetTypeInfo newReceiverTypeInfo=getSelectorReturnTypeInfo(receiver,callOperationNode,newReceiverExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
+    TypeInfoForCall newReceiverTypeInfo=getSelectorReturnTypeInfo(receiver,callOperationNode,newReceiverExpression,context.replaceExpectedType(NO_EXPECTED_TYPE));
     JetType newReceiverType=newReceiverTypeInfo.getType();
     DataFlowInfo newReceiverDataFlowInfo=newReceiverTypeInfo.getDataFlowInfo();
     JetExpression newSelectorExpression=qualifiedExpression.getSelectorExpression();
     if (newReceiverType != null && newSelectorExpression != null) {
-      return getSelectorReturnTypeInfo(new ExpressionReceiver(newReceiverExpression,newReceiverType),qualifiedExpression.getOperationTokenNode(),newSelectorExpression,context.replaceDataFlowInfo(newReceiverDataFlowInfo));
+      ExpressionReceiver expressionReceiver=new ExpressionReceiver(newReceiverExpression,newReceiverType);
+      return getSelectorReturnTypeInfo(expressionReceiver,qualifiedExpression.getOperationTokenNode(),newSelectorExpression,context.replaceDataFlowInfo(newReceiverDataFlowInfo));
     }
   }
  else {
     context.trace.report(ILLEGAL_SELECTOR.on(selectorExpression,selectorExpression.getText()));
   }
-  return JetTypeInfo.create(null,context.dataFlowInfo);
+  return TypeInfoForCall.create(null,context.dataFlowInfo);
 }
