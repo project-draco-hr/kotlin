@@ -6,6 +6,10 @@
     JetType type=getFunctionLiteralType((JetFunctionLiteralExpression)expression,context.scope,context.trace);
     return TypeInfoForCall.create(type,context.dataFlowInfo);
   }
+  TypeInfoForCall cachedTypeInfo=getRecordedTypeInfoForCall(expression,context);
+  if (cachedTypeInfo != null) {
+    return cachedTypeInfo;
+  }
   CallExpressionResolver callExpressionResolver=expressionTypingServices.getCallExpressionResolver();
   TypeInfoForCall result=null;
   if (expression instanceof JetCallExpression) {
@@ -16,6 +20,7 @@
   }
   if (result != null) {
     recordExpressionType(expression,context,result.getTypeInfo());
+    recordContextForExpressionCall(expression,context.trace,result.getCallCandidateResolutionContext());
     return result;
   }
   return TypeInfoForCall.create(expressionTypingServices.getTypeInfo(context.scope,expression,context.expectedType,context.dataFlowInfo,context.trace));
