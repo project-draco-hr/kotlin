@@ -8,8 +8,9 @@
       }
     }
     values.addAll(typeConstraints.getExactBounds());
-    if (!typeConstraints.getLowerBounds().isEmpty()) {
-      JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(typeConstraints.getLowerBounds());
+    Collection<JetType> lowerBounds=filterNotContainingErrorType(typeConstraints.getLowerBounds());
+    if (!lowerBounds.isEmpty()) {
+      JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(lowerBounds);
       for (      JetType value : values) {
         if (!JetTypeChecker.INSTANCE.isSubtypeOf(superTypeOfLowerBounds,value)) {
           values.add(superTypeOfLowerBounds);
@@ -20,8 +21,9 @@
         values.add(superTypeOfLowerBounds);
       }
     }
-    if (!typeConstraints.getUpperBounds().isEmpty()) {
-      JetType subTypeOfUpperBounds=typeConstraints.getUpperBounds().iterator().next();
+    Collection<JetType> upperBounds=filterNotContainingErrorType(typeConstraints.getUpperBounds());
+    if (!upperBounds.isEmpty()) {
+      JetType subTypeOfUpperBounds=upperBounds.iterator().next();
       for (      JetType value : values) {
         if (!JetTypeChecker.INSTANCE.isSubtypeOf(value,subTypeOfUpperBounds)) {
           values.add(subTypeOfUpperBounds);
