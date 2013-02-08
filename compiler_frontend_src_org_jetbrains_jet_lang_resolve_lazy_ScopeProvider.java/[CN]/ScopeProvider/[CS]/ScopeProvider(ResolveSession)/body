@@ -1,3 +1,15 @@
 {
   this.resolveSession=resolveSession;
+  this.fileScopes=resolveSession.getStorageManager().createMemoizedFunction(new Function<JetFile,JetScope>(){
+    @Override public JetScope fun(    @NotNull JetFile file){
+      return createFileScope(file);
+    }
+  }
+,WEAK);
+  this.defaultImportsScope=resolveSession.getStorageManager().createLazyValue(new Computable<JetScope>(){
+    @Override public JetScope compute(){
+      return createScopeWithDefaultImports();
+    }
+  }
+);
 }
