@@ -1,8 +1,10 @@
 {
   Collection<JetClassOrObject> classOrObjectDeclarations=declarationProvider.getClassOrObjectDeclarations(name);
-  for (  JetClassOrObject classOrObjectDeclaration : classOrObjectDeclarations) {
-    if (object != declaresObjectOrEnumConstant(classOrObjectDeclaration))     continue;
-    return new LazyClassDescriptor(resolveSession,thisDescriptor,name,JetClassInfoUtil.createClassLikeInfo(classOrObjectDeclaration));
+  return Lists.newArrayList(ContainerUtil.mapNotNull(classOrObjectDeclarations,new Function<JetClassOrObject,ClassDescriptor>(){
+    @Override public ClassDescriptor fun(    JetClassOrObject classOrObject){
+      if (object != declaresObjectOrEnumConstant(classOrObject))       return null;
+      return new LazyClassDescriptor(resolveSession,thisDescriptor,name,JetClassInfoUtil.createClassLikeInfo(classOrObject));
+    }
   }
-  return null;
+));
 }
