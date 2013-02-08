@@ -22,4 +22,41 @@
   }
   this.visibility=resolveVisibilityFromModifiers(modifierList,getDefaultClassVisibility(this));
   this.isInner=isInnerClass(modifierList);
+  StorageManager storageManager=resolveSession.getStorageManager();
+  this.thisAsReceiverParameter=storageManager.createLazyValue(new Computable<ReceiverParameterDescriptor>(){
+    @Override public ReceiverParameterDescriptor compute(){
+      return DescriptorResolver.createLazyReceiverParameterDescriptor(LazyClassDescriptor.this);
+    }
+  }
+);
+  this.annotations=storageManager.createLazyValue(new Computable<List<AnnotationDescriptor>>(){
+    @Override public List<AnnotationDescriptor> compute(){
+      return resolveAnnotations();
+    }
+  }
+);
+  this.classObjectDescriptor=storageManager.createLazyValue(new Computable<Optional<ClassDescriptor>>(){
+    @Override public Optional<ClassDescriptor> compute(){
+      return Optional.fromNullable(computeClassObjectDescriptor());
+    }
+  }
+);
+  this.scopeForClassHeaderResolution=storageManager.createLazyValue(new Computable<JetScope>(){
+    @Override public JetScope compute(){
+      return computeScopeForClassHeaderResolution();
+    }
+  }
+);
+  this.scopeForMemberDeclarationResolution=storageManager.createLazyValue(new Computable<JetScope>(){
+    @Override public JetScope compute(){
+      return computeScopeForMemberDeclarationResolution();
+    }
+  }
+);
+  this.scopeForPropertyInitializerResolution=storageManager.createLazyValue(new Computable<JetScope>(){
+    @Override public JetScope compute(){
+      return computeScopeForPropertyInitializerResolution();
+    }
+  }
+);
 }
