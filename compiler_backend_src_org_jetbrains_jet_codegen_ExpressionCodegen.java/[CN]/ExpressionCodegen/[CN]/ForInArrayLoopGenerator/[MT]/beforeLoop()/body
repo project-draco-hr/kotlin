@@ -1,6 +1,12 @@
 {
   super.beforeLoop();
   indexVar=myFrameMap.enterTemp(Type.INT_TYPE);
+  runAfterLoop(new Runnable(){
+    @Override public void run(){
+      myFrameMap.leaveTemp(Type.INT_TYPE);
+    }
+  }
+);
   JetExpression loopRange=forExpression.getLoopRange();
   StackValue value=gen(loopRange);
   Type asmLoopRangeType=asmType(loopRangeType);
@@ -9,12 +15,12 @@
   }
  else {
     arrayVar=myFrameMap.enterTemp(OBJECT_TYPE);
-    afterLoopAction=new Runnable(){
+    runAfterLoop(new Runnable(){
       @Override public void run(){
         myFrameMap.leaveTemp(OBJECT_TYPE);
       }
     }
-;
+);
     value.put(asmLoopRangeType,v);
     v.store(arrayVar,OBJECT_TYPE);
   }
