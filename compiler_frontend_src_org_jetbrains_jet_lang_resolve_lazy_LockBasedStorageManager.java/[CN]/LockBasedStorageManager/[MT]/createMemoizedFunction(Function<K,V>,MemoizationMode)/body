@@ -1,0 +1,22 @@
+{
+  return new Function<K,V>(){
+    private final ConcurrentMap<K,LazyValue<V>> cache;
+{
+      cache=(mode == WEAK) ? new ConcurrentWeakValueHashMap<K,LazyValue<V>>() : new ConcurrentHashMap<K,LazyValue<V>>();
+    }
+    @Override public V fun(    @NotNull final K input){
+      LazyValue<V> lazyValue=cache.get(input);
+      if (lazyValue != null)       return lazyValue.get();
+      lazyValue=createLazyValue(new Computable<V>(){
+        @Override public V compute(){
+          return compute.fun(input);
+        }
+      }
+);
+      LazyValue<V> oldValue=cache.putIfAbsent(input,lazyValue);
+      if (oldValue != null)       return oldValue.get();
+      return lazyValue.get();
+    }
+  }
+;
+}
