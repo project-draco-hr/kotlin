@@ -3,9 +3,29 @@
   this.declarationProvider=declarationProvider;
   this.thisDescriptor=thisDescriptor;
   StorageManager storageManager=resolveSession.getStorageManager();
-  this.classDescriptors=storageManager.createConcurrentMap();
-  this.objectDescriptors=storageManager.createConcurrentMap();
-  this.functionDescriptors=storageManager.createConcurrentMap();
-  this.propertyDescriptors=storageManager.createConcurrentMap();
+  this.classDescriptors=storageManager.createMemoizedFunctionWithNullableValues(new Function<Name,ClassDescriptor>(){
+    @Override public ClassDescriptor fun(    Name name){
+      return resolveClassOrObjectDescriptor(name,false);
+    }
+  }
+,STRONG);
+  this.objectDescriptors=storageManager.createMemoizedFunctionWithNullableValues(new Function<Name,ClassDescriptor>(){
+    @Override public ClassDescriptor fun(    Name name){
+      return resolveClassOrObjectDescriptor(name,true);
+    }
+  }
+,STRONG);
+  this.functionDescriptors=storageManager.createMemoizedFunction(new Function<Name,Set<FunctionDescriptor>>(){
+    @Override public Set<FunctionDescriptor> fun(    Name name){
+      return doGetFunctions(name);
+    }
+  }
+,STRONG);
+  this.propertyDescriptors=storageManager.createMemoizedFunction(new Function<Name,Set<VariableDescriptor>>(){
+    @Override public Set<VariableDescriptor> fun(    Name name){
+      return doGetProperties(name);
+    }
+  }
+,STRONG);
   this.allDescriptors=storageManager.createConcurrentCollection();
 }

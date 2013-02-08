@@ -1,0 +1,22 @@
+{
+  Set<VariableDescriptor> result=Sets.newLinkedHashSet();
+  Collection<JetProperty> declarations=declarationProvider.getPropertyDeclarations(name);
+  for (  JetProperty propertyDeclaration : declarations) {
+    JetScope resolutionScope=getScopeForMemberDeclarationResolution(propertyDeclaration);
+    result.add(resolveSession.getInjector().getDescriptorResolver().resolvePropertyDescriptor(thisDescriptor,resolutionScope,propertyDeclaration,resolveSession.getTrace()));
+  }
+  Collection<JetClassOrObject> classOrObjectDeclarations=declarationProvider.getClassOrObjectDeclarations(name);
+  for (  JetClassOrObject classOrObjectDeclaration : classOrObjectDeclarations) {
+    if (declaresObjectOrEnumConstant(classOrObjectDeclaration)) {
+      ClassDescriptor classifier=getObjectDescriptor(name);
+      if (classifier == null) {
+        throw new IllegalStateException("Object declaration " + name + " found in the DeclarationProvider "+ declarationProvider+ " but not in the scope "+ this);
+      }
+      VariableDescriptor propertyDescriptor=resolveSession.getInjector().getDescriptorResolver().resolveObjectDeclaration(thisDescriptor,classOrObjectDeclaration,classifier,resolveSession.getTrace());
+      result.add(propertyDescriptor);
+    }
+  }
+  getNonDeclaredProperties(name,result);
+  registerDescriptors(result);
+  return result;
+}
