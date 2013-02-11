@@ -1,3 +1,19 @@
 {
-  return createMemoizedFunction(compute,modeForValues,true);
+  return new Function<K,V>(){
+    private final ConcurrentMap<K,LazyValue<V>> cache=createConcurrentMap(modeForValues);
+    @Override public V fun(    @NotNull final K input){
+      LazyValue<V> lazyValue=cache.get(input);
+      if (lazyValue != null)       return lazyValue.get();
+      lazyValue=createNullableLazyValue(new Computable<V>(){
+        @Override public V compute(){
+          return compute.fun(input);
+        }
+      }
+);
+      LazyValue<V> oldValue=cache.putIfAbsent(input,lazyValue);
+      if (oldValue != null)       return oldValue.get();
+      return lazyValue.get();
+    }
+  }
+;
 }
