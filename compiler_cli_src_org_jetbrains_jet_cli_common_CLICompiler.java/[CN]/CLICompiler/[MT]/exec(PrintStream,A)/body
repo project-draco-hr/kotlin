@@ -3,18 +3,15 @@
     usage(errStream);
     return OK;
   }
-  System.setProperty("java.awt.headless","true");
-  final MessageRenderer messageRenderer=getMessageRenderer(arguments);
+  MessageRenderer messageRenderer=getMessageRenderer(arguments);
   errStream.print(messageRenderer.renderPreamble());
   printVersionIfNeeded(errStream,arguments,messageRenderer);
   PrintingMessageCollector messageCollector=new PrintingMessageCollector(errStream,messageRenderer,arguments.isVerbose());
-  Disposable rootDisposable=CompileEnvironmentUtil.createMockDisposable();
   try {
-    return doExecute(arguments,messageCollector,rootDisposable);
+    return exec(messageCollector,arguments);
   }
   finally {
     messageCollector.printToErrStream();
     errStream.print(messageRenderer.renderConclusion());
-    Disposer.dispose(rootDisposable);
   }
 }
