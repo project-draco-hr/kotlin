@@ -3,7 +3,7 @@
     private final ConcurrentMap<K,LazyValue<V>> cache=createConcurrentMap(valuesReferenceKind);
     @Override public V fun(    @NotNull final K input){
       LazyValue<V> lazyValue=cache.get(input);
-      if (lazyValue != null)       return lazyValue.get();
+      if (lazyValue != null)       return lazyValue.compute();
       lazyValue=createNullableLazyValue(new Computable<V>(){
         @Override public V compute(){
           return compute.fun(input);
@@ -11,8 +11,8 @@
       }
 );
       LazyValue<V> oldValue=cache.putIfAbsent(input,lazyValue);
-      if (oldValue != null)       return oldValue.get();
-      return lazyValue.get();
+      if (oldValue != null)       return oldValue.compute();
+      return lazyValue.compute();
     }
   }
 ;
