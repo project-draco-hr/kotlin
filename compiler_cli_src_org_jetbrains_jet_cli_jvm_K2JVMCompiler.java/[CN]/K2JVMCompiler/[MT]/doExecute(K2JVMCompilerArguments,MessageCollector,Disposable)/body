@@ -2,8 +2,14 @@
   KotlinPaths paths=arguments.kotlinHome != null ? new KotlinPathsFromHomeDir(new File(arguments.kotlinHome)) : PathUtil.getKotlinPathsForCompiler();
   messageCollector.report(CompilerMessageSeverity.LOGGING,"Using Kotlin home directory " + paths.getHomePath(),CompilerMessageLocation.NO_LOCATION);
   CompilerConfiguration configuration=new CompilerConfiguration();
-  configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(paths,arguments));
-  configuration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,getAnnotationsPath(paths,arguments));
+  try {
+    configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(paths,arguments));
+    configuration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,getAnnotationsPath(paths,arguments));
+  }
+ catch (  Throwable t) {
+    messageCollector.report(CompilerMessageSeverity.EXCEPTION,MessageRenderer.PLAIN.renderException(t),CompilerMessageLocation.NO_LOCATION);
+    return INTERNAL_ERROR;
+  }
   final List<String> argumentsSourceDirs=arguments.getSourceDirs();
   if (!arguments.script && arguments.module == null && arguments.src == null && arguments.freeArgs.isEmpty() && (argumentsSourceDirs == null || argumentsSourceDirs.size() == 0)) {
     ReplFromTerminal.run(rootDisposable,configuration);
