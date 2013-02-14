@@ -1,0 +1,21 @@
+{
+  if (!super.isAvailable(project,editor,file)) {
+    return false;
+  }
+  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject(project).getBindingContext();
+  AnnotationDescriptor annotationDescriptor=context.get(BindingContext.ANNOTATION,annotationEntry);
+  if (annotationDescriptor == null) {
+    return false;
+  }
+  annotationType=annotationDescriptor.getType();
+  DeclarationDescriptor declarationDescriptor=annotationType.getConstructor().getDeclarationDescriptor();
+  if (declarationDescriptor == null) {
+    return false;
+  }
+  PsiElement declaration=BindingContextUtils.descriptorToDeclaration(context,declarationDescriptor);
+  if (declaration instanceof JetClass) {
+    annotationClass=(JetClass)declaration;
+    return annotationClass.isWritable();
+  }
+  return false;
+}
