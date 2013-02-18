@@ -2,5 +2,13 @@
   if (elements.length != 1 || !(elements[0] instanceof JetExpression)) {
     return false;
   }
-  return isApplicable((JetExpression)elements[0]);
+  JetExpression expression=(JetExpression)elements[0];
+  if (expression instanceof JetCallExpression && expression.getParent() instanceof JetQualifiedExpression) {
+    return false;
+  }
+  JetType type=KotlinSurrounderUtils.getExpressionType(expression);
+  if (type == null || type.equals(KotlinBuiltIns.getInstance().getUnitType())) {
+    return false;
+  }
+  return isApplicable(expression);
 }
