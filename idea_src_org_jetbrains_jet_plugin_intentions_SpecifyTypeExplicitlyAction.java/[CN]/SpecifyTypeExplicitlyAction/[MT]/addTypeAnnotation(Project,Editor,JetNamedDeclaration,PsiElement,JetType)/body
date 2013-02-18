@@ -1,0 +1,33 @@
+{
+  TypeConstructor constructor=exprType.getConstructor();
+  boolean isAnonymous=DescriptorUtils.isAnonymous(constructor.getDeclarationDescriptor());
+  Set<JetType> allSupertypes=TypeUtils.getAllSupertypes(exprType);
+  List<JetType> types=isAnonymous ? new ArrayList<JetType>() : Lists.newArrayList(exprType);
+  types.addAll(allSupertypes);
+  Expression expression=new JetTypeLookupExpression<JetType>(types,types.iterator().next(),JetBundle.message("specify.type.explicitly.add.action.name")){
+    @Override protected String getLookupString(    JetType element){
+      return DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(element);
+    }
+    @Override protected String getResult(    JetType element){
+      return DescriptorRenderer.TEXT.renderType(element);
+    }
+  }
+;
+  JetTypeReference typeReference=JetPsiFactory.createType(project,"Any");
+  namedDeclaration.addAfter(typeReference,anchor);
+  Pair<PsiElement,PsiElement> colon=JetPsiFactory.createColonAndWhiteSpaces(project);
+  namedDeclaration.addRangeAfter(colon.getFirst(),colon.getSecond(),anchor);
+  PsiDocumentManager.getInstance(project).commitAllDocuments();
+  PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+  JetTypeReference newTypeRef=getTypeRef(namedDeclaration);
+  TemplateBuilderImpl builder=new TemplateBuilderImpl(newTypeRef);
+  builder.replaceElement(newTypeRef,expression);
+  editor.getCaretModel().moveToOffset(newTypeRef.getNode().getStartOffset());
+  TemplateManagerImpl manager=new TemplateManagerImpl(project);
+  manager.startTemplate(editor,builder.buildInlineTemplate(),new TemplateEditingAdapter(){
+    @Override public void templateFinished(    Template template,    boolean brokenOff){
+      ReferenceToClassesShortening.compactReferenceToClasses(Collections.singletonList(namedDeclaration));
+    }
+  }
+);
+}
