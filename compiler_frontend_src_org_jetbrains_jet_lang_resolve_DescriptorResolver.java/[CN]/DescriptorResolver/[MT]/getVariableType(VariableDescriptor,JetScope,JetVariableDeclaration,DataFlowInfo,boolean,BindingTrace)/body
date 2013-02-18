@@ -9,17 +9,17 @@
       return ErrorUtils.createErrorType("No type, no body");
     }
  else {
-      RecursionIntolerantLazyValue<JetType> lazyValue=new RecursionIntolerantLazyValueWithDefault<JetType>(ErrorUtils.createErrorType("Recursive dependency")){
-        @Override protected JetType compute(){
-          return expressionTypingServices.safeGetType(scope,initializer,TypeUtils.NO_EXPECTED_TYPE,dataFlowInfo,trace);
-        }
-      }
-;
       if (notLocal) {
-        return DeferredType.create(trace,lazyValue);
+        return DeferredType.create(trace,new RecursionIntolerantLazyValueWithDefault<JetType>(ErrorUtils.createErrorType("Recursive dependency")){
+          @Override protected JetType compute(){
+            JetType type=resolveInitializerType(scope,initializer,dataFlowInfo,trace);
+            return transformAnonymousTypeIfNeeded(variableDescriptor,variable,type,trace);
+          }
+        }
+);
       }
  else {
-        return lazyValue.get();
+        return resolveInitializerType(scope,initializer,dataFlowInfo,trace);
       }
     }
   }
