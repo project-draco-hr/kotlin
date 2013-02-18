@@ -1,0 +1,19 @@
+{
+  if (superReturnType == null)   return false;
+  PsiType substitutedSuperReturnType;
+  final boolean isJdk15=PsiUtil.isLanguageLevel5OrHigher(method);
+  if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) {
+    PsiSubstitutor unifyingSubstitutor=MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,superMethodSignature);
+    substitutedSuperReturnType=unifyingSubstitutor == null ? superReturnType : unifyingSubstitutor.substitute(superReturnType);
+  }
+ else {
+    substitutedSuperReturnType=TypeConversionUtil.erasure(superMethodSignature.getSubstitutor().substitute(superReturnType));
+  }
+  if (returnType.equals(substitutedSuperReturnType))   return true;
+  if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
+    if (isJdk15 && TypeConversionUtil.isAssignable(substitutedSuperReturnType,returnType)) {
+      return true;
+    }
+  }
+  return false;
+}

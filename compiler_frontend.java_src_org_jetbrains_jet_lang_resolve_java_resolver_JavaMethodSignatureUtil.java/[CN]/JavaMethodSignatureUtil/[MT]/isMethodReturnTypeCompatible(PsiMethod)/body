@@ -1,0 +1,18 @@
+{
+  HierarchicalMethodSignature methodSignature=method.getHierarchicalMethodSignature();
+  List<HierarchicalMethodSignature> superSignatures=methodSignature.getSuperSignatures();
+  PsiType returnType=methodSignature.getSubstitutor().substitute(method.getReturnType());
+  PsiClass aClass=method.getContainingClass();
+  if (aClass == null)   return false;
+  for (  MethodSignatureBackedByPsiMethod superMethodSignature : superSignatures) {
+    PsiMethod superMethod=superMethodSignature.getMethod();
+    PsiType declaredReturnType=superMethod.getReturnType();
+    PsiType superReturnType=declaredReturnType;
+    if (superMethodSignature.isRaw())     superReturnType=TypeConversionUtil.erasure(declaredReturnType);
+    if (returnType == null || superReturnType == null || method == superMethod)     continue;
+    PsiClass superClass=superMethod.getContainingClass();
+    if (superClass == null)     continue;
+    if (!areMethodsReturnTypesCompatible(superMethodSignature,superReturnType,method,methodSignature,returnType))     return false;
+  }
+  return true;
+}
