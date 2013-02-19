@@ -20,7 +20,10 @@
   }
   if (result != null) {
     recordExpressionType(expression,context,result.getTypeInfo());
-    recordContextForExpressionCall(expression,context.trace,result.getCallCandidateResolutionContext());
+    CallCandidateResolutionContext<FunctionDescriptor> deferredContext=result.getCallCandidateResolutionContext();
+    if (deferredContext != null) {
+      context.trace.record(BindingContext.DEFERRED_COMPUTATION_FOR_CALL,expression,deferredContext);
+    }
     return result;
   }
   return TypeInfoForCall.create(expressionTypingServices.getTypeInfo(context.scope,expression,context.expectedType,context.dataFlowInfo,context.trace));
