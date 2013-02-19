@@ -6,11 +6,11 @@
     if (classObjectType != null) {
       context.trace.record(REFERENCE_TARGET,expression,classifier);
       JetType result;
-      if (context.namespacesAllowed && classifier instanceof ClassDescriptor) {
+      if (context.expressionPosition == ExpressionPosition.LHS_OF_DOT && classifier instanceof ClassDescriptor) {
         JetScope scope=new ChainedScope(classifier,classObjectType.getMemberScope(),getStaticNestedClassesScope((ClassDescriptor)classifier));
         result=new NamespaceType(referencedName,scope);
       }
- else       if (context.namespacesAllowed || classifier.isClassObjectAValue()) {
+ else       if (context.expressionPosition == ExpressionPosition.LHS_OF_DOT || classifier.isClassObjectAValue()) {
         result=classObjectType;
       }
  else {
@@ -27,7 +27,7 @@
     return DataFlowUtils.checkType(result[0],expression,context);
   }
   if (classifier != null) {
-    if (!context.namespacesAllowed) {
+    if (context.expressionPosition == ExpressionPosition.FREE) {
       context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
     }
     context.trace.record(REFERENCE_TARGET,expression,classifier);
