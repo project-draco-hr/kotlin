@@ -1,0 +1,39 @@
+{
+  if (statements.length == 0) {
+    return statements;
+  }
+  Project project=container.getProject();
+  List<PsiElement> resultStatements=new ArrayList<PsiElement>();
+  List<JetProperty> propertiesDeclarations=new ArrayList<JetProperty>();
+  PsiElement dummyFirstStatement=container.addBefore(createExpression(project,"dummyStatement "),statements[0]);
+  try {
+    SearchScope scope=new LocalSearchScope(container);
+    int lastStatementOffset=statements[statements.length - 1].getTextRange().getEndOffset();
+    for (    PsiElement statement : statements) {
+      if (needToDeclareOut(statement,lastStatementOffset,scope)) {
+        if (statement instanceof JetProperty && ((JetProperty)statement).getInitializer() != null) {
+          JetProperty property=(JetProperty)statement;
+          JetProperty declaration=createVariableDeclaration(property,generateDefaultInitializers);
+          declaration=(JetProperty)container.addBefore(declaration,dummyFirstStatement);
+          propertiesDeclarations.add(declaration);
+          container.addAfter(createNewLine(project),declaration);
+          JetBinaryExpression assignment=createVariableAssignment(property);
+          resultStatements.add(property.replace(assignment));
+        }
+ else {
+          PsiElement newStatement=container.addBefore(statement,dummyFirstStatement);
+          container.addAfter(createNewLine(project),newStatement);
+          container.deleteChildRange(statement,statement);
+        }
+      }
+ else {
+        resultStatements.add(statement);
+      }
+    }
+  }
+  finally {
+    dummyFirstStatement.delete();
+  }
+  ReferenceToClassesShortening.compactReferenceToClasses(propertiesDeclarations);
+  return PsiUtilCore.toPsiElementArray(resultStatements);
+}
