@@ -2,7 +2,7 @@
   if (!diagnostic.isValid())   return;
   List<TextRange> textRanges=diagnostic.getTextRanges();
   if (diagnostic.getSeverity() == Severity.ERROR) {
-    if (diagnostic.getFactory() instanceof UnresolvedReferenceDiagnosticFactory) {
+    if (Errors.UNRESOLVED_REFERENCE_DIAGNOSTICS.contains(diagnostic.getFactory())) {
       JetReferenceExpression referenceExpression=(JetReferenceExpression)diagnostic.getPsiElement();
       PsiReference reference=referenceExpression.getReference();
       if (reference instanceof MultiRangeReference) {
@@ -32,7 +32,7 @@
       }
       return;
     }
-    if (diagnostic.getFactory() instanceof RedeclarationDiagnosticFactory) {
+    if (Errors.REDECLARATION_DIAGNOSTICS.contains(diagnostic.getFactory())) {
       registerQuickFix(markRedeclaration(redeclarations,diagnostic,holder),diagnostic);
       return;
     }
@@ -50,7 +50,7 @@
       Annotation annotation=holder.createWarningAnnotation(textRange,getDefaultMessage(diagnostic));
       annotation.setTooltip(getMessage(diagnostic));
       registerQuickFix(annotation,diagnostic);
-      if (diagnostic.getFactory() instanceof UnusedElementDiagnosticFactory) {
+      if (Errors.UNUSED_ELEMENT_DIAGNOSTICS.contains(diagnostic.getFactory())) {
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
       }
     }
