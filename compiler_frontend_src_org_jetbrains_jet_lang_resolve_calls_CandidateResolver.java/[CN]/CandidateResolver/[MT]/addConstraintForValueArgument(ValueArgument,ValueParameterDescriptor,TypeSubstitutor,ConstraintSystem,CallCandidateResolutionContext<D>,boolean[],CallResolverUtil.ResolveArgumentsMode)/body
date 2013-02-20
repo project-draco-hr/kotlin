@@ -4,11 +4,7 @@
   TemporaryBindingTrace traceToResolveArgument=TemporaryBindingTrace.create(context.trace,"transient trace to resolve argument",argumentExpression);
   JetType expectedType=substitutor.substitute(effectiveExpectedType,Variance.INVARIANT);
   CallResolutionContext newContext=context.replaceBindingTrace(traceToResolveArgument).replaceExpectedType(expectedType);
-  TypeInfoForCall typeInfoForCall=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,newContext,resolveFunctionArgumentBodies);
-  CallCandidateResolutionContext<FunctionDescriptor> contextForArgument=typeInfoForCall.getCallCandidateResolutionContext();
-  if (contextForArgument != null) {
-    traceToResolveArgument.commit();
-  }
+  JetTypeInfo typeInfoForCall=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,newContext,resolveFunctionArgumentBodies,traceToResolveArgument);
   JetType type=typeInfoForCall.getType();
   constraintSystem.addSubtypeConstraint(type,effectiveExpectedType,ConstraintPosition.getValueParameterPosition(valueParameterDescriptor.getIndex()));
   if (isErrorType != null) {
