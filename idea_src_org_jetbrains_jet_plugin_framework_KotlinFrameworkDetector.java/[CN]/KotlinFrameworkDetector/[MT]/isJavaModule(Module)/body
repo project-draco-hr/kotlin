@@ -1,0 +1,14 @@
+{
+  CachedValue<Boolean> result=module.getUserData(IS_KOTLIN_JAVA_MODULE);
+  if (result == null) {
+    result=CachedValuesManager.getManager(module.getProject()).createCachedValue(new CachedValueProvider<Boolean>(){
+      @Override public Result<Boolean> compute(){
+        GlobalSearchScope scope=module.getModuleWithDependenciesAndLibrariesScope(false);
+        return Result.create(KotlinRuntimeLibraryUtil.getKotlinRuntimeMarkerClass(scope) != null,ProjectRootModificationTracker.getInstance(module.getProject()));
+      }
+    }
+,false);
+    module.putUserData(IS_KOTLIN_JAVA_MODULE,result);
+  }
+  return result.getValue();
+}
