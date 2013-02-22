@@ -18,7 +18,28 @@
   configureCompilerArguments(arguments);
   final CLICompiler compiler=createCompiler();
   printCompilerArgumentsIfDebugEnabled(arguments,compiler);
-  final ExitCode exitCode=compiler.exec(System.err,arguments);
+  final Log log=getLog();
+  MessageCollector messageCollector=new MessageCollector(){
+    @Override public void report(    @NotNull CompilerMessageSeverity severity,    @NotNull String message,    @NotNull CompilerMessageLocation location){
+      String path=location.getPath();
+      String position=path == null ? "" : path + ": (" + (location.getLine() + ", " + location.getColumn())+ ") ";
+      String text=position + message;
+      if (CompilerMessageSeverity.VERBOSE.contains(severity)) {
+        log.debug(text);
+      }
+ else       if (CompilerMessageSeverity.ERRORS.contains(severity)) {
+        log.error(text);
+      }
+ else       if (severity == CompilerMessageSeverity.INFO) {
+        log.info(text);
+      }
+ else {
+        log.warn(text);
+      }
+    }
+  }
+;
+  final ExitCode exitCode=compiler.exec(messageCollector,arguments);
 switch (exitCode) {
 case COMPILATION_ERROR:
     throw new MojoExecutionException("Compilation error. See log for more details");
