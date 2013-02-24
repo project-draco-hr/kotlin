@@ -1,13 +1,11 @@
 {
-  final Ref<Boolean> found=Ref.create(Boolean.FALSE);
+  final Collection<Library> headersLibraries=Lists.newArrayList();
   ApplicationManager.getApplication().runReadAction(new Runnable(){
     @Override public void run(){
       ModuleRootManager.getInstance(module).orderEntries().librariesOnly().forEachLibrary(new Processor<Library>(){
         @Override public boolean process(        Library library){
-          String libraryName=library.getName();
-          if (libraryName != null && libraryName.contains(PathUtil.JS_LIB_JAR_NAME)) {
-            found.set(Boolean.TRUE);
-            return false;
+          if (KotlinJavaScriptHeadersPresentationProvider.getInstance().detect(Arrays.asList(library.getFiles(OrderRootType.CLASSES))) != null) {
+            headersLibraries.add(library);
           }
           return true;
         }
@@ -16,5 +14,5 @@
     }
   }
 );
-  return found.get();
+  return headersLibraries;
 }
