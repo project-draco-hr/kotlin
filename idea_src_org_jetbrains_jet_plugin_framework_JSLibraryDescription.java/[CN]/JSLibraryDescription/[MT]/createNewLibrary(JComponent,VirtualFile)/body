@@ -1,3 +1,29 @@
 {
-  return createFromPlugin(contextDirectory);
+  CreateLibrarySourceDialog dialog=new CreateLibrarySourceDialog(null,"Create Kotlin JavaScript Library",contextDirectory);
+  dialog.show();
+  if (dialog.isOK()) {
+    String standaloneCompilerPath=dialog.getStandaloneCompilerPath();
+    KotlinPaths paths=standaloneCompilerPath == null ? PathUtil.getKotlinPathsForIdeaPlugin() : PathUtil.getKotlinStandaloneCompilerPaths(standaloneCompilerPath);
+    File libraryFile=paths.getJsLibJarPath();
+    if (!libraryFile.exists()) {
+      Messages.showErrorDialog(String.format("JavaScript standard library was not found in %s",paths.getLibPath()),JAVA_SCRIPT_LIBRARY_CREATION);
+      return null;
+    }
+    String copyIntoPath=dialog.getCopyIntoPath();
+    if (copyIntoPath != null) {
+      libraryFile=FileUIUtils.copyWithOverwriteDialog(parentComponent,copyIntoPath,libraryFile,JAVA_SCRIPT_LIBRARY_CREATION);
+      if (libraryFile == null) {
+        return null;
+      }
+      copyJsRuntimeFile(copyIntoPath);
+    }
+    final String libraryFileUrl=VfsUtil.getUrlForLibraryRoot(libraryFile);
+    return new NewLibraryConfiguration(LIBRARY_NAME + "-" + dialog.getVersion(),getDownloadableLibraryType(),new LibraryVersionProperties()){
+      @Override public void addRoots(      @NotNull LibraryEditor editor){
+        editor.addRoot(libraryFileUrl,OrderRootType.SOURCES);
+      }
+    }
+;
+  }
+  return null;
 }

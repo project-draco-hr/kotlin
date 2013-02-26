@@ -1,0 +1,47 @@
+{
+  super(project);
+  setTitle(title);
+  init();
+  contentPane.setMinimumSize(new Dimension(380,180));
+  useBundledKotlinRadioButton.setText(useBundledKotlinRadioButton.getText() + " - " + JetPluginUtil.getPluginVersion());
+  initialStandaloneLabelText=useStandaloneKotlinRadioButton.getText();
+  kotlinStandalonePathField.setEditable(false);
+  kotlinStandalonePathField.addBrowseFolderListener("Kotlin Compiler","Choose folder with Kotlin compiler installation",project,new FileChooserDescriptor(false,true,false,false,false,false){
+    @Override public boolean isFileSelectable(    VirtualFile file){
+      if (!super.isFileSelectable(file)) {
+        return false;
+      }
+      return PathUtil.KOTLIN_HOME_DIRECTORY_ADAPTER.fun(com.intellij.util.PathUtil.getLocalPath(file)) != null;
+    }
+  }
+);
+  kotlinStandalonePathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter(){
+    @Override protected void textChanged(    final DocumentEvent e){
+      updateStandaloneVersion();
+      updateComponentVersion();
+    }
+  }
+);
+  updateStandaloneVersion();
+  copyIntoDirectoryField.addBrowseFolderListener("Copy Into...","Choose folder where files will be copied",project,FileChooserDescriptorFactory.createSingleFolderDescriptor());
+  copyIntoDirectoryField.getTextField().setText(FileUIUtils.getDefaultLibraryFolder(project,contextDirectory));
+  copyLibraryCheckbox.addActionListener(new ActionListener(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      updateComponents();
+    }
+  }
+);
+  useStandaloneKotlinRadioButton.addActionListener(new ActionListener(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      updateComponents();
+    }
+  }
+);
+  useBundledKotlinRadioButton.addActionListener(new ActionListener(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      updateComponents();
+    }
+  }
+);
+  updateComponents();
+}

@@ -1,3 +1,29 @@
 {
-  return createFromPlugin(contextDirectory);
+  CreateLibrarySourceDialog dialog=new CreateLibrarySourceDialog(null,"Create Kotlin Java Runtime Library",contextDirectory);
+  dialog.show();
+  if (dialog.isOK()) {
+    String standaloneCompilerPath=dialog.getStandaloneCompilerPath();
+    KotlinPaths paths=standaloneCompilerPath == null ? PathUtil.getKotlinPathsForIdeaPlugin() : PathUtil.getKotlinStandaloneCompilerPaths(standaloneCompilerPath);
+    File libraryFile=paths.getRuntimePath();
+    if (!libraryFile.exists()) {
+      Messages.showErrorDialog(parentComponent,String.format("Java Runtime library was not found in '%s'.",paths.getLibPath()),JAVA_RUNTIME_LIBRARY_CREATION);
+      return null;
+    }
+    String copyIntoPath=dialog.getCopyIntoPath();
+    if (copyIntoPath != null) {
+      libraryFile=FileUIUtils.copyWithOverwriteDialog(parentComponent,copyIntoPath,libraryFile,JAVA_RUNTIME_LIBRARY_CREATION);
+      if (libraryFile == null) {
+        return null;
+      }
+    }
+    final String libraryFileUrl=VfsUtil.getUrlForLibraryRoot(libraryFile);
+    return new NewLibraryConfiguration(LIBRARY_NAME + "-" + dialog.getVersion(),getDownloadableLibraryType(),new LibraryVersionProperties()){
+      @Override public void addRoots(      @NotNull LibraryEditor editor){
+        editor.addRoot(libraryFileUrl,OrderRootType.CLASSES);
+        editor.addRoot(libraryFileUrl + "src",OrderRootType.SOURCES);
+      }
+    }
+;
+  }
+  return null;
 }
