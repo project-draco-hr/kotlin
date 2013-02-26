@@ -1,0 +1,15 @@
+{
+  if (!super.isAvailable(project,editor,file)) {
+    return false;
+  }
+  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject().getBindingContext();
+  JetType type=context.get(BindingContext.TYPE,element);
+  if (type == null)   return false;
+  DeclarationDescriptor typeDeclarationDescriptor=type.getConstructor().getDeclarationDescriptor();
+  if (typeDeclarationDescriptor == null)   return false;
+  PsiElement typeDeclaration=BindingContextUtils.descriptorToDeclaration(context,typeDeclarationDescriptor);
+  if (typeDeclaration instanceof JetClass && typeDeclaration.isWritable()) {
+    this.classDeclaration=(JetClass)typeDeclaration;
+  }
+  return classDeclaration != null && !classDeclaration.isEnum() && !classDeclaration.isTrait();
+}
