@@ -1,0 +1,76 @@
+{
+  System.out.println("RUN COMMAND: " + settings);
+  final StringBuilder stdOut=new StringBuilder();
+  final StringBuilder stdErr=new StringBuilder();
+  final OSProcessHandler handler;
+  try {
+    handler=new OSProcessHandler(settings.commandLine.createProcess(),settings.commandLine.getCommandLineString(),Charsets.UTF_8);
+    if (settings.input != null) {
+      handler.getProcessInput().write(settings.input.getBytes());
+    }
+    close(handler.getProcessInput());
+  }
+ catch (  ExecutionException e) {
+    return new RunResult(false,getStackTrace(e));
+  }
+catch (  IOException e) {
+    return new RunResult(false,getStackTrace(e));
+  }
+  handler.addProcessListener(new ProcessAdapter(){
+    @Override public void processTerminated(    ProcessEvent event){
+      System.out.println("TERMINATED: " + settings.commandLine);
+      super.processTerminated(event);
+    }
+    @Override public void onTextAvailable(    ProcessEvent event,    Key outputType){
+      String str=event.getText();
+      if (outputType == ProcessOutputTypes.STDOUT || outputType == ProcessOutputTypes.SYSTEM) {
+        appendToContent(stdOut,str);
+      }
+ else       if (outputType == ProcessOutputTypes.STDERR) {
+        appendToContent(stdErr,str);
+      }
+    }
+    private synchronized void appendToContent(    StringBuilder content,    String line){
+      if (settings.printOutputAtAppearance) {
+        System.out.println(getPrefixString() + StringUtil.trimTrailing(line));
+        System.out.flush();
+      }
+ else {
+        content.append(getPrefixString());
+        content.append(StringUtil.trimTrailing(line));
+        content.append("\n");
+      }
+    }
+    private String getPrefixString(){
+      return (settings.outputPrefix != null) ? settings.outputPrefix + " " : "";
+    }
+  }
+);
+  handler.startNotify();
+  if (settings.waitForEnd) {
+    handler.waitFor(400000);
+    if (!handler.isProcessTerminated()) {
+      System.out.println("Output before handler.isProcessTerminated() " + settings.commandLine);
+      System.out.println(stdOut);
+      System.err.println(stdErr);
+      return new RunResult(false,"Timeout exception: execution was terminated after ~7 min.");
+    }
+  }
+ else {
+    handler.waitFor();
+  }
+  int exitCode=handler.getProcess().exitValue();
+  if (exitCode != 0) {
+    return new RunResult(false,builderToString(stdOut) + builderToString(stdErr));
+  }
+ else {
+    String output=builderToString(stdOut) + builderToString(stdErr);
+    if (OutputUtils.isBuildFailed(output)) {
+      return new RunResult(false,output);
+    }
+    if (!settings.commandLine.getCommandLineString().contains("install")) {
+      System.out.print(output);
+    }
+    return new RunResult(true,output);
+  }
+}
