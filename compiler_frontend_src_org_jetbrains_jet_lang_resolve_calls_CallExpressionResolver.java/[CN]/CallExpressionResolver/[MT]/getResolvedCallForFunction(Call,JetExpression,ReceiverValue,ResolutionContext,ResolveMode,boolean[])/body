@@ -5,9 +5,10 @@
     checkSuper(receiver,results,context.trace,callExpression);
     result[0]=true;
     if (results.isSingleResult() && resolveMode == ResolveMode.TOP_LEVEL_CALL) {
-      if (CallResolverUtil.hasReturnTypeDependentOnNotInferredParams(results.getResultingCall())) {
-        return null;
-      }
+      ResolvedCallImpl<FunctionDescriptor> callToComplete=results.getResultingCall().getResolvedCallToComplete();
+      if (CallResolverUtil.hasReturnTypeDependentOnNotInferredParams(callToComplete))       return null;
+      ConstraintSystem constraintSystem=callToComplete.getConstraintSystem();
+      if (constraintSystem != null && constraintSystem.hasExpectedTypeMismatch())       return null;
     }
     return results.isSingleResult() ? results.getResultingCall() : null;
   }

@@ -1,2 +1,14 @@
 {
+  ResolvedCallImpl<D> resolvedCall=context.candidateCall;
+  ConstraintSystem constraintSystem=resolvedCall.getConstraintSystem();
+  if (!resolvedCall.hasIncompleteTypeParameters() || constraintSystem == null)   return;
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
+    ResolvedValueArgument resolvedValueArgument=entry.getValue();
+    ValueParameterDescriptor valueParameterDescriptor=entry.getKey();
+    for (    ValueArgument valueArgument : resolvedValueArgument.getArguments()) {
+      if (!(valueArgument.getArgumentExpression() instanceof JetFunctionLiteralExpression))       continue;
+      addConstraintForFunctionLiteral(valueArgument,valueParameterDescriptor,constraintSystem,context);
+    }
+  }
+  resolvedCall.setResultingSubstitutor(constraintSystem.getResultingSubstitutor());
 }
