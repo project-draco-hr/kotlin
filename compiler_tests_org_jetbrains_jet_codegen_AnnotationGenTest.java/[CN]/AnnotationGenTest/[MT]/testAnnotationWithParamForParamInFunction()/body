@@ -1,15 +1,11 @@
 {
-  loadText("import java.lang.annotation.*\n" + "Retention(RetentionPolicy.RUNTIME) annotation class A(val a: String)\n" + "fun x(A(\"239\") i: Int) {}");
-  Class aClass=generateNamespaceClass();
-  Method x=aClass.getMethod("x",int.class);
-  assertNotNull(x);
-  Annotation[] annotations=x.getParameterAnnotations()[0];
-  Annotation resultAnnotation=null;
-  for (  Annotation annotation : annotations) {
-    if (annotation.annotationType().getCanonicalName().equals("A")) {
-      resultAnnotation=annotation;
-      break;
-    }
-  }
-  assertNotNull(resultAnnotation);
+  ClassLoader loader=loadFileGetClassLoader("import java.lang.annotation.*\n" + "Retention(RetentionPolicy.RUNTIME) annotation class A(val a: String)\n" + "fun x(A(\"239\") i: Int) {}");
+  Class packageClass=getPackageSrcClass(loader);
+  Method packageClassMethod=packageClass.getMethod("x",int.class);
+  assertNotNull(packageClassMethod);
+  assertNotNull(getAnnotationByName(packageClassMethod.getParameterAnnotations()[0],"A"));
+  Class srcClass=getPackageSrcClass(loader);
+  Method srcClassMethod=srcClass.getMethod("x",int.class);
+  assertNotNull(srcClassMethod);
+  assertNotNull(getAnnotationByName(srcClassMethod.getParameterAnnotations()[0],"A"));
 }

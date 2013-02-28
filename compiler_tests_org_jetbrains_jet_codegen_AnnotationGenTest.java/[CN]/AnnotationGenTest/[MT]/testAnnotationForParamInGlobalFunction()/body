@@ -1,8 +1,11 @@
 {
-  loadText("fun x([Deprecated] i: Int) {}");
-  Class aClass=generateNamespaceClass();
-  Method x=aClass.getMethod("x",int.class);
-  assertNotNull(x);
-  Annotation[] annotations=x.getParameterAnnotations()[0];
-  assertNotNull(getDeprecatedAnnotationFromList(annotations));
+  ClassLoader loader=loadFileGetClassLoader("fun x([Deprecated] i: Int) {}");
+  Class packageClass=getPackageClass(loader);
+  Method packageClassMethod=packageClass.getMethod("x",int.class);
+  assertNotNull(packageClassMethod);
+  assertNotNull(getDeprecatedAnnotationFromList(packageClassMethod.getParameterAnnotations()[0]));
+  Class srcClass=getPackageSrcClass(loader);
+  Method srcClassMethod=srcClass.getMethod("x",int.class);
+  assertNotNull(srcClassMethod);
+  assertNotNull(getDeprecatedAnnotationFromList(srcClassMethod.getParameterAnnotations()[0]));
 }
