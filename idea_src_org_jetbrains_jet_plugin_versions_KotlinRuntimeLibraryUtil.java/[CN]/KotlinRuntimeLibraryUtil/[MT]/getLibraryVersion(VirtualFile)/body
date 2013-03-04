@@ -1,0 +1,19 @@
+{
+  if (kotlinStdJar == null)   return null;
+  VirtualFile manifestFile=kotlinStdJar.findFileByRelativePath(JarFile.MANIFEST_NAME);
+  if (manifestFile != null) {
+    Attributes attributes=ManifestFileUtil.readManifest(manifestFile).getMainAttributes();
+    if (attributes.containsKey(Attributes.Name.IMPLEMENTATION_VERSION)) {
+      return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+    }
+  }
+  VirtualFile buildVersionFile=kotlinStdJar.findFileByRelativePath("META-INF/build.txt");
+  if (buildVersionFile != null) {
+    try {
+      return VfsUtilCore.loadText(buildVersionFile);
+    }
+ catch (    IOException e) {
+    }
+  }
+  return UNKNOWN_VERSION;
+}
