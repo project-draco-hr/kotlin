@@ -1,2 +1,36 @@
 {
+  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject().getBindingContext();
+  Collection<Diagnostic> diagnostics=context.getDiagnostics();
+  List<JetImportDirective> imports=new ArrayList<JetImportDirective>();
+  List<JetUserType> usages=new ArrayList<JetUserType>();
+  for (  Diagnostic diagnostic : diagnostics) {
+    if (diagnostic.getFactory() != Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN)     continue;
+    JetReferenceExpression refExpr=getImportOrUsageFromDiagnostic(diagnostic);
+    if (refExpr == null)     continue;
+    DeclarationDescriptor descriptor=context.get(BindingContext.REFERENCE_TARGET,refExpr);
+    if (descriptor == null || !(descriptor.equals(platformClass)))     continue;
+    JetImportDirective imp=PsiTreeUtil.getParentOfType(refExpr,JetImportDirective.class);
+    if (imp == null) {
+      JetUserType type=PsiTreeUtil.getParentOfType(refExpr,JetUserType.class);
+      if (type == null)       continue;
+      usages.add(type);
+    }
+ else {
+      imports.add(imp);
+    }
+  }
+  for (  JetImportDirective imp : imports) {
+    imp.delete();
+  }
+  if (usages.isEmpty()) {
+    return;
+  }
+  List<PsiElement> replacedElements=replaceUsagesWithFirstClass(project,usages);
+  if (possibleClasses.size() > 1) {
+    LinkedHashSet<String> possibleTypes=new LinkedHashSet<String>();
+    for (    ClassDescriptor klass : possibleClasses) {
+      possibleTypes.add(klass.getName().getName());
+    }
+    buildAndShowTemplate(project,editor,file,replacedElements,possibleTypes);
+  }
 }
