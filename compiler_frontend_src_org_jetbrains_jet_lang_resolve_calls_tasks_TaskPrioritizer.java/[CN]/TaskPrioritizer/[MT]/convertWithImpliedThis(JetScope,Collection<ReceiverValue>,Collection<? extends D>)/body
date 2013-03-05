@@ -1,2 +1,30 @@
 {
+  Collection<ResolutionCandidate<D>> result=Lists.newArrayList();
+  for (  ReceiverValue receiverParameter : receiverParameters) {
+    for (    D descriptor : descriptors) {
+      ResolutionCandidate<D> candidate=ResolutionCandidate.create(descriptor);
+      candidate.setReceiverArgument(receiverParameter);
+      candidate.setExplicitReceiverKind(receiverParameter.exists() ? ExplicitReceiverKind.RECEIVER_ARGUMENT : ExplicitReceiverKind.NO_EXPLICIT_RECEIVER);
+      if (setImpliedThis(scope,candidate)) {
+        result.add(candidate);
+      }
+    }
+  }
+  if (receiverParameters.size() == 1 && !receiverParameters.iterator().next().exists()) {
+    for (    D descriptor : descriptors) {
+      if (descriptor.getExpectedThisObject() != null && descriptor.getReceiverParameter() == null) {
+        DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+        if (descriptor instanceof ConstructorDescriptor) {
+          containingDeclaration=containingDeclaration.getContainingDeclaration();
+        }
+        if (containingDeclaration != null && isClassObject(containingDeclaration)) {
+          ResolutionCandidate<D> candidate=ResolutionCandidate.create(descriptor);
+          candidate.setThisObject(((ClassDescriptor)containingDeclaration).getThisAsReceiverParameter().getValue());
+          candidate.setExplicitReceiverKind(ExplicitReceiverKind.NO_EXPLICIT_RECEIVER);
+          result.add(candidate);
+        }
+      }
+    }
+  }
+  return result;
 }
