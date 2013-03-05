@@ -1,0 +1,26 @@
+{
+  for (  Field field : fields) {
+    p.println("this.",field.getName()," = ",field.getInitialization().renderAsCode(),";");
+  }
+  p.printlnWithNoIndent();
+  for (  Field field : fields) {
+    for (    SetterDependency dependency : field.getDependencies()) {
+      String prefix=field.isPublic() ? "this." : "";
+      String dependencyName=dependency.getDependency().getName();
+      String dependentName=dependency.getDependent().getName();
+      p.println(prefix,dependentName,".",dependency.getSetterName(),"(",dependencyName,");");
+    }
+    if (!field.getDependencies().isEmpty()) {
+      p.printlnWithNoIndent();
+    }
+  }
+  for (  Field field : fields) {
+    List<Method> postConstructMethods=getPostConstructMethods(getEffectiveFieldType(field).getClazz());
+    for (    Method postConstruct : postConstructMethods) {
+      p.println(field.getName(),".",postConstruct.getName(),"();");
+    }
+    if (postConstructMethods.size() > 0) {
+      p.printlnWithNoIndent();
+    }
+  }
+}

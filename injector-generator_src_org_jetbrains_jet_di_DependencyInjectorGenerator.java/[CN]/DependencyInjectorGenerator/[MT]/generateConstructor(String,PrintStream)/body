@@ -1,53 +1,36 @@
 {
-  String indent="        ";
+  Printer p=new Printer(out);
+  p.pushIndent();
   if (parameters.isEmpty()) {
-    out.println("    public " + injectorClassName + "() {");
+    p.println("public ",injectorClassName,"() {");
   }
  else {
-    out.println("    public " + injectorClassName + "(");
+    p.println("public ",injectorClassName,"(");
+    p.pushIndent();
     for (Iterator<Parameter> iterator=parameters.iterator(); iterator.hasNext(); ) {
       Parameter parameter=iterator.next();
-      out.print(indent);
+      p.print();
       if (parameter.isRequired()) {
-        out.print("@NotNull ");
+        p.printWithNoIndent("@NotNull ");
       }
-      out.print(parameter.getType().getSimpleName() + " " + parameter.getName());
+      p.printWithNoIndent(parameter.getType().getSimpleName()," ",parameter.getName());
       if (iterator.hasNext()) {
-        out.println(",");
+        p.printlnWithNoIndent(",");
       }
     }
-    out.println();
-    out.println("    ) {");
+    p.printlnWithNoIndent();
+    p.popIndent();
+    p.println(") {");
   }
+  p.pushIndent();
   if (lazy) {
     for (    Parameter parameter : parameters) {
-      out.println(indent + "this." + parameter.getField().getName()+ " = "+ parameter.getName()+ ";");
+      p.println("this.",parameter.getField().getName()," = ",parameter.getName(),";");
     }
   }
  else {
-    for (    Field field : fields) {
-      String prefix="this.";
-      out.println(indent + prefix + field.getName()+ " = "+ field.getInitialization().renderAsCode()+ ";");
-    }
-    out.println();
-    for (    Field field : fields) {
-      for (      SetterDependency dependency : field.getDependencies()) {
-        String prefix=field.isPublic() ? "this." : "";
-        out.println(indent + prefix + dependency.getDependent().getName()+ "."+ dependency.getSetterName()+ "("+ dependency.getDependency().getName()+ ");");
-      }
-      if (!field.getDependencies().isEmpty()) {
-        out.println();
-      }
-    }
-    for (    Field field : fields) {
-      List<Method> postConstructMethods=getPostConstructMethods(getEffectiveFieldType(field).getClazz());
-      for (      Method postConstruct : postConstructMethods) {
-        out.println(indent + field.getName() + "."+ postConstruct.getName()+ "();");
-      }
-      if (postConstructMethods.size() > 0) {
-        out.println();
-      }
-    }
+    generateInitializingCode(p,fields);
   }
-  out.println("    }");
+  p.popIndent();
+  p.println("}");
 }
