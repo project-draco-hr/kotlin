@@ -1,23 +1,22 @@
 {
   List<Field> fields=Lists.newArrayList();
-  for (  Map.Entry<DiType,Field> entry : typeToField.entries()) {
+  for (  Map.Entry<DiType,Field> entry : typeToFields.entries()) {
     if (parameterType.isAssignableFrom(entry.getKey())) {
       fields.add(entry.getValue());
     }
   }
-  Field dependency;
   if (fields.isEmpty()) {
     if (parameterType.getClazz().isPrimitive() || parameterType.getClazz().getPackage().getName().equals("java.lang")) {
       throw new IllegalArgumentException("cannot declare magic field of type " + parameterType + ": "+ errorMessage);
     }
-    dependency=addField(parameterType);
+    Field dependency=addNewField(parameterType);
     satisfyDependenciesFor(dependency,neededFor);
+    return dependency;
   }
  else   if (fields.size() == 1) {
-    dependency=fields.iterator().next();
+    return fields.iterator().next();
   }
  else {
     throw new IllegalArgumentException("Ambiguous dependency: " + errorMessage + " needed for "+ neededFor);
   }
-  return dependency;
 }
