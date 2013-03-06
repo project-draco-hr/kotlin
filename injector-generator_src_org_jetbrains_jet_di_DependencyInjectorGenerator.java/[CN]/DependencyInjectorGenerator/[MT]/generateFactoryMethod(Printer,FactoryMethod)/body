@@ -1,30 +1,8 @@
 {
-  Dependencies localDependencies=new Dependencies();
-  Map<Parameter,Field> parameterToField=Maps.newHashMap();
-  for (  Parameter parameter : method.getParameters()) {
-    Field field=new Field(true,parameter.getType(),parameter.getName());
-    localDependencies.addSatisfiedField(field);
-    parameterToField.put(parameter,field);
-  }
-  for (  Field storedField : fields) {
-    localDependencies.addSatisfiedField(storedField);
-  }
   Field resultField=new Field(true,method.getReturnType(),"_result");
-  localDependencies.addField(resultField);
-  Collection<Field> fields=Lists.newArrayList(localDependencies.satisfyDependencies());
-  fields.add(resultField);
-  p.println("public ",type(method.getReturnType())," ",method.getName(),"(");
-  p.pushIndent();
-  for (Iterator<Parameter> iterator=method.getParameters().iterator(); iterator.hasNext(); ) {
-    Parameter parameter=iterator.next();
-    p.print(type(parameter.getType())," ",parameter.getName());
-    if (iterator.hasNext()) {
-      p.printlnWithNoIndent(", ");
-    }
-  }
-  p.println();
-  p.popIndent();
-  p.println(") {");
+  Collection<Field> fields=computeFieldsForFactoryMethod(method,resultField);
+  p.print("public ",type(method.getReturnType())," ",method.getName());
+  generateParameterList(p,method.getParameters());
   p.pushIndent();
   InjectionLogicGenerator.generateForLocalVariables(importManager,p,fields);
   p.println("return ",resultField.getName(),";");
