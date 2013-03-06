@@ -1,6 +1,5 @@
 {
   Collection<DeclarationDescriptor> result=Sets.newHashSet();
-  boolean isKotlinNamespace=packageFqName != null && javaSemanticServices.getKotlinNamespaceDescriptor(packageFqName) != null;
   final JavaDescriptorResolver descriptorResolver=javaSemanticServices.getDescriptorResolver();
   for (  PsiPackage psiSubPackage : psiPackage.getSubPackages()) {
     NamespaceDescriptor childNs=descriptorResolver.resolveNamespace(new FqName(psiSubPackage.getQualifiedName()),DescriptorSearchRule.IGNORE_IF_FOUND_IN_KOTLIN);
@@ -9,13 +8,10 @@
     }
   }
   for (  PsiClass psiClass : javaSemanticServices.getPsiClassFinder().findPsiClasses(psiPackage)) {
-    if (isKotlinNamespace && PackageClassUtils.isPackageClass(psiClass)) {
+    if (PackageClassUtils.isPackageClass(psiClass)) {
       continue;
     }
     if (psiClass instanceof JetJavaMirrorMarker) {
-      continue;
-    }
-    if (PackageClassUtils.isPackageClass(psiClass)) {
       continue;
     }
     if (psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
