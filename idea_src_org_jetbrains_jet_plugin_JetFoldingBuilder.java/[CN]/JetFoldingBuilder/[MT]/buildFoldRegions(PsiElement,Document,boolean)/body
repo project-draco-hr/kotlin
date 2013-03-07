@@ -1,5 +1,18 @@
 {
+  if (!(root instanceof JetFile)) {
+    return FoldingDescriptor.EMPTY;
+  }
   List<FoldingDescriptor> descriptors=new ArrayList<FoldingDescriptor>();
+  JetFile file=(JetFile)root;
+  List<JetImportDirective> importList=file.getImportDirectives();
+  if (importList != null && !importList.isEmpty()) {
+    JetImportDirective firstImport=importList.get(0);
+    PsiElement importKeyword=firstImport.getFirstChild();
+    int startOffset=importKeyword.getTextRange().getEndOffset() + 1;
+    int endOffset=importList.get(importList.size() - 1).getTextRange().getEndOffset();
+    TextRange range=new TextRange(startOffset,endOffset);
+    descriptors.add(new FoldingDescriptor(firstImport,range));
+  }
   appendDescriptors(root.getNode(),document,descriptors);
   return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
 }
