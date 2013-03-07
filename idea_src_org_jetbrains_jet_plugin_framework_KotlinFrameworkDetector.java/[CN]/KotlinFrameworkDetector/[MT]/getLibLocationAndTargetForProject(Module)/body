@@ -1,14 +1,20 @@
 {
-  Library library=getStandardJavaScriptLibrary(module);
-  if (library != null) {
-    List<String> pathsToJSLib=Lists.newArrayList();
-    VirtualFile[] files=library.getRootProvider().getFiles(OrderRootType.SOURCES);
-    for (    VirtualFile file : files) {
-      pathsToJSLib.add(com.intellij.util.PathUtil.getLocalPath(file));
+  final Set<String> pathsToJSLib=Sets.newHashSet();
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      ModuleRootManager.getInstance(module).orderEntries().librariesOnly().forEachLibrary(new Processor<Library>(){
+        @Override public boolean process(        Library library){
+          if (JsHeaderLibraryPresentationProvider.getInstance().isDetected(library)) {
+            for (            VirtualFile file : library.getRootProvider().getFiles(OrderRootType.SOURCES)) {
+              pathsToJSLib.add(PathUtil.getLocalPath(file));
+            }
+          }
+          return true;
+        }
+      }
+);
     }
-    return Pair.create(pathsToJSLib,EcmaVersion.defaultVersion().toString());
   }
- else {
-    throw new IllegalStateException("Should be called for JS module only. JS library is expected to be found");
-  }
+);
+  return Pair.<List<String>,String>create(Lists.newArrayList(pathsToJSLib),EcmaVersion.defaultVersion().toString());
 }
