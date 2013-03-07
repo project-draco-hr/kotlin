@@ -1,2 +1,41 @@
 {
+  final AnnotationDescriptor annotation=new AnnotationDescriptor();
+  String qname=psiAnnotation.getQualifiedName();
+  if (qname == null) {
+    return null;
+  }
+  if (qname.startsWith("jet.runtime.typeinfo.") || qname.equals(JvmAbi.JETBRAINS_NOT_NULL_ANNOTATION.getFqName().getFqName())) {
+    return null;
+  }
+  FqName annotationFqName=new FqName(qname);
+  AnnotationDescriptor mappedClassDescriptor=JavaToKotlinClassMap.getInstance().mapToAnnotationClass(annotationFqName);
+  if (mappedClassDescriptor != null) {
+    return mappedClassDescriptor;
+  }
+  final ClassDescriptor annotationClass=classResolver.resolveClass(annotationFqName,DescriptorSearchRule.INCLUDE_KOTLIN,postponedTasks);
+  if (annotationClass == null) {
+    return null;
+  }
+  postponedTasks.addTask(new Runnable(){
+    @Override public void run(){
+      annotation.setAnnotationType(annotationClass.getDefaultType());
+    }
+  }
+);
+  PsiAnnotationParameterList parameterList=psiAnnotation.getParameterList();
+  for (  PsiNameValuePair psiNameValuePair : parameterList.getAttributes()) {
+    PsiAnnotationMemberValue value=psiNameValuePair.getValue();
+    String name=psiNameValuePair.getName();
+    if (name == null)     name="value";
+    Name identifier=Name.identifier(name);
+    if (value == null)     return null;
+    CompileTimeConstant compileTimeConst=compileTimeConstResolver.getCompileTimeConstFromExpression(annotationFqName,identifier,value,postponedTasks);
+    if (compileTimeConst != null) {
+      ValueParameterDescriptor valueParameterDescriptor=DescriptorResolverUtils.getValueParameterDescriptorForAnnotationParameter(identifier,annotationClass);
+      if (valueParameterDescriptor != null) {
+        annotation.setValueArgument(valueParameterDescriptor,compileTimeConst);
+      }
+    }
+  }
+  return annotation;
 }
