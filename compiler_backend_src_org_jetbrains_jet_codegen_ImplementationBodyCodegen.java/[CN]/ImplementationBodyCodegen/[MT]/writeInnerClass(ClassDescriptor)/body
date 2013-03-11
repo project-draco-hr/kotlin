@@ -15,7 +15,17 @@
   if (!innerClass.isInner()) {
     innerClassAccess|=ACC_STATIC;
   }
-  String outerClassInternalName=classAsmType.getInternalName();
-  String innerClassInternalName=typeMapper.mapType(innerClass.getDefaultType(),JetTypeMapperMode.IMPL).getInternalName();
-  v.visitInnerClass(innerClassInternalName,outerClassInternalName,innerClass.getName().getName(),innerClassAccess);
+  DeclarationDescriptor containing=innerClass.getContainingDeclaration();
+  String outerClassInternalName=containing instanceof ClassDescriptor ? getInternalNameForImpl((ClassDescriptor)containing) : null;
+  String innerClassInternalName;
+  String innerName;
+  if (isClassObject(innerClass)) {
+    innerName=JvmAbi.CLASS_OBJECT_CLASS_NAME;
+    innerClassInternalName=outerClassInternalName + JvmAbi.CLASS_OBJECT_SUFFIX;
+  }
+ else {
+    innerName=innerClass.getName().isSpecial() ? null : innerClass.getName().getName();
+    innerClassInternalName=getInternalNameForImpl(innerClass);
+  }
+  v.visitInnerClass(innerClassInternalName,outerClassInternalName,innerName,innerClassAccess);
 }
