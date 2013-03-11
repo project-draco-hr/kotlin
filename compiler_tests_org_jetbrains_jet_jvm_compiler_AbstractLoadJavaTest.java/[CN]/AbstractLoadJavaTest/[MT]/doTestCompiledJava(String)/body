@@ -1,3 +1,22 @@
 {
-  doTestCompiledJava(new File(javaFileName.replaceFirst("\\.java$",".txt")),javaFileName);
+  final File srcDir=new File(tmpdir,"src");
+  File compiledDir=new File(tmpdir,"compiled");
+  assertTrue(srcDir.mkdir());
+  assertTrue(compiledDir.mkdir());
+  List<File> srcFiles=JetTestUtils.createTestFiles(new File(javaFileName).getName(),FileUtil.loadFile(new File(javaFileName)),new JetTestUtils.TestFileFactory<File>(){
+    @Override public File create(    String fileName,    String text){
+      File targetFile=new File(srcDir,fileName);
+      try {
+        FileUtil.writeToFile(targetFile,text);
+      }
+ catch (      IOException e) {
+        throw new AssertionError(e);
+      }
+      return targetFile;
+    }
+  }
+);
+  JetTestUtils.createEnvironmentWithJdkAndNullabilityAnnotationsFromIdea(getTestRootDisposable(),ConfigurationKind.JDK_AND_ANNOTATIONS,TestJdkKind.MOCK_JDK);
+  Pair<NamespaceDescriptor,BindingContext> javaNamespaceAndContext=compileJavaAndLoadTestNamespaceAndBindingContextFromBinary(srcFiles,compiledDir,getTestRootDisposable(),ConfigurationKind.JDK_ONLY);
+  checkJavaNamespace(new File(javaFileName.replaceFirst("\\.java$",".txt")),javaNamespaceAndContext.first,javaNamespaceAndContext.second);
 }
