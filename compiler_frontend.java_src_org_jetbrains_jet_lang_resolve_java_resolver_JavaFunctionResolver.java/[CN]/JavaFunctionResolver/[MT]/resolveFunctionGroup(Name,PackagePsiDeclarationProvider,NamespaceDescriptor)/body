@@ -1,0 +1,15 @@
+{
+  NamedMembers namedMembers=scopeData.getMembersCache().get(functionName);
+  if (namedMembers == null) {
+    return Collections.emptySet();
+  }
+  PsiClass functionalInterface=namedMembers.getFunctionalInterface();
+  if (functionalInterface != null) {
+    ClassifierDescriptor classifier=ownerDescriptor.getMemberScope().getClassifier(functionName);
+    if (classifier instanceof ClassDescriptor && SingleAbstractMethodUtils.isFunctionalInterface((ClassDescriptor)classifier)) {
+      SimpleFunctionDescriptor constructorFunction=SingleAbstractMethodUtils.createConstructorFunction((ClassDescriptor)classifier);
+      return Collections.<FunctionDescriptor>singleton(constructorFunction);
+    }
+  }
+  return Collections.emptySet();
+}
