@@ -1,22 +1,22 @@
 {
-  final Set<String> modifiers=modifiersListToModifiersSet(psiClass.getModifierList());
-  final List<Field> fields=fieldsToFieldList(psiClass.getFields(),psiClass);
-  final List<Element> typeParameters=elementsToElementList(psiClass.getTypeParameters());
-  final List<Type> implementsTypes=typesToNotNullableTypeList(psiClass.getImplementsListTypes());
-  final List<Type> extendsTypes=typesToNotNullableTypeList(psiClass.getExtendsListTypes());
-  final IdentifierImpl name=new IdentifierImpl(psiClass.getName());
-  final List<Expression> baseClassParams=new LinkedList<Expression>();
+  Set<String> modifiers=modifiersListToModifiersSet(psiClass.getModifierList());
+  List<Field> fields=fieldsToFieldList(psiClass.getFields(),psiClass);
+  List<Element> typeParameters=elementsToElementList(psiClass.getTypeParameters());
+  List<Type> implementsTypes=typesToNotNullableTypeList(psiClass.getImplementsListTypes());
+  List<Type> extendsTypes=typesToNotNullableTypeList(psiClass.getExtendsListTypes());
+  IdentifierImpl name=new IdentifierImpl(psiClass.getName());
+  List<Expression> baseClassParams=new LinkedList<Expression>();
   List<Member> members=getMembers(psiClass);
-  final SuperVisitor visitor=new SuperVisitor();
+  SuperVisitor visitor=new SuperVisitor();
   psiClass.accept(visitor);
-  final Collection<PsiExpressionList> resolvedSuperCallParameters=visitor.getResolvedSuperCallParameters();
+  Collection<PsiExpressionList> resolvedSuperCallParameters=visitor.getResolvedSuperCallParameters();
   if (resolvedSuperCallParameters.size() == 1) {
     baseClassParams.addAll(expressionsToExpressionList(resolvedSuperCallParameters.toArray(new PsiExpressionList[1])[0].getExpressions()));
   }
   if (!psiClass.isEnum() && !psiClass.isInterface() && psiClass.getConstructors().length > 1 && getPrimaryConstructorForThisCase(psiClass) == null) {
-    final List<Field> finalOrWithEmptyInitializer=getFinalOrWithEmptyInitializer(fields);
-    final Map<String,String> initializers=new HashMap<String,String>();
-    for (    final Member m : members) {
+    List<Field> finalOrWithEmptyInitializer=getFinalOrWithEmptyInitializer(fields);
+    Map<String,String> initializers=new HashMap<String,String>();
+    for (    Member m : members) {
       if (m.getKind() == INode.Kind.CONSTRUCTOR) {
         Function f=(Function)m;
         if (!((Constructor)f).isPrimary()) {
@@ -24,14 +24,14 @@
             String init=getDefaultInitializer(fo);
             initializers.put(fo.getIdentifier().toKotlin(),init);
           }
-          final List<Statement> newStatements=new LinkedList<Statement>();
+          List<Statement> newStatements=new LinkedList<Statement>();
           for (          Statement s : f.getBlock().getStatements()) {
             boolean isRemoved=false;
             if (s.getKind() == INode.Kind.ASSIGNMENT_EXPRESSION) {
-              final AssignmentExpression assignmentExpression=(AssignmentExpression)s;
+              AssignmentExpression assignmentExpression=(AssignmentExpression)s;
               if (assignmentExpression.getLeft().getKind() == INode.Kind.CALL_CHAIN) {
                 for (                Field fo : finalOrWithEmptyInitializer) {
-                  final String id=fo.getIdentifier().toKotlin();
+                  String id=fo.getIdentifier().toKotlin();
                   if (((CallChainExpression)assignmentExpression.getLeft()).getIdentifier().toKotlin().endsWith("." + id)) {
                     initializers.put(id,assignmentExpression.getRight().toKotlin());
                     isRemoved=true;

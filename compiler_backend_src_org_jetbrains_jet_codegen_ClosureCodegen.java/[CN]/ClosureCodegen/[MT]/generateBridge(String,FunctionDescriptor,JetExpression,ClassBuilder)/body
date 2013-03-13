@@ -1,10 +1,10 @@
 {
-  final JvmMethodSignature bridge=erasedInvokeSignature(funDescriptor);
-  final Method delegate=typeMapper.invokeSignature(funDescriptor).getAsmMethod();
+  JvmMethodSignature bridge=erasedInvokeSignature(funDescriptor);
+  Method delegate=typeMapper.invokeSignature(funDescriptor).getAsmMethod();
   if (bridge.getAsmMethod().getDescriptor().equals(delegate.getDescriptor())) {
     return;
   }
-  final MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_BRIDGE | ACC_VOLATILE,"invoke",bridge.getAsmMethod().getDescriptor(),null,new String[0]);
+  MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_BRIDGE | ACC_VOLATILE,"invoke",bridge.getAsmMethod().getDescriptor(),null,new String[0]);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
     genStubCode(mv);
   }
@@ -12,13 +12,13 @@
     mv.visitCode();
     InstructionAdapter iv=new InstructionAdapter(mv);
     iv.load(0,Type.getObjectType(className));
-    final ReceiverParameterDescriptor receiver=funDescriptor.getReceiverParameter();
+    ReceiverParameterDescriptor receiver=funDescriptor.getReceiverParameter();
     int count=1;
     if (receiver != null) {
       StackValue.local(count,OBJECT_TYPE).put(typeMapper.mapType(receiver.getType()),iv);
       count++;
     }
-    final List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
+    List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
     for (    ValueParameterDescriptor param : params) {
       StackValue.local(count,OBJECT_TYPE).put(typeMapper.mapType(param.getType()),iv);
       count++;

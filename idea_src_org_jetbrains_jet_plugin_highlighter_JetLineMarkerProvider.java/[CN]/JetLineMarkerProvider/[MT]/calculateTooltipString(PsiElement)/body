@@ -1,12 +1,12 @@
 {
   JetFile file=(JetFile)element.getContainingFile();
   if (file == null)   return "";
-  final BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file).getBindingContext();
-  final DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
+  BindingContext bindingContext=WholeProjectAnalyzerFacade.analyzeProjectWithCacheOnAFile(file).getBindingContext();
+  DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
   if (!(descriptor instanceof CallableMemberDescriptor)) {
     return "";
   }
-  final Set<? extends CallableMemberDescriptor> overriddenMembers=((CallableMemberDescriptor)descriptor).getOverriddenDescriptors();
+  Set<? extends CallableMemberDescriptor> overriddenMembers=((CallableMemberDescriptor)descriptor).getOverriddenDescriptors();
   if (overriddenMembers.size() == 0) {
     return "";
   }
@@ -14,8 +14,8 @@
   for (  CallableMemberDescriptor function : overriddenMembers) {
     allOverriddenAbstract&=function.getModality() == Modality.ABSTRACT;
   }
-  final String implementsOrOverrides=allOverriddenAbstract ? "implements" : "overrides";
-  final String memberKind=element instanceof JetNamedFunction ? "function" : "property";
+  String implementsOrOverrides=allOverriddenAbstract ? "implements" : "overrides";
+  String memberKind=element instanceof JetNamedFunction ? "function" : "property";
   StringBuilder builder=new StringBuilder();
   builder.append(DescriptorRenderer.HTML.render(descriptor));
   int overrideCount=overriddenMembers.size();

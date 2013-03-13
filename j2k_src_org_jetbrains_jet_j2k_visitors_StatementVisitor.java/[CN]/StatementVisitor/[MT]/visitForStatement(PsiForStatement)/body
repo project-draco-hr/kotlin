@@ -1,18 +1,18 @@
 {
   super.visitForStatement(statement);
-  final PsiStatement initialization=statement.getInitialization();
-  final PsiStatement update=statement.getUpdate();
-  final PsiExpression condition=statement.getCondition();
-  final PsiStatement body=statement.getBody();
-  final PsiLocalVariable firstChild=initialization != null && initialization.getFirstChild() instanceof PsiLocalVariable ? (PsiLocalVariable)initialization.getFirstChild() : null;
+  PsiStatement initialization=statement.getInitialization();
+  PsiStatement update=statement.getUpdate();
+  PsiExpression condition=statement.getCondition();
+  PsiStatement body=statement.getBody();
+  PsiLocalVariable firstChild=initialization != null && initialization.getFirstChild() instanceof PsiLocalVariable ? (PsiLocalVariable)initialization.getFirstChild() : null;
   int bodyWriteCount=countWritingAccesses(firstChild,body);
   int conditionWriteCount=countWritingAccesses(firstChild,condition);
   int updateWriteCount=countWritingAccesses(firstChild,update);
   boolean onceWritableIterator=updateWriteCount == 1 && bodyWriteCount + conditionWriteCount == 0;
-  final IElementType operationTokenType=condition != null && condition instanceof PsiBinaryExpression ? ((PsiBinaryExpression)condition).getOperationTokenType() : null;
+  IElementType operationTokenType=condition != null && condition instanceof PsiBinaryExpression ? ((PsiBinaryExpression)condition).getOperationTokenType() : null;
   if (initialization != null && initialization instanceof PsiDeclarationStatement && initialization.getFirstChild() == initialization.getLastChild() && condition != null && update != null && update.getChildren().length == 1 && isPlusPlusExpression(update.getChildren()[0]) && operationTokenType != null && (operationTokenType == JavaTokenType.LT || operationTokenType == JavaTokenType.LE) && initialization.getFirstChild() != null && initialization.getFirstChild() instanceof PsiLocalVariable && firstChild != null && firstChild.getNameIdentifier() != null && onceWritableIterator) {
-    final Expression end=getConverter().expressionToExpression(((PsiBinaryExpression)condition).getROperand());
-    final Expression endExpression=operationTokenType == JavaTokenType.LT ? new BinaryExpression(end,new IdentifierImpl("1"),"-") : end;
+    Expression end=getConverter().expressionToExpression(((PsiBinaryExpression)condition).getROperand());
+    Expression endExpression=operationTokenType == JavaTokenType.LT ? new BinaryExpression(end,new IdentifierImpl("1"),"-") : end;
     myResult=new ForeachWithRangeStatement(new IdentifierImpl(firstChild.getName()),getConverter().expressionToExpression(firstChild.getInitializer()),endExpression,getConverter().statementToStatement(body));
   }
  else {

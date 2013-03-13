@@ -1,17 +1,17 @@
 {
-  final FunctionDescriptor descriptor=bindingContext.get(BindingContext.FUNCTION,expression);
-  final ClassDescriptor classDescriptor=bindingContext.get(CLASS_FOR_FUNCTION,descriptor);
-  final CalculatedClosure closure=bindingContext.get(CLOSURE,classDescriptor);
+  FunctionDescriptor descriptor=bindingContext.get(BindingContext.FUNCTION,expression);
+  ClassDescriptor classDescriptor=bindingContext.get(CLASS_FOR_FUNCTION,descriptor);
+  CalculatedClosure closure=bindingContext.get(CLOSURE,classDescriptor);
   ClosureCodegen closureCodegen=new ClosureCodegen(state,(MutableClosure)closure).gen(expression,context,this);
-  final JvmClassName className=closureCodegen.name;
-  final Type asmType=className.getAsmType();
+  JvmClassName className=closureCodegen.name;
+  Type asmType=className.getAsmType();
   if (isConst(closure)) {
     v.getstatic(className.getInternalName(),JvmAbi.INSTANCE_FIELD,className.getDescriptor());
   }
  else {
     v.anew(asmType);
     v.dup();
-    final Method cons=closureCodegen.constructor;
+    Method cons=closureCodegen.constructor;
     pushClosureOnStack(closure,false);
     v.invokespecial(className.getInternalName(),"<init>",cons.getDescriptor());
   }
