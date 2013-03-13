@@ -1,7 +1,6 @@
 {
-  ArrayList<Pair<String,Type>> args=new ArrayList<Pair<String,Type>>();
-  calculateConstructorParameters(args,state,closure);
-  Type[] argTypes=nameAnTypeListToTypeArray(args);
+  List<FieldInfo> args=calculateConstructorParameters(typeMapper,bindingContext,state,closure,Type.getObjectType(name.getInternalName()));
+  Type[] argTypes=fieldListToTypeArray(args);
   Method constructor=new Method("<init>",Type.VOID_TYPE,argTypes);
   MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC,"<init>",constructor.getDescriptor(),null,new String[0]);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
@@ -13,13 +12,8 @@
     iv.load(0,funClass.getAsmType());
     iv.invokespecial(funClass.getInternalName(),"<init>","()V");
     int k=1;
-    for (int i=0; i != argTypes.length; ++i) {
-      StackValue.local(0,OBJECT_TYPE).put(OBJECT_TYPE,iv);
-      Pair<String,Type> nameAndType=args.get(i);
-      Type type=nameAndType.second;
-      StackValue.local(k,type).put(type,iv);
-      k+=type.getSize();
-      StackValue.field(type,name,nameAndType.first,false).store(type,iv);
+    for (    FieldInfo fieldInfo : args) {
+      k=AsmUtil.genAssignInstanceFieldFromParam(fieldInfo,k,iv);
     }
     iv.visitInsn(RETURN);
     FunctionCodegen.endVisit(iv,"constructor",fun);
