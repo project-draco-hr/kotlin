@@ -6,6 +6,7 @@
     @Override public void run(){
       try {
         libraryDir=baseDir.createChildDirectory(this,"lib");
+        baseDir.createChildDirectory(this,SRC_DIR_NAME);
       }
  catch (      IOException e) {
         throw new RuntimeException(e);
@@ -26,8 +27,8 @@
   librarySourceDir=LocalFileSystem.getInstance().findFileByPath(SOURCES_PATH);
   assertNotNull(librarySourceDir);
   FileUtil.copyDir(getTempDirWithCompiled(),new File(libraryDir.getPath()));
-  ((NewVirtualFile)libraryDir).markDirtyRecursively();
-  libraryDir.refresh(false,true);
+  ((NewVirtualFile)baseDir).markDirtyRecursively();
+  baseDir.refresh(false,true);
   ApplicationManager.getApplication().runWriteAction(new Runnable(){
     @Override public void run(){
       ModifiableRootModel moduleModel=ModuleRootManager.getInstance(myModule).getModifiableModel();
@@ -37,6 +38,9 @@
         libraryModel.addRoot(librarySourceDir,OrderRootType.SOURCES);
       }
       libraryModel.commit();
+      VirtualFile srcDir=baseDir.findChild(SRC_DIR_NAME);
+      assertNotNull(srcDir);
+      moduleModel.addContentEntry(srcDir).addSourceFolder(srcDir,false);
       moduleModel.commit();
     }
   }
