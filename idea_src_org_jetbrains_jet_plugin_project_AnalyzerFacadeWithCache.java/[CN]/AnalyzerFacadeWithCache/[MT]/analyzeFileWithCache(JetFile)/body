@@ -1,25 +1,31 @@
 {
 synchronized (lock) {
-    return CachedValuesManager.getManager(file.getProject()).getCachedValue(file,ANALYZE_EXHAUST_FULL,new CachedValueProvider<AnalyzeExhaust>(){
-      @Override public Result<AnalyzeExhaust> compute(){
-        try {
-          if (DumbService.isDumb(file.getProject())) {
-            return new Result<AnalyzeExhaust>(emptyExhaust(),PsiModificationTracker.MODIFICATION_COUNT);
+    Project project=file.getProject();
+    return CachedValuesManager.getManager(project).getCachedValue(project,ANALYZE_EXHAUST_FULL,new CachedValueProvider<SLRUCache<JetFile,AnalyzeExhaust>>(){
+      @Nullable @Override public Result<SLRUCache<JetFile,AnalyzeExhaust>> compute(){
+        SLRUCache<JetFile,AnalyzeExhaust> cache=new SLRUCache<JetFile,AnalyzeExhaust>(3,8){
+          @NotNull @Override public AnalyzeExhaust createValue(          JetFile file){
+            try {
+              if (DumbService.isDumb(file.getProject())) {
+                return emptyExhaust();
+              }
+              ApplicationUtils.warnTimeConsuming(LOG);
+              AnalyzeExhaust analyzeExhaustHeaders=analyzeHeadersWithCacheOnFile(file);
+              return analyzeBodies(analyzeExhaustHeaders,file);
+            }
+ catch (            ProcessCanceledException e) {
+              throw e;
+            }
+catch (            Throwable e) {
+              handleError(e);
+              return emptyExhaustWithDiagnosticOnFile(file,e);
+            }
           }
-          ApplicationUtils.warnTimeConsuming(LOG);
-          AnalyzeExhaust analyzeExhaustHeaders=analyzeHeadersWithCacheOnFile(file);
-          AnalyzeExhaust exhaust=analyzeBodies(analyzeExhaustHeaders,file);
-          return new Result<AnalyzeExhaust>(exhaust,PsiModificationTracker.MODIFICATION_COUNT);
         }
- catch (        ProcessCanceledException e) {
-          throw e;
-        }
-catch (        Throwable e) {
-          handleError(e);
-          return emptyExhaustWithDiagnosticOnFile(file,e);
-        }
+;
+        return Result.create(cache,PsiModificationTracker.MODIFICATION_COUNT);
       }
     }
-,false);
+,false).get(file);
   }
 }
