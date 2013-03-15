@@ -1,14 +1,14 @@
 {
   if (selectorExpression instanceof JetCallExpression) {
-    return getCallExpressionTypeInfoForCallWithoutFinalTypeCheck((JetCallExpression)selectorExpression,receiver,callOperationNode,context,resolveMode,resolutionResultsCache);
+    return getCallExpressionTypeInfoWithoutFinalTypeCheck((JetCallExpression)selectorExpression,receiver,callOperationNode,context,resolveMode,resolutionResultsCache);
   }
  else   if (selectorExpression instanceof JetSimpleNameExpression) {
-    return TypeInfoForCall.create(getSimpleNameExpressionTypeInfo((JetSimpleNameExpression)selectorExpression,receiver,callOperationNode,context));
+    return getSimpleNameExpressionTypeInfo((JetSimpleNameExpression)selectorExpression,receiver,callOperationNode,context);
   }
  else   if (selectorExpression instanceof JetQualifiedExpression) {
     JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)selectorExpression;
     JetExpression newReceiverExpression=qualifiedExpression.getReceiverExpression();
-    TypeInfoForCall newReceiverTypeInfo=getSelectorReturnTypeInfo(receiver,callOperationNode,newReceiverExpression,context.replaceExpectedType(NO_EXPECTED_TYPE),resolveMode,resolutionResultsCache);
+    JetTypeInfo newReceiverTypeInfo=getSelectorReturnTypeInfo(receiver,callOperationNode,newReceiverExpression,context.replaceExpectedType(NO_EXPECTED_TYPE),resolveMode,resolutionResultsCache);
     JetType newReceiverType=newReceiverTypeInfo.getType();
     DataFlowInfo newReceiverDataFlowInfo=newReceiverTypeInfo.getDataFlowInfo();
     JetExpression newSelectorExpression=qualifiedExpression.getSelectorExpression();
@@ -20,5 +20,5 @@
  else {
     context.trace.report(ILLEGAL_SELECTOR.on(selectorExpression,selectorExpression.getText()));
   }
-  return TypeInfoForCall.create(null,context.dataFlowInfo);
+  return JetTypeInfo.create(null,context.dataFlowInfo);
 }
