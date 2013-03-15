@@ -1,0 +1,24 @@
+{
+  if (fun instanceof PropertyAccessorDescriptor) {
+    PropertyDescriptor property=((PropertyAccessorDescriptor)fun).getCorrespondingProperty();
+    PropertyDescriptor original=property.getOriginal();
+    if (fun instanceof PropertyGetterDescriptor) {
+      JvmPropertyAccessorSignature function=typeMapper.mapGetterSignature(property,OwnerKind.IMPLEMENTATION);
+      JvmPropertyAccessorSignature functionOriginal=typeMapper.mapGetterSignature(original,OwnerKind.IMPLEMENTATION);
+      return new TraitImplDelegateInfo(function.getJvmMethodSignature().getAsmMethod(),functionOriginal.getJvmMethodSignature().getAsmMethod());
+    }
+ else     if (fun instanceof PropertySetterDescriptor) {
+      JvmPropertyAccessorSignature function=typeMapper.mapSetterSignature(property,OwnerKind.IMPLEMENTATION);
+      JvmPropertyAccessorSignature functionOriginal=typeMapper.mapSetterSignature(original,OwnerKind.IMPLEMENTATION);
+      return new TraitImplDelegateInfo(function.getJvmMethodSignature().getAsmMethod(),functionOriginal.getJvmMethodSignature().getAsmMethod());
+    }
+ else {
+      throw new IllegalStateException("Accessor is neither getter, nor setter, what is it? " + fun);
+    }
+  }
+ else {
+    Method function=typeMapper.mapSignature(fun.getName(),fun).getAsmMethod();
+    Method functionOriginal=typeMapper.mapSignature(fun.getName(),fun.getOriginal()).getAsmMethod();
+    return new TraitImplDelegateInfo(function,functionOriginal);
+  }
+}
