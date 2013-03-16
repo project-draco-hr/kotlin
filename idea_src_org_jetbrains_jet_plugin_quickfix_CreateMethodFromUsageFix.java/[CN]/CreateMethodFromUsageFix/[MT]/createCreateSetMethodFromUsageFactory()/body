@@ -1,0 +1,25 @@
+{
+  return new JetIntentionActionFactory(){
+    @Nullable @Override public IntentionAction createAction(    Diagnostic diagnostic){
+      JetArrayAccessExpression accessExpr=QuickFixUtil.getParentElementOfType(diagnostic,JetArrayAccessExpression.class);
+      if (accessExpr == null)       return null;
+      JetExpression arrayExpr=accessExpr.getArrayExpression();
+      TypeOrExpressionThereof arrayType=new TypeOrExpressionThereof(arrayExpr);
+      List<Parameter> parameters=new ArrayList<Parameter>();
+      for (      JetExpression indexExpr : accessExpr.getIndexExpressions()) {
+        if (indexExpr == null)         return null;
+        TypeOrExpressionThereof indexType=new TypeOrExpressionThereof(indexExpr);
+        parameters.add(new Parameter(null,indexType));
+      }
+      JetBinaryExpression assignmentExpr=QuickFixUtil.getParentElementOfType(diagnostic,JetBinaryExpression.class);
+      if (assignmentExpr == null)       return null;
+      JetExpression rhs=assignmentExpr.getRight();
+      if (rhs == null)       return null;
+      TypeOrExpressionThereof valType=new TypeOrExpressionThereof(rhs);
+      parameters.add(new Parameter("value",valType));
+      TypeOrExpressionThereof returnType=new TypeOrExpressionThereof(KotlinBuiltIns.getInstance().getUnitType());
+      return new CreateMethodFromUsageFix(accessExpr,arrayType,"set",returnType,parameters);
+    }
+  }
+;
+}
