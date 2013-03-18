@@ -1,6 +1,9 @@
 {
   PsiBuilder.Marker expression=mark();
-  parseAtomicExpression();
+  boolean callableReference=parseCallableReferenceExpression();
+  if (!callableReference) {
+    parseAtomicExpression();
+  }
   while (true) {
     if (interruptedWithNewLine()) {
       break;
@@ -9,7 +12,7 @@
       parseArrayAccess();
       expression.done(ARRAY_ACCESS_EXPRESSION);
     }
- else     if (parseCallSuffix()) {
+ else     if (!callableReference && parseCallSuffix()) {
       expression.done(CALL_EXPRESSION);
     }
  else     if (at(DOT)) {
