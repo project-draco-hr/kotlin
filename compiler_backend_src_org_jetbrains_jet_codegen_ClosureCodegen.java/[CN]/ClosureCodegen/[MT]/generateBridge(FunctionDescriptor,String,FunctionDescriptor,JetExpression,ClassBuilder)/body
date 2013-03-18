@@ -1,0 +1,31 @@
+{
+  Method bridge=typeMapper.mapSignature(interfaceFunction.getName(),interfaceFunction).getAsmMethod();
+  Method delegate=typeMapper.mapSignature(interfaceFunction.getName(),funDescriptor).getAsmMethod();
+  if (bridge.getDescriptor().equals(delegate.getDescriptor())) {
+    return;
+  }
+  MethodVisitor mv=cv.newMethod(fun,ACC_PUBLIC | ACC_BRIDGE | ACC_VOLATILE,interfaceFunction.getName().getName(),bridge.getDescriptor(),null,new String[0]);
+  if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
+    genStubCode(mv);
+  }
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    mv.visitCode();
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    iv.load(0,Type.getObjectType(className));
+    ReceiverParameterDescriptor receiver=funDescriptor.getReceiverParameter();
+    int count=1;
+    if (receiver != null) {
+      StackValue.local(count,bridge.getArgumentTypes()[count - 1]).put(typeMapper.mapType(receiver.getType()),iv);
+      count++;
+    }
+    List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
+    for (    ValueParameterDescriptor param : params) {
+      StackValue.local(count,bridge.getArgumentTypes()[count - 1]).put(typeMapper.mapType(param.getType()),iv);
+      count++;
+    }
+    iv.invokevirtual(className,interfaceFunction.getName().getName(),delegate.getDescriptor());
+    StackValue.onStack(delegate.getReturnType()).put(bridge.getReturnType(),iv);
+    iv.areturn(bridge.getReturnType());
+    FunctionCodegen.endVisit(mv,"bridge",fun);
+  }
+}
