@@ -2,20 +2,21 @@
   if (!super.isAvailable(project,editor,file)) {
     return false;
   }
-  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject().getBindingContext();
-  AnnotationDescriptor annotationDescriptor=context.get(BindingContext.ANNOTATION,annotationEntry);
-  if (annotationDescriptor == null) {
+  JetTypeReference typeReference=annotationEntry.getTypeReference();
+  if (typeReference == null) {
     return false;
   }
-  annotationType=annotationDescriptor.getType();
-  DeclarationDescriptor declarationDescriptor=annotationType.getConstructor().getDeclarationDescriptor();
-  if (declarationDescriptor == null) {
+  JetSimpleNameExpression referenceExpression=PsiTreeUtil.findChildOfType(typeReference,JetSimpleNameExpression.class);
+  if (referenceExpression == null) {
     return false;
   }
-  PsiElement declaration=BindingContextUtils.descriptorToDeclaration(context,declarationDescriptor);
-  if (declaration instanceof JetClass) {
-    annotationClass=(JetClass)declaration;
-    return annotationClass.isWritable();
+  PsiReference reference=referenceExpression.getReference();
+  if (reference != null) {
+    PsiElement target=reference.resolve();
+    if (target instanceof JetClass) {
+      annotationClass=(JetClass)target;
+      return annotationClass.isWritable();
+    }
   }
   return false;
 }
