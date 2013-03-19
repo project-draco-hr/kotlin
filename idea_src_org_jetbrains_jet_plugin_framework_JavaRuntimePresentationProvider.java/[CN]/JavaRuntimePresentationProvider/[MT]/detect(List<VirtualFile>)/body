@@ -1,7 +1,14 @@
 {
   VirtualFile stdJar=getRuntimeJar(classesRoots);
   if (stdJar != null) {
-    return new LibraryVersionProperties(KotlinRuntimeLibraryUtil.getLibraryVersion(stdJar));
+    try {
+      JarFile zipFile=JarFileSystem.getInstance().getJarFile(stdJar);
+      String version=JarVersionDetectionUtil.detectJarVersion(zipFile);
+      return new LibraryVersionProperties(version);
+    }
+ catch (    IOException e) {
+      return null;
+    }
   }
   return null;
 }
