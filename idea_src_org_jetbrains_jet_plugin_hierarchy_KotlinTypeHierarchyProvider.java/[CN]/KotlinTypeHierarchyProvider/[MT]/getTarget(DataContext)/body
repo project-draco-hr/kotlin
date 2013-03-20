@@ -1,0 +1,48 @@
+{
+  Project project=PlatformDataKeys.PROJECT.getData(dataContext);
+  if (project == null)   return null;
+  Editor editor=PlatformDataKeys.EDITOR.getData(dataContext);
+  if (editor != null) {
+    PsiFile file=PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (!(file instanceof JetFile))     return null;
+    PsiElement target=TargetElementUtilBase.findTargetElement(editor,TargetElementUtilBase.getInstance().getAllAccepted());
+    if (target instanceof PsiClass) {
+      return target;
+    }
+    if (target instanceof JetClassOrObject) {
+      return JetSourceNavigationHelper.getOriginalPsiClassOrCreateLightClass((JetClassOrObject)target);
+    }
+ else     if (target instanceof JetNamedFunction) {
+      JetNamedFunction function=(JetNamedFunction)target;
+      String functionName=function.getName();
+      FunctionDescriptor functionDescriptor=KotlinCacheManager.getInstance(project).getDeclarationsFromProject().getBindingContext().get(BindingContext.FUNCTION,target);
+      if (functionDescriptor != null) {
+        JetType type=functionDescriptor.getReturnType();
+        if (type != null) {
+          String returnTypeText=DescriptorRenderer.TEXT.renderType(type);
+          if (returnTypeText.equals(functionName)) {
+            Collection<JetClassOrObject> classOrObjects=JetShortClassNameIndex.getInstance().get(functionName,project,GlobalSearchScope.allScope(project));
+            if (classOrObjects.size() == 1) {
+              JetClassOrObject classOrObject=classOrObjects.iterator().next();
+              return JetSourceNavigationHelper.getOriginalPsiClassOrCreateLightClass(classOrObject);
+            }
+          }
+        }
+      }
+    }
+    int offset=editor.getCaretModel().getOffset();
+    PsiElement element=file.findElementAt(offset);
+    if (element == null)     return null;
+    JetClassOrObject classOrObject=PsiTreeUtil.getParentOfType(element,JetClassOrObject.class);
+    if (classOrObject != null) {
+      return JetSourceNavigationHelper.getOriginalPsiClassOrCreateLightClass(classOrObject);
+    }
+  }
+ else {
+    PsiElement element=LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element instanceof JetClassOrObject) {
+      return JetSourceNavigationHelper.getOriginalPsiClassOrCreateLightClass((JetClassOrObject)element);
+    }
+  }
+  return null;
+}

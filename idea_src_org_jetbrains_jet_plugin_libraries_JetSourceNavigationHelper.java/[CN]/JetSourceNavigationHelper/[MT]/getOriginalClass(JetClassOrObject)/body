@@ -1,0 +1,34 @@
+{
+  JvmClassName className=PsiCodegenPredictor.getPredefinedJvmClassName(classOrObject);
+  if (className == null) {
+    return null;
+  }
+  String fqName=className.getFqName().getFqName();
+  JetFile file=(JetFile)classOrObject.getContainingFile();
+  VirtualFile vFile=file.getVirtualFile();
+  Project project=file.getProject();
+  final ProjectFileIndex idx=ProjectRootManager.getInstance(project).getFileIndex();
+  if (vFile == null || !idx.isInLibrarySource(vFile))   return null;
+  final Set<OrderEntry> orderEntries=new THashSet<OrderEntry>(idx.getOrderEntriesForFile(vFile));
+  PsiClass original=JavaPsiFacade.getInstance(project).findClass(fqName,new GlobalSearchScope(project){
+    @Override public int compare(    VirtualFile file1,    VirtualFile file2){
+      return 0;
+    }
+    @Override public boolean contains(    VirtualFile file){
+      List<OrderEntry> entries=idx.getOrderEntriesForFile(file);
+      for (int i=0; i < entries.size(); i++) {
+        final OrderEntry entry=entries.get(i);
+        if (orderEntries.contains(entry))         return true;
+      }
+      return false;
+    }
+    @Override public boolean isSearchInModuleContent(    @NotNull Module aModule){
+      return false;
+    }
+    @Override public boolean isSearchInLibraries(){
+      return true;
+    }
+  }
+);
+  return original;
+}
