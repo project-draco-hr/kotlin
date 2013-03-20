@@ -1,8 +1,14 @@
 {
-  return !LibraryDetectionManager.getInstance().processProperties(classesRoots,new LibraryDetectionManager.LibraryPropertiesProcessor(){
+  final Ref<T> propertiesRef=new Ref<T>();
+  LibraryDetectionManager.getInstance().processProperties(classesRoots,new LibraryDetectionManager.LibraryPropertiesProcessor(){
     @Override public <P extends LibraryProperties>boolean processProperties(    @NotNull LibraryKind processedKind,    @NotNull P properties){
-      return !libraryKind.equals(processedKind);
+      if (libraryKind.equals(processedKind)) {
+        propertiesRef.set((T)properties);
+        return false;
+      }
+      return true;
     }
   }
 );
+  return propertiesRef.get();
 }
