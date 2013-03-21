@@ -3,17 +3,6 @@
   if (namedMembers == null) {
     return Collections.emptySet();
   }
-  PsiClass functionalInterface=namedMembers.getFunctionalInterface();
-  if (functionalInterface != null) {
-    ClassifierDescriptor classifier=ownerDescriptor.getMemberScope().getClassifier(functionName);
-    if (classifier instanceof ClassDescriptor) {
-      ClassDescriptor klass=(ClassDescriptor)classifier;
-      if (SingleAbstractMethodUtils.isFunctionalInterface(klass)) {
-        SimpleFunctionDescriptor constructorFunction=SingleAbstractMethodUtils.createConstructorFunction(klass);
-        trace.record(BindingContext.SAM_CONSTRUCTOR_TO_TRAIT,constructorFunction,klass);
-        return Collections.<FunctionDescriptor>singleton(constructorFunction);
-      }
-    }
-  }
-  return Collections.emptySet();
+  SimpleFunctionDescriptor samConstructor=resolveSamConstructor(ownerDescriptor,namedMembers);
+  return samConstructor == null ? Collections.<FunctionDescriptor>emptySet() : Collections.<FunctionDescriptor>singleton(samConstructor);
 }
