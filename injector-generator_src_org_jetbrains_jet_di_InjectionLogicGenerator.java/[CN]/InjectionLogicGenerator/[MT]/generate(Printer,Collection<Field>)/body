@@ -1,5 +1,17 @@
 {
-  for (  Field field : fields) {
+  List<Field> topOrder=DFS.topologicalOrder(fields,new DFS.Neighbors<Field>(){
+    @NotNull @Override public Iterable<Field> getNeighbors(    Field current){
+      Expression initialization=current.getInitialization();
+      if (initialization instanceof ConstructorCall) {
+        ConstructorCall call=(ConstructorCall)initialization;
+        return call.getConstructorArguments();
+      }
+      return Collections.emptyList();
+    }
+  }
+);
+  Collections.reverse(topOrder);
+  for (  Field field : topOrder) {
     p.println(prefixForInitialization(field),field.getName()," = ",field.getInitialization().renderAsCode(),";");
   }
   p.printlnWithNoIndent();
