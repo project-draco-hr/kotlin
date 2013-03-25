@@ -1,6 +1,15 @@
 {
   signatureWriter.visitTypeArgument(variance);
   Type rawRetType=typeMapper.mapType(type,JetTypeMapperMode.TYPE_PARAMETER);
-  signatureWriter.visitClassType(rawRetType.getInternalName());
+  while (rawRetType.getSort() == Type.ARRAY) {
+    signatureWriter.visitArrayType();
+    rawRetType=rawRetType.getElementType();
+  }
+  if (rawRetType.getSort() == Type.OBJECT) {
+    signatureWriter.visitClassType(rawRetType.getInternalName());
+  }
+ else {
+    signatureWriter.visitBaseType(rawRetType.getDescriptor().charAt(0));
+  }
   signatureWriter.visitEnd();
 }
