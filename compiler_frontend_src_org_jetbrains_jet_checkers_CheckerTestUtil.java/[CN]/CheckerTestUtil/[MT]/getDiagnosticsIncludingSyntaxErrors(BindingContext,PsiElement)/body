@@ -1,6 +1,11 @@
 {
   ArrayList<Diagnostic> diagnostics=new ArrayList<Diagnostic>();
-  diagnostics.addAll(bindingContext.getDiagnostics());
+  diagnostics.addAll(Collections2.filter(bindingContext.getDiagnostics(),new Predicate<Diagnostic>(){
+    @Override public boolean apply(    Diagnostic diagnostic){
+      return PsiTreeUtil.isAncestor(root,diagnostic.getPsiElement(),false);
+    }
+  }
+));
   for (  PsiErrorElement errorElement : AnalyzingUtils.getSyntaxErrorRanges(root)) {
     diagnostics.add(new SyntaxErrorDiagnostic(errorElement));
   }
