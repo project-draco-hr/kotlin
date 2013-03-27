@@ -1,4 +1,14 @@
 {
-  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.INSTANCE.analyzeFiles(project,JetFilesProvider.getInstance(project).allInScope(GlobalSearchScope.allScope(project)),Collections.<AnalyzerScriptParameter>emptyList(),Predicates.<PsiFile>alwaysFalse());
-  return Result.<KotlinDeclarationsCache>create(new KotlinDeclarationsCacheImpl(analyzeExhaust),PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+synchronized (declarationAnalysisLock) {
+    BindingTraceContext trace=new BindingTraceContext();
+    incompleteTrace=trace;
+    AnalyzeExhaust analyzeExhaust;
+    try {
+      analyzeExhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(project,JetFilesProvider.getInstance(project).allInScope(GlobalSearchScope.allScope(project)),trace,Collections.<AnalyzerScriptParameter>emptyList(),Predicates.<PsiFile>alwaysFalse(),true);
+    }
+  finally {
+      incompleteTrace=null;
+    }
+    return Result.<KotlinDeclarationsCache>create(new KotlinDeclarationsCacheImpl(analyzeExhaust),PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  }
 }
