@@ -1,6 +1,6 @@
 {
   ReceiverValue explicitReceiver=context.call.getExplicitReceiver();
-  final JetScope scope;
+  JetScope scope;
   if (explicitReceiver.exists() && explicitReceiver.getType() instanceof NamespaceType) {
     scope=explicitReceiver.getType().getMemberScope();
     explicitReceiver=NO_RECEIVER;
@@ -8,8 +8,11 @@
  else {
     scope=context.scope;
   }
-  Predicate<ResolutionCandidate<D>> visibleStrategy=new Predicate<ResolutionCandidate<D>>(){
-    @Override public boolean apply(    @Nullable ResolutionCandidate<D> call){
+  ResolutionTaskHolder.PriorityProvider<ResolutionCandidate<D>> visibleStrategy=new ResolutionTaskHolder.PriorityProvider<ResolutionCandidate<D>>(){
+    @Override public int getPriority(    ResolutionCandidate<D> call){
+      return isVisible(call) ? 1 : 0;
+    }
+    private boolean isVisible(    ResolutionCandidate<D> call){
       if (call == null)       return false;
       D candidateDescriptor=call.getDescriptor();
       if (ErrorUtils.isError(candidateDescriptor))       return true;

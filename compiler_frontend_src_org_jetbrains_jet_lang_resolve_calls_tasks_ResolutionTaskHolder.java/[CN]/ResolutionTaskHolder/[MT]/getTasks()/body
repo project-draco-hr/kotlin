@@ -11,9 +11,15 @@
       candidateList.addAll(members);
     }
     candidateList.addAll(nonLocalExtensions);
-    for (    Predicate<ResolutionCandidate<D>> visibilityStrategy : Lists.newArrayList(visibleStrategy,Predicates.not(visibleStrategy))) {
+    for (int priority=MAX_PRIORITY; priority >= MIN_PRIORITY; priority--) {
+      final int finalPriority=priority;
       for (      Collection<ResolutionCandidate<D>> candidates : candidateList) {
-        Collection<ResolutionCandidate<D>> filteredCandidates=Collections2.filter(candidates,visibilityStrategy);
+        Collection<ResolutionCandidate<D>> filteredCandidates=Collections2.filter(candidates,new Predicate<ResolutionCandidate<D>>(){
+          @Override public boolean apply(          @Nullable ResolutionCandidate<D> input){
+            return finalPriority == priorityProvider.getPriority(input);
+          }
+        }
+);
         if (!filteredCandidates.isEmpty()) {
           tasks.add(new ResolutionTask<D,F>(filteredCandidates,reference,basicCallResolutionContext));
         }
