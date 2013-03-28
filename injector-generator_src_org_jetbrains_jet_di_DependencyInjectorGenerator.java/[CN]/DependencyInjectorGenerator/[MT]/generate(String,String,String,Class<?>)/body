@@ -1,17 +1,6 @@
 {
   String outputFileName=targetSourceRoot + "/" + injectorPackageName.replace(".","/")+ "/"+ injectorClassName+ ".java";
   File file=new File(outputFileName);
-  boolean useTmpfile=!SystemInfo.isWindows;
-  File tmpfile=useTmpfile ? new File(outputFileName + ".tmp") : file;
-  File parentFile=file.getParentFile();
-  if (!parentFile.exists()) {
-    if (parentFile.mkdirs()) {
-      System.out.println("Directory created: " + parentFile.getAbsolutePath());
-    }
- else {
-      throw new IllegalStateException("Cannot create directory: " + parentFile);
-    }
-  }
   fields.addAll(dependencies.satisfyDependencies());
   StringBuilder preamble=new StringBuilder();
   generatePreamble(injectorPackageName,new Printer(preamble));
@@ -41,13 +30,5 @@
   StringBuilder text=new StringBuilder(preamble);
   text.append(imports);
   text.append(body);
-  FileUtil.writeToFile(tmpfile,text.toString());
-  System.out.println("File written: " + tmpfile.getAbsolutePath());
-  if (useTmpfile) {
-    if (!tmpfile.renameTo(file)) {
-      throw new RuntimeException("failed to rename " + tmpfile + " to "+ file);
-    }
-    System.out.println("Renamed " + tmpfile + " to "+ file);
-  }
-  System.out.println();
+  GeneratorsFileUtil.writeFileIfContentChanged(file,text.toString());
 }
