@@ -1,23 +1,9 @@
 {
   FunctionDescriptor functionDescriptor=(FunctionDescriptor)bindingContext.get(DECLARATION_TO_DESCRIPTOR,function);
   if (functionDescriptor == null)   return;
-  DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
-  if (containingDeclaration instanceof ClassDescriptor) {
-    nameStack.push(peekFromStack(nameStack) + '$' + function.getName());
-    super.visitNamedFunction(function);
-    nameStack.pop();
-  }
- else   if (containingDeclaration instanceof NamespaceDescriptor) {
-    String peek=peekFromStack(nameStack);
-    FqName qualifiedName=((NamespaceDescriptor)containingDeclaration).getFqName();
-    String packageClassName=PackageClassUtils.getPackageClassName(qualifiedName);
-    if (peek.isEmpty()) {
-      peek=packageClassName;
-    }
- else {
-      peek+="/" + packageClassName;
-    }
-    nameStack.push(peek + '$' + function.getName());
+  String nameForClassOrNamespaceMember=getNameForClassOrNamespaceMember(functionDescriptor);
+  if (nameForClassOrNamespaceMember != null) {
+    nameStack.push(nameForClassOrNamespaceMember);
     super.visitNamedFunction(function);
     nameStack.pop();
   }
