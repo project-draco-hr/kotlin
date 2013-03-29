@@ -1,11 +1,18 @@
 {
-  if (jdkAnnotationsPath != null)   return jdkAnnotationsPath;
-  try {
-    jdkAnnotationsPath=extractJdkAnnotations();
-    if (jdkAnnotationsPath == null)     throw new RuntimeException("Can't find kotlin jdk annotations in maven plugin resources");
+  final ClassLoader classLoader=getClass().getClassLoader();
+  if (!(classLoader instanceof URLClassLoader)) {
+    throw new RuntimeException("Kotlin plugin`s classloader is not URLClassLoader");
   }
- catch (  IOException e) {
-    throw new RuntimeException(e);
+  final URLClassLoader urlClassLoader=(URLClassLoader)classLoader;
+  for (  URL url : urlClassLoader.getURLs()) {
+    final String path=url.getPath();
+    if (StringUtil.isEmpty(path)) {
+      continue;
+    }
+    final File file=new File(path);
+    if (file.getName().startsWith("kotlin-jdk-annotations")) {
+      return file;
+    }
   }
-  return jdkAnnotationsPath;
+  throw new RuntimeException("Could not get jdk annotations from Kotlin plugin`s classpath");
 }
