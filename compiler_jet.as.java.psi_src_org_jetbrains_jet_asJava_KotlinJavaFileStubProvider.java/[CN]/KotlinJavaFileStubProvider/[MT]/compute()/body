@@ -1,17 +1,19 @@
 {
+  FqName packageFqName=stubGenerationStrategy.getPackageFqName();
+  Collection<JetFile> files=stubGenerationStrategy.getFiles();
   checkForBuiltIns(packageFqName,files);
   LightClassConstructionContext context=LightClassGenerationSupport.getInstance(project).analyzeRelevantCode(files);
   Throwable error=context.getError();
   if (error != null) {
     throw new IllegalStateException("failed to analyze: " + error,error);
   }
-  PsiJavaFileStub javaFileStub=createJavaFileStub(getRepresentativeVirtualFile(files));
+  PsiJavaFileStub javaFileStub=createJavaFileStub(packageFqName,getRepresentativeVirtualFile(files));
   try {
     Stack<StubElement> stubStack=new Stack<StubElement>();
     stubStack.push(javaFileStub);
     GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getBindingContext(),Lists.newArrayList(files),BuiltinToJavaTypesMapping.ENABLED,false,false,stubGenerationStrategy.generateDeclaredClasses());
     state.beforeCompile();
-    stubGenerationStrategy.generate(state);
+    stubGenerationStrategy.generate(state,files);
     StubElement pop=stubStack.pop();
     if (pop != javaFileStub) {
       LOG.error("Unbalanced stack operations: " + pop);
