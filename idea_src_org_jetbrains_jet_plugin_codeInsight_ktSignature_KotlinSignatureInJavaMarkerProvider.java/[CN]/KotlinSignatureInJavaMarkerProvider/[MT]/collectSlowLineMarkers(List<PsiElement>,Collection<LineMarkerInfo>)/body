@@ -6,11 +6,9 @@
   if (!isMarkersEnabled(project)) {
     return;
   }
-  KotlinDeclarationsCache declarationsCache=KotlinCacheManager.getInstance(project).getDeclarationsFromProject(TargetPlatform.JVM);
-  BindingContext bindingContext=declarationsCache.getBindingContext();
-  DelegatingBindingTrace bindingTrace=new DelegatingBindingTrace(bindingContext,"wrapped context of declarations cache");
-  InjectorForJavaDescriptorResolver injector=new InjectorForJavaDescriptorResolver(project,bindingTrace,new ModuleDescriptor(Name.special("<fake>")));
+  InjectorForJavaDescriptorResolver injector=createInjector(project);
   JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
+  BindingTrace trace=injector.getBindingTrace();
   for (  PsiElement element : elements) {
     if (!(element instanceof PsiMember)) {
       continue;
@@ -19,9 +17,9 @@
     if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
       continue;
     }
-    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,bindingContext);
+    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,trace);
     if (memberDescriptor == null)     continue;
-    List<String> errors=bindingContext.get(BindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
+    List<String> errors=trace.get(BindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
     boolean hasSignatureAnnotation=findKotlinSignatureAnnotation(element) != null;
     if (errors != null || hasSignatureAnnotation) {
       result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
