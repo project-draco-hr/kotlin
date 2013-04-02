@@ -1,0 +1,27 @@
+{
+  JetSimpleNameExpression reference=expression.getCallableReference();
+  boolean[] result=new boolean[1];
+  FunctionDescriptor descriptor=resolveCallableReferenceTarget(lhsType,context,expression,result);
+  if (!result[0]) {
+    context.trace.report(UNRESOLVED_REFERENCE.on(reference,reference));
+  }
+  if (descriptor == null)   return null;
+  ReceiverParameterDescriptor receiverParameter=descriptor.getReceiverParameter();
+  ReceiverParameterDescriptor expectedThisObject=descriptor.getExpectedThisObject();
+  if (receiverParameter != null && expectedThisObject != null) {
+    context.trace.report(UNRESOLVED_REFERENCE.on(reference,reference));
+    return null;
+  }
+  JetType receiverType=null;
+  if (receiverParameter != null) {
+    receiverType=receiverParameter.getType();
+  }
+ else   if (expectedThisObject != null) {
+    receiverType=expectedThisObject.getType();
+  }
+  JetType type=KotlinBuiltIns.getInstance().getKFunctionType(Collections.<AnnotationDescriptor>emptyList(),receiverType,DescriptorUtils.getValueParametersTypes(descriptor.getValueParameters()),descriptor.getReturnType(),receiverParameter != null);
+  ExpressionAsFunctionDescriptor functionDescriptor=new ExpressionAsFunctionDescriptor(context.scope.getContainingDeclaration(),Name.special("<callable-reference>"));
+  FunctionDescriptorUtil.initializeFromFunctionType(functionDescriptor,type,null,Modality.FINAL,Visibilities.PUBLIC);
+  context.trace.record(CALLABLE_REFERENCE,expression,functionDescriptor);
+  return type;
+}
