@@ -1,0 +1,28 @@
+{
+  return root.accept(new JetVisitor<List<JetExpression>,List<JetExpression>>(){
+    @Override public List<JetExpression> visitExpression(    JetExpression expression,    List<JetExpression> data){
+      data.add(expression);
+      return data;
+    }
+    @Override public List<JetExpression> visitBlockExpression(    JetBlockExpression expression,    List<JetExpression> data){
+      int n=expression.getStatements().size();
+      if (n > 0) {
+        expression.getStatements().get(n - 1).accept(this,data);
+      }
+ else {
+        data.add(expression);
+      }
+      return data;
+    }
+    @SuppressWarnings("ConstantConditions") @Override public List<JetExpression> visitIfExpression(    JetIfExpression expression,    List<JetExpression> data){
+      if (expression.getThen() != null) {
+        expression.getThen().accept(this,data);
+      }
+      if (expression.getElse() != null) {
+        expression.getElse().accept(this,data);
+      }
+      return data;
+    }
+  }
+,new ArrayList<JetExpression>());
+}
