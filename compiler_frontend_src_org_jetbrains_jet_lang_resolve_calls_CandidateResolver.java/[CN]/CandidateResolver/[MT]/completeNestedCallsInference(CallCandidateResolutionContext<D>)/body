@@ -9,7 +9,7 @@
       if (expression == null)       continue;
       JetType effectiveExpectedType=getEffectiveExpectedType(parameterDescriptor,argument);
       JetType expectedType=constraintSystem != null ? constraintSystem.getCurrentSubstitutor().substitute(effectiveExpectedType,Variance.INVARIANT) : effectiveExpectedType;
-      JetVisitor<JetExpression,Void> callExpressionFinder=new JetVisitor<JetExpression,Void>(){
+      JetVisitor<JetExpression,Void> selectorExpressionFinder=new JetVisitor<JetExpression,Void>(){
         @Override public JetExpression visitQualifiedExpression(        JetQualifiedExpression expression,        Void data){
           JetExpression selector=expression.getSelectorExpression();
           return selector != null ? selector.accept(this,null) : null;
@@ -17,14 +17,24 @@
         @Override public JetExpression visitCallExpression(        JetCallExpression expression,        Void data){
           return expression;
         }
+        @Override public JetExpression visitSimpleNameExpression(        JetSimpleNameExpression expression,        Void data){
+          return expression;
+        }
         @Override public JetExpression visitJetElement(        JetElement element,        Void data){
           return null;
         }
       }
 ;
-      JetExpression callExpression=expression.accept(callExpressionFinder,null);
-      if (callExpression == null)       continue;
-      CallCandidateResolutionContext<FunctionDescriptor> storedContextForArgument=context.resolutionResultsCache.getDeferredComputation(CallKey.create(Call.CallType.DEFAULT,callExpression));
+      JetExpression selectorExpression=expression.accept(selectorExpressionFinder,null);
+      if (selectorExpression == null)       continue;
+      if (selectorExpression instanceof JetSimpleNameExpression) {
+        if (expression instanceof JetQualifiedExpression) {
+          JetType type=context.trace.get(BindingContext.EXPRESSION_TYPE,selectorExpression);
+          DataFlowUtils.checkType(type,expression,context.replaceExpectedType(expectedType));
+        }
+        continue;
+      }
+      CallCandidateResolutionContext<FunctionDescriptor> storedContextForArgument=context.resolutionResultsCache.getDeferredComputation(CallKey.create(Call.CallType.DEFAULT,selectorExpression));
       if (storedContextForArgument == null)       continue;
       CallCandidateResolutionContext<FunctionDescriptor> contextForArgument=storedContextForArgument.replaceResolveMode(ResolveMode.TOP_LEVEL_CALL).replaceBindingTrace(context.trace).replaceExpectedType(expectedType);
       JetType type;
