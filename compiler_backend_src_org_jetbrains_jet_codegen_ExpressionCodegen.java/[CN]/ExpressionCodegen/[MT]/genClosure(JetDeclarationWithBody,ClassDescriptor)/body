@@ -1,19 +1,2 @@
 {
-  FunctionDescriptor descriptor=bindingContext.get(BindingContext.FUNCTION,declaration);
-  ClassDescriptor classDescriptor=bindingContext.get(CLASS_FOR_FUNCTION,descriptor);
-  CalculatedClosure closure=bindingContext.get(CLOSURE,classDescriptor);
-  ClosureCodegen closureCodegen=new ClosureCodegen(state,(MutableClosure)closure,samInterfaceClass).gen(declaration,context,this);
-  JvmClassName className=closureCodegen.name;
-  Type asmType=className.getAsmType();
-  if (isConst(closure)) {
-    v.getstatic(className.getInternalName(),JvmAbi.INSTANCE_FIELD,className.getDescriptor());
-  }
- else {
-    v.anew(asmType);
-    v.dup();
-    Method cons=closureCodegen.constructor;
-    pushClosureOnStack(closure,false);
-    v.invokespecial(className.getInternalName(),"<init>",cons.getDescriptor());
-  }
-  return StackValue.onStack(asmType);
 }
