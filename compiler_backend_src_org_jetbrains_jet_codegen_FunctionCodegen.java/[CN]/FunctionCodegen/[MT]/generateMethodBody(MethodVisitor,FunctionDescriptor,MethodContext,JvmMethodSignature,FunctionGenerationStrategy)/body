@@ -1,0 +1,23 @@
+{
+  Collection<String> localVariableNames=new ArrayList<String>();
+  Map<Name,Label> labelsForSharedVars=new HashMap<Name,Label>();
+  mv.visitCode();
+  Label methodBegin=new Label();
+  mv.visitLabel(methodBegin);
+  OwnerKind kind=context.getContextKind();
+  if (kind instanceof OwnerKind.StaticDelegateKind) {
+    generateStaticDelegateMethodBody(mv,signature.getAsmMethod(),(OwnerKind.StaticDelegateKind)kind);
+  }
+ else {
+    FrameMap frameMap=context.prepareFrame(typeMapper);
+    for (    ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
+      frameMap.enter(parameter,typeMapper.mapType(parameter));
+    }
+    labelsForSharedVars.putAll(createSharedVarsForParameters(mv,functionDescriptor,frameMap));
+    genNotNullAssertionsForParameters(new InstructionAdapter(mv),state,functionDescriptor,frameMap);
+    strategy.generateBody(mv,signature,context,localVariableNames,frameMap);
+  }
+  Label methodEnd=new Label();
+  mv.visitLabel(methodEnd);
+  return new MethodInfo(methodBegin,methodEnd,localVariableNames,labelsForSharedVars);
+}
