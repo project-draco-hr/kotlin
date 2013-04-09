@@ -100,12 +100,12 @@
       JetTypeInfo leftTypeInfo=facade.getTypeInfo(left,context);
       JetType leftType=leftTypeInfo.getType();
       dataFlowInfo=leftTypeInfo.getDataFlowInfo();
-      ExpressionTypingContext newContext=contextWithExpectedType.replaceDataFlowInfo(dataFlowInfo).replaceScope(context.scope);
-      JetType rightType=right == null ? null : facade.getTypeInfo(right,newContext).getType();
       if (leftType != null) {
-        if (!leftType.isNullable()) {
+        if (isKnownToBeNotNull(left,leftType,context)) {
           context.trace.report(USELESS_ELVIS.on(left,leftType));
         }
+        ExpressionTypingContext newContext=contextWithExpectedType.replaceDataFlowInfo(dataFlowInfo).replaceScope(context.scope);
+        JetType rightType=right == null ? null : facade.getTypeInfo(right,newContext).getType();
         if (rightType != null) {
           DataFlowUtils.checkType(TypeUtils.makeNullableAsSpecified(leftType,rightType.isNullable()),left,contextWithExpectedType);
           return JetTypeInfo.create(TypeUtils.makeNullableAsSpecified(CommonSupertypes.commonSupertype(Arrays.asList(leftType,rightType)),rightType.isNullable()),dataFlowInfo);
