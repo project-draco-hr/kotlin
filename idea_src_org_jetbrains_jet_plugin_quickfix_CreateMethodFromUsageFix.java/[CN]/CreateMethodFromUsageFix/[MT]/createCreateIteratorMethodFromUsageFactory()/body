@@ -1,7 +1,25 @@
 {
   return new JetIntentionActionFactory(){
     @Nullable @Override public IntentionAction createAction(    Diagnostic diagnostic){
-      return null;
+      PsiFile file=diagnostic.getPsiFile();
+      if (!(file instanceof JetFile))       return null;
+      JetFile jetFile=(JetFile)file;
+      JetForExpression forExpr=QuickFixUtil.getParentElementOfType(diagnostic,JetForExpression.class);
+      if (forExpr == null)       return null;
+      JetExpression iterableExpr=forExpr.getLoopRange();
+      if (iterableExpr == null)       return null;
+      JetExpression variableExpr=forExpr.getLoopParameter();
+      if (variableExpr == null)       return null;
+      TypeOrExpressionThereof iterableType=new TypeOrExpressionThereof(iterableExpr);
+      JetType returnJetType=KotlinBuiltIns.getInstance().getIterator().getDefaultType();
+      BindingContext context=AnalyzerFacadeWithCache.analyzeFileWithCache(jetFile).getBindingContext();
+      JetType[] returnJetTypeParameterTypes=guessTypeForExpression(variableExpr,context);
+      if (returnJetTypeParameterTypes.length != 1)       return null;
+      TypeProjection returnJetTypeParameterType=new TypeProjection(returnJetTypeParameterTypes[0]);
+      List<TypeProjection> returnJetTypeArguments=Collections.singletonList(returnJetTypeParameterType);
+      returnJetType=new JetTypeImpl(returnJetType.getAnnotations(),returnJetType.getConstructor(),returnJetType.isNullable(),returnJetTypeArguments,returnJetType.getMemberScope());
+      TypeOrExpressionThereof returnType=new TypeOrExpressionThereof(returnJetType);
+      return new CreateMethodFromUsageFix(forExpr,iterableType,"next",returnType,new ArrayList<Parameter>());
     }
   }
 ;

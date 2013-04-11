@@ -1,7 +1,13 @@
 {
   return new JetIntentionActionFactory(){
     @Nullable @Override public IntentionAction createAction(    Diagnostic diagnostic){
-      return null;
+      JetForExpression forExpr=QuickFixUtil.getParentElementOfType(diagnostic,JetForExpression.class);
+      if (forExpr == null)       return null;
+      JetExpression iterableExpr=forExpr.getLoopRange();
+      if (iterableExpr == null)       return null;
+      TypeOrExpressionThereof iterableType=new TypeOrExpressionThereof(iterableExpr);
+      TypeOrExpressionThereof returnType=new TypeOrExpressionThereof(KotlinBuiltIns.getInstance().getBooleanType());
+      return new CreateMethodFromUsageFix(forExpr,iterableType,"hasNext",returnType,new ArrayList<Parameter>());
     }
   }
 ;
