@@ -1,6 +1,6 @@
 {
   Name referencedName=expression.getReferencedNameAsName();
-  ClassifierDescriptor classifier=context.scope.getClassifier(referencedName);
+  final ClassifierDescriptor classifier=context.scope.getClassifier(referencedName);
   if (classifier != null) {
     JetType classObjectType=classifier.getClassObjectType();
     if (classObjectType != null) {
@@ -31,7 +31,15 @@
       context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
     }
     context.trace.record(REFERENCE_TARGET,expression,classifier);
-    JetScope scopeForStaticMembersResolution=classifier instanceof ClassDescriptor ? getStaticNestedClassesScope((ClassDescriptor)classifier) : ErrorUtils.createErrorScope("Error scope for type parameter on the left hand side of dot");
+    JetScope scopeForStaticMembersResolution=classifier instanceof ClassDescriptor ? getStaticNestedClassesScope((ClassDescriptor)classifier) : new JetScopeImpl(){
+      @NotNull @Override public DeclarationDescriptor getContainingDeclaration(){
+        return classifier;
+      }
+      @Override public String toString(){
+        return "Scope for the type parameter on the left hand side of dot";
+      }
+    }
+;
     return new NamespaceType(referencedName,scopeForStaticMembersResolution);
   }
   temporaryTrace.commit();
