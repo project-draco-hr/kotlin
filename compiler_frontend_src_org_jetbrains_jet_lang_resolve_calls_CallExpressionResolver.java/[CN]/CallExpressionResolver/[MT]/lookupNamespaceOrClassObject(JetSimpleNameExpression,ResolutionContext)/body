@@ -19,11 +19,19 @@
     return DataFlowUtils.checkType(result[0],expression,context);
   }
   if (classifier != null) {
-    if (context.expressionPosition == ExpressionPosition.FREE) {
+    if (classifier instanceof TypeParameterDescriptor) {
+      if (context.expressionPosition == ExpressionPosition.FREE) {
+        context.trace.report(TYPE_PARAMETER_IS_NOT_AN_EXPRESSION.on(expression,(TypeParameterDescriptor)classifier));
+      }
+ else {
+        context.trace.report(TYPE_PARAMETER_ON_LHS_OF_DOT.on(expression,(TypeParameterDescriptor)classifier));
+      }
+    }
+ else     if (context.expressionPosition == ExpressionPosition.FREE) {
       context.trace.report(NO_CLASS_OBJECT.on(expression,classifier));
     }
     context.trace.record(REFERENCE_TARGET,expression,classifier);
-    JetScope scopeForStaticMembersResolution=classifier instanceof ClassDescriptor ? getStaticNestedClassesScope((ClassDescriptor)classifier) : JetScope.EMPTY;
+    JetScope scopeForStaticMembersResolution=classifier instanceof ClassDescriptor ? getStaticNestedClassesScope((ClassDescriptor)classifier) : ErrorUtils.createErrorScope("Error scope for type parameter on the left hand side of dot");
     return new NamespaceType(referencedName,scopeForStaticMembersResolution);
   }
   temporaryTrace.commit();
