@@ -1,7 +1,14 @@
 {
-  PropertyDescriptor newDescriptor=(PropertyDescriptor)descriptor.copy(descriptor.getContainingDeclaration(),Modality.OPEN,descriptor.getVisibility(),descriptor.getKind(),true);
-  newDescriptor.addOverriddenDescriptor(descriptor);
   StringBuilder bodyBuilder=new StringBuilder();
+  bodyBuilder.append(displayableVisibility(descriptor)).append("override ");
+  if (descriptor.isVar()) {
+    bodyBuilder.append("var ");
+  }
+ else {
+    bodyBuilder.append("val ");
+  }
+  addReceiverParameter(descriptor,bodyBuilder);
+  bodyBuilder.append(descriptor.getName()).append(" : ").append(DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(descriptor.getType()));
   String initializer=CodeInsightUtils.defaultInitializer(descriptor.getType());
   if (initializer != null) {
     bodyBuilder.append(" = ").append(initializer);
@@ -9,5 +16,5 @@
  else {
     bodyBuilder.append(" = ?");
   }
-  return JetPsiFactory.createProperty(project,DescriptorRenderer.SOURCE_CODE.render(newDescriptor) + bodyBuilder.toString());
+  return JetPsiFactory.createProperty(project,bodyBuilder.toString());
 }
