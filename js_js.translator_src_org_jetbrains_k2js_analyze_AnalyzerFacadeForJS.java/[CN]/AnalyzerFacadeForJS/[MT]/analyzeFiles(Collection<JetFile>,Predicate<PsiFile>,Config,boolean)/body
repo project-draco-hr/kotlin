@@ -5,13 +5,13 @@
   TopDownAnalysisParameters topDownAnalysisParameters=new TopDownAnalysisParameters(completely,false,false,Collections.<AnalyzerScriptParameter>emptyList());
   BindingContext libraryBindingContext=config.getLibraryBindingContext();
   BindingTrace trace=libraryBindingContext == null ? new ObservableBindingTrace(new BindingTraceContext()) : new DelegatingBindingTrace(libraryBindingContext,"trace for analyzing library in js");
-  InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,trace,owner,new JsConfiguration(libraryBindingContext));
-  owner.setModuleConfiguration(injector.getModuleConfiguration());
+  owner.setModuleConfiguration(new JsConfiguration(libraryBindingContext));
+  InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,trace,owner);
   try {
     Collection<JetFile> allFiles=libraryBindingContext != null ? files : Config.withJsLibAdded(files,config);
     injector.getTopDownAnalyzer().analyzeFiles(allFiles,Collections.<AnalyzerScriptParameter>emptyList());
     BodiesResolveContext bodiesResolveContext=storeContextForBodiesResolve ? new CachedBodiesResolveContext(injector.getTopDownAnalysisContext()) : null;
-    return AnalyzeExhaust.success(trace.getBindingContext(),bodiesResolveContext,injector.getModuleConfiguration());
+    return AnalyzeExhaust.success(trace.getBindingContext(),bodiesResolveContext,owner);
   }
   finally {
     injector.destroy();
