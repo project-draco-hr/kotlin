@@ -1,2 +1,12 @@
 {
+  return new JetIntentionActionFactory(){
+    @Nullable @Override public IntentionAction createAction(    Diagnostic diagnostic){
+      JetFunction function=QuickFixUtil.getParentElementOfType(diagnostic,JetFunction.class);
+      if (function == null)       return null;
+      BindingContext context=KotlinCacheManagerUtil.getDeclarationsBindingContext(function);
+      JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(context,function);
+      return matchingReturnType == null ? null : new ChangeFunctionReturnTypeFix(function,matchingReturnType);
+    }
+  }
+;
 }
