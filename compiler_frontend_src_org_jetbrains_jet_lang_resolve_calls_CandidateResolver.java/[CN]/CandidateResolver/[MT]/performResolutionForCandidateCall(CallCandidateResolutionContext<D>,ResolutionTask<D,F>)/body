@@ -16,20 +16,22 @@
     context.tracing.invisibleMember(context.trace,candidate);
     return;
   }
-  Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
-  ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
-  if (!argumentMappingStatus.isSuccess()) {
-    if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
-      candidateCall.addStatus(STRONG_ERROR);
-    }
+  if (task.checkArguments == CheckValueArgumentsMode.ENABLED) {
+    Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
+    ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
+    if (!argumentMappingStatus.isSuccess()) {
+      if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
+        candidateCall.addStatus(STRONG_ERROR);
+      }
  else {
-      candidateCall.addStatus(OTHER_ERROR);
+        candidateCall.addStatus(OTHER_ERROR);
+      }
+      if ((argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR && candidate.getTypeParameters().isEmpty()) || argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
+        argumentTypeResolver.checkTypesWithNoCallee(context.toBasic());
+        return;
+      }
+      candidateCall.setUnmappedArguments(unmappedArguments);
     }
-    if ((argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR && candidate.getTypeParameters().isEmpty()) || argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
-      argumentTypeResolver.checkTypesWithNoCallee(context.toBasic());
-      return;
-    }
-    candidateCall.setUnmappedArguments(unmappedArguments);
   }
   List<JetTypeProjection> jetTypeArguments=context.call.getTypeArguments();
   if (jetTypeArguments.isEmpty()) {
