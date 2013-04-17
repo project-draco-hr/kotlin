@@ -1,2 +1,16 @@
 {
+  List<JetProperty> properties=collectPropertiesToInitialize(file);
+  if (properties.isEmpty())   return;
+  MethodVisitor mv=builder.newMethod(file,ACC_PUBLIC | ACC_STATIC,"<clinit>","()V",null,null);
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    mv.visitCode();
+    FrameMap frameMap=new FrameMap();
+    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,CodegenContext.STATIC,state);
+    for (    JetDeclaration declaration : properties) {
+      ImplementationBodyCodegen.initializeProperty(codegen,state.getBindingContext(),new InstructionAdapter(mv),(JetProperty)declaration,true);
+    }
+    mv.visitInsn(RETURN);
+    FunctionCodegen.endVisit(mv,"static initializer for namespace",file);
+    mv.visitEnd();
+  }
 }
