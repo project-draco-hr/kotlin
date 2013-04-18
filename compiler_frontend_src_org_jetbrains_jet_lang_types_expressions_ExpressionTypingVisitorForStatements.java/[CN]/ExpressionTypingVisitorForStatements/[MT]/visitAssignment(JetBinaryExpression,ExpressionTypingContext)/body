@@ -1,6 +1,7 @@
 {
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceScope(scope);
-  JetExpression left=context.expressionTypingServices.deparenthesize(expression.getLeft(),context);
+  JetExpression leftOperand=expression.getLeft();
+  JetExpression left=leftOperand == null ? null : context.expressionTypingServices.deparenthesize(leftOperand,context);
   JetExpression right=expression.getRight();
   if (left instanceof JetArrayAccessExpression) {
     JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
@@ -9,15 +10,15 @@
     BasicExpressionTypingVisitor.checkLValue(context.trace,arrayAccessExpression);
     return JetTypeInfo.create(checkAssignmentType(typeInfo.getType(),expression,contextWithExpectedType),typeInfo.getDataFlowInfo());
   }
-  JetTypeInfo leftInfo=facade.getTypeInfo(expression.getLeft(),context);
+  JetTypeInfo leftInfo=leftOperand != null ? facade.getTypeInfo(leftOperand,context) : JetTypeInfo.create(null,context.dataFlowInfo);
   JetType leftType=leftInfo.getType();
   DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
   if (right != null) {
     JetTypeInfo rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
     dataFlowInfo=rightInfo.getDataFlowInfo();
   }
-  if (leftType != null) {
-    BasicExpressionTypingVisitor.checkLValue(context.trace,expression.getLeft());
+  if (leftType != null && leftOperand != null) {
+    BasicExpressionTypingVisitor.checkLValue(context.trace,leftOperand);
   }
   return DataFlowUtils.checkStatementType(expression,contextWithExpectedType,dataFlowInfo);
 }
