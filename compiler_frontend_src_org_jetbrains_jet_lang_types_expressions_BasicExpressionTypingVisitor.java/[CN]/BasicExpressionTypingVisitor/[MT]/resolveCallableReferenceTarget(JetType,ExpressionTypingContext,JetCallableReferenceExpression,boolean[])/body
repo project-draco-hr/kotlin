@@ -1,2 +1,26 @@
 {
+  JetSimpleNameExpression reference=expression.getCallableReference();
+  if (lhsType == null) {
+    return resolveCallableNotCheckingArguments(reference,NO_RECEIVER,context,result);
+  }
+  ClassifierDescriptor classifier=lhsType.getConstructor().getDeclarationDescriptor();
+  if (!(classifier instanceof ClassDescriptor)) {
+    context.trace.report(CALLABLE_REFERENCE_LHS_NOT_A_CLASS.on(expression));
+    return null;
+  }
+  ReceiverValue receiver=new TransientReceiver(lhsType);
+  TemporaryBindingTrace traceWithReceiver=TemporaryBindingTrace.create(context.trace,"trace to resolve callable reference with receiver",reference);
+  FunctionDescriptor descriptor=resolveCallableNotCheckingArguments(reference,receiver,context.replaceBindingTrace(traceWithReceiver),result);
+  if (result[0]) {
+    traceWithReceiver.commit();
+    return descriptor;
+  }
+  JetScope staticScope=getStaticNestedClassesScope((ClassDescriptor)classifier);
+  TemporaryBindingTrace traceForStatic=TemporaryBindingTrace.create(context.trace,"trace to resolve callable reference in static scope",reference);
+  FunctionDescriptor possibleStaticNestedClassConstructor=resolveCallableNotCheckingArguments(reference,NO_RECEIVER,context.replaceBindingTrace(traceForStatic).replaceScope(staticScope),result);
+  if (result[0]) {
+    traceForStatic.commit();
+    return possibleStaticNestedClassConstructor;
+  }
+  return null;
 }
