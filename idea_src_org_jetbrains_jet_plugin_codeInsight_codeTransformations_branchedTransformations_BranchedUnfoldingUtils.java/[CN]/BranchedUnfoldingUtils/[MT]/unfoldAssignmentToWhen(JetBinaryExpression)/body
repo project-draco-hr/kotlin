@@ -1,2 +1,14 @@
 {
+  Project project=assignment.getProject();
+  String op=assignment.getOperationReference().getText();
+  JetExpression lhs=assignment.getLeft();
+  JetWhenExpression whenExpression=(JetWhenExpression)assignment.getRight();
+  assertNotNull(whenExpression);
+  JetWhenExpression newWhenExpression=(JetWhenExpression)whenExpression.copy();
+  for (  JetWhenEntry entry : newWhenExpression.getEntries()) {
+    JetExpression currExpr=getOutermostLastBlockElement(entry.getExpression());
+    assertNotNull(currExpr);
+    currExpr.replace(JetPsiFactory.createBinaryExpression(project,lhs,op,currExpr));
+  }
+  assignment.replace(newWhenExpression);
 }

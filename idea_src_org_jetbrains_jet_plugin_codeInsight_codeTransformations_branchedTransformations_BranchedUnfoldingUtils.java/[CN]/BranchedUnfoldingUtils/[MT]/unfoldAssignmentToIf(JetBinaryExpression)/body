@@ -1,2 +1,15 @@
 {
+  Project project=assignment.getProject();
+  String op=assignment.getOperationReference().getText();
+  JetExpression lhs=assignment.getLeft();
+  JetIfExpression ifExpression=(JetIfExpression)assignment.getRight();
+  assertNotNull(ifExpression);
+  JetIfExpression newIfExpression=(JetIfExpression)ifExpression.copy();
+  JetExpression thenExpr=getOutermostLastBlockElement(newIfExpression.getThen());
+  JetExpression elseExpr=getOutermostLastBlockElement(newIfExpression.getElse());
+  assertNotNull(thenExpr);
+  assertNotNull(elseExpr);
+  thenExpr.replace(JetPsiFactory.createBinaryExpression(project,lhs,op,thenExpr));
+  elseExpr.replace(JetPsiFactory.createBinaryExpression(project,lhs,op,elseExpr));
+  assignment.replace(newIfExpression);
 }
