@@ -1,7 +1,11 @@
 {
-  JetType actualType=context.get(BindingContext.EXPRESSION_TYPE,expr);
-  if (actualType != null) {
-    return new JetType[]{actualType};
+  JetType type=context.get(BindingContext.EXPRESSION_TYPE,expr);
+  JetNamedDeclaration declaration=null;
+  if (type != null) {
+    return new JetType[]{type};
+  }
+ else   if ((type=context.get(BindingContext.EXPECTED_EXPRESSION_TYPE,expr)) != null) {
+    return new JetType[]{type};
   }
  else   if (expr instanceof JetTypeConstraint) {
     JetTypeConstraint constraint=(JetTypeConstraint)expr;
@@ -17,6 +21,7 @@
     if (typeRef != null) {
       return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
     }
+    declaration=entry;
   }
  else   if (expr instanceof JetParameter) {
     JetParameter parameter=(JetParameter)expr;
@@ -24,13 +29,37 @@
     if (typeRef != null) {
       return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
     }
+    declaration=parameter;
   }
  else   if (expr.getParent() instanceof JetVariableDeclaration) {
     JetVariableDeclaration variable=(JetVariableDeclaration)expr.getParent();
-    JetTypeReference typetypeRefEf=variable.getTypeRef();
-    if (typetypeRefEf != null) {
-      return new JetType[]{context.get(BindingContext.TYPE,typetypeRefEf)};
+    JetTypeReference typeRef=variable.getTypeRef();
+    if (typeRef != null) {
+      return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
+    }
+    declaration=variable;
+  }
+  SearchScope scope=expr.getContainingFile().getUseScope();
+  Set<JetType> expectedTypes=new HashSet<JetType>();
+  if (declaration != null) {
+    for (    PsiReference ref : SearchUtils.findAllReferences(declaration,scope)) {
+      if (ref instanceof JetSimpleNameReference) {
+        JetSimpleNameReference simpleNameRef=(JetSimpleNameReference)ref;
+        JetType expectedType=context.get(BindingContext.EXPECTED_EXPRESSION_TYPE,simpleNameRef.getExpression());
+        if (expectedType != null) {
+          expectedTypes.add(expectedType);
+        }
+      }
     }
   }
-  return new JetType[0];
+  if (expectedTypes.isEmpty()) {
+    return new JetType[0];
+  }
+  type=TypeUtils.intersect(JetTypeChecker.INSTANCE,expectedTypes);
+  if (type != null) {
+    return new JetType[]{type};
+  }
+ else {
+    return expectedTypes.toArray(new JetType[expectedTypes.size()]);
+  }
 }
