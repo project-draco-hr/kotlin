@@ -1,0 +1,25 @@
+{
+  if (args.length < 3) {
+    printUsageAndExit();
+  }
+  File file=new File(args[0]);
+  if (!file.exists()) {
+    System.out.println("File does not exist: " + file);
+    printUsageAndExit();
+  }
+  String mainClassCanonicalName=args[1];
+  int classNumber;
+  try {
+    classNumber=Integer.parseInt(args[2]);
+  }
+ catch (  NumberFormatException e) {
+    System.out.println(e.getMessage());
+    printUsageAndExit();
+    return;
+  }
+  ClassLoader parent=Preloader.class.getClassLoader();
+  ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(file,classNumber,parent);
+  Class<?> mainClass=preloaded.loadClass(mainClassCanonicalName);
+  Method mainMethod=mainClass.getMethod("main",String[].class);
+  mainMethod.invoke(0,new Object[]{Arrays.copyOfRange(args,2,args.length)});
+}

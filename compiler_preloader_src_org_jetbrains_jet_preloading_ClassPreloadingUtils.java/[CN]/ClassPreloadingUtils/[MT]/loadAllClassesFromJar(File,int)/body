@@ -1,0 +1,28 @@
+{
+  Map<String,byte[]> classes=new HashMap<String,byte[]>(classNumberEstimate);
+  FileInputStream fileInputStream=new FileInputStream(jarFile);
+  try {
+    byte[] buffer=new byte[10 * 1024];
+    ZipInputStream stream=new ZipInputStream(new BufferedInputStream(fileInputStream));
+    while (true) {
+      ZipEntry entry=stream.getNextEntry();
+      if (entry == null)       break;
+      ByteArrayOutputStreamWithPublicArray bytes=new ByteArrayOutputStreamWithPublicArray((int)entry.getSize());
+      int count;
+      while ((count=stream.read(buffer)) > 0) {
+        bytes.write(buffer,0,count);
+      }
+      if (!entry.isDirectory()) {
+        classes.put(entry.getName(),bytes.getBytes());
+      }
+    }
+  }
+  finally {
+    try {
+      fileInputStream.close();
+    }
+ catch (    IOException e) {
+    }
+  }
+  return classes;
+}
