@@ -1,0 +1,26 @@
+{
+  Collection<JetType> types=getPossibleTypes(context);
+  Set<JetType> newTypes=new LinkedHashSet<JetType>(types);
+  for (  TypeSubstitution substitution : substitutions) {
+    List<JetType> toAdd=new ArrayList<JetType>();
+    List<JetType> toRemove=new ArrayList<JetType>();
+    for (    JetType type : newTypes) {
+      toAdd.add(substituteType(type,substitution,variance));
+      if (containsType(type,substitution.getByType())) {
+        toRemove.add(type);
+      }
+    }
+    newTypes.addAll(toAdd);
+    newTypes.removeAll(toRemove);
+  }
+  if (newTypes.isEmpty()) {
+    newTypes.add(KotlinBuiltIns.getInstance().getAnyType());
+  }
+  types=newTypes;
+  typeCandidates=new TypeCandidate[types.size()];
+  int i=0;
+  for (  JetType type : types) {
+    typeCandidates[i]=new TypeCandidate(type,scope);
+    i++;
+  }
+}
