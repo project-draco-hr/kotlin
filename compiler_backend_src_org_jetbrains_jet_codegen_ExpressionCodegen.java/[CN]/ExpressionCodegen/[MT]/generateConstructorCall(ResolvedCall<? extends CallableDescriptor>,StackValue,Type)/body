@@ -1,0 +1,15 @@
+{
+  v.anew(type);
+  v.dup();
+  receiver=StackValue.receiver(resolvedCall,receiver,this,null);
+  receiver.put(receiver.type,v);
+  ConstructorDescriptor constructorDescriptor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
+  MutableClosure closure=bindingContext.get(CLOSURE,constructorDescriptor.getContainingDeclaration());
+  if (receiver.type.getSort() != Type.VOID && (closure == null || closure.getCaptureThis() == null)) {
+    v.pop();
+  }
+  pushClosureOnStack(closure,true);
+  CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor);
+  invokeMethodWithArguments(method,resolvedCall,null,StackValue.none());
+  return StackValue.onStack(type);
+}
