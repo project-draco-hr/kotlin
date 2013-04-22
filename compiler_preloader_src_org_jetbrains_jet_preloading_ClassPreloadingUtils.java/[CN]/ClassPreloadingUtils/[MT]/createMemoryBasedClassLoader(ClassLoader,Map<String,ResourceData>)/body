@@ -1,0 +1,30 @@
+{
+  return new ClassLoader(null){
+    @Override public Class<?> loadClass(    String name) throws ClassNotFoundException {
+      Class<?> aClass=super.loadClass(name);
+      if (aClass == null) {
+        return parent.loadClass(name);
+      }
+      return aClass;
+    }
+    @Override protected Class<?> findClass(    String name) throws ClassNotFoundException {
+      String internalName=name.replace('.','/').concat(".class");
+      ResourceData resourceData=preloadedResources.get(internalName);
+      if (resourceData == null)       return null;
+      return defineClass(name,resourceData.bytes,0,resourceData.bytes.length);
+    }
+    @Override protected URL findResource(    String name){
+      ResourceData resourceData=preloadedResources.get(name);
+      if (resourceData == null)       return null;
+      return resourceData.getURL();
+    }
+    @Override protected Enumeration<URL> findResources(    String name) throws IOException {
+      URL resource=findResource(name);
+      if (resource == null) {
+        return new CompoundEnumeration<URL>(new Enumeration[0]);
+      }
+      return Collections.enumeration(Collections.singletonList(resource));
+    }
+  }
+;
+}

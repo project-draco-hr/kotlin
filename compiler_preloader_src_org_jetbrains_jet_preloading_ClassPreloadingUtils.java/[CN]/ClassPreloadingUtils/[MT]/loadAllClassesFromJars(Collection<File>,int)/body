@@ -1,0 +1,31 @@
+{
+  Map<String,ResourceData> resources=new HashMap<String,ResourceData>(classNumberEstimate);
+  for (  File jarFile : jarFiles) {
+    FileInputStream fileInputStream=new FileInputStream(jarFile);
+    try {
+      byte[] buffer=new byte[10 * 1024];
+      ZipInputStream stream=new ZipInputStream(new BufferedInputStream(fileInputStream));
+      while (true) {
+        ZipEntry entry=stream.getNextEntry();
+        if (entry == null)         break;
+        if (entry.isDirectory())         continue;
+        String name=entry.getName();
+        if (resources.containsKey(name))         continue;
+        ByteArrayOutputStreamWithPublicArray bytes=new ByteArrayOutputStreamWithPublicArray((int)entry.getSize());
+        int count;
+        while ((count=stream.read(buffer)) > 0) {
+          bytes.write(buffer,0,count);
+        }
+        resources.put(name,new ResourceData(jarFile,name,bytes.getBytes()));
+      }
+    }
+  finally {
+      try {
+        fileInputStream.close();
+      }
+ catch (      IOException e) {
+      }
+    }
+  }
+  return resources;
+}
