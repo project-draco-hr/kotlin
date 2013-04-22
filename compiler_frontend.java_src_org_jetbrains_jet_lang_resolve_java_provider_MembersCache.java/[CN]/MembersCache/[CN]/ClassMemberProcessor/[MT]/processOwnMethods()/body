@@ -1,5 +1,15 @@
 {
-  for (  PsiMethod ownMethod : psiClass.getPsiClass().getMethods()) {
-    processOwnMethod(ownMethod);
+  for (  final PsiMethod method : psiClass.getPsiClass().getMethods()) {
+    RunOnce task=new RunOnce(){
+      @Override public void doRun(){
+        processOwnMethod(method);
+      }
+    }
+;
+    addTask(method,task);
+    PropertyParseResult propertyParseResult=PropertyNameUtils.parseMethodToProperty(method.getName());
+    if (propertyParseResult != null) {
+      addTask(propertyParseResult.getPropertyName(),task);
+    }
   }
 }
