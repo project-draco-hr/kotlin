@@ -7,13 +7,18 @@
     }
 );
     if (psiClass != null) {
-      Query<PsiClass> query=ClassInheritorsSearch.search(psiClass,true);
-      query.forEach(new Processor<PsiClass>(){
-        @Override public boolean process(        PsiClass clazz){
-          return consumer.process(clazz);
-        }
+      ContainerUtil.process(ClassInheritorsSearch.search(psiClass,true),consumer);
+    }
+  }
+  if (queryParameters instanceof JetNamedFunction) {
+    PsiMethod psiMethod=ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>(){
+      @Override public PsiMethod compute(){
+        return LightClassUtil.getLightClassMethod((JetNamedFunction)queryParameters);
       }
+    }
 );
+    if (psiMethod != null) {
+      ContainerUtil.process(MethodImplementationsSearch.getMethodImplementations(psiMethod),consumer);
     }
   }
 }
