@@ -1,5 +1,5 @@
 {
-  if (args.length < 3) {
+  if (args.length < PRELOADER_ARG_COUNT) {
     printUsageAndExit();
   }
   File file=new File(args[0]);
@@ -17,9 +17,15 @@
     printUsageAndExit();
     return;
   }
+  boolean printTime=parseMeasureTime(args[3]);
+  long startTime=System.nanoTime();
   ClassLoader parent=Preloader.class.getClassLoader();
   ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(file,classNumber,parent);
   Class<?> mainClass=preloaded.loadClass(mainClassCanonicalName);
   Method mainMethod=mainClass.getMethod("main",String[].class);
-  mainMethod.invoke(0,new Object[]{Arrays.copyOfRange(args,2,args.length)});
+  mainMethod.invoke(0,new Object[]{Arrays.copyOfRange(args,PRELOADER_ARG_COUNT,args.length)});
+  if (printTime) {
+    long dt=System.nanoTime() - startTime;
+    System.out.format("Total time: %.3fs\n",dt / 1e9);
+  }
 }
