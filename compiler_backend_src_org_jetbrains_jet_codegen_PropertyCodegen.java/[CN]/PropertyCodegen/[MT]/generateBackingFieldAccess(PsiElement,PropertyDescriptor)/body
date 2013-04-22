@@ -1,0 +1,26 @@
+{
+  Object value=null;
+  JetExpression initializer=p instanceof JetProperty ? ((JetProperty)p).getInitializer() : null;
+  if (initializer != null) {
+    if (initializer instanceof JetConstantExpression && !propertyDescriptor.getType().isNullable()) {
+      CompileTimeConstant<?> compileTimeValue=bindingContext.get(BindingContext.COMPILE_TIME_VALUE,initializer);
+      value=compileTimeValue != null ? compileTimeValue.getValue() : null;
+    }
+  }
+  int modifiers;
+  if (kind == OwnerKind.NAMESPACE) {
+    modifiers=ACC_STATIC;
+  }
+ else {
+    modifiers=ACC_PRIVATE;
+  }
+  if (!propertyDescriptor.isVar()) {
+    modifiers|=ACC_FINAL;
+  }
+  modifiers|=getDeprecatedAccessFlag(propertyDescriptor);
+  if (KotlinBuiltIns.getInstance().isVolatile(propertyDescriptor)) {
+    modifiers|=ACC_VOLATILE;
+  }
+  Type type=typeMapper.mapType(propertyDescriptor);
+  return v.newField(p,modifiers,propertyDescriptor.getName().getName(),type.getDescriptor(),null,value);
+}

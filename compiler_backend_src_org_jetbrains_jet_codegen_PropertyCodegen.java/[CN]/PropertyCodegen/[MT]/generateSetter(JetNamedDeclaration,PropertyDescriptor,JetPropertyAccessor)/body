@@ -5,7 +5,18 @@
     PropertySetterDescriptor setterDescriptor=propertyDescriptor.getSetter();
     setterDescriptor=setterDescriptor != null ? setterDescriptor : DescriptorResolver.createDefaultSetter(propertyDescriptor);
     if (kind != OwnerKind.TRAIT_IMPL || !defaultSetter) {
-      FunctionGenerationStrategy strategy=defaultSetter ? new DefaultPropertyAccessorStrategy(setterDescriptor) : new FunctionGenerationStrategy.FunctionDefault(state,setterDescriptor,setter);
+      FunctionGenerationStrategy strategy;
+      if (defaultSetter) {
+        if (p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null) {
+          strategy=new DefaultPropertyWithDelegateAccessorStrategy(setterDescriptor);
+        }
+ else {
+          strategy=new DefaultPropertyAccessorStrategy(setterDescriptor);
+        }
+      }
+ else {
+        strategy=new FunctionGenerationStrategy.FunctionDefault(state,setterDescriptor,setter);
+      }
       functionCodegen.generateMethod(setter != null ? setter : p,signature,true,setterDescriptor,strategy);
     }
   }

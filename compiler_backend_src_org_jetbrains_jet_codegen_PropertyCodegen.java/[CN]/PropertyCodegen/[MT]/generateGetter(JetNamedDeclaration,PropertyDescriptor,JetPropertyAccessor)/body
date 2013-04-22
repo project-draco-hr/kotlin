@@ -4,7 +4,18 @@
   PropertyGetterDescriptor getterDescriptor=propertyDescriptor.getGetter();
   getterDescriptor=getterDescriptor != null ? getterDescriptor : DescriptorResolver.createDefaultGetter(propertyDescriptor);
   if (kind != OwnerKind.TRAIT_IMPL || !defaultGetter) {
-    FunctionGenerationStrategy strategy=defaultGetter ? new DefaultPropertyAccessorStrategy(getterDescriptor) : new FunctionGenerationStrategy.FunctionDefault(state,getterDescriptor,getter);
+    FunctionGenerationStrategy strategy;
+    if (defaultGetter) {
+      if (p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null) {
+        strategy=new DefaultPropertyWithDelegateAccessorStrategy(getterDescriptor);
+      }
+ else {
+        strategy=new DefaultPropertyAccessorStrategy(getterDescriptor);
+      }
+    }
+ else {
+      strategy=new FunctionGenerationStrategy.FunctionDefault(state,getterDescriptor,getter);
+    }
     functionCodegen.generateMethod(getter != null ? getter : p,signature,true,getterDescriptor,strategy);
   }
 }
