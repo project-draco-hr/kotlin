@@ -7,13 +7,12 @@
     return;
   }
   ClassBuilder classBuilder=state.getFactory().forClassImplementation(descriptor,aClass.getContainingFile());
-  CodegenContext contextForInners=context.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state);
-  if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES) {
-    genImplementation(context,state,aClass,OwnerKind.IMPLEMENTATION,contextForInners.getAccessors(),classBuilder);
-  }
-  genInners(contextForInners,state,aClass);
-  if (state.getClassBuilderMode() != ClassBuilderMode.SIGNATURES) {
-    genImplementation(context,state,aClass,OwnerKind.IMPLEMENTATION,contextForInners.getAccessors(),classBuilder);
-  }
+  CodegenContext classContext=parentContext.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state);
+  new ImplementationBodyCodegen(aClass,classContext,classBuilder,state).generate();
   classBuilder.done();
+  if (aClass instanceof JetClass && ((JetClass)aClass).isTrait()) {
+    ClassBuilder traitBuilder=state.getFactory().forTraitImplementation(descriptor,state,aClass.getContainingFile());
+    new TraitImplBodyCodegen(aClass,parentContext.intoClass(descriptor,OwnerKind.TRAIT_IMPL,state),traitBuilder,state).generate();
+    traitBuilder.done();
+  }
 }
