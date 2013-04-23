@@ -11,7 +11,11 @@
       String internalName=name.replace('.','/').concat(".class");
       ResourceData resourceData=preloadedResources.get(internalName);
       if (resourceData == null)       return null;
-      return defineClass(name,resourceData.bytes,0,resourceData.bytes.length);
+      int sizeInBytes=resourceData.bytes.length;
+      if (handler != null) {
+        handler.beforeDefineClass(name,sizeInBytes);
+      }
+      return defineClass(name,resourceData.bytes,0,sizeInBytes);
     }
     @Override protected URL findResource(    String name){
       ResourceData resourceData=preloadedResources.get(name);
