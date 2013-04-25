@@ -1,12 +1,9 @@
 {
   String functionName=element.getName();
-  BindingContext context=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
-  SimpleFunctionDescriptor descriptor=context.get(BindingContext.FUNCTION,element);
-  if (descriptor != null) {
-    functionName=descriptor.getContainingDeclaration().getName() + "." + functionName;
-  }
+  FqName fqName=JetPsiUtil.getFQName(element);
+  if (fqName != null)   functionName=fqName.getFqName();
   if (KotlinBuiltIns.getInstance().isUnit(type) && element.hasBlockBody()) {
-    return JetBundle.message("remove.function.return.type",functionName);
+    return functionName == null ? JetBundle.message("remove.no.name.function.return.type") : JetBundle.message("remove.function.return.type",functionName);
   }
-  return JetBundle.message("change.function.return.type",functionName,type.toString());
+  return functionName == null ? JetBundle.message("change.no.name.function.return.type",type.toString()) : JetBundle.message("change.function.return.type",functionName,type.toString());
 }
