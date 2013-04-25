@@ -1,0 +1,24 @@
+{
+  ASTNode valOrVarAstNode=parameter.getValOrVarNode();
+  PsiElement valOrVarNode=valOrVarAstNode != null ? valOrVarAstNode.getPsi() : null;
+  JetValVar valOrVar=parameterInfo.getValOrVar();
+  if (valOrVarNode != null) {
+    if (valOrVar == JetValVar.None)     valOrVarNode.delete();
+ else     valOrVarNode.replace(JetPsiFactory.createValOrVarNode(getProject(),valOrVar.toString()).getPsi());
+  }
+ else   if (valOrVar != JetValVar.None) {
+    PsiElement firstChild=parameter.getFirstChild();
+    parameter.addBefore(JetPsiFactory.createValOrVarNode(getProject(),valOrVar.toString()).getPsi(),firstChild);
+    parameter.addBefore(JetPsiFactory.createWhiteSpace(getProject()),firstChild);
+  }
+  if (parameterInfo.isTypeChanged()) {
+    JetTypeReference newType=JetPsiFactory.createType(getProject(),parameterInfo.getTypeText());
+    JetTypeReference typeReference=parameter.getTypeReference();
+    if (typeReference != null)     typeReference.replace(newType);
+  }
+  PsiElement identifier=parameter.getNameIdentifier();
+  if (identifier != null) {
+    String newName=parameterInfo.getInheritedName(isInherited,element,changeInfo.getFunctionDescriptor());
+    identifier.replace(JetPsiFactory.createIdentifier(parameter.getProject(),newName));
+  }
+}

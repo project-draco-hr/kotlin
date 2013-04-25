@@ -1,0 +1,36 @@
+{
+  JetParameterList parameterList;
+  if (element instanceof JetFunction) {
+    JetFunction function=(JetFunction)element;
+    parameterList=function.getValueParameterList();
+    if (changeInfo.isNameChanged()) {
+      PsiElement identifier=function.getNameIdentifier();
+      if (identifier != null)       identifier.replace(JetPsiFactory.createIdentifier(element.getProject(),changeInfo.getNewName()));
+    }
+    if (changeInfo.isReturnTypeChanged()) {
+      SpecifyTypeExplicitlyAction.removeTypeAnnotation(function);
+      String returnTypeText=changeInfo.getNewReturnTypeText();
+      if (!KotlinBuiltIns.getInstance().getUnitType().toString().equals(returnTypeText))       ChangeFunctionReturnTypeFix.addReturnTypeAnnotation(getProject(),function,returnTypeText);
+    }
+  }
+ else   parameterList=((JetClass)element).getPrimaryConstructorParameterList();
+  if (changeInfo.isParameterSetOrOrderChanged()) {
+    String parametersText=changeInfo.getNewParametersSignature(element,isInherited,0);
+    JetParameterList newParameterList=JetPsiFactory.createParameterList(getProject(),parametersText);
+    if (parameterList != null)     parameterList=(JetParameterList)parameterList.replace(newParameterList);
+ else     if (element instanceof JetClass) {
+      PsiElement anchor=((JetClass)element).getTypeParameterList();
+      if (anchor == null)       anchor=((JetClass)element).getNameIdentifier();
+      if (anchor != null)       parameterList=(JetParameterList)element.addAfter(newParameterList,anchor);
+    }
+  }
+ else   if (parameterList != null) {
+    int paramIndex=0;
+    for (    JetParameter parameter : parameterList.getParameters()) {
+      JetParameterInfo parameterInfo=changeInfo.getNewParameters()[paramIndex++];
+      changeParameter(changeInfo,element,parameter,parameterInfo);
+    }
+  }
+  if (changeInfo.isVisibilityChanged())   changeVisibility(changeInfo,element,parameterList);
+  return true;
+}

@@ -1,0 +1,49 @@
+{
+  MultiMap<PsiElement,String> result=new MultiMap<PsiElement,String>();
+  Set<String> parameterNames=new HashSet<String>();
+  JetChangeInfo changeInfo=(JetChangeInfo)info;
+  PsiElement function=info.getMethod();
+  PsiElement element=function != null ? function : changeInfo.getContext();
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+  FunctionDescriptor oldDescriptor=changeInfo.getOldDescriptor();
+  JetScope parametersScope=null;
+  DeclarationDescriptor containingDeclaration=oldDescriptor != null ? oldDescriptor.getContainingDeclaration() : null;
+  if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptor)   parametersScope=((ClassDescriptor)containingDeclaration).getMemberScope(Collections.<TypeProjection>emptyList());
+ else   if (function instanceof JetFunction)   parametersScope=getFunctionBodyScope((JetFunction)function,bindingContext);
+  JetScope functionScope=getFunctionScope(bindingContext,containingDeclaration);
+  if (!changeInfo.isConstructor() && functionScope != null && !info.getNewName().isEmpty()) {
+    for (    FunctionDescriptor conflict : functionScope.getFunctions(Name.identifier(info.getNewName()))) {
+      if (conflict != oldDescriptor && getFunctionParameterTypes(conflict).equals(getFunctionParameterTypes(oldDescriptor))) {
+        PsiElement conflictElement=BindingContextUtils.descriptorToDeclaration(bindingContext,conflict);
+        result.putValue(conflictElement,"Function already exists: '" + DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(conflict) + "'");
+        break;
+      }
+    }
+  }
+  for (  ParameterInfo parameter : info.getNewParameters()) {
+    JetValVar valOrVar=((JetParameterInfo)parameter).getValOrVar();
+    String parameterName=parameter.getName();
+    if (!parameterNames.add(parameterName)) {
+      result.putValue(element,"Duplicating parameter '" + parameterName + "'");
+    }
+    if (parametersScope != null) {
+      if (changeInfo.isConstructor() && valOrVar != JetValVar.None) {
+        for (        VariableDescriptor property : parametersScope.getProperties(Name.identifier(parameterName))) {
+          PsiElement propertyDeclaration=BindingContextUtils.descriptorToDeclaration(bindingContext,property);
+          if (propertyDeclaration != null && !(propertyDeclaration.getParent() instanceof JetParameterList)) {
+            result.putValue(propertyDeclaration,"Duplicating property '" + parameterName + "'");
+            break;
+          }
+        }
+      }
+ else       if (function instanceof JetFunction) {
+        VariableDescriptor variable=parametersScope.getLocalVariable(Name.identifier(parameterName));
+        if (variable != null && !(variable instanceof ValueParameterDescriptor)) {
+          PsiElement conflictElement=BindingContextUtils.descriptorToDeclaration(bindingContext,variable);
+          result.putValue(conflictElement,"Duplicating local variable '" + parameterName + "'");
+        }
+      }
+    }
+  }
+  return result;
+}

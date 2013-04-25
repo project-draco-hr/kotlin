@@ -1,0 +1,31 @@
+{
+  if (PsiTreeUtil.getParentOfType(element,JetParameterList.class) != null) {
+    return PsiTreeUtil.getParentOfType(element,JetFunction.class,JetClass.class);
+  }
+  JetTypeParameterList typeParameterList=PsiTreeUtil.getParentOfType(element,JetTypeParameterList.class);
+  if (typeParameterList != null) {
+    return PsiTreeUtil.getParentOfType(typeParameterList,JetFunction.class,JetClass.class);
+  }
+  PsiElement elementParent=element.getParent();
+  if (elementParent instanceof JetNamedFunction && ((JetNamedFunction)elementParent).getNameIdentifier() == element) {
+    return elementParent;
+  }
+  if (elementParent instanceof JetClass && ((JetClass)elementParent).getNameIdentifier() == element) {
+    return elementParent;
+  }
+  JetCallElement call=PsiTreeUtil.getParentOfType(element,JetCallExpression.class,JetDelegatorToSuperCall.class);
+  if (call != null) {
+    JetExpression receiverExpr=call instanceof JetCallExpression ? call.getCalleeExpression() : ((JetDelegatorToSuperCall)call).getCalleeExpression().getConstructorReferenceExpression();
+    if (receiverExpr instanceof JetSimpleNameExpression) {
+      BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+      DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetSimpleNameExpression)receiverExpr);
+      if (descriptor != null) {
+        PsiElement declaration=BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
+        if (declaration instanceof JetNamedFunction || declaration instanceof JetClass) {
+          return declaration;
+        }
+      }
+    }
+  }
+  return null;
+}

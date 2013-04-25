@@ -1,0 +1,30 @@
+{
+  result.add(new JetFunctionDefinitionUsage(functionPsi,isInherited));
+  for (  PsiReference reference : ReferencesSearch.search(functionPsi,functionPsi.getUseScope())) {
+    PsiElement element=reference.getElement();
+    PsiElement parent=element.getParent();
+    if (parent instanceof JetReferenceExpression) {
+      parent=parent.getParent();
+      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionPsi,isInherited));
+ else       if (parent instanceof JetUserType && parent.getParent() instanceof JetTypeReference) {
+        parent=parent.getParent().getParent();
+        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionPsi,isInherited));
+      }
+    }
+  }
+  String oldName=changeInfo.getOldName();
+  if (oldName != null)   TextOccurrencesUtil.findNonCodeUsages(functionPsi,oldName,true,true,changeInfo.getNewName(),result);
+  List<JetParameter> oldParameters=functionPsi instanceof JetFunction ? ((JetFunction)functionPsi).getValueParameters() : ((JetClass)functionPsi).getPrimaryConstructorParameters();
+  for (  JetParameterInfo parameterInfo : changeInfo.getNewParameters()) {
+    if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < oldParameters.size()) {
+      JetParameter oldParam=oldParameters.get(parameterInfo.getOldIndex());
+      String oldParamName=oldParam.getName();
+      if (oldParamName != null && !oldParamName.equals(parameterInfo.getName())) {
+        for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
+          PsiElement element=reference.getElement();
+          if (element.getParent() instanceof JetSimpleNameExpression)           result.add(new JetParameterUsage((JetSimpleNameExpression)element.getParent(),parameterInfo,functionPsi,isInherited));
+        }
+      }
+    }
+  }
+}
