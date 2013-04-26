@@ -1,8 +1,12 @@
 {
   JetTypeReference propertyTypeRef=variable.getTypeRef();
+  boolean hasDelegate=variable instanceof JetProperty && ((JetProperty)variable).getDelegateExpression() != null;
   if (propertyTypeRef == null) {
     final JetExpression initializer=variable.getInitializer();
     if (initializer == null) {
+      if (hasDelegate) {
+        return ErrorUtils.createErrorType("Type from delegate");
+      }
       if (!notLocal) {
         trace.report(VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.on(variable));
       }
