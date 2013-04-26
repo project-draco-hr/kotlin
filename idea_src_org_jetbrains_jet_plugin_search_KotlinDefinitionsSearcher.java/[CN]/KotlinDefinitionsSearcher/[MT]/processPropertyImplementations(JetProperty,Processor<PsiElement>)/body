@@ -1,0 +1,23 @@
+{
+  LightClassUtil.PropertyAccessorsPsiMethods accessorsPsiMethods=ApplicationManager.getApplication().runReadAction(new Computable<LightClassUtil.PropertyAccessorsPsiMethods>(){
+    @Override public LightClassUtil.PropertyAccessorsPsiMethods compute(){
+      return LightClassUtil.getLightClassPropertyMethods(property);
+    }
+  }
+);
+  for (  PsiMethod method : accessorsPsiMethods) {
+    PsiMethod[] implementations=MethodImplementationsSearch.getMethodImplementations(method);
+    for (    PsiMethod implementation : implementations) {
+      PsiElement mirrorElement=implementation instanceof PsiCompiledElement ? ((PsiCompiledElement)implementation).getMirror() : null;
+      if (mirrorElement instanceof JetProperty) {
+        consumer.process(mirrorElement);
+      }
+ else       if (mirrorElement instanceof JetPropertyAccessor && mirrorElement.getParent() instanceof JetProperty) {
+        consumer.process(mirrorElement.getParent());
+      }
+ else {
+        consumer.process(implementation);
+      }
+    }
+  }
+}
