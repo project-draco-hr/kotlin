@@ -1,2 +1,26 @@
 {
+  JetExpression subject=whenExpression.getSubjectExpression();
+  assertNotNull(subject);
+  JetWhenExpression newWhenExpression=createWhenTemplateWithoutSubject(whenExpression);
+  int i=0;
+  List<JetWhenEntry> entries=whenExpression.getEntries();
+  List<JetWhenEntry> newEntries=newWhenExpression.getEntries();
+  for (  JetWhenEntry newEntry : newEntries) {
+    JetWhenEntry entry=entries.get(i++);
+    JetExpression branchExpression=entry.getExpression();
+    assertNotNull(branchExpression);
+    JetExpression newBranchExpression=newEntry.getExpression();
+    assertNotNull(newBranchExpression);
+    newBranchExpression.replace(branchExpression);
+    int j=0;
+    JetWhenCondition[] conditions=entry.getConditions();
+    JetWhenCondition[] newConditions=newEntry.getConditions();
+    for (    JetWhenCondition newCondition : newConditions) {
+      JetWhenCondition condition=conditions[j++];
+      JetExpression newConditionExpression=((JetWhenConditionWithExpression)newCondition).getExpression();
+      assertNotNull(newConditionExpression);
+      newConditionExpression.replace(whenConditionToExpression(condition,subject));
+    }
+  }
+  whenExpression.replace(newWhenExpression);
 }
