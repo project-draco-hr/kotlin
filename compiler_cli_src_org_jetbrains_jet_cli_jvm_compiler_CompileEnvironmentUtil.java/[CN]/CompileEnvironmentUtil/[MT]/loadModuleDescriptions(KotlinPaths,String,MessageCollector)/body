@@ -1,38 +1,21 @@
 {
-  Disposable disposable=new Disposable(){
-    @Override public void dispose(){
+  File file=new File(moduleDefinitionFile);
+  if (!file.exists()) {
+    messageCollector.report(ERROR,"Module definition file does not exist: " + moduleDefinitionFile,NO_LOCATION);
+    return Collections.emptyList();
+  }
+  String extension=FileUtilRt.getExtension(moduleDefinitionFile);
+  if ("kts".equalsIgnoreCase(extension)) {
+    return loadModuleScript(paths,moduleDefinitionFile,messageCollector);
+  }
+  if ("xml".equalsIgnoreCase(extension)) {
+    return ContainerUtil.map(ModuleXmlParser.parse(moduleDefinitionFile,messageCollector),new Function<ModuleDescription,Module>(){
+      @Override public Module fun(      ModuleDescription description){
+        return new DescriptionToModuleAdapter(description);
+      }
     }
+);
   }
-;
-  CompilerConfiguration configuration=new CompilerConfiguration();
-  File runtimePath=paths.getRuntimePath();
-  if (runtimePath.exists()) {
-    configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,runtimePath);
-  }
-  configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,PathUtil.findRtJar());
-  File jdkAnnotationsPath=paths.getJdkAnnotationsPath();
-  if (jdkAnnotationsPath.exists()) {
-    configuration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,jdkAnnotationsPath);
-  }
-  configuration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,moduleScriptFile);
-  configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,messageCollector);
-  List<Module> modules;
-  try {
-    JetCoreEnvironment scriptEnvironment=new JetCoreEnvironment(disposable,configuration);
-    GenerationState generationState=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(scriptEnvironment,false);
-    if (generationState == null) {
-      throw new CompileEnvironmentException("Module script " + moduleScriptFile + " analyze failed:\n"+ loadModuleScriptText(moduleScriptFile));
-    }
-    modules=runDefineModules(paths,moduleScriptFile,generationState.getFactory());
-  }
-  finally {
-    Disposer.dispose(disposable);
-  }
-  if (modules == null) {
-    throw new CompileEnvironmentException("Module script " + moduleScriptFile + " compilation failed");
-  }
-  if (modules.isEmpty()) {
-    throw new CompileEnvironmentException("No modules where defined by " + moduleScriptFile);
-  }
-  return modules;
+  messageCollector.report(ERROR,"Unknown module definition type: " + moduleDefinitionFile,NO_LOCATION);
+  return Collections.emptyList();
 }
