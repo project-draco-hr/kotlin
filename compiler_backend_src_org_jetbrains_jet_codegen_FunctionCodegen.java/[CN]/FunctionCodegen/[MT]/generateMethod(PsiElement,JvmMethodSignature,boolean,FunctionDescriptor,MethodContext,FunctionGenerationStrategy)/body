@@ -1,0 +1,17 @@
+{
+  Method asmMethod=jvmSignature.getAsmMethod();
+  MethodVisitor mv=v.newMethod(origin,getMethodAsmFlags(functionDescriptor,methodContext.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
+  AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(functionDescriptor);
+  if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES)   return;
+  if (needJetAnnotations) {
+    genJetAnnotations(mv,functionDescriptor,jvmSignature);
+  }
+  if (isAbstract(functionDescriptor,methodContext.getContextKind()))   return;
+  if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
+    genStubCode(mv);
+    return;
+  }
+  generateMethodBody(mv,functionDescriptor,methodContext,jvmSignature,strategy);
+  endVisit(mv,null,origin);
+  generateBridgeIfNeeded(owner,state,v,jvmSignature.getAsmMethod(),functionDescriptor);
+}

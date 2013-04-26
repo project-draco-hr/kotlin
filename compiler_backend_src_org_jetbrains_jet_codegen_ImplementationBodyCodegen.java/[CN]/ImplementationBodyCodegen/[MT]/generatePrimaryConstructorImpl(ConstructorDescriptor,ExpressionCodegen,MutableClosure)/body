@@ -1,0 +1,44 @@
+{
+  List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
+  InstructionAdapter iv=codegen.v;
+  JvmClassName classname=JvmClassName.byType(classAsmType);
+  if (superCall == null) {
+    genSimpleSuperCall(iv);
+  }
+ else   if (superCall instanceof JetDelegatorToSuperClass) {
+    genSuperCallToDelegatorToSuperClass(iv);
+  }
+ else {
+    generateDelegatorToConstructorCall(iv,codegen,constructorDescriptor);
+  }
+  if (closure != null) {
+    List<FieldInfo> argsFromClosure=ClosureCodegen.calculateConstructorParameters(typeMapper,closure,classAsmType);
+    int k=1;
+    for (    FieldInfo info : argsFromClosure) {
+      k=AsmUtil.genAssignInstanceFieldFromParam(info,k,iv);
+    }
+  }
+  int n=0;
+  for (  JetDelegationSpecifier specifier : myClass.getDelegationSpecifiers()) {
+    if (specifier == superCall) {
+      continue;
+    }
+    if (specifier instanceof JetDelegatorByExpressionSpecifier) {
+      genCallToDelegatorByExpressionSpecifier(iv,codegen,classAsmType,classname,n++,specifier);
+    }
+  }
+  int curParam=0;
+  List<JetParameter> constructorParameters=getPrimaryConstructorParameters();
+  for (  JetParameter parameter : constructorParameters) {
+    if (parameter.getValOrVarNode() != null) {
+      VariableDescriptor descriptor=paramDescrs.get(curParam);
+      Type type=typeMapper.mapType(descriptor);
+      iv.load(0,classAsmType);
+      iv.load(codegen.myFrameMap.getIndex(descriptor),type);
+      iv.putfield(classAsmType.getInternalName(),descriptor.getName().getName(),type.getDescriptor());
+    }
+    curParam++;
+  }
+  generateInitializers(codegen,iv,myClass.getDeclarations(),bindingContext,state);
+  iv.visitInsn(RETURN);
+}

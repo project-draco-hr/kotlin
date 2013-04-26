@@ -1,0 +1,39 @@
+{
+  Iterator<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters().iterator();
+  List<JvmMethodParameterSignature> params=jvmMethodSignature.getKotlinParameterTypes();
+  int shift=0;
+  boolean isStatic=isStatic(ownerKind) || ownerKind == OwnerKind.TRAIT_IMPL;
+  if (!isStatic) {
+    if (thisType != null) {
+      mv.visitLocalVariable("this",thisType.getDescriptor(),null,methodBegin,methodEnd,shift);
+    }
+ else {
+    }
+    shift++;
+  }
+  for (int i=0; i < params.size(); i++) {
+    JvmMethodParameterSignature param=params.get(i);
+    JvmMethodParameterKind kind=param.getKind();
+    String parameterName="$" + param.getKind().name().toLowerCase();
+    if (needIndexForVar(kind)) {
+      parameterName=parameterName + "$" + i;
+    }
+    Type type=param.getAsmType();
+    if (kind == JvmMethodParameterKind.VALUE) {
+      ValueParameterDescriptor parameter=valueParameters.next();
+      Label divideLabel=labelsForSharedVars.get(parameter.getName());
+      parameterName=parameter.getName().getName();
+      if (divideLabel != null) {
+        mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,shift);
+        String nameForSharedVar=createTmpVariableName(localVariableNames);
+        localVariableNames.add(nameForSharedVar);
+        Type sharedVarType=typeMapper.getSharedVarType(parameter);
+        mv.visitLocalVariable(nameForSharedVar,sharedVarType.getDescriptor(),null,divideLabel,methodEnd,shift);
+        shift+=Math.max(type.getSize(),sharedVarType.getSize());
+        continue;
+      }
+    }
+    mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,methodEnd,shift);
+    shift+=type.getSize();
+  }
+}
