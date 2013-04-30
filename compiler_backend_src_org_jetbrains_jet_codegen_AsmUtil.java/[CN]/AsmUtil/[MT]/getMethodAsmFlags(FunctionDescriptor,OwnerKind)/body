@@ -1,6 +1,4 @@
 {
-  boolean isStatic=isStatic(kind);
-  boolean isAbstract=isAbstract(functionDescriptor,kind);
   int flags=getCommonCallableFlags(functionDescriptor);
   if (functionDescriptor.getModality() == Modality.FINAL && !(functionDescriptor instanceof ConstructorDescriptor)) {
     DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
@@ -8,9 +6,14 @@
       flags|=ACC_FINAL;
     }
   }
-  if (isStatic || kind == OwnerKind.TRAIT_IMPL) {
+  if (isStaticMethod(kind,functionDescriptor)) {
     flags|=ACC_STATIC;
   }
-  if (isAbstract)   flags|=ACC_ABSTRACT;
+  if (isAbstractMethod(functionDescriptor,kind)) {
+    flags|=ACC_ABSTRACT;
+  }
+  if (JetTypeMapper.isAccessor(functionDescriptor)) {
+    flags|=ACC_SYNTHETIC;
+  }
   return flags;
 }
