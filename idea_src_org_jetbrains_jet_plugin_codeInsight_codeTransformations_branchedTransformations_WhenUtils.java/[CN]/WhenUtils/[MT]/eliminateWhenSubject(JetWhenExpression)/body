@@ -1,26 +1,18 @@
 {
   JetExpression subject=whenExpression.getSubjectExpression();
   assertNotNull(subject);
-  JetWhenExpression newWhenExpression=createWhenTemplateWithoutSubject(whenExpression);
-  int i=0;
-  List<JetWhenEntry> entries=whenExpression.getEntries();
-  List<JetWhenEntry> newEntries=newWhenExpression.getEntries();
-  for (  JetWhenEntry newEntry : newEntries) {
-    JetWhenEntry entry=entries.get(i++);
+  JetPsiFactory.WhenBuilder builder=new JetPsiFactory.WhenBuilder();
+  for (  JetWhenEntry entry : whenExpression.getEntries()) {
     JetExpression branchExpression=entry.getExpression();
     assertNotNull(branchExpression);
-    JetExpression newBranchExpression=newEntry.getExpression();
-    assertNotNull(newBranchExpression);
-    newBranchExpression.replace(branchExpression);
-    int j=0;
-    JetWhenCondition[] conditions=entry.getConditions();
-    JetWhenCondition[] newConditions=newEntry.getConditions();
-    for (    JetWhenCondition newCondition : newConditions) {
-      JetWhenCondition condition=conditions[j++];
-      JetExpression newConditionExpression=((JetWhenConditionWithExpression)newCondition).getExpression();
-      assertNotNull(newConditionExpression);
-      newConditionExpression.replace(whenConditionToExpression(condition,subject));
+    if (entry.isElse()) {
+      builder.elseEntry(branchExpression);
+      continue;
     }
+    for (    JetWhenCondition condition : entry.getConditions()) {
+      builder.condition(whenConditionToExpressionText(condition,subject));
+    }
+    builder.branchExpression(branchExpression);
   }
-  whenExpression.replace(newWhenExpression);
+  whenExpression.replace(builder.toExpression(whenExpression.getProject()));
 }
