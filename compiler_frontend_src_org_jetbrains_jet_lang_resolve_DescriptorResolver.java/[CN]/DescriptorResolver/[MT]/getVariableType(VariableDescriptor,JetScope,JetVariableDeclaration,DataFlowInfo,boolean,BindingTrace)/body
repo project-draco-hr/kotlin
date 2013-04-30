@@ -4,8 +4,16 @@
   if (propertyTypeRef == null) {
     final JetExpression initializer=variable.getInitializer();
     if (initializer == null) {
-      if (hasDelegate) {
-        return ErrorUtils.createErrorType("Type from delegate");
+      if (hasDelegate && variableDescriptor instanceof PropertyDescriptor) {
+        final JetExpression propertyDelegateExpression=((JetProperty)variable).getDelegateExpression();
+        if (propertyDelegateExpression != null) {
+          return DeferredType.create(trace,new RecursionIntolerantLazyValueWithDefault<JetType>(ErrorUtils.createErrorType("Recursive dependency")){
+            @Override protected JetType compute(){
+              return resolveDelegatedPropertyType((PropertyDescriptor)variableDescriptor,scope,propertyDelegateExpression,dataFlowInfo,trace);
+            }
+          }
+);
+        }
       }
       if (!notLocal) {
         trace.report(VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.on(variable));
