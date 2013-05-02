@@ -1,6 +1,5 @@
 {
   JetType type=context.get(BindingContext.EXPRESSION_TYPE,expr);
-  JetNamedDeclaration declaration=null;
   if (type != null) {
     return new JetType[]{type};
   }
@@ -21,7 +20,7 @@
     if (typeRef != null) {
       return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
     }
-    declaration=entry;
+    return guessTypeForDeclaration(entry,context);
   }
  else   if (expr instanceof JetParameter) {
     JetParameter parameter=(JetParameter)expr;
@@ -29,7 +28,7 @@
     if (typeRef != null) {
       return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
     }
-    declaration=parameter;
+    return guessTypeForDeclaration(parameter,context);
   }
  else   if (expr.getParent() instanceof JetVariableDeclaration) {
     JetVariableDeclaration variable=(JetVariableDeclaration)expr.getParent();
@@ -37,29 +36,7 @@
     if (typeRef != null) {
       return new JetType[]{context.get(BindingContext.TYPE,typeRef)};
     }
-    declaration=variable;
+    return guessTypeForDeclaration(variable,context);
   }
-  SearchScope scope=expr.getContainingFile().getUseScope();
-  Set<JetType> expectedTypes=new HashSet<JetType>();
-  if (declaration != null) {
-    for (    PsiReference ref : SearchUtils.findAllReferences(declaration,scope)) {
-      if (ref instanceof JetSimpleNameReference) {
-        JetSimpleNameReference simpleNameRef=(JetSimpleNameReference)ref;
-        JetType expectedType=context.get(BindingContext.EXPECTED_EXPRESSION_TYPE,simpleNameRef.getExpression());
-        if (expectedType != null) {
-          expectedTypes.add(expectedType);
-        }
-      }
-    }
-  }
-  if (expectedTypes.isEmpty()) {
-    return new JetType[0];
-  }
-  type=TypeUtils.intersect(JetTypeChecker.INSTANCE,expectedTypes);
-  if (type != null) {
-    return new JetType[]{type};
-  }
- else {
-    return expectedTypes.toArray(new JetType[expectedTypes.size()]);
-  }
+  return new JetType[0];
 }
