@@ -1,0 +1,20 @@
+{
+  FunctionDescriptor functionDescriptor=null;
+  if (descriptor instanceof FunctionDescriptor)   functionDescriptor=(FunctionDescriptor)descriptor;
+ else   if (descriptor instanceof ValueParameterDescriptor) {
+    DeclarationDescriptor containingDescriptor=descriptor.getContainingDeclaration();
+    if (containingDescriptor instanceof FunctionDescriptor)     functionDescriptor=(FunctionDescriptor)containingDescriptor;
+  }
+  if (functionDescriptor != null) {
+    BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)context.getContainingFile()).getBindingContext();
+    PsiElement declaration=BindingContextUtils.descriptorToDeclaration(bindingContext,functionDescriptor);
+    if (declaration != null) {
+      if (descriptor instanceof ValueParameterDescriptor)       return new RemoveFunctionParametersFix(declaration,context,functionDescriptor,(ValueParameterDescriptor)descriptor);
+ else {
+        boolean hasTypeMismatches=hasTypeMismatches(functionDescriptor.getValueParameters(),callElement.getValueArguments(),bindingContext);
+        return new AddFunctionParametersFix(declaration,callElement,functionDescriptor,hasTypeMismatches);
+      }
+    }
+  }
+  return null;
+}
