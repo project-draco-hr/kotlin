@@ -6,15 +6,8 @@
   if (!isDefaultNeeded(functionDescriptor)) {
     return;
   }
-  ReceiverParameterDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
-  boolean hasReceiver=receiverParameter != null;
-  boolean hasOuter=functionDescriptor instanceof ConstructorDescriptor && CodegenBinding.canHaveOuter(state.getBindingContext(),((ConstructorDescriptor)functionDescriptor).getContainingDeclaration());
   boolean isStatic=isStatic(kind);
   Method jvmSignature=signature.getAsmMethod();
-  if (kind == OwnerKind.TRAIT_IMPL) {
-    String correctedDescr="(" + jvmSignature.getDescriptor().substring(jvmSignature.getDescriptor().indexOf(";") + 1);
-    jvmSignature=new Method(jvmSignature.getName(),correctedDescr);
-  }
   int flags=ACC_PUBLIC | ACC_SYNTHETIC;
   JvmClassName ownerInternalName;
   if (contextClass instanceof NamespaceDescriptor) {
@@ -29,11 +22,10 @@
     descriptor=descriptor.replace("(","(" + ownerInternalName.getDescriptor());
   }
   MethodVisitor mv=v.newMethod(null,flags | (isConstructor ? 0 : ACC_STATIC),isConstructor ? "<init>" : jvmSignature.getName() + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX,descriptor,null,null);
-  InstructionAdapter iv=new InstructionAdapter(mv);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
     genStubCode(mv);
   }
  else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
-    generateDefaultImpl(owner,state,jvmSignature,functionDescriptor,kind,receiverParameter,hasReceiver,hasOuter,isStatic,ownerInternalName,isConstructor,mv,iv,loadStrategy);
+    generateDefaultImpl(owner,state,signature,functionDescriptor,kind,isStatic,mv,loadStrategy);
   }
 }

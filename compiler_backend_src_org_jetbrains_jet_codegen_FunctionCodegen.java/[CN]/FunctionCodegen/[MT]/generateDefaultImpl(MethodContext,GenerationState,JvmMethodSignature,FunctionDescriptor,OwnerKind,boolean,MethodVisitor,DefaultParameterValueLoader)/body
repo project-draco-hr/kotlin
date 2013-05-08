@@ -1,0 +1,54 @@
+{
+  mv.visitCode();
+  FrameMap frameMap=new FrameMap();
+  if (!aStatic) {
+    frameMap.enterTemp(OBJECT_TYPE);
+  }
+  Method jvmSignature=signature.getAsmMethod();
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,jvmSignature.getReturnType(),methodContext,state);
+  Type[] argTypes=jvmSignature.getArgumentTypes();
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  Iterator<ValueParameterDescriptor> iterator=paramDescrs.iterator();
+  int countOfExtraVarsInMethodArgs=0;
+  List<JvmMethodParameterSignature> params=signature.getKotlinParameterTypes();
+  for (int i=0; i < params.size(); i++) {
+    JvmMethodParameterSignature parameterSignature=params.get(i);
+    if (parameterSignature.getKind() != JvmMethodParameterKind.VALUE) {
+      countOfExtraVarsInMethodArgs++;
+      frameMap.enterTemp(parameterSignature.getAsmType());
+    }
+ else {
+      frameMap.enter(iterator.next(),parameterSignature.getAsmType());
+    }
+  }
+  int maskIndex=frameMap.enterTemp(Type.INT_TYPE);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,aStatic,signature);
+  for (int index=0; index < paramDescrs.size(); index++) {
+    ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
+    Type t=argTypes[countOfExtraVarsInMethodArgs + index];
+    if (parameterDescriptor.declaresDefaultValue()) {
+      iv.load(maskIndex,Type.INT_TYPE);
+      iv.iconst(1 << index);
+      iv.and(Type.INT_TYPE);
+      Label loadArg=new Label();
+      iv.ifeq(loadArg);
+      loadStrategy.putValueOnStack(parameterDescriptor,codegen);
+      int ind=frameMap.getIndex(parameterDescriptor);
+      iv.store(ind,t);
+      iv.mark(loadArg);
+    }
+    iv.load(frameMap.getIndex(parameterDescriptor),t);
+  }
+  CallableMethod method=null;
+  if (functionDescriptor instanceof ConstructorDescriptor) {
+    method=state.getTypeMapper().mapToCallableMethod((ConstructorDescriptor)functionDescriptor);
+  }
+ else {
+    method=state.getTypeMapper().mapToCallableMethod(functionDescriptor,false,isCallInsideSameClassAsDeclared(functionDescriptor,methodContext),isCallInsideSameModuleAsDeclared(functionDescriptor,methodContext),OwnerKind.IMPLEMENTATION);
+  }
+  iv.visitMethodInsn(method.getInvokeOpcode(),method.getOwner().getInternalName(),method.getSignature().getAsmMethod().getName(),method.getSignature().getAsmMethod().getDescriptor());
+  iv.areturn(jvmSignature.getReturnType());
+  endVisit(mv,"default method",callableDescriptorToDeclaration(state.getBindingContext(),functionDescriptor));
+  mv.visitEnd();
+}
