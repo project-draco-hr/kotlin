@@ -2,17 +2,7 @@
   if (args.length < PRELOADER_ARG_COUNT) {
     printUsageAndExit();
   }
-  String classpath=args[0];
-  String[] paths=classpath.split("\\" + File.pathSeparator);
-  List<File> files=new ArrayList<File>(paths.length);
-  for (  String path : paths) {
-    File file=new File(path);
-    if (!file.exists()) {
-      System.out.println("File does not exist: " + file);
-      printUsageAndExit();
-    }
-    files.add(file);
-  }
+  List<File> files=parseClassPath(args[0]);
   String mainClassCanonicalName=args[1];
   int classNumber;
   try {
@@ -23,21 +13,24 @@
     printUsageAndExit();
     return;
   }
-  boolean printTime=parseMeasureTime(args[3]);
+  String profilingModeStr=args[3];
+  ProfilingMode profilingMode=parseMeasureTime(profilingModeStr);
+  URL[] instrumentersClasspath=parseInstrumentersClasspath(profilingMode,profilingModeStr);
   long startTime=System.nanoTime();
   ClassLoader parent=Preloader.class.getClassLoader();
-  ClassPreloadingUtils.ClassHandler handler=getHandler(printTime);
-  ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(files,classNumber,parent,handler);
-  handler.done();
+  ClassLoader withInstrumenter=instrumentersClasspath.length > 0 ? new URLClassLoader(instrumentersClasspath,parent) : parent;
+  ClassPreloadingUtils.ClassHandler handler=getHandler(profilingMode,withInstrumenter);
+  ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(files,classNumber,withInstrumenter,handler);
   Class<?> mainClass=preloaded.loadClass(mainClassCanonicalName);
   Method mainMethod=mainClass.getMethod("main",String[].class);
   try {
     mainMethod.invoke(0,new Object[]{Arrays.copyOfRange(args,PRELOADER_ARG_COUNT,args.length)});
   }
   finally {
-    if (printTime) {
+    if (profilingMode != ProfilingMode.NO_TIME) {
       long dt=System.nanoTime() - startTime;
       System.out.format("Total time: %.3fs\n",dt / 1e9);
     }
+    handler.done();
   }
 }
