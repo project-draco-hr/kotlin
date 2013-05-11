@@ -1,0 +1,47 @@
+{
+  for (  Field field : handlerClass.getFields()) {
+    MethodInterceptor annotation=field.getAnnotation(MethodInterceptor.class);
+    if (annotation == null)     continue;
+    if ((field.getModifiers() & Modifier.STATIC) == 0) {
+      throw new IllegalArgumentException("Non-static field annotated @MethodInterceptor: " + field);
+    }
+    Pattern classPattern=Pattern.compile(annotation.className());
+    List<MethodInstrumenter> instrumenters=addClassPattern(classPattern.pattern());
+    try {
+      Object interceptor=field.get(null);
+      if (interceptor == null) {
+        throw new IllegalArgumentException("Interceptor is null: " + field);
+      }
+      Class<?> interceptorClass=interceptor.getClass();
+      FieldData fieldData=getFieldData(field,interceptorClass);
+      List<MethodData> enterData=new ArrayList<MethodData>();
+      List<MethodData> exitData=new ArrayList<MethodData>();
+      Method[] methods=interceptorClass.getMethods();
+      for (      Method method : methods) {
+        String name=method.getName();
+        if (name.startsWith("enter")) {
+          enterData.add(getMethodData(fieldData,method));
+        }
+ else         if (name.startsWith("exit")) {
+          exitData.add(getMethodData(fieldData,method));
+        }
+ else         if (name.startsWith("dump")) {
+          Class<?>[] parameterTypes=method.getParameterTypes();
+          if (parameterTypes.length > 1)           continue;
+          if (parameterTypes.length == 1 && parameterTypes[0] != PrintStream.class) {
+            continue;
+          }
+          addDumpTask(interceptor,method);
+        }
+      }
+      String nameFromAnnotation=annotation.methodName();
+      String methodName=nameFromAnnotation.isEmpty() ? field.getName() : nameFromAnnotation;
+      MethodInstrumenterImpl instrumenter=new MethodInstrumenterImpl(Pattern.compile(methodName),Pattern.compile(annotation.erasedSignature()),annotation.allowMultipleMatches(),enterData,exitData);
+      instrumenters.add(instrumenter);
+      neverMatchedInstrumenters.add(instrumenter);
+    }
+ catch (    IllegalAccessException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+}

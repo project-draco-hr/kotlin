@@ -1,0 +1,66 @@
+{
+  final ClassReader cr=new ClassReader(classData);
+  ClassWriter cw=new ClassWriter(cr,ClassWriter.COMPUTE_FRAMES);
+  cr.accept(new ClassVisitor(ASM4,cw){
+    private final Map<MethodInstrumenter,String> matchedMethods=new HashMap<MethodInstrumenter,String>();
+    @Override public MethodVisitor visitMethod(    final int access,    final String name,    final String desc,    String signature,    String[] exceptions){
+      MethodVisitor mv=super.visitMethod(access,name,desc,signature,exceptions);
+      if ((access & (ACC_BRIDGE | ACC_SYNTHETIC)) != 0)       return mv;
+      List<MethodInstrumenter> applicableInstrumenters=new ArrayList<MethodInstrumenter>();
+      for (      MethodInstrumenter instrumenter : instrumenters) {
+        if (instrumenter.isApplicable(name,desc)) {
+          applicableInstrumenters.add(instrumenter);
+          checkMultipleMatches(instrumenter,name,desc);
+          neverMatchedInstrumenters.remove(instrumenter);
+        }
+      }
+      if (applicableInstrumenters.isEmpty())       return mv;
+      InstructionAdapter ia=new InstructionAdapter(mv);
+      final List<MethodData> exitData=new ArrayList<MethodData>();
+      for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
+        for (        MethodData enterData : instrumenter.getEnterData()) {
+          invokeMethod(access,name,desc,ia,enterData);
+        }
+        exitData.addAll(instrumenter.getExitData());
+      }
+      if (exitData.isEmpty())       return mv;
+      return new MethodVisitor(ASM4,mv){
+        private InstructionAdapter ia=null;
+        private InstructionAdapter getInstructionAdapter(){
+          if (ia == null) {
+            ia=new InstructionAdapter(this);
+          }
+          return ia;
+        }
+        @Override public void visitInsn(        int opcode){
+switch (opcode) {
+case RETURN:
+case IRETURN:
+case LRETURN:
+case FRETURN:
+case DRETURN:
+case ARETURN:
+case ATHROW:
+            for (            MethodData methodData : exitData) {
+              invokeMethod(access,name,desc,getInstructionAdapter(),methodData);
+            }
+          break;
+      }
+      super.visitInsn(opcode);
+    }
+  }
+;
+}
+private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,String desc){
+  if (!instrumenter.allowsMultipleMatches()) {
+    String erasedSignature=name + desc;
+    String alreadyMatched=matchedMethods.put(instrumenter,erasedSignature);
+    if (alreadyMatched != null) {
+      throw new IllegalStateException(instrumenter + " matched two methods in " + cr.getClassName()+ ":\n"+ alreadyMatched+ "\n"+ erasedSignature);
+    }
+  }
+}
+}
+,0);
+return cw.toByteArray();
+}
