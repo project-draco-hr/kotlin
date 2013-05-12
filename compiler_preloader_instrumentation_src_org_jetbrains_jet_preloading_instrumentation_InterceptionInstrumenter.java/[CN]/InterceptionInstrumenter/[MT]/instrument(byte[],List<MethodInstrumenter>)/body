@@ -23,6 +23,9 @@
         exitData.addAll(instrumenter.getExitData());
       }
       if (enterData.isEmpty() && exitData.isEmpty())       return mv;
+      if (dumpInstrumentedMethods) {
+        mv=getDumpingVisitorWrapper(mv,name,desc);
+      }
       return new MethodVisitor(ASM4,mv){
         private InstructionAdapter ia=null;
         private InstructionAdapter getInstructionAdapter(){
@@ -68,6 +71,20 @@ private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,St
       throw new IllegalStateException(instrumenter + " matched two methods in " + cr.getClassName()+ ":\n"+ alreadyMatched+ "\n"+ erasedSignature);
     }
   }
+}
+private TraceMethodVisitor getDumpingVisitorWrapper(MethodVisitor mv,final String name,final String desc){
+  return new TraceMethodVisitor(mv,new Textifier(){
+    @Override public void visitMethodEnd(){
+      System.out.println(cr.getClassName() + ":" + name+ desc);
+      for (      Object line : getText()) {
+        System.out.print(line);
+      }
+      System.out.println();
+      System.out.println();
+      super.visitMethodEnd();
+    }
+  }
+);
 }
 }
 ,0);
