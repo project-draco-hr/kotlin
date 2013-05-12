@@ -18,14 +18,26 @@
       if (applicableInstrumenters.isEmpty())       return mv;
       final List<MethodData> exitData=new ArrayList<MethodData>();
       final List<MethodData> enterData=new ArrayList<MethodData>();
+      int maxParamCount=0;
       for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
-        enterData.addAll(instrumenter.getEnterData());
-        exitData.addAll(instrumenter.getExitData());
+        for (        MethodData methodData : instrumenter.getEnterData()) {
+          if (maxParamCount < methodData.getParameterCount()) {
+            maxParamCount=methodData.getParameterCount();
+          }
+          enterData.add(methodData);
+        }
+        for (        MethodData methodData : instrumenter.getExitData()) {
+          if (maxParamCount < methodData.getParameterCount()) {
+            maxParamCount=methodData.getParameterCount();
+          }
+          exitData.add(methodData);
+        }
       }
       if (enterData.isEmpty() && exitData.isEmpty())       return mv;
       if (dumpInstrumentedMethods) {
         mv=getDumpingVisitorWrapper(mv,name,desc);
       }
+      final int finalMaxParamCount=maxParamCount;
       return new MethodVisitorWithUniversalHandler(ASM4,mv){
         private InstructionAdapter ia=null;
         private boolean enterDataWritten=false;
@@ -36,8 +48,8 @@
           return ia;
         }
         @Override public void visitMaxs(        int maxStack,        int maxLocals){
-          int sizes=Type.getArgumentsAndReturnSizes(desc);
-          super.visitMaxs(Math.max(maxStack,sizes + 1),maxLocals);
+          int maxInstrumentedStack=finalMaxParamCount + 2;
+          super.visitMaxs(Math.max(maxStack,maxInstrumentedStack),maxLocals);
         }
         @Override protected boolean visitAnyInsn(        int opcode){
           writeEnterData();
