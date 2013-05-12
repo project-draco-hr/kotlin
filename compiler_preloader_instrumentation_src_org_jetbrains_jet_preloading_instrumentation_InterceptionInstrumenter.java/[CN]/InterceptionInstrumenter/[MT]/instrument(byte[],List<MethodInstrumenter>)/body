@@ -18,6 +18,7 @@
       if (applicableInstrumenters.isEmpty())       return mv;
       final List<MethodData> exitData=new ArrayList<MethodData>();
       final List<MethodData> enterData=new ArrayList<MethodData>();
+      final List<MethodData> errorData=new ArrayList<MethodData>();
       org.jetbrains.asm4.commons.Method methodBeingInstrumented=new org.jetbrains.asm4.commons.Method(name,desc);
       int maxStackDepth=0;
       for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
@@ -34,6 +35,13 @@
             maxStackDepth=depth;
           }
           exitData.add(methodData);
+        }
+        for (        MethodData methodData : instrumenter.getErrorData()) {
+          int depth=stackDepth(methodData,methodBeingInstrumented);
+          if (maxStackDepth < depth) {
+            maxStackDepth=depth;
+          }
+          errorData.add(methodData);
         }
       }
       if (enterData.isEmpty() && exitData.isEmpty())       return mv;
@@ -74,48 +82,51 @@ case LRETURN:
 case FRETURN:
 case DRETURN:
 case ARETURN:
-case ATHROW:
             for (            MethodData methodData : exitData) {
-              boolean beforeThrowInConstructor=opcode == ATHROW && isConstructor;
-              invokeMethod(access,name,desc,getInstructionAdapter(),methodData,beforeThrowInConstructor);
+              invokeMethod(access,name,desc,getInstructionAdapter(),methodData,false);
             }
           break;
-      }
-      super.visitInsn(opcode);
-    }
+case ATHROW:
+        for (        MethodData methodData : errorData) {
+          invokeMethod(access,name,desc,getInstructionAdapter(),methodData,isConstructor);
+        }
+      break;
   }
+  super.visitInsn(opcode);
+}
+}
 ;
 }
 private int stackDepth(MethodData methodData,org.jetbrains.asm4.commons.Method methodBeingInstrumented){
-  org.jetbrains.asm4.commons.Method method=getAsmMethod(methodData);
-  int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 5 : 0;
-  int totalSize=1 + Math.max(methodBeingInstrumented.getReturnType().getSize(),1);
-  for (  Type type : method.getArgumentTypes()) {
-    totalSize+=type.getSize();
-  }
-  return totalSize + allArgsStackDepth + method.getReturnType().getSize();
+org.jetbrains.asm4.commons.Method method=getAsmMethod(methodData);
+int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 5 : 0;
+int totalSize=1 + Math.max(methodBeingInstrumented.getReturnType().getSize(),1);
+for (Type type : method.getArgumentTypes()) {
+totalSize+=type.getSize();
+}
+return totalSize + allArgsStackDepth + method.getReturnType().getSize();
 }
 private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,String desc){
-  if (!instrumenter.allowsMultipleMatches()) {
-    String erasedSignature=name + desc;
-    String alreadyMatched=matchedMethods.put(instrumenter,erasedSignature);
-    if (alreadyMatched != null) {
-      throw new IllegalStateException(instrumenter + " matched two methods in " + cr.getClassName()+ ":\n"+ alreadyMatched+ "\n"+ erasedSignature);
-    }
-  }
+if (!instrumenter.allowsMultipleMatches()) {
+String erasedSignature=name + desc;
+String alreadyMatched=matchedMethods.put(instrumenter,erasedSignature);
+if (alreadyMatched != null) {
+  throw new IllegalStateException(instrumenter + " matched two methods in " + cr.getClassName()+ ":\n"+ alreadyMatched+ "\n"+ erasedSignature);
+}
+}
 }
 private TraceMethodVisitor getDumpingVisitorWrapper(MethodVisitor mv,final String methodName,final String methodDesc){
-  return new TraceMethodVisitor(mv,new Textifier(){
-    @Override public void visitMethodEnd(){
-      System.out.println(cr.getClassName() + ":" + methodName+ methodDesc);
-      for (      Object line : getText()) {
-        System.out.print(line);
-      }
-      System.out.println();
-      System.out.println();
-      super.visitMethodEnd();
-    }
+return new TraceMethodVisitor(mv,new Textifier(){
+@Override public void visitMethodEnd(){
+  System.out.println(cr.getClassName() + ":" + methodName+ methodDesc);
+  for (  Object line : getText()) {
+    System.out.print(line);
   }
+  System.out.println();
+  System.out.println();
+  super.visitMethodEnd();
+}
+}
 );
 }
 }

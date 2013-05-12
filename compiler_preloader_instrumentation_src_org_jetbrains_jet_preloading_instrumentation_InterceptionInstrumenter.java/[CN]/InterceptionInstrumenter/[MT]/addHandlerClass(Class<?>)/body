@@ -16,14 +16,23 @@
       FieldData fieldData=getFieldData(field,interceptorClass);
       List<MethodData> enterData=new ArrayList<MethodData>();
       List<MethodData> exitData=new ArrayList<MethodData>();
+      List<MethodData> errorData=new ArrayList<MethodData>();
       List<Method> dumpMethods=new ArrayList<Method>();
       for (      Method method : interceptorClass.getMethods()) {
         String name=method.getName();
+        MethodData methodData=getMethodData(fieldData,method);
         if (name.startsWith("enter")) {
-          enterData.add(getMethodData(fieldData,method));
+          enterData.add(methodData);
         }
  else         if (name.startsWith("exit")) {
-          exitData.add(getMethodData(fieldData,method));
+          exitData.add(methodData);
+        }
+ else         if (name.startsWith("error")) {
+          errorData.add(methodData);
+        }
+ else         if (name.startsWith("anyExit")) {
+          exitData.add(methodData);
+          errorData.add(methodData);
         }
  else         if (name.startsWith("dump")) {
           Class<?>[] parameterTypes=method.getParameterTypes();
@@ -36,7 +45,7 @@
       }
       String nameFromAnnotation=annotation.methodName();
       String methodName=nameFromAnnotation.isEmpty() ? field.getName() : nameFromAnnotation;
-      MethodInstrumenterImpl instrumenter=new MethodInstrumenterImpl(field.getDeclaringClass().getSimpleName() + "." + field.getName(),classPattern,compilePattern(methodName),compilePattern(annotation.erasedSignature()),annotation.allowMultipleMatches(),enterData,exitData,annotation.logInterceptions());
+      MethodInstrumenterImpl instrumenter=new MethodInstrumenterImpl(field.getDeclaringClass().getSimpleName() + "." + field.getName(),classPattern,compilePattern(methodName),compilePattern(annotation.erasedSignature()),annotation.allowMultipleMatches(),enterData,exitData,errorData,annotation.logInterceptions());
       for (      Method dumpMethod : dumpMethods) {
         addDumpTask(interceptor,dumpMethod,instrumenter);
       }
