@@ -2,7 +2,8 @@
   FieldData field=methodData.getOwnerField();
   ia.getstatic(field.getDeclaringClass(),field.getName(),field.getDesc());
   ia.checkcast(field.getRuntimeType());
-  int parameterCount=methodData.getParameterCount();
+  org.jetbrains.asm4.commons.Method asmMethod=getAsmMethod(methodData);
+  int parameterCount=asmMethod.getArgumentTypes().length;
   if (parameterCount > 0) {
     Type[] parameterTypes=Type.getArgumentTypes(instrumentedMethodDesc);
     boolean isStatic=(access & ACC_STATIC) != 0;
@@ -45,4 +46,13 @@
     }
   }
   ia.invokevirtual(methodData.getDeclaringClass(),methodData.getName(),methodData.getDesc());
+  Type type=asmMethod.getReturnType();
+  if (type.getSort() != Type.VOID) {
+    if (type.getSize() == 1) {
+      ia.pop();
+    }
+ else {
+      ia.pop2();
+    }
+  }
 }

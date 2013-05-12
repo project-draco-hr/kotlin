@@ -18,17 +18,20 @@
       if (applicableInstrumenters.isEmpty())       return mv;
       final List<MethodData> exitData=new ArrayList<MethodData>();
       final List<MethodData> enterData=new ArrayList<MethodData>();
-      int maxParamCount=0;
+      org.jetbrains.asm4.commons.Method methodBeingInstrumented=new org.jetbrains.asm4.commons.Method(name,desc);
+      int maxStackDepth=0;
       for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
         for (        MethodData methodData : instrumenter.getEnterData()) {
-          if (maxParamCount < stackDepth(methodData)) {
-            maxParamCount=stackDepth(methodData);
+          int depth=stackDepth(methodData,methodBeingInstrumented);
+          if (maxStackDepth < depth) {
+            maxStackDepth=depth;
           }
           enterData.add(methodData);
         }
         for (        MethodData methodData : instrumenter.getExitData()) {
-          if (maxParamCount < stackDepth(methodData)) {
-            maxParamCount=stackDepth(methodData);
+          int depth=stackDepth(methodData,methodBeingInstrumented);
+          if (maxStackDepth < depth) {
+            maxStackDepth=depth;
           }
           exitData.add(methodData);
         }
@@ -38,7 +41,7 @@
         mv=getDumpingVisitorWrapper(mv,name,desc);
       }
       final boolean isConstructor="<init>".equals(name);
-      final int finalMaxParamCount=maxParamCount;
+      final int finalMaxStackDepth=maxStackDepth;
       return new MethodVisitorWithUniversalHandler(ASM4,mv){
         private InstructionAdapter ia=null;
         private boolean enterDataWritten=false;
@@ -49,8 +52,7 @@
           return ia;
         }
         @Override public void visitMaxs(        int maxStack,        int maxLocals){
-          int maxInstrumentedStack=finalMaxParamCount + 1;
-          super.visitMaxs(Math.max(maxStack,maxInstrumentedStack),maxLocals);
+          super.visitMaxs(Math.max(maxStack,finalMaxStackDepth),maxLocals);
         }
         @Override protected boolean visitAnyInsn(        int opcode){
           writeEnterData();
@@ -84,9 +86,14 @@ case ATHROW:
   }
 ;
 }
-private int stackDepth(MethodData methodData){
-  int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 3 : 0;
-  return methodData.getParameterCount() + 1 + allArgsStackDepth;
+private int stackDepth(MethodData methodData,org.jetbrains.asm4.commons.Method methodBeingInstrumented){
+  org.jetbrains.asm4.commons.Method method=getAsmMethod(methodData);
+  int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 5 : 0;
+  int totalSize=1 + Math.max(methodBeingInstrumented.getReturnType().getSize(),1);
+  for (  Type type : method.getArgumentTypes()) {
+    totalSize+=type.getSize();
+  }
+  return totalSize + allArgsStackDepth + method.getReturnType().getSize();
 }
 private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,String desc){
   if (!instrumenter.allowsMultipleMatches()) {
