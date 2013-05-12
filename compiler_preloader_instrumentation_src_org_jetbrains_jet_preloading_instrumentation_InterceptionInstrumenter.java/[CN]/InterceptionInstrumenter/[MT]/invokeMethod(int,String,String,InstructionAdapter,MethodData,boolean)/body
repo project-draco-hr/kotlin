@@ -23,6 +23,20 @@
  else       if (i == methodData.getMethodDescParameterIndex()) {
         ia.aconst(instrumentedMethodDesc);
       }
+ else       if (i == methodData.getAllArgsParameterIndex()) {
+        ia.aconst(parameterTypes.length);
+        ia.newarray(OBJECT_TYPE);
+        int offset=0;
+        for (int parameterIndex=0; parameterIndex < parameterTypes.length; parameterIndex++) {
+          ia.dup();
+          Type type=parameterTypes[parameterIndex];
+          ia.iconst(parameterIndex);
+          ia.load(base + offset,type);
+          offset+=type.getSize();
+          applyBoxingIfNeeded(ia,type);
+          ia.astore(OBJECT_TYPE);
+        }
+      }
  else {
         Type type=parameterTypes[parameterOffset];
         ia.load(base + parameterOffset,type);

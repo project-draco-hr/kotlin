@@ -3,6 +3,7 @@
   int thisParameterIndex=-1;
   int methodNameParameterIndex=-1;
   int methodDescParameterIndex=-1;
+  int allArgsParameterIndex=-1;
   for (int i=0; i < parameterAnnotations.length; i++) {
     for (    Annotation annotation : parameterAnnotations[i]) {
       if (annotation instanceof This) {
@@ -23,7 +24,13 @@
         }
         methodDescParameterIndex=i;
       }
+ else       if (annotation instanceof AllArgs) {
+        if (allArgsParameterIndex > -1) {
+          throw new IllegalArgumentException("Multiple @AllArgs parameters in " + method);
+        }
+        allArgsParameterIndex=i;
+      }
     }
   }
-  return new MethodDataImpl(interceptorField,Type.getInternalName(method.getDeclaringClass()),method.getName(),Type.getMethodDescriptor(method),method.getParameterTypes().length,thisParameterIndex,methodNameParameterIndex,methodDescParameterIndex);
+  return new MethodDataImpl(interceptorField,Type.getInternalName(method.getDeclaringClass()),method.getName(),Type.getMethodDescriptor(method),method.getParameterTypes().length,thisParameterIndex,methodNameParameterIndex,methodDescParameterIndex,allArgsParameterIndex);
 }

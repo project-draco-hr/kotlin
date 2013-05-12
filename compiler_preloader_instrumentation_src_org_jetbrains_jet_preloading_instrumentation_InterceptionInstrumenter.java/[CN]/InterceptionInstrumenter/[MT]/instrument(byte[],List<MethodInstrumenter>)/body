@@ -21,14 +21,14 @@
       int maxParamCount=0;
       for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
         for (        MethodData methodData : instrumenter.getEnterData()) {
-          if (maxParamCount < methodData.getParameterCount()) {
-            maxParamCount=methodData.getParameterCount();
+          if (maxParamCount < stackDepth(methodData)) {
+            maxParamCount=stackDepth(methodData);
           }
           enterData.add(methodData);
         }
         for (        MethodData methodData : instrumenter.getExitData()) {
-          if (maxParamCount < methodData.getParameterCount()) {
-            maxParamCount=methodData.getParameterCount();
+          if (maxParamCount < stackDepth(methodData)) {
+            maxParamCount=stackDepth(methodData);
           }
           exitData.add(methodData);
         }
@@ -48,7 +48,7 @@
           return ia;
         }
         @Override public void visitMaxs(        int maxStack,        int maxLocals){
-          int maxInstrumentedStack=finalMaxParamCount + 2;
+          int maxInstrumentedStack=finalMaxParamCount + 1;
           super.visitMaxs(Math.max(maxStack,maxInstrumentedStack),maxLocals);
         }
         @Override protected boolean visitAnyInsn(        int opcode){
@@ -81,6 +81,10 @@ case ATHROW:
     }
   }
 ;
+}
+private int stackDepth(MethodData methodData){
+  int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 3 : 0;
+  return methodData.getParameterCount() + 1 + allArgsStackDepth;
 }
 private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,String desc){
   if (!instrumenter.allowsMultipleMatches()) {
