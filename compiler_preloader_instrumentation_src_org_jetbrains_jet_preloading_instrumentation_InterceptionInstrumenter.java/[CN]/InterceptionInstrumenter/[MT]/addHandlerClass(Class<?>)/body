@@ -16,8 +16,8 @@
       FieldData fieldData=getFieldData(field,interceptorClass);
       List<MethodData> enterData=new ArrayList<MethodData>();
       List<MethodData> exitData=new ArrayList<MethodData>();
-      Method[] methods=interceptorClass.getMethods();
-      for (      Method method : methods) {
+      List<Method> dumpMethods=new ArrayList<Method>();
+      for (      Method method : interceptorClass.getMethods()) {
         String name=method.getName();
         if (name.startsWith("enter")) {
           enterData.add(getMethodData(fieldData,method));
@@ -31,12 +31,15 @@
           if (parameterTypes.length == 1 && parameterTypes[0] != PrintStream.class) {
             continue;
           }
-          addDumpTask(interceptor,method);
+          dumpMethods.add(method);
         }
       }
       String nameFromAnnotation=annotation.methodName();
       String methodName=nameFromAnnotation.isEmpty() ? field.getName() : nameFromAnnotation;
       MethodInstrumenterImpl instrumenter=new MethodInstrumenterImpl(field.getDeclaringClass().getSimpleName() + "." + field.getName(),compilePattern(methodName),compilePattern(annotation.erasedSignature()),annotation.allowMultipleMatches(),enterData,exitData,annotation.logInterceptions());
+      for (      Method dumpMethod : dumpMethods) {
+        addDumpTask(interceptor,dumpMethod,instrumenter);
+      }
       instrumenters.add(instrumenter);
       neverMatchedInstrumenters.add(instrumenter);
     }
