@@ -26,8 +26,9 @@
       if (dumpInstrumentedMethods) {
         mv=getDumpingVisitorWrapper(mv,name,desc);
       }
-      return new MethodVisitor(ASM4,mv){
+      return new MethodVisitorWithUniversalHandler(ASM4,mv){
         private InstructionAdapter ia=null;
+        private boolean enterDataWritten=false;
         private InstructionAdapter getInstructionAdapter(){
           if (ia == null) {
             ia=new InstructionAdapter(this);
@@ -38,13 +39,19 @@
           int sizes=Type.getArgumentsAndReturnSizes(desc);
           super.visitMaxs(Math.max(maxStack,sizes + 1),maxLocals);
         }
-        @Override public void visitCode(){
+        @Override protected boolean visitAnyInsn(        int opcode){
+          writeEnterData();
+          return true;
+        }
+        private void writeEnterData(){
+          if (enterDataWritten)           return;
+          enterDataWritten=true;
           for (          MethodData methodData : enterData) {
-            invokeMethod(access,name,desc,getInstructionAdapter(),methodData);
+            invokeMethod(access,desc,getInstructionAdapter(),methodData);
           }
-          super.visitCode();
         }
         @Override public void visitInsn(        int opcode){
+          writeEnterData();
 switch (opcode) {
 case RETURN:
 case IRETURN:
@@ -54,7 +61,7 @@ case DRETURN:
 case ARETURN:
 case ATHROW:
             for (            MethodData methodData : exitData) {
-              invokeMethod(access,name,desc,getInstructionAdapter(),methodData);
+              invokeMethod(access,desc,getInstructionAdapter(),methodData);
             }
           break;
       }
