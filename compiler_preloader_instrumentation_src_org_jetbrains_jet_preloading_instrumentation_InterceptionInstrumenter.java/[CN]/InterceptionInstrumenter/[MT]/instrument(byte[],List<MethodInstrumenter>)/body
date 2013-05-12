@@ -50,9 +50,8 @@
       }
       final boolean isConstructor="<init>".equals(name);
       final int finalMaxStackDepth=maxStackDepth;
-      return new MethodVisitorWithUniversalHandler(ASM4,mv){
+      return new MethodVisitor(ASM4,mv){
         private InstructionAdapter ia=null;
-        private boolean enterDataWritten=false;
         private InstructionAdapter getInstructionAdapter(){
           if (ia == null) {
             ia=new InstructionAdapter(this);
@@ -62,19 +61,12 @@
         @Override public void visitMaxs(        int maxStack,        int maxLocals){
           super.visitMaxs(Math.max(maxStack,finalMaxStackDepth),maxLocals);
         }
-        @Override protected boolean visitAnyInsn(        int opcode){
-          writeEnterData();
-          return true;
-        }
-        private void writeEnterData(){
-          if (enterDataWritten)           return;
-          enterDataWritten=true;
+        @Override public void visitCode(){
           for (          MethodData methodData : enterData) {
             invokeMethod(access,name,desc,getInstructionAdapter(),methodData,isConstructor);
           }
         }
         @Override public void visitInsn(        int opcode){
-          writeEnterData();
 switch (opcode) {
 case RETURN:
 case IRETURN:
