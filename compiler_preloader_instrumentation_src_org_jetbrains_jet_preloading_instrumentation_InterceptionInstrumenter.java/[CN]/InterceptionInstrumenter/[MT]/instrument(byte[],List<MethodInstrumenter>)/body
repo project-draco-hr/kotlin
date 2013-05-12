@@ -16,9 +16,9 @@
         }
       }
       if (applicableInstrumenters.isEmpty())       return mv;
-      final List<MethodData> exitData=new ArrayList<MethodData>();
+      final List<MethodData> normalReturnData=new ArrayList<MethodData>();
       final List<MethodData> enterData=new ArrayList<MethodData>();
-      final List<MethodData> errorData=new ArrayList<MethodData>();
+      final List<MethodData> exceptionData=new ArrayList<MethodData>();
       org.jetbrains.asm4.commons.Method methodBeingInstrumented=new org.jetbrains.asm4.commons.Method(name,desc);
       int maxStackDepth=0;
       for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
@@ -29,22 +29,22 @@
           }
           enterData.add(methodData);
         }
-        for (        MethodData methodData : instrumenter.getExitData()) {
+        for (        MethodData methodData : instrumenter.getNormalReturnData()) {
           int depth=stackDepth(methodData,methodBeingInstrumented);
           if (maxStackDepth < depth) {
             maxStackDepth=depth;
           }
-          exitData.add(methodData);
+          normalReturnData.add(methodData);
         }
-        for (        MethodData methodData : instrumenter.getErrorData()) {
+        for (        MethodData methodData : instrumenter.getExceptionData()) {
           int depth=stackDepth(methodData,methodBeingInstrumented);
           if (maxStackDepth < depth) {
             maxStackDepth=depth;
           }
-          errorData.add(methodData);
+          exceptionData.add(methodData);
         }
       }
-      if (enterData.isEmpty() && exitData.isEmpty())       return mv;
+      if (enterData.isEmpty() && normalReturnData.isEmpty())       return mv;
       if (dumpInstrumentedMethods) {
         mv=getDumpingVisitorWrapper(mv,name,desc);
       }
@@ -74,12 +74,12 @@ case LRETURN:
 case FRETURN:
 case DRETURN:
 case ARETURN:
-            for (            MethodData methodData : exitData) {
+            for (            MethodData methodData : normalReturnData) {
               invokeMethod(access,name,desc,getInstructionAdapter(),methodData,false);
             }
           break;
 case ATHROW:
-        for (        MethodData methodData : errorData) {
+        for (        MethodData methodData : exceptionData) {
           invokeMethod(access,name,desc,getInstructionAdapter(),methodData,isConstructor);
         }
       break;
