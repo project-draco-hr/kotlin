@@ -37,6 +37,7 @@
       if (dumpInstrumentedMethods) {
         mv=getDumpingVisitorWrapper(mv,name,desc);
       }
+      final boolean isConstructor="<init>".equals(name);
       final int finalMaxParamCount=maxParamCount;
       return new MethodVisitorWithUniversalHandler(ASM4,mv){
         private InstructionAdapter ia=null;
@@ -59,7 +60,7 @@
           if (enterDataWritten)           return;
           enterDataWritten=true;
           for (          MethodData methodData : enterData) {
-            invokeMethod(access,name,desc,getInstructionAdapter(),methodData,"<init>".equals(name));
+            invokeMethod(access,name,desc,getInstructionAdapter(),methodData,isConstructor);
           }
         }
         @Override public void visitInsn(        int opcode){
@@ -73,7 +74,8 @@ case DRETURN:
 case ARETURN:
 case ATHROW:
             for (            MethodData methodData : exitData) {
-              invokeMethod(access,name,desc,getInstructionAdapter(),methodData,false);
+              boolean beforeThrowInConstructor=opcode == ATHROW && isConstructor;
+              invokeMethod(access,name,desc,getInstructionAdapter(),methodData,beforeThrowInConstructor);
             }
           break;
       }
