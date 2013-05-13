@@ -3,9 +3,10 @@
   ia.getstatic(field.getDeclaringClass(),field.getName(),field.getDesc());
   ia.checkcast(field.getRuntimeType());
   org.jetbrains.asm4.commons.Method asmMethod=getAsmMethod(methodData);
-  int parameterCount=asmMethod.getArgumentTypes().length;
+  Type[] interceptingMethodParameterTypes=asmMethod.getArgumentTypes();
+  int parameterCount=interceptingMethodParameterTypes.length;
   if (parameterCount > 0) {
-    Type[] parameterTypes=Type.getArgumentTypes(instrumentedMethodDesc);
+    Type[] instrumentedMethodParameterTypes=Type.getArgumentTypes(instrumentedMethodDesc);
     boolean isStatic=(instrumentedMethodAccess & ACC_STATIC) != 0;
     int base=isStatic ? 0 : 1;
     int instrumentedMethodParameterIndex=0;
@@ -29,22 +30,23 @@
         ia.aconst(instrumentedMethodDesc);
       }
  else       if (i == methodData.getAllArgsParameterIndex()) {
-        ia.aconst(parameterTypes.length);
+        ia.aconst(instrumentedMethodParameterTypes.length);
         ia.newarray(OBJECT_TYPE);
         int offset=0;
-        for (int parameterIndex=0; parameterIndex < parameterTypes.length; parameterIndex++) {
+        for (int parameterIndex=0; parameterIndex < instrumentedMethodParameterTypes.length; parameterIndex++) {
           ia.dup();
           ia.iconst(parameterIndex);
-          Type type=parameterTypes[parameterIndex];
+          Type type=instrumentedMethodParameterTypes[parameterIndex];
           ia.load(base + offset,type);
           offset+=type.getSize();
-          applyBoxingIfNeeded(ia,type);
+          boxOrCastIfNeeded(ia,type,OBJECT_TYPE);
           ia.astore(OBJECT_TYPE);
         }
       }
  else {
-        Type type=parameterTypes[instrumentedMethodParameterIndex];
+        Type type=instrumentedMethodParameterTypes[instrumentedMethodParameterIndex];
         ia.load(base + instrumentedMethodParameterOffset,type);
+        boxOrCastIfNeeded(ia,type,interceptingMethodParameterTypes[i]);
         instrumentedMethodParameterIndex++;
         instrumentedMethodParameterOffset+=type.getSize();
       }
