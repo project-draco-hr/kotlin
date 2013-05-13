@@ -1,0 +1,17 @@
+{
+  for (  PsiMethod method : accessors) {
+    PsiMethod[] implementations=MethodImplementationsSearch.getMethodImplementations(method);
+    for (    PsiMethod implementation : implementations) {
+      PsiElement mirrorElement=implementation instanceof PsiCompiledElement ? ((PsiCompiledElement)implementation).getMirror() : null;
+      if (mirrorElement instanceof JetProperty || mirrorElement instanceof JetParameter) {
+        consumer.process(mirrorElement);
+      }
+ else       if (mirrorElement instanceof JetPropertyAccessor && mirrorElement.getParent() instanceof JetProperty) {
+        consumer.process(mirrorElement.getParent());
+      }
+ else {
+        consumer.process(implementation);
+      }
+    }
+  }
+}
