@@ -1,2 +1,15 @@
 {
+  int modifiers=ACC_PRIVATE | ACC_FINAL | getDeprecatedAccessFlag(propertyDescriptor);
+  if (kind == OwnerKind.NAMESPACE) {
+    modifiers|=ACC_STATIC;
+  }
+  if (KotlinBuiltIns.getInstance().isVolatile(propertyDescriptor)) {
+    modifiers|=ACC_VOLATILE;
+  }
+  JetType delegateType=bindingContext.get(BindingContext.EXPRESSION_TYPE,p.getDelegateExpression());
+  if (delegateType == null) {
+    delegateType=ErrorUtils.createErrorType("Delegate type");
+  }
+  Type type=typeMapper.mapType(delegateType);
+  return v.newField(p,modifiers,JvmAbi.getPropertyDelegateName(propertyDescriptor.getName()),type.getDescriptor(),null,null);
 }
