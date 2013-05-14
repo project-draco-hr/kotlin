@@ -1,0 +1,18 @@
+{
+  ProtoBuf.Class.Builder builder=ProtoBuf.Class.newBuilder();
+  builder.setName(nameTable.getSimpleNameIndex(classDescriptor.getName()));
+  DescriptorSerializer local=createChildSerializer();
+  for (  TypeParameterDescriptor typeParameterDescriptor : classDescriptor.getTypeConstructor().getParameters()) {
+    builder.addTypeParameters(local.typeParameter(typeParameterDescriptor));
+  }
+  for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
+    builder.addSupertypes(local.type(supertype));
+  }
+  for (  DeclarationDescriptor descriptor : classDescriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
+    if (descriptor instanceof FunctionDescriptor) {
+      FunctionDescriptor function=(FunctionDescriptor)descriptor;
+      builder.addMembers(local.functionProto(function));
+    }
+  }
+  return builder;
+}
