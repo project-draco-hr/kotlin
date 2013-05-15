@@ -1,0 +1,25 @@
+{
+  Comparator<DeclarationDescriptor> comparator=new Comparator<DeclarationDescriptor>(){
+    @Override public int compare(    DeclarationDescriptor o1,    DeclarationDescriptor o2){
+      int names=o1.getName().getName().compareTo(o2.getName().getName());
+      if (names != 0)       return names;
+      return RENDERER.render(o1).compareTo(RENDERER.render(o2));
+    }
+  }
+;
+  List<DeclarationDescriptor> sortedDescriptors=Lists.newArrayList(descriptors);
+  Collections.sort(sortedDescriptors,comparator);
+  for (  DeclarationDescriptor descriptor : sortedDescriptors) {
+    p.println(RENDERER.render(descriptor));
+    if (descriptor instanceof ClassDescriptor) {
+      ClassDescriptor classDescriptor=(ClassDescriptor)descriptor;
+      p.pushIndent();
+      List<DeclarationDescriptor> members=Lists.newArrayList(classDescriptor.getDefaultType().getMemberScope().getAllDescriptors());
+      Collections.sort(members,comparator);
+      for (      DeclarationDescriptor member : members) {
+        p.println(RENDERER.render(member));
+      }
+      p.popIndent();
+    }
+  }
+}

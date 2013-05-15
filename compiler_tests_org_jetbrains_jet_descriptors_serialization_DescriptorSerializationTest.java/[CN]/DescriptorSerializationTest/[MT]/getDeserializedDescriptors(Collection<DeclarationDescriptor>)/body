@@ -1,0 +1,34 @@
+{
+  Profiler serialize=Profiler.create("serialize").start();
+  ByteArrayOutputStream out=new ByteArrayOutputStream();
+  serialize(descriptors,out);
+  serialize.end();
+  System.out.println("Size in bytes: " + out.size());
+  Profiler deserialize=Profiler.create("deserialize").start();
+  InputStream in=new ByteArrayInputStream(out.toByteArray());
+  ProtoBuf.SimpleNameTable simpleNames=ProtoBuf.SimpleNameTable.parseDelimitedFrom(in);
+  ProtoBuf.QualifiedNameTable qualifiedNames=ProtoBuf.QualifiedNameTable.parseDelimitedFrom(in);
+  List<ProtoBuf.Class> classProtos=parseClasses(in);
+  ClassResolverImpl classResolver=new ClassResolverImpl(new ClassResolver(){
+    @Nullable @Override public ClassDescriptor findClass(    @NotNull FqName fqName){
+      while (!fqName.isRoot()) {
+        NamespaceDescriptor namespace=KotlinBuiltIns.getInstance().getBuiltInsModule().getNamespace(fqName.parent());
+        if (namespace == null) {
+          fqName=fqName.parent();
+        }
+ else {
+          return (ClassDescriptor)namespace.getMemberScope().getClassifier(fqName.shortName());
+        }
+      }
+      return null;
+    }
+  }
+,KotlinBuiltIns.getInstance().getBuiltInsPackage(),simpleNames,qualifiedNames,classProtos);
+  List<DeclarationDescriptor> result=new ArrayList<DeclarationDescriptor>();
+  for (  ProtoBuf.Class classProto : classProtos) {
+    ClassDescriptor classDescriptor=classResolver.findClass(new FqName("jet." + classResolver.getNameResolver().getName(classProto.getName())));
+    result.add(classDescriptor);
+  }
+  deserialize.end();
+  return result;
+}
