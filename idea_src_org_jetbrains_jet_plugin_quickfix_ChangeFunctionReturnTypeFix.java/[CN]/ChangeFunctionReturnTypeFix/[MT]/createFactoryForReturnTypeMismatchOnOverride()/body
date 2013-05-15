@@ -1,11 +1,34 @@
 {
-  return new JetSingleIntentionActionFactory(){
-    @Nullable @Override public IntentionAction createAction(    Diagnostic diagnostic){
+  return new JetIntentionActionsFactory(){
+    @NotNull @Override public List<IntentionAction> createActions(    Diagnostic diagnostic){
+      List<IntentionAction> actions=new LinkedList<IntentionAction>();
       JetFunction function=QuickFixUtil.getParentElementOfType(diagnostic,JetFunction.class);
-      if (function == null)       return null;
-      BindingContext context=KotlinCacheManagerUtil.getDeclarationsBindingContext(function);
-      JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(context,function);
-      return matchingReturnType == null ? null : new ChangeFunctionReturnTypeFix(function,matchingReturnType);
+      if (function != null) {
+        BindingContext context=KotlinCacheManagerUtil.getDeclarationsBindingContext(function);
+        JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(context,function);
+        if (matchingReturnType != null) {
+          actions.add(new ChangeFunctionReturnTypeFix(function,matchingReturnType));
+        }
+        SimpleFunctionDescriptor descriptor=context.get(BindingContext.FUNCTION,function);
+        if (descriptor == null)         return actions;
+        JetType functionType=descriptor.getReturnType();
+        if (functionType == null)         return actions;
+        List<FunctionDescriptor> overriddenMismatchingFunctions=new LinkedList<FunctionDescriptor>();
+        for (        FunctionDescriptor overriddenFunction : descriptor.getOverriddenDescriptors()) {
+          JetType overriddenFunctionType=overriddenFunction.getReturnType();
+          if (overriddenFunctionType == null)           continue;
+          if (!JetTypeChecker.INSTANCE.isSubtypeOf(functionType,overriddenFunctionType)) {
+            overriddenMismatchingFunctions.add(overriddenFunction);
+          }
+        }
+        if (overriddenMismatchingFunctions.size() == 1) {
+          PsiElement overriddenFunction=BindingContextUtils.descriptorToDeclaration(context,overriddenMismatchingFunctions.get(0));
+          if (overriddenFunction instanceof JetFunction) {
+            actions.add(new ChangeFunctionReturnTypeFix((JetFunction)overriddenFunction,functionType));
+          }
+        }
+      }
+      return actions;
     }
   }
 ;
