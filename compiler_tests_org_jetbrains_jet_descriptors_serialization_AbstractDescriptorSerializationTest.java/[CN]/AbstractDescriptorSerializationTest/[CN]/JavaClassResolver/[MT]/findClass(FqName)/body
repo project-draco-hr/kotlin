@@ -1,0 +1,19 @@
+{
+  ClassDescriptor classDescriptor=javaDescriptorResolver.resolveClass(fqName);
+  if (classDescriptor != null) {
+    return classDescriptor;
+  }
+  FqName current=fqName;
+  while (!current.isRoot()) {
+    NamespaceDescriptor namespace=getNamespace(current);
+    if (namespace != null) {
+      ClassDescriptor classifier=(ClassDescriptor)namespace.getMemberScope().getClassifier(current.shortName());
+      if (classifier == null) {
+        throw new IllegalStateException("Class not found: " + fqName);
+      }
+      return classifier;
+    }
+    current=current.parent();
+  }
+  throw new IllegalStateException("Class not found: " + fqName);
+}
