@@ -3,7 +3,7 @@
   AbiVersionUtil.checkAbiVersion(psiClass,jetClassAnnotation,trace);
   ClassKind kind=getClassKind(psiClass,jetClassAnnotation);
   ClassPsiDeclarationProvider classData=semanticServices.getPsiDeclarationProviderFactory().createBinaryClassData(psiClass);
-  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,isInnerClass(psiClass),MembersCache.isSamInterface(psiClass));
+  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,isInnerClass(psiClass));
   cache(javaClassToKotlinFqName(fqName),classDescriptor);
   classDescriptor.setName(Name.identifier(psiClass.getName()));
   List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=signatureResolver.createUninitializedClassTypeParameters(psiClass,classDescriptor);
@@ -27,5 +27,10 @@
   }
   classDescriptor.setAnnotations(annotationResolver.resolveAnnotations(psiClass,taskList));
   trace.record(BindingContext.CLASS,psiClass,classDescriptor);
+  PsiMethod samInterfaceMethod=MembersCache.getSamInterfaceMethod(psiClass);
+  if (samInterfaceMethod != null) {
+    SimpleFunctionDescriptor abstractMethod=functionResolver.resolveFunctionMutely(psiClass,new PsiMethodWrapper(samInterfaceMethod),classDescriptor);
+    classDescriptor.setFunctionTypeForSamInterface(SingleAbstractMethodUtils.getFunctionTypeForAbstractMethod(abstractMethod));
+  }
   return classDescriptor;
 }

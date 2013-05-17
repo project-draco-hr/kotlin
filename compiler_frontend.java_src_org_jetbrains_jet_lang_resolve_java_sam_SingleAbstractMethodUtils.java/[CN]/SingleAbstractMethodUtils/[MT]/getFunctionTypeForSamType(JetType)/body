@@ -1,2 +1,11 @@
 {
+  ClassifierDescriptor classifier=samType.getConstructor().getDeclarationDescriptor();
+  if (classifier instanceof ClassDescriptorFromJvmBytecode) {
+    JetType functionTypeDefault=((ClassDescriptorFromJvmBytecode)classifier).getFunctionTypeForSamInterface();
+    if (functionTypeDefault != null) {
+      JetType substitute=TypeSubstitutor.create(samType).substitute(functionTypeDefault,Variance.INVARIANT);
+      return substitute == null ? null : fixProjections(TypeUtils.makeNullableAsSpecified(substitute,samType.isNullable()));
+    }
+  }
+  return null;
 }
