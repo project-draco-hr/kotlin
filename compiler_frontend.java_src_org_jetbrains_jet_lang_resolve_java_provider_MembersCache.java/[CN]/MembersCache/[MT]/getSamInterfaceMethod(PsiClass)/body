@@ -1,0 +1,25 @@
+{
+  if (psiClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+    return null;
+  }
+  if (DescriptorResolverUtils.isKotlinClass(psiClass)) {
+    return null;
+  }
+  String qualifiedName=psiClass.getQualifiedName();
+  if (qualifiedName == null || qualifiedName.startsWith(KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.getFqName() + ".")) {
+    return null;
+  }
+  if (!psiClass.isInterface() || psiClass.isAnnotationType()) {
+    return null;
+  }
+  List<PsiMethod> methods=Lists.newArrayList();
+  for (  PsiMethod method : psiClass.getAllMethods()) {
+    if (!isObjectMethod(method) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      methods.add(method);
+      if (method.hasTypeParameters()) {
+        return null;
+      }
+    }
+  }
+  return methods.size() == 1 ? methods.get(0) : null;
+}
