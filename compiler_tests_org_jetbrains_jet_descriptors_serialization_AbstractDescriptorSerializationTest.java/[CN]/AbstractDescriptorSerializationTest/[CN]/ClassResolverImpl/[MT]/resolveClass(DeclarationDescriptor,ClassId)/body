@@ -1,0 +1,18 @@
+{
+  FqName fqName=classId.asSingleFqName();
+  ClassMetadata classMetadata=this.classMetadata.fun(fqName.getFqName());
+  if (classMetadata == null) {
+    return parentResolver.findClass(classId);
+  }
+  NestedClassResolver nestedClassResolver=new NestedClassResolver(){
+    @Nullable @Override public ClassDescriptor resolveNestedClass(    @NotNull ClassDescriptor outerClass,    @NotNull Name name){
+      return resolveClass(outerClass,classId.createNestedClassId(name));
+    }
+    @Nullable @Override public ClassDescriptor resolveClassObject(    @NotNull ClassDescriptor outerClass){
+      return resolveClass(outerClass,classId.createNestedClassId(Name.identifier(JvmAbi.CLASS_OBJECT_CLASS_NAME)));
+    }
+  }
+;
+  NameResolver nameResolver=new NameResolver(classMetadata.simpleNames,classMetadata.qualifiedNames,this);
+  return new DeserializedClassDescriptor(containingDeclaration,nameResolver,nestedClassResolver,classMetadata.classProto,null);
+}

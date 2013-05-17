@@ -1,0 +1,24 @@
+{
+  ClassDescriptor javaClassDescriptor=javaDescriptorResolver.resolveClass(classId.asSingleFqName());
+  if (javaClassDescriptor != null) {
+    return javaClassDescriptor;
+  }
+  NamespaceDescriptor packageDescriptor=getNamespace(classId.getPackageFqName());
+  if (packageDescriptor == null) {
+    throw new IllegalStateException("Java package not found: " + classId.getPackageFqName() + " for "+ classId);
+  }
+  JetScope scope=packageDescriptor.getMemberScope();
+  for (Iterator<Name> iterator=classId.getRelativeClassName().pathSegments().iterator(); iterator.hasNext(); ) {
+    Name name=iterator.next();
+    ClassifierDescriptor classifier=scope.getClassifier(name);
+    if (classifier == null) {
+      throw new IllegalStateException("Class not found: " + classId);
+    }
+    ClassDescriptor classDescriptor=(ClassDescriptor)classifier;
+    if (!iterator.hasNext()) {
+      return classDescriptor;
+    }
+    scope=classDescriptor.getUnsubstitutedInnerClassesScope();
+  }
+  throw new IllegalStateException("Class not found: " + classId);
+}
