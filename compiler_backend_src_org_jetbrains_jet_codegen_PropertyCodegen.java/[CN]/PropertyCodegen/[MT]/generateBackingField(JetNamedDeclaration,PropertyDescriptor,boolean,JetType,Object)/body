@@ -1,0 +1,29 @@
+{
+  int modifiers=getDeprecatedAccessFlag(propertyDescriptor);
+  if (KotlinBuiltIns.getInstance().isVolatile(propertyDescriptor)) {
+    modifiers|=ACC_VOLATILE;
+  }
+  if (kind == OwnerKind.NAMESPACE) {
+    modifiers|=ACC_STATIC;
+  }
+  if (!propertyDescriptor.isVar() || isDelegate) {
+    modifiers|=ACC_FINAL;
+  }
+  Type type=typeMapper.mapType(jetType);
+  ClassBuilder builder=v;
+  if (AsmUtil.isPropertyWithBackingFieldInOuterClass(propertyDescriptor)) {
+    modifiers|=ACC_STATIC | getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
+    builder=getParentBodyCodegen(classBodyCodegen).v;
+  }
+ else {
+    if (kind != OwnerKind.NAMESPACE || isDelegate) {
+      modifiers|=ACC_PRIVATE;
+    }
+  }
+  if (AsmUtil.isPropertyWithBackingFieldCopyInOuterClass(propertyDescriptor)) {
+    ImplementationBodyCodegen parentBodyCodegen=getParentBodyCodegen(classBodyCodegen);
+    parentBodyCodegen.addClassObjectPropertyToCopy(propertyDescriptor);
+  }
+  String name=isDelegate ? JvmAbi.getPropertyDelegateName(propertyDescriptor.getName()) : propertyDescriptor.getName().asString();
+  return builder.newField(element,modifiers,name,type.getDescriptor(),null,defaultValue);
+}

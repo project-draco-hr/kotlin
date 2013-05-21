@@ -39,6 +39,14 @@
     }
     curParam++;
   }
-  generateInitializers(codegen,iv,myClass.getDeclarations(),bindingContext,state);
+  boolean generateInitializerInOuter=isClassObjectWithBackingFieldsInOuter(descriptor);
+  if (generateInitializerInOuter) {
+    ImplementationBodyCodegen parentCodegen=getParentBodyCodegen(this);
+    parentCodegen.genInitSingleton(descriptor,StackValue.singleton(descriptor,typeMapper));
+    parentCodegen.generateInitializers(parentCodegen.createOrGetClInitCodegen(),myClass.getDeclarations(),bindingContext,state);
+  }
+ else {
+    generateInitializers(codegen,myClass.getDeclarations(),bindingContext,state);
+  }
   iv.visitInsn(RETURN);
 }

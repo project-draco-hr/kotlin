@@ -1,13 +1,9 @@
 {
-  if (staticInitializerChunks.size() > 0) {
-    MethodVisitor mv=v.newMethod(null,ACC_STATIC,"<clinit>","()V",null,null);
+  if (clInitMethod != null) {
+    createOrGetClInitMethod();
     if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
-      mv.visitCode();
-      ExpressionCodegen codegen=new ExpressionCodegen(mv,new FrameMap(),Type.VOID_TYPE,context,state);
-      for (      CodeChunk chunk : staticInitializerChunks) {
-        chunk.generate(codegen);
-      }
-      mv.visitInsn(RETURN);
+      ExpressionCodegen codegen=createOrGetClInitCodegen();
+      createOrGetClInitMethod().visitInsn(RETURN);
       FunctionCodegen.endVisit(codegen.v,"static initializer",myClass);
     }
   }
