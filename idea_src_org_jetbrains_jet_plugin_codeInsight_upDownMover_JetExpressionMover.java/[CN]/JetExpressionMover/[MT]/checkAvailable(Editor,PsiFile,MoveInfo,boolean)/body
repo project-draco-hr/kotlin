@@ -1,0 +1,24 @@
+{
+  if (!super.checkAvailable(editor,file,info,down))   return false;
+  Boolean closingBraceWin=checkForMovableClosingBrace(editor,file,info,down);
+  if (closingBraceWin != null) {
+    if (!closingBraceWin) {
+      info.toMove2=null;
+    }
+    return true;
+  }
+  LineRange oldRange=info.toMove;
+  Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
+  if (psiRange == null)   return false;
+  PsiElement firstElement=PsiTreeUtil.getNonStrictParentOfType(psiRange.getFirst(),MOVABLE_ELEMENT_CLASSES);
+  if (firstElement == null)   return false;
+  PsiElement lastElement=PsiTreeUtil.getNonStrictParentOfType(psiRange.getSecond(),MOVABLE_ELEMENT_CLASSES);
+  if (lastElement == null)   return false;
+  LineRange sourceRange=getSourceRange(firstElement,lastElement,editor);
+  if (sourceRange == null)   return false;
+  PsiElement sibling=adjustWhiteSpaceSibling(editor,sourceRange,info,down);
+  if (sibling == null)   return true;
+  info.toMove=sourceRange;
+  info.toMove2=getTargetRange(editor,sourceRange.firstElement,sibling,down);
+  return true;
+}

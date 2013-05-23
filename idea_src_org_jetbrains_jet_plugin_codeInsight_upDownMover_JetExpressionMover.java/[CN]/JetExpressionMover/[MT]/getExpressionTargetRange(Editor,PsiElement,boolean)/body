@@ -1,0 +1,46 @@
+{
+  PsiElement start=sibling;
+  PsiElement end=sibling;
+  if (sibling.getNode().getElementType() == (down ? JetTokens.RBRACE : JetTokens.LBRACE)) {
+    PsiElement parent=sibling.getParent();
+    if (!(parent instanceof JetBlockExpression))     return null;
+    JetBlockExpression block=(JetBlockExpression)parent;
+    JetBlockExpression newBlock=findClosestBlock(sibling,down);
+    if (newBlock == null)     return null;
+    if (PsiTreeUtil.isAncestor(newBlock,block,true)) {
+      PsiElement outermostParent=JetPsiUtil.getOutermostParent(block,newBlock,true);
+      if (down) {
+        end=outermostParent;
+      }
+ else {
+        start=outermostParent;
+      }
+    }
+ else {
+      if (down) {
+        end=newBlock.getLBrace();
+      }
+ else {
+        start=newBlock.getRBrace();
+      }
+    }
+  }
+ else {
+    JetElement blockLikeElement=JetPsiUtil.getOutermostJetElement(sibling,down,JetBlockExpression.class,JetWhenExpression.class);
+    if (blockLikeElement != null && !(PsiTreeUtil.instanceOf(blockLikeElement,FUNCTIONLIKE_ELEMENT_CLASSES))) {
+      if (blockLikeElement instanceof JetWhenExpression) {
+        blockLikeElement=JetPsiUtil.getOutermostJetElement(blockLikeElement,down,JetBlockExpression.class);
+      }
+      if (blockLikeElement != null) {
+        JetBlockExpression block=(JetBlockExpression)blockLikeElement;
+        if (down) {
+          end=block.getLBrace();
+        }
+ else {
+          start=block.getRBrace();
+        }
+      }
+    }
+  }
+  return start != null && end != null ? new LineRange(start,end,editor.getDocument()) : null;
+}
