@@ -10,10 +10,18 @@
   LineRange oldRange=info.toMove;
   Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
   if (psiRange == null)   return false;
-  PsiElement firstElement=PsiTreeUtil.getNonStrictParentOfType(psiRange.getFirst(),MOVABLE_ELEMENT_CLASSES);
-  if (firstElement == null)   return false;
-  PsiElement lastElement=PsiTreeUtil.getNonStrictParentOfType(psiRange.getSecond(),MOVABLE_ELEMENT_CLASSES);
-  if (lastElement == null)   return false;
+  PsiElement firstElement=getMovableElement(psiRange.getFirst());
+  PsiElement lastElement=getMovableElement(psiRange.getSecond());
+  if (firstElement == null || lastElement == null)   return false;
+  Boolean forbidFirst=isForbiddenMove(firstElement,down);
+  Boolean forbidLast=isForbiddenMove(lastElement,down);
+  if (forbidFirst == null || forbidLast == null) {
+    return true;
+  }
+  if (forbidFirst || forbidLast) {
+    info.toMove2=null;
+    return true;
+  }
   LineRange sourceRange=getSourceRange(firstElement,lastElement,editor);
   if (sourceRange == null)   return false;
   PsiElement sibling=adjustWhiteSpaceSibling(editor,sourceRange,info,down);
