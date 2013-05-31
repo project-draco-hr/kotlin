@@ -1,32 +1,36 @@
 {
   if (!super.checkAvailable(editor,file,info,down))   return false;
-  Boolean closingBraceWin=checkForMovableClosingBrace(editor,file,info,down);
-  if (closingBraceWin != null) {
-    if (!closingBraceWin) {
+switch (checkForMovableClosingBrace(editor,file,info,down)) {
+case NOT_MOVABLE:
+{
       info.toMove2=null;
+      return true;
     }
-    return true;
-  }
-  LineRange oldRange=info.toMove;
-  Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
-  if (psiRange == null)   return false;
-  PsiElement firstElement=getMovableElement(psiRange.getFirst());
-  PsiElement lastElement=getMovableElement(psiRange.getSecond());
-  if (firstElement == null || lastElement == null)   return false;
-  Boolean forbidFirst=isForbiddenMove(firstElement,down);
-  Boolean forbidLast=isForbiddenMove(lastElement,down);
-  if (forbidFirst == null || forbidLast == null) {
-    return true;
-  }
-  if (forbidFirst || forbidLast) {
-    info.toMove2=null;
-    return true;
-  }
-  LineRange sourceRange=getSourceRange(firstElement,lastElement,editor);
-  if (sourceRange == null)   return false;
-  PsiElement sibling=adjustWhiteSpaceSibling(editor,sourceRange,info,down);
-  if (sibling == null)   return true;
-  info.toMove=sourceRange;
-  info.toMove2=getTargetRange(editor,sourceRange.firstElement,sibling,down);
+case MOVABLE:
   return true;
+default :
+break;
+}
+LineRange oldRange=info.toMove;
+Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
+if (psiRange == null) return false;
+PsiElement firstElement=getMovableElement(psiRange.getFirst());
+PsiElement lastElement=getMovableElement(psiRange.getSecond());
+if (firstElement == null || lastElement == null) return false;
+MoveStatus firstMoveStatus=getMoveStatus(firstElement,down);
+MoveStatus lastMoveStatus=getMoveStatus(lastElement,down);
+if (firstMoveStatus == MoveStatus.DEFAULT || lastMoveStatus == MoveStatus.DEFAULT) {
+return true;
+}
+if (firstMoveStatus == MoveStatus.FORBIDDEN || lastMoveStatus == MoveStatus.FORBIDDEN) {
+info.toMove2=null;
+return true;
+}
+LineRange sourceRange=getSourceRange(firstElement,lastElement,editor);
+if (sourceRange == null) return false;
+PsiElement sibling=adjustWhiteSpaceSibling(editor,sourceRange,info,down);
+if (sibling == null) return true;
+info.toMove=sourceRange;
+info.toMove2=getTargetRange(editor,sourceRange.firstElement,sibling,down);
+return true;
 }
