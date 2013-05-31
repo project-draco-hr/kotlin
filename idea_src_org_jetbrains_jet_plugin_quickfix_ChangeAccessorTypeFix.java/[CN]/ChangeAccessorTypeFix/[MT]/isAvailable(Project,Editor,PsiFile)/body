@@ -1,4 +1,10 @@
 {
-  JetType type=getPropertyType();
-  return super.isAvailable(project,editor,file) && type != null && !ErrorUtils.isErrorType(type);
+  JetProperty property=PsiTreeUtil.getParentOfType(element,JetProperty.class);
+  if (property == null)   return false;
+  JetType type=QuickFixUtil.getDeclarationReturnType(property);
+  if (super.isAvailable(project,editor,file) && type != null && !ErrorUtils.isErrorType(type)) {
+    renderedType=DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(type);
+    return true;
+  }
+  return false;
 }
