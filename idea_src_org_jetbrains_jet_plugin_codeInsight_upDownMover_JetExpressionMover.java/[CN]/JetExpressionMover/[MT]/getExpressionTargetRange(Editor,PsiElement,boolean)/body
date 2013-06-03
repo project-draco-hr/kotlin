@@ -3,12 +3,11 @@
   PsiElement end=sibling;
   if (sibling.getNode().getElementType() == (down ? JetTokens.RBRACE : JetTokens.LBRACE)) {
     PsiElement parent=sibling.getParent();
-    if (!(parent instanceof JetBlockExpression))     return null;
-    JetBlockExpression block=(JetBlockExpression)parent;
+    if (!(parent instanceof JetBlockExpression || parent instanceof JetFunctionLiteral))     return null;
     JetBlockExpression newBlock=findClosestBlock(sibling,down);
     if (newBlock == null)     return null;
-    if (PsiTreeUtil.isAncestor(newBlock,block,true)) {
-      PsiElement outermostParent=JetPsiUtil.getOutermostParent(block,newBlock,true);
+    if (PsiTreeUtil.isAncestor(newBlock,parent,true)) {
+      PsiElement outermostParent=JetPsiUtil.getOutermostParent(parent,newBlock,true);
       if (down) {
         end=outermostParent;
       }
@@ -27,7 +26,7 @@
   }
  else {
     JetElement blockLikeElement=JetPsiUtil.getOutermostJetElement(sibling,down,JetBlockExpression.class,JetWhenExpression.class,JetClassBody.class);
-    if (blockLikeElement != null && !(PsiTreeUtil.instanceOf(blockLikeElement,FUNCTIONLIKE_ELEMENT_CLASSES))) {
+    if (blockLikeElement != null && !(PsiTreeUtil.instanceOf(blockLikeElement.getParent(),FUNCTIONLIKE_ELEMENT_CLASSES))) {
       if (blockLikeElement instanceof JetWhenExpression) {
         blockLikeElement=JetPsiUtil.getOutermostJetElement(blockLikeElement,down,JetBlockExpression.class);
       }
