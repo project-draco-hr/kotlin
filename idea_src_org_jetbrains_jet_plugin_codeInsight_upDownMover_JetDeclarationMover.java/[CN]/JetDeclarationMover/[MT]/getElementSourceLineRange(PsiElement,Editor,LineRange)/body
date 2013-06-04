@@ -1,13 +1,14 @@
 {
+  JetDeclaration declaration=(JetDeclaration)element;
   Document doc=editor.getDocument();
   TextRange textRange=declaration.getTextRange();
   if (doc.getTextLength() < textRange.getEndOffset())   return null;
   int startLine=editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
   int endLine=editor.offsetToLogicalPosition(textRange.getEndOffset()).line + 1;
-  if (startLine == lineRange.startLine || startLine == lineRange.endLine || endLine == lineRange.startLine || endLine == lineRange.endLine) {
+  if (startLine == oldRange.startLine || startLine == oldRange.endLine || endLine == oldRange.startLine || endLine == oldRange.endLine) {
     return new LineRange(startLine,endLine);
   }
-  TextRange lineTextRange=new TextRange(doc.getLineStartOffset(lineRange.startLine),doc.getLineEndOffset(lineRange.endLine));
+  TextRange lineTextRange=new TextRange(doc.getLineStartOffset(oldRange.startLine),doc.getLineEndOffset(oldRange.endLine));
   for (  PsiElement anchor : getDeclarationAnchors(declaration)) {
     TextRange suspectTextRange=anchor.getTextRange();
     if (suspectTextRange != null && lineTextRange.intersects(suspectTextRange))     return new LineRange(startLine,endLine);
