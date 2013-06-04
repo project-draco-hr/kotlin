@@ -1,4 +1,5 @@
 {
+  parametersOrArgsToMove=null;
   if (!super.checkAvailable(editor,file,info,down))   return false;
 switch (checkForMovableClosingBrace(editor,file,info,down)) {
 case NOT_MOVABLE:
@@ -17,14 +18,12 @@ if (psiRange == null) return false;
 PsiElement firstElement=getMovableElement(psiRange.getFirst(),false);
 PsiElement lastElement=getMovableElement(psiRange.getSecond(),true);
 if (firstElement == null || lastElement == null) return false;
-MoveStatus firstMoveStatus=getMoveStatus(firstElement,down);
-MoveStatus lastMoveStatus=getMoveStatus(lastElement,down);
-if (firstMoveStatus == MoveStatus.DEFAULT || lastMoveStatus == MoveStatus.DEFAULT) {
-return true;
-}
-if (firstMoveStatus == MoveStatus.FORBIDDEN || lastMoveStatus == MoveStatus.FORBIDDEN) {
+if (isForbiddenMove(firstElement,down) || isForbiddenMove(lastElement,down)) {
 info.toMove2=null;
 return true;
+}
+if ((firstElement instanceof JetParameter || firstElement instanceof JetValueArgument) && PsiTreeUtil.isAncestor(lastElement,firstElement,false)) {
+lastElement=firstElement;
 }
 LineRange sourceRange=getSourceRange(firstElement,lastElement,editor,oldRange);
 if (sourceRange == null) return false;
