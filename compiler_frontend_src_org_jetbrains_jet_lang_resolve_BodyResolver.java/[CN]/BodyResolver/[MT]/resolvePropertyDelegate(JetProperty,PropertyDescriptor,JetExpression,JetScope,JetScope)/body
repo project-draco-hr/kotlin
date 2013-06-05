@@ -8,8 +8,20 @@
     trace.report(ACCESSOR_FOR_DELEGATED_PROPERTY.on(setter));
   }
   JetScope propertyDeclarationInnerScope=descriptorResolver.getPropertyDeclarationInnerScopeForInitializer(propertyScope,propertyDescriptor.getTypeParameters(),NO_RECEIVER_PARAMETER,trace);
-  JetType delegateType=expressionTypingServices.safeGetType(propertyDeclarationInnerScope,delegateExpression,NO_EXPECTED_TYPE,DataFlowInfo.EMPTY,trace);
+  TemporaryBindingTrace traceToResolveDelegatedProperty=TemporaryBindingTrace.create(trace,"Trace to resolve delegated property");
   JetScope accessorScope=JetScopeUtils.makeScopeForPropertyAccessor(propertyDescriptor,parentScopeForAccessor,descriptorResolver,trace);
+  JetExpression calleeExpression=JetPsiUtil.getCalleeExpressionIfAny(delegateExpression);
+  ConstraintSystemCompleter completer=createConstraintSystemCompleter(jetProperty,propertyDescriptor,delegateExpression,accessorScope);
+  if (calleeExpression != null) {
+    traceToResolveDelegatedProperty.record(CONSTRAINT_SYSTEM_COMPLETER,calleeExpression,completer);
+  }
+  JetType delegateType=expressionTypingServices.safeGetType(propertyDeclarationInnerScope,delegateExpression,NO_EXPECTED_TYPE,DataFlowInfo.EMPTY,traceToResolveDelegatedProperty);
+  traceToResolveDelegatedProperty.commit(new TraceEntryFilter(){
+    @Override public boolean accept(    @NotNull WritableSlice<?,?> slice,    Object key){
+      return slice != CONSTRAINT_SYSTEM_COMPLETER;
+    }
+  }
+,true);
   DelegatedPropertyUtils.resolveDelegatedPropertyGetMethod(propertyDescriptor,delegateExpression,delegateType,expressionTypingServices,trace,accessorScope);
   if (jetProperty.isVar()) {
     DelegatedPropertyUtils.resolveDelegatedPropertySetMethod(propertyDescriptor,delegateExpression,delegateType,expressionTypingServices,trace,accessorScope);
