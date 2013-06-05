@@ -1,0 +1,35 @@
+{
+  parametersOrArgsToMove=null;
+  if (!super.checkAvailable(editor,file,info,down))   return false;
+switch (checkForMovableClosingBrace(editor,file,info,down)) {
+case NOT_MOVABLE:
+{
+      info.toMove2=null;
+      return true;
+    }
+case MOVABLE:
+  return true;
+default :
+break;
+}
+LineRange oldRange=info.toMove;
+Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
+if (psiRange == null) return false;
+PsiElement firstElement=getMovableElement(psiRange.getFirst(),false);
+PsiElement lastElement=getMovableElement(psiRange.getSecond(),true);
+if (firstElement == null || lastElement == null) return false;
+if (isForbiddenMove(firstElement,down) || isForbiddenMove(lastElement,down)) {
+info.toMove2=null;
+return true;
+}
+if ((firstElement instanceof JetParameter || firstElement instanceof JetValueArgument) && PsiTreeUtil.isAncestor(lastElement,firstElement,false)) {
+lastElement=firstElement;
+}
+LineRange sourceRange=getSourceRange(firstElement,lastElement,editor,oldRange);
+if (sourceRange == null) return false;
+PsiElement sibling=adjustWhiteSpaceSibling(editor,sourceRange,info,down);
+if (sibling == null) return true;
+info.toMove=sourceRange;
+info.toMove2=getTargetRange(editor,sourceRange.firstElement,sibling,down);
+return true;
+}

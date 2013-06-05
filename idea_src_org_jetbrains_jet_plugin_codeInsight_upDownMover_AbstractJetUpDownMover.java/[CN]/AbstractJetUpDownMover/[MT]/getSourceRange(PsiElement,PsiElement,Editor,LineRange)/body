@@ -1,0 +1,23 @@
+{
+  if (firstElement == lastElement) {
+    LineRange sourceRange=getElementSourceLineRange(firstElement,editor,oldRange);
+    if (sourceRange != null) {
+      sourceRange.firstElement=sourceRange.lastElement=firstElement;
+    }
+    return sourceRange;
+  }
+  PsiElement parent=PsiTreeUtil.findCommonParent(firstElement,lastElement);
+  if (parent == null)   return null;
+  Pair<PsiElement,PsiElement> combinedRange=getElementRange(parent,firstElement,lastElement);
+  if (combinedRange == null || !checkSourceElement(combinedRange.first) || !checkSourceElement(combinedRange.second)) {
+    return null;
+  }
+  LineRange lineRange1=getElementSourceLineRange(combinedRange.first,editor,oldRange);
+  if (lineRange1 == null)   return null;
+  LineRange lineRange2=getElementSourceLineRange(combinedRange.second,editor,oldRange);
+  if (lineRange2 == null)   return null;
+  LineRange sourceRange=new LineRange(lineRange1.startLine,lineRange2.endLine);
+  sourceRange.firstElement=combinedRange.first;
+  sourceRange.lastElement=combinedRange.second;
+  return sourceRange;
+}
