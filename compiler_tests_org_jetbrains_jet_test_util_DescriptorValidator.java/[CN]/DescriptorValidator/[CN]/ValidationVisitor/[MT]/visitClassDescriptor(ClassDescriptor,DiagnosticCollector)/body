@@ -1,0 +1,22 @@
+{
+  validateTypeParameters(collector,descriptor.getTypeConstructor().getParameters());
+  validateTypes(descriptor,collector,descriptor.getTypeConstructor().getSupertypes());
+  validateType(descriptor,descriptor.getDefaultType(),collector);
+  validateScope(descriptor.getUnsubstitutedInnerClassesScope(),collector);
+  List<ConstructorDescriptor> primary=Lists.newArrayList();
+  for (  ConstructorDescriptor constructorDescriptor : descriptor.getConstructors()) {
+    if (constructorDescriptor.isPrimary()) {
+      primary.add(constructorDescriptor);
+    }
+  }
+  if (primary.size() > 1) {
+    report(collector,descriptor,"Many primary constructors: " + primary);
+  }
+  ConstructorDescriptor primaryConstructor=descriptor.getUnsubstitutedPrimaryConstructor();
+  if (primaryConstructor != null) {
+    if (!descriptor.getConstructors().contains(primaryConstructor)) {
+      report(collector,primaryConstructor,"Primary constructor not in getConstructors() result: " + descriptor.getConstructors());
+    }
+  }
+  return true;
+}
