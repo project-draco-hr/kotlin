@@ -1,0 +1,18 @@
+{
+  if (parent == null || child == null) {
+    return false;
+  }
+  while (parent != child) {
+    if (child.getParent() instanceof JetParenthesizedExpression) {
+      child=(JetExpression)child.getParent();
+      continue;
+    }
+    JetIfExpression jetIfExpression=PsiTreeUtil.getParentOfType(child,JetIfExpression.class,true);
+    if (jetIfExpression == null)     return false;
+    if (!equalOrLastInThenOrElse(jetIfExpression.getThen(),child) && !equalOrLastInThenOrElse(jetIfExpression.getElse(),child)) {
+      return false;
+    }
+    child=jetIfExpression;
+  }
+  return true;
+}

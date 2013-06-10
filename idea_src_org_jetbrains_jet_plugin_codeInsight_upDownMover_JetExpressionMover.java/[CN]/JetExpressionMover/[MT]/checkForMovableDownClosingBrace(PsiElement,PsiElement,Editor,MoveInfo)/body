@@ -1,0 +1,23 @@
+{
+  PsiElement current=block;
+  PsiElement nextElement=null;
+  PsiElement nextExpression=null;
+  do {
+    PsiElement sibling=firstNonWhiteElement(current.getNextSibling(),true);
+    if (sibling != null && nextElement == null) {
+      nextElement=sibling;
+    }
+    if (sibling instanceof JetExpression) {
+      nextExpression=sibling;
+      break;
+    }
+    current=current.getParent();
+  }
+ while (current != null && !(PsiTreeUtil.instanceOf(current,BLOCKLIKE_ELEMENT_CLASSES)));
+  if (nextExpression == null)   return BraceStatus.NOT_MOVABLE;
+  Document doc=editor.getDocument();
+  info.toMove=new LineRange(closingBrace,closingBrace,doc);
+  info.toMove2=new LineRange(nextElement,nextExpression);
+  info.indentSource=true;
+  return BraceStatus.MOVABLE;
+}

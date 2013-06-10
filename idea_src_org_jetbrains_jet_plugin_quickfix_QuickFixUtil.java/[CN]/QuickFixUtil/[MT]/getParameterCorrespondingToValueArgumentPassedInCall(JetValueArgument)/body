@@ -1,0 +1,29 @@
+{
+  if (!(valueArgument.getParent() instanceof JetValueArgumentList)) {
+    return null;
+  }
+  JetValueArgumentList valueArgumentList=(JetValueArgumentList)valueArgument.getParent();
+  if (!(valueArgumentList.getParent() instanceof JetCallExpression)) {
+    return null;
+  }
+  JetCallExpression callExpression=(JetCallExpression)valueArgumentList.getParent();
+  JetParameterList parameterList=getParameterListOfCallee(callExpression);
+  if (parameterList == null)   return null;
+  int position=valueArgumentList.getArguments().indexOf(valueArgument);
+  if (position == -1)   return null;
+  if (valueArgument.isNamed()) {
+    JetValueArgumentName valueArgumentName=valueArgument.getArgumentName();
+    JetSimpleNameExpression referenceExpression=valueArgumentName == null ? null : valueArgumentName.getReferenceExpression();
+    String valueArgumentNameAsString=referenceExpression == null ? null : referenceExpression.getReferencedName();
+    if (valueArgumentNameAsString == null)     return null;
+    for (    JetParameter parameter : parameterList.getParameters()) {
+      if (valueArgumentNameAsString.equals(parameter.getName())) {
+        return parameter;
+      }
+    }
+    return null;
+  }
+ else {
+    return parameterList.getParameters().get(position);
+  }
+}

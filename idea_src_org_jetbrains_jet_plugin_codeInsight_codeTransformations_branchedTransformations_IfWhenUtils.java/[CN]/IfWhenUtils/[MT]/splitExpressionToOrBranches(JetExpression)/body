@@ -1,0 +1,32 @@
+{
+  if (expression == null)   return Collections.emptyList();
+  final List<JetExpression> branches=new ArrayList<JetExpression>();
+  expression.accept(new JetVisitorVoid(){
+    @Override public void visitBinaryExpression(    JetBinaryExpression expression){
+      if (expression.getOperationToken() == JetTokens.OROR) {
+        JetExpression left=expression.getLeft();
+        JetExpression right=expression.getRight();
+        if (left != null) {
+          left.accept(this);
+        }
+        if (right != null) {
+          right.accept(this);
+        }
+      }
+ else {
+        visitExpression(expression);
+      }
+    }
+    @Override public void visitParenthesizedExpression(    JetParenthesizedExpression expression){
+      JetExpression baseExpression=expression.getExpression();
+      if (baseExpression != null) {
+        baseExpression.accept(this);
+      }
+    }
+    @Override public void visitExpression(    JetExpression expression){
+      branches.add(expression);
+    }
+  }
+);
+  return branches;
+}

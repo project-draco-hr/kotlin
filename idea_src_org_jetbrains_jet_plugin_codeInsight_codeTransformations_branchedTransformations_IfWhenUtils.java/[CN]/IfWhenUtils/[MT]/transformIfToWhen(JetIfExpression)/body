@@ -1,0 +1,34 @@
+{
+  JetPsiFactory.WhenBuilder builder=new JetPsiFactory.WhenBuilder();
+  JetIfExpression currIfExpression=ifExpression;
+  do {
+    JetExpression condition=currIfExpression.getCondition();
+    JetExpression thenBranch=currIfExpression.getThen();
+    JetExpression elseBranch=currIfExpression.getElse();
+    assertNotNull(thenBranch);
+    assertNotNull(elseBranch);
+    List<JetExpression> orBranches=splitExpressionToOrBranches(condition);
+    if (orBranches.isEmpty()) {
+      builder.condition("");
+    }
+ else {
+      for (      JetExpression orBranch : orBranches) {
+        builder.condition(orBranch);
+      }
+    }
+    builder.branchExpression(thenBranch);
+    if (elseBranch instanceof JetIfExpression) {
+      currIfExpression=(JetIfExpression)elseBranch;
+    }
+ else {
+      currIfExpression=null;
+      builder.elseEntry(elseBranch);
+    }
+  }
+ while (currIfExpression != null);
+  JetWhenExpression whenExpression=builder.toExpression(ifExpression.getProject());
+  if (WhenUtils.checkIntroduceWhenSubject(whenExpression)) {
+    whenExpression=WhenUtils.introduceWhenSubject(whenExpression);
+  }
+  ifExpression.replace(whenExpression);
+}

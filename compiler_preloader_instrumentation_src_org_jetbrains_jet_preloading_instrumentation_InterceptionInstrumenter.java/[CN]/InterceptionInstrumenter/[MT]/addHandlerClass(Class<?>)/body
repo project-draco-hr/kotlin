@@ -1,0 +1,67 @@
+{
+  for (  final Field field : handlerClass.getFields()) {
+    MethodInterceptor annotation=field.getAnnotation(MethodInterceptor.class);
+    if (annotation == null)     continue;
+    if ((field.getModifiers() & Modifier.STATIC) == 0) {
+      throw new IllegalArgumentException("Non-static field annotated @MethodInterceptor: " + field);
+    }
+    Pattern classPattern=compilePattern(annotation.className());
+    List<MethodInstrumenter> instrumenters=addClassPattern(classPattern);
+    try {
+      Object interceptor=field.get(null);
+      if (interceptor == null) {
+        throw new IllegalArgumentException("Interceptor is null: " + field);
+      }
+      final Class<?> interceptorClass=interceptor.getClass();
+      FieldData fieldData=getFieldData(field,interceptorClass);
+      List<MethodData> enterData=new ArrayList<MethodData>();
+      List<MethodData> normalReturnData=new ArrayList<MethodData>();
+      List<MethodData> exceptionData=new ArrayList<MethodData>();
+      List<Method> dumpMethods=new ArrayList<Method>();
+      for (      Method method : interceptorClass.getMethods()) {
+        String name=method.getName();
+        MethodData methodData=getMethodData(fieldData,method);
+        if (name.startsWith("enter")) {
+          enterData.add(methodData);
+        }
+ else         if (name.startsWith("normalReturn")) {
+          normalReturnData.add(methodData);
+        }
+ else         if (name.startsWith("exception")) {
+          exceptionData.add(methodData);
+        }
+ else         if (name.startsWith("exit")) {
+          normalReturnData.add(methodData);
+          exceptionData.add(methodData);
+        }
+ else         if (name.startsWith("dump")) {
+          Class<?>[] parameterTypes=method.getParameterTypes();
+          if (parameterTypes.length > 1)           continue;
+          if (parameterTypes.length == 1 && parameterTypes[0] != PrintStream.class) {
+            continue;
+          }
+          dumpMethods.add(method);
+        }
+      }
+      if (enterData.isEmpty() && normalReturnData.isEmpty() && exceptionData.isEmpty()) {
+        dumpTasks.add(new DumpAction(){
+          @Override public void dump(          PrintStream out){
+            out.println("WARNING: No relevant methods found in " + field + " of type "+ interceptorClass.getCanonicalName());
+          }
+        }
+);
+      }
+      String nameFromAnnotation=annotation.methodName();
+      String methodName=nameFromAnnotation.isEmpty() ? field.getName() : nameFromAnnotation;
+      MethodInstrumenter instrumenter=new MethodInstrumenter(field.getDeclaringClass().getSimpleName() + "." + field.getName(),classPattern,compilePattern(methodName),compilePattern(annotation.methodDesc()),annotation.allowMultipleMatches(),enterData,normalReturnData,exceptionData,annotation.logInterceptions(),annotation.dumpByteCode());
+      for (      Method dumpMethod : dumpMethods) {
+        addDumpTask(interceptor,dumpMethod,instrumenter);
+      }
+      instrumenters.add(instrumenter);
+      neverMatchedInstrumenters.add(instrumenter);
+    }
+ catch (    IllegalAccessException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+}

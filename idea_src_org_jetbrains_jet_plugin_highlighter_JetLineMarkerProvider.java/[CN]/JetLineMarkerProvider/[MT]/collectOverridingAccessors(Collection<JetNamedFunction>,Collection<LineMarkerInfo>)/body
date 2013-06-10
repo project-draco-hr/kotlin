@@ -1,5 +1,5 @@
 {
-  final Map<PsiMethod,JetNamedFunction> mappingToJava=Maps.newHashMap();
+  Map<PsiMethod,JetNamedFunction> mappingToJava=Maps.newHashMap();
   for (  JetNamedFunction function : functions) {
     if (isOverridableHeuristic(function)) {
       PsiMethod method=LightClassUtil.getLightClassMethod(function);
@@ -8,31 +8,8 @@
       }
     }
   }
-  Set<PsiClass> classes=new THashSet<PsiClass>();
-  for (  PsiMethod method : mappingToJava.keySet()) {
-    ProgressManager.checkCanceled();
-    PsiClass parentClass=method.getContainingClass();
-    if (parentClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(parentClass.getQualifiedName())) {
-      classes.add(parentClass);
-    }
-  }
-  final Set<JetNamedFunction> overridden=Sets.newHashSet();
-  for (  PsiClass aClass : classes) {
-    AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod,PsiMethod>>(){
-      @Override public boolean process(      Pair<PsiMethod,PsiMethod> pair){
-        ProgressManager.checkCanceled();
-        PsiMethod superMethod=pair.getFirst();
-        JetNamedFunction function=mappingToJava.get(superMethod);
-        if (function != null) {
-          mappingToJava.remove(superMethod);
-          overridden.add(function);
-        }
-        return !mappingToJava.isEmpty();
-      }
-    }
-);
-  }
-  for (  JetNamedFunction function : overridden) {
+  Set<PsiClass> classes=collectContainingClasses(mappingToJava.keySet());
+  for (  JetNamedFunction function : getOverriddenDeclarations(mappingToJava,classes)) {
     ProgressManager.checkCanceled();
     PsiElement anchor=function.getNameIdentifier();
     if (anchor == null)     anchor=function;

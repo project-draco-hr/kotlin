@@ -1,0 +1,25 @@
+{
+  Project project=ifExpression.getProject();
+  JetExpression condition=ifExpression.getCondition();
+  JetExpression thenRoot=ifExpression.getThen();
+  JetExpression elseRoot=(JetExpression)JetPsiUtil.skipTrailingWhitespacesAndComments(ifExpression);
+  assertNotNull(condition);
+  assertNotNull(thenRoot);
+  assertNotNull(elseRoot);
+  JetIfExpression newIfExpression=JetPsiFactory.createIf(project,condition,thenRoot,elseRoot);
+  JetReturnExpression newReturnExpression=JetPsiFactory.createReturn(project,newIfExpression);
+  newIfExpression=(JetIfExpression)newReturnExpression.getReturnedExpression();
+  assertNotNull(newIfExpression);
+  JetReturnExpression thenReturn=getFoldableBranchedReturn(newIfExpression.getThen());
+  JetReturnExpression elseReturn=getFoldableBranchedReturn(newIfExpression.getElse());
+  assertNotNull(thenReturn);
+  assertNotNull(elseReturn);
+  JetExpression thenExpr=thenReturn.getReturnedExpression();
+  JetExpression elseExpr=elseReturn.getReturnedExpression();
+  assertNotNull(thenExpr);
+  assertNotNull(elseExpr);
+  thenReturn.replace(thenExpr);
+  elseReturn.replace(elseExpr);
+  elseRoot.delete();
+  ifExpression.replace(newReturnExpression);
+}

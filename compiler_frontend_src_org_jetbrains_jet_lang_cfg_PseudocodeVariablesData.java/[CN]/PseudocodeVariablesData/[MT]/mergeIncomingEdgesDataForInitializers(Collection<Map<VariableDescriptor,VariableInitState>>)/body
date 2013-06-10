@@ -5,14 +5,20 @@
   }
   Map<VariableDescriptor,VariableInitState> enterInstructionData=Maps.newHashMap();
   for (  VariableDescriptor variable : variablesInScope) {
-    Set<VariableInitState> edgesDataForVariable=Sets.newHashSet();
+    boolean isInitialized=true;
+    boolean isDeclared=true;
     for (    Map<VariableDescriptor,VariableInitState> edgeData : incomingEdgesData) {
       VariableInitState initState=edgeData.get(variable);
       if (initState != null) {
-        edgesDataForVariable.add(initState);
+        if (!initState.isInitialized) {
+          isInitialized=false;
+        }
+        if (!initState.isDeclared) {
+          isDeclared=false;
+        }
       }
     }
-    enterInstructionData.put(variable,VariableInitState.create(edgesDataForVariable));
+    enterInstructionData.put(variable,VariableInitState.create(isInitialized,isDeclared));
   }
   return enterInstructionData;
 }

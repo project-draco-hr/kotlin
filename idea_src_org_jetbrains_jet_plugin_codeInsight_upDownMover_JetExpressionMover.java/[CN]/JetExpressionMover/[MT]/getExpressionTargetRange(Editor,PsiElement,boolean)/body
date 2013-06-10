@@ -1,0 +1,44 @@
+{
+  PsiElement start=sibling;
+  PsiElement end=sibling;
+  if (sibling.getNode().getElementType() == (down ? JetTokens.RBRACE : JetTokens.LBRACE)) {
+    PsiElement parent=sibling.getParent();
+    if (!(parent instanceof JetBlockExpression || parent instanceof JetFunctionLiteral))     return null;
+    JetBlockExpression newBlock=findClosestBlock(sibling,down);
+    if (newBlock == null)     return null;
+    if (PsiTreeUtil.isAncestor(newBlock,parent,true)) {
+      PsiElement outermostParent=JetPsiUtil.getOutermostParent(parent,newBlock,true);
+      if (down) {
+        end=outermostParent;
+      }
+ else {
+        start=outermostParent;
+      }
+    }
+ else {
+      if (down) {
+        end=newBlock.getLBrace();
+      }
+ else {
+        start=newBlock.getRBrace();
+      }
+    }
+  }
+ else {
+    JetElement blockLikeElement=JetPsiUtil.getOutermostJetElement(sibling,down,JetBlockExpression.class,JetWhenExpression.class,JetClassBody.class);
+    if (blockLikeElement != null && !(PsiTreeUtil.instanceOf(blockLikeElement.getParent(),FUNCTIONLIKE_ELEMENT_CLASSES))) {
+      if (blockLikeElement instanceof JetWhenExpression) {
+        blockLikeElement=JetPsiUtil.getOutermostJetElement(blockLikeElement,down,JetBlockExpression.class);
+      }
+      if (blockLikeElement != null) {
+        if (down) {
+          end=JetPsiUtil.findChildByType(blockLikeElement,JetTokens.LBRACE);
+        }
+ else {
+          start=JetPsiUtil.findChildByType(blockLikeElement,JetTokens.RBRACE);
+        }
+      }
+    }
+  }
+  return start != null && end != null ? new LineRange(start,end,editor.getDocument()) : null;
+}

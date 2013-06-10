@@ -1,0 +1,20 @@
+{
+  if (!super.checkAvailable(editor,file,info,down))   return false;
+  LineRange oldRange=info.toMove;
+  Pair<PsiElement,PsiElement> psiRange=getElementRange(editor,file,oldRange);
+  if (psiRange == null)   return false;
+  JetDeclaration firstDecl=getMovableDeclaration(psiRange.getFirst());
+  if (firstDecl == null)   return false;
+  JetDeclaration lastDecl=getMovableDeclaration(psiRange.getSecond());
+  if (lastDecl == null)   return false;
+  LineRange sourceRange=getSourceRange(firstDecl,lastDecl,editor,oldRange);
+  if (sourceRange == null)   return false;
+  PsiElement sibling=firstNonWhiteSibling(sourceRange,down);
+  if (sibling == null) {
+    info.toMove2=null;
+    return true;
+  }
+  info.toMove=sourceRange;
+  info.toMove2=getTargetRange(editor,sibling,down,sourceRange.firstElement);
+  return true;
+}

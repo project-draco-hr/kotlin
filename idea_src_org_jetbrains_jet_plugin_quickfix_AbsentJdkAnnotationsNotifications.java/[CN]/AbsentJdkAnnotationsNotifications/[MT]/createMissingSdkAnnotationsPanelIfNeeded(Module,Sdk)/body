@@ -1,0 +1,23 @@
+{
+  final boolean isAndroidSdk=isAndroidSdk(sdk);
+  if (KotlinRuntimeLibraryUtil.jdkAnnotationsArePresent(module)) {
+    if (!isAndroidSdk || KotlinRuntimeLibraryUtil.androidSdkAnnotationsArePresent(module)) {
+      return null;
+    }
+  }
+  EditorNotificationPanel panel=new EditorNotificationPanel();
+  String sdkKind=isAndroidSdk ? "Android SDK" : "JDK";
+  panel.setText("Kotlin external annotations for " + sdkKind + " are not set for '"+ sdk.getName()+ "'.");
+  panel.createActionLabel("Set up Kotlin " + sdkKind + " annotations",new Runnable(){
+    @Override public void run(){
+      if (!KotlinRuntimeLibraryUtil.jdkAnnotationsArePresent(module)) {
+        KotlinRuntimeLibraryUtil.addJdkAnnotations(module);
+      }
+      if (isAndroidSdk && !KotlinRuntimeLibraryUtil.androidSdkAnnotationsArePresent(module)) {
+        KotlinRuntimeLibraryUtil.addAndroidSdkAnnotations(module);
+      }
+    }
+  }
+);
+  return panel;
+}

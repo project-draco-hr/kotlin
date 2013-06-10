@@ -1,0 +1,22 @@
+{
+  try {
+    String className=stripClassSuffix(resourceName);
+    if (className == null) {
+      return data;
+    }
+    List<MethodInstrumenter> applicableInstrumenters=new ArrayList<MethodInstrumenter>();
+    for (    Map.Entry<String,ClassMatcher> classPatternEntry : classPatterns.entrySet()) {
+      String classPattern=classPatternEntry.getKey();
+      ClassMatcher classMatcher=classPatternEntry.getValue();
+      if (classMatcher.classPattern.matcher(className).matches()) {
+        neverMatchedClassPatterns.remove(classPattern);
+        applicableInstrumenters.addAll(classMatcher.instrumenters);
+      }
+    }
+    if (applicableInstrumenters.isEmpty())     return data;
+    return instrument(data,applicableInstrumenters);
+  }
+ catch (  Throwable e) {
+    throw new IllegalStateException("Exception while instrumenting " + resourceName,e);
+  }
+}

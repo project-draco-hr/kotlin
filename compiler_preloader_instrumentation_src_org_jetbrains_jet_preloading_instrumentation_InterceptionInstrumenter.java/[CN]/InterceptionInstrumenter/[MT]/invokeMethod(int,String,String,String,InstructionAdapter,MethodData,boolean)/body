@@ -1,0 +1,65 @@
+{
+  FieldData field=methodData.getOwnerField();
+  ia.getstatic(field.getDeclaringClass(),field.getName(),field.getDesc());
+  ia.checkcast(Type.getObjectType(methodData.getDeclaringClass()));
+  org.jetbrains.asm4.commons.Method asmMethod=getAsmMethod(methodData);
+  Type[] interceptingMethodParameterTypes=asmMethod.getArgumentTypes();
+  int parameterCount=interceptingMethodParameterTypes.length;
+  if (parameterCount > 0) {
+    Type[] instrumentedMethodParameterTypes=Type.getArgumentTypes(instrumentedMethodDesc);
+    boolean isStatic=(instrumentedMethodAccess & ACC_STATIC) != 0;
+    int base=isStatic ? 0 : 1;
+    int instrumentedMethodParameterIndex=0;
+    int instrumentedMethodParameterOffset=0;
+    for (int i=0; i < parameterCount; i++) {
+      if (i == methodData.getThisParameterIndex()) {
+        if (isStatic || thisUnavailable) {
+          ia.aconst(null);
+        }
+ else {
+          ia.load(0,OBJECT_TYPE);
+        }
+      }
+ else       if (i == methodData.getClassNameParameterIndex()) {
+        ia.aconst(instrumentedClassName);
+      }
+ else       if (i == methodData.getMethodNameParameterIndex()) {
+        ia.aconst(instrumentedMethodName);
+      }
+ else       if (i == methodData.getMethodDescParameterIndex()) {
+        ia.aconst(instrumentedMethodDesc);
+      }
+ else       if (i == methodData.getAllArgsParameterIndex()) {
+        ia.aconst(instrumentedMethodParameterTypes.length);
+        ia.newarray(OBJECT_TYPE);
+        int offset=0;
+        for (int parameterIndex=0; parameterIndex < instrumentedMethodParameterTypes.length; parameterIndex++) {
+          ia.dup();
+          ia.iconst(parameterIndex);
+          Type type=instrumentedMethodParameterTypes[parameterIndex];
+          ia.load(base + offset,type);
+          offset+=type.getSize();
+          boxOrCastIfNeeded(ia,type,OBJECT_TYPE);
+          ia.astore(OBJECT_TYPE);
+        }
+      }
+ else {
+        Type type=instrumentedMethodParameterTypes[instrumentedMethodParameterIndex];
+        ia.load(base + instrumentedMethodParameterOffset,type);
+        boxOrCastIfNeeded(ia,type,interceptingMethodParameterTypes[i]);
+        instrumentedMethodParameterIndex++;
+        instrumentedMethodParameterOffset+=type.getSize();
+      }
+    }
+  }
+  ia.invokevirtual(methodData.getDeclaringClass(),methodData.getName(),methodData.getDesc());
+  Type type=asmMethod.getReturnType();
+  if (type.getSort() != Type.VOID) {
+    if (type.getSize() == 1) {
+      ia.pop();
+    }
+ else {
+      ia.pop2();
+    }
+  }
+}

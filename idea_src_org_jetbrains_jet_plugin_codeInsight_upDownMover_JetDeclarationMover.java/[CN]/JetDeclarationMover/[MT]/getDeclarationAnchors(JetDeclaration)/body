@@ -1,0 +1,43 @@
+{
+  final List<PsiElement> memberSuspects=new ArrayList<PsiElement>();
+  JetModifierList modifierList=declaration.getModifierList();
+  if (modifierList != null)   memberSuspects.add(modifierList);
+  if (declaration instanceof JetNamedDeclaration) {
+    PsiElement nameIdentifier=((JetNamedDeclaration)declaration).getNameIdentifier();
+    if (nameIdentifier != null)     memberSuspects.add(nameIdentifier);
+  }
+  declaration.accept(new JetVisitorVoid(){
+    @Override public void visitAnonymousInitializer(    JetClassInitializer initializer){
+      PsiElement brace=initializer.getOpenBraceNode();
+      if (brace != null) {
+        memberSuspects.add(brace);
+      }
+    }
+    @Override public void visitClassObject(    JetClassObject classObject){
+      PsiElement classKeyword=classObject.getClassKeywordNode();
+      if (classKeyword != null)       memberSuspects.add(classKeyword);
+    }
+    @Override public void visitNamedFunction(    JetNamedFunction function){
+      PsiElement equalsToken=function.getEqualsToken();
+      if (equalsToken != null)       memberSuspects.add(equalsToken);
+      JetTypeParameterList typeParameterList=function.getTypeParameterList();
+      if (typeParameterList != null)       memberSuspects.add(typeParameterList);
+      JetTypeReference receiverTypeRef=function.getReceiverTypeRef();
+      if (receiverTypeRef != null)       memberSuspects.add(receiverTypeRef);
+      JetTypeReference returnTypeRef=function.getReturnTypeRef();
+      if (returnTypeRef != null)       memberSuspects.add(returnTypeRef);
+    }
+    @Override public void visitProperty(    JetProperty property){
+      PsiElement valOrVarNode=property.getValOrVarNode().getPsi();
+      if (valOrVarNode != null)       memberSuspects.add(valOrVarNode);
+      JetTypeParameterList typeParameterList=property.getTypeParameterList();
+      if (typeParameterList != null)       memberSuspects.add(typeParameterList);
+      JetTypeReference receiverTypeRef=property.getReceiverTypeRef();
+      if (receiverTypeRef != null)       memberSuspects.add(receiverTypeRef);
+      JetTypeReference returnTypeRef=property.getTypeRef();
+      if (returnTypeRef != null)       memberSuspects.add(returnTypeRef);
+    }
+  }
+);
+  return memberSuspects;
+}

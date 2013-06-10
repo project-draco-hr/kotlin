@@ -1,0 +1,20 @@
+{
+  if (importPath.fqnPart().isRoot()) {
+    return true;
+  }
+  if (!importPath.isAllUnder() && !importPath.hasAlias()) {
+    if (QualifiedNamesUtil.isOneSegmentFQN(importPath.fqnPart())) {
+      return true;
+    }
+    if (JetPsiUtil.getFQName(jetFile).equals(importPath.fqnPart().parent())) {
+      return true;
+    }
+  }
+  if (isImportedWithKotlinDefault(importPath))   return true;
+  if (KotlinFrameworkDetector.isJsKotlinModule(jetFile)) {
+    return isImportedWithJsDefault(importPath);
+  }
+ else {
+    return isImportedWithJavaDefault(importPath);
+  }
+}

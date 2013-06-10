@@ -1,0 +1,128 @@
+{
+  final ClassReader cr=new ClassReader(classData);
+  ClassWriter cw=new ClassWriter(cr,0);
+  cr.accept(new ClassVisitor(ASM4,cw){
+    private final Map<MethodInstrumenter,String> matchedMethods=new HashMap<MethodInstrumenter,String>();
+    @Override public MethodVisitor visitMethod(    final int access,    final String name,    final String desc,    String signature,    String[] exceptions){
+      MethodVisitor mv=super.visitMethod(access,name,desc,signature,exceptions);
+      if ((access & (ACC_BRIDGE | ACC_SYNTHETIC)) != 0)       return mv;
+      List<MethodInstrumenter> applicableInstrumenters=new ArrayList<MethodInstrumenter>();
+      for (      MethodInstrumenter instrumenter : instrumenters) {
+        if (instrumenter.isApplicable(name,desc)) {
+          applicableInstrumenters.add(instrumenter);
+          instrumenter.reportApplication(cr.getClassName(),name,desc);
+          checkMultipleMatches(instrumenter,name,desc);
+          neverMatchedInstrumenters.remove(instrumenter);
+        }
+      }
+      if (applicableInstrumenters.isEmpty())       return mv;
+      boolean dumpByteCode=false;
+      final List<MethodData> normalReturnData=new ArrayList<MethodData>();
+      final List<MethodData> enterData=new ArrayList<MethodData>();
+      final List<MethodData> exceptionData=new ArrayList<MethodData>();
+      for (      MethodInstrumenter instrumenter : applicableInstrumenters) {
+        enterData.addAll(instrumenter.getEnterData());
+        normalReturnData.addAll(instrumenter.getNormalReturnData());
+        exceptionData.addAll(instrumenter.getExceptionData());
+        dumpByteCode|=instrumenter.shouldDumpByteCode();
+      }
+      if (enterData.isEmpty() && normalReturnData.isEmpty() && exceptionData.isEmpty())       return mv;
+      if (dumpByteCode) {
+        mv=getDumpingVisitorWrapper(mv,name,desc);
+      }
+      final int maxStackDepth=getMaxStackDepth(name,desc,normalReturnData,enterData,exceptionData);
+      final boolean isConstructor="<init>".equals(name);
+      return new MethodVisitor(ASM4,mv){
+        private InstructionAdapter ia=null;
+        private InstructionAdapter getInstructionAdapter(){
+          if (ia == null) {
+            ia=new InstructionAdapter(this);
+          }
+          return ia;
+        }
+        @Override public void visitMaxs(        int maxStack,        int maxLocals){
+          super.visitMaxs(Math.max(maxStack,maxStackDepth),maxLocals);
+        }
+        @Override public void visitCode(){
+          for (          MethodData methodData : enterData) {
+            invokeMethod(access,cr.getClassName(),name,desc,getInstructionAdapter(),methodData,isConstructor);
+          }
+          super.visitCode();
+        }
+        @Override public void visitInsn(        int opcode){
+switch (opcode) {
+case RETURN:
+case IRETURN:
+case LRETURN:
+case FRETURN:
+case DRETURN:
+case ARETURN:
+            for (            MethodData methodData : normalReturnData) {
+              invokeMethod(access,cr.getClassName(),name,desc,getInstructionAdapter(),methodData,false);
+            }
+          break;
+case ATHROW:
+        for (        MethodData methodData : exceptionData) {
+          invokeMethod(access,cr.getClassName(),name,desc,getInstructionAdapter(),methodData,isConstructor);
+        }
+      break;
+  }
+  super.visitInsn(opcode);
+}
+}
+;
+}
+private int getMaxStackDepth(String name,String desc,List<MethodData> normalReturnData,List<MethodData> enterData,List<MethodData> exceptionData){
+org.jetbrains.asm4.commons.Method methodBeingInstrumented=new org.jetbrains.asm4.commons.Method(name,desc);
+List<MethodData> allData=new ArrayList<MethodData>();
+allData.addAll(enterData);
+allData.addAll(exceptionData);
+allData.addAll(normalReturnData);
+int maxStackDepth=0;
+for (MethodData methodData : allData) {
+int depth=stackDepth(methodData,methodBeingInstrumented);
+if (maxStackDepth < depth) {
+  maxStackDepth=depth;
+}
+}
+return maxStackDepth;
+}
+private int stackDepth(MethodData methodData,org.jetbrains.asm4.commons.Method methodBeingInstrumented){
+org.jetbrains.asm4.commons.Method method=getAsmMethod(methodData);
+int allArgsStackDepth=methodData.getAllArgsParameterIndex() >= 0 ? 5 : 0;
+int argsSize=0;
+for (Type type : method.getArgumentTypes()) {
+argsSize+=type.getSize();
+}
+int receiverSize=1;
+int exceptionSize=1;
+int returnValueSize=methodBeingInstrumented.getReturnType().getSize();
+return argsSize + allArgsStackDepth + receiverSize+ Math.max(returnValueSize,exceptionSize);
+}
+private void checkMultipleMatches(MethodInstrumenter instrumenter,String name,String desc){
+if (!instrumenter.allowsMultipleMatches()) {
+String erasedSignature=name + desc;
+String alreadyMatched=matchedMethods.put(instrumenter,erasedSignature);
+if (alreadyMatched != null) {
+  throw new IllegalStateException(instrumenter + " matched two methods in " + cr.getClassName()+ ":\n"+ alreadyMatched+ "\n"+ erasedSignature);
+}
+}
+}
+private TraceMethodVisitor getDumpingVisitorWrapper(MethodVisitor mv,final String methodName,final String methodDesc){
+return new TraceMethodVisitor(mv,new Textifier(){
+@Override public void visitMethodEnd(){
+  System.out.println(cr.getClassName() + ":" + methodName+ methodDesc);
+  for (  Object line : getText()) {
+    System.out.print(line);
+  }
+  System.out.println();
+  System.out.println();
+  super.visitMethodEnd();
+}
+}
+);
+}
+}
+,0);
+return cw.toByteArray();
+}

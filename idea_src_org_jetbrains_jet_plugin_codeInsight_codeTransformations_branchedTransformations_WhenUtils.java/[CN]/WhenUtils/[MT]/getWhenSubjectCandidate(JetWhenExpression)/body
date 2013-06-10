@@ -1,0 +1,18 @@
+{
+  if (whenExpression.getSubjectExpression() != null)   return null;
+  JetExpression lastCandidate=null;
+  for (  JetWhenEntry entry : whenExpression.getEntries()) {
+    JetWhenCondition[] conditions=entry.getConditions();
+    if (!entry.isElse() && conditions.length == 0)     return null;
+    for (    JetWhenCondition condition : conditions) {
+      if (!(condition instanceof JetWhenConditionWithExpression))       return null;
+      JetExpression currCandidate=getWhenConditionSubjectCandidate(((JetWhenConditionWithExpression)condition).getExpression());
+      if (!(currCandidate instanceof JetSimpleNameExpression))       return null;
+      if (lastCandidate == null) {
+        lastCandidate=currCandidate;
+      }
+ else       if (!JetPsiMatcher.checkElementMatch(lastCandidate,currCandidate))       return null;
+    }
+  }
+  return lastCandidate;
+}
