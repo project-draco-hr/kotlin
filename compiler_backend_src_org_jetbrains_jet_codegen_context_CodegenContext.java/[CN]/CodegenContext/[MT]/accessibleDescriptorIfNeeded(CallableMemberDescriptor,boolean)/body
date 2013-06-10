@@ -1,0 +1,30 @@
+{
+  int flag=getAccessFlags(descriptor);
+  if ((flag & ACC_PRIVATE) == 0) {
+    return descriptor;
+  }
+  CodegenContext descriptorContext=null;
+  if (!fromOutsideContext || getClassOrNamespaceDescriptor() != descriptor.getContainingDeclaration()) {
+    DeclarationDescriptor enclosed=descriptor.getContainingDeclaration();
+    boolean isClassObjectMember=DescriptorUtils.isClassObject(enclosed);
+    if (hasThisDescriptor() && (enclosed != getThisDescriptor() || !fromOutsideContext)) {
+      CodegenContext currentContext=this;
+      while (currentContext != null) {
+        if (currentContext.getContextDescriptor() == enclosed) {
+          descriptorContext=currentContext;
+          break;
+        }
+        if (isClassObjectMember && currentContext instanceof ClassContext) {
+          ClassContext classContext=(ClassContext)currentContext;
+          CodegenContext classObject=classContext.getClassObjectContext();
+          if (classObject != null && classObject.getContextDescriptor() == enclosed) {
+            descriptorContext=classObject;
+            break;
+          }
+        }
+        currentContext=currentContext.getParentContext();
+      }
+    }
+  }
+  return (MemberDescriptor)(descriptorContext != null ? descriptorContext.getAccessor(descriptor) : descriptor);
+}
