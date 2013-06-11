@@ -1,0 +1,18 @@
+{
+  if (fqName.isRoot()) {
+    return Collections.emptyList();
+  }
+  Collection<NavigatablePsiElement> resultElements=Lists.newArrayList();
+  for (  FqName declaredPackage : index.compute().filesByPackage.keys()) {
+    if (QualifiedNamesUtil.isSubpackageOf(declaredPackage,fqName)) {
+      Collection<JetFile> files=index.compute().filesByPackage.get(declaredPackage);
+      resultElements.addAll(ContainerUtil.map(files,new Function<JetFile,NavigatablePsiElement>(){
+        @Override public NavigatablePsiElement fun(        JetFile file){
+          return JetPsiUtil.getPackageReference(file,QualifiedNamesUtil.numberOfSegments(fqName) - 1);
+        }
+      }
+));
+    }
+  }
+  return resultElements;
+}
