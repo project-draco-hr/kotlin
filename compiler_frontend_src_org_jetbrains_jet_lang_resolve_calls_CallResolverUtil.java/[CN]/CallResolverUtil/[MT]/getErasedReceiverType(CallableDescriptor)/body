@@ -1,0 +1,16 @@
+{
+  ReceiverParameterDescriptor receiverDescriptor=descriptor.getReceiverParameter();
+  ReceiverParameterDescriptor expectedThisObjectDescriptor=descriptor.getExpectedThisObject();
+  JetType receiverType=receiverDescriptor != null ? receiverDescriptor.getType() : expectedThisObjectDescriptor != null ? expectedThisObjectDescriptor.getType() : null;
+  if (receiverType == null)   return null;
+  for (  TypeParameterDescriptor typeParameter : descriptor.getTypeParameters()) {
+    if (typeParameter.getTypeConstructor().equals(receiverType.getConstructor())) {
+      return typeParameter.getUpperBoundsAsType();
+    }
+  }
+  List<TypeProjection> fakeTypeArguments=Lists.newArrayList();
+  for (  TypeProjection typeProjection : receiverType.getArguments()) {
+    fakeTypeArguments.add(new TypeProjection(typeProjection.getProjectionKind(),DONT_CARE));
+  }
+  return new JetTypeImpl(receiverType.getAnnotations(),receiverType.getConstructor(),receiverType.isNullable(),fakeTypeArguments,receiverType.getMemberScope());
+}
