@@ -11,17 +11,18 @@
   TraitImplDelegateInfo delegateInfo=getTraitImplDelegateInfo(fun);
   Method methodToGenerate=delegateInfo.methodToGenerate;
   Method methodInTrait=delegateInfo.methodInTrait;
-  MethodVisitor mv=v.newMethod(myClass,flags,methodToGenerate.getName(),methodToGenerate.getDescriptor(),null,null);
+  PsiElement origin=descriptorToDeclaration(bindingContext,fun);
+  MethodVisitor mv=v.newMethod(origin,flags,methodToGenerate.getName(),methodToGenerate.getDescriptor(),null,null);
   AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(fun);
-  writeAnnotationForDelegateToTraitImpl(fun,inheritedFun,mv);
   if (state.getClassBuilderMode() == ClassBuilderMode.STUBS) {
     genStubCode(mv);
   }
  else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    writeAnnotationForDelegateToTraitImpl(fun,inheritedFun,mv);
     Type returnType=methodToGenerate.getReturnType();
     mv.visitCode();
     FrameMap frameMap=context.prepareFrame(typeMapper);
-    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,returnType,context,state);
+    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,returnType,context.intoFunction(inheritedFun),state);
     codegen.generateThisOrOuter(descriptor,false);
     Type[] argTypes=methodToGenerate.getArgumentTypes();
     Type[] originalArgTypes=methodInTrait.getArgumentTypes();
