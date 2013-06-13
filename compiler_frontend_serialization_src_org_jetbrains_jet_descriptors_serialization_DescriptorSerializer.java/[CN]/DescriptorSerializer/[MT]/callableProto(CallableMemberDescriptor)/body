@@ -1,6 +1,28 @@
 {
   ProtoBuf.Callable.Builder builder=ProtoBuf.Callable.newBuilder();
-  builder.setFlags(Flags.getCallableFlags(hasAnnotations(descriptor),descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),descriptor instanceof SimpleFunctionDescriptor && ((SimpleFunctionDescriptor)descriptor).isInline()));
+  boolean hasGetter=false;
+  boolean hasSetter=false;
+  if (descriptor instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+    int propertyFlags=Flags.getAccessorFlags(hasAnnotations(propertyDescriptor),propertyDescriptor.getVisibility(),propertyDescriptor.getModality(),true);
+    PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
+    if (getter != null) {
+      hasGetter=true;
+      int accessorFlags=getAccessorFlags(getter);
+      if (accessorFlags != propertyFlags) {
+        builder.setGetterFlags(accessorFlags);
+      }
+    }
+    PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+    if (setter != null) {
+      hasGetter=true;
+      int accessorFlags=getAccessorFlags(setter);
+      if (accessorFlags != propertyFlags) {
+        builder.setSetterFlags(accessorFlags);
+      }
+    }
+  }
+  builder.setFlags(Flags.getCallableFlags(hasAnnotations(descriptor),descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),descriptor instanceof SimpleFunctionDescriptor && ((SimpleFunctionDescriptor)descriptor).isInline(),hasGetter,hasSetter));
   DescriptorSerializer local=createChildSerializer();
   for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
     builder.addTypeParameters(local.typeParameter(typeParameterDescriptor));

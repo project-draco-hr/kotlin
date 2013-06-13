@@ -4,5 +4,30 @@
   DescriptorDeserializer local=createChildDeserializer(property);
   List<TypeParameterDescriptor> typeParameters=local.typeParameters(proto.getTypeParametersList());
   property.setType(local.typeDeserializer.type(proto.getReturnType()),typeParameters,getExpectedThisObject(),local.typeDeserializer.typeOrNull(proto.hasReceiverType() ? proto.getReceiverType() : null));
+  PropertyGetterDescriptorImpl getter=null;
+  PropertySetterDescriptorImpl setter=null;
+  if (Flags.HAS_GETTER.get(flags)) {
+    int getterFlags=proto.getGetterFlags();
+    Boolean isNotDefault=proto.hasGetterFlags() || Flags.IS_NOT_DEFAULT.get(getterFlags);
+    if (!isNotDefault) {
+      getter=DescriptorResolver.createDefaultGetter(property);
+    }
+ else {
+      getter=new PropertyGetterDescriptorImpl(property,Collections.<AnnotationDescriptor>emptyList(),modality(Flags.MODALITY.get(getterFlags)),visibility(Flags.VISIBILITY.get(getterFlags)),isNotDefault,!isNotDefault,property.getKind());
+    }
+    getter.initialize(property.getReturnType());
+  }
+  if (Flags.HAS_SETTER.get(flags)) {
+    int setterFlags=proto.getSetterFlags();
+    Boolean isNotDefault=proto.hasSetterFlags() || Flags.IS_NOT_DEFAULT.get(setterFlags);
+    if (!isNotDefault) {
+      setter=DescriptorResolver.createDefaultSetter(property);
+    }
+ else {
+      setter=new PropertySetterDescriptorImpl(property,getSetterAnnotations(proto,setterFlags),modality(Flags.MODALITY.get(setterFlags)),visibility(Flags.VISIBILITY.get(setterFlags)),isNotDefault,!isNotDefault,property.getKind());
+      setter.initializeDefault();
+    }
+  }
+  property.initialize(getter,setter);
   return property;
 }
