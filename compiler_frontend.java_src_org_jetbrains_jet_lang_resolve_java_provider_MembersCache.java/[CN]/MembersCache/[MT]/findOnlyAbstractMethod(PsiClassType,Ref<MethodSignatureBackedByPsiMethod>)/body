@@ -1,0 +1,37 @@
+{
+  PsiClassType.ClassResolveResult classResolveResult=classType.resolveGenerics();
+  PsiSubstitutor classSubstitutor=classResolveResult.getSubstitutor();
+  PsiClass psiClass=classResolveResult.getElement();
+  if (psiClass == null) {
+    return false;
+  }
+  if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
+    return true;
+  }
+  for (  PsiMethod method : psiClass.getMethods()) {
+    if (isObjectMethod(method)) {
+      continue;
+    }
+    if (method.hasTypeParameters()) {
+      return false;
+    }
+    MethodSignatureBackedByPsiMethod found=foundRef.get();
+    if (found == null) {
+      foundRef.set((MethodSignatureBackedByPsiMethod)method.getSignature(classSubstitutor));
+      continue;
+    }
+    if (!found.getName().equals(method.getName())) {
+      return false;
+    }
+    MethodSignatureBackedByPsiMethod current=(MethodSignatureBackedByPsiMethod)method.getSignature(classSubstitutor);
+    if (!areSignaturesErasureEqual(current,found) || isVarargMethod(method) != isVarargMethod(found.getMethod())) {
+      return false;
+    }
+  }
+  for (  PsiType t : classType.getSuperTypes()) {
+    if (!findOnlyAbstractMethod((PsiClassType)t,foundRef)) {
+      return false;
+    }
+  }
+  return true;
+}

@@ -1,0 +1,19 @@
+{
+  List<SimpleFunctionDescriptor> candidates=Lists.newArrayList();
+  for (  JetType supertype : supertypes) {
+    List<CallableMemberDescriptor> abstractMembers=SingleAbstractMethodUtils.getAbstractMembers(supertype);
+    if (!abstractMembers.isEmpty()) {
+      candidates.add((SimpleFunctionDescriptor)abstractMembers.get(0));
+    }
+  }
+  if (candidates.isEmpty()) {
+    throw new IllegalStateException("Couldn't find abstract method in supertypes " + supertypes);
+  }
+  SimpleFunctionDescriptor currentMostSpecificType=candidates.get(0);
+  for (  SimpleFunctionDescriptor candidate : candidates) {
+    if (JetTypeChecker.INSTANCE.isSubtypeOf(candidate.getReturnType(),currentMostSpecificType.getReturnType())) {
+      currentMostSpecificType=candidate;
+    }
+  }
+  return currentMostSpecificType;
+}
