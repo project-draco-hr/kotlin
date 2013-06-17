@@ -3,15 +3,16 @@
   JetType receiverArgumentType=receiverArgument.getType();
   JetType effectiveReceiverArgumentType=TypeUtils.makeNotNullable(receiverArgumentType);
   D candidateDescriptor=candidateCall.getCandidateDescriptor();
-  if (!argumentTypeResolver.isSubtypeOfForArgumentType(effectiveReceiverArgumentType,receiverParameter.getType())) {
+  if (!ArgumentTypeResolver.isSubtypeOfForArgumentType(effectiveReceiverArgumentType,receiverParameter.getType())) {
     if (CallResolverUtil.checkArgumentCannotBeReceiver(effectiveReceiverArgumentType,candidateDescriptor) && !(candidateDescriptor instanceof ExpressionAsFunctionDescriptor)) {
-      return STRONG_ERROR;
+      return RECEIVER_TYPE_ERROR;
     }
-    if (!TypeUtils.dependsOnTypeParameters(receiverParameter.getType(),candidateDescriptor.getTypeParameters())) {
+    if (!TypeUtils.dependsOnTypeParameters(receiverParameter.getType(),candidateDescriptor.getTypeParameters()) && !checkOnlyReceiverTypeError) {
       context.tracing.wrongReceiverType(trace,receiverParameter,receiverArgument);
       return OTHER_ERROR;
     }
   }
+  if (checkOnlyReceiverTypeError)   return SUCCESS;
   BindingContext bindingContext=trace.getBindingContext();
   boolean safeAccess=isExplicitReceiver && !implicitInvokeCheck && candidateCall.isSafeCall();
   AutoCastServiceImpl autoCastService=new AutoCastServiceImpl(context.dataFlowInfo,bindingContext);
