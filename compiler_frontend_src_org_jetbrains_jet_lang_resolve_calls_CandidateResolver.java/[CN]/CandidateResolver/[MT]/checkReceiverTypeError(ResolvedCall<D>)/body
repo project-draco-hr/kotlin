@@ -1,0 +1,25 @@
+{
+  D candidateDescriptor=candidateCall.getCandidateDescriptor();
+  if (candidateDescriptor instanceof ExpressionAsFunctionDescriptor)   return SUCCESS;
+  ReceiverParameterDescriptor receiverDescriptor=candidateDescriptor.getReceiverParameter();
+  ReceiverParameterDescriptor expectedThisObjectDescriptor=candidateDescriptor.getExpectedThisObject();
+  ReceiverParameterDescriptor receiverParameterDescriptor;
+  JetType receiverArgumentType;
+  if (receiverDescriptor != null && candidateCall.getReceiverArgument().exists()) {
+    receiverParameterDescriptor=receiverDescriptor;
+    receiverArgumentType=candidateCall.getReceiverArgument().getType();
+  }
+ else   if (expectedThisObjectDescriptor != null && candidateCall.getThisObject().exists()) {
+    receiverParameterDescriptor=expectedThisObjectDescriptor;
+    receiverArgumentType=candidateCall.getThisObject().getType();
+  }
+ else {
+    return SUCCESS;
+  }
+  JetType effectiveReceiverArgumentType=TypeUtils.makeNotNullable(receiverArgumentType);
+  JetType erasedReceiverType=CallResolverUtil.getErasedReceiverType(receiverParameterDescriptor,candidateDescriptor);
+  if (!JetTypeChecker.INSTANCE.isSubtypeOf(effectiveReceiverArgumentType,erasedReceiverType)) {
+    return RECEIVER_TYPE_ERROR;
+  }
+  return SUCCESS;
+}
