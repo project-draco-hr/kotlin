@@ -17,32 +17,32 @@
   this.kind=DescriptorDeserializer.classKind(Flags.CLASS_KIND.get(flags));
   this.isInner=Flags.INNER.get(flags);
   this.annotationDeserializer=annotationResolver;
-  this.annotations=new NotNullLazyValueImpl<List<AnnotationDescriptor>>(){
-    @NotNull @Override protected List<AnnotationDescriptor> doCompute(){
+  this.annotations=storageManager.createLazyValue(new Computable<List<AnnotationDescriptor>>(){
+    @Override public List<AnnotationDescriptor> compute(){
       return computeAnnotations();
     }
   }
-;
-  this.primaryConstructor=new NullableLazyValueImpl<ConstructorDescriptor>(){
-    @Override protected ConstructorDescriptor doCompute(){
+);
+  this.primaryConstructor=storageManager.createNullableLazyValue(new Computable<ConstructorDescriptor>(){
+    @Override public ConstructorDescriptor compute(){
       return computePrimaryConstructor();
     }
   }
-;
+);
   this.nestedClassResolver=_nestedClassResolver;
-  this.classObjectDescriptor=new NullableLazyValueImpl<ClassDescriptor>(){
-    @Override protected ClassDescriptor doCompute(){
+  this.classObjectDescriptor=storageManager.createNullableLazyValue(new Computable<ClassDescriptor>(){
+    @Override public ClassDescriptor compute(){
       return computeClassObjectDecriptor();
     }
   }
-;
-  this.nestedClasses=new NestedClassDescriptors(stringSet(classProto.getNestedClassNamesList(),nameResolver)){
+);
+  this.nestedClasses=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedClassNamesList(),nameResolver)){
     @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
       return nestedClassResolver.resolveNestedClass(DeserializedClassDescriptor.this,name);
     }
   }
 ;
-  this.nestedObjects=new NestedClassDescriptors(stringSet(classProto.getNestedObjectNamesList(),nameResolver)){
+  this.nestedObjects=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedObjectNamesList(),nameResolver)){
     @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
       return nestedClassResolver.resolveNestedClass(DeserializedClassDescriptor.this,name);
     }
