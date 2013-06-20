@@ -1,19 +1,26 @@
 {
   if (context == null || context.getParameterOwner() == null || !context.getParameterOwner().isValid()) {
+    context.setUIComponentEnabled(false);
     return;
   }
   PsiElement parameterOwner=context.getParameterOwner();
   if (!(parameterOwner instanceof JetValueArgumentList)) {
-    return;
-  }
-  JetValueArgumentList argumentList=(JetValueArgumentList)parameterOwner;
-  if (!(descriptor instanceof FunctionDescriptor)) {
     context.setUIComponentEnabled(false);
     return;
   }
-  FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+  JetValueArgumentList argumentList=(JetValueArgumentList)parameterOwner;
+  if (!(itemToShow instanceof Pair<?,?>)) {
+    context.setUIComponentEnabled(false);
+    return;
+  }
+  Pair<?,?> pair=(Pair<?,?>)itemToShow;
+  if (!(pair.first instanceof FunctionDescriptor && pair.second instanceof ResolveSession)) {
+    context.setUIComponentEnabled(false);
+    return;
+  }
+  FunctionDescriptor functionDescriptor=(FunctionDescriptor)pair.first;
+  ResolveSession resolveSession=(ResolveSession)pair.second;
   JetFile file=(JetFile)argumentList.getContainingFile();
-  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache(file).getBindingContext();
   List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
   List<JetValueArgument> valueArguments=argumentList.getArguments();
   StringBuilder builder=new StringBuilder();
@@ -31,6 +38,8 @@
   if (valueParameters.size() == 0) {
     builder.append(CodeInsightBundle.message("parameter.info.no.parameters"));
   }
+  PsiElement owner=context.getParameterOwner();
+  BindingContext bindingContext=ResolveSessionUtils.resolveToExpression(resolveSession,(JetElement)owner);
   for (int i=0; i < valueParameters.size(); ++i) {
     if (i != 0) {
       builder.append(", ");

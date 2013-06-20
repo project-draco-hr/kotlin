@@ -15,7 +15,8 @@
   if (references.length == 0) {
     return null;
   }
-  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)file).getBindingContext();
+  ResolveSession resolveSession=WholeProjectAnalyzerFacade.getLazyResolveSessionForFile((JetFile)callNameExpression.getContainingFile());
+  BindingContext bindingContext=ResolveSessionUtils.resolveToExpression(resolveSession,callNameExpression);
   JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,callNameExpression);
   DeclarationDescriptor placeDescriptor=null;
   if (scope != null) {
@@ -23,7 +24,7 @@
   }
   Collection<DeclarationDescriptor> variants=TipsManager.getReferenceVariants(callNameExpression,bindingContext);
   Name refName=callNameExpression.getReferencedNameAsName();
-  Collection<DeclarationDescriptor> itemsToShow=new ArrayList<DeclarationDescriptor>();
+  Collection<Pair<? extends DeclarationDescriptor,ResolveSession>> itemsToShow=new ArrayList<Pair<? extends DeclarationDescriptor,ResolveSession>>();
   for (  DeclarationDescriptor variant : variants) {
     if (variant instanceof FunctionDescriptor) {
       FunctionDescriptor functionDescriptor=(FunctionDescriptor)variant;
@@ -31,7 +32,7 @@
         if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,functionDescriptor)) {
           continue;
         }
-        itemsToShow.add(functionDescriptor);
+        itemsToShow.add(Pair.create(functionDescriptor,resolveSession));
       }
     }
  else     if (variant instanceof ClassDescriptor) {
@@ -41,7 +42,7 @@
           if (placeDescriptor != null && !JetVisibilityChecker.isVisible(placeDescriptor,constructorDescriptor)) {
             continue;
           }
-          itemsToShow.add(constructorDescriptor);
+          itemsToShow.add(Pair.create(constructorDescriptor,resolveSession));
         }
       }
     }
