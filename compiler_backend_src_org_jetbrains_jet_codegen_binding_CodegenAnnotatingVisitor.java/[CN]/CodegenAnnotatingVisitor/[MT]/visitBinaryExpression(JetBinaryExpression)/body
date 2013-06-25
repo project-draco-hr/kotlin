@@ -1,0 +1,18 @@
+{
+  super.visitBinaryExpression(expression);
+  FunctionDescriptor operationDescriptor=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,expression.getOperationReference());
+  if (operationDescriptor == null) {
+    return;
+  }
+  FunctionDescriptor original=SamCodegenUtil.getOriginalIfSamAdapter(bindingContext,operationDescriptor);
+  if (original == null) {
+    return;
+  }
+  ClassDescriptorFromJvmBytecode samInterfaceOfRight=getInterfaceIfSamType(original.getValueParameters().get(0).getType());
+  if (samInterfaceOfRight == null) {
+    return;
+  }
+  if (BINARY_OPERATIONS.contains(expression.getOperationToken())) {
+    bindingTrace.record(CodegenBinding.SAM_VALUE,expression.getRight(),samInterfaceOfRight);
+  }
+}
