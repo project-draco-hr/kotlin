@@ -8,11 +8,15 @@
   if (original == null) {
     return;
   }
-  ClassDescriptorFromJvmBytecode samInterfaceOfRight=getInterfaceIfSamType(original.getValueParameters().get(0).getType());
-  if (samInterfaceOfRight == null) {
+  ClassDescriptorFromJvmBytecode samInterfaceOfParameter=getInterfaceIfSamType(original.getValueParameters().get(0).getType());
+  if (samInterfaceOfParameter == null) {
     return;
   }
-  if (BINARY_OPERATIONS.contains(expression.getOperationToken())) {
-    bindingTrace.record(CodegenBinding.SAM_VALUE,expression.getRight(),samInterfaceOfRight);
+  IElementType token=expression.getOperationToken();
+  if (BINARY_OPERATIONS.contains(token)) {
+    bindingTrace.record(CodegenBinding.SAM_VALUE,expression.getRight(),samInterfaceOfParameter);
+  }
+ else   if (token == JetTokens.IN_KEYWORD || token == JetTokens.NOT_IN) {
+    bindingTrace.record(CodegenBinding.SAM_VALUE,expression.getLeft(),samInterfaceOfParameter);
   }
 }
