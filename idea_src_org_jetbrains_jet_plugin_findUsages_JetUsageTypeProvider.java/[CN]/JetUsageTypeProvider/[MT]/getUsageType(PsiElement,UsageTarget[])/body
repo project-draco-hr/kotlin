@@ -1,0 +1,19 @@
+{
+  if (element == null)   return null;
+  UsageType usageType=getCommonUsageType(element);
+  if (usageType != null)   return usageType;
+  JetSimpleNameExpression reference=PsiTreeUtil.getParentOfType(element,JetSimpleNameExpression.class,false);
+  if (reference == null)   return null;
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+  DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,reference);
+  if (descriptor instanceof ClassifierDescriptor) {
+    return getClassUsageType(element);
+  }
+  if (descriptor instanceof VariableDescriptor) {
+    return getVariableUsageType(element);
+  }
+  if (descriptor instanceof FunctionDescriptor) {
+    return getFunctionUsageType(element,(FunctionDescriptor)descriptor);
+  }
+  return null;
+}

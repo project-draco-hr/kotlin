@@ -1,18 +1,7 @@
 {
-  final PsiElement element=queryParameters.getElementToSearch();
+  PsiElement element=queryParameters.getElementToSearch();
   if (element instanceof JetClass) {
-    String className=((JetClass)element).getName();
-    if (className != null) {
-      PsiClass lightClass=ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>(){
-        @Override public PsiClass compute(){
-          return LightClassUtil.getPsiClass((JetClass)element);
-        }
-      }
-);
-      if (lightClass != null) {
-        queryParameters.getOptimizer().searchWord(className,queryParameters.getEffectiveSearchScope(),true,lightClass);
-      }
-    }
+    processJetClassOrObject((JetClass)element,queryParameters);
   }
  else   if (element instanceof JetNamedFunction) {
     final JetNamedFunction function=(JetNamedFunction)element;
@@ -24,9 +13,24 @@
         }
       }
 );
-      if (method != null) {
-        queryParameters.getOptimizer().searchWord(name,queryParameters.getEffectiveSearchScope(),true,method);
+      searchMethod(queryParameters,method);
+    }
+  }
+ else   if (element instanceof JetProperty) {
+    final JetProperty property=(JetProperty)element;
+    LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=ApplicationManager.getApplication().runReadAction(new Computable<LightClassUtil.PropertyAccessorsPsiMethods>(){
+      @Override public LightClassUtil.PropertyAccessorsPsiMethods compute(){
+        return LightClassUtil.getLightClassPropertyMethods(property);
       }
+    }
+);
+    searchMethod(queryParameters,propertyMethods.getGetter());
+    searchMethod(queryParameters,propertyMethods.getSetter());
+  }
+ else   if (element instanceof JetObjectDeclarationName) {
+    PsiElement parent=element.getParent();
+    if (parent instanceof JetObjectDeclaration) {
+      processJetClassOrObject((JetObjectDeclaration)parent,queryParameters);
     }
   }
 }
