@@ -1,0 +1,16 @@
+{
+  configureByFile(path);
+  DataContext dataContext=getCurrentEditorDataContext();
+  PsiElement element=PsiTreeUtil.getParentOfType(LangDataKeys.PSI_ELEMENT.getData(dataContext),elementClass,false);
+  try {
+    new SafeDeleteHandler().invoke(getProject(),new PsiElement[]{element},dataContext);
+    checkResultByFile(path + ".after");
+  }
+ catch (  BaseRefactoringProcessor.ConflictsInTestsException e) {
+    List<String> messages=new ArrayList<String>(e.getMessages());
+    Collections.sort(messages);
+    File messageFile=new File(path + ".messages");
+    String expectedMessage=FileUtil.loadFile(messageFile,CharsetToolkit.UTF8,true);
+    assertEquals(expectedMessage,StringUtil.join(messages,"\n"));
+  }
+}
