@@ -6,9 +6,9 @@
     JvmClassName className=state.getSamWrapperClasses().getSamWrapperClass(samInterface,(JetFile)argumentExpression.getContainingFile());
     v.anew(className.getAsmType());
     v.dup();
-    JetType functionType=samInterface.getFunctionTypeForSamInterface();
-    gen(argumentExpression,typeMapper.mapType(functionType));
-    v.invokespecial(className.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,typeMapper.mapType(functionType)));
+    Type functionType=typeMapper.mapType(samInterface.getFunctionTypeForSamInterface());
+    argumentExpression.accept(visitor,StackValue.none()).put(functionType,v);
+    v.invokespecial(className.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,functionType));
     return StackValue.onStack(className.getAsmType());
   }
 }

@@ -5,14 +5,18 @@
   if (!(selector instanceof JetBlockExpression)) {
     markLineNumber(selector);
   }
-  if (selector instanceof JetExpression) {
-    JetExpression expression=(JetExpression)selector;
-    CompileTimeConstant<?> constant=bindingContext.get(BindingContext.COMPILE_TIME_VALUE,expression);
-    if (constant != null) {
-      return StackValue.constant(constant.getValue(),expressionType(expression));
-    }
-  }
   try {
+    if (selector instanceof JetExpression) {
+      JetExpression expression=(JetExpression)selector;
+      CompileTimeConstant<?> constant=bindingContext.get(BindingContext.COMPILE_TIME_VALUE,expression);
+      if (constant != null) {
+        return StackValue.constant(constant.getValue(),expressionType(expression));
+      }
+      ClassDescriptorFromJvmBytecode samInterface=bindingContext.get(CodegenBinding.SAM_VALUE,expression);
+      if (samInterface != null) {
+        return genSamInterfaceValue(expression,samInterface,visitor);
+      }
+    }
     return selector.accept(visitor,receiver);
   }
  catch (  ProcessCanceledException e) {
