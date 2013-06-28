@@ -1,0 +1,34 @@
+{
+  DeclarationDescriptor contextClass=owner.getContextDescriptor().getContainingDeclaration();
+  if (kind != OwnerKind.TRAIT_IMPL && contextClass instanceof ClassDescriptor && ((ClassDescriptor)contextClass).getKind() == ClassKind.TRAIT) {
+    return;
+  }
+  if (!isDefaultNeeded(functionDescriptor)) {
+    return;
+  }
+  boolean isStatic=isStatic(kind);
+  Method jvmSignature=signature.getAsmMethod();
+  int flags=ACC_PUBLIC | ACC_SYNTHETIC;
+  Type ownerType;
+  if (contextClass instanceof NamespaceDescriptor) {
+    ownerType=state.getTypeMapper().getOwner(functionDescriptor,kind,true);
+  }
+ else   if (contextClass instanceof ClassDescriptor) {
+    ownerType=state.getTypeMapper().mapType(((ClassDescriptor)contextClass).getDefaultType(),JetTypeMapperMode.IMPL);
+  }
+ else   if (isLocalNamedFun(functionDescriptor)) {
+    ownerType=asmTypeForAnonymousClass(state.getBindingContext(),functionDescriptor);
+  }
+ else {
+    throw new IllegalStateException("Couldn't obtain owner name for " + functionDescriptor);
+  }
+  String descriptor=jvmSignature.getDescriptor().replace(")","I)");
+  boolean isConstructor="<init>".equals(jvmSignature.getName());
+  if (!isStatic && !isConstructor) {
+    descriptor=descriptor.replace("(","(" + ownerType.getDescriptor());
+  }
+  MethodVisitor mv=v.newMethod(null,flags | (isConstructor ? 0 : ACC_STATIC),isConstructor ? "<init>" : jvmSignature.getName() + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX,descriptor,null,null);
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    generateDefaultImpl(owner,signature,functionDescriptor,isStatic,mv,loadStrategy);
+  }
+}
