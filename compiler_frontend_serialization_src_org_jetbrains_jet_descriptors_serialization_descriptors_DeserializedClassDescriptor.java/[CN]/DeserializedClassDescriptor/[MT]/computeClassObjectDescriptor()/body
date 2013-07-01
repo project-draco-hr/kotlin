@@ -3,18 +3,11 @@
     return null;
   }
   if (getKind() == ClassKind.ENUM_CLASS) {
-    MutableClassDescriptor classObjectDescriptor=new MutableClassDescriptor(this,getUnsubstitutedInnerClassesScope(),ClassKind.CLASS_OBJECT,false,getClassObjectName(getName()));
-    classObjectDescriptor.setModality(Modality.FINAL);
-    classObjectDescriptor.setVisibility(getVisibility());
-    classObjectDescriptor.setTypeParameterDescriptors(Collections.<TypeParameterDescriptor>emptyList());
-    classObjectDescriptor.createTypeConstructor();
-    BindingTrace trace=new BindingTraceContext();
-    ConstructorDescriptorImpl primaryConstructorForObject=DescriptorResolver.createPrimaryConstructorForObject(classObjectDescriptor);
-    primaryConstructorForObject.setReturnType(classObjectDescriptor.getDefaultType());
-    classObjectDescriptor.setPrimaryConstructor(primaryConstructorForObject,trace);
-    classObjectDescriptor.getBuilder().addFunctionDescriptor(DescriptorResolver.createEnumClassObjectValuesMethod(classObjectDescriptor,trace));
-    classObjectDescriptor.getBuilder().addFunctionDescriptor(DescriptorResolver.createEnumClassObjectValueOfMethod(classObjectDescriptor,trace));
-    return classObjectDescriptor;
+    MutableClassDescriptor classObject=createEnumClassObject();
+    for (    int enumEntry : classProto.getEnumEntryList()) {
+      createEnumEntry(classObject,deserializer.getNameResolver().getName(enumEntry));
+    }
+    return classObject;
   }
   return nestedClassResolver.resolveClassObject(this);
 }
