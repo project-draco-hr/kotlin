@@ -1,5 +1,7 @@
 {
+  this.classId=classId;
   this.classProto=classProto;
+  this.classResolver=classResolver;
   this.name=nameResolver.getName(classProto.getName());
   TypeDeserializer notNullTypeDeserializer=new TypeDeserializer(storageManager,outerTypeDeserializer,nameResolver,classResolver,"Deserializer for class " + name,NONE);
   DescriptorDeserializer outerDeserializer=DescriptorDeserializer.create(storageManager,notNullTypeDeserializer,this,nameResolver,annotationResolver);
@@ -29,7 +31,6 @@
     }
   }
 );
-  this.nestedClassResolver=_nestedClassResolver;
   this.classObjectDescriptor=storageManager.createNullableLazyValue(new Computable<ClassDescriptor>(){
     @Override public ClassDescriptor compute(){
       return computeClassObjectDescriptor();
@@ -38,13 +39,13 @@
 );
   this.nestedClasses=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedClassNameList(),nameResolver)){
     @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
-      return nestedClassResolver.resolveNestedClass(DeserializedClassDescriptor.this,name);
+      return classResolver.findClass(DeserializedClassDescriptor.this.classId.createNestedClassId(name));
     }
   }
 ;
   this.nestedObjects=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedObjectNameList(),nameResolver)){
     @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
-      return nestedClassResolver.resolveNestedClass(DeserializedClassDescriptor.this,name);
+      return classResolver.findClass(DeserializedClassDescriptor.this.classId.createNestedClassId(name));
     }
   }
 ;
