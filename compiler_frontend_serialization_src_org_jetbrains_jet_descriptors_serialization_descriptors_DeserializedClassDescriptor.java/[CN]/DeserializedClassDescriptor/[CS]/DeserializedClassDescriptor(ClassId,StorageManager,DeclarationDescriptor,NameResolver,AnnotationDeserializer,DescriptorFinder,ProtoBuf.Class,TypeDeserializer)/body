@@ -1,0 +1,52 @@
+{
+  this.classId=classId;
+  this.classProto=classProto;
+  this.descriptorFinder=descriptorFinder;
+  this.name=nameResolver.getName(classProto.getName());
+  TypeDeserializer notNullTypeDeserializer=new TypeDeserializer(storageManager,outerTypeDeserializer,nameResolver,descriptorFinder,"Deserializer for class " + name,NONE);
+  DescriptorDeserializer outerDeserializer=DescriptorDeserializer.create(storageManager,notNullTypeDeserializer,this,nameResolver,annotationResolver);
+  List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(classProto.getTypeParameterCount());
+  this.deserializer=outerDeserializer.createChildDeserializer(this,classProto.getTypeParameterList(),typeParameters);
+  this.typeDeserializer=deserializer.getTypeDeserializer();
+  this.containingDeclaration=containingDeclaration;
+  this.typeConstructor=new DeserializedClassTypeConstructor(typeParameters);
+  this.memberScope=new DeserializedClassMemberScope(storageManager,this);
+  this.innerClassesScope=new InnerClassesScopeWrapper(memberScope);
+  this.thisAsReceiverParameter=new LazyClassReceiverParameterDescriptor();
+  int flags=classProto.getFlags();
+  this.modality=DescriptorDeserializer.modality(Flags.MODALITY.get(flags));
+  this.visibility=DescriptorDeserializer.visibility(Flags.VISIBILITY.get(flags));
+  this.kind=DescriptorDeserializer.classKind(Flags.CLASS_KIND.get(flags));
+  this.isInner=Flags.INNER.get(flags);
+  this.annotationDeserializer=annotationResolver;
+  this.annotations=storageManager.createLazyValue(new Computable<List<AnnotationDescriptor>>(){
+    @Override public List<AnnotationDescriptor> compute(){
+      return computeAnnotations();
+    }
+  }
+);
+  this.primaryConstructor=storageManager.createNullableLazyValue(new Computable<ConstructorDescriptor>(){
+    @Override public ConstructorDescriptor compute(){
+      return computePrimaryConstructor();
+    }
+  }
+);
+  this.classObjectDescriptor=storageManager.createNullableLazyValue(new Computable<ClassDescriptor>(){
+    @Override public ClassDescriptor compute(){
+      return computeClassObjectDescriptor();
+    }
+  }
+);
+  this.nestedClasses=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedClassNameList(),nameResolver)){
+    @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
+      return descriptorFinder.findClass(DeserializedClassDescriptor.this.classId.createNestedClassId(name));
+    }
+  }
+;
+  this.nestedObjects=new NestedClassDescriptors(storageManager,stringSet(classProto.getNestedObjectNameList(),nameResolver)){
+    @Override protected ClassDescriptor resolveNestedClass(    @NotNull Name name){
+      return descriptorFinder.findClass(DeserializedClassDescriptor.this.classId.createNestedClassId(name));
+    }
+  }
+;
+}
