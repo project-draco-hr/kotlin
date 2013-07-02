@@ -14,6 +14,26 @@
     @Override public CompileTimeConstant<?> visitStringTemplateExpression(    JetStringTemplateExpression expression,    Void nothing){
       return trace.get(BindingContext.COMPILE_TIME_VALUE,expression);
     }
+    @Override public CompileTimeConstant<?> visitSimpleNameExpression(    JetSimpleNameExpression expression,    Void data){
+      ResolvedCall<? extends CallableDescriptor> resolvedCall=trace.getBindingContext().get(BindingContext.RESOLVED_CALL,expression);
+      if (resolvedCall != null) {
+        CallableDescriptor callableDescriptor=resolvedCall.getResultingDescriptor();
+        if (callableDescriptor instanceof PropertyDescriptor) {
+          PropertyDescriptor propertyDescriptor=(PropertyDescriptor)callableDescriptor;
+          if (isEnumProperty(propertyDescriptor)) {
+            return new EnumValue(propertyDescriptor);
+          }
+        }
+      }
+      return null;
+    }
+    @Override public CompileTimeConstant<?> visitQualifiedExpression(    JetQualifiedExpression expression,    Void data){
+      JetExpression selectorExpression=expression.getSelectorExpression();
+      if (selectorExpression != null) {
+        return selectorExpression.accept(this,null);
+      }
+      return super.visitQualifiedExpression(expression,data);
+    }
     @Override public CompileTimeConstant<?> visitJetElement(    JetElement element,    Void nothing){
       return null;
     }
