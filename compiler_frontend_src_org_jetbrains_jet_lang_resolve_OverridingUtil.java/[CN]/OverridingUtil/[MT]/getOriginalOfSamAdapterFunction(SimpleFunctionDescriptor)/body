@@ -1,0 +1,19 @@
+{
+  DeclarationDescriptor containingDeclaration=callable.getContainingDeclaration();
+  if (!(containingDeclaration instanceof ClassDescriptor)) {
+    return null;
+  }
+  Pair<SimpleFunctionDescriptor,JetType> declarationOrSynthesized=getNearestDeclarationOrSynthesized(callable,((ClassDescriptor)containingDeclaration).getDefaultType());
+  if (declarationOrSynthesized == null) {
+    return null;
+  }
+  SimpleFunctionDescriptor fun=declarationOrSynthesized.first;
+  if (fun.getKind() != CallableMemberDescriptor.Kind.SYNTHESIZED) {
+    return null;
+  }
+  SimpleFunctionDescriptor originalOfSynthesized=((SimpleFunctionDescriptorImpl)fun.getOriginal()).getOriginalOfSynthesized();
+  if (originalOfSynthesized == null) {
+    return null;
+  }
+  return ((SimpleFunctionDescriptor)originalOfSynthesized.substitute(TypeSubstitutor.create(declarationOrSynthesized.second)));
+}
