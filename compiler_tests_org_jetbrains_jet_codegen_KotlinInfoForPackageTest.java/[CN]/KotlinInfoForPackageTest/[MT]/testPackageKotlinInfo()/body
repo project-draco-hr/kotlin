@@ -1,0 +1,11 @@
+{
+  loadText("package " + NAMESPACE_NAME + "\n"+ "\n"+ "fun foo() = 42\n"+ "val bar = 239\n"+ "\n"+ "class A\n"+ "class B\n"+ "object C\n");
+  Class aClass=generateClass(PackageClassUtils.getPackageClassFqName(NAMESPACE_NAME).asString());
+  assertTrue(aClass.isAnnotationPresent(KotlinInfo.class));
+  KotlinInfo kotlinInfo=(KotlinInfo)aClass.getAnnotation(KotlinInfo.class);
+  PackageData data=PackageData.readPackageDataFrom(kotlinInfo.data());
+  Set<String> classNames=collectClassNames(data);
+  assertSameElements(Arrays.asList("A","B","C"),classNames);
+  Set<String> callableNames=collectCallableNames(data);
+  assertSameElements(Arrays.asList("foo","bar","C"),callableNames);
+}
