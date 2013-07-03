@@ -6,7 +6,7 @@
   if (unresolvedCache.contains(qualifiedName)) {
     return null;
   }
-  JavaBaseScope scope=resolvedNamespaceCache.get(qualifiedName);
+  JetScope scope=resolvedNamespaceCache.get(qualifiedName);
   if (scope != null) {
     return (NamespaceDescriptor)scope.getContainingDeclaration();
   }
@@ -15,11 +15,13 @@
     return null;
   }
   JavaNamespaceDescriptor javaNamespaceDescriptor=new JavaNamespaceDescriptor(parentNs,Collections.<AnnotationDescriptor>emptyList(),qualifiedName);
-  JavaBaseScope newScope=createNamespaceScope(qualifiedName,javaNamespaceDescriptor);
+  JetScope newScope=createNamespaceScope(qualifiedName,javaNamespaceDescriptor);
   if (newScope == null) {
     return null;
   }
-  trace.record(BindingContext.NAMESPACE,newScope.getPsiElement(),javaNamespaceDescriptor);
+  if (newScope instanceof JavaBaseScope) {
+    trace.record(BindingContext.NAMESPACE,((JavaBaseScope)newScope).getPsiElement(),javaNamespaceDescriptor);
+  }
   javaNamespaceDescriptor.setMemberScope(newScope);
   return javaNamespaceDescriptor;
 }
