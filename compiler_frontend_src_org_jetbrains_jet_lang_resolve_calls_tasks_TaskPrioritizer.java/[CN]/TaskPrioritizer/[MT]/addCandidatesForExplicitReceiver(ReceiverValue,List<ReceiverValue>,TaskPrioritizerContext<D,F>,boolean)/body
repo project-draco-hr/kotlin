@@ -1,0 +1,18 @@
+{
+  List<ReceiverValue> variantsForExplicitReceiver=c.autoCastService.getVariantsForReceiver(receiver);
+  for (  CallableDescriptorCollector<? extends D> callableDescriptorCollector : c.callableDescriptorCollectors) {
+    Collection<ResolutionCandidate<D>> members=Lists.newArrayList();
+    for (    ReceiverValue variant : variantsForExplicitReceiver) {
+      Collection<? extends D> membersForThisVariant=callableDescriptorCollector.getMembersByName(variant.getType(),c.name);
+      convertWithReceivers(membersForThisVariant,Collections.singletonList(variant),Collections.singletonList(NO_RECEIVER),members,resolveInvoke);
+    }
+    c.result.addCandidates(members);
+  }
+  for (  CallableDescriptorCollector<? extends D> callableDescriptorCollector : c.callableDescriptorCollectors) {
+    for (    ReceiverValue implicitReceiver : implicitReceivers) {
+      addMemberExtensionCandidates(implicitReceiver,variantsForExplicitReceiver,callableDescriptorCollector,c,resolveInvoke);
+    }
+    Collection<ResolutionCandidate<D>> extensionFunctions=convertWithImpliedThis(c.scope,variantsForExplicitReceiver,callableDescriptorCollector.getNonMembersByName(c.scope,c.name));
+    c.result.addCandidates(extensionFunctions);
+  }
+}
