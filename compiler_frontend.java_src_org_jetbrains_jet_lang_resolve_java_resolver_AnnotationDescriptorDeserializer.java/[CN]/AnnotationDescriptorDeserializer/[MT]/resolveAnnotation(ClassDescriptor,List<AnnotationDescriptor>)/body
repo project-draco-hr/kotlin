@@ -1,0 +1,19 @@
+{
+  final AnnotationDescriptor annotation=new AnnotationDescriptor();
+  annotation.setAnnotationType(annotationClass.getDefaultType());
+  return new AnnotationVisitor(Opcodes.ASM4){
+    @Override public void visit(    String name,    Object value){
+      ValueParameterDescriptor parameter=DescriptorResolverUtils.getValueParameterDescriptorForAnnotationParameter(Name.identifier(name),annotationClass);
+      if (parameter != null) {
+        CompileTimeConstant<?> argument=JavaCompileTimeConstResolver.resolveCompileTimeConstantValue(value,null);
+        if (argument != null) {
+          annotation.setValueArgument(parameter,argument);
+        }
+      }
+    }
+    @Override public void visitEnd(){
+      result.add(annotation);
+    }
+  }
+;
+}

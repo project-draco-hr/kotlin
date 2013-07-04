@@ -1,0 +1,17 @@
+{
+  FqName fqName=kotlinFqNameToJavaFqName(naiveKotlinFqName(descriptor));
+  PsiClass psiClass=psiClassFinder.findPsiClass(fqName,PsiClassFinder.RuntimeClassesHandleMode.IGNORE);
+  if (psiClass == null) {
+    throw new IllegalStateException("Psi class is not found for class: " + descriptor);
+  }
+  VirtualFile virtualFile=getVirtualFile(psiClass,fqName,(ClassOrNamespaceDescriptor)descriptor.getContainingDeclaration());
+  if (virtualFile == null) {
+    throw new IllegalStateException("Virtual file is not found for class: " + descriptor);
+  }
+  try {
+    return loadClassAnnotationsFromFile(virtualFile);
+  }
+ catch (  IOException e) {
+    throw ExceptionUtils.rethrow(e);
+  }
+}
