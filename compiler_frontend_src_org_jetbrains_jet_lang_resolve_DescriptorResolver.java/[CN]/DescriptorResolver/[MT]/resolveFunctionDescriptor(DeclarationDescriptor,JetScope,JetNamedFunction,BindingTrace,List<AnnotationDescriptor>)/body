@@ -1,0 +1,47 @@
+{
+  final SimpleFunctionDescriptorImpl functionDescriptor=new SimpleFunctionDescriptorImpl(containingDescriptor,annotations,JetPsiUtil.safeName(function.getName()),CallableMemberDescriptor.Kind.DECLARATION);
+  WritableScope innerScope=new WritableScopeImpl(scope,functionDescriptor,new TraceBasedRedeclarationHandler(trace),"Function descriptor header scope");
+  innerScope.addLabeledDeclaration(functionDescriptor);
+  List<TypeParameterDescriptorImpl> typeParameterDescriptors=resolveTypeParametersForCallableDescriptor(functionDescriptor,innerScope,function.getTypeParameters(),trace);
+  innerScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  resolveGenericBounds(function,innerScope,typeParameterDescriptors,trace);
+  JetType receiverType=null;
+  JetTypeReference receiverTypeRef=function.getReceiverTypeRef();
+  if (receiverTypeRef != null) {
+    JetScope scopeForReceiver=function.hasTypeParameterListBeforeFunctionName() ? innerScope : scope;
+    receiverType=typeResolver.resolveType(scopeForReceiver,receiverTypeRef,trace,true);
+  }
+  List<ValueParameterDescriptor> valueParameterDescriptors=resolveValueParameters(functionDescriptor,innerScope,function.getValueParameters(),trace);
+  innerScope.changeLockLevel(WritableScope.LockLevel.READING);
+  JetTypeReference returnTypeRef=function.getReturnTypeRef();
+  JetType returnType;
+  if (returnTypeRef != null) {
+    returnType=typeResolver.resolveType(innerScope,returnTypeRef,trace,true);
+  }
+ else   if (function.hasBlockBody()) {
+    returnType=KotlinBuiltIns.getInstance().getUnitType();
+  }
+ else {
+    JetExpression bodyExpression=function.getBodyExpression();
+    if (bodyExpression != null) {
+      returnType=DeferredType.create(trace,new RecursionIntolerantLazyValueWithDefault<JetType>(ErrorUtils.createErrorType("Recursive dependency")){
+        @Override protected JetType compute(){
+          JetType type=expressionTypingServices.inferFunctionReturnType(scope,function,functionDescriptor,trace);
+          return transformAnonymousTypeIfNeeded(functionDescriptor,function,type,trace);
+        }
+      }
+);
+    }
+ else {
+      returnType=ErrorUtils.createErrorType("No type, no body");
+    }
+  }
+  boolean hasBody=function.getBodyExpression() != null;
+  Modality modality=resolveModalityFromModifiers(function,getDefaultModality(containingDescriptor,hasBody));
+  Visibility visibility=resolveVisibilityFromModifiers(function,getDefaultVisibility(function,containingDescriptor));
+  JetModifierList modifierList=function.getModifierList();
+  boolean isInline=(modifierList != null) && modifierList.hasModifier(JetTokens.INLINE_KEYWORD);
+  functionDescriptor.initialize(receiverType,getExpectedThisObjectIfNeeded(containingDescriptor),typeParameterDescriptors,valueParameterDescriptors,returnType,modality,visibility,isInline);
+  BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,function,functionDescriptor);
+  return functionDescriptor;
+}
