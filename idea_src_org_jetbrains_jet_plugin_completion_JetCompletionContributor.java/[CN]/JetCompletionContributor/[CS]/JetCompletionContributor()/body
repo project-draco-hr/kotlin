@@ -1,21 +1,7 @@
 {
   extend(CompletionType.BASIC,PlatformPatterns.psiElement(),new CompletionProvider<CompletionParameters>(){
     @Override protected void addCompletions(    @NotNull CompletionParameters parameters,    ProcessingContext context,    @NotNull CompletionResultSet result){
-      PsiElement position=parameters.getPosition();
-      if (!(position.getContainingFile() instanceof JetFile)) {
-        return;
-      }
-      JetSimpleNameReference jetReference=getJetReference(parameters);
-      if (jetReference != null) {
-        result.restartCompletionWhenNothingMatches();
-        CompletionSession session=new CompletionSession(parameters,result,jetReference,position);
-        session.completeForReference();
-        if (!session.getJetResult().isSomethingAdded() && session.getCustomInvocationCount() == 0) {
-          session=new CompletionSession(parameters,result,jetReference,position,1);
-          session.completeForReference();
-        }
-      }
-      result.stopHere();
+      doSimpleReferenceCompletion(parameters,result);
     }
   }
 );
