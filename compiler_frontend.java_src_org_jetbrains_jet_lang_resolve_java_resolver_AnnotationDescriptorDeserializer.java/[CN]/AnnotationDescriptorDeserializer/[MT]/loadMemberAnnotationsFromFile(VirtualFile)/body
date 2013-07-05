@@ -1,0 +1,22 @@
+{
+  final Map<String,List<AnnotationDescriptor>> memberAnnotations=new HashMap<String,List<AnnotationDescriptor>>();
+  new ClassReader(file.getInputStream()).accept(new ClassVisitor(Opcodes.ASM4){
+    @Override public MethodVisitor visitMethod(    int access,    String name,    String desc,    String signature,    String[] exceptions){
+      final String methodSignature=name + desc;
+      final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>();
+      return new MethodVisitor(Opcodes.ASM4){
+        @Override public AnnotationVisitor visitAnnotation(        String desc,        boolean visible){
+          return resolveAnnotation(desc,result);
+        }
+        @Override public void visitEnd(){
+          if (!result.isEmpty()) {
+            memberAnnotations.put(methodSignature,result);
+          }
+        }
+      }
+;
+    }
+  }
+,SKIP_CODE | SKIP_DEBUG | SKIP_FRAMES);
+  return memberAnnotations;
+}
