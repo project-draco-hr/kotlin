@@ -2,13 +2,11 @@
   boolean isFinal=isPropertyFinal(scopeData,psiData);
   boolean isVar=psiData.isVar();
   PropertyPsiDataElement characteristicMember=psiData.getCharacteristicMember();
-  Visibility visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi(),null);
+  Visibility visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi());
   CallableMemberDescriptor.Kind kind=CallableMemberDescriptor.Kind.DECLARATION;
   PropertyPsiDataElement getter=psiData.getGetter();
   if (getter != null) {
-    JetMethodAnnotation methodAnnotation=((PsiMethodWrapper)getter.getMember()).getJetMethodAnnotation();
-    visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi(),methodAnnotation);
-    kind=DescriptorKindUtils.flagsToKind(methodAnnotation.kind());
+    visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi());
   }
   PropertyDescriptorImpl propertyDescriptor=createPropertyDescriptor(owner,propertyName,psiData,isFinal,isVar,visibility,kind);
   PropertyGetterDescriptorImpl getterDescriptor=resolveGetter(visibility,kind,getter,propertyDescriptor);
@@ -21,9 +19,7 @@
   propertyType=getAlternativeSignatureData(isVar,characteristicMember,propertyDescriptor,propertyType);
   propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverType);
   initializeSetterAndGetter(propertyDescriptor,getterDescriptor,setterDescriptor,propertyType,psiData);
-  if (kind == CallableMemberDescriptor.Kind.DECLARATION) {
-    trace.record(BindingContext.VARIABLE,psiData.getCharacteristicPsi(),propertyDescriptor);
-  }
+  trace.record(BindingContext.VARIABLE,psiData.getCharacteristicPsi(),propertyDescriptor);
   if (scopeData.getDeclarationOrigin() == JAVA) {
     trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,propertyDescriptor);
   }

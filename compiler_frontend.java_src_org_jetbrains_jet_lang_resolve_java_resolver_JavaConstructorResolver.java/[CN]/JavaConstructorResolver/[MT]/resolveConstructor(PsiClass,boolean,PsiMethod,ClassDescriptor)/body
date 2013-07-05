@@ -1,17 +1,9 @@
 {
   PsiMethodWrapper constructor=new PsiMethodWrapper(psiConstructor);
-  JetConstructorAnnotation constructorAnnotation=constructor.getJetConstructorAnnotation();
-  if (constructorAnnotation.hidden()) {
-    return null;
-  }
-  if (DescriptorResolverUtils.isKotlinClass(psiClass) && !constructorAnnotation.isDefined()) {
-    return null;
-  }
   if (trace.get(BindingContext.CONSTRUCTOR,psiConstructor) != null) {
     return trace.get(BindingContext.CONSTRUCTOR,psiConstructor);
   }
-  boolean primary=constructor.getJetConstructorAnnotation().isDefined();
-  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),primary);
+  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),false);
   String context="constructor of class " + psiClass.getQualifiedName();
   JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=valueParameterResolver.resolveParameterDescriptors(constructorDescriptor,constructor.getParameters(),TypeVariableResolvers.classTypeVariableResolver(classDescriptor,context));
   if (valueParameterDescriptors.getReceiverType() != null) {
@@ -24,7 +16,7 @@
  else   if (alternativeMethodSignatureData.hasErrors()) {
     trace.record(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,constructorDescriptor,Collections.singletonList(alternativeMethodSignatureData.getError()));
   }
-  constructorDescriptor.initialize(classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor,constructorAnnotation),aStatic);
+  constructorDescriptor.initialize(classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor),aStatic);
   trace.record(BindingContext.CONSTRUCTOR,psiConstructor,constructorDescriptor);
   return constructorDescriptor;
 }
