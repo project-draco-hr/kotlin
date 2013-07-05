@@ -1,28 +1,17 @@
 {
   AnnotationVisitor av=v.getVisitor().visitAnnotation(JvmStdlibNames.KOTLIN_INFO_CLASS.getDescriptor(),true);
   DescriptorSerializer serializer=new DescriptorSerializer();
-  final ByteArrayOutputStream classStream=new ByteArrayOutputStream();
-  ClassSerializationUtil.serializeClass(descriptor,constantSerializer(serializer),new ClassSerializationUtil.Sink(){
-    @Override public void writeClass(    @NotNull ClassDescriptor classDescriptor,    @NotNull ProtoBuf.Class classProto){
-      if (classDescriptor == descriptor) {
-        try {
-          classProto.writeTo(classStream);
-        }
- catch (        IOException e) {
-          throw ExceptionUtils.rethrow(e);
-        }
-      }
-    }
-  }
-);
-  ByteArrayOutputStream out=new ByteArrayOutputStream();
-  NameSerializationUtil.serializeNameTable(out,serializer.getNameTable());
+  ProtoBuf.Class classProto=serializer.classProto(descriptor).build();
   try {
+    ByteArrayOutputStream classStream=new ByteArrayOutputStream();
+    classProto.writeTo(classStream);
+    ByteArrayOutputStream out=new ByteArrayOutputStream();
+    NameSerializationUtil.serializeNameTable(out,serializer.getNameTable());
     out.write(classStream.toByteArray());
+    av.visit("data",out.toByteArray());
   }
  catch (  IOException e) {
     throw ExceptionUtils.rethrow(e);
   }
-  av.visit("data",out.toByteArray());
   av.visitEnd();
 }
