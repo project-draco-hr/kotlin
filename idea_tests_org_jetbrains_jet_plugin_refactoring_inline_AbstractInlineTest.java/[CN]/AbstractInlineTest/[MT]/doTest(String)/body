@@ -1,0 +1,18 @@
+{
+  File afterFile=new File(path + ".after");
+  myFixture.configureByFile(path);
+  boolean afterFileExists=afterFile.exists();
+  final PsiElement targetElement=TargetElementUtilBase.findTargetElement(myFixture.getEditor(),ELEMENT_NAME_ACCEPTED | REFERENCED_ELEMENT_ACCEPTED);
+  final KotlinInlineLocalHandler handler=new KotlinInlineLocalHandler();
+  assertEquals(afterFileExists,handler.canInlineElement(targetElement));
+  if (!afterFileExists) {
+    return;
+  }
+  ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    @Override public void run(){
+      handler.inlineElement(myFixture.getProject(),myFixture.getEditor(),targetElement);
+    }
+  }
+);
+  myFixture.checkResult(FileUtil.loadFile(afterFile));
+}
