@@ -1,0 +1,22 @@
+{
+  boolean isVar=!field.isFinal();
+  Visibility visibility=DescriptorResolverUtils.resolveVisibility(field.getPsiField());
+  PropertyDescriptorImpl propertyDescriptor=createPropertyDescriptor(owner,propertyName,field,isVar,visibility);
+  propertyDescriptor.initialize(null,null);
+  TypeVariableResolver typeVariableResolverForPropertyInternals=TypeVariableResolvers.typeVariableResolverFromTypeParameters(Collections.<TypeParameterDescriptor>emptyList(),propertyDescriptor,"property " + propertyName + " in "+ context);
+  JetType propertyType=getPropertyType(field,typeVariableResolverForPropertyInternals);
+  propertyType=getAlternativeSignatureData(isVar,field,propertyDescriptor,propertyType);
+  propertyDescriptor.setType(propertyType,Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(owner),(JetType)null);
+  trace.record(BindingContext.VARIABLE,field.getPsiField(),propertyDescriptor);
+  trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,propertyDescriptor);
+  if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor)) {
+    PsiExpression initializer=field.getPsiField().getInitializer();
+    if (initializer instanceof PsiLiteralExpression) {
+      CompileTimeConstant<?> constant=JavaCompileTimeConstResolver.resolveCompileTimeConstantValue(((PsiLiteralExpression)initializer).getValue(),propertyType);
+      if (constant != null) {
+        trace.record(BindingContext.COMPILE_TIME_INITIALIZER,propertyDescriptor,constant);
+      }
+    }
+  }
+  return propertyDescriptor;
+}
