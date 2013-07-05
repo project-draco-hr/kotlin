@@ -1,0 +1,33 @@
+{
+  boolean isVar=psiData.isVar();
+  PropertyPsiDataElement characteristicMember=psiData.getCharacteristicMember();
+  Visibility visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi());
+  CallableMemberDescriptor.Kind kind=CallableMemberDescriptor.Kind.DECLARATION;
+  PropertyPsiDataElement getter=psiData.getGetter();
+  if (getter != null) {
+    visibility=DescriptorResolverUtils.resolveVisibility(psiData.getCharacteristicPsi());
+  }
+  PropertyDescriptorImpl propertyDescriptor=createPropertyDescriptor(owner,propertyName,psiData,true,isVar,visibility,kind);
+  PropertyGetterDescriptorImpl getterDescriptor=resolveGetter(visibility,kind,getter,propertyDescriptor);
+  PropertySetterDescriptorImpl setterDescriptor=resolveSetter(psiData,kind,propertyDescriptor);
+  propertyDescriptor.initialize(getterDescriptor,setterDescriptor);
+  List<TypeParameterDescriptor> typeParameters=resolvePropertyTypeParameters(psiData,characteristicMember,propertyDescriptor);
+  TypeVariableResolver typeVariableResolverForPropertyInternals=TypeVariableResolvers.typeVariableResolverFromTypeParameters(typeParameters,propertyDescriptor,"property " + propertyName + " in "+ context);
+  JetType propertyType=getPropertyType(psiData,characteristicMember,typeVariableResolverForPropertyInternals);
+  JetType receiverType=getReceiverType(characteristicMember,typeVariableResolverForPropertyInternals);
+  propertyType=getAlternativeSignatureData(isVar,characteristicMember,propertyDescriptor,propertyType);
+  propertyDescriptor.setType(propertyType,typeParameters,DescriptorUtils.getExpectedThisObjectIfNeeded(owner),receiverType);
+  initializeSetterAndGetter(propertyDescriptor,getterDescriptor,setterDescriptor,propertyType,psiData);
+  trace.record(BindingContext.VARIABLE,psiData.getCharacteristicPsi(),propertyDescriptor);
+  trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,propertyDescriptor);
+  if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor) && psiData.getCharacteristicPsi() instanceof PsiField) {
+    PsiExpression initializer=((PsiField)psiData.getCharacteristicPsi()).getInitializer();
+    if (initializer instanceof PsiLiteralExpression) {
+      CompileTimeConstant<?> constant=JavaCompileTimeConstResolver.resolveCompileTimeConstantValue(((PsiLiteralExpression)initializer).getValue(),propertyType);
+      if (constant != null) {
+        trace.record(BindingContext.COMPILE_TIME_INITIALIZER,propertyDescriptor,constant);
+      }
+    }
+  }
+  return propertyDescriptor;
+}
