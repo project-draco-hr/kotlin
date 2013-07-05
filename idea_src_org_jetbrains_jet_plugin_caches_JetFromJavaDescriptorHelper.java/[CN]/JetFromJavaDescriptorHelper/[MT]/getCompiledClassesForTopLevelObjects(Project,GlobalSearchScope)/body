@@ -1,9 +1,12 @@
 {
   Set<PsiClass> jetObjectClasses=Sets.newHashSet();
-  Collection<PsiClass> classesByAnnotation=getClassesByAnnotation(JetClass.class.getSimpleName(),project,scope);
+  Collection<PsiClass> classesByAnnotation=getClassesByAnnotation(KotlinClass.class.getSimpleName(),project,scope);
   for (  PsiClass psiClass : classesByAnnotation) {
-    JetClassAnnotation jetAnnotation=JetClassAnnotation.get(psiClass);
-    if (psiClass.getContainingClass() == null && jetAnnotation.kind() == JvmStdlibNames.FLAG_CLASS_KIND_OBJECT) {
+    ClassKind kind=getCompiledClassKind(psiClass);
+    if (kind == null) {
+      continue;
+    }
+    if (psiClass.getContainingClass() == null && kind == ClassKind.OBJECT) {
       jetObjectClasses.add(psiClass);
     }
   }

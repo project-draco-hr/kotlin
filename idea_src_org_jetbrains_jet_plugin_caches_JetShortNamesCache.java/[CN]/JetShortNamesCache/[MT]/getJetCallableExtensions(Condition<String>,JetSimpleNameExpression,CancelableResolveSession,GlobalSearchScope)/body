@@ -1,34 +1,25 @@
 {
-  Collection<DeclarationDescriptor> resultDescriptors=new ArrayList<DeclarationDescriptor>();
   BindingContext context=resolveSession.resolveToElement(expression);
   JetExpression receiverExpression=expression.getReceiverExpression();
-  if (receiverExpression != null) {
-    JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
-    JetScope scope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
-    if (expressionType != null && scope != null && !ErrorUtils.isErrorType(expressionType)) {
-      Collection<String> extensionFunctionsNames=getAllJetExtensionFunctionsNames(searchScope);
-      Set<FqName> functionFQNs=new java.util.HashSet<FqName>();
-      for (      String name : extensionFunctionsNames) {
-        if (acceptedNameCondition.value(name)) {
-          Collection<PsiElement> extensionFunctions=getJetExtensionFunctionsByName(name,searchScope);
-          for (          PsiElement extensionFunction : extensionFunctions) {
-            if (extensionFunction instanceof JetNamedFunction) {
-              functionFQNs.add(JetPsiUtil.getFQName((JetNamedFunction)extensionFunction));
-            }
- else             if (extensionFunction instanceof PsiMethod) {
-              FqName functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN((PsiMethod)extensionFunction);
-              if (functionFQN != null) {
-                functionFQNs.add(functionFQN);
-              }
-            }
-          }
-        }
-      }
-      for (      FqName functionFQN : functionFQNs) {
-        for (        CallableDescriptor functionDescriptor : ExpressionTypingUtils.canFindSuitableCall(functionFQN,project,receiverExpression,expressionType,scope,resolveSession.getRootModuleDescriptor())) {
-          resultDescriptors.add(functionDescriptor);
-        }
-      }
+  if (receiverExpression == null) {
+    return Collections.emptyList();
+  }
+  JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
+  JetScope scope=context.get(BindingContext.RESOLUTION_SCOPE,receiverExpression);
+  if (expressionType == null || scope == null || ErrorUtils.isErrorType(expressionType)) {
+    return Collections.emptyList();
+  }
+  Set<FqName> functionFQNs=extensionFunctionsFromSourceFqNames(acceptedNameCondition,searchScope);
+  functionFQNs.addAll(ContainerUtil.filter(getTopLevelFunctionFqNames(project,searchScope,true),new Condition<FqName>(){
+    @Override public boolean value(    FqName fqName){
+      return acceptedNameCondition.value(fqName.shortName().asString());
+    }
+  }
+));
+  Collection<DeclarationDescriptor> resultDescriptors=new ArrayList<DeclarationDescriptor>();
+  for (  FqName functionFQN : functionFQNs) {
+    for (    CallableDescriptor functionDescriptor : ExpressionTypingUtils.canFindSuitableCall(functionFQN,project,receiverExpression,expressionType,scope,resolveSession.getRootModuleDescriptor())) {
+      resultDescriptors.add(functionDescriptor);
     }
   }
   return resultDescriptors;

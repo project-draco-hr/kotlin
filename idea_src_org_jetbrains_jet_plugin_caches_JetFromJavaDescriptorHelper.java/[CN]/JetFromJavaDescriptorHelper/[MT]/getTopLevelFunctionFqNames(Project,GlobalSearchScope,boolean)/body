@@ -1,0 +1,23 @@
+{
+  Collection<FqName> result=Sets.newHashSet();
+  Collection<PsiClass> packageClasses=getClassesByAnnotation(KotlinPackage.class.getSimpleName(),project,scope);
+  for (  PsiClass psiClass : packageClasses) {
+    String qualifiedName=psiClass.getQualifiedName();
+    if (qualifiedName == null) {
+      continue;
+    }
+    FqName packageFqName=new FqName(qualifiedName).parent();
+    PackageData data=getPackageData(psiClass);
+    if (data == null) {
+      continue;
+    }
+    NameResolver nameResolver=data.getNameResolver();
+    for (    ProtoBuf.Callable callable : data.getPackageProto().getMemberList()) {
+      if (callable.hasReceiverType() == shouldBeExtension) {
+        Name name=nameResolver.getName(callable.getName());
+        result.add(packageFqName.child(name));
+      }
+    }
+  }
+  return result;
+}

@@ -1,0 +1,21 @@
+{
+  Set<String> extensionFunctionNames=new HashSet<String>(JetExtensionFunctionNameIndex.getInstance().getAllKeys(project));
+  Set<FqName> functionFQNs=new java.util.HashSet<FqName>();
+  for (  String name : extensionFunctionNames) {
+    if (acceptedNameCondition.value(name)) {
+      Collection<PsiElement> extensionFunctions=getJetExtensionFunctionsByName(name,searchScope);
+      for (      PsiElement extensionFunction : extensionFunctions) {
+        if (extensionFunction instanceof JetNamedFunction) {
+          functionFQNs.add(JetPsiUtil.getFQName((JetNamedFunction)extensionFunction));
+        }
+ else         if (extensionFunction instanceof PsiMethod) {
+          FqName functionFQN=JetFromJavaDescriptorHelper.getJetTopLevelDeclarationFQN((PsiMethod)extensionFunction);
+          if (functionFQN != null) {
+            functionFQNs.add(functionFQN);
+          }
+        }
+      }
+    }
+  }
+  return functionFQNs;
+}
