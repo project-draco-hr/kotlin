@@ -3,6 +3,10 @@
   ProtoBuf.Class classProto=serializer.classProto(descriptor).build();
   ClassData data=new ClassData(createNameResolver(serializer.getNameTable()),classProto);
   AnnotationVisitor av=v.getVisitor().visitAnnotation(JvmStdlibNames.KOTLIN_INFO_CLASS.getDescriptor(),true);
-  av.visit("data",data.toBytes());
+  AnnotationVisitor array=av.visitArray("data");
+  for (  String string : JavaProtoBufUtil.encodeBytes(data.toBytes())) {
+    array.visit(null,string);
+  }
+  array.visitEnd();
   av.visitEnd();
 }
