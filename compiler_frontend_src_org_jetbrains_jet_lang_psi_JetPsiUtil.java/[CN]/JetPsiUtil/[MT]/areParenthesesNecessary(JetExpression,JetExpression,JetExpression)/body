@@ -1,0 +1,40 @@
+{
+  if (parentExpression instanceof JetParenthesizedExpression || innerExpression instanceof JetParenthesizedExpression) {
+    return false;
+  }
+  if (parentExpression instanceof JetWhenExpression || innerExpression instanceof JetWhenExpression) {
+    return false;
+  }
+  if (innerExpression instanceof JetIfExpression) {
+    PsiElement current=parentExpression;
+    while (!(current instanceof JetBlockExpression || current instanceof JetDeclaration || current instanceof JetStatementExpression)) {
+      if (current.getTextRange().getEndOffset() != currentInner.getTextRange().getEndOffset()) {
+        return current.getText().charAt(current.getTextLength() - 1) != ')';
+      }
+      current=current.getParent();
+    }
+  }
+  IElementType innerOperation=getOperation(innerExpression);
+  IElementType parentOperation=getOperation(parentExpression);
+  if (parentExpression instanceof JetReturnExpression && innerOperation == JetTokens.LABEL_IDENTIFIER) {
+    return true;
+  }
+  if (innerExpression instanceof JetBinaryExpressionWithTypeRHS && parentOperation == JetTokens.LT) {
+    return true;
+  }
+  int innerPrecedence=getPrecedenceOfOperation(innerExpression,innerOperation);
+  int parentPrecedence=getPrecedenceOfOperation(parentExpression,parentOperation);
+  if (innerPrecedence == parentPrecedence) {
+    if (parentExpression instanceof JetBinaryExpression) {
+      if (innerOperation == JetTokens.ANDAND || innerOperation == JetTokens.OROR) {
+        return false;
+      }
+      return ((JetBinaryExpression)parentExpression).getRight() == currentInner;
+    }
+    if (parentExpression instanceof JetPrefixExpression || innerExpression instanceof JetPrefixExpression) {
+      return innerOperation == parentOperation && (innerOperation == JetTokens.PLUS || innerOperation == JetTokens.MINUS);
+    }
+    return false;
+  }
+  return innerPrecedence >= parentPrecedence;
+}

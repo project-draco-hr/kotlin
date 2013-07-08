@@ -1,24 +1,7 @@
 {
   JetExpression innerExpression=expression.getExpression();
-  JetExpression parentExpression=PsiTreeUtil.getParentOfType(expression,JetExpression.class,true);
-  if (innerExpression == null || parentExpression == null)   return true;
-  IElementType innerOperation=getOperation(innerExpression);
-  IElementType parentOperation=getOperation(parentExpression);
-  if (parentExpression instanceof JetReturnExpression && innerOperation == JetTokens.LABEL_IDENTIFIER) {
-    return false;
-  }
-  if (innerExpression instanceof JetBinaryExpressionWithTypeRHS && parentOperation == JetTokens.LT) {
-    return false;
-  }
-  if (innerOperation == parentOperation && (innerOperation == JetTokens.OROR || innerOperation == JetTokens.ANDAND)) {
-    return true;
-  }
-  if (innerOperation == null)   return true;
-  if (parentExpression instanceof JetArrayAccessExpression) {
-    return ((JetArrayAccessExpression)parentExpression).getArrayExpression() != expression;
-  }
-  if (parentOperation == null)   return true;
-  int innerPrecedence=getPrecedenceOfOperation(innerExpression,innerOperation);
-  int parentPrecedence=getPrecedenceOfOperation(parentExpression,parentOperation);
-  return innerPrecedence < parentPrecedence;
+  if (innerExpression == null)   return true;
+  PsiElement parent=expression.getParent();
+  if (!(parent instanceof JetExpression))   return true;
+  return !areParenthesesNecessary(innerExpression,expression,(JetExpression)parent);
 }
