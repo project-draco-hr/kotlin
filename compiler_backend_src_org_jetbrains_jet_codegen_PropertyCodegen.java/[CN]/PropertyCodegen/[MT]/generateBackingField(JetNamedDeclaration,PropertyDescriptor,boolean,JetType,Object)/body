@@ -1,0 +1,32 @@
+{
+  int modifiers=getDeprecatedAccessFlag(propertyDescriptor);
+  if (KotlinBuiltIns.getInstance().isVolatile(propertyDescriptor)) {
+    modifiers|=ACC_VOLATILE;
+  }
+  if (kind == OwnerKind.NAMESPACE) {
+    modifiers|=ACC_STATIC;
+  }
+  if (!propertyDescriptor.isVar() || isDelegate) {
+    modifiers|=ACC_FINAL;
+  }
+  Type type=typeMapper.mapType(jetType);
+  ClassBuilder builder=v;
+  FieldOwnerContext backingFieldContext=context;
+  if (AsmUtil.isPropertyWithBackingFieldInOuterClass(propertyDescriptor)) {
+    modifiers|=ACC_STATIC | getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
+    ImplementationBodyCodegen codegen=getParentBodyCodegen(classBodyCodegen);
+    builder=codegen.v;
+    backingFieldContext=codegen.context;
+  }
+ else {
+    if (kind != OwnerKind.NAMESPACE || isDelegate) {
+      modifiers|=ACC_PRIVATE;
+    }
+  }
+  if (AsmUtil.isPropertyWithBackingFieldCopyInOuterClass(propertyDescriptor)) {
+    ImplementationBodyCodegen parentBodyCodegen=getParentBodyCodegen(classBodyCodegen);
+    parentBodyCodegen.addClassObjectPropertyToCopy(propertyDescriptor,defaultValue);
+  }
+  String name=backingFieldContext.getFieldName(propertyDescriptor,isDelegate);
+  return builder.newField(element,modifiers,name,type.getDescriptor(),typeMapper.mapFieldSignature(jetType),defaultValue);
+}

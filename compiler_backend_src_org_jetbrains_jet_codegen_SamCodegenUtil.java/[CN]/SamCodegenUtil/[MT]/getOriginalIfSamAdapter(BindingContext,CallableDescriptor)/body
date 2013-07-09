@@ -1,0 +1,18 @@
+{
+  if (!(fun instanceof FunctionDescriptor)) {
+    return null;
+  }
+  FunctionDescriptor original=((FunctionDescriptor)fun).getOriginal();
+  if (original.getKind() == CallableMemberDescriptor.Kind.SYNTHESIZED) {
+    return bindingContext.get(JavaBindingContext.SAM_ADAPTER_FUNCTION_TO_ORIGINAL,original);
+  }
+  if (original.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+    for (    FunctionDescriptor overridden : original.getOverriddenDescriptors()) {
+      FunctionDescriptor originalIfSamAdapter=getOriginalIfSamAdapter(bindingContext,overridden);
+      if (originalIfSamAdapter != null) {
+        return originalIfSamAdapter;
+      }
+    }
+  }
+  return null;
+}

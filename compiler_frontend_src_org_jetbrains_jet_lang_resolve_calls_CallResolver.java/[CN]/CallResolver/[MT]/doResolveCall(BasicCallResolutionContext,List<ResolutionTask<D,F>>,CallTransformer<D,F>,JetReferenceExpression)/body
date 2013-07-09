@@ -10,7 +10,7 @@
   OverloadResolutionResultsImpl<F> resultsForFirstNonemptyCandidateSet=null;
   for (  ResolutionTask<D,F> task : prioritizedTasks) {
     TemporaryBindingTrace taskTrace=TemporaryBindingTrace.create(context.trace,"trace to resolve a task for",task.reference);
-    OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.replaceBindingTrace(taskTrace),callTransformer,context.trace);
+    OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.replaceBindingTrace(taskTrace),callTransformer);
     if (results.isSuccess() || results.isAmbiguity()) {
       taskTrace.commit();
       if (results.isSuccess()) {
@@ -19,11 +19,12 @@
       resolveFunctionArguments(context,results);
       return results;
     }
-    if (results.getResultCode() == OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE) {
+    if (results.getResultCode() == INCOMPLETE_TYPE_INFERENCE) {
       results.setTrace(taskTrace);
       return results;
     }
-    if (traceForFirstNonemptyCandidateSet == null && !task.getCandidates().isEmpty() && !results.isNothing()) {
+    boolean updateResults=traceForFirstNonemptyCandidateSet == null || (resultsForFirstNonemptyCandidateSet.getResultCode() == CANDIDATES_WITH_WRONG_RECEIVER && results.getResultCode() != CANDIDATES_WITH_WRONG_RECEIVER);
+    if (!task.getCandidates().isEmpty() && !results.isNothing() && updateResults) {
       traceForFirstNonemptyCandidateSet=taskTrace;
       resultsForFirstNonemptyCandidateSet=results;
     }

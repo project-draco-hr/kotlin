@@ -1,0 +1,22 @@
+{
+  boolean isConstructor=functionDescriptor instanceof ConstructorDescriptor;
+  boolean callFromAccessor=!JetTypeMapper.isAccessor(functionDescriptor);
+  CallableMethod callableMethod=isConstructor ? typeMapper.mapToCallableMethod((ConstructorDescriptor)functionDescriptor) : typeMapper.mapToCallableMethod(functionDescriptor,callFromAccessor,isCallInsideSameClassAsDeclared(functionDescriptor,context),isCallInsideSameModuleAsDeclared(functionDescriptor,context),context.getContextKind());
+  Method method=callableMethod.getSignature().getAsmMethod();
+  Type[] argTypes=method.getArgumentTypes();
+  int reg=1;
+  if (isConstructor) {
+    iv.anew(callableMethod.getOwner().getAsmType());
+    iv.dup();
+    reg=0;
+  }
+ else   if (callFromAccessor) {
+    iv.load(0,OBJECT_TYPE);
+  }
+  for (int paramIndex=0; paramIndex < argTypes.length; paramIndex++) {
+    Type argType=argTypes[paramIndex];
+    iv.load(reg,argType);
+    reg+=argType.getSize();
+  }
+  callableMethod.invokeWithoutAssertions(iv);
+}

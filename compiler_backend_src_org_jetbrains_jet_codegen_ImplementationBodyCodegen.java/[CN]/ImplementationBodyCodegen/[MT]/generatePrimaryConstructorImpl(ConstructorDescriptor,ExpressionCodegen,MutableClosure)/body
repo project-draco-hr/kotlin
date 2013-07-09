@@ -1,7 +1,7 @@
 {
   List<ValueParameterDescriptor> paramDescrs=constructorDescriptor != null ? constructorDescriptor.getValueParameters() : Collections.<ValueParameterDescriptor>emptyList();
   InstructionAdapter iv=codegen.v;
-  JvmClassName classname=JvmClassName.byType(classAsmType);
+  JvmClassName className=JvmClassName.byType(classAsmType);
   if (superCall == null) {
     genSimpleSuperCall(iv);
   }
@@ -24,7 +24,7 @@
       continue;
     }
     if (specifier instanceof JetDelegatorByExpressionSpecifier) {
-      genCallToDelegatorByExpressionSpecifier(iv,codegen,classAsmType,classname,n++,specifier);
+      genCallToDelegatorByExpressionSpecifier(iv,codegen,classAsmType,className,n++,specifier);
     }
   }
   int curParam=0;
@@ -35,10 +35,18 @@
       Type type=typeMapper.mapType(descriptor);
       iv.load(0,classAsmType);
       iv.load(codegen.myFrameMap.getIndex(descriptor),type);
-      iv.putfield(classAsmType.getInternalName(),descriptor.getName().asString(),type.getDescriptor());
+      iv.putfield(classAsmType.getInternalName(),context.getFieldName(DescriptorUtils.getPropertyDescriptor(parameter,bindingContext)),type.getDescriptor());
     }
     curParam++;
   }
-  generateInitializers(codegen,iv,myClass.getDeclarations(),bindingContext,state);
+  boolean generateInitializerInOuter=isClassObjectWithBackingFieldsInOuter(descriptor);
+  if (generateInitializerInOuter) {
+    ImplementationBodyCodegen parentCodegen=getParentBodyCodegen(this);
+    parentCodegen.genInitSingleton(descriptor,StackValue.singleton(descriptor,typeMapper));
+    parentCodegen.generateInitializers(parentCodegen.createOrGetClInitCodegen(),myClass.getDeclarations(),bindingContext,state);
+  }
+ else {
+    generateInitializers(codegen,myClass.getDeclarations(),bindingContext,state);
+  }
   iv.visitInsn(RETURN);
 }

@@ -1,0 +1,70 @@
+{
+  final List<String> lines=Lists.newArrayList();
+  RecursiveDescriptorProcessor.process(testPackage,null,new DeclarationDescriptorVisitor<Boolean,Void>(){
+    private void add(    DeclarationDescriptor descriptor){
+      add(descriptor.getName().asString(),descriptor);
+    }
+    private void add(    String name,    DeclarationDescriptor descriptor){
+      lines.add(name + ":" + closestInterface(descriptor.getClass()).getSimpleName());
+    }
+    private void addCallable(    CallableMemberDescriptor descriptor){
+      String prefix=descriptor.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE ? "fake " : "";
+      add(prefix + descriptor.getContainingDeclaration().getName() + "."+ descriptor.getName(),descriptor);
+    }
+    @Override public Boolean visitNamespaceDescriptor(    NamespaceDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitVariableDescriptor(    VariableDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitFunctionDescriptor(    FunctionDescriptor descriptor,    Void data){
+      addCallable(descriptor);
+      return true;
+    }
+    @Override public Boolean visitTypeParameterDescriptor(    TypeParameterDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitClassDescriptor(    ClassDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitModuleDeclaration(    ModuleDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitConstructorDescriptor(    ConstructorDescriptor constructorDescriptor,    Void data){
+      add(constructorDescriptor.getContainingDeclaration().getName() + ".<init>()",constructorDescriptor);
+      return true;
+    }
+    @Override public Boolean visitScriptDescriptor(    ScriptDescriptor scriptDescriptor,    Void data){
+      add(scriptDescriptor);
+      return true;
+    }
+    @Override public Boolean visitPropertyDescriptor(    PropertyDescriptor descriptor,    Void data){
+      addCallable(descriptor);
+      return true;
+    }
+    @Override public Boolean visitValueParameterDescriptor(    ValueParameterDescriptor descriptor,    Void data){
+      add(descriptor);
+      return true;
+    }
+    @Override public Boolean visitPropertyGetterDescriptor(    PropertyGetterDescriptor descriptor,    Void data){
+      addCallable(descriptor);
+      return true;
+    }
+    @Override public Boolean visitPropertySetterDescriptor(    PropertySetterDescriptor descriptor,    Void data){
+      addCallable(descriptor);
+      return true;
+    }
+    @Override public Boolean visitReceiverParameterDescriptor(    ReceiverParameterDescriptor descriptor,    Void data){
+      add(descriptor.getContainingDeclaration().getName() + ".this",descriptor);
+      return true;
+    }
+  }
+);
+  Collections.sort(lines);
+  return lines;
+}

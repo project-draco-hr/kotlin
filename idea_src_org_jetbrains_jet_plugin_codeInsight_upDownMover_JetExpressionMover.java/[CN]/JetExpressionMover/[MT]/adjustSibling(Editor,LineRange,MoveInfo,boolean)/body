@@ -1,0 +1,40 @@
+{
+  PsiElement element=down ? sourceRange.lastElement : sourceRange.firstElement;
+  PsiElement sibling=down ? element.getNextSibling() : element.getPrevSibling();
+  PsiElement whiteSpaceTestSubject=sibling;
+  if (sibling == null) {
+    PsiElement parent=element.getParent();
+    if (parent != null && isBracelessBlock(parent)) {
+      whiteSpaceTestSubject=down ? parent.getNextSibling() : parent.getPrevSibling();
+    }
+  }
+  if (whiteSpaceTestSubject instanceof PsiWhiteSpace) {
+    Document doc=editor.getDocument();
+    TextRange spaceRange=whiteSpaceTestSubject.getTextRange();
+    int startLine=doc.getLineNumber(spaceRange.getStartOffset());
+    int endLine=doc.getLineNumber(spaceRange.getEndOffset());
+    if (endLine - startLine > 1) {
+      int nearLine=down ? sourceRange.endLine : sourceRange.startLine - 1;
+      info.toMove=sourceRange;
+      info.toMove2=new LineRange(nearLine,nearLine + 1);
+      info.indentTarget=false;
+      return null;
+    }
+    if (sibling != null) {
+      sibling=firstNonWhiteElement(sibling,down);
+    }
+  }
+  if (sibling == null) {
+    JetCallExpression callExpression=PsiTreeUtil.getParentOfType(element,JetCallExpression.class);
+    if (callExpression != null) {
+      JetBlockExpression dslBlock=getDSLLambdaBlock(callExpression,down);
+      if (PsiTreeUtil.isAncestor(dslBlock,element,false)) {
+        PsiElement blockParent=dslBlock.getParent();
+        return down ? JetPsiUtil.findChildByType(blockParent,JetTokens.RBRACE) : JetPsiUtil.findChildByType(blockParent,JetTokens.LBRACE);
+      }
+    }
+    info.toMove2=null;
+    return null;
+  }
+  return sibling;
+}

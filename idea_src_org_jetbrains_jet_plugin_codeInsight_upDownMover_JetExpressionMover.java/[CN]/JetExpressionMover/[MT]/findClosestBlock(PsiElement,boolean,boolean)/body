@@ -1,0 +1,20 @@
+{
+  PsiElement current=PsiTreeUtil.getParentOfType(anchor,JetBlockExpression.class,strict);
+  while (current != null) {
+    PsiElement parent=current.getParent();
+    if (parent instanceof JetClassBody || parent instanceof JetClassInitializer || parent instanceof JetNamedFunction|| (parent instanceof JetProperty && !((JetProperty)parent).isLocal())) {
+      return null;
+    }
+    if (parent instanceof JetBlockExpression)     return (JetBlockExpression)parent;
+    PsiElement sibling=down ? current.getNextSibling() : current.getPrevSibling();
+    if (sibling != null) {
+      JetBlockExpression block=(JetBlockExpression)JetPsiUtil.getOutermostDescendantElement(sibling,down,CHECK_BLOCK);
+      if (block != null)       return block;
+      current=sibling;
+    }
+ else {
+      current=parent;
+    }
+  }
+  return null;
+}

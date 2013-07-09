@@ -1,0 +1,31 @@
+{
+  super.visitArrayAccessExpression(expression);
+  FunctionDescriptor operationDescriptor=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
+  if (operationDescriptor == null) {
+    return;
+  }
+  boolean isSetter=operationDescriptor.getName().asString().equals("set");
+  FunctionDescriptor original=SamCodegenUtil.getOriginalIfSamAdapter(bindingContext,operationDescriptor);
+  if (original == null) {
+    return;
+  }
+  List<JetExpression> indexExpressions=expression.getIndexExpressions();
+  List<ValueParameterDescriptor> parameters=original.getValueParameters();
+  for (  ValueParameterDescriptor valueParameter : parameters) {
+    ClassDescriptorFromJvmBytecode samInterface=getInterfaceIfSamType(valueParameter.getType());
+    if (samInterface == null) {
+      continue;
+    }
+    if (isSetter && valueParameter.getIndex() == parameters.size() - 1) {
+      PsiElement parent=expression.getParent();
+      if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == EQ) {
+        JetExpression right=((JetBinaryExpression)parent).getRight();
+        bindingTrace.record(CodegenBinding.SAM_VALUE,right,samInterface);
+      }
+    }
+ else {
+      JetExpression indexExpression=indexExpressions.get(valueParameter.getIndex());
+      bindingTrace.record(CodegenBinding.SAM_VALUE,indexExpression,samInterface);
+    }
+  }
+}

@@ -1,10 +1,14 @@
 {
   JetDeclaration declaration=(JetDeclaration)element;
+  PsiElement first=skipInsignificantElements(declaration.getFirstChild(),true);
+  PsiElement last=skipInsignificantElements(declaration.getLastChild(),false);
+  if (first == null || last == null)   return null;
+  TextRange textRange1=first.getTextRange();
+  TextRange textRange2=last.getTextRange();
   Document doc=editor.getDocument();
-  TextRange textRange=declaration.getTextRange();
-  if (doc.getTextLength() < textRange.getEndOffset())   return null;
-  int startLine=editor.offsetToLogicalPosition(textRange.getStartOffset()).line;
-  int endLine=editor.offsetToLogicalPosition(textRange.getEndOffset()).line + 1;
+  if (doc.getTextLength() < textRange2.getEndOffset())   return null;
+  int startLine=editor.offsetToLogicalPosition(textRange1.getStartOffset()).line;
+  int endLine=editor.offsetToLogicalPosition(textRange2.getEndOffset()).line + 1;
   if (startLine == oldRange.startLine || startLine == oldRange.endLine || endLine == oldRange.startLine || endLine == oldRange.endLine) {
     return new LineRange(startLine,endLine);
   }

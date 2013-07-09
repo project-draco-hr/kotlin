@@ -1,27 +1,33 @@
 {
   File ktFile=new File(path);
   assertTrue("Cannot find a file " + ktFile.getAbsolutePath(),ktFile.exists());
-  String fileText=FileUtil.loadFile(ktFile);
+  String fileText=FileUtil.loadFile(ktFile,true);
   JetFile psiFile=JetTestUtils.createFile(ktFile.getName(),fileText,jetCoreEnvironment.getProject());
   assertTrue("Cannot create JetFile from text",psiFile != null);
   ClassFileFactory factory=GenerationUtils.compileFileGetClassFileFactoryForTest(psiFile);
-  TestedObject testedObject=parseExpectedTestedObject(fileText);
-  String className=null;
-  for (  String filename : factory.files()) {
-    if (testedObject.isFullContainingClassName && filename.equals(testedObject.containingClass + ".class")) {
-      className=filename;
+  List<TestedObject> testedObjects=parseExpectedTestedObject(fileText);
+  for (  TestedObject testedObject : testedObjects) {
+    String className=null;
+    for (    String filename : factory.files()) {
+      if (testedObject.isFullContainingClassName && filename.equals(testedObject.containingClass + ".class")) {
+        className=filename;
+      }
+ else       if (!testedObject.isFullContainingClassName && filename.startsWith(testedObject.containingClass)) {
+        className=filename;
+      }
     }
- else     if (!testedObject.isFullContainingClassName && filename.startsWith(testedObject.containingClass)) {
-      className=filename;
+    if (className == null) {
+      throw new AssertionError("Couldn't find a class file with name " + testedObject.containingClass);
+    }
+    ClassReader cr=new ClassReader(factory.asBytes(className));
+    TestClassVisitor classVisitor;
+    classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
+    cr.accept(classVisitor,ClassReader.SKIP_CODE);
+    boolean isObjectExists=false == Boolean.valueOf(findStringWithPrefixes(testedObject.textData,"// ABSENT: "));
+    assertEquals("Wrong object existence state: " + testedObject,isObjectExists,classVisitor.isExists());
+    int expectedAccess=getExpectedFlags(testedObject.textData);
+    if (isObjectExists) {
+      assertEquals("Wrong access flag for " + testedObject + " \n"+ factory.asText(className),expectedAccess,classVisitor.getAccess());
     }
   }
-  if (className == null) {
-    throw new AssertionError("Couldn't find a class file with name " + testedObject.containingClass);
-  }
-  ClassReader cr=new ClassReader(factory.asBytes(className));
-  TestClassVisitor classVisitor;
-  classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
-  cr.accept(classVisitor,ClassReader.SKIP_CODE);
-  int expectedAccess=getExpectedFlags(fileText);
-  assertEquals("Wrong access flag \n" + factory.asText(className),expectedAccess,classVisitor.getAccess());
 }

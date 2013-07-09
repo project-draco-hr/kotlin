@@ -1,0 +1,27 @@
+{
+  String fileText;
+  try {
+    fileText=StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path)));
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  JavaCodeFoldingSettings settings=JavaCodeFoldingSettings.getInstance();
+  JavaCodeFoldingSettingsImpl restoreSettings=new JavaCodeFoldingSettingsImpl();
+  restoreSettings.loadState((JavaCodeFoldingSettingsImpl)settings);
+  try {
+    String directText=fileText.replaceAll("~true~","true").replaceAll("~false~","false");
+    directText+="\n\n// Generated from: " + path;
+    doExpandSettingsTest(directText,settings);
+    cleanAllFoldedRegions();
+    String invertedText=fileText.replaceAll("~false~","true").replaceAll("~true~","false").replaceAll(SettingsConfigurator.SET_TRUE_DIRECTIVE,"~TEMP_TRUE_DIRECTIVE~").replaceAll(SettingsConfigurator.SET_FALSE_DIRECTIVE,SettingsConfigurator.SET_TRUE_DIRECTIVE).replaceAll("~TEMP_TRUE_DIRECTIVE~",SettingsConfigurator.SET_FALSE_DIRECTIVE);
+    invertedText+="\n\n// Generated from: " + path + " with !INVERTED! settings";
+    doExpandSettingsTest(invertedText,settings);
+  }
+ catch (  IOException e) {
+    throw new IllegalStateException(e);
+  }
+ finally {
+    ((JavaCodeFoldingSettingsImpl)JavaCodeFoldingSettings.getInstance()).loadState(restoreSettings);
+  }
+}

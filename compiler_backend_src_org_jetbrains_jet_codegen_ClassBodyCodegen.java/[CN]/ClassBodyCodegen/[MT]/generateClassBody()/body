@@ -1,8 +1,17 @@
 {
   FunctionCodegen functionCodegen=new FunctionCodegen(context,v,state);
-  PropertyCodegen propertyCodegen=new PropertyCodegen(context,v,functionCodegen);
+  PropertyCodegen propertyCodegen=new PropertyCodegen(context,v,functionCodegen,this);
+  if (kind != OwnerKind.TRAIT_IMPL) {
+    for (    JetDeclaration declaration : myClass.getDeclarations()) {
+      if (shouldProcessFirst(declaration)) {
+        generateDeclaration(propertyCodegen,declaration);
+      }
+    }
+  }
   for (  JetDeclaration declaration : myClass.getDeclarations()) {
-    generateDeclaration(propertyCodegen,declaration,functionCodegen);
+    if (!shouldProcessFirst(declaration)) {
+      generateDeclaration(propertyCodegen,declaration);
+    }
   }
   generatePrimaryConstructorProperties(propertyCodegen,myClass);
 }

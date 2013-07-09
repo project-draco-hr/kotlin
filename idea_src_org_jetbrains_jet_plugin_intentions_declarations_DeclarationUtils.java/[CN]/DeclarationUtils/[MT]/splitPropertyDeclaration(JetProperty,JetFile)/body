@@ -1,0 +1,17 @@
+{
+  Project project=property.getProject();
+  PsiElement parent=property.getParent();
+  assertNotNull(parent);
+  JetExpression initializer=property.getInitializer();
+  assertNotNull(initializer);
+  JetBinaryExpression newInitializer=JetPsiFactory.createBinaryExpression(project,JetPsiFactory.createSimpleName(project,property.getName()),"=",initializer);
+  newInitializer=(JetBinaryExpression)parent.addAfter(newInitializer,property);
+  parent.addAfter(JetPsiFactory.createNewLine(project),property);
+  JetType inferredType=getPropertyTypeIfNeeded(property,file);
+  String typeStr=inferredType != null ? DescriptorRenderer.TEXT.renderType(inferredType) : JetPsiUtil.getNullableText(property.getTypeRef());
+  property=(JetProperty)property.replace(JetPsiFactory.createProperty(project,property.getNameIdentifier().getText(),typeStr,property.isVar()));
+  if (inferredType != null) {
+    ReferenceToClassesShortening.compactReferenceToClasses(Collections.singletonList(property.getTypeRef()));
+  }
+  return newInitializer;
+}

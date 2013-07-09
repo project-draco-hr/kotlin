@@ -1,0 +1,27 @@
+{
+  if (parameterType.isNullable()) {
+    return false;
+  }
+  ClassDescriptor typeDescriptor=TypeUtils.getClassDescriptor(parameterType);
+  if (typeDescriptor == null) {
+    return false;
+  }
+  KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
+  if (isEnumClass(typeDescriptor) || isAnnotationClass(typeDescriptor) || isJavaLangClass(typeDescriptor)|| builtIns.isPrimitiveArray(parameterType)|| builtIns.isPrimitiveType(parameterType)|| builtIns.getStringType().equals(parameterType)) {
+    return true;
+  }
+  if (builtIns.isArray(parameterType)) {
+    List<TypeProjection> arguments=parameterType.getArguments();
+    if (arguments.size() == 1) {
+      JetType arrayType=arguments.get(0).getType();
+      if (arrayType.isNullable()) {
+        return false;
+      }
+      ClassDescriptor arrayTypeDescriptor=TypeUtils.getClassDescriptor(arrayType);
+      if (arrayTypeDescriptor != null) {
+        return isEnumClass(arrayTypeDescriptor) || isAnnotationClass(arrayTypeDescriptor) || isJavaLangClass(arrayTypeDescriptor)|| builtIns.getStringType().equals(arrayType);
+      }
+    }
+  }
+  return false;
+}

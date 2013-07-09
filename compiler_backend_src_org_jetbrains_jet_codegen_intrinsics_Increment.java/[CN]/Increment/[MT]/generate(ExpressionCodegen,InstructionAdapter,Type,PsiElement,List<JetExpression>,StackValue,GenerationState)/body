@@ -8,9 +8,9 @@
     while (operand instanceof JetParenthesizedExpression) {
       operand=((JetParenthesizedExpression)operand).getExpression();
     }
-    if (operand instanceof JetReferenceExpression) {
+    if (operand instanceof JetReferenceExpression && expectedType == Type.INT_TYPE) {
       int index=codegen.indexOfLocal((JetReferenceExpression)operand);
-      if (index >= 0 && isIntPrimitive(expectedType)) {
+      if (index >= 0) {
         return StackValue.preIncrement(index,myDelta);
       }
     }
@@ -18,12 +18,13 @@
     value.dupReceiver(v);
     value.dupReceiver(v);
     value.put(expectedType,v);
-    value.store(genIncrement(expectedType,myDelta,v),v);
+    genIncrement(expectedType,myDelta,v);
+    value.store(expectedType,v);
     value.put(expectedType,v);
   }
  else {
     receiver.put(expectedType,v);
-    StackValue.coerce(genIncrement(expectedType,myDelta,v),expectedType,v);
+    genIncrement(expectedType,myDelta,v);
   }
   return StackValue.onStack(expectedType);
 }

@@ -1,2 +1,26 @@
 {
+  GlobalSearchScope scope=includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+  Collection<JetClassOrObject> classesOrObjects=JetShortClassNameIndex.getInstance().get(name,project,scope);
+  if (classesOrObjects.isEmpty()) {
+    return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
+  }
+  PsiClass[] classes=PsiShortNamesCache.getInstance(project).getClassesByName(name,scope);
+  Collection<String> javaQualifiedNames=new HashSet<String>();
+  for (  PsiClass aClass : classes) {
+    String qualifiedName=aClass.getQualifiedName();
+    if (qualifiedName != null) {
+      javaQualifiedNames.add(qualifiedName);
+    }
+  }
+  List<NavigationItem> items=new ArrayList<NavigationItem>();
+  for (  JetClassOrObject classOrObject : classesOrObjects) {
+    FqName fqName=JetPsiUtil.getFQName(classOrObject);
+    if (fqName == null || javaQualifiedNames.contains(fqName.toString())) {
+      continue;
+    }
+    if (classOrObject instanceof JetClass) {
+      items.add(classOrObject);
+    }
+  }
+  return ArrayUtil.toObjectArray(items,NavigationItem.class);
 }
