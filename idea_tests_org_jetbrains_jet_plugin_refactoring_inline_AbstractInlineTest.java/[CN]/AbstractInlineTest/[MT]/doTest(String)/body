@@ -4,15 +4,26 @@
   boolean afterFileExists=afterFile.exists();
   final PsiElement targetElement=TargetElementUtilBase.findTargetElement(myFixture.getEditor(),ELEMENT_NAME_ACCEPTED | REFERENCED_ELEMENT_ACCEPTED);
   final KotlinInlineLocalHandler handler=new KotlinInlineLocalHandler();
-  assertEquals(afterFileExists,handler.canInlineElement(targetElement));
-  if (!afterFileExists) {
-    return;
-  }
-  ApplicationManager.getApplication().runWriteAction(new Runnable(){
-    @Override public void run(){
-      handler.inlineElement(myFixture.getProject(),myFixture.getEditor(),targetElement);
+  List<String> expectedErrors=InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.getFile().getText(),"// ERROR: ");
+  if (handler.canInlineElement(targetElement)) {
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          handler.inlineElement(myFixture.getProject(),myFixture.getEditor(),targetElement);
+        }
+      }
+);
+      assertTrue(afterFileExists);
+      assertEmpty(expectedErrors);
+      myFixture.checkResult(FileUtil.loadFile(afterFile));
+    }
+ catch (    CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertFalse(afterFileExists);
+      assertEquals(1,expectedErrors.size());
+      assertEquals(expectedErrors.get(0).replace("\\n","\n"),e.getMessage());
     }
   }
-);
-  myFixture.checkResult(FileUtil.loadFile(afterFile));
+ else {
+    assertFalse(afterFileExists);
+  }
 }

@@ -1,2 +1,73 @@
 {
+  final JetProperty val=(JetProperty)element;
+  String name=val.getName();
+  JetExpression initializerInDeclaration=val.getInitializer();
+  final Collection<PsiReference> references=ReferencesSearch.search(val,GlobalSearchScope.allScope(project),false).findAll();
+  final Set<PsiElement> assignments=Sets.newHashSet();
+  for (  PsiReference ref : references) {
+    PsiElement refElement=ref.getElement();
+    PsiElement parent=refElement.getParent();
+    if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == JetTokens.EQ && ((JetBinaryExpression)parent).getLeft() == refElement) {
+      assignments.add(parent);
+    }
+  }
+  final JetExpression initializer;
+  if (initializerInDeclaration != null) {
+    initializer=initializerInDeclaration;
+  }
+ else {
+    if (assignments.size() == 1) {
+      initializer=((JetBinaryExpression)assignments.iterator().next()).getRight();
+    }
+ else {
+      initializer=null;
+    }
+    if (initializer == null) {
+      String key=assignments.isEmpty() ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
+      String message=RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key,name));
+      CommonRefactoringUtil.showErrorHint(project,editor,message,RefactoringBundle.message("inline.variable.title"),HelpID.INLINE_VARIABLE);
+      return;
+    }
+  }
+  PsiReference[] referencesArray=references.toArray(references.toArray(new PsiReference[references.size()]));
+  if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+    EditorColorsManager editorColorsManager=EditorColorsManager.getInstance();
+    TextAttributes attributes=editorColorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor,referencesArray,attributes,true,null);
+    RefactoringMessageDialog dialog=new RefactoringMessageDialog(RefactoringBundle.message("inline.variable.title"),RefactoringBundle.message("inline.local.variable.prompt",name) + " " + RefactoringBundle.message("occurences.string",references.size()),HelpID.INLINE_VARIABLE,"OptionPane.questionIcon",true,project);
+    dialog.show();
+    if (!dialog.isOK()) {
+      StatusBar statusBar=WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null) {
+        statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      }
+      return;
+    }
+  }
+  CommandProcessor.getInstance().executeCommand(project,new Runnable(){
+    public void run(){
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          for (          PsiReference reference : references) {
+            PsiElement referenceElement=reference.getElement();
+            if (assignments.contains(referenceElement.getParent())) {
+              continue;
+            }
+            if (referenceElement.getParent() instanceof JetSimpleNameStringTemplateEntry && !(initializer instanceof JetSimpleNameExpression)) {
+              referenceElement.getParent().replace(JetPsiFactory.createBlockStringTemplateEntry(project,initializer));
+            }
+ else {
+              referenceElement.replace(initializer.copy());
+            }
+          }
+          for (          PsiElement assignment : assignments) {
+            assignment.delete();
+          }
+          val.delete();
+        }
+      }
+);
+    }
+  }
+,RefactoringBundle.message("inline.command",name),null);
 }
