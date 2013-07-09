@@ -4,7 +4,13 @@
   if (sibling.getNode().getElementType() == (down ? JetTokens.RBRACE : JetTokens.LBRACE)) {
     PsiElement parent=sibling.getParent();
     if (!(parent instanceof JetBlockExpression || parent instanceof JetFunctionLiteral))     return null;
-    JetBlockExpression newBlock=findClosestBlock(sibling,down);
+    JetBlockExpression newBlock;
+    if (parent instanceof JetFunctionLiteral) {
+      newBlock=findClosestBlock(((JetFunctionLiteral)parent).getBodyExpression(),down,false);
+    }
+ else {
+      newBlock=findClosestBlock(sibling,down,true);
+    }
     if (newBlock == null)     return null;
     if (PsiTreeUtil.isAncestor(newBlock,parent,true)) {
       PsiElement outermostParent=JetPsiUtil.getOutermostParent(parent,newBlock,true);
@@ -25,7 +31,14 @@
     }
   }
  else {
-    JetElement blockLikeElement=JetPsiUtil.getOutermostDescendantElement(sibling,down,CHECK_BLOCK_LIKE_ELEMENT);
+    PsiElement blockLikeElement;
+    JetBlockExpression dslBlock=getDSLLambdaBlock(sibling,down);
+    if (dslBlock != null) {
+      blockLikeElement=dslBlock.getParent();
+    }
+ else {
+      blockLikeElement=JetPsiUtil.getOutermostDescendantElement(sibling,down,CHECK_BLOCK_LIKE_ELEMENT);
+    }
     if (blockLikeElement != null) {
       if (down) {
         end=JetPsiUtil.findChildByType(blockLikeElement,JetTokens.LBRACE);
