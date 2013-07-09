@@ -3,10 +3,24 @@
     return null;
   }
   return new AnnotationVisitor(Opcodes.ASM4){
-    @Override public AnnotationVisitor visitArray(    String name){
-      if (!name.equals("data")) {
+    @Override public void visit(    String name,    Object value){
+      if (name.equals("version")) {
+        version=(Integer)value;
+      }
+ else       if (isAbiVersionCompatible(version)) {
         throw new IllegalStateException("Unexpected argument " + name + " for annotation "+ KOTLIN_INFO_TYPE);
       }
+    }
+    @Override public AnnotationVisitor visitArray(    String name){
+      if (name.equals("data")) {
+        return stringArrayVisitor();
+      }
+ else       if (isAbiVersionCompatible(version)) {
+        throw new IllegalStateException("Unexpected array argument " + name + " for annotation "+ KOTLIN_INFO_TYPE);
+      }
+      return super.visitArray(name);
+    }
+    @NotNull private AnnotationVisitor stringArrayVisitor(){
       final List<String> strings=new ArrayList<String>(1);
       return new AnnotationVisitor(Opcodes.ASM4){
         @Override public void visit(        String name,        Object value){
