@@ -1,13 +1,15 @@
 {
   String testName=getTestName(false);
   configureByFile(testName + ".kt");
+  String referenceToString=InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(),"REF:");
+  Assert.assertNotNull("Test data wasn't found, use \"// REF: \" directive",referenceToString);
   int offset=getEditor().getCaretModel().getOffset();
   PsiReference psiReference=getFile().findReferenceAt(offset);
   if (psiReference != null) {
     PsiElement resolvedTo=psiReference.resolve();
     if (resolvedTo != null) {
       String resolvedToElementStr=ReferenceUtils.renderAsGotoImplementation(resolvedTo);
-      String notEqualMessage=String.format("Found reference to '%s', but '%s' was expected",resolvedToElementStr,referenceToString != null ? referenceToString : "<null>");
+      String notEqualMessage=String.format("Found reference to '%s', but '%s' was expected",resolvedToElementStr,referenceToString);
       assertEquals(notEqualMessage,referenceToString,resolvedToElementStr);
     }
  else {
