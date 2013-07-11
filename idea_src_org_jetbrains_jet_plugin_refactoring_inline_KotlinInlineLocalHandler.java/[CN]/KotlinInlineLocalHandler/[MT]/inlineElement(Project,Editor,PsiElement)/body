@@ -29,6 +29,7 @@
       return;
     }
   }
+  final String typeArgumentsForCall=getTypeArgumentsStringForCall(initializer);
   PsiReference[] referencesArray=references.toArray(references.toArray(new PsiReference[references.size()]));
   if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
     EditorColorsManager editorColorsManager=EditorColorsManager.getInstance();
@@ -44,8 +45,9 @@
       return;
     }
   }
+  final List<JetExpression> inlinedExpressions=Lists.newArrayList();
   CommandProcessor.getInstance().executeCommand(project,new Runnable(){
-    public void run(){
+    @Override public void run(){
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         @Override public void run(){
           for (          PsiReference reference : references) {
@@ -53,17 +55,15 @@
             if (assignments.contains(referenceElement.getParent())) {
               continue;
             }
-            if (referenceElement.getParent() instanceof JetSimpleNameStringTemplateEntry && !(initializer instanceof JetSimpleNameExpression)) {
-              referenceElement.getParent().replace(JetPsiFactory.createBlockStringTemplateEntry(project,initializer));
-            }
- else {
-              referenceElement.replace(initializer.copy());
-            }
+            inlinedExpressions.add(replaceExpression(referenceElement,initializer));
           }
           for (          PsiElement assignment : assignments) {
             assignment.delete();
           }
           val.delete();
+          if (typeArgumentsForCall != null) {
+            addTypeArguments(typeArgumentsForCall,inlinedExpressions);
+          }
         }
       }
 );

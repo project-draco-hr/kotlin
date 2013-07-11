@@ -1,0 +1,24 @@
+{
+  JetCallExpression callExpression=getCallExpression(initializer);
+  if (callExpression == null) {
+    return null;
+  }
+  JetExpression callee=callExpression.getCalleeExpression();
+  ResolveSession resolveSession=AnalyzerFacadeWithCache.getLazyResolveSession((JetFile)initializer.getContainingFile());
+  BindingContext context=ResolveSessionUtils.resolveToExpression(resolveSession,initializer);
+  ResolvedCall<? extends CallableDescriptor> call=context.get(BindingContext.RESOLVED_CALL,callee);
+  if (call == null) {
+    return null;
+  }
+  List<JetType> typeArguments=Lists.newArrayList();
+  Map<TypeParameterDescriptor,JetType> typeArgumentMap=call.getTypeArguments();
+  for (  TypeParameterDescriptor typeParameter : call.getCandidateDescriptor().getTypeParameters()) {
+    typeArguments.add(typeArgumentMap.get(typeParameter));
+  }
+  return StringUtil.join(typeArguments,new Function<JetType,String>(){
+    @Override public String fun(    JetType type){
+      return DescriptorRenderer.TEXT.renderType(type);
+    }
+  }
+,", ");
+}
