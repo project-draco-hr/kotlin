@@ -1,0 +1,22 @@
+{
+  QualifiedName.Builder builder=QualifiedName.newBuilder();
+  if (descriptor instanceof ClassDescriptor) {
+    builder.setKind(QualifiedName.Kind.CLASS);
+  }
+  builder.setShortName(getSimpleNameIndex(descriptor.getName()));
+  DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+  if (containingDeclaration instanceof NamespaceDescriptor) {
+    NamespaceDescriptor namespaceDescriptor=(NamespaceDescriptor)containingDeclaration;
+    if (!DescriptorUtils.isRootNamespace(namespaceDescriptor)) {
+      builder.setParentQualifiedName(getFqNameIndex(namespaceDescriptor));
+    }
+  }
+ else   if (containingDeclaration instanceof ClassDescriptor) {
+    ClassDescriptor outerClass=(ClassDescriptor)containingDeclaration;
+    builder.setParentQualifiedName(getFqNameIndex(outerClass));
+  }
+ else {
+    throw new IllegalStateException("FQ names are only stored for top-level or inner classes: " + descriptor);
+  }
+  return qualifiedNames.intern(builder);
+}
