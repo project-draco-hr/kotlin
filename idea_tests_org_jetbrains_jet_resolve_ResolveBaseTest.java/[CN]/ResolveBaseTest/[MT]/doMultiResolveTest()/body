@@ -1,13 +1,14 @@
 {
-  String testName=getTestName(false);
-  configureByFile(testName + ".kt");
+  List<String> expectedReferences=InTextDirectivesUtils.findListWithPrefixes(getFile().getText(),"REF:");
   PsiReference psiReference=getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
   assertTrue(psiReference instanceof PsiPolyVariantReference);
   PsiPolyVariantReference variantReference=(PsiPolyVariantReference)psiReference;
-  PsiElement element=variantReference.resolve();
   ResolveResult[] results=variantReference.multiResolve(true);
+  List<String> actualResolvedTo=Lists.newArrayList();
   for (  ResolveResult result : results) {
-    assertNotNull(result);
+    PsiElement resolvedToElement=result.getElement();
+    assertNotNull(resolvedToElement);
+    actualResolvedTo.add(ReferenceUtils.renderAsGotoImplementation(resolvedToElement));
   }
-  assertTrue("Nothing resolved by reference '" + psiReference.getElement().getText() + "'.",element != null || results.length > 0);
+  assertOrderedEquals(Ordering.natural().sortedCopy(actualResolvedTo),Ordering.natural().sortedCopy(expectedReferences));
 }
