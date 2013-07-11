@@ -4,6 +4,15 @@
   String text=node.getText();
   KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
   CompileTimeConstantResolver compileTimeConstantResolver=context.getCompileTimeConstantResolver();
+  if (context.expectedType == UNKNOWN_EXPECTED_TYPE) {
+    if (elementType == JetNodeTypes.INTEGER_CONSTANT) {
+      Long longValue=CompileTimeConstantResolver.parseLongValue(text);
+      if (longValue != null) {
+        JetTypeImpl numberValueType=new JetTypeImpl(Collections.<AnnotationDescriptor>emptyList(),new NumberValueTypeConstructor(longValue),false,Collections.<TypeProjection>emptyList(),ErrorUtils.createErrorScope("Scope for number value type (" + longValue + ")",true));
+        return JetTypeInfo.create(numberValueType,context.dataFlowInfo);
+      }
+    }
+  }
   CompileTimeConstant<?> value;
   if (elementType == JetNodeTypes.INTEGER_CONSTANT) {
     value=compileTimeConstantResolver.getIntegerValue(text,context.expectedType);
