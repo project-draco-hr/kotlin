@@ -1,5 +1,5 @@
 {
-  boolean hasBackingField=bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor);
+  boolean hasBackingField=Boolean.TRUE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor));
   boolean isDelegated=p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null;
   if (hasBackingField || isDelegated) {
     DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
@@ -8,5 +8,12 @@
     }
     FieldVisitor fieldVisitor=hasBackingField ? generateBackingFieldAccess(p,propertyDescriptor) : generatePropertyDelegateAccess((JetProperty)p,propertyDescriptor);
     AnnotationCodegen.forField(fieldVisitor,typeMapper).genAnnotations(propertyDescriptor);
+  }
+ else   if (!propertyDescriptor.getAnnotations().isEmpty()) {
+    MethodVisitor mv=v.newMethod(null,ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC,JvmAbi.getSyntheticMethodNameForAnnotatedProperty(propertyDescriptor.getName()),JvmAbi.ANNOTATED_PROPERTY_METHOD_SIGNATURE,null,null);
+    AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(propertyDescriptor);
+    mv.visitCode();
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitEnd();
   }
 }
