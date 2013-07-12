@@ -1,0 +1,22 @@
+{
+  Collection<CallableMemberDescriptor> overridable=Lists.newArrayList();
+  overridable.add(overrider);
+  for (Iterator<CallableMemberDescriptor> iterator=extractFrom.iterator(); iterator.hasNext(); ) {
+    CallableMemberDescriptor candidate=iterator.next();
+    if (overrider == candidate) {
+      iterator.remove();
+      continue;
+    }
+    OverridingUtil.OverrideCompatibilityInfo.Result result1=OverridingUtil.isOverridableBy(candidate,overrider).getResult();
+    OverridingUtil.OverrideCompatibilityInfo.Result result2=OverridingUtil.isOverridableBy(overrider,candidate).getResult();
+    if (result1 == OVERRIDABLE && result2 == OVERRIDABLE) {
+      overridable.add(candidate);
+      iterator.remove();
+    }
+ else     if (result1 == CONFLICT || result2 == CONFLICT) {
+      sink.conflict(overrider,candidate);
+      iterator.remove();
+    }
+  }
+  return overridable;
+}
