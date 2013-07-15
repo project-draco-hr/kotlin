@@ -1,7 +1,14 @@
 {
   Method asmMethod=jvmSignature.getAsmMethod();
   MethodVisitor mv=v.newMethod(origin,getMethodAsmFlags(functionDescriptor,methodContext.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
-  v.getMemberMap().recordMethodOfDescriptor(functionDescriptor,asmMethod);
+  OwnerKind contextKind=owner.getContextKind();
+  if (contextKind instanceof OwnerKind.StaticDelegateKind) {
+    FqName fqName=((OwnerKind.StaticDelegateKind)contextKind).getOwnerClass().getFqName();
+    v.getMemberMap().recordSrcClassNameForCallable(functionDescriptor,fqName.shortName());
+  }
+ else {
+    v.getMemberMap().recordMethodOfDescriptor(functionDescriptor,asmMethod);
+  }
   AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(functionDescriptor);
   if (state.getClassBuilderMode() == ClassBuilderMode.SIGNATURES)   return;
   if (needJetAnnotations) {
