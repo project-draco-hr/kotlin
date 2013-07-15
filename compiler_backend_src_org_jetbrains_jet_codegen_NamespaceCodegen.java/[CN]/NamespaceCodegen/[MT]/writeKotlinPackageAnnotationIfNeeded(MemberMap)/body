@@ -1,2 +1,17 @@
 {
+  for (  JetFile file : files) {
+    if (file.isScript())     return;
+  }
+  DescriptorSerializer serializer=new DescriptorSerializer(new JavaSerializerExtension(members));
+  ProtoBuf.Package packageProto=serializer.packageProto(descriptor).build();
+  if (packageProto.getMemberCount() == 0)   return;
+  PackageData data=new PackageData(createNameResolver(serializer.getNameTable()),packageProto);
+  AnnotationVisitor av=v.getClassBuilder().newAnnotation(JvmStdlibNames.KOTLIN_PACKAGE.getDescriptor(),true);
+  av.visit(JvmStdlibNames.ABI_VERSION_NAME,JvmAbi.VERSION);
+  AnnotationVisitor array=av.visitArray(JvmStdlibNames.KOTLIN_INFO_DATA_FIELD);
+  for (  String string : JavaProtoBufUtil.encodeBytes(data.toBytes())) {
+    array.visit(null,string);
+  }
+  array.visitEnd();
+  av.visitEnd();
 }
