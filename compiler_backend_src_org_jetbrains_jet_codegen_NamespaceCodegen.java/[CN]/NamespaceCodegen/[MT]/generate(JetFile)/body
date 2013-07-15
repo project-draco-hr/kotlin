@@ -1,2 +1,32 @@
 {
+  boolean generateSrcClass=false;
+  for (  JetDeclaration declaration : file.getDeclarations()) {
+    if (declaration instanceof JetProperty || declaration instanceof JetNamedFunction) {
+      generateSrcClass=true;
+    }
+ else     if (declaration instanceof JetClassOrObject) {
+      if (state.isGenerateDeclaredClasses()) {
+        generateClassOrObject((JetClassOrObject)declaration);
+      }
+    }
+ else     if (declaration instanceof JetScript) {
+      state.getScriptCodegen().generate((JetScript)declaration);
+    }
+  }
+  if (!generateSrcClass)   return null;
+  JvmClassName className=getMultiFileNamespaceInternalName(PackageClassUtils.getPackageClassFqName(name),file);
+  ClassBuilder builder=state.getFactory().forNamespacePart(className,file);
+  builder.defineClass(file,V1_6,ACC_PUBLIC | ACC_FINAL,className.getInternalName(),null,"java/lang/Object",new String[0]);
+  builder.visitSource(file.getName(),null);
+  FieldOwnerContext nameSpaceContext=CodegenContext.STATIC.intoNamespace(descriptor);
+  FieldOwnerContext nameSpacePart=CodegenContext.STATIC.intoNamespacePart(className,descriptor);
+  for (  JetDeclaration declaration : file.getDeclarations()) {
+    if (declaration instanceof JetNamedFunction || declaration instanceof JetProperty) {
+      genFunctionOrProperty(nameSpaceContext,(JetTypeParameterListOwner)declaration,builder);
+      genFunctionOrProperty(nameSpacePart,(JetTypeParameterListOwner)declaration,v.getClassBuilder());
+    }
+  }
+  generateStaticInitializers(builder,file,nameSpaceContext);
+  builder.done();
+  return builder;
 }
