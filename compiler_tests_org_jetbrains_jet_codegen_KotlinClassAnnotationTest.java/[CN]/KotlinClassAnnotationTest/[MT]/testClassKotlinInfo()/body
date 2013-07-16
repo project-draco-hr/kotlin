@@ -3,8 +3,7 @@
   Class aClass=generateClass(NAMESPACE_NAME + "." + CLASS_NAME);
   assertTrue(aClass.isAnnotationPresent(KotlinClass.class));
   KotlinClass kotlinClass=(KotlinClass)aClass.getAnnotation(KotlinClass.class);
-  AbstractDescriptorFinder descriptorFinder=new KotlinInfoBasedDescriptorFinder(kotlinClass);
-  ClassDescriptor descriptor=descriptorFinder.findClass(new ClassId(NAMESPACE_NAME,CLASS_NAME));
-  assertNotNull(descriptor);
-  assertEquals(CLASS_NAME.asString(),descriptor.getName().asString());
+  ClassData data=JavaProtoBufUtil.readClassDataFrom(kotlinClass.data());
+  Set<String> callableNames=collectCallableNames(data.getClassProto().getMemberList(),data.getNameResolver());
+  assertSameElements(Arrays.asList("foo","bar"),callableNames);
 }
