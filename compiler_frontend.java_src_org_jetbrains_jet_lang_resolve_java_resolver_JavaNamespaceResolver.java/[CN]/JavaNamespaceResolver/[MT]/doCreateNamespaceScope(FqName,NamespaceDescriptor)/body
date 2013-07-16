@@ -4,11 +4,11 @@
     PsiClass psiClass=getPsiClassForJavaPackageScope(fqName);
     trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
     if (psiClass != null) {
-      boolean hasKotlinPackageAnnotation=hasKotlinPackageAnnotation(psiClass);
-      if (isOldKotlinPackageClass(psiClass) && !hasKotlinPackageAnnotation) {
+      boolean isCompiledKotlinPackageClass=DescriptorResolverUtils.isCompiledKotlinPackageClass(psiClass);
+      if (isOldKotlinPackageClass(psiClass) && !isCompiledKotlinPackageClass) {
         AbiVersionUtil.checkAbiVersion(psiClass,INVALID_VERSION,trace);
       }
-      if (hasKotlinPackageAnnotation) {
+      if (isCompiledKotlinPackageClass) {
         JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(psiClass,namespaceDescriptor);
         if (kotlinPackageScope != null)         return kotlinPackageScope;
       }
@@ -19,7 +19,7 @@
   if (psiClass == null) {
     return null;
   }
-  if (DescriptorResolverUtils.isKotlinClass(psiClass)) {
+  if (DescriptorResolverUtils.isCompiledKotlinClassOrPackageClass(psiClass)) {
     return null;
   }
   if (!hasStaticMembers(psiClass)) {
