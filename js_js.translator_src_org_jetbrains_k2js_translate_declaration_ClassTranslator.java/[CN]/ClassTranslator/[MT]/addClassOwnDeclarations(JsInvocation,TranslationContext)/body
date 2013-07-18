@@ -1,18 +1,47 @@
 {
-  JsObjectLiteral properties=new JsObjectLiteral(true);
-  List<JsPropertyInitializer> propertyList=properties.getPropertyInitializers();
+  final List<JsPropertyInitializer> properties=new SmartList<JsPropertyInitializer>();
+  final List<JsPropertyInitializer> staticProperties;
+  boolean isTopLevelDeclaration=context() == declarationContext;
+  if (!isTopLevelDeclaration) {
+    staticProperties=null;
+  }
+ else   if (descriptor.getKind().isObject()) {
+    staticProperties=null;
+    declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
+      @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
+        return createPlace(properties,context().getThisObject(descriptor));
+      }
+    }
+);
+  }
+ else {
+    staticProperties=new SmartList<JsPropertyInitializer>();
+    declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
+      @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
+        return createPlace(staticProperties,getQualifiedReference(declarationContext,descriptor));
+      }
+    }
+);
+  }
   if (!isTrait()) {
-    JsFunction initializer=Translation.generateClassInitializerMethod(classDeclaration,classDeclarationContext);
+    JsFunction initializer=new ClassInitializerTranslator(classDeclaration,declarationContext).generateInitializeMethod();
     if (context().isEcma5()) {
       jsClassDeclaration.getArguments().add(initializer.getBody().getStatements().isEmpty() ? JsLiteral.NULL : initializer);
     }
  else {
-      propertyList.add(new JsPropertyInitializer(Namer.initializeMethodReference(),initializer));
+      properties.add(new JsPropertyInitializer(Namer.initializeMethodReference(),initializer));
     }
   }
-  propertyList.addAll(translatePropertiesAsConstructorParameters(classDeclarationContext));
-  propertyList.addAll(declarationBodyVisitor.traverseClass(classDeclaration,classDeclarationContext));
-  if (!propertyList.isEmpty() || !context().isEcma5()) {
-    jsClassDeclaration.getArguments().add(properties);
+  translatePropertiesAsConstructorParameters(declarationContext,properties);
+  new DeclarationBodyVisitor(properties).traverseContainer(classDeclaration,declarationContext);
+  if (isTopLevelDeclaration) {
+    declarationContext.literalFunctionTranslator().setDefinitionPlace(null);
+  }
+  boolean hasStaticProperties=staticProperties != null && !staticProperties.isEmpty();
+  if (!properties.isEmpty() || hasStaticProperties) {
+    jsClassDeclaration.getArguments().add(properties.isEmpty() ? JsLiteral.NULL : new JsObjectLiteral(properties,true));
+  }
+  if (hasStaticProperties) {
+    jsClassDeclaration.getArguments().add(new JsObjectLiteral(staticProperties,true));
   }
 }

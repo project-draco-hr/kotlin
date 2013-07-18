@@ -5,14 +5,11 @@
   if (isConstructor()) {
     return constructorCall();
   }
-  if (isNativeExtensionFunctionCall()) {
-    return nativeExtensionCall();
-  }
-  if (isExtensionFunctionLiteral()) {
-    return extensionFunctionLiteralCall();
-  }
-  if (isExtensionFunction()) {
-    return extensionFunctionCall();
+  if (resolvedCall.getReceiverArgument().exists()) {
+    if (AnnotationsUtils.isNativeObject(descriptor)) {
+      return methodCall(callParameters.getReceiver());
+    }
+    return extensionFunctionCall(!(descriptor instanceof ExpressionAsFunctionDescriptor) && !descriptor.getName().asString().equals("invoke"));
   }
   if (isExpressionAsFunction()) {
     return expressionAsFunctionCall();

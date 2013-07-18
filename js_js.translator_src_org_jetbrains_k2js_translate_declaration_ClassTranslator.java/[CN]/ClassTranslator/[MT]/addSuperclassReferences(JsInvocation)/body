@@ -1,16 +1,19 @@
 {
   List<JsExpression> superClassReferences=getSupertypesNameReferences();
-  List<JsExpression> expressions=jsClassDeclaration.getArguments();
-  if (context().isEcma5()) {
-    if (superClassReferences.isEmpty()) {
+  if (superClassReferences.isEmpty()) {
+    if (!isTrait() || context().isEcma5()) {
       jsClassDeclaration.getArguments().add(JsLiteral.NULL);
-      return;
     }
- else     if (superClassReferences.size() > 1) {
-      JsArrayLiteral arrayLiteral=new JsArrayLiteral();
-      jsClassDeclaration.getArguments().add(arrayLiteral);
-      expressions=arrayLiteral.getExpressions();
-    }
+    return;
+  }
+  List<JsExpression> expressions;
+  if (superClassReferences.size() > 1) {
+    JsArrayLiteral arrayLiteral=new JsArrayLiteral();
+    jsClassDeclaration.getArguments().add(arrayLiteral);
+    expressions=arrayLiteral.getExpressions();
+  }
+ else {
+    expressions=jsClassDeclaration.getArguments();
   }
   for (  JsExpression superClassReference : superClassReferences) {
     expressions.add(superClassReference);
