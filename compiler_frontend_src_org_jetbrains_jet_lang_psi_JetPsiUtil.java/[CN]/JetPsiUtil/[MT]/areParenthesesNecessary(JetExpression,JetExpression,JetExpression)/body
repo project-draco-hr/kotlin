@@ -22,19 +22,19 @@
   if (innerExpression instanceof JetBinaryExpressionWithTypeRHS && parentOperation == JetTokens.LT) {
     return true;
   }
-  int innerPrecedence=getPrecedenceOfOperation(innerExpression,innerOperation);
-  int parentPrecedence=getPrecedenceOfOperation(parentExpression,parentOperation);
-  if (innerPrecedence == parentPrecedence) {
+  int innerPriority=getPriority(innerExpression);
+  int parentPriority=getPriority(parentExpression);
+  if (innerPriority == parentPriority) {
     if (parentExpression instanceof JetBinaryExpression) {
       if (innerOperation == JetTokens.ANDAND || innerOperation == JetTokens.OROR) {
         return false;
       }
       return ((JetBinaryExpression)parentExpression).getRight() == currentInner;
     }
-    if (parentExpression instanceof JetPrefixExpression || innerExpression instanceof JetPrefixExpression) {
+    if (parentExpression instanceof JetPrefixExpression && innerExpression instanceof JetPrefixExpression) {
       return innerOperation == parentOperation && (innerOperation == JetTokens.PLUS || innerOperation == JetTokens.MINUS);
     }
     return false;
   }
-  return innerPrecedence >= parentPrecedence;
+  return innerPriority < parentPriority;
 }
