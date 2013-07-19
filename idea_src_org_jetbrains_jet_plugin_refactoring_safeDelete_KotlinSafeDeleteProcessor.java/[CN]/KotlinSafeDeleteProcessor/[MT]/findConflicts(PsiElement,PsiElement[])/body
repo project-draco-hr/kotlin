@@ -1,17 +1,17 @@
 {
-  if (element instanceof JetNamedFunction) {
+  if (element instanceof JetNamedFunction || element instanceof JetProperty) {
     JetClass jetClass=PsiTreeUtil.getParentOfType(element,JetClass.class);
     if (jetClass == null || jetClass.getBody() != element.getParent())     return null;
     JetModifierList modifierList=jetClass.getModifierList();
     if (modifierList != null && modifierList.hasModifier(JetTokens.ABSTRACT_KEYWORD))     return null;
     BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
     DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
-    if (!(declarationDescriptor instanceof FunctionDescriptor))     return null;
+    if (!(declarationDescriptor instanceof CallableMemberDescriptor))     return null;
     List<String> messages=new ArrayList<String>();
-    FunctionDescriptor functionDescriptor=(FunctionDescriptor)declarationDescriptor;
-    for (    FunctionDescriptor overridenDescriptor : functionDescriptor.getOverriddenDescriptors()) {
+    CallableMemberDescriptor callableDescriptor=(CallableMemberDescriptor)declarationDescriptor;
+    for (    CallableMemberDescriptor overridenDescriptor : callableDescriptor.getOverriddenDescriptors()) {
       if (overridenDescriptor.getModality() == Modality.ABSTRACT) {
-        String message=JetBundle.message("x.implements.y",formatFunction(functionDescriptor,bindingContext,true),formatClass(functionDescriptor.getContainingDeclaration(),bindingContext,true),formatFunction(overridenDescriptor,bindingContext,true),formatClass(overridenDescriptor.getContainingDeclaration(),bindingContext,true));
+        String message=JetBundle.message("x.implements.y",formatFunction(callableDescriptor,bindingContext,true),formatClass(callableDescriptor.getContainingDeclaration(),bindingContext,true),formatFunction(overridenDescriptor,bindingContext,true),formatClass(overridenDescriptor.getContainingDeclaration(),bindingContext,true));
         messages.add(message);
       }
     }

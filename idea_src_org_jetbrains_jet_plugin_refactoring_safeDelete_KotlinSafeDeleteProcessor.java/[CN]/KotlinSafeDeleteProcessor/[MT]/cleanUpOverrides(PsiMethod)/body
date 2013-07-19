@@ -1,12 +1,13 @@
 {
-  Collection<MethodSignatureBackedByPsiMethod> superMethods=SuperMethodsSearch.search(method,null,true,false).findAll();
-  Collection<PsiMethod> overridingMethods=OverridingMethodsSearch.search(method,false).findAll();
+  Collection<PsiMethod> superMethods=Arrays.asList(method.findSuperMethods(true));
+  Collection<PsiMethod> overridingMethods=OverridingMethodsSearch.search(method,true).findAll();
   overrideLoop:   for (  PsiMethod overridingMethod : overridingMethods) {
     PsiElement overridingElement=overridingMethod instanceof JetClsMethod ? ((JetClsMethod)overridingMethod).getOrigin() : overridingMethod;
-    Collection<MethodSignatureBackedByPsiMethod> currentSuperMethods=SuperMethodsSearch.search(overridingMethod,null,true,false).findAll();
+    Collection<PsiMethod> currentSuperMethods=new ArrayList<PsiMethod>();
+    ContainerUtil.addAll(currentSuperMethods,overridingMethod.findSuperMethods(true));
     currentSuperMethods.addAll(superMethods);
-    for (    MethodSignatureBackedByPsiMethod superMethod : currentSuperMethods) {
-      if (superMethod.getMethod() != method)       continue overrideLoop;
+    for (    PsiMethod superMethod : currentSuperMethods) {
+      if (!checkPsiMethodEquality(superMethod,method))       continue overrideLoop;
     }
     removeOverrideModifier(overridingElement);
   }
