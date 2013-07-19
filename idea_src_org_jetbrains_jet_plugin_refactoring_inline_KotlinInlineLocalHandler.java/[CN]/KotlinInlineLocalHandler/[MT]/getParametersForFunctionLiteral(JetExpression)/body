@@ -1,0 +1,18 @@
+{
+  JetFunctionLiteralExpression functionLiteralExpression=getFunctionLiteralExpression(initializer);
+  if (functionLiteralExpression == null) {
+    return null;
+  }
+  ResolveSession resolveSession=AnalyzerFacadeWithCache.getLazyResolveSession((JetFile)initializer.getContainingFile());
+  BindingContext context=ResolveSessionUtils.resolveToExpression(resolveSession,initializer);
+  SimpleFunctionDescriptor fun=context.get(BindingContext.FUNCTION,functionLiteralExpression.getFunctionLiteral());
+  if (fun == null || ErrorUtils.containsErrorType(fun)) {
+    return null;
+  }
+  return StringUtil.join(fun.getValueParameters(),new Function<ValueParameterDescriptor,String>(){
+    @Override public String fun(    ValueParameterDescriptor descriptor){
+      return descriptor.getName() + ": " + DescriptorRenderer.TEXT.renderType(descriptor.getType());
+    }
+  }
+,", ");
+}
