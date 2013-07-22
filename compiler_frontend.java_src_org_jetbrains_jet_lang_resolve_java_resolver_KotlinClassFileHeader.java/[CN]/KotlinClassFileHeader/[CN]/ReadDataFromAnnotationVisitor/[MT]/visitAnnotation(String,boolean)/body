@@ -1,5 +1,17 @@
 {
-  if (!desc.equals(JvmAnnotationNames.KOTLIN_CLASS.getDescriptor()) && !desc.equals(JvmAnnotationNames.KOTLIN_PACKAGE.getDescriptor())) {
+  for (  HeaderType headerType : HeaderType.values()) {
+    JvmClassName annotation=headerType.correspondingAnnotation;
+    if (annotation == null) {
+      continue;
+    }
+    if (desc.equals(annotation.getDescriptor())) {
+      if (type != HeaderType.NONE) {
+        throw new IllegalStateException("Both " + type.correspondingAnnotation + " and "+ headerType.correspondingAnnotation+ " present!");
+      }
+      type=headerType;
+    }
+  }
+  if (type == HeaderType.NONE) {
     return null;
   }
   return new AnnotationVisitor(Opcodes.ASM4){
