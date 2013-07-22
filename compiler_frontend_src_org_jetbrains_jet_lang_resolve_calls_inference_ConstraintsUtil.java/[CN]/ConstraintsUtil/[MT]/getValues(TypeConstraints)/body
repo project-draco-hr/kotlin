@@ -1,38 +1,52 @@
 {
   Set<JetType> values=Sets.newLinkedHashSet();
-  if (typeConstraints != null && !typeConstraints.isEmpty()) {
-    if (typeConstraints.getExactBounds().size() == 1) {
-      if (verifyOneExactBound(typeConstraints)) {
-        JetType exactBound=typeConstraints.getExactBounds().iterator().next();
-        return Collections.singleton(exactBound);
+  if (typeConstraints == null || typeConstraints.isEmpty()) {
+    return values;
+  }
+  TypeConstraints typeConstraintsWithoutErrorTypes=filterNotContainingErrorType(typeConstraints,values);
+  Collection<JetType> exactBounds=typeConstraintsWithoutErrorTypes.getExactBounds();
+  if (exactBounds.size() == 1) {
+    JetType exactBound=exactBounds.iterator().next();
+    if (trySuggestion(exactBound,typeConstraints)) {
+      return Collections.singleton(exactBound);
+    }
+  }
+  values.addAll(exactBounds);
+  Collection<JetType> lowerBounds=Sets.newHashSet();
+  Collection<JetType> numberLowerBounds=Sets.newHashSet();
+  for (  JetType lowerBound : typeConstraintsWithoutErrorTypes.getLowerBounds()) {
+    if (lowerBound.getConstructor() instanceof NumberValueTypeConstructor) {
+      numberLowerBounds.add(lowerBound);
+    }
+ else {
+      lowerBounds.add(lowerBound);
+    }
+  }
+  JetType superTypeOfLowerBounds=commonSupertype(lowerBounds);
+  if (trySuggestion(superTypeOfLowerBounds,typeConstraints)) {
+    return Collections.singleton(superTypeOfLowerBounds);
+  }
+  addToValuesIfDifferent(superTypeOfLowerBounds,values);
+  if (values.isEmpty()) {
+    Collection<JetType> upperBounds=typeConstraintsWithoutErrorTypes.getUpperBounds();
+    for (    JetType upperBound : upperBounds) {
+      if (trySuggestion(upperBound,typeConstraints)) {
+        return Collections.singleton(upperBound);
       }
     }
-    values.addAll(typeConstraints.getExactBounds());
-    Collection<JetType> lowerBounds=filterNotContainingErrorType(typeConstraints.getLowerBounds());
-    if (!lowerBounds.isEmpty()) {
-      JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertype(lowerBounds);
-      for (      JetType value : values) {
-        if (!JetTypeChecker.INSTANCE.isSubtypeOf(superTypeOfLowerBounds,value)) {
-          values.add(superTypeOfLowerBounds);
-          break;
-        }
-      }
-      if (values.isEmpty()) {
-        values.add(superTypeOfLowerBounds);
-      }
-    }
-    Collection<JetType> upperBounds=filterNotContainingErrorType(typeConstraints.getUpperBounds());
-    if (!upperBounds.isEmpty()) {
-      JetType subTypeOfUpperBounds=upperBounds.iterator().next();
-      for (      JetType value : values) {
-        if (!JetTypeChecker.INSTANCE.isSubtypeOf(value,subTypeOfUpperBounds)) {
-          values.add(subTypeOfUpperBounds);
-          break;
-        }
-      }
-      if (values.isEmpty()) {
-        values.add(subTypeOfUpperBounds);
-      }
+  }
+  for (  JetType upperBound : typeConstraintsWithoutErrorTypes.getUpperBounds()) {
+    addToValuesIfDifferent(upperBound,values);
+  }
+  JetType superTypeOfNumberLowerBounds=commonSupertypeForNumberTypes(numberLowerBounds);
+  if (trySuggestion(superTypeOfNumberLowerBounds,typeConstraints)) {
+    return Collections.singleton(superTypeOfNumberLowerBounds);
+  }
+  addToValuesIfDifferent(superTypeOfNumberLowerBounds,values);
+  if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
+    JetType superTypeOfAllLowerBounds=commonSupertype(Lists.newArrayList(superTypeOfLowerBounds,superTypeOfNumberLowerBounds));
+    if (trySuggestion(superTypeOfAllLowerBounds,typeConstraints)) {
+      return Collections.singleton(superTypeOfAllLowerBounds);
     }
   }
   return values;
