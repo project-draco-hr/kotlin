@@ -9,8 +9,13 @@
         AbiVersionUtil.reportIncompatibleAbiVersion(psiClass,INVALID_VERSION,trace);
       }
       if (isCompiledKotlinPackageClass) {
-        JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(psiClass,namespaceDescriptor,DescriptorResolverUtils.createPsiBasedErrorReporter(psiClass,trace));
-        if (kotlinPackageScope != null)         return kotlinPackageScope;
+        VirtualFile file=psiClass.getContainingFile().getVirtualFile();
+        if (file != null) {
+          JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(namespaceDescriptor,file,DescriptorResolverUtils.createPsiBasedErrorReporter(psiClass,trace));
+          if (kotlinPackageScope != null) {
+            return kotlinPackageScope;
+          }
+        }
       }
     }
     return new JavaPackageScopeWithoutMembers(namespaceDescriptor,javaSemanticServices.getPsiDeclarationProviderFactory().createDeclarationProviderForNamespaceWithoutMembers(psiPackage),fqName,javaSemanticServices);
