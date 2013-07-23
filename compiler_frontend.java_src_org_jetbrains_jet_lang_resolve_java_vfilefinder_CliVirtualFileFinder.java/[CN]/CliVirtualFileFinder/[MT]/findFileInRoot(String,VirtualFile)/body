@@ -1,0 +1,24 @@
+{
+  String pathRest=qName;
+  VirtualFile cur=root;
+  while (true) {
+    int dot=pathRest.indexOf('.');
+    if (dot < 0)     break;
+    String pathComponent=pathRest.substring(0,dot);
+    VirtualFile child=cur.findChild(pathComponent);
+    if (child == null)     break;
+    pathRest=pathRest.substring(dot + 1);
+    cur=child;
+  }
+  String className=pathRest.replace('.','$');
+  VirtualFile vFile=cur.findChild(className + ".class");
+  if (vFile != null) {
+    if (!vFile.isValid()) {
+      return null;
+    }
+    if (KotlinClassFileHeader.readKotlinHeaderFromClassFile(vFile).getType() != KotlinClassFileHeader.HeaderType.NONE) {
+      return vFile;
+    }
+  }
+  return null;
+}
