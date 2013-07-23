@@ -4,8 +4,8 @@
     return trace.get(BindingContext.CONSTRUCTOR,psiConstructor);
   }
   ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),false);
-  String context="constructor of class " + psiClass.getQualifiedName();
-  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=valueParameterResolver.resolveParameterDescriptors(constructorDescriptor,constructor.getParameters(),TypeVariableResolvers.classTypeVariableResolver(classDescriptor,context));
+  List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
+  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=valueParameterResolver.resolveParameterDescriptors(constructorDescriptor,constructor.getParameters(),new TypeVariableResolver(typeParameters,classDescriptor,"constructor of class " + psiClass.getQualifiedName()));
   if (valueParameterDescriptors.getReceiverType() != null) {
     throw new IllegalStateException();
   }
@@ -16,7 +16,7 @@
  else   if (alternativeMethodSignatureData.hasErrors()) {
     trace.record(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,constructorDescriptor,Collections.singletonList(alternativeMethodSignatureData.getError()));
   }
-  constructorDescriptor.initialize(classDescriptor.getTypeConstructor().getParameters(),valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor),aStatic);
+  constructorDescriptor.initialize(typeParameters,valueParameterDescriptors.getDescriptors(),DescriptorResolverUtils.resolveVisibility(psiConstructor),aStatic);
   trace.record(BindingContext.CONSTRUCTOR,psiConstructor,constructorDescriptor);
   return constructorDescriptor;
 }
