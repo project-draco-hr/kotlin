@@ -8,16 +8,10 @@
     }
   }
 );
-  meLoop:   for (  ResolvedCallWithTrace<D> candidateCall : candidates) {
-    D me=candidateCall.getResultingDescriptor();
-    for (    ResolvedCallWithTrace<D> otherCall : candidates) {
-      D other=otherCall.getResultingDescriptor();
-      if (other == me)       continue;
-      if (!moreSpecific(me,other,discriminateGenericDescriptors) || moreSpecific(other,me,discriminateGenericDescriptors)) {
-        continue meLoop;
-      }
+  for (  ResolvedCallWithTrace<D> candidateCall : candidates) {
+    if (isMaximallySpecific(candidateCall,candidates,discriminateGenericDescriptors)) {
+      maximallySpecific.add(candidateCall);
     }
-    maximallySpecific.add(candidateCall);
   }
   return maximallySpecific.size() == 1 ? maximallySpecific.iterator().next() : null;
 }

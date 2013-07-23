@@ -1,0 +1,22 @@
+{
+  JetDotQualifiedExpression dotQualifiedExpression=PsiTreeUtil.getParentOfType(element,JetDotQualifiedExpression.class,false);
+  if (dotQualifiedExpression != null) {
+    if (PsiTreeUtil.isAncestor(dotQualifiedExpression.getReceiverExpression(),element,false)) {
+      return JetUsageTypes.RECEIVER;
+    }
+    PsiElement parent=dotQualifiedExpression.getParent();
+    if (parent instanceof JetDotQualifiedExpression && PsiTreeUtil.isAncestor(((JetDotQualifiedExpression)parent).getReceiverExpression(),element,false)) {
+      return JetUsageTypes.RECEIVER;
+    }
+    return JetUsageTypes.SELECTOR;
+  }
+  JetBinaryExpression binaryExpression=(JetBinaryExpression)JetPsiUtil.getParentByTypeAndPredicate(element,JetBinaryExpression.class,IS_ASSIGNMENT,false);
+  if (binaryExpression != null && PsiTreeUtil.isAncestor(binaryExpression.getLeft(),element,false)) {
+    return UsageType.WRITE;
+  }
+  JetSimpleNameExpression simpleNameExpression=PsiTreeUtil.getParentOfType(element,JetSimpleNameExpression.class,false);
+  if (simpleNameExpression != null) {
+    return UsageType.READ;
+  }
+  return null;
+}

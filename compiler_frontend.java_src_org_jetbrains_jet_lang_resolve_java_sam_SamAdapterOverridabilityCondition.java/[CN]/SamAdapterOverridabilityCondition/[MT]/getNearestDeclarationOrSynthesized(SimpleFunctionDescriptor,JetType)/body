@@ -1,0 +1,18 @@
+{
+  if (samAdapter.getKind() != CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+    return Pair.create(samAdapter,ownerType);
+  }
+  for (  CallableMemberDescriptor overridden : samAdapter.getOverriddenDescriptors()) {
+    ClassDescriptor containingClass=(ClassDescriptor)overridden.getContainingDeclaration();
+    for (    JetType immediateSupertype : TypeUtils.getImmediateSupertypes(ownerType)) {
+      if (containingClass != immediateSupertype.getConstructor().getDeclarationDescriptor()) {
+        continue;
+      }
+      Pair<SimpleFunctionDescriptor,JetType> found=getNearestDeclarationOrSynthesized((SimpleFunctionDescriptor)overridden,immediateSupertype);
+      if (found != null) {
+        return found;
+      }
+    }
+  }
+  return null;
+}

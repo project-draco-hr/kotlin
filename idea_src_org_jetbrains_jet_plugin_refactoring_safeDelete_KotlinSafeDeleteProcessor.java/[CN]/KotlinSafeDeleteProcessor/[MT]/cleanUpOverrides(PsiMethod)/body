@@ -1,0 +1,13 @@
+{
+  Collection<MethodSignatureBackedByPsiMethod> superMethods=SuperMethodsSearch.search(method,null,true,false).findAll();
+  Collection<PsiMethod> overridingMethods=OverridingMethodsSearch.search(method,false).findAll();
+  overrideLoop:   for (  PsiMethod overridingMethod : overridingMethods) {
+    PsiElement overridingElement=overridingMethod instanceof JetClsMethod ? ((JetClsMethod)overridingMethod).getOrigin() : overridingMethod;
+    Collection<MethodSignatureBackedByPsiMethod> currentSuperMethods=SuperMethodsSearch.search(overridingMethod,null,true,false).findAll();
+    currentSuperMethods.addAll(superMethods);
+    for (    MethodSignatureBackedByPsiMethod superMethod : currentSuperMethods) {
+      if (superMethod.getMethod() != method)       continue overrideLoop;
+    }
+    removeOverrideModifier(overridingElement);
+  }
+}

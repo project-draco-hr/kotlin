@@ -2,5 +2,16 @@
   if (qualifier != null && !isExtensionCall) {
     return qualifier;
   }
-  return context.thisAliasProvider().get(resolvedCall);
+  ReceiverValue thisObject=resolvedCall.getThisObject();
+  if (!thisObject.exists()) {
+    return null;
+  }
+  if (thisObject instanceof ClassReceiver) {
+    JsExpression ref=context.getAliasForDescriptor(((ClassReceiver)thisObject).getDeclarationDescriptor());
+    return ref == null ? JsLiteral.THIS : ref;
+  }
+ else   if (thisObject instanceof ExtensionReceiver) {
+    return context.getAliasForDescriptor(getDeclarationDescriptorForReceiver(thisObject));
+  }
+  return resolvedCall.getReceiverArgument().exists() && resolvedCall.getExplicitReceiverKind().isThisObject() ? JsLiteral.THIS : null;
 }

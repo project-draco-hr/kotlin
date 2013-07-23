@@ -1,6 +1,6 @@
 {
   if ((superDescriptor.getReceiverParameter() == null) != (subDescriptor.getReceiverParameter() == null)) {
-    return OverrideCompatibilityInfo.receiverPresenseMismatch();
+    return OverrideCompatibilityInfo.receiverPresenceMismatch();
   }
   if (superDescriptor.getValueParameters().size() != subDescriptor.getValueParameters().size()) {
     return OverrideCompatibilityInfo.valueParameterNumberMismatch();
@@ -41,6 +41,11 @@
       boolean bothErrors=ErrorUtils.isErrorType(superValueParameter) && ErrorUtils.isErrorType(subValueParameter);
       if (!bothErrors && !JetTypeChecker.INSTANCE.equalTypes(superValueParameter,subValueParameter,axioms)) {
         return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,OverrideCompatibilityInfo.Result.INCOMPATIBLE);
+      }
+    }
+    for (    ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
+      if (!externalCondition.isOverridable(superDescriptor,subDescriptor)) {
+        return OverrideCompatibilityInfo.externalConditionFailed(externalCondition.getClass());
       }
     }
   }

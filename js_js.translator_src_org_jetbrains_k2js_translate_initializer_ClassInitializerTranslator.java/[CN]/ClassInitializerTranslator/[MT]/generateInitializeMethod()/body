@@ -1,9 +1,16 @@
 {
   ConstructorDescriptor primaryConstructor=getConstructor(bindingContext(),classDeclaration);
   JsFunction result=context().getFunctionObject(primaryConstructor);
-  setParameters(result,translatePrimaryConstructorParameters());
+  result.getParameters().addAll(translatePrimaryConstructorParameters());
   mayBeAddCallToSuperMethod(result);
-  (new InitializerVisitor(initializerStatements)).traverseClass(classDeclaration,context());
-  result.getBody().getStatements().addAll(initializerStatements);
+  new InitializerVisitor(initializerStatements).traverseContainer(classDeclaration,context());
+  for (  JsStatement statement : initializerStatements) {
+    if (statement instanceof JsBlock) {
+      result.getBody().getStatements().addAll(((JsBlock)statement).getStatements());
+    }
+ else {
+      result.getBody().getStatements().add(statement);
+    }
+  }
   return result;
 }
