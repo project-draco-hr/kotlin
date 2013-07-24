@@ -1,0 +1,43 @@
+{
+  Name methodName=namedMembers.getName();
+  Set<SimpleFunctionDescriptor> functionsFromSupertypes=null;
+  if (owner instanceof ClassDescriptor) {
+    functionsFromSupertypes=getFunctionsFromSupertypes(methodName,owner);
+  }
+  Set<SimpleFunctionDescriptor> functionsFromCurrent=Sets.newHashSet();
+  for (  PsiMethodWrapper method : namedMembers.getMethods()) {
+    SimpleFunctionDescriptor function=resolveMethodToFunctionDescriptor(psiClass,method,owner,true);
+    if (function != null) {
+      functionsFromCurrent.add(function);
+      ContainerUtil.addIfNotNull(functionsFromCurrent,resolveSamAdapter(function));
+    }
+  }
+  if (owner instanceof NamespaceDescriptor) {
+    ContainerUtil.addIfNotNull(functionsFromCurrent,resolveSamConstructor((NamespaceDescriptor)owner,namedMembers));
+  }
+  final Set<FunctionDescriptor> fakeOverrides=new HashSet<FunctionDescriptor>();
+  if (owner instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)owner;
+    OverrideResolver.generateOverridesInFunctionGroup(methodName,functionsFromSupertypes,functionsFromCurrent,classDescriptor,new OverrideResolver.DescriptorSink(){
+      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
+        fakeOverrides.add((FunctionDescriptor)fakeOverride);
+      }
+      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
+      }
+    }
+);
+  }
+  OverrideResolver.resolveUnknownVisibilities(fakeOverrides,trace);
+  Set<FunctionDescriptor> functions=Sets.newHashSet(fakeOverrides);
+  if (isEnumClassObject(owner)) {
+    for (    FunctionDescriptor functionDescriptor : functionsFromCurrent) {
+      if (!(isEnumValueOfMethod(functionDescriptor) || isEnumValuesMethod(functionDescriptor))) {
+        functions.add(functionDescriptor);
+      }
+    }
+  }
+ else {
+    functions.addAll(functionsFromCurrent);
+  }
+  return functions;
+}
