@@ -15,7 +15,8 @@
       throw new RuntimeException("rt.jar mismatch: " + jar + ", "+ PathUtil.findRtJar());
     }
   }
-  InjectorForJavaSemanticServices injector=new InjectorForJavaSemanticServices(jetCoreEnvironment.getProject());
+  InjectorForJavaDescriptorResolver injector=new InjectorForJavaDescriptorResolver(jetCoreEnvironment.getProject(),new BindingTraceContext());
+  JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
   boolean hasErrors;
   try {
     hasErrors=false;
@@ -40,7 +41,7 @@
       }
       String className=entryName.substring(0,entryName.length() - ".class".length()).replace("/",".");
       try {
-        ClassDescriptor clazz=injector.getJavaDescriptorResolver().resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
+        ClassDescriptor clazz=javaDescriptorResolver.resolveClass(new FqName(className),DescriptorSearchRule.ERROR_IF_FOUND_IN_KOTLIN);
         if (clazz == null) {
           throw new IllegalStateException("class not found by name " + className + " in "+ libDescription);
         }
