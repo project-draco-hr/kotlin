@@ -1,7 +1,5 @@
 {
-  ClassKind kind=getClassKind(psiClass);
-  ClassPsiDeclarationProvider classData=new ClassPsiDeclarationProviderImpl(psiClass,false,psiClassFinder);
-  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,kind,isInnerClass(psiClass));
+  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,getClassKind(psiClass),isInnerClass(psiClass));
   cache(javaClassToKotlinFqName(fqName),classDescriptor);
   classDescriptor.setName(Name.identifier(psiClass.getName()));
   List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=JavaSignatureResolver.createUninitializedClassTypeParameters(psiClass,classDescriptor);
@@ -11,7 +9,7 @@
   classDescriptor.setVisibility(DescriptorResolverUtils.resolveVisibility(psiClass));
   classDescriptor.setModality(resolveModality(psiClass,classDescriptor));
   classDescriptor.createTypeConstructor();
-  JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classDescriptor,classData,javaDescriptorResolver);
+  JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classDescriptor,psiClass,false,psiClassFinder,javaDescriptorResolver);
   classDescriptor.setScopeForMemberLookup(scope);
   classDescriptor.setScopeForConstructorResolve(scope);
   String context="class " + psiClass.getQualifiedName();

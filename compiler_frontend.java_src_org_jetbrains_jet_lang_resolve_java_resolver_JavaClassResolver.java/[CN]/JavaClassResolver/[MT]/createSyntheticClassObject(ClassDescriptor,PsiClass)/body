@@ -1,6 +1,14 @@
 {
   ClassDescriptorFromJvmBytecode classObjectDescriptor=new ClassDescriptorFromJvmBytecode(containing,ClassKind.CLASS_OBJECT,false);
-  ClassPsiDeclarationProvider provider=new ClassPsiDeclarationProviderImpl(psiClass,true,psiClassFinder);
-  setUpClassObjectDescriptor(classObjectDescriptor,containing,provider,getClassObjectName(containing.getName().asString()));
+  classObjectDescriptor.setName(getClassObjectName(containing.getName()));
+  classObjectDescriptor.setModality(Modality.FINAL);
+  classObjectDescriptor.setVisibility(containing.getVisibility());
+  classObjectDescriptor.setTypeParameterDescriptors(Collections.<TypeParameterDescriptor>emptyList());
+  classObjectDescriptor.createTypeConstructor();
+  JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classObjectDescriptor,psiClass,true,psiClassFinder,javaDescriptorResolver);
+  WritableScopeImpl writableScope=new WritableScopeImpl(scope,classObjectDescriptor,RedeclarationHandler.THROW_EXCEPTION,"Member lookup scope");
+  writableScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  classObjectDescriptor.setScopeForMemberLookup(writableScope);
+  classObjectDescriptor.setScopeForConstructorResolve(scope);
   return classObjectDescriptor;
 }
