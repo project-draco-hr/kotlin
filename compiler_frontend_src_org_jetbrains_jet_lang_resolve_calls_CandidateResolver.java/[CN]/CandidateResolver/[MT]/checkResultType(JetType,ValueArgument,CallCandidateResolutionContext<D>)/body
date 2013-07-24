@@ -1,0 +1,17 @@
+{
+  JetExpression expression=argument.getArgumentExpression();
+  if (expression == null)   return;
+  if (expression instanceof JetConstantExpression && !KotlinBuiltIns.getInstance().isUnit(context.expectedType)) {
+    CompileTimeConstant<?> value=new CompileTimeConstantResolver().getCompileTimeConstant((JetConstantExpression)expression,context.expectedType);
+    if (value instanceof ErrorValue) {
+      context.trace.report(ERROR_COMPILE_TIME_VALUE.on(expression,((ErrorValue)value).getMessage()));
+    }
+    return;
+  }
+  DataFlowInfo dataFlowInfoForValueArgument=context.candidateCall.getDataFlowInfoForValueArgument(argument);
+  ResolutionContext<?> newContext=context.replaceExpectedType(context.expectedType);
+  if (dataFlowInfoForValueArgument != null) {
+    newContext=newContext.replaceDataFlowInfo(dataFlowInfoForValueArgument);
+  }
+  DataFlowUtils.checkType(type,expression,newContext);
+}

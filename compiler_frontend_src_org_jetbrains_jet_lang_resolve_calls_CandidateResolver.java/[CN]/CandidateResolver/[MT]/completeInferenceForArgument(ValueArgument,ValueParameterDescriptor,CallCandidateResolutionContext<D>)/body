@@ -1,0 +1,29 @@
+{
+  ConstraintSystem constraintSystem=context.candidateCall.getConstraintSystem();
+  JetExpression expression=argument.getArgumentExpression();
+  if (expression == null)   return;
+  JetType effectiveExpectedType=getEffectiveExpectedType(parameterDescriptor,argument);
+  JetType expectedType=constraintSystem != null ? constraintSystem.getCurrentSubstitutor().substitute(effectiveExpectedType,Variance.INVARIANT) : effectiveExpectedType;
+  context=context.replaceExpectedType(expectedType);
+  JetExpression keyExpression=getDeferredComputationKeyExpression(expression);
+  CallCandidateResolutionContext<FunctionDescriptor> storedContextForArgument=context.resolutionResultsCache.getDeferredComputation(CallKey.create(Call.CallType.DEFAULT,keyExpression));
+  if (storedContextForArgument == null) {
+    PsiElement parent=expression.getParent();
+    if (parent instanceof JetWhenExpression && expression == ((JetWhenExpression)parent).getSubjectExpression() || (expression instanceof JetFunctionLiteralExpression)) {
+      return;
+    }
+    JetType type=updateResultTypeIfNotDenotable(context,expression);
+    checkResultType(type,argument,context);
+    return;
+  }
+  CallCandidateResolutionContext<FunctionDescriptor> contextForArgument=storedContextForArgument.replaceResolveMode(ResolveMode.TOP_LEVEL_CALL).replaceBindingTrace(context.trace).replaceExpectedType(expectedType);
+  JetType type;
+  if (contextForArgument.candidateCall.hasIncompleteTypeParameters()) {
+    type=completeTypeInferenceDependentOnExpectedTypeForCall(contextForArgument,true);
+  }
+ else {
+    type=completeNestedCallsInference(contextForArgument);
+    checkValueArgumentTypes(contextForArgument);
+  }
+  DataFlowUtils.checkType(type,expression,contextForArgument);
+}
