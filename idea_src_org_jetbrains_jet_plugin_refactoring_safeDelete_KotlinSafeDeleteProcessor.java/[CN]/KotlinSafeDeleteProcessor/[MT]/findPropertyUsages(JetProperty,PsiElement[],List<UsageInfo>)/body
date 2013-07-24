@@ -1,0 +1,20 @@
+{
+  LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=LightClassUtil.getLightClassPropertyMethods(property);
+  PsiMethod getter=propertyMethods.getGetter();
+  PsiMethod setter=propertyMethods.getSetter();
+  Collection<PsiReference> references=ReferencesSearch.search(property).findAll();
+  Collection<PsiMethod> getterOverriding=(getter != null) ? OverridingMethodsSearch.search(getter,true).findAll() : Collections.<PsiMethod>emptyList();
+  Collection<PsiMethod> setterOverriding=(setter != null) ? OverridingMethodsSearch.search(setter,true).findAll() : Collections.<PsiMethod>emptyList();
+  List<PsiMethod> overridingMethods=new ArrayList<PsiMethod>();
+  overridingMethods.addAll(getterOverriding);
+  overridingMethods.addAll(setterOverriding);
+  overridingMethods=difference(overridingMethods,allElementsToDelete);
+  processDeclarationUsages(property,allElementsToDelete,result,references,overridingMethods);
+  Map<PsiMethod,Collection<PsiReference>> methodToReferences=getOverridingUsagesMap(overridingMethods);
+  Set<PsiMethod> safeGetterOverriding=filterSafeOverridingMethods(getter,references,getterOverriding,methodToReferences,result,allElementsToDelete);
+  Set<PsiMethod> safeSetterOverriding=filterSafeOverridingMethods(setter,references,setterOverriding,methodToReferences,result,allElementsToDelete);
+  List<PsiElement> ignoredElements=new ArrayList<PsiElement>(safeGetterOverriding);
+  ignoredElements.addAll(safeSetterOverriding);
+  ContainerUtil.addAll(ignoredElements,allElementsToDelete);
+  return getSearchInfo(property,ignoredElements);
+}
