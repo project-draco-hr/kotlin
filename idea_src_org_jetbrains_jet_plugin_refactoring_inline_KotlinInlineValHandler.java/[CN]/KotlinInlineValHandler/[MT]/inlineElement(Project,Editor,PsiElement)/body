@@ -2,12 +2,11 @@
   final JetProperty val=(JetProperty)element;
   String name=val.getName();
   JetExpression initializerInDeclaration=val.getInitializer();
-  final Collection<PsiReference> references=ReferencesSearch.search(val,GlobalSearchScope.allScope(project),false).findAll();
+  final List<JetExpression> referenceExpressions=findReferenceExpressions(val);
   final Set<PsiElement> assignments=Sets.newHashSet();
-  for (  PsiReference ref : references) {
-    PsiElement refElement=ref.getElement();
-    PsiElement parent=refElement.getParent();
-    if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == JetTokens.EQ && ((JetBinaryExpression)parent).getLeft() == refElement) {
+  for (  JetExpression expression : referenceExpressions) {
+    PsiElement parent=expression.getParent();
+    if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == JetTokens.EQ && ((JetBinaryExpression)parent).getLeft() == expression) {
       assignments.add(parent);
     }
   }
@@ -31,31 +30,24 @@
   }
   final String typeArgumentsForCall=getTypeArgumentsStringForCall(initializer);
   final String parametersForFunctionLiteral=getParametersForFunctionLiteral(initializer);
-  PsiReference[] referencesArray=references.toArray(references.toArray(new PsiReference[references.size()]));
-  EditorColorsManager editorColorsManager=EditorColorsManager.getInstance();
-  final TextAttributes searchResultsAttributes=editorColorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-  final HighlightManager highlightManager=HighlightManager.getInstance(project);
-  if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-    highlightManager.addOccurrenceHighlights(editor,referencesArray,searchResultsAttributes,true,null);
-    if (!showDialog(project,name,references)) {
-      StatusBar statusBar=WindowManager.getInstance().getStatusBar(project);
-      if (statusBar != null) {
-        statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      }
-      return;
+  highlightExpressions(project,editor,referenceExpressions);
+  if (!showDialog(project,name,referenceExpressions)) {
+    StatusBar statusBar=WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     }
+    return;
   }
   final List<JetExpression> inlinedExpressions=Lists.newArrayList();
   CommandProcessor.getInstance().executeCommand(project,new Runnable(){
     @Override public void run(){
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         @Override public void run(){
-          for (          PsiReference reference : references) {
-            PsiElement referenceElement=reference.getElement();
-            if (assignments.contains(referenceElement.getParent())) {
+          for (          JetExpression referenceExpression : referenceExpressions) {
+            if (assignments.contains(referenceExpression.getParent())) {
               continue;
             }
-            inlinedExpressions.add(replaceExpression(referenceElement,initializer));
+            inlinedExpressions.add(replaceExpression(referenceExpression,initializer));
           }
           for (          PsiElement assignment : assignments) {
             assignment.delete();
@@ -67,9 +59,7 @@
           if (parametersForFunctionLiteral != null) {
             addFunctionLiteralParameterTypes(parametersForFunctionLiteral,inlinedExpressions);
           }
-          if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-            highlightManager.addOccurrenceHighlights(editor,inlinedExpressions.toArray(new PsiElement[inlinedExpressions.size()]),searchResultsAttributes,true,null);
-          }
+          highlightExpressions(project,editor,inlinedExpressions);
         }
       }
 );
