@@ -1,2 +1,19 @@
 {
+  final BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)declaration.getContainingFile()).getBindingContext();
+  DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
+  if (!(declarationDescriptor instanceof CallableMemberDescriptor))   return null;
+  CallableMemberDescriptor callableDescriptor=(CallableMemberDescriptor)declarationDescriptor;
+  Set<? extends CallableMemberDescriptor> overridenDescriptors=callableDescriptor.getOverriddenDescriptors();
+  Collection<? extends PsiElement> superMethods=ContainerUtil.map(overridenDescriptors,new Function<CallableMemberDescriptor,PsiElement>(){
+    @Override public PsiElement fun(    CallableMemberDescriptor descriptor){
+      return BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
+    }
+  }
+);
+  if (ignore != null) {
+    superMethods.removeAll(ignore);
+  }
+  if (superMethods.isEmpty())   return Collections.singletonList(declaration);
+  List<String> superClasses=getClassDescriptions(bindingContext,superMethods);
+  return askUserForMethodsToSearch(declaration,callableDescriptor,superMethods,superClasses);
 }
