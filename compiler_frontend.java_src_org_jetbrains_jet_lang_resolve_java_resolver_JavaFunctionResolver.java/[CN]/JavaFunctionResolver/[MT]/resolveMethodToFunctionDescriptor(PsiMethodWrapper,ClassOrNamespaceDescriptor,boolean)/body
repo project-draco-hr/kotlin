@@ -7,13 +7,12 @@
     return null;
   }
   PsiMethod psiMethod=method.getPsiMethod();
-  PsiClass containingClass=psiMethod.getContainingClass();
   if (trace.get(BindingContext.FUNCTION,psiMethod) != null) {
     return trace.get(BindingContext.FUNCTION,psiMethod);
   }
   SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(ownerDescriptor,annotationResolver.resolveAnnotations(psiMethod),Name.identifier(method.getName()),CallableMemberDescriptor.Kind.DECLARATION);
   List<TypeParameterDescriptor> methodTypeParameters=signatureResolver.resolveMethodTypeParameters(method,functionDescriptorImpl);
-  TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl,"method " + method.getName() + " in class "+ psiClass.getQualifiedName());
+  TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl,"method " + method.getName() + " in class "+ psiMethod.getContainingClass());
   JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=parameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),methodTypeVariableResolver);
   JetType returnType=makeReturnType(returnPsiType,method,methodTypeVariableResolver);
   List<String> signatureErrors=Lists.newArrayList();
@@ -44,9 +43,6 @@
   }
   if (record) {
     trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,functionDescriptorImpl);
-  }
-  if (containingClass != psiClass && !method.isStatic()) {
-    throw new IllegalStateException("non-static method in subclass");
   }
   if (!RawTypesCheck.hasRawTypesInHierarchicalSignature(psiMethod) && JavaMethodSignatureUtil.isMethodReturnTypeCompatible(psiMethod) && !containsErrorType(superFunctions,functionDescriptorImpl)) {
     if (signatureErrors.isEmpty()) {
