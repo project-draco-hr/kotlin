@@ -1,12 +1,17 @@
 {
-  for (  JetImportDirective directive : importsProvider.getImports(name)) {
-    if (directive == directiveUnderResolve) {
+  return resolveSession.getStorageManager().compute(new Computable<D>(){
+    @Override public D compute(){
+      for (      JetImportDirective directive : importsProvider.getImports(name)) {
+        if (directive == directiveUnderResolve) {
+          return null;
+        }
+        D foundDescriptor=descriptorSelector.get(getImportScope(directive,lookupMode),name);
+        if (foundDescriptor != null) {
+          return foundDescriptor;
+        }
+      }
       return null;
     }
-    D foundDescriptor=descriptorSelector.get(getImportScope(directive,lookupMode),name);
-    if (foundDescriptor != null) {
-      return foundDescriptor;
-    }
   }
-  return null;
+);
 }

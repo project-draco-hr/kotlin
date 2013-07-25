@@ -1,0 +1,28 @@
+{
+  ImportResolveStatus status=importResolveStatus;
+  if (status != null && (status.lookupMode == mode || status.lookupMode == LookupMode.EVERYTHING)) {
+    return status.scope;
+  }
+  return resolveSession.getStorageManager().compute(new Computable<JetScope>(){
+    @Override public JetScope compute(){
+      ImportResolveStatus cachedStatus=importResolveStatus;
+      if (cachedStatus != null && (cachedStatus.lookupMode == mode || cachedStatus.lookupMode == LookupMode.EVERYTHING)) {
+        return cachedStatus.scope;
+      }
+      WritableScope directiveImportScope=new WritableScopeImpl(JetScope.EMPTY,packageDescriptor,RedeclarationHandler.DO_NOTHING,"Scope for import '" + directive.getText() + "' resolve in "+ toString());
+      directiveImportScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+      Importer.StandardImporter importer=new Importer.StandardImporter(directiveImportScope);
+      directiveUnderResolve=directive;
+      try {
+        resolveSession.getInjector().getQualifiedExpressionResolver().processImportReference(directive,rootScope,packageDescriptor.getMemberScope(),importer,traceForImportResolve,resolveSession.getRootModuleDescriptor(),mode);
+      }
+  finally {
+        directiveUnderResolve=null;
+        directiveImportScope.changeLockLevel(WritableScope.LockLevel.READING);
+      }
+      importResolveStatus=new ImportResolveStatus(mode,directiveImportScope);
+      return directiveImportScope;
+    }
+  }
+);
+}
