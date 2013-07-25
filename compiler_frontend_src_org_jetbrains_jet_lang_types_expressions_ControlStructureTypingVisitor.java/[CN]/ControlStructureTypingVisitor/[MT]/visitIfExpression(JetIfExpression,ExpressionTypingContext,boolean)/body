@@ -1,25 +1,38 @@
 {
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE);
-  JetExpression condition=expression.getCondition();
+  JetExpression condition=ifExpression.getCondition();
   DataFlowInfo conditionDataFlowInfo=checkCondition(context.scope,condition,context);
-  JetExpression elseBranch=expression.getElse();
-  JetExpression thenBranch=expression.getThen();
+  JetExpression elseBranch=ifExpression.getElse();
+  JetExpression thenBranch=ifExpression.getThen();
   WritableScopeImpl thenScope=newWritableScopeImpl(context,"Then scope");
   WritableScopeImpl elseScope=newWritableScopeImpl(context,"Else scope");
   DataFlowInfo thenInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,context).and(conditionDataFlowInfo);
   DataFlowInfo elseInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,context).and(conditionDataFlowInfo);
   if (elseBranch == null) {
     if (thenBranch != null) {
-      return getTypeInfoWhenOnlyOneBranchIsPresent(thenBranch,thenScope,thenInfo,elseInfo,contextWithExpectedType,expression,isStatement);
+      return getTypeInfoWhenOnlyOneBranchIsPresent(thenBranch,thenScope,thenInfo,elseInfo,contextWithExpectedType,ifExpression,isStatement);
     }
     return JetTypeInfo.create(null,context.dataFlowInfo);
   }
   if (thenBranch == null) {
-    return getTypeInfoWhenOnlyOneBranchIsPresent(elseBranch,elseScope,elseInfo,thenInfo,contextWithExpectedType,expression,isStatement);
+    return getTypeInfoWhenOnlyOneBranchIsPresent(elseBranch,elseScope,elseInfo,thenInfo,contextWithExpectedType,ifExpression,isStatement);
   }
-  CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
-  JetTypeInfo thenTypeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(thenInfo),context.trace);
-  JetTypeInfo elseTypeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(elseInfo),context.trace);
+  JetTypeInfo thenTypeInfo;
+  JetTypeInfo elseTypeInfo;
+  if (contextWithExpectedType.expectedType == UNKNOWN_EXPECTED_TYPE) {
+    Call callForIf=ControlStructureTypingUtils.createCallForIf(ifExpression,thenBranch,elseBranch);
+    ResolvedCall<FunctionDescriptor> resultingCall=ControlStructureTypingUtils.resolveIfAsCall(callForIf,contextWithExpectedType);
+    List<ValueParameterDescriptor> valueParameters=resultingCall.getResultingDescriptor().getValueParameters();
+    ValueParameterDescriptor thenParameter=valueParameters.get(0);
+    ValueParameterDescriptor elseParameter=valueParameters.get(1);
+    thenTypeInfo=JetTypeInfo.create(thenParameter.getType(),context.dataFlowInfo);
+    elseTypeInfo=JetTypeInfo.create(elseParameter.getType(),context.dataFlowInfo);
+  }
+ else {
+    CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
+    thenTypeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(thenScope,Collections.singletonList(thenBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(thenInfo),context.trace);
+    elseTypeInfo=context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(elseScope,Collections.singletonList(elseBranch),coercionStrategy,contextWithExpectedType.replaceDataFlowInfo(elseInfo),context.trace);
+  }
   JetType thenType=thenTypeInfo.getType();
   JetType elseType=elseTypeInfo.getType();
   DataFlowInfo thenDataFlowInfo=thenTypeInfo.getDataFlowInfo();
@@ -39,5 +52,5 @@
  else {
     result=JetTypeInfo.create(CommonSupertypes.commonSupertype(Arrays.asList(thenType,elseType)),thenDataFlowInfo.or(elseDataFlowInfo));
   }
-  return DataFlowUtils.checkImplicitCast(result.getType(),expression,contextWithExpectedType,isStatement,result.getDataFlowInfo());
+  return DataFlowUtils.checkImplicitCast(result.getType(),ifExpression,contextWithExpectedType,isStatement,result.getDataFlowInfo());
 }
