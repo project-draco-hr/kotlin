@@ -1,21 +1,14 @@
 {
   PsiPackage psiPackage=psiClassFinder.findPsiPackage(fqName);
   if (psiPackage != null) {
-    PsiClass psiClass=getPsiClassForJavaPackageScope(fqName);
+    FqName packageClassFqName=PackageClassUtils.getPackageClassFqName(fqName);
+    VirtualFile virtualFile=virtualFileFinder.find(packageClassFqName);
     trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
-    if (psiClass != null) {
-      boolean isCompiledKotlinPackageClass=DescriptorResolverUtils.isCompiledKotlinPackageClass(psiClass);
-      if (isOldKotlinPackageClass(psiClass) && !isCompiledKotlinPackageClass) {
-        AbiVersionUtil.reportIncompatibleAbiVersion(psiClass,INVALID_VERSION,trace);
-      }
-      if (isCompiledKotlinPackageClass) {
-        VirtualFile file=psiClass.getContainingFile().getVirtualFile();
-        if (file != null) {
-          JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(namespaceDescriptor,file,DescriptorResolverUtils.createPsiBasedErrorReporter(psiClass,trace));
-          if (kotlinPackageScope != null) {
-            return kotlinPackageScope;
-          }
-        }
+    if (virtualFile != null) {
+      ErrorReporter errorReporter=AbiVersionUtil.abiVersionErrorReporter(virtualFile,packageClassFqName,trace);
+      JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(namespaceDescriptor,virtualFile,errorReporter);
+      if (kotlinPackageScope != null) {
+        return kotlinPackageScope;
       }
     }
     return new JavaPackageScope(namespaceDescriptor,psiPackage,fqName,javaDescriptorResolver,psiClassFinder);
