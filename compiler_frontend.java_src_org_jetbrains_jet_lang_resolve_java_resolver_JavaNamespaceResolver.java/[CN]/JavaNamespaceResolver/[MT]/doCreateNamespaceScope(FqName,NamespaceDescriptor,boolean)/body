@@ -1,6 +1,6 @@
 {
-  PsiPackage psiPackage=psiClassFinder.findPsiPackage(fqName);
-  if (psiPackage != null) {
+  JavaPackage javaPackage=javaClassFinder.findPackage(fqName);
+  if (javaPackage != null) {
     FqName packageClassFqName=PackageClassUtils.getPackageClassFqName(fqName);
     VirtualFile virtualFile=virtualFileFinder.find(packageClassFqName);
     trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
@@ -12,17 +12,18 @@
       }
     }
     if (record) {
-      trace.record(BindingContext.NAMESPACE,psiPackage,namespaceDescriptor);
+      trace.record(BindingContext.NAMESPACE,javaPackage.getPsiPackage(),namespaceDescriptor);
     }
-    return new JavaPackageScope(namespaceDescriptor,psiPackage,fqName,javaDescriptorResolver);
+    return new JavaPackageScope(namespaceDescriptor,javaPackage,fqName,javaDescriptorResolver);
   }
-  PsiClass psiClass=psiClassFinder.findPsiClass(fqName);
-  if (psiClass == null) {
+  JavaClass javaClass=javaClassFinder.findClass(fqName);
+  if (javaClass == null) {
     return null;
   }
-  if (DescriptorResolverUtils.isCompiledKotlinClassOrPackageClass(psiClass)) {
+  if (DescriptorResolverUtils.isCompiledKotlinClassOrPackageClass(javaClass)) {
     return null;
   }
+  PsiClass psiClass=javaClass.getPsiClass();
   if (!hasStaticMembers(psiClass)) {
     return null;
   }
@@ -30,5 +31,5 @@
   if (record) {
     trace.record(BindingContext.NAMESPACE,psiClass,namespaceDescriptor);
   }
-  return new JavaClassStaticMembersScope(namespaceDescriptor,fqName,psiClass,javaDescriptorResolver);
+  return new JavaClassStaticMembersScope(namespaceDescriptor,fqName,javaClass,javaDescriptorResolver);
 }

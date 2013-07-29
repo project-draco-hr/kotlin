@@ -1,18 +1,18 @@
 {
   Collection<DeclarationDescriptor> result=Sets.newHashSet();
-  for (  PsiPackage psiSubPackage : psiPackage.getSubPackages()) {
-    FqName fqName=new FqName(psiSubPackage.getQualifiedName());
+  for (  JavaPackage subPackage : javaPackage.getSubPackages()) {
+    FqName fqName=new FqName(subPackage.getFqName());
     NamespaceDescriptor childNs=javaDescriptorResolver.resolveNamespace(fqName,IGNORE_KOTLIN_SOURCES);
     if (childNs != null) {
       result.add(childNs);
     }
   }
-  for (  PsiClass psiClass : DescriptorResolverUtils.filterDuplicateClasses(psiPackage.getClasses())) {
-    if (DescriptorResolverUtils.isCompiledKotlinPackageClass(psiClass))     continue;
-    if (psiClass instanceof JetJavaMirrorMarker)     continue;
-    if (!psiClass.hasModifierProperty(PsiModifier.PUBLIC))     continue;
+  for (  JavaClass javaClass : DescriptorResolverUtils.filterDuplicateClasses(javaPackage.getClasses())) {
+    if (DescriptorResolverUtils.isCompiledKotlinPackageClass(javaClass))     continue;
+    if (isKotlinLightClass(javaClass))     continue;
+    if (!javaClass.getPsiClass().hasModifierProperty(PsiModifier.PUBLIC))     continue;
     ProgressIndicatorProvider.checkCanceled();
-    String qualifiedName=psiClass.getQualifiedName();
+    String qualifiedName=javaClass.getFqName();
     if (qualifiedName == null)     continue;
     FqName fqName=new FqName(qualifiedName);
     ClassDescriptor classDescriptor=javaDescriptorResolver.resolveClass(fqName,IGNORE_KOTLIN_SOURCES);
