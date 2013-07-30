@@ -1,30 +1,29 @@
 {
-  PsiClass psiClass=javaClass.getPsiClass();
-  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,getClassKind(psiClass),isInnerClass(psiClass));
+  ClassDescriptorFromJvmBytecode classDescriptor=new ClassDescriptorFromJvmBytecode(containingDeclaration,javaClass.getKind(),isInnerClass(javaClass));
   cache(javaClassToKotlinFqName(fqName),classDescriptor);
-  classDescriptor.setName(Name.identifier(psiClass.getName()));
-  List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=JavaSignatureResolver.createUninitializedClassTypeParameters(psiClass,classDescriptor);
+  classDescriptor.setName(javaClass.getName());
+  List<JavaSignatureResolver.TypeParameterDescriptorInitialization> typeParameterDescriptorInitializations=JavaSignatureResolver.createUninitializedClassTypeParameters(javaClass,classDescriptor);
   classDescriptor.setTypeParameterDescriptors(getTypeParametersDescriptors(typeParameterDescriptorInitializations));
   List<JetType> supertypes=Lists.newArrayList();
   classDescriptor.setSupertypes(supertypes);
-  classDescriptor.setVisibility(DescriptorResolverUtils.resolveVisibility(psiClass));
-  classDescriptor.setModality(resolveModality(psiClass,classDescriptor));
+  classDescriptor.setVisibility(javaClass.getVisibility());
+  classDescriptor.setModality(javaClass.getModality());
   classDescriptor.createTypeConstructor();
   JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classDescriptor,javaClass,false,javaDescriptorResolver);
   classDescriptor.setScopeForMemberLookup(scope);
   classDescriptor.setScopeForConstructorResolve(scope);
-  String context="class " + psiClass.getQualifiedName();
-  signatureResolver.initializeTypeParameters(typeParameterDescriptorInitializations,classDescriptor,context);
+  signatureResolver.initializeTypeParameters(typeParameterDescriptorInitializations,classDescriptor,"class " + javaClass.getFqName());
   List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
-  supertypes.addAll(supertypesResolver.getSupertypes(classDescriptor,psiClass,classTypeParameters));
-  if (psiClass.isEnum()) {
+  supertypes.addAll(supertypesResolver.getSupertypes(classDescriptor,javaClass,classTypeParameters));
+  if (javaClass.isEnum()) {
     ClassDescriptorFromJvmBytecode classObjectDescriptor=createClassObjectDescriptorForEnum(classDescriptor,javaClass);
-    cache(getFqNameForClassObject(psiClass),classObjectDescriptor);
+    cache(getFqNameForClassObject(javaClass),classObjectDescriptor);
     classDescriptor.getBuilder().setClassObjectDescriptor(classObjectDescriptor);
   }
+  PsiClass psiClass=javaClass.getPsi();
   classDescriptor.setAnnotations(annotationResolver.resolveAnnotations(psiClass,taskList));
   trace.record(BindingContext.CLASS,psiClass,classDescriptor);
-  PsiMethod samInterfaceMethod=SingleAbstractMethodUtils.getSamInterfaceMethod(psiClass);
+  JavaMethod samInterfaceMethod=SingleAbstractMethodUtils.getSamInterfaceMethod(javaClass,psiClass.getProject());
   if (samInterfaceMethod != null) {
     SimpleFunctionDescriptor abstractMethod=resolveFunctionOfSamInterface(samInterfaceMethod,classDescriptor);
     classDescriptor.setFunctionTypeForSamInterface(SingleAbstractMethodUtils.getFunctionTypeForAbstractMethod(abstractMethod));

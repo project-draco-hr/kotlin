@@ -1,12 +1,13 @@
 {
   TypeParameterDescriptorImpl typeParameterDescriptor=typeParameter.descriptor;
-  PsiClassType[] referencedTypes=typeParameter.psiTypeParameter.getExtendsList().getReferencedTypes();
-  if (referencedTypes.length == 0) {
+  Collection<JavaClassType> upperBounds=typeParameter.javaTypeParameter.getUpperBounds();
+  if (upperBounds.isEmpty()) {
     typeParameterDescriptor.addUpperBound(KotlinBuiltIns.getInstance().getNullableAnyType());
   }
  else {
-    for (    PsiClassType referencedType : referencedTypes) {
-      JetType transformedType=typeTransformer.transformToType(referencedType,TypeUsage.UPPER_BOUND,typeVariableByPsiResolver);
+    for (    JavaClassType upperBound : upperBounds) {
+      PsiClassType psiClassType=upperBound.getPsi();
+      JetType transformedType=typeTransformer.transformToType(psiClassType,TypeUsage.UPPER_BOUND,typeVariableByPsiResolver);
       typeParameterDescriptor.addUpperBound(transformedType);
     }
   }
