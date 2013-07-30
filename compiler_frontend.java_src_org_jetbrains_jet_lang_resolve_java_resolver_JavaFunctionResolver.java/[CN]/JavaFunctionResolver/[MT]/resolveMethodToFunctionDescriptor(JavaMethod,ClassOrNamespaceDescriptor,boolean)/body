@@ -2,11 +2,11 @@
   if (!DescriptorResolverUtils.isCorrectOwnerForEnumMember(ownerDescriptor,method)) {
     return null;
   }
-  PsiMethod psiMethod=method.getPsi();
-  PsiType returnPsiType=psiMethod.getReturnType();
-  if (returnPsiType == null) {
+  JavaType returnJavaType=method.getReturnType();
+  if (returnJavaType == null) {
     return null;
   }
+  PsiMethod psiMethod=method.getPsi();
   SimpleFunctionDescriptor alreadyResolved=trace.get(BindingContext.FUNCTION,psiMethod);
   if (alreadyResolved != null) {
     return alreadyResolved;
@@ -14,8 +14,8 @@
   SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(ownerDescriptor,annotationResolver.resolveAnnotations(psiMethod),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
   List<TypeParameterDescriptor> methodTypeParameters=signatureResolver.resolveMethodTypeParameters(method,functionDescriptorImpl);
   TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl,"method " + method.getName() + " in class "+ method.getContainingClass());
-  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=parameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method.getValueParameters(),methodTypeVariableResolver);
-  JetType returnType=makeReturnType(returnPsiType,method,methodTypeVariableResolver);
+  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=parameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method,methodTypeVariableResolver);
+  JetType returnType=makeReturnType(returnJavaType,method,methodTypeVariableResolver);
   List<String> signatureErrors=Lists.newArrayList();
   List<FunctionDescriptor> superFunctions;
   if (ownerDescriptor instanceof ClassDescriptor) {
