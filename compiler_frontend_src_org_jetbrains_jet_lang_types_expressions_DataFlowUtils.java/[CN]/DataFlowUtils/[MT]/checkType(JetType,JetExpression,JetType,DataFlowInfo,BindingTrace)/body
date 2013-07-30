@@ -1,0 +1,22 @@
+{
+  if (!noExpectedType(expectedType)) {
+    trace.record(BindingContext.EXPECTED_EXPRESSION_TYPE,expression,expectedType);
+  }
+  if (expressionType == null || noExpectedType(expectedType) || JetTypeChecker.INSTANCE.isSubtypeOf(expressionType,expectedType)) {
+    return expressionType;
+  }
+  DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,expressionType,trace.getBindingContext());
+  for (  JetType possibleType : dataFlowInfo.getPossibleTypes(dataFlowValue)) {
+    if (JetTypeChecker.INSTANCE.isSubtypeOf(possibleType,expectedType)) {
+      if (dataFlowValue.isStableIdentifier()) {
+        trace.record(AUTOCAST,expression,possibleType);
+      }
+ else {
+        trace.report(AUTOCAST_IMPOSSIBLE.on(expression,possibleType,expression.getText()));
+      }
+      return possibleType;
+    }
+  }
+  trace.report(TYPE_MISMATCH.on(expression,expectedType,expressionType));
+  return expressionType;
+}

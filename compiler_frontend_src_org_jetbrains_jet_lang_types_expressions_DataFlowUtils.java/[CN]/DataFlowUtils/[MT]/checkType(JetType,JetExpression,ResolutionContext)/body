@@ -1,22 +1,3 @@
 {
-  if (!noExpectedType(context.expectedType)) {
-    context.trace.record(BindingContext.EXPECTED_EXPRESSION_TYPE,expression,context.expectedType);
-  }
-  if (expressionType == null || noExpectedType(context.expectedType) || JetTypeChecker.INSTANCE.isSubtypeOf(expressionType,context.expectedType)) {
-    return expressionType;
-  }
-  DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,expressionType,context.trace.getBindingContext());
-  for (  JetType possibleType : context.dataFlowInfo.getPossibleTypes(dataFlowValue)) {
-    if (JetTypeChecker.INSTANCE.isSubtypeOf(possibleType,context.expectedType)) {
-      if (dataFlowValue.isStableIdentifier()) {
-        context.trace.record(AUTOCAST,expression,possibleType);
-      }
- else {
-        context.trace.report(AUTOCAST_IMPOSSIBLE.on(expression,possibleType,expression.getText()));
-      }
-      return possibleType;
-    }
-  }
-  context.trace.report(TYPE_MISMATCH.on(expression,context.expectedType,expressionType));
-  return expressionType;
+  return checkType(expressionType,expression,context.expectedType,context.dataFlowInfo,context.trace);
 }
