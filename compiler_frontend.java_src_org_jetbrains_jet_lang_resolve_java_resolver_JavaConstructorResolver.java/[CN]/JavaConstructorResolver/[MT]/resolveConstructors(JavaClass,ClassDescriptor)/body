@@ -1,2 +1,21 @@
 {
+  Collection<ConstructorDescriptor> result=Lists.newArrayList();
+  Collection<JavaMethod> constructors=javaClass.getConstructors();
+  if (containingClass.getKind() == ClassKind.OBJECT || containingClass.getKind() == ClassKind.CLASS_OBJECT) {
+    result.add(DescriptorResolver.createPrimaryConstructorForObject(containingClass));
+  }
+ else   if (constructors.isEmpty()) {
+    ContainerUtil.addIfNotNull(result,resolveDefaultConstructor(javaClass,containingClass));
+  }
+ else {
+    for (    JavaMethod constructor : constructors) {
+      ConstructorDescriptor descriptor=resolveConstructor(javaClass,constructor,containingClass);
+      result.add(descriptor);
+      ContainerUtil.addIfNotNull(result,resolveSamAdapter(descriptor));
+    }
+  }
+  for (  ConstructorDescriptor constructor : result) {
+    ((ConstructorDescriptorImpl)constructor).setReturnType(containingClass.getDefaultType());
+  }
+  return result;
 }

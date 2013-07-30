@@ -1,0 +1,21 @@
+{
+  ConstructorDescriptor alreadyResolved=trace.get(BindingContext.CONSTRUCTOR,javaClass.getPsi());
+  if (alreadyResolved != null) {
+    return alreadyResolved;
+  }
+  boolean isAnnotation=javaClass.isAnnotationType();
+  if (javaClass.isInterface() && !isAnnotation)   return null;
+  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(containingClass,Collections.<AnnotationDescriptor>emptyList(),true);
+  List<TypeParameterDescriptor> typeParameters=containingClass.getTypeConstructor().getParameters();
+  List<ValueParameterDescriptor> valueParameters;
+  if (isAnnotation) {
+    TypeVariableResolver typeVariableResolver=new TypeVariableResolver(typeParameters,containingClass,"class " + javaClass.getFqName());
+    valueParameters=resolveAnnotationParameters(javaClass,constructorDescriptor,typeVariableResolver);
+  }
+ else {
+    valueParameters=Collections.emptyList();
+  }
+  constructorDescriptor.initialize(typeParameters,valueParameters,getConstructorVisibility(containingClass),javaClass.isStatic());
+  trace.record(BindingContext.CONSTRUCTOR,javaClass.getPsi(),constructorDescriptor);
+  return constructorDescriptor;
+}
