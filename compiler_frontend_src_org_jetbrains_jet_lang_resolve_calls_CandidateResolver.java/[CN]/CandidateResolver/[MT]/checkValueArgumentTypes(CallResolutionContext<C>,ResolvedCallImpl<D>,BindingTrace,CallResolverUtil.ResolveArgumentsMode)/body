@@ -1,6 +1,7 @@
 {
   ResolutionStatus resultStatus=SUCCESS;
   List<JetType> argumentTypes=Lists.newArrayList();
+  MutableDataFlowInfoForArguments infoForArguments=candidateCall.getDataFlowInfoForArguments();
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : candidateCall.getValueArguments().entrySet()) {
     ValueParameterDescriptor parameterDescriptor=entry.getKey();
     ResolvedValueArgument resolvedArgument=entry.getValue();
@@ -11,11 +12,10 @@
       if (TypeUtils.dependsOnTypeParameters(expectedType,candidateCall.getCandidateDescriptor().getTypeParameters())) {
         expectedType=NO_EXPECTED_TYPE;
       }
-      candidateCall.setDataFlowInfoForArgument(argument,candidateCall.getDataFlowInfo());
-      CallResolutionContext<?> newContext=context.replaceDataFlowInfo(candidateCall.getDataFlowInfo()).replaceBindingTrace(trace).replaceExpectedType(expectedType);
+      CallResolutionContext<?> newContext=context.replaceDataFlowInfo(infoForArguments.getInfo(argument)).replaceBindingTrace(trace).replaceExpectedType(expectedType);
       JetTypeInfo typeInfoForCall=argumentTypeResolver.getArgumentTypeInfo(expression,newContext,resolveFunctionArgumentBodies,null);
       JetType type=typeInfoForCall.getType();
-      candidateCall.addDataFlowInfo(typeInfoForCall.getDataFlowInfo());
+      infoForArguments.updateInfo(argument,typeInfoForCall.getDataFlowInfo());
       if (type == null || (ErrorUtils.isErrorType(type) && type != PLACEHOLDER_FUNCTION_TYPE)) {
         candidateCall.argumentHasNoType();
         argumentTypes.add(type);
