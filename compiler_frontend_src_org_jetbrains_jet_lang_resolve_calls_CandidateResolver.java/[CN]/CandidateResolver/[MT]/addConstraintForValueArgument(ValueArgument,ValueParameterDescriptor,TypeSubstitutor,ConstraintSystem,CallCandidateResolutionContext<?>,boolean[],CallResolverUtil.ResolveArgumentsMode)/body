@@ -3,9 +3,11 @@
   JetExpression argumentExpression=valueArgument.getArgumentExpression();
   TemporaryBindingTrace traceToResolveArgument=TemporaryBindingTrace.create(context.trace,"transient trace to resolve argument",argumentExpression);
   JetType expectedType=substitutor.substitute(effectiveExpectedType,Variance.INVARIANT);
-  CallResolutionContext<?> newContext=context.replaceBindingTrace(traceToResolveArgument).replaceExpectedType(expectedType);
+  DataFlowInfo dataFlowInfoForArgument=context.candidateCall.getDataFlowInfoForArguments().getInfo(valueArgument);
+  CallResolutionContext<?> newContext=context.replaceBindingTrace(traceToResolveArgument).replaceExpectedType(expectedType).replaceDataFlowInfo(dataFlowInfoForArgument);
   JetTypeInfo typeInfoForCall=argumentTypeResolver.getArgumentTypeInfo(argumentExpression,newContext,resolveFunctionArgumentBodies,traceToResolveArgument);
-  JetType type=updateResultTypeForSmartCasts(typeInfoForCall.getType(),argumentExpression,context);
+  context.candidateCall.getDataFlowInfoForArguments().updateInfo(valueArgument,typeInfoForCall.getDataFlowInfo());
+  JetType type=updateResultTypeForSmartCasts(typeInfoForCall.getType(),argumentExpression,dataFlowInfoForArgument,context.trace);
   constraintSystem.addSubtypeConstraint(type,effectiveExpectedType,ConstraintPosition.getValueParameterPosition(valueParameterDescriptor.getIndex()));
   if (isErrorType != null) {
     isErrorType[0]=type == null || ErrorUtils.isErrorType(type);
