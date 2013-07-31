@@ -16,19 +16,20 @@
     }
   }
  else {
-    PsiType[] psiArguments=classifierType.getPsi().getParameters();
-    if (parameters.size() != psiArguments.length) {
-      LOG.warn("parameters = " + parameters.size() + ", actual arguments = "+ psiArguments.length+ " in "+ classifierType.getPresentableText()+ "\n fqName: \n"+ fqName);
+    Collection<JavaType> javaTypeArguments=classifierType.getTypeArguments();
+    if (parameters.size() != javaTypeArguments.size()) {
+      LOG.warn("parameters = " + parameters.size() + ", actual arguments = "+ javaTypeArguments.size()+ " in "+ classifierType.getPresentableText()+ "\n fqName: \n"+ fqName);
       for (      TypeParameterDescriptor parameter : parameters) {
         arguments.add(new TypeProjection(ErrorUtils.createErrorType(parameter.getName().asString())));
       }
     }
  else {
-      for (int i=0; i < parameters.size(); i++) {
-        PsiType psiArgument=psiArguments[i];
-        TypeParameterDescriptor typeParameterDescriptor=parameters.get(i);
+      int index=0;
+      for (      JavaType typeArgument : javaTypeArguments) {
+        TypeParameterDescriptor typeParameterDescriptor=parameters.get(index);
+        index++;
         TypeUsage howTheProjectionIsUsed=howThisTypeIsUsed == SUPERTYPE ? SUPERTYPE_ARGUMENT : TYPE_ARGUMENT;
-        TypeProjection typeProjection=transformToTypeProjection(JavaType.create(psiArgument),typeParameterDescriptor,typeVariableResolver,howTheProjectionIsUsed);
+        TypeProjection typeProjection=transformToTypeProjection(typeArgument,typeParameterDescriptor,typeVariableResolver,howTheProjectionIsUsed);
         if (typeProjection.getProjectionKind() == typeParameterDescriptor.getVariance()) {
           arguments.add(new TypeProjection(INVARIANT,typeProjection.getType()));
         }
