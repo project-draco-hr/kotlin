@@ -1,0 +1,13 @@
+{
+  JavaTypeParameterListOwner owner=typeParameter.getOwner();
+  if (owner instanceof JavaMethod && ((JavaMethod)owner).isConstructor()) {
+    Set<JetType> supertypesJet=Sets.newHashSet();
+    for (    JavaClassType supertype : typeParameter.getUpperBounds()) {
+      supertypesJet.add(transformToType(supertype,UPPER_BOUND,typeVariableResolver));
+    }
+    return TypeUtils.intersect(JetTypeChecker.INSTANCE,supertypesJet);
+  }
+  TypeParameterDescriptor typeParameterDescriptor=typeVariableResolver.getTypeVariable(typeParameter.getName().asString());
+  boolean nullable=!EnumSet.of(TYPE_ARGUMENT,UPPER_BOUND,SUPERTYPE_ARGUMENT).contains(howThisTypeIsUsed);
+  return TypeUtils.makeNullableIfNeeded(typeParameterDescriptor.getDefaultType(),nullable);
+}
