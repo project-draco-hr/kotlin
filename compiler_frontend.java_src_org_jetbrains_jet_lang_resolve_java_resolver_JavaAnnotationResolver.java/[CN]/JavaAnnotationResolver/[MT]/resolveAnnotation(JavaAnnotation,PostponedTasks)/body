@@ -1,0 +1,34 @@
+{
+  final AnnotationDescriptor annotation=new AnnotationDescriptor();
+  FqName fqName=javaAnnotation.getFqName();
+  if (fqName == null) {
+    return null;
+  }
+  if (fqName.asString().startsWith("jet.runtime.typeinfo.") || fqName.equals(JvmAnnotationNames.JETBRAINS_NOT_NULL_ANNOTATION.getFqName()) || fqName.equals(JvmAnnotationNames.KOTLIN_CLASS.getFqName())|| fqName.equals(JvmAnnotationNames.KOTLIN_PACKAGE.getFqName())) {
+    return null;
+  }
+  AnnotationDescriptor mappedClassDescriptor=JavaToKotlinClassMap.getInstance().mapToAnnotationClass(fqName);
+  if (mappedClassDescriptor != null) {
+    return mappedClassDescriptor;
+  }
+  final ClassDescriptor annotationClass=classResolver.resolveClass(fqName,INCLUDE_KOTLIN_SOURCES,postponedTasks);
+  if (annotationClass == null) {
+    return null;
+  }
+  postponedTasks.addTask(new Runnable(){
+    @Override public void run(){
+      annotation.setAnnotationType(annotationClass.getDefaultType());
+    }
+  }
+);
+  for (  JavaAnnotationArgument argument : javaAnnotation.getArguments()) {
+    CompileTimeConstant value=compileTimeConstResolver.resolveAnnotationArgument(fqName,argument,postponedTasks);
+    if (value == null)     continue;
+    Name name=argument.getName();
+    ValueParameterDescriptor descriptor=DescriptorResolverUtils.getAnnotationParameterByName(name == null ? DEFAULT_ANNOTATION_MEMBER_NAME : name,annotationClass);
+    if (descriptor != null) {
+      annotation.setValueArgument(descriptor,value);
+    }
+  }
+  return annotation;
+}
