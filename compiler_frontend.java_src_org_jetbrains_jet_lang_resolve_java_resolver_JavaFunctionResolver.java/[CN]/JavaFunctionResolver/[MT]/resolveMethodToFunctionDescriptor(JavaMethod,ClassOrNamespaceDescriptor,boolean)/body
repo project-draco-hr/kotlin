@@ -16,31 +16,31 @@
   typeParameterInitializer.initialize();
   List<TypeParameterDescriptor> methodTypeParameters=typeParameterInitializer.getDescriptors();
   TypeVariableResolver typeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl);
-  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=valueParameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method,typeVariableResolver);
+  JavaValueParameterResolver.ValueParameters valueParameters=valueParameterResolver.resolveValueParameters(functionDescriptorImpl,method,typeVariableResolver);
   JetType returnType=makeReturnType(returnJavaType,method,typeVariableResolver);
   List<String> signatureErrors=Lists.newArrayList();
   List<FunctionDescriptor> superFunctions;
   if (ownerDescriptor instanceof ClassDescriptor) {
-    SignaturesPropagationData signaturesPropagationData=new SignaturesPropagationData((ClassDescriptor)ownerDescriptor,returnType,valueParameterDescriptors,methodTypeParameters,method,trace);
+    SignaturesPropagationData signaturesPropagationData=new SignaturesPropagationData((ClassDescriptor)ownerDescriptor,returnType,valueParameters,methodTypeParameters,method,trace);
     superFunctions=signaturesPropagationData.getSuperFunctions();
     returnType=signaturesPropagationData.getModifiedReturnType();
-    valueParameterDescriptors=signaturesPropagationData.getModifiedValueParameters();
+    valueParameters=signaturesPropagationData.getModifiedValueParameters();
     methodTypeParameters=signaturesPropagationData.getModifiedTypeParameters();
     signatureErrors.addAll(signaturesPropagationData.getSignatureErrors());
   }
  else {
     superFunctions=Collections.emptyList();
   }
-  AlternativeMethodSignatureData alternativeMethodSignatureData=new AlternativeMethodSignatureData(method,valueParameterDescriptors,returnType,methodTypeParameters,!superFunctions.isEmpty());
+  AlternativeMethodSignatureData alternativeMethodSignatureData=new AlternativeMethodSignatureData(method,valueParameters,returnType,methodTypeParameters,!superFunctions.isEmpty());
   if (alternativeMethodSignatureData.isAnnotated() && !alternativeMethodSignatureData.hasErrors()) {
-    valueParameterDescriptors=alternativeMethodSignatureData.getValueParameters();
+    valueParameters=alternativeMethodSignatureData.getValueParameters();
     returnType=alternativeMethodSignatureData.getReturnType();
     methodTypeParameters=alternativeMethodSignatureData.getTypeParameters();
   }
  else   if (alternativeMethodSignatureData.hasErrors()) {
     signatureErrors.add(alternativeMethodSignatureData.getError());
   }
-  functionDescriptorImpl.initialize(valueParameterDescriptors.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameterDescriptors.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
+  functionDescriptorImpl.initialize(valueParameters.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameters.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
   if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION && record) {
     BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,psiMethod,functionDescriptorImpl);
   }
