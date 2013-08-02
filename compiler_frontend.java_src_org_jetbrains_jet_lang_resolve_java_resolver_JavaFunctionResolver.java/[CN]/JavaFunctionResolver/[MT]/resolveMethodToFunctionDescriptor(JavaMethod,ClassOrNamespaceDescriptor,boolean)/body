@@ -6,8 +6,7 @@
   if (returnJavaType == null) {
     return null;
   }
-  PsiMethod psiMethod=method.getPsi();
-  SimpleFunctionDescriptor alreadyResolved=trace.get(BindingContext.FUNCTION,psiMethod);
+  SimpleFunctionDescriptor alreadyResolved=trace.get(BindingContext.FUNCTION,method.getPsi());
   if (alreadyResolved != null) {
     return alreadyResolved;
   }
@@ -42,12 +41,12 @@
   }
   functionDescriptorImpl.initialize(valueParameters.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameters.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
   if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION && record) {
-    BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,psiMethod,functionDescriptorImpl);
+    BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,method.getPsi(),functionDescriptorImpl);
   }
   if (record) {
     trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,functionDescriptorImpl);
   }
-  if (!RawTypesCheck.hasRawTypesInHierarchicalSignature(psiMethod) && JavaMethodSignatureUtil.isMethodReturnTypeCompatible(psiMethod) && !containsErrorType(superFunctions,functionDescriptorImpl)) {
+  if (!RawTypesCheck.hasRawTypesInHierarchicalSignature(method) && JavaMethodSignatureUtil.isMethodReturnTypeCompatible(method) && !containsErrorType(superFunctions,functionDescriptorImpl)) {
     if (signatureErrors.isEmpty()) {
       checkFunctionsOverrideCorrectly(method,superFunctions,functionDescriptorImpl);
     }
