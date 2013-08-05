@@ -1,0 +1,37 @@
+{
+  final KotlinMethodFindUsagesOptions kotlinOptions=(KotlinMethodFindUsagesOptions)options;
+  SearchScope searchScope=kotlinOptions.searchScope;
+  final PsiMethod lightMethod=ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>(){
+    @Override public PsiMethod compute(){
+      return LightClassUtil.getLightClassMethod(getElement());
+    }
+  }
+);
+  if (lightMethod == null)   return true;
+  if (kotlinOptions.isUsages) {
+    boolean strictSignatureSearch=!kotlinOptions.isIncludeOverloadUsages;
+    if (!MethodReferencesSearch.search(new MethodReferencesSearch.SearchParameters(lightMethod,searchScope,strictSignatureSearch,kotlinOptions.fastTrack)).forEach(new ReadActionProcessor<PsiReference>(){
+      @Override public boolean processInReadAction(      PsiReference ref){
+        return processUsage(processor,ref,kotlinOptions);
+      }
+    }
+)) {
+      return false;
+    }
+  }
+  boolean isAbstract=ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+    @Override public Boolean compute(){
+      return lightMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+    }
+  }
+);
+  if (isAbstract && kotlinOptions.isImplementingMethods || kotlinOptions.isOverridingMethods) {
+    OverridingMethodsSearch.search(lightMethod,options.searchScope,kotlinOptions.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
+      @Override public boolean execute(      @NotNull PsiMethod element){
+        return processUsage(processor,element.getNavigationElement(),kotlinOptions);
+      }
+    }
+));
+  }
+  return true;
+}
