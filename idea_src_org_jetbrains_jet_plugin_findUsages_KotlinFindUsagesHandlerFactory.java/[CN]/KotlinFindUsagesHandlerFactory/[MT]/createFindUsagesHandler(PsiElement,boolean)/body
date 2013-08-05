@@ -3,6 +3,13 @@
     return new KotlinFindClassUsagesHandler((JetClass)element,this);
   }
   if (element instanceof JetNamedFunction) {
+    if (!forHighlightUsages) {
+      Collection<? extends PsiElement> methods=JetRefactoringUtil.checkSuperMethods((JetDeclaration)element,null,"super.methods.action.key.find.usages");
+      if (methods == null || methods.isEmpty())       return FindUsagesHandler.NULL_HANDLER;
+      if (methods.size() > 1) {
+        return new KotlinFindFunctionUsagesHandler((JetNamedFunction)element,methods,this);
+      }
+    }
     return new KotlinFindFunctionUsagesHandler((JetNamedFunction)element,this);
   }
   throw new IllegalArgumentException("unexpected element type: " + element);
