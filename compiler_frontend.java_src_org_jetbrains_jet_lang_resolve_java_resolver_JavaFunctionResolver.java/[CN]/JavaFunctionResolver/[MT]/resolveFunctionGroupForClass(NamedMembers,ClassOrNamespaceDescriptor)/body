@@ -1,9 +1,5 @@
 {
   Name methodName=members.getName();
-  Set<SimpleFunctionDescriptor> functionsFromSupertypes=null;
-  if (owner instanceof ClassDescriptor) {
-    functionsFromSupertypes=getFunctionsFromSupertypes(methodName,owner);
-  }
   Set<SimpleFunctionDescriptor> functionsFromCurrent=Sets.newHashSet();
   for (  JavaMethod method : members.getMethods()) {
     SimpleFunctionDescriptor function=resolveMethodToFunctionDescriptor(method,owner,true);
@@ -15,20 +11,12 @@
   if (owner instanceof NamespaceDescriptor) {
     ContainerUtil.addIfNotNull(functionsFromCurrent,resolveSamConstructor((NamespaceDescriptor)owner,members));
   }
-  final Set<FunctionDescriptor> fakeOverrides=new HashSet<FunctionDescriptor>();
+  Set<FunctionDescriptor> functions=new HashSet<FunctionDescriptor>();
   if (owner instanceof ClassDescriptor) {
     ClassDescriptor classDescriptor=(ClassDescriptor)owner;
-    OverrideResolver.generateOverridesInFunctionGroup(methodName,functionsFromSupertypes,functionsFromCurrent,classDescriptor,new OverrideResolver.DescriptorSink(){
-      @Override public void addToScope(      @NotNull CallableMemberDescriptor fakeOverride){
-        fakeOverrides.add((FunctionDescriptor)fakeOverride);
-      }
-      @Override public void conflict(      @NotNull CallableMemberDescriptor fromSuper,      @NotNull CallableMemberDescriptor fromCurrent){
-      }
-    }
-);
+    Collection<SimpleFunctionDescriptor> functionsFromSupertypes=getFunctionsFromSupertypes(methodName,classDescriptor);
+    functions.addAll(resolveOverrides(methodName,functionsFromSupertypes,functionsFromCurrent,classDescriptor,trace));
   }
-  OverrideResolver.resolveUnknownVisibilities(fakeOverrides,trace);
-  Set<FunctionDescriptor> functions=Sets.newHashSet(fakeOverrides);
   if (isEnumClassObject(owner)) {
     for (    FunctionDescriptor functionDescriptor : functionsFromCurrent) {
       if (!(isEnumValueOfMethod(functionDescriptor) || isEnumValuesMethod(functionDescriptor))) {
