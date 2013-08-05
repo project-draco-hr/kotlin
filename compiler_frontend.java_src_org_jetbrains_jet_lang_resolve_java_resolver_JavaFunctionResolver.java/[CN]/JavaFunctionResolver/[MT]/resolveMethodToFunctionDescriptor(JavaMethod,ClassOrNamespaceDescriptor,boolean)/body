@@ -10,7 +10,7 @@
   if (alreadyResolved != null) {
     return alreadyResolved;
   }
-  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(ownerDescriptor,annotationResolver.resolveAnnotations(method),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
+  SimpleFunctionDescriptorImpl functionDescriptorImpl=new JavaMethodDescriptor(ownerDescriptor,annotationResolver.resolveAnnotations(method),method.getName());
   JavaTypeParameterResolver.Initializer typeParameterInitializer=typeParameterResolver.resolveTypeParameters(functionDescriptorImpl,method);
   typeParameterInitializer.initialize();
   List<TypeParameterDescriptor> methodTypeParameters=typeParameterInitializer.getDescriptors();
@@ -42,9 +42,6 @@
   functionDescriptorImpl.initialize(valueParameters.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameters.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
   if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION && record) {
     BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,method.getPsi(),functionDescriptorImpl);
-  }
-  if (record) {
-    trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,functionDescriptorImpl);
   }
   if (!RawTypesCheck.hasRawTypesInHierarchicalSignature(method) && JavaMethodSignatureUtil.isMethodReturnTypeCompatible(method) && !containsErrorType(superFunctions,functionDescriptorImpl)) {
     if (signatureErrors.isEmpty()) {
