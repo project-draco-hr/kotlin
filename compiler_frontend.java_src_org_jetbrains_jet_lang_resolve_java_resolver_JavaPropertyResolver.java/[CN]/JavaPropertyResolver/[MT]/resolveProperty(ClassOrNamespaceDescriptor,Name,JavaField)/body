@@ -4,8 +4,12 @@
   propertyDescriptor.initialize(null,null);
   TypeVariableResolver typeVariableResolver=new TypeVariableResolver(Collections.<TypeParameterDescriptor>emptyList(),propertyDescriptor);
   JetType propertyType=getPropertyType(field,typeVariableResolver);
-  propertyType=getAlternativeSignatureData(isVar,field,propertyDescriptor,propertyType);
-  propertyDescriptor.setType(propertyType,Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(owner),(JetType)null);
+  ExternalSignatureResolver.AlternativeFieldSignature effectiveSignature=externalSignatureResolver.resolveAlternativeFieldSignature(field,propertyType,isVar);
+  List<String> signatureErrors=effectiveSignature.getErrors();
+  if (!signatureErrors.isEmpty()) {
+    externalSignatureResolver.reportSignatureErrors(propertyDescriptor,signatureErrors);
+  }
+  propertyDescriptor.setType(effectiveSignature.getReturnType(),Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(owner),(JetType)null);
   trace.record(BindingContext.VARIABLE,field.getPsi(),propertyDescriptor);
   if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor)) {
     PsiExpression initializer=field.getPsi().getInitializer();
