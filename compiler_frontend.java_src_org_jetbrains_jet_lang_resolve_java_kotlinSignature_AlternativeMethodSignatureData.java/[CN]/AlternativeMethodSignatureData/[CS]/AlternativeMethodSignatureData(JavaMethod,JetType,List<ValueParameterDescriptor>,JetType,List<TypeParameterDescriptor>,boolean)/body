@@ -1,0 +1,30 @@
+{
+  String signature=SignaturesUtil.getKotlinSignature(method);
+  if (signature == null) {
+    setAnnotated(false);
+    altFunDeclaration=null;
+    return;
+  }
+  if (receiverType != null) {
+    throw new UnsupportedOperationException("Alternative annotations for extension functions are not supported yet");
+  }
+  setAnnotated(true);
+  Project project=method.getPsi().getProject();
+  altFunDeclaration=JetPsiFactory.createFunction(project,signature);
+  originalToAltTypeParameters=SignaturesUtil.recreateTypeParametersAndReturnMapping(methodTypeParameters,null);
+  try {
+    checkForSyntaxErrors(altFunDeclaration);
+    checkEqualFunctionNames(altFunDeclaration,method);
+    computeTypeParameters(methodTypeParameters);
+    computeValueParameters(valueParameters);
+    if (originalReturnType != null) {
+      altReturnType=computeReturnType(originalReturnType,altFunDeclaration.getReturnTypeRef(),originalToAltTypeParameters);
+    }
+    if (hasSuperMethods) {
+      checkParameterAndReturnTypesForOverridingMethods(valueParameters,methodTypeParameters,originalReturnType);
+    }
+  }
+ catch (  AlternativeSignatureMismatchException e) {
+    setError(e.getMessage());
+  }
+}

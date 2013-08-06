@@ -5,18 +5,13 @@
   }
   ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),false);
   List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
-  JavaValueParameterResolver.ValueParameters valueParameters=valueParameterResolver.resolveValueParameters(constructorDescriptor,constructor,new TypeVariableResolver(typeParameters,classDescriptor));
-  if (valueParameters.getReceiverType() != null) {
-    throw new IllegalStateException();
+  List<ValueParameterDescriptor> valueParameters=valueParameterResolver.resolveValueParameters(constructorDescriptor,constructor,new TypeVariableResolver(typeParameters,classDescriptor));
+  ExternalSignatureResolver.AlternativeMethodSignature effectiveSignature=externalSignatureResolver.resolveAlternativeMethodSignature(constructor,false,null,null,valueParameters,Collections.<TypeParameterDescriptor>emptyList());
+  constructorDescriptor.initialize(typeParameters,effectiveSignature.getValueParameters(),constructor.getVisibility(),isStaticClass);
+  List<String> signatureErrors=effectiveSignature.getErrors();
+  if (!signatureErrors.isEmpty()) {
+    externalSignatureResolver.reportSignatureErrors(constructorDescriptor,signatureErrors);
   }
-  AlternativeMethodSignatureData alternativeMethodSignatureData=new AlternativeMethodSignatureData(constructor,valueParameters,null,Collections.<TypeParameterDescriptor>emptyList(),false);
-  if (alternativeMethodSignatureData.isAnnotated() && !alternativeMethodSignatureData.hasErrors()) {
-    valueParameters=alternativeMethodSignatureData.getValueParameters();
-  }
- else   if (alternativeMethodSignatureData.hasErrors()) {
-    trace.record(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,constructorDescriptor,Collections.singletonList(alternativeMethodSignatureData.getError()));
-  }
-  constructorDescriptor.initialize(typeParameters,valueParameters.getDescriptors(),constructor.getVisibility(),isStaticClass);
   trace.record(BindingContext.CONSTRUCTOR,constructor.getPsi(),constructorDescriptor);
   return constructorDescriptor;
 }
