@@ -1,21 +1,19 @@
 {
-  if (isIntrinsic()) {
-    return intrinsicInvocation();
+  JsExpression result=intrinsicInvocation();
+  if (result != null) {
+    return result;
   }
   if (isConstructor()) {
     return constructorCall();
   }
   if (resolvedCall.getReceiverArgument().exists()) {
     if (AnnotationsUtils.isNativeObject(descriptor)) {
-      return methodCall(callParameters.getReceiver());
+      return nativeExtensionCall();
     }
-    return extensionFunctionCall(!(descriptor instanceof ExpressionAsFunctionDescriptor) && !descriptor.getName().asString().equals("invoke"));
+    return extensionFunctionCall(!(descriptor instanceof ExpressionAsFunctionDescriptor));
   }
   if (isExpressionAsFunction()) {
     return expressionAsFunctionCall();
-  }
-  if (isInvoke()) {
-    return invokeCall();
   }
   return methodCall(getThisObjectOrQualifier());
 }
