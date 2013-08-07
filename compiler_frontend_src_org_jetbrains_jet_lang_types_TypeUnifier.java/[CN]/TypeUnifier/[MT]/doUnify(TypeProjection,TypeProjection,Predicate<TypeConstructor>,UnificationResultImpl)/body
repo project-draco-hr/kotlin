@@ -1,0 +1,46 @@
+{
+  JetType known=knownProjection.getType();
+  JetType withVariables=projectWithVariables.getType();
+  Variance knownProjectionKind=knownProjection.getProjectionKind();
+  Variance withVariablesProjectionKind=projectWithVariables.getProjectionKind();
+  if (knownProjectionKind == withVariablesProjectionKind && knownProjectionKind != Variance.INVARIANT) {
+    doUnify(new TypeProjection(known),new TypeProjection(withVariables),isVariable,result);
+    return;
+  }
+  if (known.isNullable() && withVariables.isNullable()) {
+    doUnify(new TypeProjection(knownProjectionKind,TypeUtils.makeNotNullable(known)),new TypeProjection(withVariablesProjectionKind,TypeUtils.makeNotNullable(withVariables)),isVariable,result);
+    return;
+  }
+  if (knownProjectionKind != withVariablesProjectionKind && withVariablesProjectionKind != Variance.INVARIANT) {
+    result.fail();
+    return;
+  }
+  if (!known.isNullable() && withVariables.isNullable()) {
+    result.fail();
+    return;
+  }
+  TypeConstructor maybeVariable=withVariables.getConstructor();
+  if (isVariable.apply(maybeVariable)) {
+    result.put(maybeVariable,new TypeProjection(knownProjectionKind,known));
+    return;
+  }
+  boolean structuralMismatch=known.isNullable() != withVariables.isNullable() || knownProjectionKind != withVariablesProjectionKind || !known.getConstructor().equals(withVariables.getConstructor());
+  if (structuralMismatch) {
+    result.fail();
+    return;
+  }
+  if (known.getArguments().size() != withVariables.getArguments().size()) {
+    result.fail();
+    return;
+  }
+  if (known.getArguments().isEmpty()) {
+    return;
+  }
+  List<TypeProjection> knownArguments=known.getArguments();
+  List<TypeProjection> withVariablesArguments=withVariables.getArguments();
+  for (int i=0; i < knownArguments.size(); i++) {
+    TypeProjection knownArg=knownArguments.get(i);
+    TypeProjection withVariablesArg=withVariablesArguments.get(i);
+    doUnify(knownArg,withVariablesArg,isVariable,result);
+  }
+}
