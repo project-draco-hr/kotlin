@@ -10,15 +10,6 @@
     externalSignatureResolver.reportSignatureErrors(propertyDescriptor,signatureErrors);
   }
   propertyDescriptor.setType(effectiveSignature.getReturnType(),Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(owner),(JetType)null);
-  trace.record(BindingContext.VARIABLE,field.getPsi(),propertyDescriptor);
-  if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor)) {
-    PsiExpression initializer=field.getPsi().getInitializer();
-    if (initializer instanceof PsiLiteralExpression) {
-      CompileTimeConstant<?> constant=JavaAnnotationArgumentResolver.resolveCompileTimeConstantValue(((PsiLiteralExpression)initializer).getValue(),propertyType);
-      if (constant != null) {
-        trace.record(BindingContext.COMPILE_TIME_INITIALIZER,propertyDescriptor,constant);
-      }
-    }
-  }
+  cache.recordField(field,propertyDescriptor);
   return propertyDescriptor;
 }

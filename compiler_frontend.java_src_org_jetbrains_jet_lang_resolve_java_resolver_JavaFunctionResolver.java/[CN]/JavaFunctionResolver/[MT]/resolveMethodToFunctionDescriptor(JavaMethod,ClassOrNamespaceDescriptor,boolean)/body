@@ -6,7 +6,7 @@
   if (returnJavaType == null) {
     return null;
   }
-  SimpleFunctionDescriptor alreadyResolved=trace.get(BindingContext.FUNCTION,method.getPsi());
+  SimpleFunctionDescriptor alreadyResolved=cache.getMethod(method);
   if (alreadyResolved != null) {
     return alreadyResolved;
   }
@@ -36,8 +36,8 @@
     throw new IllegalStateException("Unknown class or namespace descriptor: " + ownerDescriptor);
   }
   functionDescriptorImpl.initialize(effectiveSignature.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),effectiveSignature.getTypeParameters(),effectiveSignature.getValueParameters(),effectiveSignature.getReturnType(),Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
-  if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION && record) {
-    BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,method.getPsi(),functionDescriptorImpl);
+  if (record) {
+    cache.recordMethod(method,functionDescriptorImpl);
   }
   if (!RawTypesCheck.hasRawTypesInHierarchicalSignature(method) && JavaMethodSignatureUtil.isMethodReturnTypeCompatible(method) && !containsErrorType(superFunctions,functionDescriptorImpl)) {
     if (signatureErrors.isEmpty()) {

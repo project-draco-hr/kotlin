@@ -3,7 +3,7 @@
   if (javaPackage != null) {
     FqName packageClassFqName=PackageClassUtils.getPackageClassFqName(fqName);
     VirtualFile virtualFile=virtualFileFinder.find(packageClassFqName);
-    trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.PROPER);
+    cache.recordProperNamespace(namespaceDescriptor);
     if (virtualFile != null) {
       ErrorReporter errorReporter=AbiVersionUtil.abiVersionErrorReporter(virtualFile,packageClassFqName,trace);
       JetScope kotlinPackageScope=deserializedDescriptorResolver.createKotlinPackageScope(namespaceDescriptor,virtualFile,errorReporter);
@@ -12,7 +12,7 @@
       }
     }
     if (record) {
-      trace.record(BindingContext.NAMESPACE,javaPackage.getPsi(),namespaceDescriptor);
+      cache.recordPackage(javaPackage,namespaceDescriptor);
     }
     return new JavaPackageScope(namespaceDescriptor,javaPackage,fqName,javaDescriptorResolver);
   }
@@ -26,9 +26,9 @@
   if (!hasStaticMembers(javaClass)) {
     return null;
   }
-  trace.record(JavaBindingContext.JAVA_NAMESPACE_KIND,namespaceDescriptor,JavaNamespaceKind.CLASS_STATICS);
+  cache.recordClassStaticMembersNamespace(namespaceDescriptor);
   if (record) {
-    trace.record(BindingContext.NAMESPACE,javaClass.getPsi(),namespaceDescriptor);
+    cache.recordPackage(javaClass,namespaceDescriptor);
   }
   return new JavaClassStaticMembersScope(namespaceDescriptor,fqName,javaClass,javaDescriptorResolver);
 }
