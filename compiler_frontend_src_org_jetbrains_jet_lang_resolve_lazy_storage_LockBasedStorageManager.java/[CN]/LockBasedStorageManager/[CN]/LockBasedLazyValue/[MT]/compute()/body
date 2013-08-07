@@ -1,12 +1,18 @@
 {
   Object _value=value;
-  if (_value != null)   return Nulls.unescape(_value);
+  if (_value != null)   return WrappedValues.unescapeExceptionOrNull(_value);
 synchronized (lock) {
     _value=value;
-    if (_value != null)     return Nulls.unescape(_value);
-    T typedValue=computable.compute();
-    value=Nulls.escape(typedValue);
-    postCompute(typedValue);
-    return typedValue;
+    if (_value != null)     return WrappedValues.unescapeExceptionOrNull(_value);
+    try {
+      T typedValue=computable.compute();
+      value=WrappedValues.escapeNull(typedValue);
+      postCompute(typedValue);
+      return typedValue;
+    }
+ catch (    Throwable throwable) {
+      value=WrappedValues.escapeThrowable(throwable);
+      throw ExceptionUtils.rethrow(throwable);
+    }
   }
 }
