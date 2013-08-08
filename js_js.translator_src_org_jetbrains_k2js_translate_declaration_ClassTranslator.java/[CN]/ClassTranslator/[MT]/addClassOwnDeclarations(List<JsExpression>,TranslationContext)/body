@@ -2,11 +2,14 @@
   final List<JsPropertyInitializer> properties=new SmartList<JsPropertyInitializer>();
   final List<JsPropertyInitializer> staticProperties;
   boolean isTopLevelDeclaration=context() == declarationContext;
+  final JsNameRef qualifiedReference;
   if (!isTopLevelDeclaration) {
     staticProperties=null;
+    qualifiedReference=null;
   }
  else   if (descriptor.getKind().isObject()) {
     staticProperties=null;
+    qualifiedReference=null;
     declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
       @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
         return createPlace(properties,context().getThisObject(descriptor));
@@ -15,10 +18,11 @@
 );
   }
  else {
+    qualifiedReference=getQualifiedReference(declarationContext,descriptor);
     staticProperties=new SmartList<JsPropertyInitializer>();
     declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
       @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
-        return createPlace(staticProperties,getQualifiedReference(declarationContext,descriptor));
+        return createPlace(staticProperties,qualifiedReference);
       }
     }
 );
@@ -26,7 +30,7 @@
   if (!isTrait()) {
     JsFunction initializer=new ClassInitializerTranslator(classDeclaration,declarationContext).generateInitializeMethod();
     if (context().isEcma5()) {
-      jsClassDeclaration.getArguments().add(initializer.getBody().getStatements().isEmpty() ? JsLiteral.NULL : initializer);
+      invocationArguments.add(initializer.getBody().getStatements().isEmpty() ? JsLiteral.NULL : initializer);
     }
  else {
       properties.add(new JsPropertyInitializer(Namer.initializeMethodReference(),initializer));
@@ -39,9 +43,18 @@
   }
   boolean hasStaticProperties=staticProperties != null && !staticProperties.isEmpty();
   if (!properties.isEmpty() || hasStaticProperties) {
-    jsClassDeclaration.getArguments().add(properties.isEmpty() ? JsLiteral.NULL : new JsObjectLiteral(properties,true));
+    if (properties.isEmpty()) {
+      invocationArguments.add(JsLiteral.NULL);
+    }
+ else {
+      if (qualifiedReference != null) {
+        invocationArguments.add(new JsDocComment("lends",new JsNameRef("prototype",qualifiedReference)));
+      }
+      invocationArguments.add(new JsObjectLiteral(properties,true));
+    }
   }
   if (hasStaticProperties) {
-    jsClassDeclaration.getArguments().add(new JsObjectLiteral(staticProperties,true));
+    invocationArguments.add(new JsDocComment("lends",qualifiedReference));
+    invocationArguments.add(new JsObjectLiteral(staticProperties,true));
   }
 }
