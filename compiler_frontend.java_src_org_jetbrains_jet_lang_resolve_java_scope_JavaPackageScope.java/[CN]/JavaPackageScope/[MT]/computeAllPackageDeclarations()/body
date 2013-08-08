@@ -1,23 +1,23 @@
 {
   Collection<DeclarationDescriptor> result=Sets.newHashSet();
   for (  JavaPackage subPackage : javaPackage.getSubPackages()) {
-    NamespaceDescriptor childNs=javaDescriptorResolver.resolveNamespace(subPackage.getFqName(),IGNORE_KOTLIN_SOURCES);
+    NamespaceDescriptor childNs=memberResolver.resolveNamespace(subPackage.getFqName(),IGNORE_KOTLIN_SOURCES);
     if (childNs != null) {
       result.add(childNs);
     }
   }
   for (  JavaClass javaClass : DescriptorResolverUtils.filterDuplicateClasses(javaPackage.getClasses())) {
     if (DescriptorResolverUtils.isCompiledKotlinPackageClass(javaClass.getPsi()))     continue;
-    if (isKotlinLightClass(javaClass))     continue;
-    if (!javaClass.getPsi().hasModifierProperty(PsiModifier.PUBLIC))     continue;
+    if (javaClass.getPsi() instanceof JetJavaMirrorMarker)     continue;
+    if (javaClass.getVisibility() != Visibilities.PUBLIC)     continue;
     ProgressIndicatorProvider.checkCanceled();
     FqName fqName=javaClass.getFqName();
     if (fqName == null)     continue;
-    ClassDescriptor classDescriptor=javaDescriptorResolver.resolveClass(fqName,IGNORE_KOTLIN_SOURCES);
+    ClassDescriptor classDescriptor=memberResolver.resolveClass(fqName,IGNORE_KOTLIN_SOURCES);
     if (classDescriptor != null) {
       result.add(classDescriptor);
     }
-    NamespaceDescriptor namespace=javaDescriptorResolver.resolveNamespace(fqName,IGNORE_KOTLIN_SOURCES);
+    NamespaceDescriptor namespace=memberResolver.resolveNamespace(fqName,IGNORE_KOTLIN_SOURCES);
     if (namespace != null) {
       result.add(namespace);
     }
