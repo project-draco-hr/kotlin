@@ -1,0 +1,23 @@
+{
+  if (!(refTarget instanceof JetSimpleNameExpression))   return;
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)refTarget.getContainingFile()).getBindingContext();
+  DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetSimpleNameExpression)refTarget);
+  if (!(descriptor instanceof FunctionDescriptor))   return;
+  FunctionDescriptor functionDescriptor=(FunctionDescriptor)descriptor;
+  ReceiverParameterDescriptor receiverParameterDescriptor=functionDescriptor.getReceiverParameter();
+  if (receiverParameterDescriptor == null)   return;
+  JetType receiverType=receiverParameterDescriptor.getType();
+  ClassifierDescriptor receiverDescriptor=receiverType.getConstructor().getDeclarationDescriptor();
+  if (!(receiverDescriptor instanceof ClassDescriptor))   return;
+  PsiElement originalMethod=parameters.getMethod();
+  if (originalMethod instanceof JetClsMethod) {
+    originalMethod=((JetClsMethod)originalMethod).getOrigin();
+  }
+  DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,originalMethod);
+  if (declarationDescriptor == null)   return;
+  DeclarationDescriptor containingDescriptor=declarationDescriptor.getContainingDeclaration();
+  if (!(containingDescriptor instanceof ClassDescriptor))   return;
+  if (DescriptorUtils.isSubclass((ClassDescriptor)containingDescriptor,(ClassDescriptor)receiverDescriptor)) {
+    consumer.process(ref);
+  }
+}
