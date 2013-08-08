@@ -1,26 +1,26 @@
 {
   boolean[] result=new boolean[1];
-  TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace,"trace to resolve as variable",nameExpression);
-  JetType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
+  TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as variable",nameExpression);
+  JetType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceTraceAndCache(temporaryForVariable),result);
   if (result[0]) {
-    traceForVariable.commit();
+    temporaryForVariable.commit();
     if (type instanceof NamespaceType && context.expressionPosition == ExpressionPosition.FREE) {
       type=null;
     }
     return JetTypeInfo.create(type,context.dataFlowInfo);
   }
   Call call=CallMaker.makeCall(nameExpression,receiver,callOperationNode,nameExpression,Collections.<ValueArgument>emptyList());
-  TemporaryBindingTrace traceForFunction=TemporaryBindingTrace.create(context.trace,"trace to resolve as function",nameExpression);
-  ResolutionContext newContext=context.replaceResolveMode(ResolveMode.TOP_LEVEL_CALL).replaceResolutionResultsCache();
+  TemporaryTraceAndCache temporaryForFunction=TemporaryTraceAndCache.create(context,"trace to resolve as function",nameExpression);
+  ResolutionContext newContext=context.replaceTraceAndCache(temporaryForFunction);
   ResolvedCall<FunctionDescriptor> resolvedCall=getResolvedCallForFunction(call,nameExpression,newContext,CheckValueArgumentsMode.ENABLED,result);
   if (result[0]) {
     FunctionDescriptor functionDescriptor=resolvedCall != null ? resolvedCall.getResultingDescriptor() : null;
-    traceForFunction.commit();
+    temporaryForFunction.commit();
     boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
     context.trace.report(FUNCTION_CALL_EXPECTED.on(nameExpression,nameExpression,hasValueParameters));
     type=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
     return JetTypeInfo.create(type,context.dataFlowInfo);
   }
-  traceForVariable.commit();
+  temporaryForVariable.commit();
   return JetTypeInfo.create(null,context.dataFlowInfo);
 }

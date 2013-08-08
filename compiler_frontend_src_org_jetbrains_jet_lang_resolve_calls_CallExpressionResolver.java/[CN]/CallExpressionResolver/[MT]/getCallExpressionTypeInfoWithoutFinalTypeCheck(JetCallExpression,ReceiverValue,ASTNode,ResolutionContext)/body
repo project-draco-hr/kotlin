@@ -1,11 +1,11 @@
 {
   boolean[] result=new boolean[1];
   Call call=CallMaker.makeCall(receiver,callOperationNode,callExpression);
-  TemporaryBindingTrace traceForFunction=TemporaryBindingTrace.create(context.trace,"trace to resolve as function call",callExpression);
-  ResolvedCallWithTrace<FunctionDescriptor> resolvedCall=getResolvedCallForFunction(call,callExpression,context.replaceBindingTrace(traceForFunction),CheckValueArgumentsMode.ENABLED,result);
+  TemporaryTraceAndCache temporaryForFunction=TemporaryTraceAndCache.create(context,"trace to resolve as function call",callExpression);
+  ResolvedCallWithTrace<FunctionDescriptor> resolvedCall=getResolvedCallForFunction(call,callExpression,context.replaceTraceAndCache(temporaryForFunction),CheckValueArgumentsMode.ENABLED,result);
   if (result[0]) {
     FunctionDescriptor functionDescriptor=resolvedCall != null ? resolvedCall.getResultingDescriptor() : null;
-    traceForFunction.commit();
+    temporaryForFunction.commit();
     if (callExpression.getValueArgumentList() == null && callExpression.getFunctionLiteralArguments().isEmpty()) {
       boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
       context.trace.report(FUNCTION_CALL_EXPECTED.on(callExpression,callExpression,hasValueParameters));
@@ -18,14 +18,14 @@
   }
   JetExpression calleeExpression=callExpression.getCalleeExpression();
   if (calleeExpression instanceof JetSimpleNameExpression && callExpression.getTypeArgumentList() == null) {
-    TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace,"trace to resolve as variable with 'invoke' call",callExpression);
-    JetType type=getVariableType((JetSimpleNameExpression)calleeExpression,receiver,callOperationNode,context.replaceBindingTrace(traceForVariable),result);
+    TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as variable with 'invoke' call",callExpression);
+    JetType type=getVariableType((JetSimpleNameExpression)calleeExpression,receiver,callOperationNode,context.replaceTraceAndCache(temporaryForVariable),result);
     if (result[0]) {
-      traceForVariable.commit();
+      temporaryForVariable.commit();
       context.trace.report(FUNCTION_EXPECTED.on((JetReferenceExpression)calleeExpression,calleeExpression,type != null ? type : ErrorUtils.createErrorType("")));
       return JetTypeInfo.create(null,context.dataFlowInfo);
     }
   }
-  traceForFunction.commit();
+  temporaryForFunction.commit();
   return JetTypeInfo.create(null,context.dataFlowInfo);
 }

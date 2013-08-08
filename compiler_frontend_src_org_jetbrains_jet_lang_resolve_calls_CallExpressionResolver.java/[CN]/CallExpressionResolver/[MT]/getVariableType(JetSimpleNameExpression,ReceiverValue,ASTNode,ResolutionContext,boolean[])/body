@@ -1,20 +1,20 @@
 {
-  TemporaryBindingTrace traceForVariable=TemporaryBindingTrace.create(context.trace,"trace to resolve as local variable or property",nameExpression);
+  TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as local variable or property",nameExpression);
   CallResolver callResolver=expressionTypingServices.getCallResolver();
   Call call=CallMaker.makePropertyCall(receiver,callOperationNode,nameExpression);
-  BasicCallResolutionContext contextForVariable=BasicCallResolutionContext.create(context.replaceBindingTrace(traceForVariable).replaceResolveMode(ResolveMode.TOP_LEVEL_CALL).replaceResolutionResultsCache(),call,CheckValueArgumentsMode.ENABLED);
+  BasicCallResolutionContext contextForVariable=BasicCallResolutionContext.create(context.replaceTraceAndCache(temporaryForVariable),call,CheckValueArgumentsMode.ENABLED);
   OverloadResolutionResults<VariableDescriptor> resolutionResult=callResolver.resolveSimpleProperty(contextForVariable);
   if (!resolutionResult.isNothing()) {
-    traceForVariable.commit();
+    temporaryForVariable.commit();
     checkSuper(receiver,resolutionResult,context.trace,nameExpression);
     result[0]=true;
     return resolutionResult.isSingleResult() ? resolutionResult.getResultingDescriptor().getReturnType() : null;
   }
   ResolutionContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
-  TemporaryBindingTrace traceForNamespaceOrClassObject=TemporaryBindingTrace.create(context.trace,"trace to resolve as namespace or class object",nameExpression);
-  JetType jetType=lookupNamespaceOrClassObject(nameExpression,newContext.replaceBindingTrace(traceForNamespaceOrClassObject));
+  TemporaryTraceAndCache temporaryForNamespaceOrClassObject=TemporaryTraceAndCache.create(context,"trace to resolve as namespace or class object",nameExpression);
+  JetType jetType=lookupNamespaceOrClassObject(nameExpression,newContext.replaceTraceAndCache(temporaryForNamespaceOrClassObject));
   if (jetType != null) {
-    traceForNamespaceOrClassObject.commit();
+    temporaryForNamespaceOrClassObject.commit();
     context.trace.record(RESOLUTION_SCOPE,nameExpression,context.scope);
     if (context.dataFlowInfo.hasTypeInfoConstraints()) {
       context.trace.record(NON_DEFAULT_EXPRESSION_DATA_FLOW,nameExpression,context.dataFlowInfo);
@@ -22,6 +22,7 @@
     result[0]=true;
     return jetType;
   }
+  temporaryForVariable.commit();
   result[0]=false;
   return null;
 }
