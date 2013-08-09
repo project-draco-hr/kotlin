@@ -7,6 +7,20 @@
     @Override public JetExpression visitExpression(    JetExpression expression,    Void data){
       return expression;
     }
+    @Override public JetExpression visitParenthesizedExpression(    JetParenthesizedExpression expression,    Void data){
+      return expression.getExpression();
+    }
+    @Override public JetExpression visitPrefixExpression(    JetPrefixExpression expression,    Void data){
+      JetExpression baseExpression=JetPsiUtil.getBaseExpressionIfLabeledExpression(expression);
+      return baseExpression != null ? baseExpression : expression;
+    }
+    @Override public JetExpression visitBinaryExpression(    JetBinaryExpression expression,    Void data){
+      IElementType operationType=expression.getOperationReference().getReferencedNameElementType();
+      if (OperatorConventions.COMPARISON_OPERATIONS.contains(operationType)) {
+        return null;
+      }
+      return super.visitBinaryExpression(expression,data);
+    }
   }
 ;
   return expression.accept(selectorExpressionFinder,null);

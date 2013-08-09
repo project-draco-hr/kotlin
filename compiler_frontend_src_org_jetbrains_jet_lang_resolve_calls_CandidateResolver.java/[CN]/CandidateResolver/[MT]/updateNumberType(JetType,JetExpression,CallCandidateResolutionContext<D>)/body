@@ -1,0 +1,12 @@
+{
+  if (expression == null)   return;
+  BindingContextUtils.updateRecordedType(numberType,expression,context.trace,false);
+  if (!(expression instanceof JetConstantExpression)) {
+    updateNumberType(numberType,JetPsiUtil.deparenthesizeWithNoTypeResolution(expression,false),context);
+    return;
+  }
+  CompileTimeConstant<?> constant=new CompileTimeConstantResolver().getCompileTimeConstant((JetConstantExpression)expression,numberType);
+  if (!(constant instanceof ErrorValue)) {
+    context.trace.record(BindingContext.COMPILE_TIME_VALUE,expression,constant);
+  }
+}
