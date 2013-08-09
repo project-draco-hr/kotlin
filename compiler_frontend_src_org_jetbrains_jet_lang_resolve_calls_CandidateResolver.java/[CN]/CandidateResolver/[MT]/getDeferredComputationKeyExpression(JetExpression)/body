@@ -14,9 +14,19 @@
       JetExpression baseExpression=JetPsiUtil.getBaseExpressionIfLabeledExpression(expression);
       return baseExpression != null ? baseExpression : expression;
     }
-    @Override public JetExpression visitBinaryExpression(    JetBinaryExpression expression,    Void data){
+    @Override public JetExpression visitBlockExpression(    JetBlockExpression expression,    Void data){
+      JetElement lastStatement=JetPsiUtil.getLastStatementInABlock(expression);
+      if (lastStatement != null) {
+        return lastStatement.accept(this,data);
+      }
+      return expression;
+    }
+    @SuppressWarnings("SuspiciousMethodCalls") @Override public JetExpression visitBinaryExpression(    JetBinaryExpression expression,    Void data){
       IElementType operationType=expression.getOperationReference().getReferencedNameElementType();
       if (OperatorConventions.COMPARISON_OPERATIONS.contains(operationType)) {
+        return null;
+      }
+      if (OperatorConventions.ASSIGNMENT_OPERATIONS.containsKey(operationType)) {
         return null;
       }
       return super.visitBinaryExpression(expression,data);
