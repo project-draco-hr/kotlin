@@ -1,5 +1,5 @@
 {
-  if (expression instanceof JetBinaryExpressionWithTypeRHS) {
+  if (deparenthesizeBinaryExpressionWithTypeRHS && expression instanceof JetBinaryExpressionWithTypeRHS) {
     JetBinaryExpressionWithTypeRHS binaryExpression=(JetBinaryExpressionWithTypeRHS)expression;
     JetSimpleNameExpression operationSign=binaryExpression.getOperationReference();
     if (JetTokens.COLON.equals(operationSign.getReferencedNameElementType())) {
@@ -11,16 +11,14 @@
     }
   }
  else   if (expression instanceof JetPrefixExpression) {
-    if (JetTokens.LABELS.contains(((JetPrefixExpression)expression).getOperationReference().getReferencedNameElementType())) {
-      JetExpression baseExpression=((JetPrefixExpression)expression).getBaseExpression();
-      if (baseExpression != null) {
-        expression=baseExpression;
-      }
+    JetExpression baseExpression=getBaseExpressionIfLabeledExpression((JetPrefixExpression)expression);
+    if (baseExpression != null) {
+      expression=baseExpression;
     }
   }
   if (expression instanceof JetParenthesizedExpression) {
     JetExpression innerExpression=((JetParenthesizedExpression)expression).getExpression();
-    return innerExpression != null ? deparenthesizeWithResolutionStrategy(innerExpression,typeResolutionStrategy) : null;
+    return innerExpression != null ? deparenthesizeWithResolutionStrategy(innerExpression,deparenthesizeBinaryExpressionWithTypeRHS,typeResolutionStrategy) : null;
   }
   return expression;
 }
