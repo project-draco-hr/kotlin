@@ -1,0 +1,16 @@
+{
+  this.resolveSession=resolveSession;
+  this.additionalResolveCache=CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<MemoizedFunctionToNotNull<JetElement,BindingContext>>(){
+    @Nullable @Override public Result<MemoizedFunctionToNotNull<JetElement,BindingContext>> compute(){
+      StorageManager manager=ResolveElementCache.this.resolveSession.getStorageManager();
+      MemoizedFunctionToNotNull<JetElement,BindingContext> elementsCacheFunction=manager.createMemoizedFunction(new com.intellij.util.Function<JetElement,BindingContext>(){
+        @Override public BindingContext fun(        JetElement jetElement){
+          return elementAdditionalResolve(jetElement);
+        }
+      }
+,StorageManager.ReferenceKind.WEAK);
+      return Result.create(elementsCacheFunction,PsiModificationTracker.MODIFICATION_COUNT);
+    }
+  }
+,false);
+}

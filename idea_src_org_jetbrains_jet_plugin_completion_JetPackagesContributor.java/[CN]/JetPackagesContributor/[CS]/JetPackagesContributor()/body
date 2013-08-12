@@ -12,16 +12,21 @@
         if (name == null) {
           return;
         }
-        int prefixLength=parameters.getOffset() - simpleNameReference.getExpression().getTextOffset();
-        result=result.withPrefixMatcher(new PlainPrefixMatcher(name.substring(0,prefixLength)));
-        CancelableResolveSession resolveSession=WholeProjectAnalyzerFacade.getLazyResolveResultForFile((JetFile)simpleNameReference.getExpression().getContainingFile());
-        BindingContext bindingContext=resolveSession.resolveToElement(simpleNameReference.getExpression());
-        for (        LookupElement variant : DescriptorLookupConverter.collectLookupElements(resolveSession,bindingContext,TipsManager.getPackageReferenceVariants(simpleNameReference.getExpression(),bindingContext))) {
-          if (!variant.getLookupString().contains(DUMMY_IDENTIFIER)) {
-            result.addElement(variant);
+        try {
+          int prefixLength=parameters.getOffset() - simpleNameReference.getExpression().getTextOffset();
+          result=result.withPrefixMatcher(new PlainPrefixMatcher(name.substring(0,prefixLength)));
+          CancelableResolveSession resolveSession=WholeProjectAnalyzerFacade.getLazyResolveResultForFile((JetFile)simpleNameReference.getExpression().getContainingFile());
+          BindingContext bindingContext=resolveSession.resolveToElement(simpleNameReference.getExpression());
+          for (          LookupElement variant : DescriptorLookupConverter.collectLookupElements(resolveSession,bindingContext,TipsManager.getPackageReferenceVariants(simpleNameReference.getExpression(),bindingContext))) {
+            if (!variant.getLookupString().contains(DUMMY_IDENTIFIER)) {
+              result.addElement(variant);
+            }
           }
+          result.stopHere();
         }
-        result.stopHere();
+ catch (        ProcessCanceledException e) {
+          throw CompletionProgressIndicatorUtil.rethrowWithCancelIndicator(e);
+        }
       }
     }
   }
