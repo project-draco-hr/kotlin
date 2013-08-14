@@ -1,0 +1,25 @@
+{
+  ClassDescriptor descriptor=getClassDescriptor(context().bindingContext(),declaration);
+  JsExpression value;
+  if (descriptor.getModality() == Modality.FINAL) {
+    value=new ClassTranslator(declaration,classDescriptorToQualifiedLabel,context).translate();
+  }
+ else {
+    String label=localLabelGenerator.generate();
+    JsName name=dummyFunction.getScope().declareName(label);
+    JsNameRef qualifiedLabel=openClassDescriptorToQualifiedLabel.get(descriptor);
+    if (qualifiedLabel == null) {
+      qualifiedLabel=new JsNameRef(name);
+      openClassDescriptorToQualifiedLabel.put(descriptor,qualifiedLabel);
+    }
+ else {
+      qualifiedLabel.resolve(name);
+    }
+    qualifiedLabel.setQualifier(declarationsObjectRef);
+    OpenClassInfo item=new OpenClassInfo((JetClass)declaration,descriptor,name.makeRef());
+    openList.add(item);
+    openClassDescriptorToItem.put(descriptor,item);
+    value=qualifiedLabel;
+  }
+  return InitializerUtils.createPropertyInitializer(descriptor,value,context());
+}
