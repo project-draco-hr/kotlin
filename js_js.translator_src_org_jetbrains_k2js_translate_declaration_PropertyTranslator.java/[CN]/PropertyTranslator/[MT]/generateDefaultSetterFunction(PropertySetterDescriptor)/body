@@ -2,6 +2,15 @@
   JsFunction fun=new JsFunction(context().getScopeForDescriptor(setterDescriptor.getContainingDeclaration()));
   JsParameter defaultParameter=new JsParameter(propertyAccessContext(setterDescriptor).scope().declareTemporary());
   fun.getParameters().add(defaultParameter);
-  fun.setBody(new JsBlock(assignmentToBackingField(context(),descriptor,defaultParameter.getName().makeRef()).makeStmt()));
+  JsExpression setExpression;
+  ResolvedCall<FunctionDescriptor> delegatedCall=bindingContext().get(BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL,setterDescriptor);
+  JsNameRef defaultParameterRef=defaultParameter.getName().makeRef();
+  if (delegatedCall != null) {
+    setExpression=getDelegateCall(delegatedCall,getDelegateCallArgs(defaultParameterRef));
+  }
+ else {
+    setExpression=assignmentToBackingField(context(),descriptor,defaultParameterRef);
+  }
+  fun.setBody(new JsBlock(setExpression.makeStmt()));
   return fun;
 }

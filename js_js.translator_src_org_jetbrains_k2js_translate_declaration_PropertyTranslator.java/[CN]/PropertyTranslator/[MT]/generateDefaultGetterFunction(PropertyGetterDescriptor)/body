@@ -1,5 +1,11 @@
 {
-  JsFunction fun=new JsFunction(context().getScopeForDescriptor(descriptor.getContainingDeclaration()));
-  fun.setBody(new JsBlock(new JsReturn(backingFieldReference(context(),this.descriptor))));
-  return fun;
+  JsExpression value;
+  ResolvedCall<FunctionDescriptor> delegatedCall=bindingContext().get(BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL,getterDescriptor);
+  if (delegatedCall != null) {
+    value=getDelegateCall(delegatedCall,getDelegateCallArgs(null));
+  }
+ else {
+    value=backingFieldReference(context(),this.descriptor);
+  }
+  return simpleReturnFunction(context().getScopeForDescriptor(getterDescriptor.getContainingDeclaration()),value);
 }
