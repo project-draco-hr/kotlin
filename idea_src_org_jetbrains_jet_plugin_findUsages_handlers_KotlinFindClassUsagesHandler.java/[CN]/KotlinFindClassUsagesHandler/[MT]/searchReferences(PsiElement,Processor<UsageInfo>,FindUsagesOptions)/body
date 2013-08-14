@@ -1,6 +1,13 @@
 {
   KotlinClassFindUsagesOptions kotlinOptions=(KotlinClassFindUsagesOptions)options;
   JetClass jetClass=(JetClass)element;
+  PsiClass lightClass=ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>(){
+    @Override public PsiClass compute(){
+      return LightClassUtil.getPsiClass(getElement());
+    }
+  }
+);
+  if (lightClass == null)   return true;
   if (kotlinOptions.isUsages || kotlinOptions.searchConstructorUsages) {
     Collection<PsiReference> references=ReferencesSearch.search(new ReferencesSearch.SearchParameters(jetClass,kotlinOptions.searchScope,false)).findAll();
     for (    PsiReference ref : references) {
@@ -10,5 +17,5 @@
       processor.process(new UsageInfo(ref.getElement(),rangeInElement.getStartOffset(),rangeInElement.getEndOffset(),false));
     }
   }
-  return true;
+  return processDeclarationsUsages(jetClass,processor,kotlinOptions);
 }
