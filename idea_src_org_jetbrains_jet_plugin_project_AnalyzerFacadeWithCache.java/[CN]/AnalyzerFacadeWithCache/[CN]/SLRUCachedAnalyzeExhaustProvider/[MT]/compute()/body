@@ -1,0 +1,23 @@
+{
+  SLRUCache<JetFile,AnalyzeExhaust> cache=new SLRUCache<JetFile,AnalyzeExhaust>(3,8){
+    @NotNull @Override public AnalyzeExhaust createValue(    JetFile file){
+      try {
+        if (DumbService.isDumb(file.getProject())) {
+          return emptyExhaust();
+        }
+        ApplicationUtils.warnTimeConsuming(LOG);
+        AnalyzeExhaust analyzeExhaustHeaders=analyzeHeadersWithCacheOnFile(file);
+        return analyzeBodies(analyzeExhaustHeaders,file);
+      }
+ catch (      ProcessCanceledException e) {
+        throw e;
+      }
+catch (      Throwable e) {
+        handleError(e);
+        return emptyExhaustWithDiagnosticOnFile(file,e);
+      }
+    }
+  }
+;
+  return Result.create(cache,PsiModificationTracker.MODIFICATION_COUNT);
+}
