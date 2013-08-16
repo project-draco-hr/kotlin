@@ -1,12 +1,17 @@
 {
-  JsStatement currentVar=newVar(parameterName,itemValue);
-  JsStatement realBody=translateOriginalBodyExpression();
-  if (realBody instanceof JsBlock) {
-    JsBlock block=(JsBlock)realBody;
-    block.getStatements().add(0,currentVar);
-    return block;
+  JsStatement realBody=Translation.translateAsStatement(getLoopBody(expression),context());
+  if (itemValue == null && !parameterIsMultiDeclaration()) {
+    return realBody;
   }
  else {
-    return new JsBlock(currentVar,realBody);
+    JsStatement currentVarInit=makeCurrentVarInit(itemValue);
+    if (realBody instanceof JsBlock) {
+      JsBlock block=(JsBlock)realBody;
+      block.getStatements().add(0,currentVarInit);
+      return block;
+    }
+ else {
+      return new JsBlock(currentVarInit,realBody);
+    }
   }
 }
