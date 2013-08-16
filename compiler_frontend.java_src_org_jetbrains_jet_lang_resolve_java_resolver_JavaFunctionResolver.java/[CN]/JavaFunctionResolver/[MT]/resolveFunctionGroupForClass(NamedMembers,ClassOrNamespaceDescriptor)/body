@@ -1,15 +1,21 @@
 {
   Name methodName=members.getName();
-  Set<SimpleFunctionDescriptor> functionsFromCurrent=Sets.newHashSet();
+  Set<SimpleFunctionDescriptor> functionsFromCurrent=new HashSet<SimpleFunctionDescriptor>();
   for (  JavaMethod method : members.getMethods()) {
     SimpleFunctionDescriptor function=resolveMethodToFunctionDescriptor(method,owner,true);
     if (function != null) {
       functionsFromCurrent.add(function);
-      ContainerUtil.addIfNotNull(functionsFromCurrent,resolveSamAdapter(function));
+      SimpleFunctionDescriptor samAdapter=resolveSamAdapter(function);
+      if (samAdapter != null) {
+        functionsFromCurrent.add(samAdapter);
+      }
     }
   }
   if (owner instanceof NamespaceDescriptor) {
-    ContainerUtil.addIfNotNull(functionsFromCurrent,resolveSamConstructor((NamespaceDescriptor)owner,members));
+    SamConstructorDescriptor samConstructor=resolveSamConstructor((NamespaceDescriptor)owner,members);
+    if (samConstructor != null) {
+      functionsFromCurrent.add(samConstructor);
+    }
   }
   Set<FunctionDescriptor> functions=new HashSet<FunctionDescriptor>();
   if (owner instanceof ClassDescriptor) {
