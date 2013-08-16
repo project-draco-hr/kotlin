@@ -1,2 +1,28 @@
 {
+  if (block.isEmpty()) {
+    return JetTypeInfo.create(KotlinBuiltIns.getInstance().getUnitType(),context.dataFlowInfo);
+  }
+  ExpressionTypingInternals blockLevelVisitor=ExpressionTypingVisitorDispatcher.createForBlock(scope);
+  ExpressionTypingContext newContext=createContext(context,trace,scope,context.dataFlowInfo,NO_EXPECTED_TYPE);
+  JetTypeInfo result=JetTypeInfo.create(null,context.dataFlowInfo);
+  for (Iterator<? extends JetElement> iterator=block.iterator(); iterator.hasNext(); ) {
+    JetElement statement=iterator.next();
+    if (!(statement instanceof JetExpression)) {
+      continue;
+    }
+    trace.record(STATEMENT,statement);
+    JetExpression statementExpression=(JetExpression)statement;
+    if (!iterator.hasNext()) {
+      result=getTypeOfLastExpressionInBlock(statementExpression,newContext.replaceExpectedType(context.expectedType),coercionStrategyForLastExpression,blockLevelVisitor);
+    }
+ else {
+      result=blockLevelVisitor.getTypeInfo(statementExpression,newContext.replaceContextDependency(ContextDependency.INDEPENDENT),true);
+    }
+    DataFlowInfo newDataFlowInfo=result.getDataFlowInfo();
+    if (newDataFlowInfo != context.dataFlowInfo) {
+      newContext=newContext.replaceDataFlowInfo(newDataFlowInfo);
+    }
+    blockLevelVisitor=ExpressionTypingVisitorDispatcher.createForBlock(scope);
+  }
+  return result;
 }
