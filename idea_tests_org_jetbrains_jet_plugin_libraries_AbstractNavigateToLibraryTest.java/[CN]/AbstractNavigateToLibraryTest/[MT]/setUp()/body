@@ -2,15 +2,11 @@
   super.setUp();
   final VirtualFile baseDir=getProject().getBaseDir();
   assertNotNull(baseDir);
-  ApplicationManager.getApplication().runWriteAction(new Runnable(){
-    @Override public void run(){
-      try {
-        libraryDir=baseDir.createChildDirectory(this,"lib");
-        baseDir.createChildDirectory(this,SRC_DIR_NAME);
-      }
- catch (      IOException e) {
-        throw new RuntimeException(e);
-      }
+  final VirtualFile libraryDir=ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile,IOException>(){
+    @Override public VirtualFile compute() throws IOException {
+      VirtualFile libraryDir=baseDir.createChildDirectory(this,"lib");
+      baseDir.createChildDirectory(this,SRC_DIR_NAME);
+      return libraryDir;
     }
   }
 );
@@ -24,7 +20,7 @@
     }
   }
 );
-  librarySourceDir=LocalFileSystem.getInstance().findFileByPath(SOURCES_PATH);
+  final VirtualFile librarySourceDir=LocalFileSystem.getInstance().findFileByPath(SOURCES_PATH);
   assertNotNull(librarySourceDir);
   FileUtil.copyDir(getTempDirWithCompiled(),new File(libraryDir.getPath()));
   ((NewVirtualFile)baseDir).markDirtyRecursively();
