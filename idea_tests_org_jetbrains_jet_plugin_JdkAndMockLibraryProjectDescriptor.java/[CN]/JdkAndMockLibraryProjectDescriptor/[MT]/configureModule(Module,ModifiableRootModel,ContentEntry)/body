@@ -1,0 +1,39 @@
+{
+  try {
+    File compiledDir=compileTestLibrary(sourcesPath);
+    final VirtualFile baseDir=module.getProject().getBaseDir();
+    assertNotNull(baseDir);
+    VirtualFile libraryDir=ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile,IOException>(){
+      @Override public VirtualFile compute() throws IOException {
+        VirtualFile libraryDir=baseDir.createChildDirectory(this,"lib");
+        baseDir.createChildDirectory(this,"src");
+        return libraryDir;
+      }
+    }
+);
+    VirtualFile testDataDir=LocalFileSystem.getInstance().findFileByPath(sourcesPath).getParent();
+    assertNotNull(testDataDir);
+    VfsUtilCore.visitChildrenRecursively(testDataDir,new VirtualFileVisitor(){
+      @Override public boolean visitFile(      @NotNull VirtualFile file){
+        file.getChildren();
+        file.refresh(false,true);
+        return true;
+      }
+    }
+);
+    VirtualFile librarySourceDir=LocalFileSystem.getInstance().findFileByPath(sourcesPath);
+    assertNotNull(librarySourceDir);
+    FileUtil.copyDir(compiledDir,new File(libraryDir.getPath()));
+    ((NewVirtualFile)baseDir).markDirtyRecursively();
+    baseDir.refresh(false,true);
+    Library.ModifiableModel libraryModel=model.getModuleLibraryTable().getModifiableModel().createLibrary("myKotlinLib").getModifiableModel();
+    libraryModel.addRoot(libraryDir,OrderRootType.CLASSES);
+    if (withSources) {
+      libraryModel.addRoot(librarySourceDir,OrderRootType.SOURCES);
+    }
+    libraryModel.commit();
+  }
+ catch (  IOException e) {
+    throw new AssertionError(e);
+  }
+}
