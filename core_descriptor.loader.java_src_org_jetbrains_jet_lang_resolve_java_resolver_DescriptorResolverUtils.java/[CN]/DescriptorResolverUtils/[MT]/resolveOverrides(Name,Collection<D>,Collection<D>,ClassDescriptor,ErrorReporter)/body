@@ -2,7 +2,12 @@
   final Set<D> result=new HashSet<D>();
   OverridingUtil.generateOverridesInFunctionGroup(name,membersFromSupertypes,membersFromCurrent,classDescriptor,new OverridingUtil.DescriptorSink(){
     @Override @SuppressWarnings("unchecked") public void addToScope(    @NotNull CallableMemberDescriptor fakeOverride){
-      visibilityResolver.resolveUnknownVisibilityForMember(fakeOverride);
+      OverridingUtil.resolveUnknownVisibilityForMember(fakeOverride,new OverridingUtil.NotInferredVisibilitySink(){
+        @Override public void cannotInferVisibility(        @NotNull CallableMemberDescriptor descriptor){
+          errorReporter.reportCannotInferVisibility(descriptor);
+        }
+      }
+);
       result.add((D)fakeOverride);
     }
     @Override public void conflict(    @NotNull CallableMemberDescriptor fromSuper,    @NotNull CallableMemberDescriptor fromCurrent){
