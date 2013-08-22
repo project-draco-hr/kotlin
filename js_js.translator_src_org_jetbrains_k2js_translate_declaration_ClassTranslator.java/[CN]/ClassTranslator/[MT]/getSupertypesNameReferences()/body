@@ -3,34 +3,27 @@
   if (supertypes.isEmpty()) {
     return Collections.emptyList();
   }
-  JsExpression base=null;
-  List<JsExpression> list=null;
-  for (  JetType type : supertypes) {
-    ClassDescriptor result=getClassDescriptorForType(type);
-    if (isNotAny(result) && !AnnotationsUtils.isNativeObject(result)) {
-switch (result.getKind()) {
-case CLASS:
-        base=getClassReference(result);
-      break;
-case TRAIT:
-    if (list == null) {
-      list=new ArrayList<JsExpression>();
+  if (supertypes.size() == 1) {
+    JetType type=supertypes.iterator().next();
+    ClassDescriptor supertypeDescriptor=getClassDescriptorForType(type);
+    if (isAny(supertypeDescriptor)) {
+      return Collections.emptyList();
     }
-  list.add(getClassReference(result));
-break;
-case ENUM_CLASS:
-base=getClassReference(result);
-break;
-default :
-throw new UnsupportedOperationException("unsupported super class kind " + result.getKind().name());
-}
-}
-}
-if (list == null) {
-return base == null ? Collections.<JsExpression>emptyList() : Collections.singletonList(base);
-}
- else if (base != null) {
-list.add(0,base);
-}
-return list;
+    return Collections.<JsExpression>singletonList(getClassReference(supertypeDescriptor));
+  }
+  Set<TypeConstructor> supertypeConstructors=new HashSet<TypeConstructor>();
+  for (  JetType type : supertypes) {
+    supertypeConstructors.add(type.getConstructor());
+  }
+  List<TypeConstructor> sortedAllSuperTypes=topologicallySortSuperclassesAndRecordAllInstances(descriptor.getDefaultType(),new HashMap<TypeConstructor,Set<JetType>>(),new HashSet<TypeConstructor>());
+  List<JsExpression> supertypesRefs=new ArrayList<JsExpression>();
+  for (  TypeConstructor typeConstructor : sortedAllSuperTypes) {
+    if (supertypeConstructors.contains(typeConstructor)) {
+      ClassDescriptor supertypeDescriptor=getClassDescriptorForTypeConstructor(typeConstructor);
+      if (!isAny(supertypeDescriptor)) {
+        supertypesRefs.add(getClassReference(supertypeDescriptor));
+      }
+    }
+  }
+  return supertypesRefs;
 }
