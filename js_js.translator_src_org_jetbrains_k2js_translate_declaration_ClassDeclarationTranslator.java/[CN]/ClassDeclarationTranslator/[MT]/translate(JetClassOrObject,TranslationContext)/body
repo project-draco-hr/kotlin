@@ -5,7 +5,7 @@
     value=new ClassTranslator(declaration,classDescriptorToQualifiedLabel,context).translate();
   }
  else {
-    String label=localLabelGenerator.generate();
+    String label=createNameForClass(descriptor);
     JsName name=dummyFunction.getScope().declareName(label);
     JsNameRef qualifiedLabel=openClassDescriptorToQualifiedLabel.get(descriptor);
     if (qualifiedLabel == null) {
@@ -20,6 +20,9 @@
     openList.add(item);
     openClassDescriptorToItem.put(descriptor,item);
     value=qualifiedLabel;
+    if (!descriptor.getVisibility().isPublicAPI()) {
+      return null;
+    }
   }
   return InitializerUtils.createPropertyInitializer(descriptor,value,context());
 }
