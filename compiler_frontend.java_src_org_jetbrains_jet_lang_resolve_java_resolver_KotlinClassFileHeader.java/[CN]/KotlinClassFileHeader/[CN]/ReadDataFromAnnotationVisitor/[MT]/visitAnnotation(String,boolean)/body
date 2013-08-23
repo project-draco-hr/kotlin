@@ -1,17 +1,15 @@
 {
-  for (  HeaderType headerType : HeaderType.values()) {
-    JvmClassName annotation=headerType.correspondingAnnotation;
-    if (annotation == null) {
-      continue;
-    }
-    if (desc.equals(annotation.getDescriptor())) {
-      if (type != HeaderType.NONE) {
-        throw new IllegalStateException("Both " + type.correspondingAnnotation + " and "+ headerType.correspondingAnnotation+ " present!");
-      }
-      type=headerType;
-    }
+  HeaderType headerTypeByAnnotation=HeaderType.byDescriptor(desc);
+  if (headerTypeByAnnotation == HeaderType.NONE) {
+    return null;
   }
-  if (type == HeaderType.NONE) {
+  if (headerTypeByAnnotation.isValidAnnotation() && type.isValidAnnotation()) {
+    throw new IllegalStateException("Both " + type.correspondingAnnotation + " and "+ headerTypeByAnnotation.correspondingAnnotation+ " present!");
+  }
+  if (!type.isValidAnnotation()) {
+    type=headerTypeByAnnotation;
+  }
+  if (!headerTypeByAnnotation.isValidAnnotation()) {
     return null;
   }
   return new AnnotationVisitor(Opcodes.ASM4){
@@ -19,7 +17,7 @@
       if (name.equals(JvmAnnotationNames.ABI_VERSION_FIELD_NAME)) {
         version=(Integer)value;
       }
- else       if (AbiVersionUtil.isAbiVersionCompatible(version)) {
+ else       if (isAbiVersionCompatible(version)) {
         throw new IllegalStateException("Unexpected argument " + name + " for annotation "+ desc);
       }
     }
@@ -27,7 +25,7 @@
       if (name.equals(JvmAnnotationNames.DATA_FIELD_NAME)) {
         return stringArrayVisitor();
       }
- else       if (AbiVersionUtil.isAbiVersionCompatible(version)) {
+ else       if (isAbiVersionCompatible(version)) {
         throw new IllegalStateException("Unexpected array argument " + name + " for annotation "+ desc);
       }
       return super.visitArray(name);
