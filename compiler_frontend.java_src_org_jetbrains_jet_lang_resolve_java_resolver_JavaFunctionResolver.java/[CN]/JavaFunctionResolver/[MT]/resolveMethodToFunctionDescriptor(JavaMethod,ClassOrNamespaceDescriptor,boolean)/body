@@ -1,20 +1,20 @@
 {
-  PsiMethodWrapper method=new PsiMethodWrapper(javaMethod.getPsi());
-  if (!DescriptorResolverUtils.isCorrectOwnerForEnumMember(ownerDescriptor,method.getPsiMember())) {
+  if (!DescriptorResolverUtils.isCorrectOwnerForEnumMember(ownerDescriptor,method)) {
     return null;
   }
-  PsiType returnPsiType=method.getReturnType();
+  PsiMethod psiMethod=method.getPsi();
+  PsiType returnPsiType=psiMethod.getReturnType();
   if (returnPsiType == null) {
     return null;
   }
-  PsiMethod psiMethod=method.getPsiMethod();
-  if (trace.get(BindingContext.FUNCTION,psiMethod) != null) {
-    return trace.get(BindingContext.FUNCTION,psiMethod);
+  SimpleFunctionDescriptor alreadyResolved=trace.get(BindingContext.FUNCTION,psiMethod);
+  if (alreadyResolved != null) {
+    return alreadyResolved;
   }
-  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(ownerDescriptor,annotationResolver.resolveAnnotations(psiMethod),Name.identifier(method.getName()),CallableMemberDescriptor.Kind.DECLARATION);
+  SimpleFunctionDescriptorImpl functionDescriptorImpl=new SimpleFunctionDescriptorImpl(ownerDescriptor,annotationResolver.resolveAnnotations(psiMethod),method.getName(),CallableMemberDescriptor.Kind.DECLARATION);
   List<TypeParameterDescriptor> methodTypeParameters=signatureResolver.resolveMethodTypeParameters(method,functionDescriptorImpl);
-  TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl,"method " + method.getName() + " in class "+ psiMethod.getContainingClass());
-  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=parameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method.getParameters(),methodTypeVariableResolver);
+  TypeVariableResolver methodTypeVariableResolver=new TypeVariableResolver(methodTypeParameters,functionDescriptorImpl,"method " + method.getName() + " in class "+ method.getContainingClass());
+  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=parameterResolver.resolveParameterDescriptors(functionDescriptorImpl,method.getValueParameters(),methodTypeVariableResolver);
   JetType returnType=makeReturnType(returnPsiType,method,methodTypeVariableResolver);
   List<String> signatureErrors=Lists.newArrayList();
   List<FunctionDescriptor> superFunctions;
@@ -38,7 +38,7 @@
  else   if (alternativeMethodSignatureData.hasErrors()) {
     signatureErrors.add(alternativeMethodSignatureData.getError());
   }
-  functionDescriptorImpl.initialize(valueParameterDescriptors.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameterDescriptors.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),DescriptorResolverUtils.resolveVisibility(psiMethod),false);
+  functionDescriptorImpl.initialize(valueParameterDescriptors.getReceiverType(),DescriptorUtils.getExpectedThisObjectIfNeeded(ownerDescriptor),methodTypeParameters,valueParameterDescriptors.getDescriptors(),returnType,Modality.convertFromFlags(method.isAbstract(),!method.isFinal()),method.getVisibility(),false);
   if (functionDescriptorImpl.getKind() == CallableMemberDescriptor.Kind.DECLARATION && record) {
     BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,psiMethod,functionDescriptorImpl);
   }

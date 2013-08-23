@@ -1,0 +1,18 @@
+{
+  String signature=SignaturesUtil.getKotlinSignature(field);
+  if (signature == null) {
+    setAnnotated(false);
+    return;
+  }
+  setAnnotated(true);
+  Project project=field.getPsi().getProject();
+  JetProperty altPropertyDeclaration=JetPsiFactory.createProperty(project,signature);
+  try {
+    checkForSyntaxErrors(altPropertyDeclaration);
+    checkFieldAnnotation(altPropertyDeclaration,field,isVar);
+    altReturnType=computeReturnType(originalReturnType,altPropertyDeclaration.getTypeRef(),new HashMap<TypeParameterDescriptor,TypeParameterDescriptorImpl>());
+  }
+ catch (  AlternativeSignatureMismatchException e) {
+    setError(e.getMessage());
+  }
+}

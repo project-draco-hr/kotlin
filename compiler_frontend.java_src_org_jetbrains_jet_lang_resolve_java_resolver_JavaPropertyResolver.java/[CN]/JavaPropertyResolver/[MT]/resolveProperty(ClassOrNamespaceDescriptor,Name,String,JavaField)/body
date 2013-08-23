@@ -1,0 +1,21 @@
+{
+  boolean isVar=!field.isFinal();
+  PropertyDescriptorImpl propertyDescriptor=createPropertyDescriptor(owner,propertyName,field,isVar);
+  propertyDescriptor.initialize(null,null);
+  TypeVariableResolver typeVariableResolverForPropertyInternals=new TypeVariableResolver(Collections.<TypeParameterDescriptor>emptyList(),propertyDescriptor,"property " + propertyName + " in "+ context);
+  JetType propertyType=getPropertyType(field,typeVariableResolverForPropertyInternals);
+  propertyType=getAlternativeSignatureData(isVar,field,propertyDescriptor,propertyType);
+  propertyDescriptor.setType(propertyType,Collections.<TypeParameterDescriptor>emptyList(),DescriptorUtils.getExpectedThisObjectIfNeeded(owner),(JetType)null);
+  trace.record(BindingContext.VARIABLE,field.getPsi(),propertyDescriptor);
+  trace.record(JavaBindingContext.IS_DECLARED_IN_JAVA,propertyDescriptor);
+  if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor)) {
+    PsiExpression initializer=field.getPsi().getInitializer();
+    if (initializer instanceof PsiLiteralExpression) {
+      CompileTimeConstant<?> constant=JavaCompileTimeConstResolver.resolveCompileTimeConstantValue(((PsiLiteralExpression)initializer).getValue(),propertyType);
+      if (constant != null) {
+        trace.record(BindingContext.COMPILE_TIME_INITIALIZER,propertyDescriptor,constant);
+      }
+    }
+  }
+  return propertyDescriptor;
+}

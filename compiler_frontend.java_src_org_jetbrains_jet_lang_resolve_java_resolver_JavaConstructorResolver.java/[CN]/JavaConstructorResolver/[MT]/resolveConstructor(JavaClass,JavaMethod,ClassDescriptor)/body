@@ -1,0 +1,22 @@
+{
+  ConstructorDescriptor alreadyResolved=trace.get(BindingContext.CONSTRUCTOR,constructor.getPsi());
+  if (alreadyResolved != null) {
+    return alreadyResolved;
+  }
+  ConstructorDescriptorImpl constructorDescriptor=new ConstructorDescriptorImpl(classDescriptor,Collections.<AnnotationDescriptor>emptyList(),false);
+  List<TypeParameterDescriptor> typeParameters=classDescriptor.getTypeConstructor().getParameters();
+  JavaDescriptorResolver.ValueParameterDescriptors valueParameterDescriptors=valueParameterResolver.resolveParameterDescriptors(constructorDescriptor,constructor.getValueParameters(),new TypeVariableResolver(typeParameters,classDescriptor,"constructor of class " + javaClass.getFqName()));
+  if (valueParameterDescriptors.getReceiverType() != null) {
+    throw new IllegalStateException();
+  }
+  AlternativeMethodSignatureData alternativeMethodSignatureData=new AlternativeMethodSignatureData(constructor,valueParameterDescriptors,null,Collections.<TypeParameterDescriptor>emptyList(),false);
+  if (alternativeMethodSignatureData.isAnnotated() && !alternativeMethodSignatureData.hasErrors()) {
+    valueParameterDescriptors=alternativeMethodSignatureData.getValueParameters();
+  }
+ else   if (alternativeMethodSignatureData.hasErrors()) {
+    trace.record(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,constructorDescriptor,Collections.singletonList(alternativeMethodSignatureData.getError()));
+  }
+  constructorDescriptor.initialize(typeParameters,valueParameterDescriptors.getDescriptors(),constructor.getVisibility(),javaClass.isStatic());
+  trace.record(BindingContext.CONSTRUCTOR,constructor.getPsi(),constructorDescriptor);
+  return constructorDescriptor;
+}
