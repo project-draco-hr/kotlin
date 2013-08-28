@@ -1,0 +1,16 @@
+{
+  if (resultingDescriptor == null)   return;
+  DeclarationDescriptor original=resultingDescriptor.getOriginal();
+  List<PsiElement> declarations=BindingContextUtils.descriptorToDeclarations(context,original);
+  for (  PsiElement declaration : declarations) {
+    results.add(new PsiElementResolveResult(declaration,true));
+  }
+  JetDeclaration declarationInDecompiledFile=DecompiledNavigationUtils.findDeclarationForReference(project,original);
+  if (declarationInDecompiledFile != null) {
+    results.add(new PsiElementResolveResult(declarationInDecompiledFile));
+  }
+  Collection<PsiElement> builtInSymbols=project.getComponent(BuiltInsReferenceResolver.class).resolveBuiltInSymbol(original);
+  for (  PsiElement symbol : builtInSymbols) {
+    results.add(new PsiElementResolveResult(symbol));
+  }
+}
