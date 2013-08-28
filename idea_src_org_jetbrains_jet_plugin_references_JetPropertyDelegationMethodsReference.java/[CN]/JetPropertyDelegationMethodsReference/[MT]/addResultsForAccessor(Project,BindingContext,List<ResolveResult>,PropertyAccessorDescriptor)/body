@@ -1,0 +1,18 @@
+{
+  if (accessor == null)   return;
+  ResolvedCall<FunctionDescriptor> resolvedCall=context.get(BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL,accessor);
+  if (resolvedCall == null)   return;
+  FunctionDescriptor resultingDescriptor=resolvedCall.getResultingDescriptor().getOriginal();
+  List<PsiElement> declarations=BindingContextUtils.descriptorToDeclarations(context,resultingDescriptor);
+  for (  PsiElement declaration : declarations) {
+    results.add(new PsiElementResolveResult(declaration,true));
+  }
+  JetDeclaration declarationInDecompiledFile=DecompiledNavigationUtils.findDeclarationForReference(project,resultingDescriptor);
+  if (declarationInDecompiledFile != null) {
+    results.add(new PsiElementResolveResult(declarationInDecompiledFile));
+  }
+  Collection<PsiElement> stdlibSymbols=project.getComponent(BuiltInsReferenceResolver.class).resolveStandardLibrarySymbol(resultingDescriptor);
+  for (  PsiElement symbol : stdlibSymbols) {
+    results.add(new PsiElementResolveResult(symbol));
+  }
+}
