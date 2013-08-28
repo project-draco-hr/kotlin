@@ -13,27 +13,25 @@
   }
   values.addAll(exactBounds);
   Pair<Collection<JetType>,Collection<JetType>> pair=TypeUtils.filterNumberTypes(typeConstraintsWithoutErrorTypes.getLowerBounds());
-  Collection<JetType> lowerBounds=pair.getFirst();
+  Collection<JetType> generalLowerBounds=pair.getFirst();
   Collection<JetType> numberLowerBounds=pair.getSecond();
-  JetType superTypeOfLowerBounds=commonSupertype(lowerBounds);
+  JetType superTypeOfLowerBounds=commonSupertype(generalLowerBounds);
   if (trySuggestion(superTypeOfLowerBounds,typeConstraints)) {
     return Collections.singleton(superTypeOfLowerBounds);
   }
-  addToValuesIfDifferent(superTypeOfLowerBounds,values);
+  ContainerUtil.addIfNotNull(superTypeOfLowerBounds,values);
   Collection<JetType> upperBounds=typeConstraintsWithoutErrorTypes.getUpperBounds();
   for (  JetType upperBound : upperBounds) {
     if (trySuggestion(upperBound,typeConstraints)) {
       return Collections.singleton(upperBound);
     }
   }
-  for (  JetType upperBound : typeConstraintsWithoutErrorTypes.getUpperBounds()) {
-    addToValuesIfDifferent(upperBound,values);
-  }
+  values.addAll(typeConstraintsWithoutErrorTypes.getUpperBounds());
   JetType superTypeOfNumberLowerBounds=commonSupertypeForNumberTypes(numberLowerBounds);
   if (trySuggestion(superTypeOfNumberLowerBounds,typeConstraints)) {
     return Collections.singleton(superTypeOfNumberLowerBounds);
   }
-  addToValuesIfDifferent(superTypeOfNumberLowerBounds,values);
+  ContainerUtil.addIfNotNull(superTypeOfNumberLowerBounds,values);
   if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
     JetType superTypeOfAllLowerBounds=commonSupertype(Lists.newArrayList(superTypeOfLowerBounds,superTypeOfNumberLowerBounds));
     if (trySuggestion(superTypeOfAllLowerBounds,typeConstraints)) {
