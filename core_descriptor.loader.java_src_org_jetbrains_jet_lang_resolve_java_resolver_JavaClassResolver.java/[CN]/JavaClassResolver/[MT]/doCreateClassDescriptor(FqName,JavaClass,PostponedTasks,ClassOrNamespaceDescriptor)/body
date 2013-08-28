@@ -8,16 +8,17 @@
   classDescriptor.setVisibility(javaClass.getVisibility());
   classDescriptor.setModality(determineClassModality(javaClass));
   classDescriptor.createTypeConstructor();
-  JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classDescriptor,javaClass,false,memberResolver);
+  JavaClassNonStaticMembersScope scope=new JavaClassNonStaticMembersScope(classDescriptor,javaClass,memberResolver);
   classDescriptor.setScopeForMemberLookup(scope);
   classDescriptor.setScopeForConstructorResolve(scope);
   typeParameterInitializer.initialize();
   List<TypeParameterDescriptor> classTypeParameters=classDescriptor.getTypeConstructor().getParameters();
   supertypes.addAll(supertypesResolver.getSupertypes(classDescriptor,javaClass,classTypeParameters));
   if (javaClass.isEnum()) {
-    ClassDescriptorFromJvmBytecode classObjectDescriptor=createClassObjectDescriptorForEnum(classDescriptor,javaClass);
-    cache(getFqNameForClassObject(javaClass),classObjectDescriptor);
-    classDescriptor.getBuilder().setClassObjectDescriptor(classObjectDescriptor);
+    JavaEnumClassObjectDescriptor enumClassObject=createEnumClassObject(classDescriptor,javaClass);
+    createEnumSyntheticMethods(enumClassObject,classDescriptor.getDefaultType());
+    cache(getFqNameForClassObject(javaClass),enumClassObject);
+    classDescriptor.getBuilder().setClassObjectDescriptor(enumClassObject);
   }
   classDescriptor.setAnnotations(annotationResolver.resolveAnnotations(javaClass,taskList));
   cache.recordClass(javaClass,classDescriptor);
