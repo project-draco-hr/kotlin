@@ -1,0 +1,39 @@
+{
+  Iterator<ValueParameterDescriptor> descriptors=functionDescriptor.getValueParameters().iterator();
+  List<JvmMethodParameterSignature> kotlinParameterTypes=jvmSignature.getKotlinParameterTypes();
+  for (int i=0; i < kotlinParameterTypes.size(); i++) {
+    JvmMethodParameterKind kind=kotlinParameterTypes.get(i).getKind();
+    if (kind == JvmMethodParameterKind.ENUM_NAME || kind == JvmMethodParameterKind.ENUM_ORDINAL) {
+      continue;
+    }
+    String name;
+    boolean nullableType;
+    if (kind == JvmMethodParameterKind.VALUE) {
+      ValueParameterDescriptor descriptor=descriptors.next();
+      name=descriptor.getName().asString();
+      nullableType=descriptor.getType().isNullable();
+    }
+ else {
+      String lowercaseKind=kind.name().toLowerCase();
+      if (needIndexForVar(kind)) {
+        name="$" + lowercaseKind + "$"+ i;
+      }
+ else {
+        name="$" + lowercaseKind;
+      }
+      if (kind == JvmMethodParameterKind.RECEIVER) {
+        ReceiverParameterDescriptor receiver=functionDescriptor.getReceiverParameter();
+        nullableType=receiver == null || receiver.getType().isNullable();
+      }
+ else {
+        nullableType=true;
+      }
+    }
+    AnnotationVisitor av=mv.visitParameterAnnotation(i,JvmClassName.byClass(JetValueParameter.class).getDescriptor(),true);
+    av.visit("name",name);
+    if (nullableType) {
+      av.visit("type","?");
+    }
+    av.visitEnd();
+  }
+}
