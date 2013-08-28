@@ -1,0 +1,22 @@
+{
+  Collection<KotlinProjectConfigurator> configurators=getApplicableConfigurators(project);
+  String links=StringUtil.join(configurators,new Function<KotlinProjectConfigurator,String>(){
+    @Override public String fun(    KotlinProjectConfigurator configurator){
+      return getLink(configurator);
+    }
+  }
+,"  ");
+  Notifications.Bus.notify(new Notification("Configure Kotlin","Kotlin file(s) found in your project.","Configure Kotlin:\n" + links,NotificationType.ERROR,new NotificationListener(){
+    @Override public void hyperlinkUpdate(    @NotNull Notification notification,    @NotNull HyperlinkEvent event){
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        KotlinProjectConfigurator configurator=getConfiguratorByName(event.getDescription());
+        if (configurator == null) {
+          throw new AssertionError("Missed action: " + event.getDescription());
+        }
+        configurator.configure(project);
+        notification.expire();
+      }
+    }
+  }
+),project);
+}
