@@ -1,17 +1,24 @@
 {
   for (  PsiMethod method : accessors) {
-    PsiMethod[] implementations=MethodImplementationsSearch.getMethodImplementations(method);
+    PsiMethod[] implementations=MethodImplementationsSearch.getMethodImplementations(method,scope);
     for (    PsiMethod implementation : implementations) {
       PsiElement mirrorElement=implementation instanceof JetClsMethod ? ((JetClsMethod)implementation).getOrigin() : null;
       if (mirrorElement instanceof JetProperty || mirrorElement instanceof JetParameter) {
-        consumer.process(mirrorElement);
+        if (!consumer.process(mirrorElement)) {
+          return false;
+        }
       }
  else       if (mirrorElement instanceof JetPropertyAccessor && mirrorElement.getParent() instanceof JetProperty) {
-        consumer.process(mirrorElement.getParent());
+        if (!consumer.process(mirrorElement.getParent())) {
+          return false;
+        }
       }
  else {
-        consumer.process(implementation);
+        if (!consumer.process(implementation)) {
+          return false;
+        }
       }
     }
   }
+  return true;
 }

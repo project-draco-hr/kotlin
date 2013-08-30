@@ -1,8 +1,12 @@
 {
-  Project project=location.getProject();
+  Location location=context.getLocation();
+  if (location == null) {
+    return false;
+  }
+  Project project=context.getProject();
   PsiElement leaf=location.getPsiElement();
   if (!(leaf.getContainingFile() instanceof JetFile)) {
-    return null;
+    return false;
   }
   JetFile jetFile=(JetFile)leaf.getContainingFile();
   JetNamedFunction function=PsiTreeUtil.getParentOfType(leaf,JetNamedFunction.class,false);
@@ -14,8 +18,7 @@
         for (        PsiMethod method : delegate.getMethods()) {
           if (method.getNavigationElement() == function) {
             if (TestNGUtil.hasTest(method)) {
-              myElement=function;
-              return createRuntimeConfigSettings(location,context,project,delegate,method);
+              return configure(configuration,location,context,project,delegate,method);
             }
             break;
           }
@@ -28,12 +31,11 @@
     jetClass=JetJUnitConfigurationProducer.getClassDeclarationInFile(jetFile);
   }
   if (jetClass == null) {
-    return null;
+    return false;
   }
   PsiClass delegate=LightClassUtil.getPsiClass(jetClass);
   if (!isTestNGClass(delegate)) {
-    return null;
+    return false;
   }
-  myElement=jetClass;
-  return createRuntimeConfigSettings(location,context,project,delegate,null);
+  return configure(configuration,location,context,project,delegate,null);
 }
