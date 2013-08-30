@@ -3,7 +3,7 @@
   String text=expression.getNode().getText();
   KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
   CompileTimeConstantResolver compileTimeConstantResolver=context.getCompileTimeConstantResolver();
-  if (context.expectedType == UNKNOWN_EXPECTED_TYPE) {
+  if (noExpectedType(context.expectedType) && context.contextDependency == DEPENDENT) {
     if (elementType == JetNodeTypes.INTEGER_CONSTANT) {
       Long longValue=CompileTimeConstantResolver.parseLongValue(text);
       if (longValue != null) {
@@ -19,7 +19,7 @@
   }
   CompileTimeConstant<?> value=compileTimeConstantResolver.getCompileTimeConstant(expression,context.expectedType);
   if (value instanceof ErrorValue) {
-    if (context.expectedType != UNKNOWN_EXPECTED_TYPE) {
+    if (context.contextDependency == INDEPENDENT) {
       context.trace.report(ERROR_COMPILE_TIME_VALUE.on(expression,((ErrorValue)value).getMessage()));
     }
     return JetTypeInfo.create(getDefaultType(elementType),context.dataFlowInfo);
