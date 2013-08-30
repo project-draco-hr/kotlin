@@ -1,0 +1,54 @@
+{
+  String directives=diagnostics.get(DIAGNOSTICS_DIRECTIVE);
+  if (directives == null) {
+    return Conditions.alwaysTrue();
+  }
+  Condition<Diagnostic> condition=Conditions.alwaysTrue();
+  Matcher matcher=DIAGNOSTICS_PATTERN.matcher(directives);
+  if (!matcher.find()) {
+    Assert.fail("Wrong syntax in the '// DIAGNOSTICS: ...' directive:\n" + "found: '" + directives + "'\n"+ "Must be '([+-!]DIAGNOSTIC_FACTORY_NAME|ERROR|WARNING|INFO)+'\n"+ "where '+' means 'include'\n"+ "      '-' means 'exclude'\n"+ "      '!' means 'exclude everything but this'\n"+ "directives are applied in the order of appearance, i.e. !FOO +BAR means inluce only FOO and BAR");
+  }
+  boolean first=true;
+  do {
+    String operation=matcher.group(1);
+    final String name=matcher.group(2);
+    Condition<Diagnostic> newCondition;
+    if (ImmutableSet.of("ERROR","WARNING","INFO").contains(name)) {
+      final Severity severity=Severity.valueOf(name);
+      newCondition=new Condition<Diagnostic>(){
+        @Override public boolean value(        Diagnostic diagnostic){
+          return diagnostic.getSeverity() == severity;
+        }
+      }
+;
+    }
+ else {
+      newCondition=new Condition<Diagnostic>(){
+        @Override public boolean value(        Diagnostic diagnostic){
+          return name.equals(diagnostic.getFactory().getName());
+        }
+      }
+;
+    }
+    if ("!".equals(operation)) {
+      if (!first) {
+        Assert.fail("'" + operation + name+ "' appears in a position rather than the first one, "+ "which effectively cancels all the previous filters in this directive");
+      }
+      condition=newCondition;
+    }
+ else     if ("+".equals(operation)) {
+      condition=Conditions.or(condition,newCondition);
+    }
+ else     if ("-".equals(operation)) {
+      condition=Conditions.and(condition,Conditions.not(newCondition));
+    }
+    first=false;
+  }
+ while (matcher.find());
+  return Conditions.or(condition,new Condition<Diagnostic>(){
+    @Override public boolean value(    Diagnostic diagnostic){
+      return DIAGNOSTICS_TO_INCLUDE_ANYWAY.contains(diagnostic.getFactory());
+    }
+  }
+);
+}
