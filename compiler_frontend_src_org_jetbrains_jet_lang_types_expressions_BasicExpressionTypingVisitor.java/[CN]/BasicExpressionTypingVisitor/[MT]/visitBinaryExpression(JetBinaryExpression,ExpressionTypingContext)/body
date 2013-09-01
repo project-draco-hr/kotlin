@@ -1,21 +1,20 @@
 {
-  ExpressionTypingContext independentContext=context.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE);
+  ExpressionTypingContext context=contextWithExpectedType.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
   IElementType operationType=operationSign.getReferencedNameElementType();
-  JetType result=null;
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  JetTypeInfo result;
   if (operationType == JetTokens.IDENTIFIER) {
     Name referencedName=operationSign.getReferencedNameAsName();
-    JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,referencedName,context,expression);
-    result=typeInfo.getType();
-    dataFlowInfo=typeInfo.getDataFlowInfo();
+    result=getTypeInfoForBinaryCall(referencedName,contextWithExpectedType,expression);
   }
  else   if (OperatorConventions.BINARY_OPERATION_NAMES.containsKey(operationType)) {
-    JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,OperatorConventions.BINARY_OPERATION_NAMES.get(operationType),context,expression);
-    result=typeInfo.getType();
-    dataFlowInfo=typeInfo.getDataFlowInfo();
+    Name referencedName=OperatorConventions.BINARY_OPERATION_NAMES.get(operationType);
+    result=getTypeInfoForBinaryCall(referencedName,contextWithExpectedType,expression);
+  }
+ else   if (operationType == JetTokens.ELVIS) {
+    return visitElvisExpression(expression,contextWithExpectedType);
   }
  else   if (operationType == JetTokens.EQ) {
     result=visitAssignment(expression,context);
@@ -24,85 +23,24 @@
     result=visitAssignmentOperation(expression,context);
   }
  else   if (OperatorConventions.COMPARISON_OPERATIONS.contains(operationType)) {
-    JetTypeInfo typeInfo=getTypeInfoForBinaryCall(context.scope,OperatorConventions.COMPARE_TO,independentContext,expression);
-    dataFlowInfo=typeInfo.getDataFlowInfo();
-    JetType compareToReturnType=typeInfo.getType();
-    if (compareToReturnType != null && !ErrorUtils.isErrorType(compareToReturnType)) {
-      TypeConstructor constructor=compareToReturnType.getConstructor();
-      KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
-      TypeConstructor intTypeConstructor=builtIns.getInt().getTypeConstructor();
-      if (constructor.equals(intTypeConstructor)) {
-        result=builtIns.getBooleanType();
-      }
- else {
-        context.trace.report(COMPARE_TO_TYPE_MISMATCH.on(operationSign,compareToReturnType));
-      }
-    }
+    result=visitComparison(expression,context,operationSign);
+  }
+ else   if (OperatorConventions.EQUALS_OPERATIONS.contains(operationType)) {
+    result=visitEquality(expression,context,operationSign,left,right);
+  }
+ else   if (operationType == JetTokens.EQEQEQ || operationType == JetTokens.EXCLEQEQEQ) {
+    ensureNonemptyIntersectionOfOperandTypes(expression,context);
+    result=JetTypeInfo.create(KotlinBuiltIns.getInstance().getBooleanType(),context.dataFlowInfo);
+  }
+ else   if (OperatorConventions.IN_OPERATIONS.contains(operationType)) {
+    result=checkInExpression(expression,operationSign,left,right,context);
+  }
+ else   if (OperatorConventions.BOOLEAN_OPERATIONS.containsKey(operationType)) {
+    result=visitBooleanOperationExpression(operationType,left,right,context);
   }
  else {
-    JetType booleanType=KotlinBuiltIns.getInstance().getBooleanType();
-    if (OperatorConventions.EQUALS_OPERATIONS.contains(operationType)) {
-      if (right != null && left != null) {
-        ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,independentContext);
-        JetTypeInfo leftTypeInfo=getTypeInfoOrNullType(left,independentContext,facade);
-        dataFlowInfo=leftTypeInfo.getDataFlowInfo();
-        ExpressionTypingContext contextWithDataFlow=independentContext.replaceDataFlowInfo(dataFlowInfo);
-        OverloadResolutionResults<FunctionDescriptor> resolutionResults=resolveFakeCall(contextWithDataFlow,receiver,OperatorConventions.EQUALS,KotlinBuiltIns.getInstance().getNullableAnyType());
-        dataFlowInfo=facade.getTypeInfo(right,contextWithDataFlow).getDataFlowInfo();
-        if (resolutionResults.isSuccess()) {
-          FunctionDescriptor equals=resolutionResults.getResultingCall().getResultingDescriptor();
-          context.trace.record(REFERENCE_TARGET,operationSign,equals);
-          context.trace.record(RESOLVED_CALL,operationSign,resolutionResults.getResultingCall());
-          if (ensureBooleanResult(operationSign,OperatorConventions.EQUALS,equals.getReturnType(),context)) {
-            ensureNonemptyIntersectionOfOperandTypes(expression,independentContext);
-          }
-        }
- else {
-          if (resolutionResults.isAmbiguity()) {
-            context.trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(operationSign,resolutionResults.getResultingCalls()));
-          }
- else {
-            context.trace.report(EQUALS_MISSING.on(operationSign));
-          }
-        }
-      }
-      result=booleanType;
-    }
- else     if (operationType == JetTokens.EQEQEQ || operationType == JetTokens.EXCLEQEQEQ) {
-      ensureNonemptyIntersectionOfOperandTypes(expression,independentContext);
-      result=booleanType;
-    }
- else     if (OperatorConventions.IN_OPERATIONS.contains(operationType)) {
-      if (right == null) {
-        return JetTypeInfo.create(null,dataFlowInfo);
-      }
-      JetTypeInfo typeInfo=checkInExpression(expression,expression.getOperationReference(),left,right,independentContext);
-      dataFlowInfo=typeInfo.getDataFlowInfo();
-      result=typeInfo.getType();
-    }
- else     if (OperatorConventions.BOOLEAN_OPERATIONS.containsKey(operationType)) {
-      JetTypeInfo leftTypeInfo=getTypeInfoOrNullType(left,independentContext,facade);
-      JetType leftType=leftTypeInfo.getType();
-      dataFlowInfo=leftTypeInfo.getDataFlowInfo();
-      WritableScopeImpl leftScope=newWritableScopeImpl(context,"Left scope of && or ||");
-      DataFlowInfo flowInfoLeft=DataFlowUtils.extractDataFlowInfoFromCondition(left,operationType == JetTokens.ANDAND,context).and(dataFlowInfo);
-      WritableScopeImpl rightScope=operationType == JetTokens.ANDAND ? leftScope : newWritableScopeImpl(context,"Right scope of && or ||");
-      ExpressionTypingContext contextForRightExpr=independentContext.replaceDataFlowInfo(flowInfoLeft).replaceScope(rightScope);
-      JetType rightType=right != null ? facade.getTypeInfo(right,contextForRightExpr).getType() : null;
-      if (left != null && leftType != null && !isBoolean(leftType)) {
-        context.trace.report(TYPE_MISMATCH.on(left,booleanType,leftType));
-      }
-      if (rightType != null && !isBoolean(rightType)) {
-        context.trace.report(TYPE_MISMATCH.on(right,booleanType,rightType));
-      }
-      result=booleanType;
-    }
- else     if (operationType == JetTokens.ELVIS) {
-      return visitElvisExpression(expression,context);
-    }
- else {
-      context.trace.report(UNSUPPORTED.on(operationSign,"Unknown operation"));
-    }
+    context.trace.report(UNSUPPORTED.on(operationSign,"Unknown operation"));
+    result=JetTypeInfo.create(null,context.dataFlowInfo);
   }
-  return DataFlowUtils.checkType(result,expression,context,dataFlowInfo);
+  return DataFlowUtils.checkType(result.getType(),expression,contextWithExpectedType,result.getDataFlowInfo());
 }

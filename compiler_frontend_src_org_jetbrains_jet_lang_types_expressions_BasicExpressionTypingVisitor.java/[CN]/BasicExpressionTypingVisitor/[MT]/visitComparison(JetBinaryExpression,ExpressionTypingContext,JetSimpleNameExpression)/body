@@ -1,0 +1,18 @@
+{
+  JetTypeInfo typeInfo=getTypeInfoForBinaryCall(OperatorConventions.COMPARE_TO,context,expression);
+  DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
+  JetType compareToReturnType=typeInfo.getType();
+  JetType type=null;
+  if (compareToReturnType != null && !ErrorUtils.isErrorType(compareToReturnType)) {
+    TypeConstructor constructor=compareToReturnType.getConstructor();
+    KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
+    TypeConstructor intTypeConstructor=builtIns.getInt().getTypeConstructor();
+    if (constructor.equals(intTypeConstructor)) {
+      type=builtIns.getBooleanType();
+    }
+ else {
+      context.trace.report(COMPARE_TO_TYPE_MISMATCH.on(operationSign,compareToReturnType));
+    }
+  }
+  return JetTypeInfo.create(type,dataFlowInfo);
+}
