@@ -1,5 +1,5 @@
 {
-  ExpressionTypingContext context=contextWithExpectedType.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE);
+  ExpressionTypingContext context=isBinaryExpressionDependentOnExpectedType(expression) ? contextWithExpectedType : contextWithExpectedType.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE);
   JetSimpleNameExpression operationSign=expression.getOperationReference();
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
@@ -7,14 +7,14 @@
   JetTypeInfo result;
   if (operationType == JetTokens.IDENTIFIER) {
     Name referencedName=operationSign.getReferencedNameAsName();
-    result=getTypeInfoForBinaryCall(referencedName,contextWithExpectedType,expression);
+    result=getTypeInfoForBinaryCall(referencedName,context,expression);
   }
  else   if (OperatorConventions.BINARY_OPERATION_NAMES.containsKey(operationType)) {
     Name referencedName=OperatorConventions.BINARY_OPERATION_NAMES.get(operationType);
-    result=getTypeInfoForBinaryCall(referencedName,contextWithExpectedType,expression);
+    result=getTypeInfoForBinaryCall(referencedName,context,expression);
   }
  else   if (operationType == JetTokens.ELVIS) {
-    return visitElvisExpression(expression,contextWithExpectedType);
+    return visitElvisExpression(expression,context);
   }
  else   if (operationType == JetTokens.EQ) {
     result=visitAssignment(expression,context);
