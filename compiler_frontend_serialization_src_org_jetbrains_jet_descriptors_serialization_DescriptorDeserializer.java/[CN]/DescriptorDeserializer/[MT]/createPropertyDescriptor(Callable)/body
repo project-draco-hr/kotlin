@@ -1,2 +1,17 @@
 {
+  int flags=proto.getFlags();
+  Name name=nameResolver.getName(proto.getName());
+  List<AnnotationDescriptor> annotations=getAnnotations(proto,flags,AnnotatedCallableKind.PROPERTY);
+  Visibility visibility=visibility(Flags.VISIBILITY.get(flags));
+  Callable.CallableKind callableKind=Flags.CALLABLE_KIND.get(flags);
+  if (callableKind == Callable.CallableKind.OBJECT_PROPERTY) {
+    FqNameUnsafe fqName=DescriptorUtils.getFQName(containingDeclaration).child(name);
+    ClassId objectId=ClassId.fromFqNameAndContainingDeclaration(fqName,(ClassOrNamespaceDescriptor)containingDeclaration);
+    ClassDescriptor objectClass=typeDeserializer.getDescriptorFinder().findClass(objectId);
+    if (objectClass == null) {
+      objectClass=ErrorUtils.createErrorClass(objectId.asSingleFqName().asString());
+    }
+    return new PropertyDescriptorForObjectImpl(containingDeclaration,annotations,visibility,name,objectClass);
+  }
+  return new PropertyDescriptorImpl(containingDeclaration,annotations,modality(Flags.MODALITY.get(flags)),visibility,callableKind == Callable.CallableKind.VAR,name,memberKind(Flags.MEMBER_KIND.get(flags)));
 }
