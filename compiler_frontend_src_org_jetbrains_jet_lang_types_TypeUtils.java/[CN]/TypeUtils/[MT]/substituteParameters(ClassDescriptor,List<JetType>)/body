@@ -1,13 +1,9 @@
 {
-  List<TypeParameterDescriptor> clazzTypeParameters=clazz.getTypeConstructor().getParameters();
-  if (clazzTypeParameters.size() != actualTypeParameters.size()) {
-    throw new IllegalArgumentException("type parameter counts do not match: " + clazz + ", "+ actualTypeParameters);
+  List<TypeProjection> projections=ContainerUtil.map(typeArguments,new com.intellij.util.Function<JetType,TypeProjection>(){
+    @Override public TypeProjection fun(    JetType type){
+      return new TypeProjection(type);
+    }
   }
-  Map<TypeConstructor,TypeProjection> substitutions=Maps.newHashMap();
-  for (int i=0; i < clazzTypeParameters.size(); ++i) {
-    TypeConstructor typeConstructor=clazzTypeParameters.get(i).getTypeConstructor();
-    TypeProjection typeProjection=new TypeProjection(actualTypeParameters.get(i));
-    substitutions.put(typeConstructor,typeProjection);
-  }
-  return TypeSubstitutor.create(substitutions).substitute(clazz.getDefaultType(),Variance.INVARIANT);
+);
+  return substituteProjectionsForParameters(clazz,projections);
 }
