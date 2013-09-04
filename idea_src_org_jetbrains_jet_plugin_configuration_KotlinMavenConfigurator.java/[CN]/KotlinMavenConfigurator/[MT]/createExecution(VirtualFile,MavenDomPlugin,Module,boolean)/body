@@ -1,0 +1,26 @@
+{
+  MavenDomPluginExecution execution=kotlinPlugin.getExecutions().addExecution();
+  String tagValue=isTest ? "test-compile" : "compile";
+  execution.getId().setStringValue(tagValue);
+  if (hasJavaFiles(module)) {
+    execution.getPhase().setStringValue(isTest ? "process-test-sources" : "process-sources");
+  }
+ else {
+    execution.getPhase().setStringValue(tagValue);
+  }
+  createTagIfNeeded(execution.getGoals(),"goal",tagValue);
+  XmlTag sourcesTag=createTagIfNeeded(execution.getConfiguration(),"sourceDirs","");
+  for (  ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+    SourceFolder[] folders=contentEntry.getSourceFolders();
+    for (    SourceFolder sourceFolder : folders) {
+      if (isTest && sourceFolder.isTestSource() || !isTest && !sourceFolder.isTestSource()) {
+        VirtualFile sourceFolderFile=sourceFolder.getFile();
+        if (sourceFolderFile != null) {
+          String relativePath=VfsUtilCore.getRelativePath(sourceFolderFile,virtualFile.getParent(),'/');
+          XmlTag newTag=sourcesTag.createChildTag("source",sourcesTag.getNamespace(),relativePath,false);
+          sourcesTag.addSubTag(newTag,true);
+        }
+      }
+    }
+  }
+}
