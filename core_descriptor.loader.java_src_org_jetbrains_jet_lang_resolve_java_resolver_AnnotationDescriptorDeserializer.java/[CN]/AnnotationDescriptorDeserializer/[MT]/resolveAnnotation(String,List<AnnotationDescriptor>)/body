@@ -1,2 +1,43 @@
 {
+  if (ignoreAnnotation(desc))   return null;
+  FqName annotationFqName=convertJvmDescriptorToFqName(desc);
+  final ClassDescriptor annotationClass=resolveAnnotationClass(annotationFqName);
+  final AnnotationDescriptor annotation=new AnnotationDescriptor();
+  annotation.setAnnotationType(annotationClass.getDefaultType());
+  return new AnnotationVisitor(Opcodes.ASM4){
+    @Override public void visit(    String name,    Object value){
+      CompileTimeConstant<?> argument=JavaAnnotationArgumentResolver.resolveCompileTimeConstantValue(value,null);
+      setArgumentValueByName(name,argument != null ? argument : new ErrorValue("Unsupported annotation argument: " + name));
+    }
+    @Override public void visitEnum(    String name,    String desc,    String value){
+      FqName fqName=convertJvmDescriptorToFqName(desc);
+      setArgumentValueByName(name,enumEntryValue(fqName,Name.identifier(value)));
+    }
+    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull FqName enumFqName,    @NotNull Name name){
+      ClassDescriptor enumClass=javaClassResolver.resolveClass(enumFqName,IGNORE_KOTLIN_SOURCES);
+      if (enumClass != null && enumClass.getKind() == ClassKind.ENUM_CLASS) {
+        ClassDescriptor classObject=enumClass.getClassObjectDescriptor();
+        if (classObject != null) {
+          Collection<VariableDescriptor> properties=classObject.getDefaultType().getMemberScope().getProperties(name);
+          if (properties.size() == 1) {
+            VariableDescriptor property=properties.iterator().next();
+            if (property instanceof PropertyDescriptor) {
+              return new EnumValue((PropertyDescriptor)property);
+            }
+          }
+        }
+      }
+      return new ErrorValue("Unresolved enum entry: " + enumFqName + "."+ name);
+    }
+    @Override public void visitEnd(){
+      result.add(annotation);
+    }
+    private void setArgumentValueByName(    @NotNull String name,    @NotNull CompileTimeConstant<?> argumentValue){
+      ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(Name.identifier(name),annotationClass);
+      if (parameter != null) {
+        annotation.setValueArgument(parameter,argumentValue);
+      }
+    }
+  }
+;
 }
