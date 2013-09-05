@@ -1,4 +1,12 @@
 {
-  PsiClass psiClass=psiClassFinder.findPsiClass(fqName);
-  return psiClass == null ? null : new JavaClassImpl(psiClass);
+  PsiClass psiClass=javaFacade.findClass(fqName.asString(),javaSearchScope);
+  if (psiClass == null)   return null;
+  JavaClassImpl javaClass=new JavaClassImpl(psiClass);
+  if (!fqName.equals(javaClass.getFqName())) {
+    throw new IllegalStateException("Requested " + fqName + ", got "+ javaClass.getFqName());
+  }
+  if (javaClass.getOriginKind() == JavaClass.OriginKind.KOTLIN_LIGHT_CLASS) {
+    throw new IllegalStateException("Kotlin light classes should not be found by JavaPsiFacade, resolving: " + fqName);
+  }
+  return javaClass;
 }
