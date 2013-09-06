@@ -7,16 +7,21 @@
   if (allParametersReified(subtype))   return false;
   JetType subtypeWithVariables=TypeUtils.makeUnsubstitutedType(subtype.getConstructor(),ErrorUtils.createErrorScope("Scope for intermediate type. This type shouldn't be used outside isCastErased()",true));
   JetType supertypeWithVariables=TypeCheckingProcedure.findCorrespondingSupertype(subtypeWithVariables,supertype);
-  if (supertypeWithVariables == null)   return true;
   final List<TypeParameterDescriptor> variables=subtypeWithVariables.getConstructor().getParameters();
-  TypeUnifier.UnificationResult solution=TypeUnifier.unify(new TypeProjection(supertype),new TypeProjection(supertypeWithVariables),new Predicate<TypeConstructor>(){
-    @Override public boolean apply(    TypeConstructor typeConstructor){
-      ClassifierDescriptor descriptor=typeConstructor.getDeclarationDescriptor();
-      return descriptor instanceof TypeParameterDescriptor && variables.contains(descriptor);
+  Map<TypeConstructor,TypeProjection> substitution;
+  if (supertypeWithVariables != null) {
+    TypeUnifier.UnificationResult solution=TypeUnifier.unify(new TypeProjection(supertype),new TypeProjection(supertypeWithVariables),new Predicate<TypeConstructor>(){
+      @Override public boolean apply(      TypeConstructor typeConstructor){
+        ClassifierDescriptor descriptor=typeConstructor.getDeclarationDescriptor();
+        return descriptor instanceof TypeParameterDescriptor && variables.contains(descriptor);
+      }
     }
-  }
 );
-  Map<TypeConstructor,TypeProjection> substitution=Maps.newHashMap(solution.getSubstitution());
+    substitution=Maps.newHashMap(solution.getSubstitution());
+  }
+ else {
+    substitution=Maps.newHashMapWithExpectedSize(variables.size());
+  }
   for (  TypeParameterDescriptor variable : variables) {
     TypeProjection value=substitution.get(variable.getTypeConstructor());
     if (value == null) {
