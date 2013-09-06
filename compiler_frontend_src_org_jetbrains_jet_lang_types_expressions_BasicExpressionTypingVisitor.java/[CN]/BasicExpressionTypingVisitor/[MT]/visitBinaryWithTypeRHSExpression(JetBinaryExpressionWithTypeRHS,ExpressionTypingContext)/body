@@ -1,28 +1,2 @@
 {
-  ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
-  JetExpression left=expression.getLeft();
-  JetTypeReference right=expression.getRight();
-  if (right == null) {
-    JetTypeInfo leftTypeInfo=facade.getTypeInfo(left,contextWithNoExpectedType);
-    return JetTypeInfo.create(null,leftTypeInfo.getDataFlowInfo());
-  }
-  JetType targetType=context.expressionTypingServices.getTypeResolver().resolveType(context.scope,right,context.trace,true);
-  IElementType operationType=expression.getOperationReference().getReferencedNameElementType();
-  if (isTypeFlexible(left) || operationType == JetTokens.COLON) {
-    JetTypeInfo typeInfo=facade.getTypeInfo(left,contextWithNoExpectedType.replaceExpectedType(targetType));
-    checkBinaryWithTypeRHS(expression,context,targetType,typeInfo.getType());
-    return DataFlowUtils.checkType(targetType,expression,context,typeInfo.getDataFlowInfo());
-  }
-  JetTypeInfo typeInfo=facade.getTypeInfo(left,contextWithNoExpectedType);
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
-  if (typeInfo.getType() != null) {
-    checkBinaryWithTypeRHS(expression,contextWithNoExpectedType,targetType,typeInfo.getType());
-    dataFlowInfo=typeInfo.getDataFlowInfo();
-    if (operationType == JetTokens.AS_KEYWORD) {
-      DataFlowValue value=DataFlowValueFactory.INSTANCE.createDataFlowValue(left,typeInfo.getType(),context.trace.getBindingContext());
-      dataFlowInfo=dataFlowInfo.establishSubtyping(value,targetType);
-    }
-  }
-  JetType result=operationType == JetTokens.AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
-  return DataFlowUtils.checkType(result,expression,context,dataFlowInfo);
 }

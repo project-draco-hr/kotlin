@@ -1,5 +1,5 @@
 {
-  final JetType[] result=new JetType[1];
+  final PossiblyBareType[] result=new PossiblyBareType[1];
   if (typeElement != null) {
     typeElement.accept(new JetVisitorVoid(){
       @Override public void visitUserType(      JetUserType type){
@@ -18,10 +18,10 @@
           TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)classifierDescriptor;
           JetScope scopeForTypeParameter=getScopeForTypeParameter(c,typeParameterDescriptor);
           if (scopeForTypeParameter instanceof ErrorUtils.ErrorScope) {
-            result[0]=ErrorUtils.createErrorType("?");
+            result[0]=type(ErrorUtils.createErrorType("?"));
           }
  else {
-            result[0]=new JetTypeImpl(annotations,typeParameterDescriptor.getTypeConstructor(),TypeUtils.hasNullableLowerBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),scopeForTypeParameter);
+            result[0]=type(new JetTypeImpl(annotations,typeParameterDescriptor.getTypeConstructor(),TypeUtils.hasNullableLowerBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),scopeForTypeParameter));
           }
           resolveTypeProjections(c,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments());
           DeclarationDescriptor containing=typeParameterDescriptor.getContainingDeclaration();
@@ -37,26 +37,26 @@
           int expectedArgumentCount=parameters.size();
           int actualArgumentCount=arguments.size();
           if (ErrorUtils.isError(typeConstructor)) {
-            result[0]=ErrorUtils.createErrorType("[Error type: " + typeConstructor + "]");
+            result[0]=type(ErrorUtils.createErrorType("[Error type: " + typeConstructor + "]"));
           }
  else {
             if (actualArgumentCount != expectedArgumentCount) {
               if (actualArgumentCount == 0) {
-                if (rhsOfIsExpression(type) || rhsOfIsPattern(type)) {
-                  c.trace.report(NO_TYPE_ARGUMENTS_ON_RHS_OF_IS_EXPRESSION.on(type,expectedArgumentCount,allStarProjectionsString(typeConstructor)));
+                if (c.allowBareTypes) {
+                  result[0]=PossiblyBareType.bare(typeConstructor,false);
+                  return;
                 }
- else {
-                  c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type,expectedArgumentCount));
-                }
+                c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type,expectedArgumentCount));
               }
  else {
                 c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type.getTypeArgumentList(),expectedArgumentCount));
               }
             }
  else {
-              result[0]=new JetTypeImpl(annotations,typeConstructor,false,arguments,classDescriptor.getMemberScope(arguments));
+              JetTypeImpl resultingType=new JetTypeImpl(annotations,typeConstructor,false,arguments,classDescriptor.getMemberScope(arguments));
+              result[0]=type(resultingType);
               if (c.checkBounds) {
-                TypeSubstitutor substitutor=TypeSubstitutor.create(result[0]);
+                TypeSubstitutor substitutor=TypeSubstitutor.create(resultingType);
                 for (int i=0, parametersSize=parameters.size(); i < parametersSize; i++) {
                   TypeParameterDescriptor parameter=parameters.get(i);
                   JetType argument=arguments.get(i).getType();
@@ -71,31 +71,31 @@
         }
       }
       @Override public void visitNullableType(      JetNullableType nullableType){
-        JetType baseType=resolveTypeElement(c,annotations,nullableType.getInnerType());
+        PossiblyBareType baseType=resolveTypeElement(c,annotations,nullableType.getInnerType());
         if (baseType.isNullable()) {
           c.trace.report(REDUNDANT_NULLABLE.on(nullableType));
         }
- else         if (TypeUtils.hasNullableSuperType(baseType)) {
-          c.trace.report(BASE_WITH_NULLABLE_UPPER_BOUND.on(nullableType,baseType));
+ else         if (!baseType.isBare() && TypeUtils.hasNullableSuperType(baseType.getActualType())) {
+          c.trace.report(BASE_WITH_NULLABLE_UPPER_BOUND.on(nullableType,baseType.getActualType()));
         }
-        result[0]=TypeUtils.makeNullable(baseType);
+        result[0]=baseType.makeNullable();
       }
       @Override public void visitFunctionType(      JetFunctionType type){
         JetTypeReference receiverTypeRef=type.getReceiverTypeRef();
-        JetType receiverType=receiverTypeRef == null ? null : resolveType(c,receiverTypeRef);
+        JetType receiverType=receiverTypeRef == null ? null : resolveType(c.noBareTypes(),receiverTypeRef);
         List<JetType> parameterTypes=new ArrayList<JetType>();
         for (        JetParameter parameter : type.getParameters()) {
-          parameterTypes.add(resolveType(c,parameter.getTypeReference()));
+          parameterTypes.add(resolveType(c.noBareTypes(),parameter.getTypeReference()));
         }
         JetTypeReference returnTypeRef=type.getReturnTypeRef();
         JetType returnType;
         if (returnTypeRef != null) {
-          returnType=resolveType(c,returnTypeRef);
+          returnType=resolveType(c.noBareTypes(),returnTypeRef);
         }
  else {
           returnType=KotlinBuiltIns.getInstance().getUnitType();
         }
-        result[0]=KotlinBuiltIns.getInstance().getFunctionType(annotations,receiverType,parameterTypes,returnType);
+        result[0]=type(KotlinBuiltIns.getInstance().getFunctionType(annotations,receiverType,parameterTypes,returnType));
       }
       @Override public void visitJetElement(      JetElement element){
         c.trace.report(UNSUPPORTED.on(element,"Self-types are not supported yet"));
@@ -104,7 +104,7 @@
 );
   }
   if (result[0] == null) {
-    return ErrorUtils.createErrorType(typeElement == null ? "No type element" : typeElement.getText());
+    return type(ErrorUtils.createErrorType(typeElement == null ? "No type element" : typeElement.getText()));
   }
   return result[0];
 }
