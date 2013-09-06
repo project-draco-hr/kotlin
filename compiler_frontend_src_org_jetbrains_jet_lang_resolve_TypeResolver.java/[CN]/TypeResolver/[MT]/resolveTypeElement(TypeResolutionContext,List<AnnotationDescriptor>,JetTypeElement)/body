@@ -8,31 +8,31 @@
         if (referenceExpression == null || referencedName == null) {
           return;
         }
-        ClassifierDescriptor classifierDescriptor=resolveClass(scope,type,trace);
+        ClassifierDescriptor classifierDescriptor=resolveClass(c.scope,type,c.trace);
         if (classifierDescriptor == null) {
-          resolveTypeProjections(scope,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments(),trace,checkBounds);
+          resolveTypeProjections(c,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments());
           return;
         }
-        trace.record(BindingContext.REFERENCE_TARGET,referenceExpression,classifierDescriptor);
+        c.trace.record(BindingContext.REFERENCE_TARGET,referenceExpression,classifierDescriptor);
         if (classifierDescriptor instanceof TypeParameterDescriptor) {
           TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)classifierDescriptor;
-          JetScope scopeForTypeParameter=getScopeForTypeParameter(typeParameterDescriptor,checkBounds);
+          JetScope scopeForTypeParameter=getScopeForTypeParameter(c,typeParameterDescriptor);
           if (scopeForTypeParameter instanceof ErrorUtils.ErrorScope) {
             result[0]=ErrorUtils.createErrorType("?");
           }
  else {
             result[0]=new JetTypeImpl(annotations,typeParameterDescriptor.getTypeConstructor(),TypeUtils.hasNullableLowerBound(typeParameterDescriptor),Collections.<TypeProjection>emptyList(),scopeForTypeParameter);
           }
-          resolveTypeProjections(scope,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments(),trace,checkBounds);
+          resolveTypeProjections(c,ErrorUtils.createErrorType("No type").getConstructor(),type.getTypeArguments());
           DeclarationDescriptor containing=typeParameterDescriptor.getContainingDeclaration();
           if (containing instanceof ClassDescriptor) {
-            DescriptorResolver.checkHasOuterClassInstance(scope,trace,referenceExpression,(ClassDescriptor)containing,false);
+            DescriptorResolver.checkHasOuterClassInstance(c.scope,c.trace,referenceExpression,(ClassDescriptor)containing,false);
           }
         }
  else         if (classifierDescriptor instanceof ClassDescriptor) {
           ClassDescriptor classDescriptor=(ClassDescriptor)classifierDescriptor;
           TypeConstructor typeConstructor=classifierDescriptor.getTypeConstructor();
-          List<TypeProjection> arguments=resolveTypeProjections(scope,typeConstructor,type.getTypeArguments(),trace,checkBounds);
+          List<TypeProjection> arguments=resolveTypeProjections(c,typeConstructor,type.getTypeArguments());
           List<TypeParameterDescriptor> parameters=typeConstructor.getParameters();
           int expectedArgumentCount=parameters.size();
           int actualArgumentCount=arguments.size();
@@ -43,26 +43,26 @@
             if (actualArgumentCount != expectedArgumentCount) {
               if (actualArgumentCount == 0) {
                 if (rhsOfIsExpression(type) || rhsOfIsPattern(type)) {
-                  trace.report(NO_TYPE_ARGUMENTS_ON_RHS_OF_IS_EXPRESSION.on(type,expectedArgumentCount,allStarProjectionsString(typeConstructor)));
+                  c.trace.report(NO_TYPE_ARGUMENTS_ON_RHS_OF_IS_EXPRESSION.on(type,expectedArgumentCount,allStarProjectionsString(typeConstructor)));
                 }
  else {
-                  trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type,expectedArgumentCount));
+                  c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type,expectedArgumentCount));
                 }
               }
  else {
-                trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type.getTypeArgumentList(),expectedArgumentCount));
+                c.trace.report(WRONG_NUMBER_OF_TYPE_ARGUMENTS.on(type.getTypeArgumentList(),expectedArgumentCount));
               }
             }
  else {
               result[0]=new JetTypeImpl(annotations,typeConstructor,false,arguments,classDescriptor.getMemberScope(arguments));
-              if (checkBounds) {
+              if (c.checkBounds) {
                 TypeSubstitutor substitutor=TypeSubstitutor.create(result[0]);
                 for (int i=0, parametersSize=parameters.size(); i < parametersSize; i++) {
                   TypeParameterDescriptor parameter=parameters.get(i);
                   JetType argument=arguments.get(i).getType();
                   JetTypeReference typeReference=type.getTypeArguments().get(i).getTypeReference();
                   if (typeReference != null) {
-                    descriptorResolver.checkBounds(typeReference,argument,parameter,substitutor,trace);
+                    DescriptorResolver.checkBounds(typeReference,argument,parameter,substitutor,c.trace);
                   }
                 }
               }
@@ -71,26 +71,26 @@
         }
       }
       @Override public void visitNullableType(      JetNullableType nullableType){
-        JetType baseType=resolveTypeElement(scope,annotations,nullableType.getInnerType(),trace,checkBounds);
+        JetType baseType=resolveTypeElement(c,annotations,nullableType.getInnerType());
         if (baseType.isNullable()) {
-          trace.report(REDUNDANT_NULLABLE.on(nullableType));
+          c.trace.report(REDUNDANT_NULLABLE.on(nullableType));
         }
  else         if (TypeUtils.hasNullableSuperType(baseType)) {
-          trace.report(BASE_WITH_NULLABLE_UPPER_BOUND.on(nullableType,baseType));
+          c.trace.report(BASE_WITH_NULLABLE_UPPER_BOUND.on(nullableType,baseType));
         }
         result[0]=TypeUtils.makeNullable(baseType);
       }
       @Override public void visitFunctionType(      JetFunctionType type){
         JetTypeReference receiverTypeRef=type.getReceiverTypeRef();
-        JetType receiverType=receiverTypeRef == null ? null : resolveType(scope,receiverTypeRef,trace,checkBounds);
+        JetType receiverType=receiverTypeRef == null ? null : resolveType(c,receiverTypeRef);
         List<JetType> parameterTypes=new ArrayList<JetType>();
         for (        JetParameter parameter : type.getParameters()) {
-          parameterTypes.add(resolveType(scope,parameter.getTypeReference(),trace,checkBounds));
+          parameterTypes.add(resolveType(c,parameter.getTypeReference()));
         }
         JetTypeReference returnTypeRef=type.getReturnTypeRef();
         JetType returnType;
         if (returnTypeRef != null) {
-          returnType=resolveType(scope,returnTypeRef,trace,checkBounds);
+          returnType=resolveType(c,returnTypeRef);
         }
  else {
           returnType=KotlinBuiltIns.getInstance().getUnitType();
@@ -98,7 +98,7 @@
         result[0]=KotlinBuiltIns.getInstance().getFunctionType(annotations,receiverType,parameterTypes,returnType);
       }
       @Override public void visitJetElement(      JetElement element){
-        trace.report(UNSUPPORTED.on(element,"Self-types are not supported yet"));
+        c.trace.report(UNSUPPORTED.on(element,"Self-types are not supported yet"));
       }
     }
 );
