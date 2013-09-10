@@ -1,11 +1,11 @@
 {
-  for (  JvmPrimitiveType jvmPrimitiveType : JvmPrimitiveType.values()) {
-    FqName className=jvmPrimitiveType.getPrimitiveType().getClassName();
-    register(className,jvmPrimitiveType.getAsmType());
-    registerNullable(className,jvmPrimitiveType.getWrapper().getAsmType());
-  }
+  FqName builtInsFqName=KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME;
   for (  JvmPrimitiveType jvmPrimitiveType : JvmPrimitiveType.values()) {
     PrimitiveType primitiveType=jvmPrimitiveType.getPrimitiveType();
-    register(primitiveType.getArrayClassName(),jvmPrimitiveType.getAsmArrayType());
+    Type asmType=jvmPrimitiveType.getAsmType();
+    FqName fqName=builtInsFqName.child(primitiveType.getTypeName());
+    register(fqName,asmType);
+    registerNullable(fqName,jvmPrimitiveType.getWrapper().getAsmType());
+    register(builtInsFqName.child(primitiveType.getArrayTypeName()),Type.getType("[" + asmType.getDescriptor()));
   }
 }
