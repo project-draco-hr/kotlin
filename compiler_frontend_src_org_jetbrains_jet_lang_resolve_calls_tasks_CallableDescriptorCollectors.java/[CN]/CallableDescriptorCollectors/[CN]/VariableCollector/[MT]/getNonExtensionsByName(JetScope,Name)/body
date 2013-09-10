@@ -1,8 +1,13 @@
 {
-  VariableDescriptor descriptor=scope.getLocalVariable(name);
-  if (descriptor == null) {
-    descriptor=DescriptorUtils.filterNonExtensionProperty(scope.getProperties(name));
+  VariableDescriptor localVariable=scope.getLocalVariable(name);
+  if (localVariable != null) {
+    return Collections.singleton(localVariable);
   }
-  if (descriptor == null)   return Collections.emptyList();
-  return Collections.singleton(descriptor);
+  LinkedHashSet<VariableDescriptor> variables=Sets.newLinkedHashSet();
+  for (  VariableDescriptor variable : scope.getProperties(name)) {
+    if (variable.getReceiverParameter() == null) {
+      variables.add(variable);
+    }
+  }
+  return variables;
 }
