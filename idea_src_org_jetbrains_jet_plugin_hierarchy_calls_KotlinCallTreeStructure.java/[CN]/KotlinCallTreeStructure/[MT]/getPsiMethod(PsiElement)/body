@@ -1,0 +1,19 @@
+{
+  if (element instanceof PsiMethod) {
+    return (PsiMethod)element;
+  }
+  PsiMethod method=null;
+  if (element instanceof JetNamedFunction) {
+    method=LightClassUtil.getLightClassMethod((JetNamedFunction)element);
+  }
+ else   if (element instanceof JetProperty) {
+    LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=LightClassUtil.getLightClassPropertyMethods((JetProperty)element);
+    if (propertyMethods.getGetter() != null) {
+      method=propertyMethods.getGetter();
+    }
+ else {
+      method=propertyMethods.getSetter();
+    }
+  }
+  return method != null ? method : getClosestContainingClassConstructor(element);
+}

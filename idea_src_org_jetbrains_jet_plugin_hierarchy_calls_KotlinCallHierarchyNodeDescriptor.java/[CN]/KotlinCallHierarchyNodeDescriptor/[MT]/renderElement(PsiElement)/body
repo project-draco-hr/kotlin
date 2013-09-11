@@ -1,0 +1,63 @@
+{
+  String elementText;
+  String containerText=null;
+  if (element instanceof JetFile) {
+    elementText=((JetFile)element).getName();
+  }
+ else   if (element instanceof JetNamedDeclaration) {
+    BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
+    if (descriptor == null)     return null;
+    if (element instanceof JetClassOrObject) {
+      if (element instanceof JetObjectDeclaration && ((JetObjectDeclaration)element).isClassObject()) {
+        descriptor=descriptor.getContainingDeclaration();
+        if (!(descriptor instanceof ClassDescriptor))         return null;
+        elementText=renderClassOrObject((ClassDescriptor)descriptor);
+      }
+ else       if (element instanceof JetEnumEntry) {
+        elementText=((JetEnumEntry)element).getName();
+      }
+ else {
+        if (((JetClassOrObject)element).getName() != null) {
+          elementText=renderClassOrObject((ClassDescriptor)descriptor);
+        }
+ else {
+          elementText="[anonymous]";
+        }
+      }
+    }
+ else     if (element instanceof JetNamedFunction) {
+      elementText=renderNamedFunction((FunctionDescriptor)descriptor);
+    }
+ else     if (element instanceof JetProperty) {
+      elementText=((JetProperty)element).getName();
+    }
+ else     return null;
+    DeclarationDescriptor containerDescriptor=descriptor.getContainingDeclaration();
+    while (containerDescriptor != null) {
+      String name=containerDescriptor.getName().asString();
+      if (!name.startsWith("<")) {
+        containerText=name;
+        break;
+      }
+      containerDescriptor=containerDescriptor.getContainingDeclaration();
+    }
+  }
+ else   if (element instanceof PsiMember) {
+    PsiMember member=(PsiMember)element;
+    if (member instanceof PsiMethod) {
+      elementText=renderPsiMethod((PsiMethod)member);
+    }
+ else     if (member instanceof PsiClass) {
+      elementText=ClassPresentationUtil.getNameForClass((PsiClass)member,false);
+    }
+ else     return null;
+    PsiClass containingClass=member.getContainingClass();
+    if (containingClass != null) {
+      containerText=ClassPresentationUtil.getNameForClass(containingClass,false);
+    }
+  }
+ else   return null;
+  if (elementText == null)   return null;
+  return containerText != null ? containerText + "." + elementText : elementText;
+}

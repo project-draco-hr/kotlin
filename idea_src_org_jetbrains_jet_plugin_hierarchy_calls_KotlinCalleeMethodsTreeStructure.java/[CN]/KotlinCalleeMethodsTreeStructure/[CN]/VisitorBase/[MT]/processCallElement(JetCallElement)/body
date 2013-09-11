@@ -1,0 +1,18 @@
+{
+  JetExpression callee=element.getCalleeExpression();
+  JetReferenceExpression referenceExpression=null;
+  if (callee instanceof JetReferenceExpression) {
+    referenceExpression=(JetReferenceExpression)callee;
+  }
+ else   if (callee instanceof JetConstructorCalleeExpression) {
+    referenceExpression=((JetConstructorCalleeExpression)callee).getConstructorReferenceExpression();
+  }
+  if (referenceExpression != null) {
+    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,referenceExpression);
+    if (descriptor == null)     return;
+    PsiElement declaration=BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
+    if (declaration instanceof JetClassOrObject || (declaration instanceof JetNamedFunction && !((JetNamedFunction)declaration).isLocal()) || declaration instanceof PsiMethod) {
+      result.add(declaration);
+    }
+  }
+}

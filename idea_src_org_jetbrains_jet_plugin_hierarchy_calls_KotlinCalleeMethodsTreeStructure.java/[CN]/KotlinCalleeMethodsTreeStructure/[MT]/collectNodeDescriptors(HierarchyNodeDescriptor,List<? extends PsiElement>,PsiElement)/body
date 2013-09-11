@@ -1,0 +1,17 @@
+{
+  HashMap<PsiElement,KotlinCallHierarchyNodeDescriptor> declarationToDescriptorMap=new HashMap<PsiElement,KotlinCallHierarchyNodeDescriptor>();
+  ArrayList<KotlinCallHierarchyNodeDescriptor> result=new ArrayList<KotlinCallHierarchyNodeDescriptor>();
+  for (  PsiElement callee : calleeElements) {
+    if (!isInScope(baseElement,callee,scopeType))     continue;
+    KotlinCallHierarchyNodeDescriptor d=declarationToDescriptorMap.get(callee);
+    if (d == null) {
+      d=new KotlinCallHierarchyNodeDescriptor(myProject,descriptor,callee,false,false);
+      declarationToDescriptorMap.put(callee,d);
+      result.add(d);
+    }
+ else {
+      d.incrementUsageCount();
+    }
+  }
+  return ArrayUtil.toObjectArray(result);
+}

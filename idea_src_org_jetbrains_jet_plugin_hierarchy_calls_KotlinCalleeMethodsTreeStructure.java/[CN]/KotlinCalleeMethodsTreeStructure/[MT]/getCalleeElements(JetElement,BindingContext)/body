@@ -1,0 +1,39 @@
+{
+  ArrayList<PsiElement> result=new ArrayList<PsiElement>();
+  JetVisitorVoid visitor=new VisitorBase(bindingContext,result);
+  if (rootElement instanceof JetNamedFunction) {
+    JetExpression body=((JetNamedFunction)rootElement).getBodyExpression();
+    if (body != null) {
+      body.accept(visitor);
+    }
+  }
+ else   if (rootElement instanceof JetProperty) {
+    for (    JetPropertyAccessor accessor : ((JetProperty)rootElement).getAccessors()) {
+      JetExpression body=accessor.getBodyExpression();
+      if (body != null) {
+        body.accept(visitor);
+      }
+    }
+  }
+ else {
+    JetClassOrObject classOrObject=(JetClassOrObject)rootElement;
+    for (    JetDelegationSpecifier specifier : classOrObject.getDelegationSpecifiers()) {
+      if (specifier instanceof JetCallElement) {
+        specifier.accept(visitor);
+      }
+    }
+    JetClassBody body=classOrObject.getBody();
+    if (body != null) {
+      for (      JetClassInitializer initializer : body.getAnonymousInitializers()) {
+        initializer.getBody().accept(visitor);
+      }
+      for (      JetProperty property : body.getProperties()) {
+        JetExpression initializer=property.getInitializer();
+        if (initializer != null) {
+          initializer.accept(visitor);
+        }
+      }
+    }
+  }
+  return result;
+}

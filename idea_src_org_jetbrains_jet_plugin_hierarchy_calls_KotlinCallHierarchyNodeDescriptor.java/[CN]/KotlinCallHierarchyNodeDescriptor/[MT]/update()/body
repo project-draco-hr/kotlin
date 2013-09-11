@@ -1,0 +1,53 @@
+{
+  CompositeAppearance oldText=myHighlightedText;
+  Icon oldIcon=getIcon();
+  int flags=Iconable.ICON_FLAG_VISIBILITY;
+  if (isMarkReadOnly()) {
+    flags|=Iconable.ICON_FLAG_READ_STATUS;
+  }
+  boolean changes=super.update();
+  PsiElement targetElement=getTargetElement();
+  String elementText=renderElement(targetElement);
+  if (elementText == null) {
+    String invalidPrefix=IdeBundle.message("node.hierarchy.invalid");
+    if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
+      myHighlightedText.getBeginning().addText(invalidPrefix,HierarchyNodeDescriptor.getInvalidPrefixAttributes());
+    }
+    return true;
+  }
+  Icon newIcon=targetElement.getIcon(flags);
+  if (changes && myIsBase) {
+    LayeredIcon icon=new LayeredIcon(2);
+    icon.setIcon(newIcon,0);
+    icon.setIcon(AllIcons.Hierarchy.Base,1,-AllIcons.Hierarchy.Base.getIconWidth() / 2,0);
+    newIcon=icon;
+  }
+  setIcon(newIcon);
+  myHighlightedText=new CompositeAppearance();
+  TextAttributes mainTextAttributes=null;
+  if (myColor != null) {
+    mainTextAttributes=new TextAttributes(myColor,null,null,null,Font.PLAIN);
+  }
+  String packageName=null;
+  if (targetElement instanceof JetElement) {
+    packageName=JetPsiUtil.getPackageName((JetElement)targetElement);
+  }
+ else {
+    PsiClass enclosingClass=PsiTreeUtil.getParentOfType(targetElement,PsiClass.class,false);
+    if (enclosingClass != null) {
+      packageName=JavaHierarchyUtil.getPackageName(enclosingClass);
+    }
+  }
+  myHighlightedText.getEnding().addText(elementText,mainTextAttributes);
+  if (usageCount > 1) {
+    myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages",usageCount),HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
+  }
+  if (packageName != null && packageName.length() > 0) {
+    myHighlightedText.getEnding().addText("  (" + packageName + ")",HierarchyNodeDescriptor.getPackageNameAttributes());
+  }
+  myName=myHighlightedText.getText();
+  if (!(Comparing.equal(myHighlightedText,oldText) && Comparing.equal(getIcon(),oldIcon))) {
+    changes=true;
+  }
+  return changes;
+}
