@@ -6,6 +6,13 @@
   if (expressionType == null || noExpectedType(expectedType) || JetTypeChecker.INSTANCE.isSubtypeOf(expressionType,expectedType)) {
     return expressionType;
   }
+  if (expression instanceof JetConstantExpression) {
+    Diagnostic diagnostic=new CompileTimeConstantResolver().checkConstantExpressionType((JetConstantExpression)expression,expectedType);
+    if (diagnostic != null) {
+      trace.report(diagnostic);
+    }
+    return expressionType;
+  }
   DataFlowValue dataFlowValue=DataFlowValueFactory.INSTANCE.createDataFlowValue(expression,expressionType,trace.getBindingContext());
   for (  JetType possibleType : dataFlowInfo.getPossibleTypes(dataFlowValue)) {
     if (JetTypeChecker.INSTANCE.isSubtypeOf(possibleType,expectedType)) {
