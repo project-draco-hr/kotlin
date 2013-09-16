@@ -1,0 +1,16 @@
+{
+  myFile=createPsiFile(FileUtil.getNameWithoutExtension(PathUtil.getFileName(filePath)),loadFile(filePath));
+  myFile.acceptChildren(new JetVisitorVoid(){
+    @Override public void visitJetElement(    JetElement element){
+      element.acceptChildren(this);
+      try {
+        checkPsiGetters(element);
+      }
+ catch (      Throwable throwable) {
+        throw new RuntimeException(throwable);
+      }
+    }
+  }
+);
+  doCheckResult(myFullDataPath,filePath.replace(".jet",".txt"),toParseTreeText(myFile,false,false).trim());
+}
