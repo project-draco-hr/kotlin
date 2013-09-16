@@ -1,0 +1,21 @@
+{
+  StringBuilder builder=new StringBuilder("Configure ");
+  Collection<Module> modules=getModulesWithKotlinFiles(project);
+  final boolean isOnlyOneModule=modules.size() == 1;
+  if (isOnlyOneModule) {
+    builder.append("'").append(modules.iterator().next().getName()).append("' module");
+  }
+ else {
+    builder.append("modules");
+  }
+  builder.append(" in '").append(project.getName()).append("' project");
+  builder.append("\n");
+  String links=StringUtil.join(getApplicableConfigurators(project),new Function<KotlinProjectConfigurator,String>(){
+    @Override public String fun(    KotlinProjectConfigurator configurator){
+      return getLink(configurator,isOnlyOneModule);
+    }
+  }
+,"  ");
+  builder.append(links);
+  return builder.toString();
+}
