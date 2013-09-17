@@ -1,5 +1,16 @@
 {
-  for (  CallableMemberDescriptor descriptor : generateDelegatedMembers(trace,jetClassOrObject,classDescriptor)) {
+  Callback<CallableMemberDescriptor> eagerResolveCallback=new Callback<CallableMemberDescriptor>(){
+    @Nullable @Override public JetType getTypeByTypeReference(    @NotNull JetTypeReference reference){
+      return trace.get(BindingContext.TYPE,reference);
+    }
+    @NotNull @Override public Collection<CallableMemberDescriptor> getMembersByType(    @NotNull JetType type){
+      return (Collection)Collections2.filter(type.getMemberScope().getAllDescriptors(),Predicates.instanceOf(CallableMemberDescriptor.class));
+    }
+  }
+;
+  Set<CallableMemberDescriptor> existingMembers=classDescriptor.getAllCallableMembers();
+  Collection<CallableMemberDescriptor> delegatedMembers=generateDelegatedMembers(jetClassOrObject,classDescriptor,existingMembers,trace,eagerResolveCallback);
+  for (  CallableMemberDescriptor descriptor : delegatedMembers) {
     if (descriptor instanceof PropertyDescriptor) {
       PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
       classDescriptor.getBuilder().addPropertyDescriptor(propertyDescriptor);
