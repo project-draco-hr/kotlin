@@ -1,5 +1,4 @@
 {
-  ConstraintSystemWithPriorities constraintSystem=new ConstraintSystemWithPriorities(ConstraintResolutionListener.DO_NOTHING);
   final Map<TypeParameterDescriptor,Variance> parameters=Maps.newHashMap();
   Processor<TypeParameterUsage> processor=new Processor<TypeParameterUsage>(){
     @Override public boolean process(    TypeParameterUsage parameterUsage){
@@ -14,10 +13,10 @@
 ;
   processAllTypeParameters(withParameters,Variance.INVARIANT,processor);
   processAllTypeParameters(expected,Variance.INVARIANT,processor);
+  ConstraintSystemImpl constraintSystem=new ConstraintSystemImpl();
   for (  Map.Entry<TypeParameterDescriptor,Variance> entry : parameters.entrySet()) {
     constraintSystem.registerTypeVariable(entry.getKey(),entry.getValue());
   }
-  constraintSystem.addSubtypingConstraint(ConstraintType.VALUE_ARGUMENT.assertSubtyping(withParameters,expected));
-  ConstraintSystemSolution solution=constraintSystem.solve();
-  return solution.getStatus().isSuccessful();
+  constraintSystem.addSubtypeConstraint(withParameters,expected,ConstraintPosition.SPECIAL);
+  return constraintSystem.isSuccessful();
 }
