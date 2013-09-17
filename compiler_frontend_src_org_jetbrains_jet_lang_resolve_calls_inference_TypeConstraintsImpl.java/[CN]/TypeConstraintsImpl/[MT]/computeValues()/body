@@ -1,40 +1,40 @@
 {
   Set<JetType> values=Sets.newLinkedHashSet();
-  if (typeConstraints == null || typeConstraints.isEmpty()) {
+  if (isEmpty()) {
     return values;
   }
-  TypeConstraints typeConstraintsWithoutErrorTypes=filterNotContainingErrorType(typeConstraints,values);
-  Collection<JetType> exactBounds=typeConstraintsWithoutErrorTypes.getExactBounds();
+  TypeConstraints withoutErrorTypes=filterNotContainingErrorType(values);
+  Collection<JetType> exactBounds=withoutErrorTypes.getExactBounds();
   if (exactBounds.size() == 1) {
     JetType exactBound=exactBounds.iterator().next();
-    if (trySuggestion(exactBound,typeConstraints)) {
+    if (trySuggestion(exactBound)) {
       return Collections.singleton(exactBound);
     }
   }
   values.addAll(exactBounds);
-  Pair<Collection<JetType>,Collection<JetType>> pair=TypeUtils.filterNumberTypes(typeConstraintsWithoutErrorTypes.getLowerBounds());
+  Pair<Collection<JetType>,Collection<JetType>> pair=TypeUtils.filterNumberTypes(withoutErrorTypes.getLowerBounds());
   Collection<JetType> generalLowerBounds=pair.getFirst();
   Collection<JetType> numberLowerBounds=pair.getSecond();
   JetType superTypeOfLowerBounds=commonSupertype(generalLowerBounds);
-  if (trySuggestion(superTypeOfLowerBounds,typeConstraints)) {
+  if (trySuggestion(superTypeOfLowerBounds)) {
     return Collections.singleton(superTypeOfLowerBounds);
   }
   ContainerUtil.addIfNotNull(superTypeOfLowerBounds,values);
-  Collection<JetType> upperBounds=typeConstraintsWithoutErrorTypes.getUpperBounds();
+  Collection<JetType> upperBounds=withoutErrorTypes.getUpperBounds();
   for (  JetType upperBound : upperBounds) {
-    if (trySuggestion(upperBound,typeConstraints)) {
+    if (trySuggestion(upperBound)) {
       return Collections.singleton(upperBound);
     }
   }
-  values.addAll(typeConstraintsWithoutErrorTypes.getUpperBounds());
+  values.addAll(withoutErrorTypes.getUpperBounds());
   JetType superTypeOfNumberLowerBounds=commonSupertypeForNumberTypes(numberLowerBounds);
-  if (trySuggestion(superTypeOfNumberLowerBounds,typeConstraints)) {
+  if (trySuggestion(superTypeOfNumberLowerBounds)) {
     return Collections.singleton(superTypeOfNumberLowerBounds);
   }
   ContainerUtil.addIfNotNull(superTypeOfNumberLowerBounds,values);
   if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
     JetType superTypeOfAllLowerBounds=commonSupertype(Lists.newArrayList(superTypeOfLowerBounds,superTypeOfNumberLowerBounds));
-    if (trySuggestion(superTypeOfAllLowerBounds,typeConstraints)) {
+    if (trySuggestion(superTypeOfAllLowerBounds)) {
       return Collections.singleton(superTypeOfAllLowerBounds);
     }
   }
