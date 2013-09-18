@@ -2,7 +2,7 @@
   if (callable instanceof FunctionDescriptor) {
     Method method=memberMap.getMethodOfDescriptor((FunctionDescriptor)callable);
     if (method != null) {
-      JavaProtoBufUtil.saveMethodSignature(proto,method,nameTable);
+      proto.setExtension(JavaProtoBuf.methodSignature,new SignatureSerializer(nameTable).methodSignature(method));
     }
   }
  else   if (callable instanceof PropertyDescriptor) {
@@ -28,6 +28,7 @@
       isStaticInOuter=false;
       syntheticMethodName=memberMap.getSyntheticMethodNameOfProperty(property);
     }
-    JavaProtoBufUtil.savePropertySignature(proto,fieldType,fieldName,isStaticInOuter,syntheticMethodName,getterMethod,setterMethod,nameTable);
+    JavaProtoBuf.JavaPropertySignature signature=new SignatureSerializer(nameTable).propertySignature(fieldType,fieldName,isStaticInOuter,syntheticMethodName,getterMethod,setterMethod);
+    proto.setExtension(JavaProtoBuf.propertySignature,signature);
   }
 }

@@ -1,15 +1,38 @@
 {
 switch (kind) {
 case FUNCTION:
-    return MemberSignature.fromMethod(JavaProtoBufUtil.loadMethodSignature(proto,nameResolver));
+    if (proto.hasExtension(JavaProtoBuf.methodSignature)) {
+      JavaProtoBuf.JavaMethodSignature signature=proto.getExtension(JavaProtoBuf.methodSignature);
+      return new SignatureDeserializer(nameResolver).methodSignature(signature);
+    }
+  break;
 case PROPERTY_GETTER:
-  return MemberSignature.fromMethod(JavaProtoBufUtil.loadPropertyGetterSignature(proto,nameResolver));
-case PROPERTY_SETTER:
-return MemberSignature.fromMethod(JavaProtoBufUtil.loadPropertySetterSignature(proto,nameResolver));
-case PROPERTY:
-JavaProtoBufUtil.PropertyData data=JavaProtoBufUtil.loadPropertyData(proto,nameResolver);
-return data == null ? null : MemberSignature.fromPropertyData(data.getFieldType(),data.getFieldName(),data.getSyntheticMethodName());
-default :
-return null;
+if (proto.hasExtension(JavaProtoBuf.propertySignature)) {
+  JavaProtoBuf.JavaPropertySignature propertySignature=proto.getExtension(JavaProtoBuf.propertySignature);
+  return new SignatureDeserializer(nameResolver).methodSignature(propertySignature.getGetter());
 }
+break;
+case PROPERTY_SETTER:
+if (proto.hasExtension(JavaProtoBuf.propertySignature)) {
+JavaProtoBuf.JavaPropertySignature propertySignature=proto.getExtension(JavaProtoBuf.propertySignature);
+return new SignatureDeserializer(nameResolver).methodSignature(propertySignature.getSetter());
+}
+break;
+case PROPERTY:
+if (proto.hasExtension(JavaProtoBuf.propertySignature)) {
+JavaProtoBuf.JavaPropertySignature propertySignature=proto.getExtension(JavaProtoBuf.propertySignature);
+if (propertySignature.hasField()) {
+JavaProtoBuf.JavaFieldSignature field=propertySignature.getField();
+Type type=new SignatureDeserializer(nameResolver).type(field.getType());
+Name name=nameResolver.getName(field.getName());
+return MemberSignature.fromFieldNameAndDesc(name.asString(),type.getDescriptor());
+}
+ else if (propertySignature.hasSyntheticMethodName()) {
+Name name=nameResolver.getName(propertySignature.getSyntheticMethodName());
+return MemberSignature.fromMethodNameAndDesc(name.asString(),JvmAbi.ANNOTATED_PROPERTY_METHOD_SIGNATURE);
+}
+}
+break;
+}
+return null;
 }
