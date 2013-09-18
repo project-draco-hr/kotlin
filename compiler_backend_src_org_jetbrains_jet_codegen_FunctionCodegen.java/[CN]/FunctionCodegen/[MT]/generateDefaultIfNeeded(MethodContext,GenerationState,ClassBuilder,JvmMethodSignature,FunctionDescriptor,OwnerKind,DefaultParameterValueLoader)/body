@@ -13,8 +13,14 @@
   if (contextClass instanceof NamespaceDescriptor) {
     ownerInternalName=state.getTypeMapper().getOwner(functionDescriptor,kind,true);
   }
- else {
+ else   if (contextClass instanceof ClassDescriptor) {
     ownerInternalName=JvmClassName.byType(state.getTypeMapper().mapType(((ClassDescriptor)contextClass).getDefaultType(),JetTypeMapperMode.IMPL));
+  }
+ else   if (isLocalNamedFun(functionDescriptor)) {
+    ownerInternalName=classNameForAnonymousClass(state.getBindingContext(),functionDescriptor);
+  }
+ else {
+    throw new IllegalStateException("Couldn't obtain owner name for " + functionDescriptor);
   }
   String descriptor=jvmSignature.getDescriptor().replace(")","I)");
   boolean isConstructor="<init>".equals(jvmSignature.getName());
@@ -26,6 +32,6 @@
     genStubCode(mv);
   }
  else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
-    generateDefaultImpl(owner,state,signature,functionDescriptor,kind,isStatic,mv,loadStrategy);
+    generateDefaultImpl(owner,state,signature,functionDescriptor,isStatic,mv,loadStrategy);
   }
 }
