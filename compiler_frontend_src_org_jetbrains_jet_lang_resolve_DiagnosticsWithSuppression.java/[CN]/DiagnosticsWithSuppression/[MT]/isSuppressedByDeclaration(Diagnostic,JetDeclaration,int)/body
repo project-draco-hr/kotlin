@@ -1,0 +1,17 @@
+{
+  if (LOG.isDebugEnabled()) {
+    LOG.debug("Declaration: ",declaration.getName());
+    LOG.debug("Depth: ",debugDepth);
+    LOG.debug("Cache size: ",suppressors.size(),"\n");
+  }
+  Suppressor suppressor=getOrCreateSuppressor(declaration);
+  if (suppressor.isSuppressed(diagnostic))   return true;
+  JetDeclaration declarationAbove=PsiTreeUtil.getParentOfType(suppressor.getDeclaration(),JetDeclaration.class,true);
+  if (declarationAbove == null)   return false;
+  boolean suppressed=isSuppressedByDeclaration(diagnostic,declarationAbove,debugDepth + 1);
+  Suppressor suppressorAbove=suppressors.get(declarationAbove);
+  if (suppressorAbove != null && suppressorAbove.dominates(suppressor)) {
+    suppressors.put(declaration,suppressorAbove);
+  }
+  return suppressed;
+}
