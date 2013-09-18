@@ -1,21 +1,7 @@
 {
-  try {
-    if (!(file instanceof PsiJavaFile)) {
-      return null;
-    }
-    String eol=System.getProperty("line.separator");
-    List<PsiElement> buffer=getSelectedElements(file,startOffsets,endOffsets);
-    StringBuilder result=new StringBuilder();
-    for (    PsiElement e : buffer) {
-      String converted=new Converter(file.getProject()).elementToKotlin(e);
-      if (!converted.isEmpty()) {
-        result.append(converted).append(eol);
-      }
-    }
-    return new ConvertedCode(StringUtil.convertLineSeparators(result.toString()));
+  if (!(file instanceof PsiJavaFile)) {
+    return null;
   }
- catch (  Throwable t) {
-    LOG.error(t);
-  }
-  return null;
+  PsiFile lightFile=PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getText(),file);
+  return new CopiedCode(lightFile,startOffsets,endOffsets);
 }
