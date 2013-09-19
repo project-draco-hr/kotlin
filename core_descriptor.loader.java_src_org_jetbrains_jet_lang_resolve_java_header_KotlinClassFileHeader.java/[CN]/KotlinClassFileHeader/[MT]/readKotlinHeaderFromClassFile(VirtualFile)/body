@@ -1,18 +1,28 @@
 {
   try {
     ClassReader reader=new ClassReader(virtualFile.contentsToByteArray());
-    ReadDataFromAnnotationVisitor visitor=new ReadDataFromAnnotationVisitor();
-    reader.accept(visitor,SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
-    if (visitor.foundType == null) {
+    ReadDataFromAnnotationVisitor v=new ReadDataFromAnnotationVisitor();
+    reader.accept(v,SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
+    if (v.foundType == null) {
       return null;
     }
-    if (visitor.fqName == null) {
+    if (v.fqName == null) {
       LOG.error("File doesn't have a class name: " + virtualFile);
       return null;
     }
-    return new KotlinClassFileHeader(visitor.version,visitor.annotationData,visitor.foundType,visitor.fqName);
-  }
- catch (  IOException e) {
-    throw new RuntimeException(e);
-  }
+switch (v.foundType) {
+case CLASS:
+      return SerializedDataHeader.create(v.version,v.annotationData,SerializedDataHeader.Kind.CLASS,v.fqName);
+case PACKAGE:
+    return SerializedDataHeader.create(v.version,v.annotationData,SerializedDataHeader.Kind.PACKAGE,v.fqName);
+case OLD_CLASS:
+case OLD_PACKAGE:
+  return new OldAnnotationHeader(v.fqName);
+default :
+throw new UnsupportedOperationException("Unknown HeaderType: " + v.foundType);
+}
+}
+ catch (IOException e) {
+throw new RuntimeException(e);
+}
 }
