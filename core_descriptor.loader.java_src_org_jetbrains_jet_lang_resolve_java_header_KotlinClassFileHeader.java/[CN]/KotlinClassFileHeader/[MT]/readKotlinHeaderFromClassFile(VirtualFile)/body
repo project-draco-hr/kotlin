@@ -1,28 +1,11 @@
 {
   try {
     ClassReader reader=new ClassReader(virtualFile.contentsToByteArray());
-    ReadDataFromAnnotationVisitor v=new ReadDataFromAnnotationVisitor();
-    reader.accept(v,SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
-    if (v.foundType == null) {
-      return null;
-    }
-    if (v.fqName == null) {
-      LOG.error("File doesn't have a class name: " + virtualFile);
-      return null;
-    }
-switch (v.foundType) {
-case CLASS:
-      return SerializedDataHeader.create(v.version,v.annotationData,SerializedDataHeader.Kind.CLASS,v.fqName);
-case PACKAGE:
-    return SerializedDataHeader.create(v.version,v.annotationData,SerializedDataHeader.Kind.PACKAGE,v.fqName);
-case OLD_CLASS:
-case OLD_PACKAGE:
-  return new OldAnnotationHeader(v.fqName);
-default :
-throw new UnsupportedOperationException("Unknown HeaderType: " + v.foundType);
-}
-}
- catch (IOException e) {
-throw new RuntimeException(e);
-}
+    ReadDataFromAnnotationVisitor visitor=new ReadDataFromAnnotationVisitor();
+    reader.accept(visitor,SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
+    return visitor.createHeader(virtualFile);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
 }
