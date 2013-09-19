@@ -1,0 +1,16 @@
+{
+  loadText("package " + NAMESPACE_NAME + "\n\nfun foo() = 42\n");
+  String facadeFileName=JvmClassName.byFqNameWithoutInnerClasses(PackageClassUtils.getPackageClassFqName(NAMESPACE_NAME)).getInternalName() + ".class";
+  ClassFileFactory factory=generateClassesInFile();
+  for (  String fileName : factory.files()) {
+    if (!fileName.equals(facadeFileName)) {
+      String fqName=fileName.substring(0,fileName.length() - ".class".length()).replace('/','.');
+      Class aClass=generateClass(fqName);
+      assertTrue("No KotlinPackageFragment annotation on a package fragment",aClass.isAnnotationPresent(KotlinPackageFragment.class));
+      KotlinPackageFragment annotation=(KotlinPackageFragment)aClass.getAnnotation(KotlinPackageFragment.class);
+      assertTrue("KotlinPackageFragment annotation is written with an unsupported format",AbiVersionUtil.isAbiVersionCompatible(annotation.abiVersion()));
+      return;
+    }
+  }
+  fail("No package fragment was found: " + factory.files());
+}
