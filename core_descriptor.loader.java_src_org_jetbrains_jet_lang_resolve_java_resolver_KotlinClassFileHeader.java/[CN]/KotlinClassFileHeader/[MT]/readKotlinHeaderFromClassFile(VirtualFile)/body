@@ -1,10 +1,9 @@
 {
   try {
-    byte[] bytes=virtualFile.contentsToByteArray();
-    ClassReader reader=new ClassReader(bytes);
-    KotlinClassFileHeader classFileData=new KotlinClassFileHeader();
-    reader.accept(classFileData.new ReadDataFromAnnotationVisitor(),SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
-    return classFileData;
+    ClassReader reader=new ClassReader(virtualFile.contentsToByteArray());
+    ReadDataFromAnnotationVisitor visitor=new ReadDataFromAnnotationVisitor();
+    reader.accept(visitor,SKIP_CODE | SKIP_FRAMES | SKIP_DEBUG);
+    return new KotlinClassFileHeader(visitor.version,visitor.annotationData,visitor.type,visitor.fqName);
   }
  catch (  IOException e) {
     throw new RuntimeException(e);
