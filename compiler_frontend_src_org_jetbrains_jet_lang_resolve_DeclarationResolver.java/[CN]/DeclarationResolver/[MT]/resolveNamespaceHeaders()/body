@@ -1,0 +1,18 @@
+{
+  for (  JetFile file : context.getNamespaceDescriptors().keySet()) {
+    JetNamespaceHeader namespaceHeader=file.getNamespaceHeader();
+    if (namespaceHeader != null) {
+      PsiElement firstChild=namespaceHeader.getFirstChild();
+      if (firstChild instanceof JetModifierList) {
+        JetModifierList modifierList=(JetModifierList)firstChild;
+        for (        JetAnnotationEntry annotationEntry : modifierList.getAnnotationEntries()) {
+          JetReferenceExpression reference=annotationEntry.getCalleeExpression().getConstructorReferenceExpression();
+          trace.report(UNRESOLVED_REFERENCE.on(reference,reference));
+        }
+        for (        ASTNode node : modifierList.getModifierNodes()) {
+          trace.report(ILLEGAL_MODIFIER.on(node.getPsi(),(JetKeywordToken)node.getElementType()));
+        }
+      }
+    }
+  }
+}
