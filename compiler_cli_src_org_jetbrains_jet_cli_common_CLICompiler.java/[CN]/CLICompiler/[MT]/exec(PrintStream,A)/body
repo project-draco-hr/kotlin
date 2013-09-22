@@ -6,9 +6,12 @@
   MessageRenderer messageRenderer=getMessageRenderer(arguments);
   errStream.print(messageRenderer.renderPreamble());
   printVersionIfNeeded(errStream,arguments,messageRenderer);
-  PrintingMessageCollector printingCollector=new PrintingMessageCollector(errStream,messageRenderer,arguments.isVerbose());
+  MessageCollector collector=new PrintingMessageCollector(errStream,messageRenderer,arguments.isVerbose());
+  if (arguments.suppressAllWarnings()) {
+    collector=new FilteringMessageCollector(collector,Predicates.equalTo(CompilerMessageSeverity.WARNING));
+  }
   try {
-    return exec(printingCollector,arguments);
+    return exec(collector,arguments);
   }
   finally {
     errStream.print(messageRenderer.renderConclusion());
