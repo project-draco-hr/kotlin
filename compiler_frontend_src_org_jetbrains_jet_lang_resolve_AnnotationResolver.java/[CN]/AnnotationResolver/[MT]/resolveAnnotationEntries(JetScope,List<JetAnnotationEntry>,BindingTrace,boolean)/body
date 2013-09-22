@@ -1,0 +1,17 @@
+{
+  if (annotationEntryElements.isEmpty())   return Collections.emptyList();
+  List<AnnotationDescriptor> result=Lists.newArrayList();
+  for (  JetAnnotationEntry entryElement : annotationEntryElements) {
+    AnnotationDescriptor descriptor=trace.get(BindingContext.ANNOTATION,entryElement);
+    if (descriptor == null) {
+      descriptor=new AnnotationDescriptor();
+      resolveAnnotationStub(scope,entryElement,descriptor,trace);
+      trace.record(BindingContext.ANNOTATION,entryElement,descriptor);
+    }
+    if (shouldResolveArguments) {
+      resolveAnnotationArguments(entryElement,scope,trace);
+    }
+    result.add(descriptor);
+  }
+  return result;
+}
