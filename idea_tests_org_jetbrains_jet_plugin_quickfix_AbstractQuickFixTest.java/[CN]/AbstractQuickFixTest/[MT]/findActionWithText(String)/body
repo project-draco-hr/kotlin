@@ -1,0 +1,18 @@
+{
+  IntentionAction intention=super.findActionWithText(text);
+  if (intention != null)   return intention;
+  for (  HighlightInfo highlight : doHighlighting()) {
+    ProblemGroup group=highlight.getProblemGroup();
+    if (group instanceof SuppressableProblemGroup) {
+      SuppressableProblemGroup problemGroup=(SuppressableProblemGroup)group;
+      PsiElement at=getFile().findElementAt(highlight.getActualStartOffset());
+      SuppressIntentionAction[] actions=problemGroup.getSuppressActions(at);
+      for (      SuppressIntentionAction action : actions) {
+        if (action.getText().equals(text)) {
+          return action;
+        }
+      }
+    }
+  }
+  return null;
+}
