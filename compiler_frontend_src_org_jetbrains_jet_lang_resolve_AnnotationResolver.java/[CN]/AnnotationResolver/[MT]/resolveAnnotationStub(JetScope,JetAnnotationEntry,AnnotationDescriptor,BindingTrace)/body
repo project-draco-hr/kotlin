@@ -1,7 +1,7 @@
 {
   TemporaryBindingTrace temporaryBindingTrace=new TemporaryBindingTrace(trace,"Trace for resolve annotation type");
   OverloadResolutionResults<FunctionDescriptor> results=resolveAnnotationCall(entryElement,scope,temporaryBindingTrace);
-  if (results.isSuccess()) {
+  if (results.isSingleResult()) {
     FunctionDescriptor descriptor=results.getResultingDescriptor();
     if (!ErrorUtils.isError(descriptor)) {
       if (descriptor instanceof ConstructorDescriptor) {
@@ -19,6 +19,7 @@
     annotationDescriptor.setAnnotationType(annotationType);
   }
  else {
-    annotationDescriptor.setAnnotationType(ErrorUtils.createErrorType("Unresolved annotation type"));
+    JetConstructorCalleeExpression calleeExpression=entryElement.getCalleeExpression();
+    annotationDescriptor.setAnnotationType(ErrorUtils.createErrorType("Unresolved annotation type: " + (calleeExpression == null ? "null" : calleeExpression.getText())));
   }
 }
