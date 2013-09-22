@@ -1,0 +1,19 @@
+{
+  if (expression instanceof JetAnnotatedExpression || expression instanceof JetPrefixExpression) {
+    return PRECEDENCE_OF_PREFIX_EXPRESSION;
+  }
+  if (expression instanceof JetPostfixExpression) {
+    return PRECEDENCE_OF_POSTFIX_EXPRESSION;
+  }
+  if (expression instanceof JetOperationExpression) {
+    JetOperationExpression operationExpression=(JetOperationExpression)expression;
+    IElementType operation=operationExpression.getOperationReference().getReferencedNameElementType();
+    Integer precedenceNumber=precedence.get(operation);
+    if (precedenceNumber == null) {
+      LOG.error("No precedence for operation: " + operation);
+      return precedence.size();
+    }
+    return precedenceNumber;
+  }
+  return PRECEDENCE_OF_ATOMIC_EXPRESSION;
+}
