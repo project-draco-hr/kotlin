@@ -1,20 +1,18 @@
 {
-  if (ignoreAnnotation(desc))   return null;
-  FqName annotationFqName=convertJvmDescriptorToFqName(desc);
-  final ClassDescriptor annotationClass=resolveAnnotationClass(annotationFqName);
+  if (ignoreAnnotation(className))   return null;
+  final ClassDescriptor annotationClass=resolveAnnotationClass(className);
   final AnnotationDescriptor annotation=new AnnotationDescriptor();
   annotation.setAnnotationType(annotationClass.getDefaultType());
-  return new AnnotationVisitor(Opcodes.ASM4){
-    @Override public void visit(    String name,    Object value){
+  return new KotlinJvmBinaryClass.AnnotationArgumentVisitor(){
+    @Override public void visit(    @NotNull Name name,    @Nullable Object value){
       CompileTimeConstant<?> argument=JavaAnnotationArgumentResolver.resolveCompileTimeConstantValue(value,null);
       setArgumentValueByName(name,argument != null ? argument : ErrorValue.create("Unsupported annotation argument: " + name));
     }
-    @Override public void visitEnum(    String name,    String desc,    String value){
-      FqName fqName=convertJvmDescriptorToFqName(desc);
-      setArgumentValueByName(name,enumEntryValue(fqName,Name.identifier(value)));
+    @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
+      setArgumentValueByName(name,enumEntryValue(enumClassName,enumEntryName));
     }
-    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull FqName enumFqName,    @NotNull Name name){
-      ClassDescriptor enumClass=javaClassResolver.resolveClass(enumFqName,IGNORE_KOTLIN_SOURCES);
+    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull JvmClassName enumClassName,    @NotNull Name name){
+      ClassDescriptor enumClass=javaClassResolver.resolveClass(enumClassName.getFqName(),IGNORE_KOTLIN_SOURCES);
       if (enumClass != null && enumClass.getKind() == ClassKind.ENUM_CLASS) {
         ClassDescriptor classObject=enumClass.getClassObjectDescriptor();
         if (classObject != null) {
@@ -27,13 +25,13 @@
           }
         }
       }
-      return ErrorValue.create("Unresolved enum entry: " + enumFqName + "."+ name);
+      return ErrorValue.create("Unresolved enum entry: " + enumClassName.getFqName() + "."+ name);
     }
     @Override public void visitEnd(){
       result.add(annotation);
     }
-    private void setArgumentValueByName(    @NotNull String name,    @NotNull CompileTimeConstant<?> argumentValue){
-      ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(Name.identifier(name),annotationClass);
+    private void setArgumentValueByName(    @NotNull Name name,    @NotNull CompileTimeConstant<?> argumentValue){
+      ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(name,annotationClass);
       if (parameter != null) {
         annotation.setValueArgument(parameter,argumentValue);
       }

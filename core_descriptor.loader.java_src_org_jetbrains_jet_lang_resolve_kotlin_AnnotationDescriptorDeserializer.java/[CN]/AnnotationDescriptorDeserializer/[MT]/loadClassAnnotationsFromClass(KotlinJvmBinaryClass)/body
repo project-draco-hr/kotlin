@@ -1,10 +1,12 @@
 {
   final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>();
-  new ClassReader(kotlinClass.getFile().contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM4){
-    @Override public AnnotationVisitor visitAnnotation(    String desc,    boolean visible){
-      return resolveAnnotation(desc,result);
+  kotlinClass.loadClassAnnotations(new KotlinJvmBinaryClass.AnnotationVisitor(){
+    @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitAnnotation(    @NotNull JvmClassName className){
+      return resolveAnnotation(className,result);
+    }
+    @Override public void visitEnd(){
     }
   }
-,SKIP_CODE | SKIP_DEBUG | SKIP_FRAMES);
+);
   return result;
 }

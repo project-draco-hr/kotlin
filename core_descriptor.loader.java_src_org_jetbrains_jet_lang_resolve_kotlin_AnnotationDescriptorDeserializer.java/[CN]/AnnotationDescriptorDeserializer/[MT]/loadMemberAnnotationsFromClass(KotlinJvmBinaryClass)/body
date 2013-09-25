@@ -1,37 +1,27 @@
 {
   final Map<MemberSignature,List<AnnotationDescriptor>> memberAnnotations=new HashMap<MemberSignature,List<AnnotationDescriptor>>();
-  new ClassReader(kotlinClass.getFile().contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM4){
-    @Override public MethodVisitor visitMethod(    int access,    String name,    String desc,    String signature,    String[] exceptions){
-      final MemberSignature methodSignature=MemberSignature.fromMethodNameAndDesc(name,desc);
-      final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>();
-      return new MethodVisitor(Opcodes.ASM4){
-        @Override public AnnotationVisitor visitAnnotation(        String desc,        boolean visible){
-          return resolveAnnotation(desc,result);
-        }
-        @Override public void visitEnd(){
-          if (!result.isEmpty()) {
-            memberAnnotations.put(methodSignature,result);
-          }
-        }
-      }
-;
+  kotlinClass.loadMemberAnnotations(new KotlinJvmBinaryClass.MemberVisitor(){
+    @Nullable @Override public KotlinJvmBinaryClass.AnnotationVisitor visitMethod(    @NotNull Name name,    @NotNull String desc){
+      return annotationVisitor(MemberSignature.fromMethodNameAndDesc(name,desc));
     }
-    @Override public FieldVisitor visitField(    int access,    String name,    String desc,    String signature,    Object value){
-      final MemberSignature fieldSignature=MemberSignature.fromFieldNameAndDesc(name,desc);
-      final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>();
-      return new FieldVisitor(Opcodes.ASM4){
-        @Override public AnnotationVisitor visitAnnotation(        String desc,        boolean visible){
-          return resolveAnnotation(desc,result);
+    @Nullable @Override public KotlinJvmBinaryClass.AnnotationVisitor visitField(    @NotNull Name name,    @NotNull String desc){
+      return annotationVisitor(MemberSignature.fromFieldNameAndDesc(name,desc));
+    }
+    @NotNull private KotlinJvmBinaryClass.AnnotationVisitor annotationVisitor(    @NotNull final MemberSignature signature){
+      return new KotlinJvmBinaryClass.AnnotationVisitor(){
+        private final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>();
+        @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitAnnotation(        @NotNull JvmClassName className){
+          return resolveAnnotation(className,result);
         }
         @Override public void visitEnd(){
           if (!result.isEmpty()) {
-            memberAnnotations.put(fieldSignature,result);
+            memberAnnotations.put(signature,result);
           }
         }
       }
 ;
     }
   }
-,SKIP_CODE | SKIP_DEBUG | SKIP_FRAMES);
+);
   return memberAnnotations;
 }
