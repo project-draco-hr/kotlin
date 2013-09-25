@@ -8,11 +8,13 @@
   }
   Set<Name> typeNamesInReceiver=collectUsedTypeNames(receiverParameter.getType());
   ConstraintSystem constraintSystem=new ConstraintSystemImpl();
+  Map<TypeParameterDescriptor,Variance> typeVariables=Maps.newLinkedHashMap();
   for (  TypeParameterDescriptor typeParameterDescriptor : callableDescriptor.getTypeParameters()) {
     if (typeNamesInReceiver.contains(typeParameterDescriptor.getName())) {
-      constraintSystem.registerTypeVariable(typeParameterDescriptor,Variance.INVARIANT);
+      typeVariables.put(typeParameterDescriptor,Variance.INVARIANT);
     }
   }
+  constraintSystem.registerTypeVariables(typeVariables);
   constraintSystem.addSubtypeConstraint(receiverType,receiverParameter.getType(),ConstraintPosition.RECEIVER_POSITION);
   return constraintSystem.getStatus().isSuccessful() && ConstraintsUtil.checkBoundsAreSatisfied(constraintSystem,true);
 }
