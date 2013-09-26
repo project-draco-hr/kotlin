@@ -1,0 +1,18 @@
+{
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+  final ArrayList<PsiElement> result=new ArrayList<PsiElement>();
+  localizingCodeBlock.accept(new CalleeReferenceVisitorBase(bindingContext,true){
+    @Override protected void processDeclaration(    JetReferenceExpression reference,    PsiElement declaration){
+      if (!declaration.equals(element))       return;
+      PsiElement container=PsiTreeUtil.getParentOfType(reference,JetNamedFunction.class,JetPropertyAccessor.class,JetClassOrObject.class);
+      if (container instanceof JetPropertyAccessor) {
+        container=PsiTreeUtil.getParentOfType(container,JetProperty.class);
+      }
+      if (container != null) {
+        result.add(container);
+      }
+    }
+  }
+);
+  return collectNodeDescriptors(descriptor,result);
+}
