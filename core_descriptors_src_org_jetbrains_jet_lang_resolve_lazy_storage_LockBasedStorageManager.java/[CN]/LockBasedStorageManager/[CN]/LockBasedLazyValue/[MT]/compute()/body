@@ -1,9 +1,16 @@
 {
   Object _value=value;
-  if (_value != null)   return WrappedValues.unescapeExceptionOrNull(_value);
+  if (_value != null && _value != COMPUTING)   return WrappedValues.unescapeExceptionOrNull(_value);
 synchronized (lock) {
     _value=value;
+    if (_value == COMPUTING) {
+      Object result=recursionDetected();
+      if (result != null) {
+        return WrappedValues.unescapeExceptionOrNull(result);
+      }
+    }
     if (_value != null)     return WrappedValues.unescapeExceptionOrNull(_value);
+    value=COMPUTING;
     try {
       T typedValue=computable.compute();
       value=WrappedValues.escapeNull(typedValue);
