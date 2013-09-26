@@ -3,8 +3,12 @@
     TypeParameterDescriptor typeParameterDescriptor=entry.getKey();
     TypeConstraintsImpl typeConstraints=entry.getValue();
     for (    JetType declaredUpperBound : typeParameterDescriptor.getUpperBounds()) {
-      for (      JetType lowerOrExactBound : Sets.union(typeConstraints.getLowerBounds(),typeConstraints.getExactBounds())) {
-        addSubtypeConstraint(lowerOrExactBound,declaredUpperBound,ConstraintPosition.BOUND_CONSTRAINT_POSITION);
+      Collection<Constraint> constraints=Lists.newArrayList(typeConstraints.getConstraints());
+      for (      Constraint constraint : constraints) {
+        if (constraint.boundKind == LOWER_BOUND || constraint.boundKind == EXACT_BOUND) {
+          ConstraintPosition position=ConstraintPosition.getCompoundConstraintPosition(ConstraintPosition.getTypeBoundPosition(typeParameterDescriptor.getIndex()),constraint.constraintPosition);
+          addSubtypeConstraint(constraint.type,declaredUpperBound,position);
+        }
       }
     }
   }

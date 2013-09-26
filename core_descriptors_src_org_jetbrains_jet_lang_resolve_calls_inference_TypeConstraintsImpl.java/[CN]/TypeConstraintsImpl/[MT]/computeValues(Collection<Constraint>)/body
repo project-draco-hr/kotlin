@@ -1,0 +1,41 @@
+{
+  Set<JetType> values=Sets.newLinkedHashSet();
+  if (constraints.isEmpty()) {
+    return Collections.emptyList();
+  }
+  Set<JetType> exactBounds=filterBounds(constraints,BoundKind.EXACT_BOUND,values);
+  if (exactBounds.size() == 1) {
+    JetType exactBound=exactBounds.iterator().next();
+    if (trySuggestion(exactBound,constraints)) {
+      return Collections.singleton(exactBound);
+    }
+  }
+  values.addAll(exactBounds);
+  Pair<Collection<JetType>,Collection<JetType>> pair=TypeUtils.filterNumberTypes(filterBounds(constraints,BoundKind.LOWER_BOUND,values));
+  Collection<JetType> generalLowerBounds=pair.getFirst();
+  Collection<JetType> numberLowerBounds=pair.getSecond();
+  JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertypeForNonDenotableTypes(generalLowerBounds);
+  if (trySuggestion(superTypeOfLowerBounds,constraints)) {
+    return Collections.singleton(superTypeOfLowerBounds);
+  }
+  ContainerUtil.addIfNotNull(superTypeOfLowerBounds,values);
+  Set<JetType> upperBounds=filterBounds(constraints,BoundKind.UPPER_BOUND,values);
+  for (  JetType upperBound : upperBounds) {
+    if (trySuggestion(upperBound,constraints)) {
+      return Collections.singleton(upperBound);
+    }
+  }
+  values.addAll(filterBounds(constraints,BoundKind.UPPER_BOUND));
+  JetType superTypeOfNumberLowerBounds=TypeUtils.commonSupertypeForNumberTypes(numberLowerBounds);
+  if (trySuggestion(superTypeOfNumberLowerBounds,constraints)) {
+    return Collections.singleton(superTypeOfNumberLowerBounds);
+  }
+  ContainerUtil.addIfNotNull(superTypeOfNumberLowerBounds,values);
+  if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
+    JetType superTypeOfAllLowerBounds=CommonSupertypes.commonSupertypeForNonDenotableTypes(Lists.newArrayList(superTypeOfLowerBounds,superTypeOfNumberLowerBounds));
+    if (trySuggestion(superTypeOfAllLowerBounds,constraints)) {
+      return Collections.singleton(superTypeOfAllLowerBounds);
+    }
+  }
+  return values;
+}
