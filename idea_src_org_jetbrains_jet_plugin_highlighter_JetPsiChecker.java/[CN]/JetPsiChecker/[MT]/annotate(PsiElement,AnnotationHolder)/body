@@ -5,28 +5,26 @@
   for (  HighlightingVisitor visitor : getBeforeAnalysisVisitors(holder)) {
     element.accept(visitor);
   }
-  if (element instanceof JetFile) {
-    JetFile file=(JetFile)element;
-    try {
-      BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache(file).getBindingContext();
-      if (JetPluginUtil.isInSource(element,false)) {
-        Collection<Diagnostic> diagnostics=Sets.newLinkedHashSet(bindingContext.getDiagnostics());
-        Set<PsiElement> redeclarations=Sets.newHashSet();
-        for (        Diagnostic diagnostic : diagnostics) {
-          if (diagnostic.getPsiFile() != file)           continue;
-          registerDiagnosticAnnotations(diagnostic,redeclarations,holder);
-        }
-      }
-      for (      HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
-        file.acceptChildren(visitor);
+  JetFile file=(JetFile)element.getContainingFile();
+  if (passCache == null || passCache.isOutdated(file)) {
+    passCache=new HighlightingPassCache(AnalyzerFacadeWithCache.analyzeFileWithCache(file),file);
+  }
+  if (!passCache.analyzeExhaust.isError()) {
+    BindingContext bindingContext=passCache.analyzeExhaust.getBindingContext();
+    for (    HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
+      element.accept(visitor);
+    }
+    if (JetPluginUtil.isInSource(element,false)) {
+      for (      Diagnostic diagnostic : passCache.elementToDiagnostic.get(element)) {
+        registerDiagnosticAnnotations(diagnostic,passCache.redeclarations,holder);
       }
     }
- catch (    ProcessCanceledException e) {
-      throw e;
+  }
+ else   if (element instanceof JetFile) {
+    Throwable error=passCache.analyzeExhaust.getError();
+    if (JetPluginUtil.isInSource(element,false)) {
+      holder.createErrorAnnotation(file,error.getClass().getCanonicalName() + ": " + error.getMessage());
     }
-catch (    Throwable e) {
-      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
-      LOG.error(e);
-    }
+    LOG.error(error);
   }
 }
