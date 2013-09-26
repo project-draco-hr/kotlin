@@ -1,0 +1,37 @@
+{
+  for (  JetFile file : files) {
+    if (file.isScript())     continue;
+    FqName packageFqName=JetPsiUtil.getFQName(file);
+    PackageViewDescriptor packageDescriptor=session.getModuleDescriptor().getPackage(packageFqName);
+    if (packageDescriptor == null) {
+      LOG.warn("No descriptor found for package " + packageFqName + " in file "+ file.getName()+ "\n"+ file.getText());
+      session.forceResolveAll();
+      continue;
+    }
+    for (    JetDeclaration declaration : file.getDeclarations()) {
+      if (declaration instanceof JetClassOrObject) {
+        ClassDescriptor descriptor=session.getClassDescriptor((JetClassOrObject)declaration);
+        ForceResolveUtil.forceResolveAllContents(descriptor);
+      }
+ else       if (declaration instanceof JetFunction) {
+        JetFunction jetFunction=(JetFunction)declaration;
+        Name name=jetFunction.getNameAsSafeName();
+        Collection<FunctionDescriptor> functions=packageDescriptor.getMemberScope().getFunctions(name);
+        for (        FunctionDescriptor descriptor : functions) {
+          ForceResolveUtil.forceResolveAllContents(descriptor);
+        }
+      }
+ else       if (declaration instanceof JetProperty) {
+        JetProperty jetProperty=(JetProperty)declaration;
+        Name name=jetProperty.getNameAsSafeName();
+        Collection<VariableDescriptor> properties=packageDescriptor.getMemberScope().getProperties(name);
+        for (        VariableDescriptor descriptor : properties) {
+          ForceResolveUtil.forceResolveAllContents(descriptor);
+        }
+      }
+ else {
+        LOG.error("Unsupported declaration kind: " + declaration + " in file "+ file.getName()+ "\n"+ file.getText());
+      }
+    }
+  }
+}
