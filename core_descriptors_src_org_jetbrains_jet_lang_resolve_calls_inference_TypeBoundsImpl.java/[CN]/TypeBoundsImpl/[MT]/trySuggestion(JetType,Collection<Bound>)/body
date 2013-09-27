@@ -1,0 +1,25 @@
+{
+  if (suggestion == null)   return false;
+  if (!suggestion.getConstructor().isDenotable())   return false;
+  if (filterBounds(bounds,BoundKind.EXACT_BOUND).size() > 1)   return false;
+  for (  Bound bound : bounds) {
+switch (bound.kind) {
+case LOWER_BOUND:
+      if (!JetTypeChecker.INSTANCE.isSubtypeOf(bound.type,suggestion)) {
+        return false;
+      }
+    break;
+case UPPER_BOUND:
+  if (!JetTypeChecker.INSTANCE.isSubtypeOf(suggestion,bound.type)) {
+    return false;
+  }
+break;
+case EXACT_BOUND:
+if (!JetTypeChecker.INSTANCE.equalTypes(bound.type,suggestion)) {
+return false;
+}
+break;
+}
+}
+return true;
+}

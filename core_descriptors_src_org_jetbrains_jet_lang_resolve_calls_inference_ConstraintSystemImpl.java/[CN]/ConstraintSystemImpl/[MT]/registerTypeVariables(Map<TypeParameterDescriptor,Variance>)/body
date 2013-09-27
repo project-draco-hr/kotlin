@@ -2,17 +2,17 @@
   for (  Map.Entry<TypeParameterDescriptor,Variance> entry : typeVariables.entrySet()) {
     TypeParameterDescriptor typeVariable=entry.getKey();
     Variance positionVariance=entry.getValue();
-    typeParameterConstraints.put(typeVariable,new TypeConstraintsImpl(typeVariable,positionVariance));
+    typeParameterBounds.put(typeVariable,new TypeBoundsImpl(typeVariable,positionVariance));
   }
-  TypeSubstitutor constantSubstitutor=TypeUtils.makeConstantSubstitutor(typeParameterConstraints.keySet(),DONT_CARE);
-  for (  Map.Entry<TypeParameterDescriptor,TypeConstraintsImpl> entry : typeParameterConstraints.entrySet()) {
+  TypeSubstitutor constantSubstitutor=TypeUtils.makeConstantSubstitutor(typeParameterBounds.keySet(),DONT_CARE);
+  for (  Map.Entry<TypeParameterDescriptor,TypeBoundsImpl> entry : typeParameterBounds.entrySet()) {
     TypeParameterDescriptor typeVariable=entry.getKey();
-    TypeConstraintsImpl typeConstraints=entry.getValue();
+    TypeBoundsImpl typeBounds=entry.getValue();
     for (    JetType declaredUpperBound : typeVariable.getUpperBounds()) {
       if (KotlinBuiltIns.getInstance().getNullableAnyType().equals(declaredUpperBound))       continue;
       JetType substitutedBound=constantSubstitutor.substitute(declaredUpperBound,Variance.INVARIANT);
       if (substitutedBound != null) {
-        typeConstraints.addConstraint(UPPER_BOUND,substitutedBound,ConstraintPosition.getTypeBoundPosition(typeVariable.getIndex()));
+        typeBounds.addBound(UPPER_BOUND,substitutedBound,ConstraintPosition.getTypeBoundPosition(typeVariable.getIndex()));
       }
     }
   }
