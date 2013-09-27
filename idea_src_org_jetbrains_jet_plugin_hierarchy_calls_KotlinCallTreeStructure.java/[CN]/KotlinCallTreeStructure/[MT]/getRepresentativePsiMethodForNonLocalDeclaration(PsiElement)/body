@@ -1,0 +1,19 @@
+{
+  if (element instanceof PsiMethod) {
+    return (PsiMethod)element;
+  }
+  if (element instanceof JetNamedFunction) {
+    return LightClassUtil.getLightClassMethod((JetNamedFunction)element);
+  }
+  if (element instanceof JetProperty) {
+    LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=LightClassUtil.getLightClassPropertyMethods((JetProperty)element);
+    return (propertyMethods.getGetter() != null) ? propertyMethods.getGetter() : propertyMethods.getSetter();
+  }
+  if (element instanceof JetClassOrObject) {
+    PsiClass psiClass=LightClassUtil.getPsiClass((JetClassOrObject)element);
+    if (psiClass == null)     return null;
+    PsiMethod[] constructors=psiClass.getConstructors();
+    if (constructors.length > 0)     return constructors[0];
+  }
+  return null;
+}
