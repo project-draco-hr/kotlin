@@ -3,8 +3,8 @@
     return genClosure(((JetFunctionLiteralExpression)expression).getFunctionLiteral(),samInterface);
   }
  else {
-    JvmClassName className=state.getSamWrapperClasses().getSamWrapperClass(samInterface,(JetFile)expression.getContainingFile());
-    v.anew(className.getAsmType());
+    Type asmType=state.getSamWrapperClasses().getSamWrapperClass(samInterface,(JetFile)expression.getContainingFile());
+    v.anew(asmType);
     v.dup();
     Type functionType=typeMapper.mapType(samInterface.getFunctionTypeForSamInterface());
     expression.accept(visitor,StackValue.none()).put(functionType,v);
@@ -17,8 +17,8 @@
     v.aconst(null);
     v.goTo(afterAll);
     v.mark(ifNonNull);
-    v.invokespecial(className.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,functionType));
+    v.invokespecial(asmType.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,functionType));
     v.mark(afterAll);
-    return StackValue.onStack(className.getAsmType());
+    return StackValue.onStack(asmType);
   }
 }

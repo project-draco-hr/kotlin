@@ -1,6 +1,6 @@
 {
   ++lineNumber;
-  JvmClassName scriptClassName=JvmClassName.byInternalName("Line" + lineNumber);
+  Type scriptClassType=Type.getObjectType("Line" + lineNumber);
   StringBuilder fullText=new StringBuilder();
   for (  String prevLine : previousIncompleteLines) {
     fullText.append(prevLine + "\n");
@@ -26,18 +26,18 @@
   if (scriptDescriptor == null) {
     return LineResult.error(errorCollector.getString());
   }
-  List<Pair<ScriptDescriptor,JvmClassName>> earierScripts=Lists.newArrayList();
+  List<Pair<ScriptDescriptor,Type>> earlierScripts=Lists.newArrayList();
   for (  EarlierLine earlierLine : earlierLines) {
-    earierScripts.add(Pair.create(earlierLine.getScriptDescriptor(),earlierLine.getClassName()));
+    earlierScripts.add(Pair.create(earlierLine.getScriptDescriptor(),earlierLine.getClassType()));
   }
   BindingContext bindingContext=AnalyzeExhaust.success(trace.getBindingContext(),module).getBindingContext();
   GenerationState generationState=new GenerationState(psiFile.getProject(),ClassBuilderFactories.binaries(false),bindingContext,Collections.singletonList(psiFile));
-  generationState.getScriptCodegen().compileScript(psiFile.getScript(),scriptClassName,earierScripts,CompilationErrorHandler.THROW_EXCEPTION);
+  generationState.getScriptCodegen().compileScript(psiFile.getScript(),scriptClassType,earlierScripts,CompilationErrorHandler.THROW_EXCEPTION);
   for (  String file : generationState.getFactory().files()) {
     classLoader.addClass(JvmClassName.byInternalName(file.replaceFirst("\\.class$","")),generationState.getFactory().asBytes(file));
   }
   try {
-    Class<?> scriptClass=classLoader.loadClass(scriptClassName.getFqName().asString());
+    Class<?> scriptClass=classLoader.loadClass(fqNameByAsmTypeUnsafe(scriptClassType).asString());
     Class<?>[] constructorParams=new Class<?>[earlierLines.size()];
     Object[] constructorArgs=new Object[earlierLines.size()];
     for (int i=0; i < earlierLines.size(); ++i) {
@@ -55,7 +55,7 @@
     Field rvField=scriptClass.getDeclaredField("rv");
     rvField.setAccessible(true);
     Object rv=rvField.get(scriptInstance);
-    earlierLines.add(new EarlierLine(line,scriptDescriptor,scriptClass,scriptInstance,scriptClassName));
+    earlierLines.add(new EarlierLine(line,scriptDescriptor,scriptClass,scriptInstance,scriptClassType));
     return LineResult.successful(rv,scriptDescriptor.getReturnType().equals(KotlinBuiltIns.getInstance().getUnitType()));
   }
  catch (  Throwable e) {
