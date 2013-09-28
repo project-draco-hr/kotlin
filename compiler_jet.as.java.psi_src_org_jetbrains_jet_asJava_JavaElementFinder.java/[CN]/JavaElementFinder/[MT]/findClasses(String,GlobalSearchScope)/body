@@ -1,12 +1,6 @@
 {
-  if (!QualifiedNamesUtil.isValidJavaFqName(qualifiedNameString)) {
-    return PsiClass.EMPTY_ARRAY;
+  SLRUCache<FindClassesRequest,PsiClass[]> value=findClassesCache.getValue();
+synchronized (value) {
+    return value.get(new FindClassesRequest(qualifiedNameString,scope));
   }
-  List<PsiClass> answer=new SmartList<PsiClass>();
-  FqName qualifiedName=new FqName(qualifiedNameString);
-  findClassesAndObjects(qualifiedName,scope,answer);
-  if (PackageClassUtils.isPackageClassFqName(qualifiedName)) {
-    findPackageClass(qualifiedName.parent(),scope,answer);
-  }
-  return answer.toArray(new PsiClass[answer.size()]);
 }
