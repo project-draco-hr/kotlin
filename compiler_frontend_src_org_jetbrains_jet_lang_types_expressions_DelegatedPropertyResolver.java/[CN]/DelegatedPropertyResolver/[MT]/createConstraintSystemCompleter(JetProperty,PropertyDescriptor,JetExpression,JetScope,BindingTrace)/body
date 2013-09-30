@@ -15,13 +15,16 @@
         addConstraintForThisValue(constraintSystem,descriptor);
       }
       if (!propertyDescriptor.isVar())       return;
+      if (propertyDescriptor.getReturnType() instanceof DeferredType)       return;
       OverloadResolutionResults<FunctionDescriptor> setMethodResults=getDelegatedPropertyConventionMethod(propertyDescriptor,delegateExpression,returnType,traceToResolveConventionMethods,accessorScope,false);
       if (conventionMethodFound(setMethodResults)) {
         FunctionDescriptor descriptor=setMethodResults.getResultingDescriptor();
         List<ValueParameterDescriptor> valueParameters=descriptor.getValueParameters();
         if (valueParameters.size() == 3) {
           ValueParameterDescriptor valueParameterForThis=valueParameters.get(2);
-          constraintSystem.addSubtypeConstraint(expectedType,valueParameterForThis.getType(),ConstraintPosition.FROM_COMPLETER);
+          if (!noExpectedType(expectedType)) {
+            constraintSystem.addSubtypeConstraint(expectedType,valueParameterForThis.getType(),ConstraintPosition.FROM_COMPLETER);
+          }
           addConstraintForThisValue(constraintSystem,descriptor);
         }
       }
