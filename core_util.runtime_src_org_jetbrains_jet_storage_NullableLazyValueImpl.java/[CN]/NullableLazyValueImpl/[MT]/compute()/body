@@ -1,8 +1,14 @@
 {
   Object _value=value;
-  if (_value != NOT_COMPUTED)   return (T)_value;
-  T typedValue=doCompute();
-  value=typedValue;
-  postCompute(typedValue);
-  return typedValue;
+  if (_value != NOT_COMPUTED)   return WrappedValues.unescapeThrowable(_value);
+  try {
+    T typedValue=doCompute();
+    value=typedValue;
+    postCompute(typedValue);
+    return typedValue;
+  }
+ catch (  Throwable e) {
+    value=WrappedValues.escapeThrowable(e);
+    throw ExceptionUtils.rethrow(e);
+  }
 }
