@@ -1,17 +1,17 @@
 {
   Object _value=value;
-  if (_value != NOT_COMPUTED && _value != COMPUTING)   return WrappedValues.unescapeThrowable(_value);
+  if (!(value instanceof NotValue))   return WrappedValues.unescapeThrowable(_value);
   lock.lock();
   try {
     _value=value;
-    if (_value == COMPUTING) {
+    if (!(_value instanceof NotValue))     return WrappedValues.unescapeThrowable(_value);
+    if (_value == NotValue.COMPUTING) {
       Object result=recursionDetected();
-      if (result != NOT_COMPUTED) {
+      if (result != NotValue.NOT_COMPUTED) {
         return WrappedValues.unescapeThrowable(result);
       }
     }
-    if (_value != NOT_COMPUTED)     return WrappedValues.unescapeThrowable(_value);
-    value=COMPUTING;
+    value=NotValue.COMPUTING;
     try {
       T typedValue=computable.compute();
       value=typedValue;
