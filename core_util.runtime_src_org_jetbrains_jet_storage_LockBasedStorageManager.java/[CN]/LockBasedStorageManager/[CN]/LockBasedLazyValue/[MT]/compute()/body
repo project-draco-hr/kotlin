@@ -1,7 +1,8 @@
 {
   Object _value=value;
   if (_value != NOT_COMPUTED && _value != COMPUTING)   return WrappedValues.unescapeThrowable(_value);
-synchronized (lock) {
+  lock.lock();
+  try {
     _value=value;
     if (_value == COMPUTING) {
       Object result=recursionDetected();
@@ -21,5 +22,8 @@ synchronized (lock) {
       value=WrappedValues.escapeThrowable(throwable);
       throw ExceptionUtils.rethrow(throwable);
     }
+  }
+  finally {
+    lock.unlock();
   }
 }
