@@ -1,0 +1,20 @@
+{
+  final CounterImpl counter=new CounterImpl();
+  NotNullLazyValue<Collection<String>> v=m.createLazyValueWithPostCompute(new Computable<Collection<String>>(){
+    @Override public Collection<String> compute(){
+      List<String> strings=new ArrayList<String>();
+      strings.add("first");
+      return strings;
+    }
+  }
+,null,new Consumer<Collection<String>>(){
+    @Override public void consume(    Collection<String> strings){
+      counter.inc();
+      strings.add("postComputed");
+    }
+  }
+);
+  assertEquals(Arrays.asList("first","postComputed"),v.compute());
+  v.compute();
+  assertEquals(1,counter.getCount());
+}

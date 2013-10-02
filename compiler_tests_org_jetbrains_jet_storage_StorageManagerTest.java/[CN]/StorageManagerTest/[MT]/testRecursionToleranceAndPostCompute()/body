@@ -1,0 +1,26 @@
+{
+  final CounterImpl counter=new CounterImpl();
+class C {
+    NotNullLazyValue<String> rec=m.createLazyValueWithPostCompute(new Computable<String>(){
+      @Override public String compute(){
+        return rec.compute();
+      }
+    }
+,new Function<Boolean,Object>(){
+      @Override public Object fun(      Boolean aBoolean){
+        return "tolerant";
+      }
+    }
+,new Consumer<String>(){
+      @Override public void consume(      String s){
+        counter.inc();
+        assertEquals("tolerant",s);
+      }
+    }
+);
+  }
+  C c=new C();
+  assertEquals("tolerant",c.rec.compute());
+  c.rec.compute();
+  assertEquals("postCompute() called more than once",1,counter.getCount());
+}
