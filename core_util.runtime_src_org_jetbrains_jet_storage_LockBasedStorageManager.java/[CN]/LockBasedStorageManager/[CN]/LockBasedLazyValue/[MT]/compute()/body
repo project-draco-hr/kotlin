@@ -5,7 +5,13 @@
   try {
     _value=value;
     if (!(_value instanceof NotValue))     return WrappedValues.unescapeThrowable(_value);
-    if (_value == NotValue.COMPUTING)     return WrappedValues.unescapeThrowable(recursionDetected());
+    if (_value == NotValue.COMPUTING) {
+      value=NotValue.RECURSION_WAS_DETECTED;
+      return WrappedValues.unescapeThrowable(recursionDetected(true));
+    }
+    if (_value == NotValue.RECURSION_WAS_DETECTED) {
+      return WrappedValues.unescapeThrowable(recursionDetected(false));
+    }
     value=NotValue.COMPUTING;
     try {
       T typedValue=computable.compute();
