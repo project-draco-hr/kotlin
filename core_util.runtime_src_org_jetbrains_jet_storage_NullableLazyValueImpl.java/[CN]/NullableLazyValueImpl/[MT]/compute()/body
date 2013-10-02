@@ -1,14 +1,21 @@
 {
-  if (value == COMPUTING) {
-    Object result=recursionDetected();
-    if (result != NOT_COMPUTED) {
+  if (!(value instanceof State)) {
+    return WrappedValues.unescapeThrowable(value);
+  }
+  if (value == State.COMPUTING) {
+    Object result=recursionDetected(true);
+    if (result != State.NOT_COMPUTED) {
+      value=State.RECURSION_WAS_DETECTED;
       return WrappedValues.unescapeThrowable(result);
     }
   }
- else   if (value != NOT_COMPUTED) {
-    return WrappedValues.unescapeThrowable(value);
+ else   if (value == State.RECURSION_WAS_DETECTED) {
+    Object result=recursionDetected(false);
+    if (result != State.NOT_COMPUTED) {
+      return WrappedValues.unescapeThrowable(result);
+    }
   }
-  value=COMPUTING;
+  value=State.COMPUTING;
   try {
     T typedValue=doCompute();
     value=typedValue;
