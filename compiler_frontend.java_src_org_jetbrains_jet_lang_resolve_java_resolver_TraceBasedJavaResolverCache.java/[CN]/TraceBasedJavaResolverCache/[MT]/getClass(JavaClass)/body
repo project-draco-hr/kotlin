@@ -1,3 +1,12 @@
 {
+  FqName fqName=javaClass.getFqName();
+  if (fqName != null && KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.equals(fqName.parent())) {
+    if (javaClass.findAnnotation(ASSERT_INVISIBLE_IN_RESOLVER_ANNOTATION) != null) {
+      if (ApplicationManager.getApplication().isInternal()) {
+        LOG.error("Classpath is configured incorrectly:" + " class " + fqName + " from runtime must not be loaded by compiler");
+      }
+      return null;
+    }
+  }
   return trace.get(CLASS,((JavaClassImpl)javaClass).getPsi());
 }
