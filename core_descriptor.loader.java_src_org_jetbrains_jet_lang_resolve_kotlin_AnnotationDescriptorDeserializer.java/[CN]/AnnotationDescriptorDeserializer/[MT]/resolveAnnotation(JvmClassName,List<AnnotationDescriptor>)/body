@@ -1,6 +1,6 @@
 {
   if (ignoreAnnotation(className))   return null;
-  final ClassDescriptor annotationClass=resolveAnnotationClass(className);
+  final ClassDescriptor annotationClass=resolveClass(className);
   final AnnotationDescriptor annotation=new AnnotationDescriptor();
   annotation.setAnnotationType(annotationClass.getDefaultType());
   return new KotlinJvmBinaryClass.AnnotationArgumentVisitor(){
@@ -17,8 +17,8 @@
       return null;
     }
     @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull JvmClassName enumClassName,    @NotNull Name name){
-      ClassDescriptor enumClass=javaClassResolver.resolveClass(enumClassName.getFqName(),IGNORE_KOTLIN_SOURCES);
-      if (enumClass != null && enumClass.getKind() == ClassKind.ENUM_CLASS) {
+      ClassDescriptor enumClass=resolveClass(enumClassName);
+      if (enumClass.getKind() == ClassKind.ENUM_CLASS) {
         ClassDescriptor classObject=enumClass.getClassObjectDescriptor();
         if (classObject != null) {
           Collection<VariableDescriptor> properties=classObject.getDefaultType().getMemberScope().getProperties(name);
@@ -30,7 +30,7 @@
           }
         }
       }
-      return ErrorValue.create("Unresolved enum entry: " + enumClassName.getFqName() + "."+ name);
+      return ErrorValue.create("Unresolved enum entry: " + enumClassName.getInternalName() + "."+ name);
     }
     @Override public void visitEnd(){
       result.add(annotation);
