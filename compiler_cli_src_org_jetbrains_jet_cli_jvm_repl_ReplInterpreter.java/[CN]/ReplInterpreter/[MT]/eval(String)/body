@@ -1,6 +1,7 @@
 {
   ++lineNumber;
-  Type scriptClassType=Type.getObjectType("Line" + lineNumber);
+  FqName scriptFqName=new FqName("Line" + lineNumber);
+  Type scriptClassType=asmTypeByFqNameWithoutInnerClasses(scriptFqName);
   StringBuilder fullText=new StringBuilder();
   for (  String prevLine : previousIncompleteLines) {
     fullText.append(prevLine + "\n");
@@ -37,7 +38,7 @@
     classLoader.addClass(JvmClassName.byInternalName(file.replaceFirst("\\.class$","")),generationState.getFactory().asBytes(file));
   }
   try {
-    Class<?> scriptClass=classLoader.loadClass(fqNameByAsmTypeUnsafe(scriptClassType).asString());
+    Class<?> scriptClass=classLoader.loadClass(scriptFqName.asString());
     Class<?>[] constructorParams=new Class<?>[earlierLines.size()];
     Object[] constructorArgs=new Object[earlierLines.size()];
     for (int i=0; i < earlierLines.size(); ++i) {

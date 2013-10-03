@@ -1,9 +1,10 @@
 {
   Type known=null;
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (mapBuiltinsToJava) {
-    if (descriptor instanceof ClassDescriptor) {
-      known=KotlinToJavaTypesMap.getInstance().getJavaAnalog(jetType);
+  if (mapBuiltinsToJava && descriptor instanceof ClassDescriptor) {
+    FqNameUnsafe className=DescriptorUtils.getFQName(descriptor);
+    if (className.isSafe()) {
+      known=KotlinToJavaTypesMap.getInstance().getJavaAnalog(className.toSafe(),jetType.isNullable());
     }
   }
   if (known != null) {
