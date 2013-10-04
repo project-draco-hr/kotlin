@@ -1,7 +1,14 @@
 {
   JsName backingFieldName=context.getNameForDescriptor(descriptor);
-  if (!JsDescriptorUtils.isSimpleProperty(descriptor)) {
-    backingFieldName=context.declarePropertyOrPropertyAccessorName(descriptor,getKotlinBackingFieldName(backingFieldName.getIdent()),false);
+  if (!JsDescriptorUtils.isSimpleFinalProperty(descriptor)) {
+    String backingFieldMangledName;
+    if (descriptor.getVisibility() != Visibilities.PRIVATE) {
+      backingFieldMangledName=getMangledName(descriptor,getKotlinBackingFieldName(backingFieldName.getIdent()));
+    }
+ else {
+      backingFieldMangledName=getKotlinBackingFieldName(backingFieldName.getIdent());
+    }
+    backingFieldName=context.declarePropertyOrPropertyAccessorName(descriptor,backingFieldMangledName,false);
   }
   return new JsNameRef(backingFieldName,JsLiteral.THIS);
 }
