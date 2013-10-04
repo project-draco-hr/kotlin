@@ -1,3 +1,32 @@
 {
-  return compute();
+  Object _value=value;
+  if (!(value instanceof NotValue))   return WrappedValues.unescapeThrowable(_value);
+  lock.lock();
+  try {
+    _value=value;
+    if (!(_value instanceof NotValue))     return WrappedValues.unescapeThrowable(_value);
+    if (_value == NotValue.COMPUTING) {
+      value=NotValue.RECURSION_WAS_DETECTED;
+      return recursionDetected(true);
+    }
+    if (_value == NotValue.RECURSION_WAS_DETECTED) {
+      return recursionDetected(false);
+    }
+    value=NotValue.COMPUTING;
+    try {
+      T typedValue=computable.compute();
+      value=typedValue;
+      postCompute(typedValue);
+      return typedValue;
+    }
+ catch (    Throwable throwable) {
+      if (value == NotValue.COMPUTING) {
+        value=WrappedValues.escapeThrowable(throwable);
+      }
+      throw ExceptionUtils.rethrow(throwable);
+    }
+  }
+  finally {
+    lock.unlock();
+  }
 }
