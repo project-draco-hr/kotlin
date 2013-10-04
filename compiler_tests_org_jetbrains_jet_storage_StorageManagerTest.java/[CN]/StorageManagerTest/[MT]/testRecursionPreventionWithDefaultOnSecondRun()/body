@@ -1,21 +1,22 @@
 {
 @SuppressWarnings("unchecked") class C {
-    NotNullLazyValue<String> rec=m.createLazyValueWithPostCompute(new Computable<String>(){
-      @Override public String compute(){
+    NotNullLazyValue<String> rec=m.createLazyValueWithPostCompute(new Function0<String>(){
+      @Override public String invoke(){
         return rec.invoke();
       }
     }
-,new Function<Boolean,String>(){
-      @Override public String fun(      Boolean firstTime){
+,new Function1<Boolean,String>(){
+      @Override public String invoke(      Boolean firstTime){
         if (firstTime) {
           throw new ReenteringLazyValueComputationException();
         }
         return "second";
       }
     }
-,new Consumer<String>(){
-      @Override public void consume(      String s){
+,new Function1<String,Void>(){
+      @Override public Void invoke(      String s){
         fail("Recursion-tolerating value should not be post computed");
+        return null;
       }
     }
 );
