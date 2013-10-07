@@ -1,0 +1,28 @@
+{
+  if (!CommonRefactoringUtil.checkReadOnlyStatus(project,element))   return null;
+  DeclarationDescriptor descriptor;
+  if (element instanceof JetSimpleNameExpression) {
+    descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetReferenceExpression)element);
+  }
+ else {
+    descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
+  }
+  if (descriptor instanceof ClassDescriptor) {
+    descriptor=((ClassDescriptor)descriptor).getUnsubstitutedPrimaryConstructor();
+  }
+  if (descriptor instanceof FunctionDescriptor) {
+    for (    ValueParameterDescriptor parameter : ((FunctionDescriptor)descriptor).getValueParameters()) {
+      if (parameter.getVarargElementType() != null) {
+        String message=JetRefactoringBundle.message("error.cant.refactor.vararg.functions");
+        CommonRefactoringUtil.showErrorHint(project,editor,message,REFACTORING_NAME,HelpID.CHANGE_SIGNATURE);
+        return null;
+      }
+    }
+    return (FunctionDescriptor)descriptor;
+  }
+ else {
+    String message=RefactoringBundle.getCannotRefactorMessage(JetRefactoringBundle.message("error.wrong.caret.position.function.or.constructor.name"));
+    CommonRefactoringUtil.showErrorHint(project,editor,message,REFACTORING_NAME,HelpID.CHANGE_SIGNATURE);
+    return null;
+  }
+}

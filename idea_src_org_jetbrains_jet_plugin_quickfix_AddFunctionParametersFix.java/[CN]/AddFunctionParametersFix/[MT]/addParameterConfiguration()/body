@@ -1,0 +1,25 @@
+{
+  return new JetChangeSignatureConfiguration(){
+    @Override public void configure(    @NotNull JetChangeSignatureData changeSignatureData,    @NotNull BindingContext bindingContext){
+      List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+      List<? extends ValueArgument> arguments=callElement.getValueArguments();
+      JetNameValidator validator=JetNameValidator.getCollectingValidator(callElement.getProject());
+      for (int i=0; i < arguments.size(); i++) {
+        ValueArgument argument=arguments.get(i);
+        JetExpression expression=argument.getArgumentExpression();
+        if (i < parameters.size()) {
+          validator.validateName(parameters.get(i).getName().asString());
+          JetType argumentType=expression != null ? bindingContext.get(BindingContext.EXPRESSION_TYPE,expression) : null;
+          JetType parameterType=parameters.get(i).getType();
+          if (argumentType != null && !JetTypeChecker.INSTANCE.isSubtypeOf(argumentType,parameterType))           changeSignatureData.getParameters().get(i).setTypeText(DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(argumentType));
+        }
+ else {
+          JetParameterInfo parameterInfo=getNewParameterInfo(bindingContext,argument,validator);
+          if (expression != null)           parameterInfo.setDefaultValueText(expression.getText());
+          changeSignatureData.addParameter(parameterInfo);
+        }
+      }
+    }
+  }
+;
+}
