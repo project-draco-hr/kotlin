@@ -1,0 +1,15 @@
+{
+  Iterator<ValueParameterDescriptor> iterator=functionDescriptor.getValueParameters().iterator();
+  List<JvmMethodParameterSignature> kotlinParameterTypes=jvmSignature.getKotlinParameterTypes();
+  for (int i=0; i < kotlinParameterTypes.size(); i++) {
+    JvmMethodParameterKind kind=kotlinParameterTypes.get(i).getKind();
+    if (kind == JvmMethodParameterKind.ENUM_NAME || kind == JvmMethodParameterKind.ENUM_ORDINAL) {
+      markEnumConstructorParameterAsSynthetic(mv,i);
+      continue;
+    }
+    if (kind == JvmMethodParameterKind.VALUE) {
+      ValueParameterDescriptor parameter=iterator.next();
+      AnnotationCodegen.forParameter(i,mv,typeMapper).genAnnotations(parameter);
+    }
+  }
+}
