@@ -1,0 +1,25 @@
+{
+  List<String> versions=Lists.newArrayList();
+  HttpURLConnection urlConnection=HttpConfigurable.getInstance().openHttpConnection(VERSIONS_LIST_URL);
+  try {
+    int timeout=(int)TimeUnit.SECONDS.toMillis(30);
+    urlConnection.setConnectTimeout(timeout);
+    urlConnection.setReadTimeout(timeout);
+    urlConnection.connect();
+    InputStreamReader streamReader=new InputStreamReader(urlConnection.getInputStream());
+    try {
+      JsonElement rootElement=new JsonParser().parse(streamReader);
+      JsonArray docsElements=rootElement.getAsJsonObject().get("response").getAsJsonObject().get("docs").getAsJsonArray();
+      for (      JsonElement element : docsElements) {
+        versions.add(element.getAsJsonObject().get("v").getAsString());
+      }
+    }
+  finally {
+      streamReader.close();
+    }
+  }
+  finally {
+    urlConnection.disconnect();
+  }
+  return versions;
+}

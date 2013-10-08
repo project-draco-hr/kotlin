@@ -2,9 +2,23 @@
   super(project);
   setTitle("Configure Kotlin in Project");
   init();
+  ProgressManager.getInstance().run(new Task.Backgroundable(project,"Find Kotlin Maven plugin versions",false){
+    @Override public void run(    @NotNull ProgressIndicator indicator){
+      setVersions(kotlinVersions);
+    }
+  }
+);
+  kotlinVersionComboBox.addActionListener(new ActionListener(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      updateComponents();
+    }
+  }
+);
+  kotlinVersionComboBox.addItem("loading...");
+  kotlinVersionComboBox.setEnabled(false);
+  processIcon.resume();
+  infoPanel.add(processIcon,BorderLayout.CENTER);
   chooseModulePanel=new ChooseModulePanel(project,modules);
   chooseModulesPanelPlace.add(chooseModulePanel.getContentPane(),BorderLayout.CENTER);
-  for (  String version : kotlinVersions) {
-    kotlinVersionComboBox.addItem(version);
-  }
+  updateComponents();
 }
