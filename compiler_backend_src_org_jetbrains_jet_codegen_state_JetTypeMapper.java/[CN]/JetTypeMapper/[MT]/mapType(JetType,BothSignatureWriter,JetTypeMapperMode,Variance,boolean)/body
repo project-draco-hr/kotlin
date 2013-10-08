@@ -7,12 +7,13 @@
       known=KotlinToJavaTypesMap.getInstance().getJavaAnalog(className.toSafe(),jetType.isNullable());
     }
   }
+  boolean projectionsAllowed=kind != JetTypeMapperMode.SUPER_TYPE;
   if (known != null) {
     if (kind == JetTypeMapperMode.VALUE) {
       return mapKnownAsmType(jetType,known,signatureVisitor,howThisTypeIsUsed);
     }
- else     if (kind == JetTypeMapperMode.TYPE_PARAMETER) {
-      return mapKnownAsmType(jetType,boxType(known),signatureVisitor,howThisTypeIsUsed,arrayParameter);
+ else     if (kind == JetTypeMapperMode.TYPE_PARAMETER || kind == JetTypeMapperMode.SUPER_TYPE) {
+      return mapKnownAsmType(jetType,boxType(known),signatureVisitor,howThisTypeIsUsed,arrayParameter,projectionsAllowed);
     }
  else     if (kind == JetTypeMapperMode.TRAIT_IMPL) {
       throw new IllegalStateException("TRAIT_IMPL is not possible for " + jetType);
@@ -74,7 +75,7 @@
  else {
       asmType=descriptorAsmType;
     }
-    writeGenericType(signatureVisitor,asmType,jetType,howThisTypeIsUsed);
+    writeGenericType(signatureVisitor,asmType,jetType,howThisTypeIsUsed,projectionsAllowed);
     checkValidType(asmType);
     return asmType;
   }
