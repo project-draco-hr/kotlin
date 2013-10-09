@@ -1,7 +1,7 @@
 {
   Type known=null;
   DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (mapBuiltinsToJava && descriptor instanceof ClassDescriptor) {
+  if (descriptor instanceof ClassDescriptor) {
     FqNameUnsafe className=DescriptorUtils.getFQName(descriptor);
     if (className.isSafe()) {
       known=KotlinToJavaTypesMap.getInstance().getJavaAnalog(className.toSafe(),jetType.isNullable());
@@ -19,8 +19,6 @@
       throw new IllegalStateException("TRAIT_IMPL is not possible for " + jetType);
     }
  else     if (kind == JetTypeMapperMode.IMPL) {
-      if (mapBuiltinsToJava) {
-      }
       return mapKnownAsmType(jetType,known,signatureVisitor,howThisTypeIsUsed);
     }
  else {
@@ -42,10 +40,9 @@
     if (signatureVisitor != null) {
       signatureVisitor.writeAsmType(asmType);
     }
-    checkValidType(asmType);
     return asmType;
   }
-  if (mapBuiltinsToJava && descriptor instanceof ClassDescriptor && KotlinBuiltIns.getInstance().isArray(jetType)) {
+  if (descriptor instanceof ClassDescriptor && KotlinBuiltIns.getInstance().isArray(jetType)) {
     if (jetType.getArguments().size() != 1) {
       throw new UnsupportedOperationException("arrays must have one type argument");
     }
@@ -63,7 +60,6 @@
  else {
       r=AsmTypeConstants.JAVA_ARRAY_GENERIC_TYPE;
     }
-    checkValidType(r);
     return r;
   }
   if (descriptor instanceof ClassDescriptor) {
@@ -76,7 +72,6 @@
       asmType=descriptorAsmType;
     }
     writeGenericType(signatureVisitor,asmType,jetType,howThisTypeIsUsed,projectionsAllowed);
-    checkValidType(asmType);
     return asmType;
   }
   if (descriptor instanceof TypeParameterDescriptor) {
@@ -85,7 +80,6 @@
     if (signatureVisitor != null) {
       signatureVisitor.writeTypeVariable(typeParameterDescriptor.getName(),type);
     }
-    checkValidType(type);
     return type;
   }
   throw new UnsupportedOperationException("Unknown type " + jetType);
