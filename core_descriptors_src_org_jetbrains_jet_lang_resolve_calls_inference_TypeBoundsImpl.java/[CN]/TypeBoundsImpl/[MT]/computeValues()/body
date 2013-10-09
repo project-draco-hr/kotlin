@@ -15,7 +15,7 @@
   Set<JetType> exactBounds=filterBounds(bounds,BoundKind.EXACT_BOUND,values);
   if (exactBounds.size() == 1) {
     JetType exactBound=exactBounds.iterator().next();
-    if (trySuggestion(exactBound,bounds)) {
+    if (tryPossibleAnswer(exactBound)) {
       return Collections.singleton(exactBound);
     }
   }
@@ -24,26 +24,26 @@
   Collection<JetType> generalLowerBounds=pair.getFirst();
   Collection<JetType> numberLowerBounds=pair.getSecond();
   JetType superTypeOfLowerBounds=CommonSupertypes.commonSupertypeForNonDenotableTypes(generalLowerBounds);
-  if (trySuggestion(superTypeOfLowerBounds,bounds)) {
+  if (tryPossibleAnswer(superTypeOfLowerBounds)) {
     return Collections.singleton(superTypeOfLowerBounds);
   }
   ContainerUtil.addIfNotNull(superTypeOfLowerBounds,values);
   Set<JetType> upperBounds=filterBounds(bounds,BoundKind.UPPER_BOUND,values);
   JetType intersectionOfUpperBounds=TypeUtils.intersect(JetTypeChecker.INSTANCE,upperBounds);
   if (!upperBounds.isEmpty() && intersectionOfUpperBounds != null) {
-    if (trySuggestion(intersectionOfUpperBounds,bounds)) {
+    if (tryPossibleAnswer(intersectionOfUpperBounds)) {
       return Collections.singleton(intersectionOfUpperBounds);
     }
   }
   values.addAll(filterBounds(bounds,BoundKind.UPPER_BOUND));
   JetType superTypeOfNumberLowerBounds=TypeUtils.commonSupertypeForNumberTypes(numberLowerBounds);
-  if (trySuggestion(superTypeOfNumberLowerBounds,bounds)) {
+  if (tryPossibleAnswer(superTypeOfNumberLowerBounds)) {
     return Collections.singleton(superTypeOfNumberLowerBounds);
   }
   ContainerUtil.addIfNotNull(superTypeOfNumberLowerBounds,values);
   if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
     JetType superTypeOfAllLowerBounds=CommonSupertypes.commonSupertypeForNonDenotableTypes(Lists.newArrayList(superTypeOfLowerBounds,superTypeOfNumberLowerBounds));
-    if (trySuggestion(superTypeOfAllLowerBounds,bounds)) {
+    if (tryPossibleAnswer(superTypeOfAllLowerBounds)) {
       return Collections.singleton(superTypeOfAllLowerBounds);
     }
   }
