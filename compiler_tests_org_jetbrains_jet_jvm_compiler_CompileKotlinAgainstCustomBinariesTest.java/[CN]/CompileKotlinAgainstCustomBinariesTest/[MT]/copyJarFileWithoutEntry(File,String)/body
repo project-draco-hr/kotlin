@@ -1,0 +1,26 @@
+{
+  try {
+    File outputFile=new File(jarPath.getParentFile(),FileUtil.getNameWithoutExtension(jarPath) + "-after.jar");
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") JarFile jar=new JarFile(jarPath);
+    ZipOutputStream output=new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
+    try {
+      for (Enumeration<JarEntry> enumeration=jar.entries(); enumeration.hasMoreElements(); ) {
+        JarEntry jarEntry=enumeration.nextElement();
+        if (entryToDelete.equals(jarEntry.getName())) {
+          continue;
+        }
+        output.putNextEntry(jarEntry);
+        output.write(FileUtil.loadBytes(jar.getInputStream(jarEntry)));
+        output.closeEntry();
+      }
+    }
+  finally {
+      output.close();
+      jar.close();
+    }
+    return outputFile;
+  }
+ catch (  IOException e) {
+    throw ExceptionUtils.rethrow(e);
+  }
+}
