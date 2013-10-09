@@ -2,20 +2,20 @@
   File file=new File(moduleDefinitionFile);
   if (!file.exists()) {
     messageCollector.report(ERROR,"Module definition file does not exist: " + moduleDefinitionFile,NO_LOCATION);
-    return Collections.emptyList();
+    return ModuleChunk.EMPTY;
   }
   String extension=FileUtilRt.getExtension(moduleDefinitionFile);
   if ("kts".equalsIgnoreCase(extension)) {
-    return loadModuleScript(paths,moduleDefinitionFile,messageCollector);
+    return new ModuleChunk(loadModuleScript(paths,moduleDefinitionFile,messageCollector));
   }
   if ("xml".equalsIgnoreCase(extension)) {
-    return ContainerUtil.map(ModuleXmlParser.parse(moduleDefinitionFile,messageCollector),new Function<ModuleDescription,Module>(){
+    return new ModuleChunk(ContainerUtil.map(ModuleXmlParser.parse(moduleDefinitionFile,messageCollector),new Function<ModuleDescription,Module>(){
       @Override public Module fun(      ModuleDescription description){
         return new DescriptionToModuleAdapter(description);
       }
     }
-);
+));
   }
   messageCollector.report(ERROR,"Unknown module definition type: " + moduleDefinitionFile,NO_LOCATION);
-  return Collections.emptyList();
+  return ModuleChunk.EMPTY;
 }
