@@ -1,0 +1,14 @@
+{
+  KotlinModuleDescriptionBuilder builder=FACTORY.create();
+  boolean noSources=true;
+  for (  ModuleBuildTarget target : chunk.getTargets()) {
+    File outputDir=getOutputDir(target);
+    List<File> sourceFiles=KotlinSourceFileCollector.getAllKotlinSourceFiles(target);
+    noSources&=sourceFiles.isEmpty();
+    builder.addModule(target.getId(),outputDir.getAbsolutePath(),getKotlinModuleDependencies(context,target),sourceFiles,target.isTests(),Collections.singleton(outputDir));
+  }
+  if (noSources)   return null;
+  File scriptFile=new File(getOutputDir(chunk.representativeTarget()),"script." + FACTORY.getFileExtension());
+  writeScriptToFile(context,builder.asText(),scriptFile);
+  return scriptFile;
+}
