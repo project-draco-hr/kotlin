@@ -1,5 +1,9 @@
 {
-  for (  Module module : modules.getModules()) {
+  List<Module> modules=chunk.getModules();
+  if (COMPILE_CHUNK_AS_ONE_MODULE && modules.size() > 1) {
+    modules=Collections.<Module>singletonList(new ChunkAsOneModule(chunk));
+  }
+  for (  Module module : modules) {
     ClassFileFactory moduleFactory=compileModule(configuration,module,directory);
     if (moduleFactory == null) {
       return false;
@@ -7,7 +11,7 @@
     CompileEnvironmentUtil.OutputDirector outputDir=new CompileEnvironmentUtil.OutputDirector(){
       @NotNull @Override public File getOutputDirectory(      @NotNull Collection<File> sourceFiles){
         for (        File sourceFile : sourceFiles) {
-          Module module=modules.findModuleBySourceFile(sourceFile);
+          Module module=chunk.findModuleBySourceFile(sourceFile);
           if (module != null) {
             return new File(module.getOutputDirectory());
           }
