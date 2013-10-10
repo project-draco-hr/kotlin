@@ -1,18 +1,18 @@
 {
-  List<JetProperty> properties=collectPropertiesToInitialize(file);
+  List<JetProperty> properties=collectPropertiesToInitialize();
   if (properties.isEmpty())   return;
-  MethodVisitor mv=builder.newMethod(file,ACC_STATIC,"<clinit>","()V",null,null);
+  MethodVisitor mv=v.newMethod(jetFile,ACC_STATIC,"<clinit>","()V",null,null);
   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
     mv.visitCode();
     FrameMap frameMap=new FrameMap();
-    SimpleFunctionDescriptorImpl clInit=new SimpleFunctionDescriptorImpl(descriptor,Collections.<AnnotationDescriptor>emptyList(),Name.special("<clinit>"),CallableMemberDescriptor.Kind.SYNTHESIZED);
+    SimpleFunctionDescriptorImpl clInit=new SimpleFunctionDescriptorImpl(this.descriptor,Collections.<AnnotationDescriptor>emptyList(),Name.special("<clinit>"),CallableMemberDescriptor.Kind.SYNTHESIZED);
     clInit.initialize(null,null,Collections.<TypeParameterDescriptor>emptyList(),Collections.<ValueParameterDescriptor>emptyList(),null,null,Visibilities.PRIVATE,false);
-    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,context.intoFunction(clInit),state,this);
+    ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,Type.VOID_TYPE,this.context.intoFunction(clInit),state,this);
     for (    JetDeclaration declaration : properties) {
       ImplementationBodyCodegen.initializeProperty(codegen,state.getBindingContext(),(JetProperty)declaration);
     }
     mv.visitInsn(RETURN);
-    FunctionCodegen.endVisit(mv,"static initializer for namespace",file);
+    FunctionCodegen.endVisit(mv,"static initializer for namespace",jetFile);
     mv.visitEnd();
   }
 }
