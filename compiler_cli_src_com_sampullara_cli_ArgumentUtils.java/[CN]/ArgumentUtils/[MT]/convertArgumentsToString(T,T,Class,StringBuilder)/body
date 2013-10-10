@@ -1,0 +1,29 @@
+{
+  Class superClazz=clazz.getSuperclass();
+  if (superClazz != null) {
+    convertArgumentsToString(arguments,defaultArguments,superClazz,result);
+  }
+  for (  Field field : clazz.getDeclaredFields()) {
+    Argument argument=field.getAnnotation(Argument.class);
+    if (argument == null)     continue;
+    Object value;
+    Object defaultValue;
+    try {
+      value=field.get(arguments);
+      defaultValue=field.get(defaultArguments);
+    }
+ catch (    IllegalAccessException ignored) {
+      continue;
+    }
+    if (ComparatorUtil.equalsNullable(value,defaultValue))     continue;
+    String name=Args.getAlias(argument);
+    if (name == null) {
+      name=Args.getName(argument,field);
+    }
+    result.append("-").append(name).append(" ");
+    Class<?> fieldType=field.getType();
+    if (fieldType != boolean.class && fieldType != Boolean.class) {
+      result.append(value).append(" ");
+    }
+  }
+}
