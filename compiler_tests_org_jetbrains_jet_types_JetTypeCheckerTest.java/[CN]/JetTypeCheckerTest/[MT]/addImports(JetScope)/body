@@ -2,9 +2,11 @@
   WritableScopeImpl writableScope=new WritableScopeImpl(scope,scope.getContainingDeclaration(),RedeclarationHandler.DO_NOTHING,"JetTypeCheckerTest.addImports");
   InjectorForJavaDescriptorResolver injector=new InjectorForJavaDescriptorResolver(getProject(),new BindingTraceContext());
   JavaDescriptorResolver javaDescriptorResolver=injector.getJavaDescriptorResolver();
-  writableScope.importScope(javaDescriptorResolver.resolveNamespace(FqName.ROOT,INCLUDE_KOTLIN_SOURCES).getMemberScope());
-  writableScope.importScope(javaDescriptorResolver.resolveNamespace(new FqName("java.lang"),IGNORE_KOTLIN_SOURCES).getMemberScope());
+  ModuleDescriptor module=javaDescriptorResolver.getPackageFragmentProvider().getModule();
+  for (  ImportPath defaultImport : module.getDefaultImports()) {
+    writableScope.importScope(module.getPackage(defaultImport.fqnPart()).getMemberScope());
+  }
+  writableScope.importScope(module.getPackage(FqName.ROOT).getMemberScope());
   writableScope.changeLockLevel(WritableScope.LockLevel.BOTH);
-  writableScope.importScope(builtIns.getBuiltInsScope());
   return writableScope;
 }

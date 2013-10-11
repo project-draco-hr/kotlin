@@ -1,6 +1,6 @@
 {
   boolean generateSrcClass=false;
-  FieldOwnerContext packageFragmentContext=CodegenContext.STATIC.intoNamespace(descriptor);
+  FieldOwnerContext packagePartContext=CodegenContext.STATIC.intoPackagePart(getPackageFragment(file));
   for (  JetDeclaration declaration : file.getDeclarations()) {
     if (declaration instanceof JetProperty || declaration instanceof JetNamedFunction) {
       generateSrcClass=true;
@@ -11,14 +11,14 @@
       }
     }
  else     if (declaration instanceof JetScript) {
-      ScriptCodegen.createScriptCodegen((JetScript)declaration,state,packageFragmentContext).generate();
+      ScriptCodegen.createScriptCodegen((JetScript)declaration,state,packagePartContext).generate();
     }
   }
   if (!generateSrcClass)   return null;
-  Type packageFragmentType=getNamespacePartType(getPackageClassFqName(name),file.getVirtualFile());
-  ClassBuilder builder=state.getFactory().forPackageFragment(packageFragmentType,file);
-  new NamespacePartCodegen(builder,file,packageFragmentType,packageFragmentContext,state).generate();
-  FieldOwnerContext namespaceFacade=CodegenContext.STATIC.intoNamespaceFacade(packageFragmentType,descriptor);
+  Type packagePartType=getNamespacePartType(getPackageClassFqName(name),file.getVirtualFile());
+  ClassBuilder builder=state.getFactory().forPackageFragment(packagePartType,file);
+  new NamespacePartCodegen(builder,file,packagePartType,packagePartContext,state).generate();
+  FieldOwnerContext namespaceFacade=CodegenContext.STATIC.intoPackageFacade(packagePartType,getPackageFragment(file));
   for (  JetDeclaration declaration : file.getDeclarations()) {
     if (declaration instanceof JetNamedFunction || declaration instanceof JetProperty) {
       genFunctionOrProperty(namespaceFacade,(JetTypeParameterListOwner)declaration,v.getClassBuilder());

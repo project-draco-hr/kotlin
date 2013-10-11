@@ -1,0 +1,13 @@
+{
+  JetNamespaceHeader namespaceHeader=file.getNamespaceHeader();
+  List<JetSimpleNameExpression> allNamespaceNames=new ArrayList<JetSimpleNameExpression>(namespaceHeader.getParentNamespaceNames());
+  ContainerUtil.addIfNotNull(allNamespaceNames,namespaceHeader.getLastPartExpression());
+  for (  JetSimpleNameExpression nameExpression : allNamespaceNames) {
+    FqName parentFqName=namespaceHeader.getParentFqName(nameExpression);
+    getOrCreatePackageFragment(parentFqName,nameExpression,handler);
+    trace.record(RESOLUTION_SCOPE,nameExpression,module.getPackage(parentFqName).getMemberScope());
+  }
+  MutablePackageFragmentDescriptor fragment=getOrCreatePackageFragment(namespaceHeader.getFqName(),namespaceHeader.getLastPartExpression(),handler);
+  storeBindingForFile(file,fragment);
+  return fragment;
+}

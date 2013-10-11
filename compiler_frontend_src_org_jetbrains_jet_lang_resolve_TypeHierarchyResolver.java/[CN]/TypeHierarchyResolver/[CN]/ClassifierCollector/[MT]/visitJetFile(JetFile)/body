@@ -1,11 +1,13 @@
 {
-  NamespaceDescriptorImpl namespaceDescriptor=namespaceFactory.createNamespaceDescriptorPathIfNeeded(file,outerScope,RedeclarationHandler.DO_NOTHING);
-  context.getNamespaceDescriptors().put(file,namespaceDescriptor);
-  WriteThroughScope namespaceScope=new WriteThroughScope(outerScope,namespaceDescriptor.getMemberScope(),new TraceBasedRedeclarationHandler(trace),"namespace in file " + file.getName());
-  namespaceScope.changeLockLevel(WritableScope.LockLevel.BOTH);
-  context.getNamespaceScopes().put(file,namespaceScope);
+  MutablePackageFragmentDescriptor packageFragment=namespaceFactory.createPackageFragmentIfNeeded(file,RedeclarationHandler.DO_NOTHING);
+  context.getPackageFragments().put(file,packageFragment);
+  PackageViewDescriptor packageView=packageFragment.getContainingDeclaration().getPackage(packageFragment.getFqName());
+  ChainedScope rootPlusPackageScope=new ChainedScope(packageView,packageView.getMemberScope(),outerScope);
+  WriteThroughScope packageScope=new WriteThroughScope(rootPlusPackageScope,packageFragment.getMemberScope(),new TraceBasedRedeclarationHandler(trace),"package in file " + file.getName());
+  packageScope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  context.getNamespaceScopes().put(file,packageScope);
   if (file.isScript()) {
-    scriptHeaderResolver.processScriptHierarchy(file.getScript(),namespaceScope);
+    scriptHeaderResolver.processScriptHierarchy(file.getScript(),packageScope);
   }
-  prepareForDeferredCall(namespaceScope,namespaceDescriptor,file);
+  prepareForDeferredCall(packageScope,packageFragment,file);
 }

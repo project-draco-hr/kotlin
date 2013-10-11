@@ -1,0 +1,34 @@
+{
+  if (!(packageFragment instanceof JavaPackageFragmentDescriptor) || packageFragment.getMemberScope() instanceof DeserializedPackageMemberScope) {
+    JetFile file=BindingContextUtils.getContainingFile(bindingContext,descriptor);
+    if (insideModule && file != null) {
+      return NamespaceCodegen.getNamespacePartInternalName(file);
+    }
+ else {
+      return PackageClassUtils.getPackageClassFqName(packageFragment.getFqName()).asString().replace('.','/');
+    }
+  }
+  if (!(packageFragment.getMemberScope() instanceof JavaClassStaticMembersScope)) {
+    throw new IllegalStateException("Unexpected scope: " + packageFragment.getMemberScope().getClass());
+  }
+  JavaPackageFragmentProvider javaFragmentProvider=((JavaPackageFragmentDescriptor)packageFragment).getProvider();
+  StringBuilder r=new StringBuilder();
+  for (  FqName pathItem : packageFragment.getFqName().parent().path()) {
+    if (pathItem.isRoot()) {
+      continue;
+    }
+    r.append(pathItem.shortName().asString());
+    JetScope memberScope=javaFragmentProvider.getOrCreatePackage(pathItem).getMemberScope();
+    if (memberScope instanceof JavaClassStaticMembersScope) {
+      r.append("$");
+    }
+ else     if (memberScope instanceof JavaPackageScope) {
+      r.append("/");
+    }
+ else {
+      throw new IllegalStateException("Unexpected scope: " + memberScope.getClass());
+    }
+  }
+  r.append(packageFragment.getName().asString());
+  return r.toString();
+}

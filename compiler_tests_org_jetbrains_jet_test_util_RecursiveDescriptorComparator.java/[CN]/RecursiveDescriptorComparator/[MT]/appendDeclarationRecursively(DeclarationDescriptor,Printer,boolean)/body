@@ -1,10 +1,10 @@
 {
-  if (descriptor instanceof ClassOrNamespaceDescriptor && !topLevel) {
+  if ((descriptor instanceof ClassOrNamespaceDescriptor || descriptor instanceof PackageViewDescriptor) && !topLevel) {
     printer.println();
   }
   boolean isPrimaryConstructor=descriptor instanceof ConstructorDescriptor && ((ConstructorDescriptor)descriptor).isPrimary();
   printer.print(isPrimaryConstructor && conf.checkPrimaryConstructors ? "/*primary*/ " : "",conf.renderer.render(descriptor));
-  if (descriptor instanceof ClassOrNamespaceDescriptor) {
+  if (descriptor instanceof ClassOrNamespaceDescriptor || descriptor instanceof PackageViewDescriptor) {
     if (!topLevel) {
       printer.printlnWithNoIndent(" {").pushIndent();
     }
@@ -16,8 +16,11 @@
       ClassDescriptor klass=(ClassDescriptor)descriptor;
       appendSubDescriptors(klass.getDefaultType().getMemberScope(),getConstructorsAndClassObject(klass),printer);
     }
- else     if (descriptor instanceof NamespaceDescriptor) {
-      appendSubDescriptors(((NamespaceDescriptor)descriptor).getMemberScope(),Collections.<DeclarationDescriptor>emptyList(),printer);
+ else     if (descriptor instanceof PackageFragmentDescriptor) {
+      appendSubDescriptors(((PackageFragmentDescriptor)descriptor).getMemberScope(),Collections.<DeclarationDescriptor>emptyList(),printer);
+    }
+ else     if (descriptor instanceof PackageViewDescriptor) {
+      appendSubDescriptors(((PackageViewDescriptor)descriptor).getMemberScope(),Collections.<DeclarationDescriptor>emptyList(),printer);
     }
     if (!topLevel) {
       printer.popIndent().println("}");

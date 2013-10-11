@@ -4,6 +4,11 @@
   AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   final BindingContext bindingContext=analyzeExhaust.getBindingContext();
   final List<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
+  FqName fqName=psiFile.getNamespaceHeader().getFqName();
+  if (!fqName.isRoot()) {
+    PackageViewDescriptor packageDescriptor=analyzeExhaust.getModuleDescriptor().getPackage(fqName);
+    descriptors.add(packageDescriptor);
+  }
   psiFile.acceptChildren(new JetVisitorVoid(){
     @Override public void visitJetElement(    @NotNull JetElement element){
       DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
