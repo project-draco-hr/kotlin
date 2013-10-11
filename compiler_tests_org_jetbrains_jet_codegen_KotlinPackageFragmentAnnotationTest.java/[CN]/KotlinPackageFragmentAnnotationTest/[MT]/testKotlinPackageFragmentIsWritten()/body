@@ -6,9 +6,10 @@
     if (!fileName.equals(facadeFileName)) {
       String fqName=fileName.substring(0,fileName.length() - ".class".length()).replace('/','.');
       Class aClass=generateClass(fqName);
-      assertTrue("No KotlinPackageFragment annotation on a package fragment",aClass.isAnnotationPresent(KotlinPackageFragment.class));
-      KotlinPackageFragment annotation=(KotlinPackageFragment)aClass.getAnnotation(KotlinPackageFragment.class);
-      assertTrue("KotlinPackageFragment annotation is written with an unsupported format",AbiVersionUtil.isAbiVersionCompatible(annotation.abiVersion()));
+      Class<? extends Annotation> annotationClass=getCorrespondingAnnotationClass(KotlinPackageFragment.class);
+      assertTrue("No KotlinPackageFragment annotation on a package fragment",aClass.isAnnotationPresent(annotationClass));
+      Annotation kotlinPackageFragment=aClass.getAnnotation(annotationClass);
+      assertTrue("KotlinPackageFragment annotation is written with an unsupported format",AbiVersionUtil.isAbiVersionCompatible((Integer)ClassLoaderIsolationUtil.getAnnotationAttribute(kotlinPackageFragment,"abiVersion")));
       return;
     }
   }

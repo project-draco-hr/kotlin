@@ -1,9 +1,11 @@
 {
   loadText("package " + NAMESPACE_NAME + "\n"+ "\n"+ "fun foo() = 42\n"+ "val bar = 239\n"+ "\n"+ "class A\n"+ "class B\n"+ "object C\n");
   Class aClass=generateClass(PackageClassUtils.getPackageClassFqName(NAMESPACE_NAME).asString());
-  assertTrue(aClass.isAnnotationPresent(KotlinPackage.class));
-  KotlinPackage kotlinPackage=(KotlinPackage)aClass.getAnnotation(KotlinPackage.class);
-  PackageData data=JavaProtoBufUtil.readPackageDataFrom(kotlinPackage.data());
+  Class<? extends Annotation> annotationClass=getCorrespondingAnnotationClass(KotlinPackage.class);
+  assertTrue(aClass.isAnnotationPresent(annotationClass));
+  assertTrue(aClass.isAnnotationPresent(annotationClass));
+  Annotation kotlinPackage=aClass.getAnnotation(annotationClass);
+  PackageData data=JavaProtoBufUtil.readPackageDataFrom((String[])ClassLoaderIsolationUtil.getAnnotationAttribute(kotlinPackage,"data"));
   Set<String> callableNames=collectCallableNames(data.getPackageProto().getMemberList(),data.getNameResolver());
   assertSameElements(Arrays.asList("foo","bar","C"),callableNames);
 }
