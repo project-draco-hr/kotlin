@@ -1,0 +1,31 @@
+{
+  Set<D> candidates=Sets.newLinkedHashSet();
+  outerLoop:   for (  D meD : candidateSet) {
+    CallableDescriptor me=transform.fun(meD);
+    for (    D otherD : candidateSet) {
+      CallableDescriptor other=transform.fun(otherD);
+      if (me == other)       continue;
+      if (filtering == Filtering.RETAIN_OVERRIDING) {
+        if (overrides(other,me)) {
+          continue outerLoop;
+        }
+      }
+ else       if (filtering == Filtering.RETAIN_OVERRIDDEN) {
+        if (overrides(me,other)) {
+          continue outerLoop;
+        }
+      }
+ else {
+        throw new AssertionError("Unexpected Filtering object: " + filtering);
+      }
+    }
+    for (    D otherD : candidates) {
+      CallableDescriptor other=transform.fun(otherD);
+      if (me.getOriginal() == other.getOriginal() && isOverridableBy(other,me).getResult() == OverrideCompatibilityInfo.Result.OVERRIDABLE && isOverridableBy(me,other).getResult() == OverrideCompatibilityInfo.Result.OVERRIDABLE) {
+        continue outerLoop;
+      }
+    }
+    candidates.add(meD);
+  }
+  return candidates;
+}
