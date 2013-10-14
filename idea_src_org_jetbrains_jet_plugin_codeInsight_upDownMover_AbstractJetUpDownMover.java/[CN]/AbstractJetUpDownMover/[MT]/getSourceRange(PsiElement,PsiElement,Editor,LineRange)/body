@@ -1,11 +1,4 @@
 {
-  if (firstElement == lastElement) {
-    LineRange sourceRange=getElementSourceLineRange(firstElement,editor,oldRange);
-    if (sourceRange != null) {
-      sourceRange.firstElement=sourceRange.lastElement=firstElement;
-    }
-    return sourceRange;
-  }
   PsiElement parent=PsiTreeUtil.findCommonParent(firstElement,lastElement);
   int topExtension=0;
   int bottomExtension=0;
@@ -36,8 +29,9 @@
     }
   }
   if (parent == null)   return null;
-  Pair<PsiElement,PsiElement> combinedRange=getElementRange(parent,firstElement,lastElement);
-  if (combinedRange == null || !checkSourceElement(combinedRange.first) || !checkSourceElement(combinedRange.second)) {
+  Pair<PsiElement,PsiElement> originalRange=getElementRange(parent,firstElement,lastElement);
+  Pair<PsiElement,PsiElement> combinedRange=adjustElementRange(originalRange,editor);
+  if (combinedRange == null || !checkSourceElement(originalRange.first) || !checkSourceElement(originalRange.second)) {
     return null;
   }
   LineRange lineRange1=getElementSourceLineRange(combinedRange.first,editor,oldRange);
@@ -46,7 +40,7 @@
   if (lineRange2 == null)   return null;
   LineRange parentLineRange=getElementSourceLineRange(parent,editor,oldRange);
   LineRange sourceRange=new LineRange(lineRange1.startLine - topExtension,lineRange2.endLine + bottomExtension);
-  if (parentLineRange != null && sourceRange.contains(parentLineRange)) {
+  if (parentLineRange != null && sourceRange.startLine == parentLineRange.startLine && sourceRange.endLine == parentLineRange.endLine) {
     sourceRange.firstElement=sourceRange.lastElement=parent;
   }
  else {

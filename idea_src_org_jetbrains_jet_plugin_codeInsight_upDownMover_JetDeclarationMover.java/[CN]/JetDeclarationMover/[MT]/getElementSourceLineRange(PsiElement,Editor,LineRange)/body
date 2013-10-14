@@ -1,21 +1,29 @@
 {
-  JetDeclaration declaration=(JetDeclaration)element;
-  PsiElement first=skipInsignificantElements(declaration.getFirstChild(),true);
-  PsiElement last=skipInsignificantElements(declaration.getLastChild(),false);
-  if (first == null || last == null)   return null;
+  PsiElement first;
+  PsiElement last;
+  if (element instanceof JetDeclaration) {
+    first=skipInsignificantElements(element.getFirstChild(),true);
+    last=skipInsignificantElements(element.getLastChild(),false);
+    if (first == null || last == null)     return null;
+  }
+ else {
+    first=last=element;
+  }
   TextRange textRange1=first.getTextRange();
   TextRange textRange2=last.getTextRange();
   Document doc=editor.getDocument();
   if (doc.getTextLength() < textRange2.getEndOffset())   return null;
   int startLine=editor.offsetToLogicalPosition(textRange1.getStartOffset()).line;
   int endLine=editor.offsetToLogicalPosition(textRange2.getEndOffset()).line + 1;
-  if (startLine == oldRange.startLine || startLine == oldRange.endLine || endLine == oldRange.startLine || endLine == oldRange.endLine) {
+  if (element instanceof PsiComment || startLine == oldRange.startLine || startLine == oldRange.endLine || endLine == oldRange.startLine || endLine == oldRange.endLine) {
     return new LineRange(startLine,endLine);
   }
   TextRange lineTextRange=new TextRange(doc.getLineStartOffset(oldRange.startLine),doc.getLineEndOffset(oldRange.endLine));
-  for (  PsiElement anchor : getDeclarationAnchors(declaration)) {
-    TextRange suspectTextRange=anchor.getTextRange();
-    if (suspectTextRange != null && lineTextRange.intersects(suspectTextRange))     return new LineRange(startLine,endLine);
+  if (element instanceof JetDeclaration) {
+    for (    PsiElement anchor : getDeclarationAnchors((JetDeclaration)element)) {
+      TextRange suspectTextRange=anchor.getTextRange();
+      if (suspectTextRange != null && lineTextRange.intersects(suspectTextRange))       return new LineRange(startLine,endLine);
+    }
   }
   return null;
 }
