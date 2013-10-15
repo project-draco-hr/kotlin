@@ -10,14 +10,10 @@
     AnnotationCodegen.forField(fieldVisitor,typeMapper).genAnnotations(propertyDescriptor);
   }
  else   if (!propertyDescriptor.getAnnotations().isEmpty()) {
-    ReceiverParameterDescriptor receiver=propertyDescriptor.getReceiverParameter();
-    Type receiverAsmType=receiver == null ? null : typeMapper.mapType(receiver.getType());
-    Method method=JvmAbi.getSyntheticMethodSignatureForAnnotatedProperty(propertyDescriptor.getName(),receiverAsmType);
-    MethodVisitor mv=v.newMethod(null,ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC,method.getName(),method.getDescriptor(),null,null);
-    v.getMemberMap().recordSyntheticMethodOfProperty(propertyDescriptor,method);
-    AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(propertyDescriptor);
-    mv.visitCode();
-    mv.visitInsn(Opcodes.RETURN);
-    mv.visitEnd();
+    if (!isTrait(context.getContextDescriptor())) {
+      Method method=getSyntheticMethodSignature(typeMapper,propertyDescriptor);
+      generateSyntheticMethodForAnnotatedProperty(v,typeMapper,propertyDescriptor,method);
+      v.getMemberMap().recordSyntheticMethodOfProperty(propertyDescriptor,method);
+    }
   }
 }
