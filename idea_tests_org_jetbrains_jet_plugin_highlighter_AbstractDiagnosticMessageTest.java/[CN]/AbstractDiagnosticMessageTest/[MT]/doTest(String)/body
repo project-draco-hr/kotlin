@@ -1,10 +1,11 @@
 {
-  String fileName=name + ".kt";
-  JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
-  String fileData=JetTestUtils.doLoadFile(new File(getTestDataPath() + fileName));
+  File file=new File(filePath);
+  String fileName=file.getName();
+  String fileData=JetTestUtils.doLoadFile(file);
   Map<String,String> directives=JetTestUtils.parseDirectives(fileData);
   int diagnosticNumber=computeDiagnosticNumber(directives);
   final Set<DiagnosticFactory> diagnosticFactories=computeDiagnosticFactories(directives);
+  JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
   AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   BindingContext bindingContext=analyzeExhaust.getBindingContext();
   List<Diagnostic> diagnostics=ContainerUtil.filter(bindingContext.getDiagnostics().all(),new Condition<Diagnostic>(){
@@ -15,6 +16,7 @@
 );
   assertEquals("Expected diagnostics number mismatch:",diagnosticNumber,diagnostics.size());
   int index=1;
+  String name=FileUtil.getNameWithoutExtension(fileName);
   for (  Diagnostic diagnostic : diagnostics) {
     String readableDiagnosticText;
     String extension;
