@@ -1,10 +1,7 @@
 {
   loadFile(filename);
-  ClassFileFactory factory=generateClassesInFile();
-  GeneratedClassLoader loader=createClassLoader(factory);
-  String scriptClassName=ScriptNameUtil.classNameForScript(myFiles.getPsiFile());
   try {
-    Class<?> scriptClass=loader.loadClass(scriptClassName);
+    Class<?> scriptClass=generateClass(ScriptNameUtil.classNameForScript(myFiles.getPsiFile()));
     Constructor constructor=getConstructor(scriptClass);
     scriptInstance=constructor.newInstance(myFiles.getScriptParameterValues().toArray());
     assertFalse("expecting at least one expectation",myFiles.getExpectedValues().isEmpty());
@@ -29,6 +26,6 @@
   }
  catch (  Throwable e) {
     System.out.println(generateToText());
-    ExceptionUtils.rethrow(e);
+    throw ExceptionUtils.rethrow(e);
   }
 }
