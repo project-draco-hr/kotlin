@@ -1,12 +1,15 @@
 {
   String fileName=name + ".kt";
   JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
+  String fileData=JetTestUtils.doLoadFile(new File(getTestDataPath() + fileName));
+  Map<String,String> directives=JetTestUtils.parseDirectives(fileData);
+  int diagnosticNumber=computeDiagnosticNumber(directives);
+  final Set<DiagnosticFactory> diagnosticFactories=computeDiagnosticFactories(directives);
   AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   BindingContext bindingContext=analyzeExhaust.getBindingContext();
-  final Set<DiagnosticFactory> factoriesSet=Sets.newHashSet(diagnosticFactories);
   List<Diagnostic> diagnostics=ContainerUtil.filter(bindingContext.getDiagnostics().all(),new Condition<Diagnostic>(){
     @Override public boolean value(    Diagnostic diagnostic){
-      return factoriesSet.contains(diagnostic.getFactory());
+      return diagnosticFactories.contains(diagnostic.getFactory());
     }
   }
 );
