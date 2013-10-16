@@ -1,0 +1,29 @@
+{
+  KotlinPaths paths=new KotlinPathsFromHomeDir(new File("dist/kotlinc"));
+  GroupingMessageCollector messageCollector=new GroupingMessageCollector(new PrintingMessageCollector(System.err,MessageRenderer.PLAIN,false));
+  Disposable rootDisposable=Disposer.newDisposable();
+  try {
+    CompilerConfiguration configuration=JetTestUtils.compilerConfigurationForTests(ConfigurationKind.JDK_AND_ANNOTATIONS,TestJdkKind.MOCK_JDK);
+    configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,messageCollector);
+    configuration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,"compiler/testData/cli/" + scriptPath);
+    configuration.addAll(CommonConfigurationKeys.SCRIPT_DEFINITIONS_KEY,scriptDefinitions);
+    configuration.put(JVMConfigurationKeys.SCRIPT_PARAMETERS,scriptParameters);
+    JetCoreEnvironment environment=JetCoreEnvironment.createForProduction(rootDisposable,configuration);
+    try {
+      JetScriptDefinitionProvider.getInstance(environment.getProject()).markFileAsScript(environment.getSourceFiles().get(0));
+      return KotlinToJVMBytecodeCompiler.compileScript(paths,environment);
+    }
+ catch (    CompilationException e) {
+      messageCollector.report(CompilerMessageSeverity.EXCEPTION,MessageRenderer.PLAIN.renderException(e),MessageUtil.psiElementToMessageLocation(e.getElement()));
+      return null;
+    }
+catch (    Throwable t) {
+      MessageCollectorUtil.reportException(messageCollector,t);
+      return null;
+    }
+  }
+  finally {
+    messageCollector.flush();
+    Disposer.dispose(rootDisposable);
+  }
+}

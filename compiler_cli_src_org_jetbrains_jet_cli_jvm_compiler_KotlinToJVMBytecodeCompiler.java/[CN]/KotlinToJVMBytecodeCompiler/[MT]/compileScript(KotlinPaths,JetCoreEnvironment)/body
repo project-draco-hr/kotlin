@@ -1,0 +1,20 @@
+{
+  GenerationState state=analyzeAndGenerate(environment);
+  if (state == null) {
+    return null;
+  }
+  GeneratedClassLoader classLoader=null;
+  try {
+    classLoader=new GeneratedClassLoader(state.getFactory(),new URLClassLoader(new URL[]{paths.getRuntimePath().toURI().toURL()},AllModules.class.getClassLoader()));
+    return classLoader.loadClass(ScriptNameUtil.classNameForScript(environment.getSourceFiles().get(0)));
+  }
+ catch (  Exception e) {
+    throw new RuntimeException("Failed to evaluate script: " + e,e);
+  }
+ finally {
+    if (classLoader != null) {
+      classLoader.dispose();
+    }
+    state.destroy();
+  }
+}
