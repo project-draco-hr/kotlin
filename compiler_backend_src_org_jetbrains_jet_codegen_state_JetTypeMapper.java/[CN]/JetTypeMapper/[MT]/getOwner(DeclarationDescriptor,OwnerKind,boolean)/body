@@ -1,19 +1,14 @@
 {
-  JetTypeMapperMode mapTypeMode=ownerKindToMapTypeMode(kind);
   DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
   if (containingDeclaration instanceof NamespaceDescriptor) {
     return asmTypeForNamespace((NamespaceDescriptor)containingDeclaration,descriptor,isInsideModule);
   }
  else   if (containingDeclaration instanceof ClassDescriptor) {
     ClassDescriptor classDescriptor=(ClassDescriptor)containingDeclaration;
-    if (classDescriptor.getKind() == ClassKind.OBJECT) {
-      mapTypeMode=JetTypeMapperMode.IMPL;
+    if (kind == OwnerKind.TRAIT_IMPL) {
+      return mapTraitImpl(classDescriptor);
     }
-    Type asmType=mapType(classDescriptor.getDefaultType(),mapTypeMode);
-    if (asmType.getSort() != Type.OBJECT) {
-      throw new IllegalStateException();
-    }
-    return asmType;
+    return mapType(classDescriptor.getDefaultType(),JetTypeMapperMode.IMPL);
   }
  else   if (containingDeclaration instanceof ScriptDescriptor) {
     return asmTypeForScriptDescriptor(bindingContext,(ScriptDescriptor)containingDeclaration);
