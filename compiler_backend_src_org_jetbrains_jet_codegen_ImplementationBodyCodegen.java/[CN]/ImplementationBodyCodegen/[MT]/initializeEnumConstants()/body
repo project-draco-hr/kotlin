@@ -1,0 +1,16 @@
+{
+  if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
+  ExpressionCodegen codegen=createOrGetClInitCodegen();
+  InstructionAdapter iv=codegen.v;
+  Type arrayAsmType=typeMapper.mapType(KotlinBuiltIns.getInstance().getArrayType(descriptor.getDefaultType()));
+  v.newField(myClass,ACC_PRIVATE | ACC_STATIC | ACC_FINAL| ACC_SYNTHETIC,VALUES,arrayAsmType.getDescriptor(),null,null);
+  iv.iconst(myEnumConstants.size());
+  iv.newarray(classAsmType);
+  if (!myEnumConstants.isEmpty()) {
+    iv.dup();
+    for (int ordinal=0, size=myEnumConstants.size(); ordinal < size; ordinal++) {
+      initializeEnumConstant(codegen,ordinal);
+    }
+  }
+  iv.putstatic(classAsmType.getInternalName(),VALUES,arrayAsmType.getDescriptor());
+}
