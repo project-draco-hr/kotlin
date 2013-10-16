@@ -10,10 +10,15 @@
     AnnotationCodegen.forField(fieldVisitor,typeMapper).genAnnotations(propertyDescriptor);
   }
  else   if (!propertyDescriptor.getAnnotations().isEmpty()) {
-    if (!isTrait(context.getContextDescriptor())) {
-      Method method=getSyntheticMethodSignature(typeMapper,propertyDescriptor);
-      generateSyntheticMethodForAnnotatedProperty(v,typeMapper,propertyDescriptor,method);
-      v.getMemberMap().recordSyntheticMethodOfProperty(propertyDescriptor,method);
+    Method method=getSyntheticMethodSignature(typeMapper,propertyDescriptor);
+    DeclarationDescriptor descriptor=context.getContextDescriptor();
+    if (isTrait(descriptor)) {
+      Type tImplType=typeMapper.mapTraitImpl((ClassDescriptor)descriptor);
+      v.getMemberMap().recordImplClassNameForCallable(propertyDescriptor,shortNameByAsmType(tImplType));
     }
+ else {
+      generateSyntheticMethodForAnnotatedProperty(v,typeMapper,propertyDescriptor,method);
+    }
+    v.getMemberMap().recordSyntheticMethodOfProperty(propertyDescriptor,method);
   }
 }
