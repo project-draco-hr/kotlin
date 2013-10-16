@@ -3,8 +3,9 @@
   String fileName=file.getName();
   String fileData=JetTestUtils.doLoadFile(file);
   Map<String,String> directives=JetTestUtils.parseDirectives(fileData);
-  int diagnosticNumber=computeDiagnosticNumber(directives);
-  final Set<DiagnosticFactory> diagnosticFactories=computeDiagnosticFactories(directives);
+  int diagnosticNumber=getDiagnosticNumber(directives);
+  final Set<DiagnosticFactory> diagnosticFactories=getDiagnosticFactories(directives);
+  MessageType messageType=getMessageTypeDirective(directives);
   JetFile psiFile=createPsiFile(null,fileName,loadFile(fileName));
   AnalyzeExhaust analyzeExhaust=AnalyzerFacadeForJVM.analyzeOneFileWithJavaIntegration(psiFile,Collections.<AnalyzerScriptParameter>emptyList());
   BindingContext bindingContext=analyzeExhaust.getBindingContext();
@@ -20,13 +21,13 @@
   for (  Diagnostic diagnostic : diagnostics) {
     String readableDiagnosticText;
     String extension;
-    if (IdeErrorMessages.MAP.get(diagnostic.getFactory()) != null) {
+    if (messageType != MessageType.TEXT && IdeErrorMessages.MAP.get(diagnostic.getFactory()) != null) {
       readableDiagnosticText=IdeErrorMessages.RENDERER.render(diagnostic).replaceAll(">",">\n");
-      extension="html";
+      extension=MessageType.HTML.extension;
     }
  else {
       readableDiagnosticText=DefaultErrorMessages.RENDERER.render(diagnostic);
-      extension="txt";
+      extension=MessageType.TEXT.extension;
     }
     String errorMessageFileName=name + index;
     String path=getTestDataPath() + "/" + errorMessageFileName+ "."+ extension;
