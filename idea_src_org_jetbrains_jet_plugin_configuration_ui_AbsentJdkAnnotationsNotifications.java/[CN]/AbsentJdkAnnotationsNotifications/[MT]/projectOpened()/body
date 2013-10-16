@@ -1,0 +1,33 @@
+{
+  super.projectOpened();
+  MessageBusConnection connection=myProject.getMessageBus().connect();
+  connection.subscribe(DumbService.DUMB_MODE,new DumbService.DumbModeListener(){
+    @Override public void enteredDumbMode(){
+    }
+    @Override public void exitDumbMode(){
+      showNotificationIfNeeded();
+    }
+  }
+);
+  connection.subscribe(ProjectTopics.PROJECT_ROOTS,new ModuleRootAdapter(){
+    @Override public void rootsChanged(    ModuleRootEvent event){
+      showNotificationIfNeeded();
+    }
+  }
+);
+  connection.subscribe(VirtualFileManager.VFS_CHANGES,new BulkVirtualFileListenerAdapter(new VirtualFileAdapter(){
+    @Override public void fileDeleted(    VirtualFileEvent event){
+      showNotificationIfNeeded();
+    }
+    @Override public void fileCreated(    VirtualFileEvent event){
+      showNotificationIfNeeded();
+    }
+    @Override public void fileMoved(    VirtualFileMoveEvent event){
+      showNotificationIfNeeded();
+    }
+    @Override public void fileCopied(    VirtualFileCopyEvent event){
+      showNotificationIfNeeded();
+    }
+  }
+));
+}
