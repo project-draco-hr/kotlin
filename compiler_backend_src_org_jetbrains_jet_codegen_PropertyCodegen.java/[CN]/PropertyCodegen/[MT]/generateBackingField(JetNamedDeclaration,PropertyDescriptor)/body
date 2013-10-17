@@ -1,24 +1,17 @@
 {
-  boolean hasBackingField=Boolean.TRUE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor));
-  boolean isDelegated=p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null;
-  if (hasBackingField || isDelegated) {
-    DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
-    if (isInterface(containingDeclaration)) {
-      return;
-    }
-    FieldVisitor fieldVisitor=hasBackingField ? generateBackingFieldAccess(p,propertyDescriptor) : generatePropertyDelegateAccess((JetProperty)p,propertyDescriptor);
-    AnnotationCodegen.forField(fieldVisitor,typeMapper).genAnnotations(propertyDescriptor);
+  if (isInterface(descriptor.getContainingDeclaration()) || kind == OwnerKind.TRAIT_IMPL) {
+    return false;
   }
- else   if (!propertyDescriptor.getAnnotations().isEmpty()) {
-    Method method=getSyntheticMethodSignature(typeMapper,propertyDescriptor);
-    DeclarationDescriptor descriptor=context.getContextDescriptor();
-    if (isTrait(descriptor)) {
-      Type tImplType=typeMapper.mapTraitImpl((ClassDescriptor)descriptor);
-      v.getMemberMap().recordImplClassNameForCallable(propertyDescriptor,shortNameByAsmType(tImplType));
-    }
+  FieldVisitor fv;
+  if (Boolean.TRUE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,descriptor))) {
+    fv=generateBackingFieldAccess(p,descriptor);
+  }
+ else   if (p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null) {
+    fv=generatePropertyDelegateAccess((JetProperty)p,descriptor);
+  }
  else {
-      generateSyntheticMethodForAnnotatedProperty(v,typeMapper,propertyDescriptor,method);
-    }
-    v.getMemberMap().recordSyntheticMethodOfProperty(propertyDescriptor,method);
+    return false;
   }
+  AnnotationCodegen.forField(fv,typeMapper).genAnnotations(descriptor);
+  return true;
 }

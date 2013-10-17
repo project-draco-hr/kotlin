@@ -1,0 +1,20 @@
+{
+  if (descriptor.getAnnotations().isEmpty())   return;
+  ReceiverParameterDescriptor receiver=descriptor.getReceiverParameter();
+  Type receiverAsmType=receiver == null ? null : typeMapper.mapType(receiver.getType());
+  Method method=JvmAbi.getSyntheticMethodSignatureForAnnotatedProperty(descriptor.getName(),receiverAsmType);
+  if (!isTrait(context.getContextDescriptor()) || kind == OwnerKind.TRAIT_IMPL) {
+    MethodVisitor mv=v.newMethod(null,ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC,method.getName(),method.getDescriptor(),null,null);
+    AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(descriptor);
+    mv.visitCode();
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitEnd();
+  }
+ else {
+    Type tImplType=typeMapper.mapTraitImpl((ClassDescriptor)context.getContextDescriptor());
+    v.getMemberMap().recordImplClassNameForCallable(descriptor,shortNameByAsmType(tImplType));
+  }
+  if (kind != OwnerKind.TRAIT_IMPL) {
+    v.getMemberMap().recordSyntheticMethodOfProperty(descriptor,method);
+  }
+}
