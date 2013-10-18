@@ -22,6 +22,22 @@
   if (analyzeAndReportErrors(messageCollector,environmentForJS.getSourceFiles(),config)) {
     return COMPILATION_ERROR;
   }
+  File outputPrefixFile=null;
+  if (arguments.outputPrefix != null) {
+    outputPrefixFile=new File(arguments.outputPrefix);
+    if (!outputPrefixFile.exists()) {
+      messageCollector.report(CompilerMessageSeverity.ERROR,"Output prefix file '" + arguments.outputPrefix + "' not found",CompilerMessageLocation.NO_LOCATION);
+      return ExitCode.COMPILATION_ERROR;
+    }
+  }
+  File outputPostfixFile=null;
+  if (arguments.outputPostfix != null) {
+    outputPostfixFile=new File(arguments.outputPostfix);
+    if (!outputPostfixFile.exists()) {
+      messageCollector.report(CompilerMessageSeverity.ERROR,"Output postfix file '" + arguments.outputPostfix + "' not found",CompilerMessageLocation.NO_LOCATION);
+      return ExitCode.COMPILATION_ERROR;
+    }
+  }
   MainCallParameters mainCallParameters=createMainCallParameters(arguments.main);
-  return translateAndGenerateOutputFile(mainCallParameters,environmentForJS,config,outputFile);
+  return translateAndGenerateOutputFile(mainCallParameters,environmentForJS,config,outputFile,outputPrefixFile,outputPostfixFile);
 }

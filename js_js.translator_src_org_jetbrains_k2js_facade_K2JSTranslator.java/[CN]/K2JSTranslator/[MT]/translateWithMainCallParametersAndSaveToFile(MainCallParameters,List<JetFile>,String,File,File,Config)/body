@@ -4,7 +4,18 @@
   TextOutputImpl output=new TextOutputImpl();
   SourceMapBuilder sourceMapBuilder=config.isSourcemap() ? new SourceMap3Builder(outFile,output,new SourceMapBuilderConsumer()) : null;
   String programCode=translator.generateProgramCode(files,mainCall,output,sourceMapBuilder);
-  FileUtil.writeToFile(outFile,programCode);
+  if (outputPrefixFile != null) {
+    String prefix=FileUtil.loadFile(outputPrefixFile);
+    FileUtil.writeToFile(outFile,prefix);
+    if (sourceMapBuilder != null) {
+      sourceMapBuilder.skipLinesInBegin(StringUtil.getLineBreakCount(prefix));
+    }
+  }
+  FileUtil.writeToFile(outFile,programCode.getBytes(),outputPrefixFile != null);
+  if (outputPostfixFile != null) {
+    byte[] postfix=FileUtil.loadFileBytes(outputPostfixFile);
+    FileUtil.writeToFile(outFile,postfix,true);
+  }
   if (sourceMapBuilder != null) {
     FileUtil.writeToFile(sourceMapBuilder.getOutFile(),sourceMapBuilder.build());
   }
