@@ -8,16 +8,6 @@
       final List<JetImportDirective> directivesAfterCurrent=jetFile.getImportDirectives();
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         @Override public void run(){
-          List<JetImportDirective> imports=jetFile.getImportDirectives();
-          if (!imports.isEmpty()) {
-            PsiElement firstForDelete=getWithPreviousWhitespaces(imports.get(0));
-            PsiElement lastForDelete=getWithFollowedWhitespaces(imports.get(imports.size() - 1));
-            PsiElement elementBeforeImports=firstForDelete.getPrevSibling();
-            jetFile.deleteChildRange(firstForDelete,lastForDelete);
-            if (elementBeforeImports != null) {
-              jetFile.addAfter(JetPsiFactory.createNewLine(jetFile.getProject()),elementBeforeImports);
-            }
-          }
           for (          JetImportDirective anImport : directives) {
             directivesAfterCurrent.remove(anImport);
             ImportPath importPath=JetPsiUtil.getImportPath(anImport);
@@ -25,8 +15,10 @@
               continue;
             }
             if (isUseful(importPath,usedQualifiedNames) && doNeedImport(importPath,jetFile,directivesBeforeCurrent) && doNeedImport(importPath,jetFile,directivesAfterCurrent)) {
-              ImportInsertHelper.writeImportToFile(importPath,jetFile);
               directivesBeforeCurrent.add(anImport);
+            }
+ else {
+              anImport.delete();
             }
           }
         }
