@@ -1,6 +1,6 @@
 {
   if (callable instanceof FunctionDescriptor) {
-    Method method=memberMap.getMethodOfDescriptor((FunctionDescriptor)callable);
+    Method method=bindings.get(METHOD_FOR_FUNCTION,(FunctionDescriptor)callable);
     if (method != null) {
       proto.setExtension(JavaProtoBuf.methodSignature,new SignatureSerializer(nameTable).methodSignature(method));
     }
@@ -9,9 +9,9 @@
     PropertyDescriptor property=(PropertyDescriptor)callable;
     PropertyGetterDescriptor getter=property.getGetter();
     PropertySetterDescriptor setter=property.getSetter();
-    Method getterMethod=getter == null ? null : memberMap.getMethodOfDescriptor(getter);
-    Method setterMethod=setter == null ? null : memberMap.getMethodOfDescriptor(setter);
-    Pair<Type,String> field=memberMap.getFieldOfProperty(property);
+    Method getterMethod=getter == null ? null : bindings.get(METHOD_FOR_FUNCTION,getter);
+    Method setterMethod=setter == null ? null : bindings.get(METHOD_FOR_FUNCTION,setter);
+    Pair<Type,String> field=bindings.get(FIELD_FOR_PROPERTY,property);
     Type fieldType;
     String fieldName;
     boolean isStaticInOuter;
@@ -19,14 +19,14 @@
     if (field != null) {
       fieldType=field.first;
       fieldName=field.second;
-      isStaticInOuter=memberMap.isStaticFieldInOuterClass(property);
+      isStaticInOuter=bindings.get(STATIC_FIELD_IN_OUTER_CLASS,property);
       syntheticMethod=null;
     }
  else {
       fieldType=null;
       fieldName=null;
       isStaticInOuter=false;
-      syntheticMethod=memberMap.getSyntheticMethodOfProperty(property);
+      syntheticMethod=bindings.get(SYNTHETIC_METHOD_FOR_PROPERTY,property);
     }
     JavaProtoBuf.JavaPropertySignature signature=new SignatureSerializer(nameTable).propertySignature(fieldType,fieldName,isStaticInOuter,syntheticMethod,getterMethod,setterMethod);
     proto.setExtension(JavaProtoBuf.propertySignature,signature);
