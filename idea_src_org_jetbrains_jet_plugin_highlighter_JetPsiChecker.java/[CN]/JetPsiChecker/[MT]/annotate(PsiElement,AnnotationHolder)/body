@@ -6,25 +6,22 @@
     element.accept(visitor);
   }
   JetFile file=(JetFile)element.getContainingFile();
-  if (passCache == null || passCache.isOutdated(file)) {
-    passCache=new HighlightingPassCache(AnalyzerFacadeWithCache.analyzeFileWithCache(file),file);
+  AnalyzeExhaust analyzeExhaust=AnalyzerFacadeWithCache.analyzeFileWithCache(file);
+  if (analyzeExhaust.isError()) {
+    HighlighterPackage.updateHighlightingResult(file,true);
+    throw new ProcessCanceledException(analyzeExhaust.getError());
   }
-  if (!passCache.analyzeExhaust.isError()) {
-    BindingContext bindingContext=passCache.analyzeExhaust.getBindingContext();
-    for (    HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
-      element.accept(visitor);
-    }
-    if (JetPluginUtil.isInSource(element,false)) {
-      for (      Diagnostic diagnostic : passCache.elementToDiagnostic.get(element)) {
-        registerDiagnosticAnnotations(diagnostic,passCache.redeclarations,holder);
-      }
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  for (  HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
+    element.accept(visitor);
+  }
+  if (JetPluginUtil.isInSource(element,false)) {
+    Ref<Boolean> isMarkedWithRedeclaration=Ref.create(false);
+    for (    Diagnostic diagnostic : bindingContext.getDiagnostics().forElement(element)) {
+      registerDiagnosticAnnotations(element,diagnostic,holder,isMarkedWithRedeclaration);
     }
   }
- else   if (element instanceof JetFile) {
-    Throwable error=passCache.analyzeExhaust.getError();
-    if (JetPluginUtil.isInSource(element,false)) {
-      holder.createErrorAnnotation(file,error.getClass().getCanonicalName() + ": " + error.getMessage());
-    }
-    LOG.error(error);
+  if (element instanceof JetFile) {
+    HighlighterPackage.updateHighlightingResult(file,false);
   }
 }
