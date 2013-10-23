@@ -4,14 +4,14 @@
   }
   List<FoldingDescriptor> descriptors=new ArrayList<FoldingDescriptor>();
   JetFile file=(JetFile)root;
-  List<JetImportDirective> importList=file.getImportDirectives();
-  if (importList != null && importList.size() > 1) {
-    JetImportDirective firstImport=importList.get(0);
-    PsiElement importKeyword=firstImport.getFirstChild();
+  List<JetImportDirective> imports=file.getImportDirectives();
+  if (imports.size() > 1) {
+    PsiElement importKeyword=imports.get(0).getFirstChild();
     int startOffset=importKeyword.getTextRange().getEndOffset() + 1;
-    int endOffset=importList.get(importList.size() - 1).getTextRange().getEndOffset();
+    JetImportList importList=file.getImportList();
+    int endOffset=importList.getTextRange().getEndOffset();
     TextRange range=new TextRange(startOffset,endOffset);
-    descriptors.add(new FoldingDescriptor(firstImport,range));
+    descriptors.add(new FoldingDescriptor(importList,range));
   }
   appendDescriptors(root.getNode(),document,descriptors);
   return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
