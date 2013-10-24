@@ -1,0 +1,23 @@
+{
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)element.getContainingFile()).getBindingContext();
+  final List<PsiReference> result=new ArrayList<PsiReference>();
+  CalleeReferenceVisitorBase visitor=new CalleeReferenceVisitorBase(bindingContext,true){
+    private boolean isAcceptable(    PsiElement declaration){
+      if (kotlinOptions.isIncludeOverloadUsages) {
+        return declaration instanceof JetNamedFunction && function.getName().equals(((JetNamedFunction)declaration).getName());
+      }
+      return declaration.equals(element);
+    }
+    @Override protected void processDeclaration(    JetReferenceExpression reference,    PsiElement declaration){
+      if (isAcceptable(declaration)) {
+        result.add(reference.getReference());
+      }
+    }
+  }
+;
+  blockForLocalDeclaration.accept(visitor);
+  for (  PsiReference ref : result) {
+    if (!processUsage(processor,ref,kotlinOptions))     return false;
+  }
+  return true;
+}
