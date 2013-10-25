@@ -1,5 +1,6 @@
 {
   MutableClosure top=closure;
+  StackValue myOuter=null;
   if (top != null) {
     EnclosedValueDescriptor answer=closure.getCaptureVariables().get(d);
     if (answer != null) {
@@ -18,8 +19,12 @@
         }
       }
     }
-    StackValue outer=getOuterExpression(null,ignoreNoOuter);
-    result=result == null || outer == null ? outer : StackValue.composed(result,outer);
+    myOuter=getOuterExpression(null,ignoreNoOuter,false);
+    result=result == null || myOuter == null ? myOuter : StackValue.composed(result,myOuter);
   }
-  return parentContext != null ? parentContext.lookupInContext(d,result,state,ignoreNoOuter) : null;
+  StackValue resultValue=parentContext != null ? parentContext.lookupInContext(d,result,state,ignoreNoOuter) : null;
+  if (myOuter != null && resultValue != null) {
+    closure.setCaptureThis();
+  }
+  return resultValue;
 }
