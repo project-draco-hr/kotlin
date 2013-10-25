@@ -1,5 +1,11 @@
 {
-  MutableClassDescriptor objectDescriptor=createClassDescriptorForObject(declaration,owner,outerScope,JetPsiUtil.safeName(declaration.getName()),ClassKind.OBJECT);
-  owner.addObjectDescriptor(objectDescriptor);
-  trace.record(FQNAME_TO_CLASS_DESCRIPTOR,JetPsiUtil.getFQName(declaration),objectDescriptor);
+  if (declaration.isObjectLiteral()) {
+    MutableClassDescriptor descriptor=createClassDescriptorForObject(declaration,SpecialNames.NO_NAME_PROVIDED,ClassKind.CLASS);
+    context.getClasses().put(declaration,descriptor);
+    return;
+  }
+  MutableClassDescriptor descriptor=createClassDescriptorForObject(declaration,JetPsiUtil.safeName(declaration.getName()),ClassKind.OBJECT);
+  context.getObjects().put(declaration,descriptor);
+  owner.addObjectDescriptor(descriptor);
+  trace.record(FQNAME_TO_CLASS_DESCRIPTOR,JetPsiUtil.getFQName(declaration),descriptor);
 }
