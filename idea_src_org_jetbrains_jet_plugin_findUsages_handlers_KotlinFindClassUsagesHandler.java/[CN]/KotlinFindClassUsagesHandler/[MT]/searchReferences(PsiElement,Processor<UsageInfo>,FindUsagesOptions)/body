@@ -2,18 +2,18 @@
   return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
     @Override public Boolean compute(){
       KotlinClassFindUsagesOptions kotlinOptions=(KotlinClassFindUsagesOptions)options;
-      JetClass jetClass=(JetClass)element;
-      if (kotlinOptions.isUsages || kotlinOptions.getSearchConstructorUsages()) {
-        Collection<PsiReference> references=ReferencesSearch.search(new ReferencesSearch.SearchParameters(jetClass,kotlinOptions.searchScope,false)).findAll();
-        for (        PsiReference ref : references) {
-          boolean constructorUsage=FindUsagesPackage.isConstructorUsage(ref.getElement(),jetClass);
-          if ((constructorUsage && !kotlinOptions.getSearchConstructorUsages()) || (!constructorUsage && !kotlinOptions.isUsages))           continue;
-          processUsage(processor,ref,kotlinOptions);
-        }
+      JetClassOrObject classOrObject=(JetClassOrObject)element;
+      UsagesSearchTarget<JetClassOrObject> target=FindUsagesPackage.toSearchTarget(kotlinOptions,classOrObject,true);
+      UsagesSearchRequest classRequest=FindUsagesPackage.toClassHelper(kotlinOptions).newRequest(target);
+      UsagesSearchRequest declarationsRequest=FindUsagesPackage.toClassDeclarationsHelper(kotlinOptions).newRequest(target);
+      for (      PsiReference ref : UsagesSearch.instance$.search(classRequest)) {
+        processUsage(processor,ref);
       }
-      PsiClass lightClass=LightClassUtil.getPsiClass(getElement());
+      for (      PsiReference ref : UsagesSearch.instance$.search(declarationsRequest)) {
+        processUsage(processor,ref);
+      }
+      PsiClass lightClass=LightClassUtil.getPsiClass(classOrObject);
       if (lightClass == null)       return true;
-      if (!processDeclarationsUsages(jetClass,processor,kotlinOptions))       return false;
       if (!processInheritors(lightClass,processor,kotlinOptions))       return false;
       return true;
     }
