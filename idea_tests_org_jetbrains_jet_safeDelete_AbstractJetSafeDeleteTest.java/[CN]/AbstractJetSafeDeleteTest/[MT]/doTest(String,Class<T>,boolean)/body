@@ -22,15 +22,13 @@
   try {
     SafeDeleteHandler.invoke(getProject(),new PsiElement[]{element},null,true,null);
     for (int j=0; j < filePaths.length; j++) {
-      String expectedText=FileUtil.loadFile(new File(filePaths[j] + ".after"));
-      assertEquals(StringUtil.convertLineSeparators(expectedText),editors[j].getDocument().getText());
+      assertSameLinesWithFile(new File(filePaths[j] + ".after").getAbsolutePath(),editors[j].getDocument().getText());
     }
   }
  catch (  BaseRefactoringProcessor.ConflictsInTestsException e) {
     List<String> messages=new ArrayList<String>(e.getMessages());
     Collections.sort(messages);
     File messageFile=new File(path + ".messages");
-    String expectedMessage=FileUtil.loadFile(messageFile,CharsetToolkit.UTF8,true);
-    assertEquals(expectedMessage,StringUtil.join(messages,"\n"));
+    assertSameLinesWithFile(messageFile.getAbsolutePath(),StringUtil.join(messages,"\n"));
   }
 }
