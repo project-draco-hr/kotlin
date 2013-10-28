@@ -1,0 +1,17 @@
+{
+  DeclarationDescriptor descriptor=trace.getBindingContext().get(BindingContext.REFERENCE_TARGET,expression);
+  if (descriptor != null && DescriptorUtils.isEnumEntry(descriptor)) {
+    return new EnumValue((ClassDescriptor)descriptor);
+  }
+  ResolvedCall<? extends CallableDescriptor> resolvedCall=trace.getBindingContext().get(BindingContext.RESOLVED_CALL,expression);
+  if (resolvedCall != null) {
+    CallableDescriptor callableDescriptor=resolvedCall.getResultingDescriptor();
+    if (callableDescriptor instanceof PropertyDescriptor) {
+      PropertyDescriptor propertyDescriptor=(PropertyDescriptor)callableDescriptor;
+      if (AnnotationUtils.isPropertyAcceptableAsAnnotationParameter(propertyDescriptor)) {
+        return trace.getBindingContext().get(COMPILE_TIME_INITIALIZER,propertyDescriptor);
+      }
+    }
+  }
+  return null;
+}
