@@ -1,6 +1,17 @@
 {
   if (trace == null) {
-    trace=new BindingTraceContext();
+    trace=new BindingTraceContext(){
+      @Override public <K,V>void record(      WritableSlice<K,V> slice,      K key,      V value){
+        if (slice == BindingContext.RESOLUTION_SCOPE || slice == BindingContext.TYPE_RESOLUTION_SCOPE) {
+          return;
+        }
+        super.record(slice,key,value);
+      }
+      @Override public String toString(){
+        return "Filtering trace for the CLI compiler: does not save scopes";
+      }
+    }
+;
   }
   return trace;
 }
