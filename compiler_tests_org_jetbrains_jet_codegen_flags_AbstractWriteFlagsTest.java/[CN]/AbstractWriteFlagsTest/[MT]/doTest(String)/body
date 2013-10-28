@@ -21,14 +21,12 @@
     OutputFile outputFile=outputFiles.get(className);
     assertNotNull(outputFile);
     ClassReader cr=new ClassReader(outputFile.asByteArray());
-    TestClassVisitor classVisitor;
-    classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
+    TestClassVisitor classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
     cr.accept(classVisitor,ClassReader.SKIP_CODE);
     boolean isObjectExists=!Boolean.valueOf(findStringWithPrefixes(testedObject.textData,"// ABSENT: "));
     assertEquals("Wrong object existence state: " + testedObject,isObjectExists,classVisitor.isExists());
-    int expectedAccess=getExpectedFlags(testedObject.textData);
     if (isObjectExists) {
-      assertEquals("Wrong access flag for " + testedObject + " \n"+ outputFile.asText(),expectedAccess,classVisitor.getAccess());
+      assertEquals("Wrong access flag for " + testedObject + " \n"+ outputFile.asText(),getExpectedFlags(testedObject.textData),classVisitor.getAccess());
     }
   }
 }
