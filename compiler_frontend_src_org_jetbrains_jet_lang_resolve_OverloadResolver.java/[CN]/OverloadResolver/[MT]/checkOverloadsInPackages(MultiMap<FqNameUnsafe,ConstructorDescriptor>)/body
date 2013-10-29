@@ -1,0 +1,19 @@
+{
+  MultiMap<FqNameUnsafe,CallableMemberDescriptor> functionsByName=MultiMap.create();
+  for (  SimpleFunctionDescriptor function : context.getFunctions().values()) {
+    if (function.getContainingDeclaration() instanceof PackageFragmentDescriptor) {
+      functionsByName.putValue(getFQName(function),function);
+    }
+  }
+  for (  PropertyDescriptor property : context.getProperties().values()) {
+    if (property.getContainingDeclaration() instanceof PackageFragmentDescriptor) {
+      functionsByName.putValue(getFQName(property),property);
+    }
+  }
+  for (  Map.Entry<FqNameUnsafe,Collection<ConstructorDescriptor>> entry : inPackages.entrySet()) {
+    functionsByName.putValues(entry.getKey(),entry.getValue());
+  }
+  for (  Map.Entry<FqNameUnsafe,Collection<CallableMemberDescriptor>> e : functionsByName.entrySet()) {
+    checkOverloadsWithSameName(e.getValue(),e.getKey().parent().asString());
+  }
+}
