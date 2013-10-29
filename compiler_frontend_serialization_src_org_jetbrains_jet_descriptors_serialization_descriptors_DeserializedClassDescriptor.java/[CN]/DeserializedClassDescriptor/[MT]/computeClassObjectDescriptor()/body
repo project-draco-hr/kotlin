@@ -1,5 +1,5 @@
 {
-  if (!classProto.getClassObjectPresent()) {
+  if (!classProto.hasClassObject()) {
     return null;
   }
   if (getKind() == ClassKind.ENUM_CLASS) {
@@ -8,6 +8,13 @@
       createEnumEntry(classObject,deserializer.getNameResolver().getName(enumEntry));
     }
     return classObject;
+  }
+  if (getKind() == ClassKind.OBJECT) {
+    ProtoBuf.Class.ClassObject classObjectProto=classProto.getClassObject();
+    if (!classObjectProto.hasData()) {
+      throw new IllegalStateException("Object should have a serialized class object: " + classId);
+    }
+    return new DeserializedClassDescriptor(storageManager,annotationDeserializer,descriptorFinder,deserializer.getNameResolver(),classObjectProto.getData());
   }
   return descriptorFinder.findClass(classId.createNestedClassId(getClassObjectName(getName())));
 }
