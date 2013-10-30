@@ -1,8 +1,9 @@
 {
   for (  Map.Entry<JetClassOrObject,MutableClassDescriptor> entry : context.getClasses().entrySet()) {
-    resolveAnnotationsForClassOrObject(annotationResolver,entry.getKey(),entry.getValue());
-  }
-  for (  Map.Entry<JetObjectDeclaration,MutableClassDescriptor> entry : context.getObjects().entrySet()) {
-    resolveAnnotationsForClassOrObject(annotationResolver,entry.getKey(),entry.getValue());
+    JetModifierList modifierList=entry.getKey().getModifierList();
+    if (modifierList != null) {
+      MutableClassDescriptor descriptor=entry.getValue();
+      descriptor.getAnnotations().addAll(annotationResolver.resolveAnnotationsWithoutArguments(descriptor.getScopeForSupertypeResolution(),modifierList,trace));
+    }
   }
 }
