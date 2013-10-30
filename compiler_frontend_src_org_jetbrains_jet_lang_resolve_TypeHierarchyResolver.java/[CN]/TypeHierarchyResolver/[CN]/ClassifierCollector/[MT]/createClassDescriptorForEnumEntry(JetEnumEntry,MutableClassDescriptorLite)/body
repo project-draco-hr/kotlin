@@ -1,11 +1,8 @@
 {
-  NamespaceLikeBuilder owner=classObjectDescriptor.getBuilder();
-  MutableClassDescriptor mutableClassObjectDescriptor=(MutableClassDescriptor)classObjectDescriptor;
-  MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(owner.getOwnerForChildren(),mutableClassObjectDescriptor.getScopeForMemberResolution(),ClassKind.ENUM_ENTRY,false,JetPsiUtil.safeName(declaration.getName()));
-  context.getClasses().put(declaration,mutableClassDescriptor);
-  prepareForDeferredCall(mutableClassDescriptor.getScopeForMemberResolution(),mutableClassDescriptor,declaration);
-  createPrimaryConstructorForObject(declaration,mutableClassDescriptor);
-  owner.addObjectDescriptor(mutableClassDescriptor);
-  trace.record(BindingContext.CLASS,declaration,mutableClassDescriptor);
-  return mutableClassDescriptor;
+  JetScope scope=((MutableClassDescriptor)enumClassObject).getScopeForMemberResolution();
+  MutableClassDescriptor descriptor=createClassDescriptorForSingleton(enumClassObject,scope,declaration,JetPsiUtil.safeName(declaration.getName()),ClassKind.ENUM_ENTRY);
+  context.getClasses().put(declaration,descriptor);
+  enumClassObject.getBuilder().addClassifierDescriptor(descriptor);
+  descriptor.getBuilder().setClassObjectDescriptor(createSyntheticClassObject(descriptor));
+  return descriptor;
 }
