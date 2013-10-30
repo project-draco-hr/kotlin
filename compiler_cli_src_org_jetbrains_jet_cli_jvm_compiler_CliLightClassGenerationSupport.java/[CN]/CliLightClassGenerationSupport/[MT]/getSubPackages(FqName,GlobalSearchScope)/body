@@ -1,11 +1,11 @@
 {
-  NamespaceDescriptor namespaceDescriptor=getTrace().get(BindingContext.FQNAME_TO_NAMESPACE_DESCRIPTOR,fqn);
-  if (namespaceDescriptor == null)   return Collections.emptyList();
-  Collection<DeclarationDescriptor> allDescriptors=namespaceDescriptor.getMemberScope().getAllDescriptors();
-  return ContainerUtil.mapNotNull(allDescriptors,new Function<DeclarationDescriptor,FqName>(){
-    @Override public FqName fun(    DeclarationDescriptor input){
-      if (input instanceof NamespaceDescriptor) {
-        return DescriptorUtils.getFQName(input).toSafe();
+  PackageViewDescriptor packageView=getModule().getPackage(fqn);
+  if (packageView == null)   return Collections.emptyList();
+  Collection<DeclarationDescriptor> members=packageView.getMemberScope().getAllDescriptors();
+  return ContainerUtil.mapNotNull(members,new Function<DeclarationDescriptor,FqName>(){
+    @Override public FqName fun(    DeclarationDescriptor member){
+      if (member instanceof PackageViewDescriptor) {
+        return ((PackageViewDescriptor)member).getFqName();
       }
       return null;
     }
