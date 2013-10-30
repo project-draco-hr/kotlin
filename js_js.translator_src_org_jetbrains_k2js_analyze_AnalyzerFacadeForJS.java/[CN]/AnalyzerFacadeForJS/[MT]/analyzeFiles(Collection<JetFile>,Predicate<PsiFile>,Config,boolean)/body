@@ -3,12 +3,16 @@
   ModuleDescriptorImpl owner=createJsModule("<module>");
   Predicate<PsiFile> completely=Predicates.and(notLibFiles(config.getLibFiles()),filesToAnalyzeCompletely);
   TopDownAnalysisParameters topDownAnalysisParameters=new TopDownAnalysisParameters(completely,false,false,Collections.<AnalyzerScriptParameter>emptyList());
-  BindingContext libraryBindingContext=config.getLibraryBindingContext();
-  BindingTrace trace=libraryBindingContext == null ? new ObservableBindingTrace(new BindingTraceContext()) : new DelegatingBindingTrace(libraryBindingContext,"trace for analyzing library in js");
-  owner.setModuleConfiguration(new JsConfiguration(libraryBindingContext));
+  ModuleDescriptor libraryModule=config.getLibraryModule();
+  if (libraryModule != null) {
+    owner.addFragmentProvider(libraryModule.getPackageFragmentProvider());
+  }
+  BindingContext libraryContext=config.getLibraryContext();
+  BindingTrace trace=libraryContext == null ? new BindingTraceContext() : new DelegatingBindingTrace(libraryContext,"trace with preanalyzed library");
+  owner.setModuleConfiguration(new JsConfiguration());
   InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,trace,owner);
   try {
-    Collection<JetFile> allFiles=libraryBindingContext != null ? files : Config.withJsLibAdded(files,config);
+    Collection<JetFile> allFiles=libraryModule != null ? files : Config.withJsLibAdded(files,config);
     injector.getTopDownAnalyzer().analyzeFiles(allFiles,Collections.<AnalyzerScriptParameter>emptyList());
     BodiesResolveContext bodiesResolveContext=storeContextForBodiesResolve ? new CachedBodiesResolveContext(injector.getTopDownAnalysisContext()) : null;
     return AnalyzeExhaust.success(trace.getBindingContext(),bodiesResolveContext,owner);
