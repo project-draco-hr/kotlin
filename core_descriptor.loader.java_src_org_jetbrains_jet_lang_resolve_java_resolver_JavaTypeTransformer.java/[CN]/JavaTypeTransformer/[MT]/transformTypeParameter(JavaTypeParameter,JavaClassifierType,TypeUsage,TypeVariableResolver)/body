@@ -1,14 +1,18 @@
 {
+  boolean nullable=!EnumSet.of(TYPE_ARGUMENT,UPPER_BOUND,SUPERTYPE_ARGUMENT).contains(howThisTypeIsUsed);
   JavaTypeParameterListOwner owner=typeParameter.getOwner();
   if (owner instanceof JavaMethod && ((JavaMethod)owner).isConstructor()) {
     Set<JetType> supertypesJet=new HashSet<JetType>();
     for (    JavaClassifierType supertype : typeParameter.getUpperBounds()) {
       supertypesJet.add(transformToType(supertype,UPPER_BOUND,typeVariableResolver));
     }
-    return TypeUtils.intersect(JetTypeChecker.INSTANCE,supertypesJet);
+    JetType intersection=TypeUtils.intersect(JetTypeChecker.INSTANCE,supertypesJet);
+    if (intersection == null) {
+      return createErrorClassifierType(classifierType,nullable);
+    }
+    return intersection;
   }
   TypeParameterDescriptor descriptor=typeVariableResolver.getTypeVariable(typeParameter.getName());
-  if (descriptor == null)   return null;
-  boolean nullable=!EnumSet.of(TYPE_ARGUMENT,UPPER_BOUND,SUPERTYPE_ARGUMENT).contains(howThisTypeIsUsed);
+  if (descriptor == null)   return createErrorClassifierType(classifierType,nullable);
   return TypeUtils.makeNullableIfNeeded(descriptor.getDefaultType(),nullable);
 }
