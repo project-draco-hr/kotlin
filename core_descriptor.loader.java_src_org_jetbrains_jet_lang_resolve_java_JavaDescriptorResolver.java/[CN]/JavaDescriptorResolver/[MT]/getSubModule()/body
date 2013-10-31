@@ -1,6 +1,21 @@
 {
   if (subModule == null) {
-    subModule=new LazyJavaSubModule(new GlobalJavaResolverContext(storageManager,javaClassFinder,new LazyJavaClassResolver(){
+    subModule=new LazyJavaSubModule(new GlobalJavaResolverContext(storageManager,new JavaClassFinder(){
+      @Nullable @Override public JavaClass findClass(      @NotNull FqName fqName){
+        JavaClass javaClass=javaClassFinder.findClass(fqName);
+        if (javaClass == null) {
+          return null;
+        }
+        if (DescriptorResolverUtils.isCompiledKotlinClassOrPackageClass(javaClass)) {
+          return null;
+        }
+        return javaClass;
+      }
+      @Nullable @Override public JavaPackage findPackage(      @NotNull FqName fqName){
+        return javaClassFinder.findPackage(fqName);
+      }
+    }
+,new LazyJavaClassResolver(){
       @Override public ClassDescriptor resolveClass(      JavaClass aClass){
         FqName fqName=aClass.getFqName();
         if (fqName != null) {
