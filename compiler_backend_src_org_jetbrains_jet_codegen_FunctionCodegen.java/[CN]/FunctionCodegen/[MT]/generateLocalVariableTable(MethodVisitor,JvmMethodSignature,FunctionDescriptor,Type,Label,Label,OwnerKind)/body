@@ -14,25 +14,16 @@
   for (int i=0; i < params.size(); i++) {
     JvmMethodParameterSignature param=params.get(i);
     JvmMethodParameterKind kind=param.getKind();
-    String parameterName="$" + param.getKind().name().toLowerCase();
-    if (needIndexForVar(kind)) {
-      parameterName=parameterName + "$" + i;
-    }
-    Type type=param.getAsmType();
+    String parameterName;
     if (kind == JvmMethodParameterKind.VALUE) {
       ValueParameterDescriptor parameter=valueParameters.next();
-      Label divideLabel=labelsForSharedVars.get(parameter.getName());
       parameterName=parameter.getName().asString();
-      if (divideLabel != null) {
-        mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,divideLabel,shift);
-        String nameForSharedVar=createTmpVariableName(localVariableNames);
-        localVariableNames.add(nameForSharedVar);
-        Type sharedVarType=typeMapper.getSharedVarType(parameter);
-        mv.visitLocalVariable(nameForSharedVar,sharedVarType.getDescriptor(),null,divideLabel,methodEnd,shift);
-        shift+=Math.max(type.getSize(),sharedVarType.getSize());
-        continue;
-      }
     }
+ else {
+      String lowercaseKind=kind.name().toLowerCase();
+      parameterName=needIndexForVar(kind) ? "$" + lowercaseKind + "$"+ i : "$" + lowercaseKind;
+    }
+    Type type=param.getAsmType();
     mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,methodEnd,shift);
     shift+=type.getSize();
   }

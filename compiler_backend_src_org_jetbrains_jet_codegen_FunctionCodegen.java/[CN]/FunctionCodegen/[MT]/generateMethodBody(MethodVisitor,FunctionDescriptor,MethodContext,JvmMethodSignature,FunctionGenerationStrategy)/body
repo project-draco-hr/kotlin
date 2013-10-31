@@ -1,6 +1,4 @@
 {
-  Collection<String> localVariableNames=new HashSet<String>(getParameterNamesAsStrings(functionDescriptor));
-  Map<Name,Label> labelsForSharedVars=new HashMap<Name,Label>();
   mv.visitCode();
   Label methodBegin=new Label();
   mv.visitLabel(methodBegin);
@@ -15,15 +13,13 @@
     Label methodEntry=new Label();
     mv.visitLabel(methodEntry);
     context.setMethodStartLabel(methodEntry);
-    labelsForSharedVars.putAll(createSharedVarsForParameters(mv,functionDescriptor,frameMap));
     if (!JetTypeMapper.isAccessor(functionDescriptor)) {
       genNotNullAssertionsForParameters(new InstructionAdapter(mv),state,functionDescriptor,frameMap);
     }
     strategy.generateBody(mv,signature,context,getParentCodegen());
-    localVariableNames.addAll(strategy.getLocalVariableNames());
   }
   Label methodEnd=new Label();
   mv.visitLabel(methodEnd);
   Type thisType=getThisTypeForFunction(functionDescriptor,context);
-  generateLocalVariableTable(mv,signature,functionDescriptor,thisType,methodBegin,methodEnd,localVariableNames,labelsForSharedVars,context.getContextKind());
+  generateLocalVariableTable(mv,signature,functionDescriptor,thisType,methodBegin,methodEnd,context.getContextKind());
 }
