@@ -5,17 +5,19 @@
   candidateCall.addStatus(checkReceiverTypeError(context.candidateCall));
   if (ErrorUtils.isError(candidate)) {
     candidateCall.addStatus(SUCCESS);
-    argumentTypeResolver.checkTypesWithNoCallee(context.toBasic());
+    markAllArgumentsAsUnmapped(context);
     return;
   }
   if (!checkOuterClassMemberIsAccessible(context)) {
     candidateCall.addStatus(OTHER_ERROR);
+    markAllArgumentsAsUnmapped(context);
     return;
   }
   DeclarationDescriptorWithVisibility invisibleMember=Visibilities.findInvisibleMember(candidate,context.scope.getContainingDeclaration());
   if (invisibleMember != null) {
     candidateCall.addStatus(OTHER_ERROR);
     context.tracing.invisibleMember(context.trace,invisibleMember);
+    markAllArgumentsAsUnmapped(context);
     return;
   }
   if (task.checkArguments == CheckValueArgumentsMode.ENABLED) {
@@ -28,11 +30,10 @@
  else {
         candidateCall.addStatus(OTHER_ERROR);
       }
+      candidateCall.setUnmappedArguments(unmappedArguments);
       if ((argumentMappingStatus == ValueArgumentsToParametersMapper.Status.ERROR && candidate.getTypeParameters().isEmpty()) || argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
-        argumentTypeResolver.checkTypesWithNoCallee(context.toBasic());
         return;
       }
-      candidateCall.setUnmappedArguments(unmappedArguments);
     }
   }
   List<JetTypeProjection> jetTypeArguments=context.call.getTypeArguments();
