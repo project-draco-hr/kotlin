@@ -14,7 +14,14 @@
   }
   ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
   if (primaryConstructor != null) {
-    builder.setPrimaryConstructor(local.callableProto(primaryConstructor));
+    if (DescriptorFactory.isDefaultPrimaryConstructor(primaryConstructor)) {
+      builder.setPrimaryConstructor(ProtoBuf.Class.PrimaryConstructor.getDefaultInstance());
+    }
+ else {
+      ProtoBuf.Class.PrimaryConstructor.Builder constructorBuilder=ProtoBuf.Class.PrimaryConstructor.newBuilder();
+      constructorBuilder.setData(local.callableProto(primaryConstructor));
+      builder.setPrimaryConstructor(constructorBuilder);
+    }
   }
   for (  DeclarationDescriptor descriptor : sort(classDescriptor.getDefaultType().getMemberScope().getAllDescriptors())) {
     if (descriptor instanceof CallableMemberDescriptor) {
