@@ -1,2 +1,29 @@
 {
+  JetExpression expression=argument.getArgumentExpression();
+  if (expression == null)   return;
+  JetType expectedType=getEffectiveExpectedType(parameterDescriptor,argument);
+  context=context.replaceExpectedType(expectedType);
+  JetExpression keyExpression=getDeferredComputationKeyExpression(expression);
+  CallCandidateResolutionContext<? extends CallableDescriptor> storedContextForArgument=context.resolutionResultsCache.getDeferredComputation(keyExpression);
+  PsiElement parent=expression.getParent();
+  if (parent instanceof JetWhenExpression && expression == ((JetWhenExpression)parent).getSubjectExpression() || (expression instanceof JetFunctionLiteralExpression)) {
+    return;
+  }
+  if (storedContextForArgument == null) {
+    JetType type=argumentTypeResolver.updateResultArgumentTypeIfNotDenotable(context,expression);
+    checkResultArgumentType(type,argument,context);
+    return;
+  }
+  CallCandidateResolutionContext<? extends CallableDescriptor> contextForArgument=storedContextForArgument.replaceContextDependency(INDEPENDENT).replaceBindingTrace(context.trace).replaceExpectedType(expectedType);
+  JetType type;
+  if (contextForArgument.candidateCall.hasIncompleteTypeParameters()) {
+    type=completeTypeInferenceDependentOnExpectedTypeForCall(contextForArgument,true);
+  }
+ else {
+    type=completeNestedCallsInference(contextForArgument);
+    checkValueArgumentTypes(contextForArgument);
+  }
+  JetType result=BindingContextUtils.updateRecordedType(type,expression,context.trace,isFairSafeCallExpression(expression,context.trace));
+  markResultingCallAsCompleted(context,keyExpression);
+  DataFlowUtils.checkType(result,expression,contextForArgument);
 }

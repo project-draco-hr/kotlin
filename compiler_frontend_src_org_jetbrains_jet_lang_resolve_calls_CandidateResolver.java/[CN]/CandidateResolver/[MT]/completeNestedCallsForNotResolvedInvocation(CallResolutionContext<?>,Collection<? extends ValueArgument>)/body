@@ -1,0 +1,12 @@
+{
+  if (context.checkArguments == CheckValueArgumentsMode.DISABLED)   return;
+  for (  ValueArgument argument : arguments) {
+    JetExpression expression=argument.getArgumentExpression();
+    JetExpression keyExpression=getDeferredComputationKeyExpression(expression);
+    markResultingCallAsCompleted(context,keyExpression);
+    CallCandidateResolutionContext<? extends CallableDescriptor> storedContextForArgument=context.resolutionResultsCache.getDeferredComputation(keyExpression);
+    if (storedContextForArgument != null) {
+      completeNestedCallsForNotResolvedInvocation(storedContextForArgument);
+    }
+  }
+}
