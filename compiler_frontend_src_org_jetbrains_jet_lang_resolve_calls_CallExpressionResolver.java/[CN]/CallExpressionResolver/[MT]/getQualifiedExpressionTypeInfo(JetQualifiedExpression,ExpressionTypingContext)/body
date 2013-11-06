@@ -7,11 +7,11 @@
   if (selectorExpression == null)   return JetTypeInfo.create(null,context.dataFlowInfo);
   if (receiverType == null)   receiverType=ErrorUtils.createErrorType("Type for " + expression.getText());
   context=context.replaceDataFlowInfo(receiverTypeInfo.getDataFlowInfo());
-  if (selectorExpression instanceof JetSimpleNameExpression) {
-    ConstantUtils.propagateConstantValues(expression,context.trace,(JetSimpleNameExpression)selectorExpression);
-  }
   JetTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(new ExpressionReceiver(receiverExpression,receiverType),expression.getOperationTokenNode(),selectorExpression,context);
   JetType selectorReturnType=selectorReturnTypeInfo.getType();
+  if (receiverExpression instanceof JetConstantExpression && selectorExpression instanceof JetCallExpression) {
+    ConstantsPackage.propagateConstantValues(expression,context.trace,(JetCallExpression)selectorExpression);
+  }
   if (!(receiverType instanceof NamespaceType) && expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
     if (selectorReturnType != null && !selectorReturnType.isNullable() && !KotlinBuiltIns.getInstance().isUnit(selectorReturnType)) {
       if (receiverType.isNullable()) {
