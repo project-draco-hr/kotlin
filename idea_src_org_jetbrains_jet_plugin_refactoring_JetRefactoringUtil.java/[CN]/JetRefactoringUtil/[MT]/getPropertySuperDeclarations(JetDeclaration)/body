@@ -1,0 +1,22 @@
+{
+  LightClassUtil.PropertyAccessorsPsiMethods lightMethods;
+  if (declaration instanceof JetProperty) {
+    lightMethods=LightClassUtil.getLightClassPropertyMethods((JetProperty)declaration);
+  }
+ else   if (declaration instanceof JetParameter) {
+    lightMethods=LightClassUtil.getLightClassPropertyMethods((JetParameter)declaration);
+  }
+ else   return Collections.emptyList();
+  Collection<PsiMethod> foundMethods=new HashSet<PsiMethod>();
+  if (lightMethods.getGetter() != null) {
+    foundMethods.addAll(DeepestSuperMethodsSearch.search(lightMethods.getGetter()).findAll());
+  }
+  if (lightMethods.getSetter() != null) {
+    foundMethods.addAll(DeepestSuperMethodsSearch.search(lightMethods.getSetter()).findAll());
+  }
+  Set<PsiElement> declarations=new HashSet<PsiElement>();
+  for (  PsiMethod method : foundMethods) {
+    declarations.add(toJetDeclarationOrMethod(method));
+  }
+  return new ArrayList<PsiElement>(declarations);
+}

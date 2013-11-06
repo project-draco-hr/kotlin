@@ -1,0 +1,24 @@
+{
+  KotlinCallableFindUsagesOptions kotlinOptions=(KotlinCallableFindUsagesOptions)options;
+  @SuppressWarnings("unchecked") UsagesSearchRequest request=getSearchHelper(kotlinOptions).newRequest(FindUsagesPackage.toSearchTarget(options,(T)element,true));
+  for (  PsiReference ref : UsagesSearch.instance$.search(request)) {
+    processUsage(processor,ref);
+  }
+  Iterator<PsiMethod> lightMethods=ApplicationManager.getApplication().runReadAction(new Computable<Iterator<PsiMethod>>(){
+    @Override public Iterator<PsiMethod> compute(){
+      return getLightMethods((JetNamedDeclaration)element).iterator();
+    }
+  }
+);
+  if (kotlinOptions.getSearchOverrides()) {
+    while (lightMethods.hasNext()) {
+      OverridingMethodsSearch.search(lightMethods.next(),options.searchScope,true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
+        @Override public boolean execute(        @NotNull PsiMethod element){
+          return processUsage(processor,element.getNavigationElement());
+        }
+      }
+));
+    }
+  }
+  return true;
+}
