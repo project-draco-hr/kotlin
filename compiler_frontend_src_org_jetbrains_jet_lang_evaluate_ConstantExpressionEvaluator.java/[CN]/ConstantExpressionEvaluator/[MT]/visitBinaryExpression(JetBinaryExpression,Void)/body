@@ -1,0 +1,27 @@
+{
+  JetExpression leftExpression=expression.getLeft();
+  if (leftExpression == null) {
+    return null;
+  }
+  JetExpression rightExpression=expression.getRight();
+  if (rightExpression == null) {
+    return null;
+  }
+  CompileTimeConstant<?> leftConstant=leftExpression.accept(this,data);
+  if (leftConstant == null) {
+    return null;
+  }
+  CompileTimeConstant<?> rightConstant=rightExpression.accept(this,data);
+  if (rightConstant == null) {
+    return null;
+  }
+  ResolvedCall<? extends CallableDescriptor> resolvedCall=trace.getBindingContext().get(RESOLVED_CALL,expression.getOperationReference());
+  if (resolvedCall != null) {
+    CallableDescriptor resultingDescriptor=resolvedCall.getResultingDescriptor();
+    Object value=EvaluatePackage.evaluateBinaryExpression(leftConstant,rightConstant,resultingDescriptor.getName());
+    if (value != null) {
+      return createCompileTimeConstant(value);
+    }
+  }
+  return null;
+}
