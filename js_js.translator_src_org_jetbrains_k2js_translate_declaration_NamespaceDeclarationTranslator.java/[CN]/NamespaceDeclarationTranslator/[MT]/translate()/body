@@ -1,15 +1,19 @@
 {
-  Map<NamespaceDescriptor,DefineInvocation> descriptorToDefineInvocation=new THashMap<NamespaceDescriptor,DefineInvocation>();
-  NamespaceDescriptor rootNamespaceDescriptor=null;
+  Map<FqName,DefineInvocation> packageFqNameToDefineInvocation=new THashMap<FqName,DefineInvocation>();
   for (  JetFile file : files) {
+    PackageFragmentDescriptor packageFragment=context().bindingContext().get(BindingContext.FILE_TO_PACKAGE_FRAGMENT,file);
+    NamespaceTranslator translator=packageFragmentToTranslator.get(packageFragment);
+    if (translator == null) {
+      createRootPackageDefineInvocationIfNeeded(packageFqNameToDefineInvocation);
+      translator=new NamespaceTranslator(packageFragment,packageFqNameToDefineInvocation,context());
+      packageFragmentToTranslator.put(packageFragment,translator);
+    }
+    translator.translate(file);
   }
-  if (rootNamespaceDescriptor == null) {
-    return Collections.emptyList();
-  }
-  for (  NamespaceTranslator translator : descriptorToTranslator.values()) {
-    translator.add(descriptorToDefineInvocation);
+  for (  NamespaceTranslator translator : packageFragmentToTranslator.values()) {
+    translator.add(packageFqNameToDefineInvocation);
   }
   JsVars vars=new JsVars(true);
-  vars.addIfHasInitializer(getRootPackageDeclaration(descriptorToDefineInvocation.get(rootNamespaceDescriptor)));
+  vars.addIfHasInitializer(getRootPackageDeclaration(packageFqNameToDefineInvocation.get(FqName.ROOT)));
   return Collections.<JsStatement>singletonList(vars);
 }
