@@ -14,8 +14,10 @@
     modifierList=((JetModifierListOwner)psiElement).getModifierList();
   }
   if (modifierList == null) {
+    generateAdditionalAnnotations(annotated,Collections.<String>emptySet());
     return;
   }
+  Set<String> annotationDescriptorsAlreadyPresent=new HashSet<String>();
   List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
   for (  JetAnnotationEntry annotationEntry : annotationEntries) {
     ResolvedCall<? extends CallableDescriptor> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,annotationEntry.getCalleeExpression());
@@ -23,6 +25,10 @@
     AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
     if (annotationDescriptor == null)     continue;
     if (isVolatile(annotationDescriptor))     continue;
-    genAnnotation(annotationDescriptor);
+    String descriptor=genAnnotation(annotationDescriptor);
+    if (descriptor != null) {
+      annotationDescriptorsAlreadyPresent.add(descriptor);
+    }
   }
+  generateAdditionalAnnotations(annotated,annotationDescriptorsAlreadyPresent);
 }
