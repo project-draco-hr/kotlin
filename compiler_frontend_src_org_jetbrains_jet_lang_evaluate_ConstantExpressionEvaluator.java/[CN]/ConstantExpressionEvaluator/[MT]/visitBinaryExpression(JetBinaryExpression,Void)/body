@@ -3,5 +3,29 @@
   if (leftExpression == null) {
     return null;
   }
-  return getCallConstant(expression.getOperationReference(),leftExpression);
+  IElementType operationToken=expression.getOperationToken();
+  if (OperatorConventions.BOOLEAN_OPERATIONS.containsKey(operationToken)) {
+    JetType booleanType=KotlinBuiltIns.getInstance().getBooleanType();
+    CompileTimeConstant<?> leftConstant=leftExpression.accept(new ConstantExpressionEvaluator(trace,booleanType),null);
+    if (leftConstant == null) {
+      return null;
+    }
+    JetExpression rightExpression=expression.getRight();
+    if (rightExpression == null) {
+      return null;
+    }
+    CompileTimeConstant<?> rightConstant=rightExpression.accept(new ConstantExpressionEvaluator(trace,booleanType),null);
+    if (rightConstant == null) {
+      return null;
+    }
+    Name operationName=operationToken == JetTokens.ANDAND ? Name.identifier("andand") : Name.identifier("oror");
+    Object result=EvaluatePackage.evaluateBinaryExpression(leftConstant,rightConstant,operationName);
+    if (result == null) {
+      return null;
+    }
+    return createCompileTimeConstant(result,expectedType);
+  }
+ else {
+    return getCallConstant(expression.getOperationReference(),leftExpression);
+  }
 }
