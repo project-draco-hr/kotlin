@@ -1,0 +1,21 @@
+{
+  ResolvedCall<?> resolvedCall=trace.getBindingContext().get(BindingContext.RESOLVED_CALL,resolvedCallExpression);
+  if (resolvedCall != null) {
+    CallableDescriptor resultingDescriptor=resolvedCall.getResultingDescriptor();
+    JetType receiverExpressionType=getReceiverExpressionType(resolvedCall);
+    if (receiverExpressionType == null) {
+      return null;
+    }
+    ConstantExpressionEvaluator evaluator=new ConstantExpressionEvaluator(trace,receiverExpressionType);
+    CompileTimeConstant<?> receiverValue=receiverExpression.accept(evaluator,null);
+    if (receiverValue == null) {
+      return null;
+    }
+    List<CompileTimeConstant<?>> arguments=Lists.newArrayList();
+    for (    Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> argumentEntry : resolvedCall.getValueArguments().entrySet()) {
+      arguments.addAll(resolveArguments(argumentEntry.getValue().getArguments(),argumentEntry.getKey().getType(),trace));
+    }
+    return ConstantsPackage.resolveCallToCompileTimeValue(resultingDescriptor.getName(),receiverValue,arguments,expectedType);
+  }
+  return null;
+}

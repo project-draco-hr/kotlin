@@ -1,10 +1,17 @@
 {
+  CompileTimeConstant wholeExpressionValue=trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,expression);
+  if (wholeExpressionValue != null) {
+    return wholeExpressionValue;
+  }
   JetExpression receiverExpression=expression.getReceiverExpression();
   JetExpression selectorExpression=expression.getSelectorExpression();
-  if (receiverExpression instanceof JetConstantExpression && selectorExpression instanceof JetCallExpression) {
-    CompileTimeConstant<?> constant=ConstantsPackage.propagateConstantValues(expression,trace,(JetCallExpression)selectorExpression);
-    if (constant != null) {
-      return constant;
+  if (selectorExpression instanceof JetCallExpression) {
+    JetExpression calleeExpression=((JetCallExpression)selectorExpression).getCalleeExpression();
+    if (!(calleeExpression instanceof JetSimpleNameExpression)) {
+      return null;
+    }
+    if (((JetCallExpression)selectorExpression).getValueArguments().size() < 2) {
+      return getCallConstant(calleeExpression,receiverExpression);
     }
   }
   if (selectorExpression != null) {
