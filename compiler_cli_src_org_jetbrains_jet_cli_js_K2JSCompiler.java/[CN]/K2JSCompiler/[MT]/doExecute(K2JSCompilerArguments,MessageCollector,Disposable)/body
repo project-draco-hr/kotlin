@@ -7,19 +7,20 @@
   configuration.addAll(CommonConfigurationKeys.SOURCE_ROOTS_KEY,Arrays.asList(arguments.sourceFiles));
   JetCoreEnvironment environmentForJS=JetCoreEnvironment.createForProduction(rootDisposable,configuration);
   Project project=environmentForJS.getProject();
+  List<JetFile> sourcesFiles=environmentForJS.getSourceFiles();
   ClassPathLibrarySourcesLoader sourceLoader=new ClassPathLibrarySourcesLoader(project);
-  List<JetFile> sourceFiles=sourceLoader.findSourceFiles();
-  environmentForJS.getSourceFiles().addAll(sourceFiles);
+  List<JetFile> additionalSourceFiles=sourceLoader.findSourceFiles();
+  sourcesFiles.addAll(additionalSourceFiles);
   if (arguments.verbose) {
-    reportCompiledSourcesList(messageCollector,environmentForJS);
+    reportCompiledSourcesList(messageCollector,sourcesFiles);
   }
-  String outputFile=arguments.outputFile;
-  if (outputFile == null) {
+  if (arguments.outputFile == null) {
     messageCollector.report(CompilerMessageSeverity.ERROR,"Specify output file via -output",CompilerMessageLocation.NO_LOCATION);
     return ExitCode.INTERNAL_ERROR;
   }
+  File outputFile=new File(arguments.outputFile);
   Config config=getConfig(arguments,project);
-  if (analyzeAndReportErrors(messageCollector,environmentForJS.getSourceFiles(),config)) {
+  if (analyzeAndReportErrors(messageCollector,sourcesFiles,config)) {
     return COMPILATION_ERROR;
   }
   File outputPrefixFile=null;
@@ -39,5 +40,8 @@
     }
   }
   MainCallParameters mainCallParameters=createMainCallParameters(arguments.main);
-  return translateAndGenerateOutputFile(mainCallParameters,environmentForJS,config,outputFile,outputPrefixFile,outputPostfixFile);
+  OutputFileCollection outputFiles=translate(mainCallParameters,config,sourcesFiles,outputFile,outputPrefixFile,outputPostfixFile);
+  OutputDirector outputDirector=new SingleDirectoryDirector(outputFile.getParentFile());
+  OutputUtilsPackage.writeAll(outputFiles,outputDirector,messageCollector);
+  return OK;
 }
