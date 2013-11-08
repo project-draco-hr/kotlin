@@ -1,10 +1,11 @@
 {
   loadText("package " + NAMESPACE_NAME + "\n\nfun foo() = 42\n");
   String facadeFileName=JvmClassName.byFqNameWithoutInnerClasses(PackageClassUtils.getPackageClassFqName(NAMESPACE_NAME)).getInternalName() + ".class";
-  ClassFileFactory factory=generateClassesInFile();
-  for (  String fileName : factory.getOutputFiles()) {
-    if (!fileName.equals(facadeFileName)) {
-      String fqName=fileName.substring(0,fileName.length() - ".class".length()).replace('/','.');
+  OutputFileCollection outputFiles=generateClassesInFile();
+  for (  OutputFile outputFile : outputFiles.asList()) {
+    String filePath=outputFile.getRelativePath();
+    if (!filePath.equals(facadeFileName)) {
+      String fqName=filePath.substring(0,filePath.length() - ".class".length()).replace('/','.');
       Class aClass=generateClass(fqName);
       Class<? extends Annotation> annotationClass=getCorrespondingAnnotationClass(KotlinPackageFragment.class);
       assertTrue("No KotlinPackageFragment annotation on a package fragment",aClass.isAnnotationPresent(annotationClass));
@@ -13,5 +14,5 @@
       return;
     }
   }
-  fail("No package fragment was found: " + factory.getOutputFiles());
+  fail("No package fragment was found: " + outputFiles.asList());
 }

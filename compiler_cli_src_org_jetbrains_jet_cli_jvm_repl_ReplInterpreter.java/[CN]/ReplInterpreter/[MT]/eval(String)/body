@@ -34,8 +34,8 @@
   BindingContext bindingContext=AnalyzeExhaust.success(trace.getBindingContext(),module).getBindingContext();
   GenerationState generationState=new GenerationState(psiFile.getProject(),ClassBuilderFactories.BINARIES,bindingContext,Collections.singletonList(psiFile));
   compileScript(psiFile.getScript(),scriptClassType,earlierScripts,generationState,CompilationErrorHandler.THROW_EXCEPTION);
-  for (  String file : generationState.getFactory().getOutputFiles()) {
-    classLoader.addClass(JvmClassName.byInternalName(file.replaceFirst("\\.class$","")),generationState.getFactory().asBytes(file));
+  for (  OutputFile outputFile : generationState.getFactory().asList()) {
+    classLoader.addClass(JvmClassName.byInternalName(outputFile.getRelativePath().replaceFirst("\\.class$","")),outputFile.asByteArray());
   }
   try {
     Class<?> scriptClass=classLoader.loadClass(scriptFqName.asString());
