@@ -16,12 +16,12 @@
         String generatedTestName=generateTestName(file.getName());
         String packageName=file.getPath().replaceAll("\\\\|-|\\.|/","_");
         text=changePackage(packageName,text);
-        ClassFileFactory factory;
+        OutputFileCollection outputFiles;
         if (filesCompiledWithoutStdLib.contains(file.getName())) {
-          factory=getFactoryFromText(file.getAbsolutePath(),text,environmentWithMockJdk);
+          outputFiles=compileFromText(file.getAbsolutePath(),text,environmentWithMockJdk);
         }
  else {
-          factory=getFactoryFromText(file.getAbsolutePath(),text,environmentWithFullJdk);
+          outputFiles=compileFromText(file.getAbsolutePath(),text,environmentWithFullJdk);
         }
         generateTestMethod(p,generatedTestName,StringUtil.escapeStringCharacters(file.getPath()));
         File outputDir=new File(pathManager.getOutputForCompiledFiles());
@@ -29,7 +29,7 @@
           outputDir.mkdirs();
         }
         Assert.assertTrue("Cannot create directory for compiled files",outputDir.exists());
-        OutputUtilsPackage.writeAllTo(factory,outputDir);
+        OutputUtilsPackage.writeAllTo(outputFiles,outputDir);
       }
     }
   }
