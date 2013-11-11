@@ -1,0 +1,16 @@
+{
+  if (!super.isAvailable(project,editor,file)) {
+    return false;
+  }
+  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)file).getBindingContext();
+  List<PsiElement> declarations=BindingContextUtils.callableDescriptorToDeclarations(bindingContext,functionDescriptor);
+  if (declarations.isEmpty()) {
+    return false;
+  }
+  for (  PsiElement declaration : declarations) {
+    if (!QuickFixUtil.canModifyElement(declaration)) {
+      return false;
+    }
+  }
+  return true;
+}
