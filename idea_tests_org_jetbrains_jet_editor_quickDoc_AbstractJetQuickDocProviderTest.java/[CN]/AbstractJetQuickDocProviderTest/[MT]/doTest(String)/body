@@ -1,10 +1,28 @@
 {
-  myFixture.configureByFile(path);
+  myFixture.configureByFiles(ArrayUtil.toStringArray(getTestFiles(path)));
   PsiElement element=myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
   assertNotNull("Can't find element at caret in file: " + path,element);
   DocumentationManager documentationManager=DocumentationManager.getInstance(myFixture.getProject());
   PsiElement targetElement=documentationManager.findTargetElement(myFixture.getEditor(),myFixture.getFile());
-  List<String> directives=InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.getFile().getText(),"INFO:");
-  assertTrue("Documentation to check should be added to test file with // INFO: directive " + path,1 == directives.size());
-  assertEquals(directives.get(0),CtrlMouseHandler.getInfo(targetElement,element));
+  String info=CtrlMouseHandler.getInfo(targetElement,element);
+  File testDataFile=new File(path);
+  String textData=FileUtil.loadFile(testDataFile);
+  List<String> directives=InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData,"INFO:");
+  if (directives.isEmpty()) {
+    throw new FileComparisonFailure("'// INFO:' directive was expected",textData,textData + "\n\n//INFO: " + info,testDataFile.getAbsolutePath());
+  }
+ else   if (directives.size() == 1) {
+    String expectedInfo=directives.get(0);
+    if (info != null && expectedInfo.endsWith("...")) {
+      if (!info.startsWith(StringUtil.trimEnd(expectedInfo,"..."))) {
+        throw new ComparisonFailure(null,expectedInfo,info);
+      }
+    }
+ else {
+      Assert.assertEquals(expectedInfo,info);
+    }
+  }
+ else {
+    Assert.fail("Too many '// INFO:' directives in file " + path);
+  }
 }

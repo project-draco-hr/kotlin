@@ -1,24 +1,21 @@
 {
-  JetReferenceExpression ref=PsiTreeUtil.getParentOfType(originalElement,JetReferenceExpression.class,false);
-  PsiElement declarationPsiElement=PsiTreeUtil.getParentOfType(originalElement,JetDeclaration.class);
-  if (ref != null || declarationPsiElement != null) {
-    BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)originalElement.getContainingFile()).getBindingContext();
-    if (ref != null) {
-      DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,ref);
+  if (element instanceof JetDeclaration) {
+    return renderKotlinDeclaration((JetDeclaration)element);
+  }
+ else   if (element instanceof KotlinLightMethod) {
+    return renderKotlinDeclaration(((KotlinLightMethod)element).getOrigin());
+  }
+  if (mergeKotlinAndJava) {
+    JetReferenceExpression referenceExpression=PsiTreeUtil.getParentOfType(originalElement,JetReferenceExpression.class,false);
+    if (referenceExpression != null) {
+      BindingContext context=AnalyzerFacadeWithCache.getContextForElement(referenceExpression);
+      DeclarationDescriptor declarationDescriptor=context.get(BindingContext.REFERENCE_TARGET,referenceExpression);
       if (declarationDescriptor != null) {
-        return render(declarationDescriptor,bindingContext,element,originalElement,mergeKotlinAndJava);
-      }
-      if (declarationPsiElement != null) {
-        declarationPsiElement=BindingContextUtils.resolveToDeclarationPsiElement(bindingContext,ref);
+        return mixKotlinToJava(declarationDescriptor,element,originalElement);
       }
     }
-    if (declarationPsiElement != null) {
-      DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declarationPsiElement);
-      if (declarationDescriptor != null) {
-        return render(declarationDescriptor,bindingContext,element,originalElement,mergeKotlinAndJava);
-      }
-    }
-    return "Unresolved";
+  }
+ else {
   }
   return null;
 }
