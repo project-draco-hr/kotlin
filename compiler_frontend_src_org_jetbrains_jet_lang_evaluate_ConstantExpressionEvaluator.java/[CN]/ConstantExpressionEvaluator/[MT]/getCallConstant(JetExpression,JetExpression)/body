@@ -15,7 +15,30 @@
     for (    Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> argumentEntry : resolvedCall.getValueArguments().entrySet()) {
       arguments.addAll(resolveArguments(argumentEntry.getValue().getArguments(),argumentEntry.getKey().getType(),trace));
     }
-    return ConstantsPackage.resolveCallToCompileTimeValue(resultingDescriptor.getName(),receiverValue,arguments,expectedType);
+    Name resultingDescriptorName=resultingDescriptor.getName();
+    if (arguments.isEmpty()) {
+      Object result=EvaluatePackage.evaluateUnaryExpression(receiverValue,resultingDescriptorName);
+      if (result == null) {
+        return null;
+      }
+      return createCompileTimeConstant(result,expectedType);
+    }
+ else     if (arguments.size() == 1) {
+      Object result=EvaluatePackage.evaluateBinaryExpression(receiverValue,arguments.iterator().next(),resultingDescriptorName);
+      if (result == null) {
+        return null;
+      }
+      if (OperatorConventions.COMPARE_TO.equals(resultingDescriptorName)) {
+        PsiElement parentExpression=resolvedCallExpression.getParent();
+        if (parentExpression instanceof JetBinaryExpression) {
+          return createCompileTimeConstantForCompareTo(result,(JetBinaryExpression)parentExpression);
+        }
+      }
+ else {
+        return createCompileTimeConstant(result,expectedType);
+      }
+    }
+    return null;
   }
   return null;
 }
