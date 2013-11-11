@@ -1,16 +1,16 @@
 {
-  for (  Map.Entry<JetClass,MutableClassDescriptor> entry : context.getClasses().entrySet()) {
-    JetClass jetClass=entry.getKey();
+  for (  Map.Entry<JetClassOrObject,MutableClassDescriptor> entry : context.getClasses().entrySet()) {
+    JetClassOrObject classOrObject=entry.getKey();
     MutableClassDescriptor descriptor=entry.getValue();
-    descriptorResolver.resolveMutableClassDescriptor(jetClass,descriptor,trace);
-    descriptor.createTypeConstructor();
+    if (classOrObject instanceof JetClass) {
+      descriptorResolver.resolveMutableClassDescriptor((JetClass)classOrObject,descriptor,trace);
+      descriptor.createTypeConstructor();
+    }
+ else     if (classOrObject instanceof JetObjectDeclaration) {
+      initializeObject((JetObjectDeclaration)classOrObject,descriptor);
+    }
   }
   for (  Map.Entry<JetObjectDeclaration,MutableClassDescriptor> entry : context.getObjects().entrySet()) {
-    JetObjectDeclaration objectDeclaration=entry.getKey();
-    MutableClassDescriptor descriptor=entry.getValue();
-    descriptor.setModality(Modality.FINAL);
-    descriptor.setVisibility(resolveVisibilityFromModifiers(objectDeclaration,getDefaultClassVisibility(descriptor)));
-    descriptor.setTypeParameterDescriptors(new ArrayList<TypeParameterDescriptor>(0));
-    descriptor.createTypeConstructor();
+    initializeObject(entry.getKey(),entry.getValue());
   }
 }
