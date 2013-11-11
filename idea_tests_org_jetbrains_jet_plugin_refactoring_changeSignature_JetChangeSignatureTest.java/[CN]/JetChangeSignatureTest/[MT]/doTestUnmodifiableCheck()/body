@@ -1,0 +1,21 @@
+{
+  try {
+    JetChangeInfo changeInfo=getChangeInfo();
+    PsiFile containingFile=changeInfo.getMethod().getContainingFile();
+    JetChangeSignatureConfiguration empty=new JetChangeSignatureConfiguration(){
+      @Override public void configure(      JetChangeSignatureData data,      BindingContext bindingContext){
+      }
+      @Override public boolean performSilently(      Collection<? extends PsiElement> elements){
+        return true;
+      }
+    }
+;
+    BindingContext context=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)containingFile).getBindingContext();
+    ChangeSignaturePackage.runChangeSignature(getProject(),changeInfo.getOldDescriptor(),empty,context,changeInfo.getMethod(),"test");
+  }
+ catch (  RuntimeException e) {
+    assertTrue(e.getMessage().startsWith("Refactoring cannot be"));
+    return;
+  }
+  fail("Exception expected");
+}
