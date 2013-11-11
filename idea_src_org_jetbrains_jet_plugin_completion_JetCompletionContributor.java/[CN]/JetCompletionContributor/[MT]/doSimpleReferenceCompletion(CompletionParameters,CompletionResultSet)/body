@@ -8,10 +8,15 @@
     try {
       result.restartCompletionWhenNothingMatches();
       CompletionSession session=new CompletionSession(parameters,result,jetReference,position);
-      session.completeForReference();
-      if (!session.getJetResult().isSomethingAdded() && session.getParameters().getInvocationCount() < 2) {
-        session=new CompletionSession(parameters.withInvocationCount(2),result,jetReference,position);
+      if (parameters.getCompletionType() == CompletionType.BASIC) {
         session.completeForReference();
+        if (!session.getJetResult().isSomethingAdded() && session.getParameters().getInvocationCount() < 2) {
+          session=new CompletionSession(parameters.withInvocationCount(2),result,jetReference,position);
+          session.completeForReference();
+        }
+      }
+ else {
+        session.completeSmart();
       }
       result.stopHere();
     }
