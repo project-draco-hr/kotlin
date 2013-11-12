@@ -1,15 +1,20 @@
 {
+  List<Pair<JetScope,ReceiverValue>> variants=new ArrayList<Pair<JetScope,ReceiverValue>>(2);
   ReceiverValue explicitReceiver=context.call.getExplicitReceiver();
-  JetScope scope;
   if (explicitReceiver.exists() && explicitReceiver.getType() instanceof NamespaceType) {
-    scope=explicitReceiver.getType().getMemberScope();
-    explicitReceiver=NO_RECEIVER;
+    JetType receiverType=explicitReceiver.getType();
+    variants.add(Pair.create(receiverType.getMemberScope(),NO_RECEIVER));
+    ReceiverValue value=((NamespaceType)receiverType).getReceiverValue();
+    if (value.exists()) {
+      variants.add(Pair.create(context.scope,value));
+    }
   }
  else {
-    scope=context.scope;
+    variants.add(Pair.create(context.scope,explicitReceiver));
   }
   ResolutionTaskHolder<D,F> result=new ResolutionTaskHolder<D,F>(functionReference,context,new MyPriorityProvider<D>(context),null);
-  TaskPrioritizerContext<D,F> c=new TaskPrioritizerContext<D,F>(name,result,context,scope,callableDescriptorCollectors);
-  doComputeTasks(explicitReceiver,c);
+  for (  Pair<JetScope,ReceiverValue> pair : variants) {
+    doComputeTasks(pair.second,new TaskPrioritizerContext<D,F>(name,result,context,pair.first,callableDescriptorCollectors));
+  }
   return result.getTasks();
 }
