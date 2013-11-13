@@ -1,17 +1,17 @@
 {
-  if (unresolvedCache.contains(qualifiedName)) {
+  if (unresolvedCache.contains(fqName)) {
     return null;
   }
-  JetScope scope=packageFragments.get(qualifiedName);
-  if (scope != null) {
-    return (JavaPackageFragmentDescriptor)scope.getContainingDeclaration();
+  JavaPackageFragmentDescriptor packageFragment=packageFragments.get(fqName);
+  if (packageFragment != null) {
+    return packageFragment;
   }
-  JavaPackageFragmentDescriptor packageFragment=new JavaPackageFragmentDescriptor(this,qualifiedName);
-  JetScope namespaceScope=createPackageScope(qualifiedName,packageFragment,true);
-  cache(qualifiedName,namespaceScope);
-  if (namespaceScope == null) {
-    return null;
+  packageFragment=JavaPackageFragmentDescriptor.create(this,fqName,new NullableFunction<JavaPackageFragmentDescriptor,JetScope>(){
+    @Override @Nullable public JetScope fun(    JavaPackageFragmentDescriptor packageFragment){
+      return createPackageScope(fqName,packageFragment);
+    }
   }
-  packageFragment.setMemberScope(namespaceScope);
+);
+  cache(fqName,packageFragment);
   return packageFragment;
 }
