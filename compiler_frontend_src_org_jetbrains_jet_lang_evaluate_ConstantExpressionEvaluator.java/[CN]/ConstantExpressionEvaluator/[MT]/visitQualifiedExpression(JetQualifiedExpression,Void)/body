@@ -1,8 +1,4 @@
 {
-  CompileTimeConstant wholeExpressionValue=trace.getBindingContext().get(BindingContext.COMPILE_TIME_VALUE,expression);
-  if (wholeExpressionValue != null) {
-    return wholeExpressionValue;
-  }
   JetExpression receiverExpression=expression.getReceiverExpression();
   JetExpression selectorExpression=expression.getSelectorExpression();
   if (selectorExpression instanceof JetCallExpression) {
@@ -12,14 +8,11 @@
     }
     if (((JetCallExpression)selectorExpression).getValueArguments().size() < 2) {
       Object result=evaluateCall(calleeExpression,receiverExpression);
-      if (result == null) {
-        return null;
-      }
       return createCompileTimeConstant(result,expectedType);
     }
   }
   if (selectorExpression != null) {
-    return selectorExpression.accept(this,null);
+    return evaluate(selectorExpression);
   }
-  return super.visitQualifiedExpression(expression,data);
+  return null;
 }
