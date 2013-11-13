@@ -2,11 +2,14 @@
   if (subModule == null) {
     subModule=new LazyJavaSubModule(new GlobalJavaResolverContext(storageManager,new JavaClassFinder(){
       @Nullable @Override public JavaClass findClass(      @NotNull FqName fqName){
+        if (kotlinClassesFromBinaries.invoke(fqName) != null || kotlinNamespacesFromBinaries.invoke(fqName) != null) {
+          return null;
+        }
         JavaClass javaClass=javaClassFinder.findClass(fqName);
         if (javaClass == null) {
           return null;
         }
-        if (DescriptorResolverUtils.isCompiledKotlinClassOrPackageClass(javaClass)) {
+        if (javaClass.getOriginKind() == JavaClass.OriginKind.KOTLIN_LIGHT_CLASS) {
           return null;
         }
         return javaClass;
