@@ -10,8 +10,8 @@
   this.unsubstitutedMemberScope=new LazyClassMemberScope(resolveSession,declarationProvider,this);
   this.unsubstitutedInnerClassesScope=new InnerClassesScopeWrapper(unsubstitutedMemberScope);
   this.typeConstructor=new LazyClassTypeConstructor();
-  JetModifierList modifierList=classLikeInfo.getModifierList();
   this.kind=classLikeInfo.getClassKind();
+  JetModifierList modifierList=classLikeInfo.getModifierList();
   if (kind.isObject()) {
     this.modality=Modality.FINAL;
   }
@@ -19,7 +19,7 @@
     Modality defaultModality=kind == ClassKind.TRAIT ? Modality.ABSTRACT : Modality.FINAL;
     this.modality=resolveModalityFromModifiers(modifierList,defaultModality);
   }
-  this.visibility=resolveVisibilityFromModifiers(modifierList,getDefaultClassVisibility(this));
+  this.visibility=isEnumClassObject(this) ? DescriptorUtils.getSyntheticClassObjectVisibility() : resolveVisibilityFromModifiers(modifierList,getDefaultClassVisibility(this));
   this.isInner=isInnerClass(modifierList);
   StorageManager storageManager=resolveSession.getStorageManager();
   this.thisAsReceiverParameter=storageManager.createLazyValue(new Function0<ReceiverParameterDescriptor>(){
