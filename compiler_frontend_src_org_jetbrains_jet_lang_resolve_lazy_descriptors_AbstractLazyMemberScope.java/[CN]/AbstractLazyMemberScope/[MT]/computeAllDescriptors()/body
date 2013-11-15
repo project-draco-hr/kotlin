@@ -1,35 +1,21 @@
 {
-  AllDescriptors result=new AllDescriptors();
+  Collection<DeclarationDescriptor> result=new LinkedHashSet<DeclarationDescriptor>();
   for (  JetDeclaration declaration : declarationProvider.getAllDeclarations()) {
-    if (declaration instanceof JetEnumEntry) {
-      JetEnumEntry jetEnumEntry=(JetEnumEntry)declaration;
-      Name name=safeNameForLazyResolve(jetEnumEntry);
-      result.all.addAll(getProperties(name));
-      result.objects.add(getObjectDescriptor(name));
-    }
- else     if (declaration instanceof JetObjectDeclaration) {
-      JetObjectDeclaration objectDeclaration=(JetObjectDeclaration)declaration;
-      Name name=safeNameForLazyResolve(objectDeclaration);
-      result.all.addAll(getProperties(name));
-      result.objects.add(getObjectDescriptor(name));
-    }
- else     if (declaration instanceof JetClassOrObject) {
+    if (declaration instanceof JetClassOrObject) {
       JetClassOrObject classOrObject=(JetClassOrObject)declaration;
-      Name name=safeNameForLazyResolve(classOrObject.getNameAsName());
-      result.all.addAll(classDescriptors.invoke(name));
+      result.addAll(classDescriptors.invoke(safeNameForLazyResolve(classOrObject.getNameAsName())));
     }
  else     if (declaration instanceof JetFunction) {
       JetFunction function=(JetFunction)declaration;
-      result.all.addAll(getFunctions(safeNameForLazyResolve(function)));
+      result.addAll(getFunctions(safeNameForLazyResolve(function)));
     }
  else     if (declaration instanceof JetProperty) {
       JetProperty property=(JetProperty)declaration;
-      result.all.addAll(getProperties(safeNameForLazyResolve(property)));
+      result.addAll(getProperties(safeNameForLazyResolve(property)));
     }
  else     if (declaration instanceof JetParameter) {
       JetParameter parameter=(JetParameter)declaration;
-      Name name=safeNameForLazyResolve(parameter);
-      result.all.addAll(getProperties(name));
+      result.addAll(getProperties(safeNameForLazyResolve(parameter)));
     }
  else     if (declaration instanceof JetTypedef || declaration instanceof JetMultiDeclaration) {
     }
@@ -37,6 +23,6 @@
       throw new IllegalArgumentException("Unsupported declaration kind: " + declaration);
     }
   }
-  addExtraDescriptors(result.all);
+  addExtraDescriptors(result);
   return result;
 }
