@@ -13,6 +13,32 @@ if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
   }
 }
 return Result.CONTINUE;
+case '{':
+int offset=editor.getCaretModel().getOffset();
+if (offset == 0) {
+return Result.CONTINUE;
+}
+HighlighterIterator iterator=((EditorEx)editor).getHighlighter().createIterator(offset - 1);
+while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
+iterator.retreat();
+}
+if (iterator.atEnd() || iterator.getTokenType() != JetTokens.RPAR) {
+return Result.CONTINUE;
+}
+PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+PsiElement leaf=file.findElementAt(offset);
+if (leaf != null) {
+PsiElement parent=leaf.getParent();
+if (parent != null && CONTROL_FLOW_EXPRESSIONS.contains(parent.getNode().getElementType())) {
+ASTNode nonWhitespaceSibling=FormatterUtil.getPreviousNonWhitespaceSibling(leaf.getNode());
+if (nonWhitespaceSibling != null && nonWhitespaceSibling.getText().equals(")")) {
+EditorModificationUtil.insertStringAtCaret(editor,"{",false,true);
+indentBrace(project,editor,'{');
+return Result.STOP;
+}
+}
+}
+return Result.CONTINUE;
 }
 return Result.CONTINUE;
 }
