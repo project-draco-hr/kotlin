@@ -1,0 +1,18 @@
+{
+  List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+  for (  ValueParameterDescriptor parameter : parameters) {
+    KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
+    if (builtIns.isExactFunctionOrExtensionFunctionType(parameter.getType())) {
+      if (!InlineUtil.hasNoinlineAnnotation(parameter)) {
+        return;
+      }
+    }
+  }
+  ReceiverParameterDescriptor receiverParameter=functionDescriptor.getReceiverParameter();
+  if (receiverParameter != null) {
+    if (KotlinBuiltIns.getInstance().isExactFunctionOrExtensionFunctionType(receiverParameter.getType())) {
+      return;
+    }
+  }
+  trace.report(Errors.NOTHING_TO_INLINE.on(function,functionDescriptor));
+}
