@@ -9,9 +9,8 @@
       Collection<JetScope> tempScopes=Lists.newArrayList();
       for (      JetScope scope : scopes) {
         ClassifierDescriptor classifier=scope.getClassifier(subName);
-        if (classifier instanceof ClassDescriptorBase) {
-          ClassDescriptorBase classDescriptor=(ClassDescriptorBase)classifier;
-          tempScopes.add(classDescriptor.getUnsubstitutedInnerClassesScope());
+        if (classifier instanceof ClassDescriptor) {
+          tempScopes.add(((ClassDescriptor)classifier).getUnsubstitutedInnerClassesScope());
         }
       }
       scopes=tempScopes;
@@ -21,14 +20,8 @@
   Collection<ClassDescriptor> resultClassifierDescriptors=Lists.newArrayList();
   for (  JetScope scope : scopes) {
     ClassifierDescriptor classifier=scope.getClassifier(shortName);
-    if (classifier instanceof ClassDescriptor) {
+    if (classifier instanceof ClassDescriptor && includeObjectDeclarations == ((ClassDescriptor)classifier).getKind().isSingleton()) {
       resultClassifierDescriptors.add((ClassDescriptor)classifier);
-    }
-    if (includeObjectDeclarations) {
-      ClassDescriptor objectDescriptor=scope.getObjectDescriptor(shortName);
-      if (objectDescriptor != null) {
-        resultClassifierDescriptors.add(objectDescriptor);
-      }
     }
   }
   return resultClassifierDescriptors;
