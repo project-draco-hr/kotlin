@@ -1,0 +1,13 @@
+{
+  doTestWithKotlinRename(new Function<PsiFile,PsiElement>(){
+    @Override public PsiElement fun(    PsiFile file){
+      BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)file).getBindingContext();
+      ClassDescriptor classDescriptor=bindingContext.get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,qClassName);
+      assertNotNull(classDescriptor);
+      JetScope scope=classDescriptor.getMemberScope(Collections.<TypeProjection>emptyList());
+      VariableDescriptor propertyName=scope.getProperties(Name.identifier(oldPropertyName)).iterator().next();
+      return BindingContextUtils.descriptorToDeclaration(bindingContext,propertyName);
+    }
+  }
+,newPropertyName);
+}
