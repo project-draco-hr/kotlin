@@ -10,6 +10,7 @@
   List<JetFile> allJetFiles=new ArrayList<JetFile>();
   Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule);
   Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
+  LazyOperationsLog lazyOperationsLog=new LazyOperationsLog(HASH_SANITIZER);
   for (  Map.Entry<TestModule,List<TestFile>> entry : groupedByModule.entrySet()) {
     TestModule testModule=entry.getKey();
     List<? extends TestFile> testFilesInModule=entry.getValue();
@@ -26,9 +27,12 @@
       module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
       module.seal();
     }
-    TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module,null,null);
+    ExceptionTracker tracker=new ExceptionTracker();
+    GlobalContext context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
+    TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegrationWithCustomContext(getProject(),context,jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module,null,null);
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
+  Throwable exceptionFromLazyResolveLogValidation=checkLazyResolveLog(lazyOperationsLog,testDataFile);
   Throwable exceptionFromDescriptorValidation=null;
   try {
     File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
@@ -47,5 +51,8 @@
   checkAllResolvedCallsAreCompleted(allJetFiles,supportTrace.getBindingContext());
   if (exceptionFromDescriptorValidation != null) {
     throw UtilsPackage.rethrow(exceptionFromDescriptorValidation);
+  }
+  if (exceptionFromLazyResolveLogValidation != null) {
+    throw UtilsPackage.rethrow(exceptionFromLazyResolveLogValidation);
   }
 }
