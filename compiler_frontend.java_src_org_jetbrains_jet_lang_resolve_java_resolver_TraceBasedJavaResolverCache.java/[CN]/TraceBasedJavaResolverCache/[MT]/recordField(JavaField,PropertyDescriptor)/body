@@ -3,8 +3,9 @@
   trace.record(VARIABLE,psiField,descriptor);
   if (AnnotationUtils.isPropertyCompileTimeConstant(descriptor)) {
     PsiExpression initializer=psiField.getInitializer();
-    if (initializer instanceof PsiLiteralExpression) {
-      CompileTimeConstant<?> constant=JavaAnnotationArgumentResolver.resolveCompileTimeConstantValue(((PsiLiteralExpression)initializer).getValue(),descriptor.getType());
+    Object evaluatedExpression=JavaConstantExpressionEvaluator.computeConstantExpression(initializer,false);
+    if (evaluatedExpression != null) {
+      CompileTimeConstant<?> constant=JavaAnnotationArgumentResolver.resolveCompileTimeConstantValue(evaluatedExpression,descriptor.getType());
       if (constant != null) {
         trace.record(COMPILE_TIME_INITIALIZER,descriptor,constant);
       }
