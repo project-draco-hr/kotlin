@@ -1,11 +1,20 @@
 {
-  CompileTimeConstant<?> compileTimeConstant=getCompileTimeConstant(expression,expectedType);
-  Set<DiagnosticFactory> errorsThatDependOnExpectedType=Sets.<DiagnosticFactory>newHashSet(CONSTANT_EXPECTED_TYPE_MISMATCH,NULL_FOR_NONNULL_TYPE);
-  if (compileTimeConstant instanceof ErrorValueWithDiagnostic) {
-    Diagnostic diagnostic=((ErrorValueWithDiagnostic)compileTimeConstant).getDiagnostic();
-    if (errorsThatDependOnExpectedType.contains(diagnostic.getFactory())) {
-      return diagnostic;
-    }
+  CompileTimeConstant<?> compileTimeConstant=ConstantExpressionEvaluator.object$.evaluate(expression,trace,expectedType);
+  IElementType elementType=expression.getNode().getElementType();
+  if (elementType == JetNodeTypes.INTEGER_CONSTANT) {
+    return checkIntegerValue(compileTimeConstant,expectedType,expression);
   }
-  return null;
+ else   if (elementType == JetNodeTypes.FLOAT_CONSTANT) {
+    return checkFloatValue(compileTimeConstant,expectedType,expression);
+  }
+ else   if (elementType == JetNodeTypes.BOOLEAN_CONSTANT) {
+    return checkBooleanValue(compileTimeConstant,expectedType,expression);
+  }
+ else   if (elementType == JetNodeTypes.CHARACTER_CONSTANT) {
+    return checkCharValue(compileTimeConstant,expectedType,expression);
+  }
+ else   if (elementType == JetNodeTypes.NULL) {
+    return checkNullValue(expectedType,expression);
+  }
+  return false;
 }
