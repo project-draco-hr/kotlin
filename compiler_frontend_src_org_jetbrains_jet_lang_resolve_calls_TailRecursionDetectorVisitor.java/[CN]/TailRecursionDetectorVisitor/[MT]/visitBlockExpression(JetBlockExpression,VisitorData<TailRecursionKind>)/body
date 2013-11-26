@@ -1,0 +1,18 @@
+{
+  if (data.data.isReturn())   return continueTrace(data);
+  PsiElement child=data.last;
+  JetElement last=findLastJetElement(expression.getLastChild());
+  if (last != child) {
+    if (!(last instanceof JetReturnExpression)) {
+      return noTailRecursion();
+    }
+    JetReturnExpression returnExpression=(JetReturnExpression)last;
+    if (returnExpression.getReturnedExpression() != null) {
+      return noTailRecursion();
+    }
+    if (findLastJetElement(returnExpression.getPrevSibling()) != child) {
+      return noTailRecursion();
+    }
+  }
+  return continueTrace(data);
+}

@@ -1,0 +1,13 @@
+{
+  List<JetCallExpression> callExpressions=firstNonNull(trace.get(BindingContext.FUNCTION_RECURSIVE_CALL_EXPRESSIONS,descriptor),Collections.<JetCallExpression>emptyList());
+  boolean allNonTailRecursiveCalls=Iterables.all(callExpressions,new Predicate<JetCallExpression>(){
+    @Override public boolean apply(    JetCallExpression callExpression){
+      TailRecursionKind recursionKind=trace.get(BindingContext.TAIL_RECURSION_CALL,callExpression);
+      return recursionKind == null || !recursionKind.isDoGenerateTailRecursion();
+    }
+  }
+);
+  if (allNonTailRecursiveCalls) {
+    trace.report(Errors.NO_TAIL_CALLS_FOUND.on(function));
+  }
+}
