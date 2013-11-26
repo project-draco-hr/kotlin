@@ -1,0 +1,31 @@
+{
+  List<ValueParameterDescriptor> descriptorsStored=new ArrayList<ValueParameterDescriptor>(valueArguments.size());
+  for (  ValueParameterDescriptor parameterDescriptor : fd.getValueParameters()) {
+    ResolvedValueArgument arg=valueArguments.get(parameterDescriptor.getIndex());
+    Type type=types.get(parameterDescriptor.getIndex());
+    if (arg instanceof ExpressionValueArgument) {
+      ExpressionValueArgument ev=(ExpressionValueArgument)arg;
+      ValueArgument argument=ev.getValueArgument();
+      JetExpression argumentExpression=argument == null ? null : argument.getArgumentExpression();
+      if (argumentExpression instanceof JetSimpleNameExpression) {
+        JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)argumentExpression;
+        if (nameExpression.getReferencedNameAsName().equals(parameterDescriptor.getName())) {
+          continue;
+        }
+      }
+      codegen.gen(argumentExpression,type);
+    }
+ else     if (arg instanceof DefaultValueArgument) {
+      DefaultParameterValueLoader.DEFAULT.putValueOnStack(parameterDescriptor,codegen);
+    }
+ else     if (arg instanceof VarargValueArgument) {
+      VarargValueArgument valueArgument=(VarargValueArgument)arg;
+      codegen.genVarargs(parameterDescriptor,valueArgument);
+    }
+ else {
+      throw new UnsupportedOperationException();
+    }
+    descriptorsStored.add(parameterDescriptor);
+  }
+  return descriptorsStored;
+}
