@@ -2,7 +2,15 @@
   for (  MutableClassDescriptor mutableClassDescriptor : context.getClasses().values()) {
     mutableClassDescriptor.lockScopes();
   }
-  for (  Map.Entry<JetFile,WritableScope> namespaceScope : context.getNamespaceScopes().entrySet()) {
-    if (!namespaceScope.getKey().isScript())     namespaceScope.getValue().changeLockLevel(WritableScope.LockLevel.READING);
+  Set<FqName> scriptFqNames=Sets.newHashSet();
+  for (  JetFile file : context.getNamespaceScopes().keySet()) {
+    if (file.isScript()) {
+      scriptFqNames.add(JetPsiUtil.getFQName(file));
+    }
+  }
+  for (  MutablePackageFragmentDescriptor fragment : packageFragmentProvider.getAllFragments()) {
+    if (!scriptFqNames.contains(fragment.getFqName())) {
+      fragment.getMemberScope().changeLockLevel(WritableScope.LockLevel.READING);
+    }
   }
 }
