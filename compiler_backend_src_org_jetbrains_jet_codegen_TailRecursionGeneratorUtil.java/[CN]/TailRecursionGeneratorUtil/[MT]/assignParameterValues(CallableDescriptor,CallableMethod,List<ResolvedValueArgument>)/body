@@ -1,6 +1,6 @@
 {
-  List<ValueParameterDescriptor> descriptorsStored=new ArrayList<ValueParameterDescriptor>(valueArguments.size());
-  for (  ValueParameterDescriptor parameterDescriptor : fd.getValueParameters()) {
+  List<Type> types=callableMethod.getValueParameterTypes();
+  for (  ValueParameterDescriptor parameterDescriptor : Lists.reverse(fd.getValueParameters())) {
     ResolvedValueArgument arg=valueArguments.get(parameterDescriptor.getIndex());
     Type type=types.get(parameterDescriptor.getIndex());
     if (arg instanceof ExpressionValueArgument) {
@@ -8,24 +8,22 @@
       ValueArgument argument=ev.getValueArgument();
       JetExpression argumentExpression=argument == null ? null : argument.getArgumentExpression();
       if (argumentExpression instanceof JetSimpleNameExpression) {
-        JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)argumentExpression;
-        if (nameExpression.getReferencedNameAsName().equals(parameterDescriptor.getName())) {
+        ResolvedCall<? extends CallableDescriptor> resolvedCall=state.getBindingContext().get(RESOLVED_CALL,argumentExpression);
+        if (resolvedCall != null && resolvedCall.getResultingDescriptor().equals(parameterDescriptor.getOriginal())) {
+          AsmUtil.pop(v,type);
           continue;
         }
       }
-      codegen.gen(argumentExpression,type);
     }
  else     if (arg instanceof DefaultValueArgument) {
+      AsmUtil.pop(v,type);
       DefaultParameterValueLoader.DEFAULT.putValueOnStack(parameterDescriptor,codegen);
     }
  else     if (arg instanceof VarargValueArgument) {
-      VarargValueArgument valueArgument=(VarargValueArgument)arg;
-      codegen.genVarargs(parameterDescriptor,valueArgument);
     }
  else {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Unknown argument type: " + arg + " in "+ fd);
     }
-    descriptorsStored.add(parameterDescriptor);
+    store(parameterDescriptor,type);
   }
-  return descriptorsStored;
 }
