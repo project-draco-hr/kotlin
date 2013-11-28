@@ -1,0 +1,16 @@
+{
+  final JetCoreEnvironment jetCoreEnvironment=createEnvironmentWithMockJdkAndIdeaAnnotations(disposable,configurationKind);
+  List<JetFile> jetFiles=ContainerUtil.map(kotlinFiles,new Function<File,JetFile>(){
+    @Override public JetFile fun(    File kotlinFile){
+      try {
+        return JetTestUtils.createFile(kotlinFile.getName(),FileUtil.loadFile(kotlinFile,true),jetCoreEnvironment.getProject());
+      }
+ catch (      IOException e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+);
+  AnalyzeExhaust exhaust=AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(jetCoreEnvironment.getProject(),jetFiles,Collections.<AnalyzerScriptParameter>emptyList(),Predicates.<PsiFile>alwaysTrue());
+  return new JetFilesAndExhaust(jetFiles,exhaust);
+}
