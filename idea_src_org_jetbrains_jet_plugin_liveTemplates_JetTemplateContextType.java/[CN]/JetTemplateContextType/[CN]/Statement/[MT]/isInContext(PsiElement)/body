@@ -1,10 +1,10 @@
 {
-  PsiElement parent=element.getParent();
-  if (parent instanceof JetSimpleNameExpression) {
-    parent=parent.getParent();
+  PsiElement parentStatement=PsiTreeUtil.findFirstParent(element,new Condition<PsiElement>(){
+    @Override public boolean value(    PsiElement element){
+      return element instanceof JetExpression && (element.getParent() instanceof JetBlockExpression);
+    }
   }
-  if (parent instanceof JetBinaryExpression) {
-    parent=parent.getParent();
-  }
-  return parent instanceof JetBlockExpression;
+);
+  if (parentStatement == null)   return false;
+  return element.getTextOffset() == parentStatement.getTextOffset();
 }
