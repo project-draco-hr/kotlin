@@ -2,17 +2,19 @@
   FqName packageFqName=stubGenerationStrategy.getPackageFqName();
   Collection<JetFile> files=stubGenerationStrategy.getFiles();
   checkForBuiltIns(packageFqName,files);
-  LightClassConstructionContext context=LightClassGenerationSupport.getInstance(project).analyzeRelevantCode(files);
+  LightClassConstructionContext context=stubGenerationStrategy.createLightClassConstructionContext(files);
   Throwable error=context.getError();
   if (error != null) {
     throw new IllegalStateException("failed to analyze: " + error,error);
   }
   PsiJavaFileStub javaFileStub=createJavaFileStub(packageFqName,getRepresentativeVirtualFile(files));
+  BindingContext bindingContext;
   try {
     Stack<StubElement> stubStack=new Stack<StubElement>();
     stubStack.push(javaFileStub);
     GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getBindingContext(),Lists.newArrayList(files),false,false,stubGenerationStrategy.generateDeclaredClasses(),InlineUtil.DEFAULT_INLINE_FLAG_FOR_STUB);
     state.beforeCompile();
+    bindingContext=state.getBindingContext();
     stubGenerationStrategy.generate(state,files);
     StubElement pop=stubStack.pop();
     if (pop != javaFileStub) {
@@ -26,5 +28,5 @@ catch (  RuntimeException e) {
     logErrorWithOSInfo(e,packageFqName,null);
     throw e;
   }
-  return Result.create(javaFileStub,PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  return Result.create(stubGenerationStrategy.createStubWithName(javaFileStub,bindingContext),local ? PsiModificationTracker.MODIFICATION_COUNT : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
 }

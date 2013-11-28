@@ -11,9 +11,8 @@
       GlobalSearchScope scope=(GlobalSearchScope)queryParameters.getScope();
       Collection<JetClassOrObject> candidates=JetSuperClassIndex.getInstance().get(name,clazz.getProject(),scope);
       for (      JetClassOrObject candidate : candidates) {
-        JetFile containingFile=(JetFile)candidate.getContainingFile();
-        KotlinCodeAnalyzer sessionForFile=AnalyzerFacadeWithCache.getLazyResolveSessionForFile(containingFile);
-        ClassDescriptor classDescriptor=(ClassDescriptor)sessionForFile.resolveToDescriptor(candidate);
+        ClassDescriptor classDescriptor=(ClassDescriptor)UsagesSearchPackage.getDescriptor(candidate);
+        if (classDescriptor == null)         continue;
         for (        JetType type : classDescriptor.getTypeConstructor().getSupertypes()) {
           ClassifierDescriptor declarationDescriptor=type.getConstructor().getDeclarationDescriptor();
           if (declarationDescriptor != null) {

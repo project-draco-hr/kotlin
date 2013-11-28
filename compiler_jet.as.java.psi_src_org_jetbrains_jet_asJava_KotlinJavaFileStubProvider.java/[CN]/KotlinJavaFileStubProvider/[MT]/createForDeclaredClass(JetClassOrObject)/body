@@ -1,0 +1,31 @@
+{
+  return new KotlinJavaFileStubProvider(classOrObject.getProject(),JetPsiUtil.isLocal(classOrObject),new StubGenerationStrategy.WithDeclaredClasses(){
+    private JetFile getFile(){
+      return (JetFile)classOrObject.getContainingFile();
+    }
+    @NotNull @Override public LightClassConstructionContext createLightClassConstructionContext(    @NotNull Collection<JetFile> files){
+      return LightClassGenerationSupport.getInstance(classOrObject.getProject()).analyzeRelevantCode(classOrObject);
+    }
+    @NotNull @Override public GeneratedLightClassData createStubWithName(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext){
+      ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
+      assert(classDescriptor != null);
+      Type asmType=bindingContext.get(CodegenBinding.ASM_TYPE,classDescriptor);
+      assert(asmType != null);
+      String jvmInternalName=asmType.getClassName();
+      assert(jvmInternalName != null);
+      return new GeneratedLightClassData(javaFileStub,jvmInternalName,classDescriptor);
+    }
+    @NotNull @Override public Collection<JetFile> getFiles(){
+      return Collections.singletonList(getFile());
+    }
+    @NotNull @Override public FqName getPackageFqName(){
+      return JetPsiUtil.getFQName(getFile());
+    }
+    @Override public void generate(    @NotNull GenerationState state,    @NotNull Collection<JetFile> files){
+      NamespaceCodegen namespaceCodegen=state.getFactory().forNamespace(getPackageFqName(),files);
+      namespaceCodegen.generateClassOrObject(classOrObject);
+      state.getFactory().asList();
+    }
+  }
+);
+}
