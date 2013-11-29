@@ -1,0 +1,28 @@
+{
+  CallableDescriptor targetDescriptor=resolvedCall.getResultingDescriptor();
+  JetExpression expression=context.call.getCalleeExpression();
+  if (expression == null) {
+    return;
+  }
+  checkCallWithReceiver(context,targetDescriptor,resolvedCall.getThisObject(),expression);
+  checkCallWithReceiver(context,targetDescriptor,resolvedCall.getReceiverArgument(),expression);
+  boolean isInlinableClosure=inlinableParameters.contains(targetDescriptor);
+  if (isInlinableClosure) {
+    PsiElement parent=expression.getParent();
+    if (parent instanceof JetValueArgument || parent instanceof JetBinaryExpression || parent instanceof JetDotQualifiedExpression|| parent instanceof JetCallExpression) {
+    }
+ else {
+      context.trace.report(Errors.USAGE_IS_NOT_INLINABLE.on(expression,expression,descriptor));
+    }
+  }
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
+    ResolvedValueArgument value=entry.getValue();
+    if (value instanceof ExpressionValueArgument) {
+      JetExpression jetExpression=((ExpressionValueArgument)value).getValueArgument().getArgumentExpression();
+      DeclarationDescriptor varDescriptor=getDescriptor(context,jetExpression);
+      if (varDescriptor != null && inlinableParameters.contains(varDescriptor)) {
+        checkFunctionCall(context,targetDescriptor,jetExpression);
+      }
+    }
+  }
+}
