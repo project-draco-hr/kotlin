@@ -1,0 +1,12 @@
+{
+  for (  LocalFunctionDeclarationInstruction localDeclarationInstruction : pseudocode.getLocalDeclarations()) {
+    JetElement element=localDeclarationInstruction.getElement();
+    if (element instanceof JetNamedFunction) {
+      JetNamedFunction localFunction=(JetNamedFunction)element;
+      SimpleFunctionDescriptor functionDescriptor=trace.getBindingContext().get(BindingContext.FUNCTION,localFunction);
+      JetType expectedType=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+      JetFlowInformationProvider providerForLocalDeclaration=new JetFlowInformationProvider(localFunction,trace,localDeclarationInstruction.getBody());
+      providerForLocalDeclaration.checkDefiniteReturn(expectedType != null ? expectedType : NO_EXPECTED_TYPE);
+    }
+  }
+}
