@@ -1,5 +1,6 @@
 {
-  if (!(packageFragment instanceof JavaPackageFragmentDescriptor) || packageFragment.getMemberScope() instanceof DeserializedPackageMemberScope) {
+  JetScope packageScope=packageFragment.getMemberScope();
+  if (!(packageFragment instanceof JavaPackageFragmentDescriptor) || packageScope instanceof DeserializedPackageMemberScope || packageScope instanceof JavaFullPackageScope) {
     JetFile file=BindingContextUtils.getContainingFile(bindingContext,descriptor);
     if (insideModule && file != null) {
       return NamespaceCodegen.getNamespacePartInternalName(file);
@@ -8,8 +9,8 @@
       return PackageClassUtils.getPackageClassFqName(packageFragment.getFqName()).asString().replace('.','/');
     }
   }
-  if (!(packageFragment.getMemberScope() instanceof JavaClassStaticMembersScope)) {
-    throw new IllegalStateException("Unexpected scope: " + packageFragment.getMemberScope().getClass());
+  if (!(packageScope instanceof JavaClassStaticMembersScope)) {
+    throw new IllegalStateException("Unexpected scope: " + packageScope.getClass());
   }
   JavaPackageFragmentProvider javaFragmentProvider=((JavaPackageFragmentDescriptor)packageFragment).getProvider();
   StringBuilder r=new StringBuilder();
@@ -22,7 +23,7 @@
     if (memberScope instanceof JavaClassStaticMembersScope) {
       r.append("$");
     }
- else     if (memberScope instanceof JavaPackageScope) {
+ else     if (memberScope instanceof JavaPurePackageScope || memberScope instanceof JavaFullPackageScope) {
       r.append("/");
     }
  else {
