@@ -1,19 +1,17 @@
 {
-  CallableDescriptor targetDescriptor=resolvedCall.getResultingDescriptor();
   JetExpression expression=context.call.getCalleeExpression();
   if (expression == null) {
     return;
   }
+  CallableDescriptor targetDescriptor=resolvedCall.getResultingDescriptor();
   checkCallWithReceiver(context,targetDescriptor,resolvedCall.getThisObject(),expression);
   checkCallWithReceiver(context,targetDescriptor,resolvedCall.getReceiverArgument(),expression);
-  boolean isInlinableClosure=inlinableParameters.contains(targetDescriptor);
-  if (isInlinableClosure) {
+  if (inlinableParameters.contains(targetDescriptor)) {
     if (!couldAccessVariable(expression)) {
       context.trace.report(Errors.USAGE_IS_NOT_INLINABLE.on(expression,expression,descriptor));
     }
   }
-  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
-    ResolvedValueArgument value=entry.getValue();
+  for (  ResolvedValueArgument value : resolvedCall.getValueArguments().values()) {
     if (!(value instanceof DefaultValueArgument)) {
       for (      ValueArgument argument : value.getArguments()) {
         checkValueParameter(context,targetDescriptor,argument,value instanceof VarargValueArgument);
