@@ -1,0 +1,24 @@
+{
+  ClassNode classNode=new ClassNode();
+  new ClassReader(bytecode).accept(classNode,0);
+  SimpleVerifier verifier=new SimpleVerifier();
+  verifier.setClassLoader(loader);
+  Analyzer<BasicValue> analyzer=new Analyzer<BasicValue>(verifier);
+  boolean noErrors=true;
+  for (  MethodNode method : classNode.methods) {
+    try {
+      analyzer.analyze(classNode.name,method);
+    }
+ catch (    AnalyzerException e) {
+      System.err.println(classNode.name + "::" + method.name+ method.desc);
+      TraceMethodVisitor tmv=new TraceMethodVisitor(new Textifier());
+      e.node.accept(tmv);
+      PrintWriter pw=new PrintWriter(System.err);
+      tmv.p.print(pw);
+      pw.flush();
+      e.printStackTrace();
+      noErrors=false;
+    }
+  }
+  return noErrors;
+}
