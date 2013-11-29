@@ -1,0 +1,27 @@
+{
+  File file=new File(fileName);
+  JetFile jetFile=JetTestUtils.loadJetFile(getProject(),file);
+  Map<JetElement,Pseudocode> data=new LinkedHashMap<JetElement,Pseudocode>();
+  AnalyzeExhaust analyzeExhaust=JetTestUtils.analyzeFile(jetFile);
+  List<JetDeclaration> declarations=jetFile.getDeclarations();
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  for (  JetDeclaration declaration : declarations) {
+    Pseudocode pseudocode=PseudocodeUtil.generatePseudocode(declaration,bindingContext);
+    data.put(declaration,pseudocode);
+    for (    LocalDeclarationInstruction instruction : pseudocode.getLocalDeclarations()) {
+      Pseudocode localPseudocode=instruction.getBody();
+      data.put(localPseudocode.getCorrespondingElement(),localPseudocode);
+    }
+  }
+  try {
+    processCFData(file,data);
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    if ("true".equals(System.getProperty("jet.control.flow.test.dump.graphs"))) {
+      dumpDot(file,data.values());
+    }
+  }
+}
