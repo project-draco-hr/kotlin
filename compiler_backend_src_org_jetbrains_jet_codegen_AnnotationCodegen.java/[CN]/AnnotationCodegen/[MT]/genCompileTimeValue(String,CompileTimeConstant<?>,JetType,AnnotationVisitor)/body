@@ -35,7 +35,7 @@
     @Override public Void visitArrayValue(    ArrayValue value,    Void data){
       AnnotationVisitor visitor=annotationVisitor.visitArray(name);
       for (      CompileTimeConstant<?> argument : value.getValue()) {
-        genCompileTimeValue(null,argument,visitor);
+        genCompileTimeValue(null,argument,value.getType(KotlinBuiltIns.getInstance()),visitor);
       }
       visitor.visitEnd();
       return null;
@@ -49,6 +49,14 @@
     }
     @Override public Void visitJavaClassValue(    JavaClassValue value,    Void data){
       annotationVisitor.visit(name,typeMapper.mapType(value.getValue()));
+      return null;
+    }
+    @Override public Void visitNumberTypeValue(    NumberValueTypeConstant value,    Void data){
+      NumberValueTypeConstructor typeConstructor=value.getValue();
+      Object numberType=EvaluatePackage.getValueForNumberType(typeConstructor,expectedType);
+      if (numberType != null) {
+        annotationVisitor.visit(name,numberType);
+      }
       return null;
     }
     private Void visitSimpleValue(    CompileTimeConstant value){
