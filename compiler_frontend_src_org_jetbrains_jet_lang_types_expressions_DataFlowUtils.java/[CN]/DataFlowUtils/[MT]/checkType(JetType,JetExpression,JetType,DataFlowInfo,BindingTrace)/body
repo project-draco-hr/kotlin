@@ -1,11 +1,14 @@
 {
   JetExpression expression=JetPsiUtil.safeDeparenthesize(expressionToCheck,false);
   recordExpectedType(trace,expression,expectedType);
-  if (expressionType == null || noExpectedType(expectedType) || JetTypeChecker.INSTANCE.isSubtypeOf(expressionType,expectedType)) {
+  if (expressionType == null || noExpectedType(expectedType) || !expectedType.getConstructor().isDenotable() || JetTypeChecker.INSTANCE.isSubtypeOf(expressionType,expectedType)) {
     return expressionType;
   }
   if (expression instanceof JetConstantExpression) {
     CompileTimeConstant<?> value=ConstantExpressionEvaluator.object$.evaluate(expression,trace,expectedType);
+    if (value instanceof NumberValueTypeConstant) {
+      value=EvaluatePackage.getCompileTimeConstantForNumberType(((NumberValueTypeConstant)value).getValue(),expectedType);
+    }
     new CompileTimeConstantResolver(trace,true).checkConstantExpressionType(value,(JetConstantExpression)expression,expectedType);
     return expressionType;
   }
