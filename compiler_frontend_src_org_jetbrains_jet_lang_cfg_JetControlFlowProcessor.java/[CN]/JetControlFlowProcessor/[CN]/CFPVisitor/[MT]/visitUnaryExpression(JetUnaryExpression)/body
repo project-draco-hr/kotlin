@@ -7,13 +7,17 @@
     String referencedName=operationSign.getReferencedName();
     visitLabeledExpression(referencedName.substring(1),baseExpression);
   }
- else {
+ else   if (JetTokens.EXCLEXCL == operationType) {
     generateInstructions(baseExpression,false);
-    generateInstructions(operationSign,false);
+    builder.predefinedOperation(expression,NOT_NULL_ASSERTION);
+  }
+ else {
+    if (!generateCall(expression.getOperationReference())) {
+      generateInstructions(baseExpression,false);
+    }
     boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
     if (incrementOrDecrement) {
-      builder.write(expression,baseExpression);
+      visitAssignment(baseExpression,expression);
     }
-    builder.read(expression);
   }
 }

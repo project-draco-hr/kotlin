@@ -1,8 +1,14 @@
 {
-  for (  JetTypeProjection typeArgument : expression.getTypeArguments()) {
-    generateInstructions(typeArgument,false);
+  if (!generateCall(expression.getCalleeExpression())) {
+    for (    ValueArgument argument : expression.getValueArguments()) {
+      JetExpression argumentExpression=argument.getArgumentExpression();
+      if (argumentExpression != null) {
+        generateInstructions(argumentExpression,false);
+      }
+    }
+    for (    JetExpression functionLiteral : expression.getFunctionLiteralArguments()) {
+      generateInstructions(functionLiteral,false);
+    }
+    generateInstructions(expression.getCalleeExpression(),false);
   }
-  visitCall(expression);
-  generateInstructions(expression.getCalleeExpression(),false);
-  builder.read(expression);
 }
