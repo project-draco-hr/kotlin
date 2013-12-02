@@ -1,17 +1,21 @@
 {
   PsiElement parent=expression.getParent();
   while (parent != null) {
-    if (parent instanceof JetValueArgument || parent instanceof JetBinaryExpression || parent instanceof JetDotQualifiedExpression|| parent instanceof JetCallExpression) {
+    if (parent instanceof JetValueArgument || parent instanceof JetBinaryExpression || parent instanceof JetUnaryExpression|| parent instanceof JetDotQualifiedExpression|| parent instanceof JetCallExpression|| parent instanceof JetArrayAccessExpression|| parent instanceof JetMultiDeclaration) {
+      if (parent instanceof JetPrefixExpression) {
+        if (JetPsiUtil.isLabeledExpression((JetPrefixExpression)parent)) {
+          parent=parent.getParent();
+          continue;
+        }
+      }
+ else       if (parent instanceof JetBinaryExpression) {
+        if (JetPsiUtil.getOperationToken((JetOperationExpression)parent) == JetTokens.EQ) {
+          return false;
+        }
+      }
       return true;
     }
  else     if (parent instanceof JetParenthesizedExpression || parent instanceof JetBinaryExpressionWithTypeRHS) {
-      parent=parent.getParent();
-    }
- else     if (parent instanceof JetPrefixExpression) {
-      boolean isLabeled=JetPsiUtil.isLabeledExpression((JetPrefixExpression)parent);
-      if (!isLabeled) {
-        return false;
-      }
       parent=parent.getParent();
     }
  else {
