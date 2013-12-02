@@ -3,6 +3,7 @@
   String stdlibPath=(this.stdlib != null ? getPath(this.stdlib) : null);
   String[] classpath=(this.compileClasspath != null ? this.compileClasspath.list() : null);
   String[] externalAnnotationsPath=(this.externalAnnotations != null) ? this.externalAnnotations.list() : null;
+  boolean enableInline=InlineUtil.optionToInlineFlag(inline);
   if (this.src != null) {
     if ((this.output == null) && (this.jar == null)) {
       throw new CompileEnvironmentException("\"output\" or \"jar\" should be specified");
@@ -11,10 +12,10 @@
     String destination=getPath(this.output != null ? this.output : this.jar);
     log(String.format("Compiling [%s] => [%s]",Arrays.toString(source),destination));
     if (this.output != null) {
-      compiler.sourcesToDir(source,destination,stdlibPath,classpath,externalAnnotationsPath);
+      compiler.sourcesToDir(source,destination,stdlibPath,classpath,externalAnnotationsPath,enableInline);
     }
  else {
-      compiler.sourcesToJar(source,destination,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath);
+      compiler.sourcesToJar(source,destination,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline);
     }
   }
  else   if (this.module != null) {
@@ -24,7 +25,7 @@
     String modulePath=getPath(this.module);
     String jarPath=(this.jar != null ? getPath(this.jar) : null);
     log(jarPath != null ? String.format("Compiling [%s] => [%s]",modulePath,jarPath) : String.format("Compiling [%s]",modulePath));
-    compiler.moduleToJar(modulePath,jarPath,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath);
+    compiler.moduleToJar(modulePath,jarPath,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline);
   }
  else {
     throw new CompileEnvironmentException("\"src\" or \"module\" should be specified");
