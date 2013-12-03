@@ -4,10 +4,12 @@
     builder.compilationError(lhs,"No lValue in assignment");
     return;
   }
-  if (left instanceof JetSimpleNameExpression) {
-  }
- else   if (left instanceof JetArrayAccessExpression) {
+  if (left instanceof JetArrayAccessExpression) {
     generateArrayAccess((JetArrayAccessExpression)left);
+    recordWrite(left,parentExpression);
+    return;
+  }
+  if (left instanceof JetSimpleNameExpression) {
   }
  else   if (left instanceof JetQualifiedExpression) {
     generateInstructions(((JetQualifiedExpression)left).getReceiverExpression(),false);
@@ -17,8 +19,6 @@
  else {
     builder.unsupported(parentExpression);
   }
-  VariableDescriptor descriptor=BindingContextUtils.extractVariableDescriptorIfAny(trace.getBindingContext(),left,false);
-  if (descriptor != null) {
-    builder.write(parentExpression,left);
-  }
+  generateInstructions(rhs,false);
+  recordWrite(left,parentExpression);
 }
