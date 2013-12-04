@@ -27,7 +27,7 @@
       maxNextLength=instructionListText.length();
     }
   }
-  for (int i=0, instructionsSize=instructions.size(); i < instructionsSize; i++) {
+  for (int i=0; i < instructions.size(); i++) {
     Instruction instruction=instructions.get(i);
     if (instruction instanceof LocalFunctionDeclarationInstruction) {
       LocalFunctionDeclarationInstruction localFunctionDeclarationInstruction=(LocalFunctionDeclarationInstruction)instruction;
@@ -38,7 +38,18 @@
         out.append(label.getName()).append(":\n");
       }
     }
-    out.append(formatInstruction(instruction,maxLength,remainedAfterPostProcessInstructions)).append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(instruction.getNextInstructions()))).append("    PREV:").append(formatInstructionList(instruction.getPreviousInstructions())).append("\n");
+    out.append(formatInstruction(instruction,maxLength,remainedAfterPostProcessInstructions));
+    Instruction next=i == instructions.size() - 1 ? null : instructions.get(i + 1);
+    Collection<Instruction> nextInstructions=instruction.getNextInstructions();
+    if (!sameContents(next,nextInstructions)) {
+      out.append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(nextInstructions)));
+    }
+    Instruction prev=i == 0 ? null : instructions.get(i - 1);
+    Collection<Instruction> previousInstructions=instruction.getPreviousInstructions();
+    if (!sameContents(prev,previousInstructions)) {
+      out.append("    PREV:").append(formatInstructionList(previousInstructions));
+    }
+    out.append("\n");
   }
   for (  PseudocodeImpl local : locals) {
     dumpInstructions(local,out);
