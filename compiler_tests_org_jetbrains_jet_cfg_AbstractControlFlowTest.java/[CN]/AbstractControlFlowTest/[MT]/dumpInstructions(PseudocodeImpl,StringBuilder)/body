@@ -38,17 +38,19 @@
         out.append(label.getName()).append(":\n");
       }
     }
-    out.append(formatInstruction(instruction,maxLength,remainedAfterPostProcessInstructions));
+    StringBuilder line=new StringBuilder();
+    line.append(formatInstruction(instruction,maxLength,remainedAfterPostProcessInstructions));
     Instruction next=i == instructions.size() - 1 ? null : instructions.get(i + 1);
     Collection<Instruction> nextInstructions=instruction.getNextInstructions();
     if (!sameContents(next,nextInstructions)) {
-      out.append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(nextInstructions)));
+      line.append("    NEXT:").append(String.format("%1$-" + maxNextLength + "s",formatInstructionList(nextInstructions)));
     }
     Instruction prev=i == 0 ? null : instructions.get(i - 1);
     Collection<Instruction> previousInstructions=instruction.getPreviousInstructions();
     if (!sameContents(prev,previousInstructions)) {
-      out.append("    PREV:").append(formatInstructionList(previousInstructions));
+      line.append("    PREV:").append(formatInstructionList(previousInstructions));
     }
+    out.append(StringUtil.trimTrailing(line.toString()));
     out.append("\n");
   }
   for (  PseudocodeImpl local : locals) {
