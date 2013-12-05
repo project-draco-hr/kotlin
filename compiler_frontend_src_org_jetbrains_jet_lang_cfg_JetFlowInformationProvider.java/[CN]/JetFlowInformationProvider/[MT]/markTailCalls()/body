@@ -17,7 +17,8 @@ class KindAndCall {
       CallInstruction callInstruction=(CallInstruction)instruction;
       ResolvedCall<?> resolvedCall=trace.get(RESOLVED_CALL,callInstruction.getElement());
       if (resolvedCall == null)       return;
-      if (!resolvedCall.getResultingDescriptor().getOriginal().equals(subroutineDescriptor))       return;
+      CallableDescriptor functionDescriptor=resolvedCall.getResultingDescriptor();
+      if (!functionDescriptor.getOriginal().equals(subroutineDescriptor))       return;
       JetElement element=callInstruction.getElement();
       JetExpression parent=PsiTreeUtil.getParentOfType(element,JetTryExpression.class,JetFunction.class,JetClassInitializer.class);
       if (parent instanceof JetTryExpression) {
@@ -25,7 +26,8 @@ class KindAndCall {
         return;
       }
       boolean isTail=PseudocodeTraverser.traverseFollowingInstructions(callInstruction,new HashSet<Instruction>(),FORWARD,new TailRecursionDetector(subroutine,callInstruction));
-      TailRecursionKind kind=isTail ? MIGHT_BE : NON_TAIL;
+      boolean sameThisObject=sameThisObject(resolvedCall);
+      TailRecursionKind kind=isTail && sameThisObject ? MIGHT_BE : NON_TAIL;
       KindAndCall kindAndCall=calls.get(element);
       calls.put(element,new KindAndCall(combineKinds(kind,kindAndCall == null ? null : kindAndCall.kind),resolvedCall));
     }
