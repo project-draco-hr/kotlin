@@ -1,5 +1,4 @@
 {
-  JetTypeInfo result;
   DataFlowInfo dataFlowInfo=context.dataFlowInfo;
   if (right != null && left != null) {
     ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,context);
@@ -9,12 +8,18 @@
     TemporaryBindingTrace traceInterpretingRightAsNullableAny=TemporaryBindingTrace.create(context.trace,"trace to resolve 'equals(Any?)' interpreting as of type Any? an expression:" + right);
     traceInterpretingRightAsNullableAny.record(EXPRESSION_TYPE,right,KotlinBuiltIns.getInstance().getNullableAnyType());
     traceInterpretingRightAsNullableAny.record(PROCESSED,right);
-    OverloadResolutionResults<FunctionDescriptor> resolutionResults=resolveFakeCall(receiver,context.replaceBindingTrace(traceInterpretingRightAsNullableAny),Collections.singletonList(right),OperatorConventions.EQUALS);
+    Call call=CallMaker.makeCallWithExpressions(operationSign,receiver,null,operationSign,Collections.singletonList(right));
+    ExpressionTypingContext newContext=context.replaceBindingTrace(traceInterpretingRightAsNullableAny);
+    OverloadResolutionResults<FunctionDescriptor> resolutionResults=newContext.resolveCallWithGivenName(call,operationSign,OperatorConventions.EQUALS);
+    traceInterpretingRightAsNullableAny.commit(new TraceEntryFilter(){
+      @Override public boolean accept(      @Nullable WritableSlice<?,?> slice,      Object key){
+        return !(key == right && (slice == EXPRESSION_TYPE || slice == PROCESSED));
+      }
+    }
+,true);
     dataFlowInfo=facade.getTypeInfo(right,contextWithDataFlow).getDataFlowInfo();
     if (resolutionResults.isSuccess()) {
       FunctionDescriptor equals=resolutionResults.getResultingCall().getResultingDescriptor();
-      context.trace.record(REFERENCE_TARGET,operationSign,equals);
-      context.trace.record(RESOLVED_CALL,operationSign,resolutionResults.getResultingCall());
       if (ensureBooleanResult(operationSign,OperatorConventions.EQUALS,equals.getReturnType(),context)) {
         ensureNonemptyIntersectionOfOperandTypes(expression,context);
       }
@@ -28,6 +33,5 @@
       }
     }
   }
-  result=JetTypeInfo.create(KotlinBuiltIns.getInstance().getBooleanType(),dataFlowInfo);
-  return result;
+  return JetTypeInfo.create(KotlinBuiltIns.getInstance().getBooleanType(),dataFlowInfo);
 }
