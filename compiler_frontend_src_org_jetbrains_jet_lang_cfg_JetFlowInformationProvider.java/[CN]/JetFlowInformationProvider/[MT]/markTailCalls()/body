@@ -1,0 +1,51 @@
+{
+  final DeclarationDescriptor subroutineDescriptor=trace.get(BindingContext.DECLARATION_TO_DESCRIPTOR,subroutine);
+  if (!(subroutineDescriptor instanceof FunctionDescriptor))   return;
+  if (!KotlinBuiltIns.getInstance().isTailRecursive(subroutineDescriptor))   return;
+class KindAndCall {
+    TailRecursionKind kind;
+    ResolvedCall<?> call;
+    KindAndCall(    TailRecursionKind kind,    ResolvedCall<?> call){
+      this.kind=kind;
+      this.call=call;
+    }
+  }
+  final Map<JetElement,KindAndCall> calls=new HashMap<JetElement,KindAndCall>();
+  PseudocodeTraverser.traverse(pseudocode,FORWARD,new InstructionAnalyzeStrategy(){
+    @Override public void execute(    @NotNull Instruction instruction){
+      if (!(instruction instanceof CallInstruction))       return;
+      CallInstruction callInstruction=(CallInstruction)instruction;
+      ResolvedCall<?> resolvedCall=trace.get(RESOLVED_CALL,callInstruction.getElement());
+      if (resolvedCall == null)       return;
+      if (!resolvedCall.getResultingDescriptor().getOriginal().equals(subroutineDescriptor))       return;
+      JetElement element=callInstruction.getElement();
+      JetExpression parent=PsiTreeUtil.getParentOfType(element,JetTryExpression.class,JetFunction.class,JetClassInitializer.class);
+      if (parent instanceof JetTryExpression) {
+        calls.put(element,new KindAndCall(IN_TRY,resolvedCall));
+        return;
+      }
+      boolean isTail=PseudocodeTraverser.traverseFollowingInstructions(callInstruction,new HashSet<Instruction>(),FORWARD,new TailRecursionDetector(subroutine,callInstruction));
+      TailRecursionKind kind=isTail ? MIGHT_BE : NON_TAIL;
+      KindAndCall kindAndCall=calls.get(element);
+      calls.put(element,new KindAndCall(combineKinds(kind,kindAndCall == null ? null : kindAndCall.kind),resolvedCall));
+    }
+  }
+);
+  for (  Map.Entry<JetElement,KindAndCall> entry : calls.entrySet()) {
+    JetElement element=entry.getKey();
+    KindAndCall kindAndCall=entry.getValue();
+switch (kindAndCall.kind) {
+case MIGHT_BE:
+case IN_RETURN:
+      trace.record(TAIL_RECURSION_CALL,kindAndCall.call,TailRecursionKind.IN_RETURN);
+    trace.record(BindingContext.HAS_TAIL_CALLS,(FunctionDescriptor)subroutineDescriptor);
+  break;
+case IN_TRY:
+trace.report(Errors.TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED.on(element));
+break;
+case NON_TAIL:
+trace.report(Errors.NON_TAIL_RECURSIVE_CALL.on(element));
+break;
+}
+}
+}
