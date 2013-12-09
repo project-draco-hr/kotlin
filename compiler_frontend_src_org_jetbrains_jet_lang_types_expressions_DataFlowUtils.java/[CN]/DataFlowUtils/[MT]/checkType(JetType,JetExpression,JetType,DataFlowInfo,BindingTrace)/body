@@ -15,12 +15,7 @@
   DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(expression,expressionType,trace.getBindingContext());
   for (  JetType possibleType : dataFlowInfo.getPossibleTypes(dataFlowValue)) {
     if (JetTypeChecker.INSTANCE.isSubtypeOf(possibleType,expectedType)) {
-      if (dataFlowValue.isStableIdentifier()) {
-        trace.record(AUTOCAST,expression,possibleType);
-      }
- else {
-        trace.report(AUTOCAST_IMPOSSIBLE.on(expression,possibleType,expression.getText()));
-      }
+      AutoCastUtils.recordCastOrError(expression,possibleType,trace,dataFlowValue.isStableIdentifier(),false);
       return possibleType;
     }
   }
