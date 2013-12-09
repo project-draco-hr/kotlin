@@ -4,10 +4,11 @@
   assertTrue("kotlinc executable not found, probably you need to invoke 'dist' Ant target: " + kotlincFile.getAbsolutePath(),kotlincFile.exists());
   String[] args=CliBaseTest.readArgs(argsFilePath,testDataDir,tmpdir.getAbsolutePath());
   final Process process=Runtime.getRuntime().exec(ArrayUtil.prepend(kotlincFile.getAbsolutePath(),args));
+  final Ref<String> stderr=Ref.create();
   new Thread(new Runnable(){
     @Override public void run(){
       try {
-        FileUtil.loadBytes(process.getErrorStream());
+        stderr.set(FileUtil.loadTextAndClose(process.getErrorStream()));
       }
  catch (      IOException e) {
         throw new RuntimeException(e);
@@ -20,5 +21,13 @@
   ExitCode exitCode=ExitCode.values()[intExitCode];
   String normalizedOutput=CliBaseTest.getNormalizedCompilerOutput(output,exitCode,testDataDir);
   File outFile=new File(argsFilePath.replace(".args",".out"));
-  JetTestUtils.assertEqualsToFile(outFile,normalizedOutput);
+  try {
+    JetTestUtils.assertEqualsToFile(outFile,normalizedOutput);
+  }
+ catch (  Exception e) {
+    System.out.println("exitcode " + intExitCode);
+    System.out.println("<stdout>" + output + "</stdout>");
+    System.out.println("<stderr>" + stderr + "</stderr>");
+    throw e;
+  }
 }
