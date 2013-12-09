@@ -1,7 +1,8 @@
 {
-  Set<JetType> types=typeInfo.get(key);
+  Set<JetType> theseTypes=typeInfo.get(key);
+  Set<JetType> types=parent == null ? theseTypes : Sets.union(theseTypes,parent.getPossibleTypes(key));
   if (getNullability(key).canBeNull()) {
-    return parent == null ? types : Sets.union(types,parent.getPossibleTypes(key));
+    return types;
   }
   Set<JetType> enrichedTypes=Sets.newHashSetWithExpectedSize(types.size() + 1);
   JetType originalType=key.getType();
@@ -11,5 +12,5 @@
   for (  JetType type : types) {
     enrichedTypes.add(TypeUtils.makeNotNullable(type));
   }
-  return parent == null ? enrichedTypes : Sets.union(enrichedTypes,parent.getPossibleTypes(key));
+  return enrichedTypes;
 }
