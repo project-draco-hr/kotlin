@@ -1,29 +1,23 @@
 {
   List<JsExpression> invocationArguments=new ArrayList<JsExpression>();
-  final List<JsPropertyInitializer> properties=new SmartList<JsPropertyInitializer>();
-  final List<JsPropertyInitializer> staticProperties=new SmartList<JsPropertyInitializer>();
+  List<JsPropertyInitializer> properties=new SmartList<JsPropertyInitializer>();
+  List<JsPropertyInitializer> staticProperties=new SmartList<JsPropertyInitializer>();
   boolean isTopLevelDeclaration=context() == declarationContext;
-  final JsNameRef qualifiedReference;
+  JsNameRef qualifiedReference;
   if (!isTopLevelDeclaration) {
     qualifiedReference=null;
   }
- else   if (descriptor.getKind().isSingleton() || isAnonymousObject(descriptor)) {
-    qualifiedReference=null;
-    declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
-      @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
-        return createPlace(properties,context().getThisObject(descriptor));
-      }
-    }
-);
-  }
  else {
-    qualifiedReference=declarationContext.getQualifiedReference(descriptor);
-    declarationContext.literalFunctionTranslator().setDefinitionPlace(new NotNullLazyValue<Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression>>(){
-      @Override @NotNull public Trinity<List<JsPropertyInitializer>,LabelGenerator,JsExpression> compute(){
-        return createPlace(staticProperties,qualifiedReference);
-      }
+    DefinitionPlace definitionPlace;
+    if (descriptor.getKind().isSingleton() || isAnonymousObject(descriptor)) {
+      qualifiedReference=null;
+      definitionPlace=new DefinitionPlace(properties,context().getThisObject(descriptor));
     }
-);
+ else {
+      qualifiedReference=declarationContext.getQualifiedReference(descriptor);
+      definitionPlace=new DefinitionPlace(staticProperties,qualifiedReference);
+    }
+    declarationContext=declarationContext.newDeclaration(descriptor,definitionPlace);
   }
   invocationArguments.add(getSuperclassReferences(declarationContext));
   if (!isTrait()) {
@@ -34,9 +28,6 @@
   DeclarationBodyVisitor bodyVisitor=new DeclarationBodyVisitor(properties,staticProperties);
   bodyVisitor.traverseContainer(classDeclaration,declarationContext);
   mayBeAddEnumEntry(bodyVisitor.getEnumEntryList(),staticProperties,declarationContext);
-  if (isTopLevelDeclaration) {
-    declarationContext.literalFunctionTranslator().setDefinitionPlace(null);
-  }
   boolean hasStaticProperties=!staticProperties.isEmpty();
   if (!properties.isEmpty() || hasStaticProperties) {
     if (properties.isEmpty()) {
