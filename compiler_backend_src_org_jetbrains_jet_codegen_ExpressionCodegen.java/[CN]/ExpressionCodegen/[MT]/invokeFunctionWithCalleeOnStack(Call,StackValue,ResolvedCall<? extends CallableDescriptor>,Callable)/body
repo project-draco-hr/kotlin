@@ -1,0 +1,19 @@
+{
+  if (callable instanceof CallableMethod) {
+    CallableMethod callableMethod=(CallableMethod)callable;
+    invokeMethodWithArguments(callableMethod,resolvedCall,receiver);
+    Type returnType=typeMapper.mapReturnType(resolvedCall.getResultingDescriptor().getReturnType());
+    StackValue.coerce(callableMethod.getSignature().getAsmMethod().getReturnType(),returnType,v);
+    return StackValue.onStack(returnType);
+  }
+ else {
+    receiver=StackValue.receiver(resolvedCall,receiver,this,null);
+    List<JetExpression> args=new ArrayList<JetExpression>();
+    for (    ValueArgument argument : call.getValueArguments()) {
+      args.add(argument.getArgumentExpression());
+    }
+    Type returnType=typeMapper.mapType(resolvedCall.getResultingDescriptor());
+    ((IntrinsicMethod)callable).generate(this,v,returnType,call.getCallElement(),args,receiver);
+    return StackValue.onStack(returnType);
+  }
+}
