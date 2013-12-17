@@ -1,3 +1,17 @@
 {
-  return checkHasOuterClassInstance(scope,trace,reportErrorsOn,target,true);
+  ClassDescriptor classDescriptor=getContainingClass(scope);
+  if (!isInsideOuterClassOrItsSubclass(classDescriptor,target)) {
+    return true;
+  }
+  while (classDescriptor != null) {
+    if (isSubclass(classDescriptor,target)) {
+      return true;
+    }
+    if (isStaticNestedClass(classDescriptor)) {
+      trace.report(INACCESSIBLE_OUTER_CLASS_EXPRESSION.on(reportErrorsOn,classDescriptor));
+      return false;
+    }
+    classDescriptor=getParentOfType(classDescriptor,ClassDescriptor.class,true);
+  }
+  return true;
 }
