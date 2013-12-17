@@ -6,14 +6,19 @@
     @NotNull @Override public LightClassConstructionContext createLightClassConstructionContext(    @NotNull Collection<JetFile> files){
       return LightClassGenerationSupport.getInstance(classOrObject.getProject()).analyzeRelevantCode(classOrObject);
     }
-    @NotNull @Override public GeneratedLightClassData createStubWithName(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext){
+    @NotNull @Override public LightClassStubWithData createLightClassStubWithData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext){
       ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
       assert(classDescriptor != null);
-      Type asmType=bindingContext.get(CodegenBinding.ASM_TYPE,classDescriptor);
-      assert(asmType != null);
-      String jvmInternalName=asmType.getClassName();
-      assert(jvmInternalName != null);
-      return new GeneratedLightClassData(javaFileStub,jvmInternalName,classDescriptor);
+      String jvmInternalName=CodegenBinding.getJvmInternalName(bindingContext,classDescriptor);
+      Collection<ClassDescriptor> allInnerClasses=CodegenBinding.getAllInnerClasses(bindingContext,classDescriptor);
+      Map<JetClassOrObject,LightClassDataForKotlinClass> innerClassesMap=ContainerUtil.newHashMap();
+      for (      ClassDescriptor innerClassDescriptor : allInnerClasses) {
+        JetClassOrObject innerClass=(JetClassOrObject)BindingContextUtils.descriptorToDeclaration(bindingContext,innerClassDescriptor);
+        if (innerClass == null)         continue;
+        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(CodegenBinding.getJvmInternalName(bindingContext,innerClassDescriptor),innerClass,innerClassDescriptor);
+        innerClassesMap.put(innerClass,innerLightClassData);
+      }
+      return new LightClassStubWithData(javaFileStub,new OutermostKotlinClassLightClassData(jvmInternalName,classOrObject,classDescriptor,innerClassesMap));
     }
     @NotNull @Override public Collection<JetFile> getFiles(){
       return Collections.singletonList(getFile());

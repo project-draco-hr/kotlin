@@ -1,0 +1,19 @@
+{
+  Collection<ClassDescriptor> innerClasses=bindingContext.get(INNER_CLASSES,outermostClass);
+  if (innerClasses == null || innerClasses.isEmpty())   return Collections.emptySet();
+  Set<ClassDescriptor> allInnerClasses=new HashSet<ClassDescriptor>();
+  Deque<ClassDescriptor> stack=new ArrayDeque<ClassDescriptor>(innerClasses);
+  do {
+    ClassDescriptor currentClass=stack.pop();
+    if (allInnerClasses.add(currentClass)) {
+      Collection<ClassDescriptor> nextClasses=bindingContext.get(INNER_CLASSES,currentClass);
+      if (nextClasses != null) {
+        for (        ClassDescriptor nextClass : nextClasses) {
+          stack.push(nextClass);
+        }
+      }
+    }
+  }
+ while (!stack.isEmpty());
+  return allInnerClasses;
+}
