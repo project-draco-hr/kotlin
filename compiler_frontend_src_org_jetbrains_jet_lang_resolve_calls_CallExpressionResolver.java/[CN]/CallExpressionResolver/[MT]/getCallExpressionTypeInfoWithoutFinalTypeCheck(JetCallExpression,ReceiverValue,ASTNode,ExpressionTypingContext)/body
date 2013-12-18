@@ -13,6 +13,11 @@
     if (functionDescriptor == null) {
       return JetTypeInfo.create(null,context.dataFlowInfo);
     }
+    if (functionDescriptor instanceof ConstructorDescriptor && DescriptorUtils.isAnnotationClass(functionDescriptor.getContainingDeclaration())) {
+      if (!canInstantiateAnnotationClass(callExpression)) {
+        context.trace.report(ANNOTATION_CLASS_CONSTRUCTOR_CALL.on(callExpression));
+      }
+    }
     JetType type=functionDescriptor.getReturnType();
     return JetTypeInfo.create(type,resolvedCall.getDataFlowInfoForArguments().getResultInfo());
   }
