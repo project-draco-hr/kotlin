@@ -7,10 +7,16 @@
     if (!(_value instanceof NotValue))     return WrappedValues.unescapeThrowable(_value);
     if (_value == NotValue.COMPUTING) {
       value=NotValue.RECURSION_WAS_DETECTED;
-      return recursionDetected(true);
+      RecursionDetectedResult<T> result=recursionDetected(true);
+      if (!result.isFallThrough()) {
+        return result.getValue();
+      }
     }
     if (_value == NotValue.RECURSION_WAS_DETECTED) {
-      return recursionDetected(false);
+      RecursionDetectedResult<T> result=recursionDetected(false);
+      if (!result.isFallThrough()) {
+        return result.getValue();
+      }
     }
     value=NotValue.COMPUTING;
     try {
