@@ -1,0 +1,26 @@
+{
+  mark(expression);
+  LoopInfo loopInfo=builder.enterLoop(expression,null,null);
+  builder.bindLabel(loopInfo.getConditionEntryPoint());
+  JetExpression condition=expression.getCondition();
+  if (condition != null) {
+    generateInstructions(condition,IN_CONDITION);
+  }
+  boolean conditionIsTrueConstant=false;
+  if (condition instanceof JetConstantExpression && condition.getNode().getElementType() == JetNodeTypes.BOOLEAN_CONSTANT) {
+    if (BooleanValue.TRUE == ConstantExpressionEvaluator.object$.evaluate(condition,trace,KotlinBuiltIns.getInstance().getBooleanType())) {
+      conditionIsTrueConstant=true;
+    }
+  }
+  if (!conditionIsTrueConstant) {
+    builder.jumpOnFalse(loopInfo.getExitPoint());
+  }
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    generateInstructions(body,NOT_IN_CONDITION);
+  }
+  builder.jump(loopInfo.getEntryPoint());
+  builder.exitLoop(expression);
+  builder.loadUnit(expression);
+}

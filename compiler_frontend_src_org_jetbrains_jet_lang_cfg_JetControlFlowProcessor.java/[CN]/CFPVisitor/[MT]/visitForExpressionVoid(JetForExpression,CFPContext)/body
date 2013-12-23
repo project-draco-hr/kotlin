@@ -1,0 +1,28 @@
+{
+  mark(expression);
+  JetExpression loopRange=expression.getLoopRange();
+  if (loopRange != null) {
+    generateInstructions(loopRange,NOT_IN_CONDITION);
+  }
+  JetParameter loopParameter=expression.getLoopParameter();
+  if (loopParameter != null) {
+    generateInstructions(loopParameter,context);
+  }
+ else {
+    JetMultiDeclaration multiParameter=expression.getMultiParameter();
+    generateInstructions(multiParameter,context);
+  }
+  Label loopExitPoint=builder.createUnboundLabel();
+  Label conditionEntryPoint=builder.createUnboundLabel();
+  builder.bindLabel(conditionEntryPoint);
+  builder.nondeterministicJump(loopExitPoint);
+  LoopInfo loopInfo=builder.enterLoop(expression,loopExitPoint,conditionEntryPoint);
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    generateInstructions(body,NOT_IN_CONDITION);
+  }
+  builder.nondeterministicJump(loopInfo.getEntryPoint());
+  builder.exitLoop(expression);
+  builder.loadUnit(expression);
+}

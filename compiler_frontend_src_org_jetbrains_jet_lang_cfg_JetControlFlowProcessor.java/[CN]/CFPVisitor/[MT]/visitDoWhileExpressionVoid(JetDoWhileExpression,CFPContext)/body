@@ -1,0 +1,17 @@
+{
+  mark(expression);
+  LoopInfo loopInfo=builder.enterLoop(expression,null,null);
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    generateInstructions(body,NOT_IN_CONDITION);
+  }
+  builder.bindLabel(loopInfo.getConditionEntryPoint());
+  JetExpression condition=expression.getCondition();
+  if (condition != null) {
+    generateInstructions(condition,IN_CONDITION);
+  }
+  builder.jumpOnTrue(loopInfo.getEntryPoint());
+  builder.exitLoop(expression);
+  builder.loadUnit(expression);
+}

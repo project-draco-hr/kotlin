@@ -1,0 +1,24 @@
+{
+  mark(expression);
+  JetSimpleNameExpression operationSign=expression.getOperationReference();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  JetExpression baseExpression=expression.getBaseExpression();
+  if (baseExpression == null)   return;
+  if (JetTokens.LABELS.contains(operationType)) {
+    String referencedName=operationSign.getReferencedName();
+    visitLabeledExpression(referencedName.substring(1),baseExpression,context);
+  }
+ else   if (JetTokens.EXCLEXCL == operationType) {
+    generateInstructions(baseExpression,NOT_IN_CONDITION);
+    builder.predefinedOperation(expression,NOT_NULL_ASSERTION);
+  }
+ else {
+    if (!generateCall(expression.getOperationReference())) {
+      generateInstructions(baseExpression,NOT_IN_CONDITION);
+    }
+    boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
+    if (incrementOrDecrement) {
+      visitAssignment(baseExpression,null,expression);
+    }
+  }
+}
