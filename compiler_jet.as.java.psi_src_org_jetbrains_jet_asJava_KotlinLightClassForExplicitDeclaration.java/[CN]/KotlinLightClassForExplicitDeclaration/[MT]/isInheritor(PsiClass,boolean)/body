@@ -1,10 +1,12 @@
 {
   String qualifiedName;
   if (baseClass instanceof KotlinLightClassForExplicitDeclaration) {
-    qualifiedName=DescriptorUtils.getFqName(((KotlinLightClassForExplicitDeclaration)baseClass).getDescriptor()).asString();
+    ClassDescriptor baseDescriptor=((KotlinLightClassForExplicitDeclaration)baseClass).getDescriptor();
+    qualifiedName=baseDescriptor != null ? DescriptorUtils.getFqName(baseDescriptor).asString() : null;
   }
  else {
     qualifiedName=baseClass.getQualifiedName();
   }
-  return ResolvePackage.checkSuperTypeByFQName(getDescriptor(),qualifiedName,checkDeep);
+  ClassDescriptor thisDescriptor=getDescriptor();
+  return qualifiedName != null && thisDescriptor != null && ResolvePackage.checkSuperTypeByFQName(thisDescriptor,qualifiedName,checkDeep);
 }
