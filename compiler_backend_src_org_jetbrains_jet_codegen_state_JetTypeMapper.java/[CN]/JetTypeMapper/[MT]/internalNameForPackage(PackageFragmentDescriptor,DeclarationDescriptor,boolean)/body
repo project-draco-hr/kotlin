@@ -19,16 +19,11 @@
       continue;
     }
     r.append(pathItem.shortName().asString());
-    JetScope memberScope=javaFragmentProvider.getPackageFragment(pathItem).getMemberScope();
-    if (memberScope instanceof JavaClassStaticMembersScope) {
-      r.append("$");
+    JavaPackageFragmentDescriptor fragment=javaFragmentProvider.getPackageFragment(pathItem);
+    if (fragment == null) {
+      throw new IllegalStateException("Package fragment not found: " + pathItem);
     }
- else     if (memberScope instanceof JavaPurePackageScope || memberScope instanceof JavaFullPackageScope) {
-      r.append("/");
-    }
- else {
-      throw new IllegalStateException("Unexpected scope: " + memberScope.getClass());
-    }
+    r.append(fragment.getKind() == CLASS_STATICS ? "$" : "/");
   }
   r.append(packageFragment.getName().asString());
   return r.toString();
