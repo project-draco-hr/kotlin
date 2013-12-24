@@ -1,6 +1,15 @@
 {
   if (descriptor instanceof PropertyAccessorDescriptor) {
-    return getPropertyAccessorName(((PropertyAccessorDescriptor)descriptor).getCorrespondingProperty(),descriptor instanceof PropertyGetterDescriptor);
+    PropertyDescriptor property=((PropertyAccessorDescriptor)descriptor).getCorrespondingProperty();
+    if (isAnnotationClass(property.getContainingDeclaration())) {
+      return property.getName().asString();
+    }
+    if (descriptor instanceof PropertyGetterDescriptor) {
+      return PropertyCodegen.getterName(property.getName());
+    }
+ else {
+      return PropertyCodegen.setterName(property.getName());
+    }
   }
  else   if (isLocalNamedFun(descriptor) || descriptor instanceof AnonymousFunctionDescriptor || descriptor instanceof ExpressionAsFunctionDescriptor) {
     return "invoke";
