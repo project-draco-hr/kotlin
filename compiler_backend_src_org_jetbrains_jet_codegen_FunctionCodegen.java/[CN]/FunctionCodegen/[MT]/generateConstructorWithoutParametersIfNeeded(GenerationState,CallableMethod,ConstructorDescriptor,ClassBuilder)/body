@@ -4,25 +4,20 @@
   }
   int flags=getVisibilityAccessFlag(constructorDescriptor);
   MethodVisitor mv=classBuilder.newMethod(null,flags,"<init>","()V",null,null);
-  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES) {
-    return;
+  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES)   return;
+  InstructionAdapter v=new InstructionAdapter(mv);
+  mv.visitCode();
+  Type methodOwner=method.getOwner();
+  v.load(0,methodOwner);
+  int mask=0;
+  for (  ValueParameterDescriptor parameterDescriptor : constructorDescriptor.getValueParameters()) {
+    Type paramType=state.getTypeMapper().mapType(parameterDescriptor.getType());
+    pushDefaultValueOnStack(paramType,v);
+    mask|=(1 << parameterDescriptor.getIndex());
   }
- else   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
-    InstructionAdapter v=new InstructionAdapter(mv);
-    mv.visitCode();
-    Type methodOwner=method.getOwner();
-    Method jvmSignature=method.getSignature().getAsmMethod();
-    v.load(0,methodOwner);
-    int mask=0;
-    for (    ValueParameterDescriptor parameterDescriptor : constructorDescriptor.getValueParameters()) {
-      Type paramType=state.getTypeMapper().mapType(parameterDescriptor.getType());
-      pushDefaultValueOnStack(paramType,v);
-      mask|=(1 << parameterDescriptor.getIndex());
-    }
-    v.iconst(mask);
-    String desc=jvmSignature.getDescriptor().replace(")","I)");
-    v.invokespecial(methodOwner.getInternalName(),"<init>",desc);
-    v.areturn(Type.VOID_TYPE);
-    endVisit(mv,"default constructor for " + methodOwner.getInternalName(),null);
-  }
+  v.iconst(mask);
+  String desc=method.getSignature().getAsmMethod().getDescriptor().replace(")","I)");
+  v.invokespecial(methodOwner.getInternalName(),"<init>",desc);
+  v.areturn(Type.VOID_TYPE);
+  endVisit(mv,"default constructor for " + methodOwner.getInternalName(),null);
 }
