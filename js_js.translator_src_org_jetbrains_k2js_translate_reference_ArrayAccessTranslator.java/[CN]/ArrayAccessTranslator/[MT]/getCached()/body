@@ -1,3 +1,13 @@
 {
-  return new CachedArrayAccessTranslator(expression,context());
+  List<TemporaryVariable> temporaries=new ArrayList<TemporaryVariable>();
+  Map<JetExpression,JsExpression> aliases=new HashMap<JetExpression,JsExpression>();
+  TemporaryVariable temporaryArrayExpression=context().declareTemporary(getArrayExpression());
+  temporaries.add(temporaryArrayExpression);
+  for (  JetExpression jetExpression : expression.getIndexExpressions()) {
+    JsExpression jsExpression=Translation.translateAsExpression(jetExpression,context());
+    TemporaryVariable temporaryVariable=context().declareTemporary(jsExpression);
+    temporaries.add(temporaryVariable);
+    aliases.put(jetExpression,temporaryVariable.reference());
+  }
+  return new CachedArrayAccessTranslator(expression,context().innerContextWithAliasesForExpressions(aliases),temporaryArrayExpression,temporaries);
 }
