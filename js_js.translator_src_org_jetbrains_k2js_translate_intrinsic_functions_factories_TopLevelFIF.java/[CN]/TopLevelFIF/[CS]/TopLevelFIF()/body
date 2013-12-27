@@ -6,36 +6,6 @@
   add(pattern("String|Boolean|Char|Number.equals"),EQUALS);
   add(pattern("jet","arrayOfNulls"),new KotlinFunctionIntrinsic("nullArray"));
   add(pattern("jet","iterator").receiverExists(),RETURN_RECEIVER_INTRINSIC);
-  add(new DescriptorPredicate(){
-    @Override public boolean apply(    @NotNull FunctionDescriptor descriptor){
-      if (!descriptor.getName().asString().equals("invoke")) {
-        return false;
-      }
-      int parameterCount=descriptor.getValueParameters().size();
-      DeclarationDescriptor fun=descriptor.getContainingDeclaration();
-      return fun == (descriptor.getReceiverParameter() == null ? KotlinBuiltIns.getInstance().getFunction(parameterCount) : KotlinBuiltIns.getInstance().getExtensionFunction(parameterCount));
-    }
-  }
-,new CallParametersAwareFunctionIntrinsic(){
-    @NotNull @Override public JsExpression apply(    @NotNull CallTranslator callTranslator,    @NotNull List<JsExpression> arguments,    @NotNull TranslationContext context){
-      JsExpression thisExpression=callTranslator.getCallParameters().getThisObject();
-      JsExpression functionReference=callTranslator.getCallParameters().getFunctionReference();
-      if (thisExpression == null) {
-        return new JsInvocation(functionReference,arguments);
-      }
- else       if (callTranslator.getResolvedCall().getReceiverArgument().exists()) {
-        return callTranslator.extensionFunctionCall(false);
-      }
- else {
-        CallableDescriptor descriptor=callTranslator.getResolvedCall().getCandidateDescriptor();
-        if (descriptor.getName().asString().equals("invoke") && functionReference instanceof JsNameRef && ((JsNameRef)functionReference).getIdent().startsWith("invoke")) {
-          return callTranslator.explicitInvokeCall();
-        }
-        return new JsInvocation(Namer.getFunctionCallRef(functionReference),generateInvocationArguments(thisExpression,arguments));
-      }
-    }
-  }
-);
   add(pattern("jet","Map","get").checkOverridden(),NATIVE_MAP_GET);
   add(pattern("js","set").receiverExists(),NATIVE_MAP_SET);
   add(pattern("java.util","HashMap","<init>"),new MapSelectImplementationIntrinsic(false));
