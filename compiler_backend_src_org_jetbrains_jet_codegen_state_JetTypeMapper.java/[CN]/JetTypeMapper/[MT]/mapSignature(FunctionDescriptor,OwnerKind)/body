@@ -1,2 +1,29 @@
 {
+  BothSignatureWriter sw=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD);
+  if (f instanceof ConstructorDescriptor) {
+    sw.writeParametersStart();
+    writeAdditionalConstructorParameters((ConstructorDescriptor)f,sw);
+    for (    ValueParameterDescriptor parameter : f.getOriginal().getValueParameters()) {
+      writeParameter(sw,parameter.getType());
+    }
+    writeVoidReturn(sw);
+  }
+ else {
+    if (f instanceof PropertyAccessorDescriptor) {
+      writeFormalTypeParameters(((PropertyAccessorDescriptor)f).getCorrespondingProperty().getTypeParameters(),sw);
+    }
+ else {
+      writeFormalTypeParameters(f.getTypeParameters(),sw);
+    }
+    sw.writeParametersStart();
+    writeThisIfNeeded(f,kind,sw);
+    writeReceiverIfNeeded(f.getReceiverParameter(),sw);
+    for (    ValueParameterDescriptor parameter : f.getValueParameters()) {
+      writeParameter(sw,parameter.getType());
+    }
+    sw.writeReturnType();
+    mapReturnType(f,sw);
+    sw.writeReturnTypeEnd();
+  }
+  return sw.makeJvmMethodSignature(mapFunctionName(f));
 }
