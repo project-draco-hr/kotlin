@@ -2,7 +2,6 @@
   boolean isConstructor=functionDescriptor instanceof ConstructorDescriptor;
   boolean callFromAccessor=!JetTypeMapper.isAccessor(functionDescriptor);
   CallableMethod callableMethod=isConstructor ? typeMapper.mapToCallableMethod((ConstructorDescriptor)functionDescriptor) : typeMapper.mapToCallableMethod(functionDescriptor,callFromAccessor,context);
-  Type[] argTypes=callableMethod.getSignature().getAsmMethod().getArgumentTypes();
   int reg=1;
   if (isConstructor) {
     iv.anew(callableMethod.getOwner());
@@ -12,7 +11,7 @@
  else   if (callFromAccessor) {
     iv.load(0,OBJECT_TYPE);
   }
-  for (  Type argType : argTypes) {
+  for (  Type argType : callableMethod.getAsmMethod().getArgumentTypes()) {
     iv.load(reg,argType);
     reg+=argType.getSize();
   }
