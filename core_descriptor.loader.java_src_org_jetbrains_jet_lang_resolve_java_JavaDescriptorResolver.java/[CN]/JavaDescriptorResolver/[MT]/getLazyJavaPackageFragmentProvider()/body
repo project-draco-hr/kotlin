@@ -1,24 +1,6 @@
 {
   if (lazyJavaPackageFragmentProvider == null) {
-    lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(new GlobalJavaResolverContext(storageManager,new JavaClassFinder(){
-      @Nullable @Override public JavaClass findClass(      @NotNull FqName fqName){
-        if (kotlinClassesFromBinaries.invoke(fqName) != null || JavaClassResolver.getKotlinBuiltinClassDescriptor(fqName) != null) {
-          return null;
-        }
-        JavaClass javaClass=javaClassFinder.findClass(fqName);
-        if (javaClass == null) {
-          return null;
-        }
-        if (javaClass.getOriginKind() == JavaClass.OriginKind.KOTLIN_LIGHT_CLASS) {
-          return null;
-        }
-        return javaClass;
-      }
-      @Nullable @Override public JavaPackage findPackage(      @NotNull FqName fqName){
-        return javaClassFinder.findPackage(fqName);
-      }
-    }
-,kotlinClassFinder,deserializedDescriptorResolver,new LazyJavaClassResolver(){
+    lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(new GlobalJavaResolverContext(storageManager,javaClassFinder,kotlinClassFinder,deserializedDescriptorResolver,new LazyJavaClassResolver(){
       @Override public ClassDescriptor resolveClass(      JavaClass aClass){
         FqName fqName=aClass.getFqName();
         if (fqName != null) {
@@ -27,15 +9,7 @@
         return null;
       }
       @Override public ClassDescriptor resolveClassByFqName(      FqName fqName){
-        ClassDescriptor kotlinClassDescriptor=javaResolverCache.getClassResolvedFromSource(fqName);
-        if (kotlinClassDescriptor != null) {
-          return kotlinClassDescriptor;
-        }
-        ClassDescriptor classFromBinaries=kotlinClassesFromBinaries.invoke(fqName);
-        if (classFromBinaries != null) {
-          return classFromBinaries;
-        }
-        return null;
+        return javaResolverCache.getClassResolvedFromSource(fqName);
       }
     }
 ,externalAnnotationResolver,externalSignatureResolver,errorReporter,signatureChecker,javaResolverCache,this),module);
