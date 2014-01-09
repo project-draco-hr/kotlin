@@ -1,22 +1,12 @@
 {
-  if (foundType == null) {
+  if (headerKind == null) {
     return null;
   }
   if (!AbiVersionUtil.isAbiVersionCompatible(version)) {
-    return KotlinClassHeader.createIncompatibleVersionErrorHeader(version);
+    return new KotlinClassHeader(INCOMPATIBLE_ABI_VERSION,version,null);
   }
-switch (foundType) {
-case CLASS:
-    if (annotationData == null)     return null;
-  return KotlinClassHeader.createClassHeader(version,annotationData);
-case PACKAGE:
-if (annotationData == null) return null;
-return KotlinClassHeader.createPackageFacadeHeader(version,annotationData);
-case PACKAGE_FRAGMENT:
-return KotlinClassHeader.createPackageFragmentHeader(version);
-case TRAIT_IMPL:
-return KotlinClassHeader.createTraitImplHeader(version);
-default :
-throw new UnsupportedOperationException("Unknown compatible HeaderType: " + foundType);
-}
+  if ((headerKind == CLASS || headerKind == PACKAGE_FACADE) && annotationData == null) {
+    return null;
+  }
+  return new KotlinClassHeader(headerKind,version,annotationData);
 }
