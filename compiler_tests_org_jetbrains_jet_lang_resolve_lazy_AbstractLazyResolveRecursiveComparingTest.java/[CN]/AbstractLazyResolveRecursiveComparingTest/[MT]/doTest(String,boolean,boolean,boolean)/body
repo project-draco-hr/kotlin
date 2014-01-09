@@ -1,0 +1,22 @@
+{
+  List<JetFile> files=JetTestUtils.createTestFiles(testFileName,FileUtil.loadFile(new File(testFileName),true),new JetTestUtils.TestFileFactory<JetFile>(){
+    @Override public JetFile create(    String fileName,    String text,    Map<String,String> directives){
+      return JetPsiFactory.createFile(getProject(),fileName,text);
+    }
+  }
+);
+  ModuleDescriptor eagerModule=LazyResolveTestUtil.resolveEagerly(files,getEnvironment());
+  ModuleDescriptor lazyModule=LazyResolveTestUtil.resolveLazily(files,getEnvironment());
+  FqName test=new FqName("test");
+  PackageViewDescriptor actual=lazyModule.getPackage(test);
+  Assert.assertNotNull("Package for name " + test + " is null after lazy resolve",actual);
+  PackageViewDescriptor expected=eagerModule.getPackage(test);
+  Assert.assertNotNull("Package for name " + test + " is null after eager resolve",expected);
+  File serializeResultsTo=new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt");
+  RecursiveDescriptorComparator.validateAndCompareDescriptors(expected,actual,RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT.filterRecursion(new Predicate<FqName>(){
+    @Override public boolean apply(    FqName fqName){
+      return !KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.equals(fqName);
+    }
+  }
+).checkPrimaryConstructors(checkPrimaryConstructors).checkPropertyAccessors(checkPropertyAccessors).withValidationStrategy(allowErrorTypes ? ALLOW_ERROR_TYPES : FORBID_ERROR_TYPES),serializeResultsTo);
+}
