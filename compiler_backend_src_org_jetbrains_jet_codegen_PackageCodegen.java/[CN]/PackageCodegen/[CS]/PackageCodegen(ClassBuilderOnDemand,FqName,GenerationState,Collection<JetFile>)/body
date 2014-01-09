@@ -1,0 +1,21 @@
+{
+  super(state,null);
+  checkAllFilesHaveSamePackage(packageFiles);
+  this.v=v;
+  name=fqName;
+  this.files=packageFiles;
+  packageFragments=Sets.newHashSet();
+  for (  JetFile file : packageFiles) {
+    packageFragments.add(getPackageFragment(file));
+  }
+  final PsiFile sourceFile=packageFiles.size() == 1 ? packageFiles.iterator().next().getContainingFile() : null;
+  v.addOptionalDeclaration(new ClassBuilderOnDemand.ClassBuilderCallback(){
+    @Override public void doSomething(    @NotNull ClassBuilder v){
+      v.defineClass(sourceFile,V1_6,ACC_PUBLIC | ACC_FINAL,JvmClassName.byFqNameWithoutInnerClasses(getPackageClassFqName(fqName)).getInternalName(),null,"java/lang/Object",ArrayUtil.EMPTY_STRING_ARRAY);
+      if (sourceFile != null) {
+        v.visitSource(sourceFile.getName(),null);
+      }
+    }
+  }
+);
+}
