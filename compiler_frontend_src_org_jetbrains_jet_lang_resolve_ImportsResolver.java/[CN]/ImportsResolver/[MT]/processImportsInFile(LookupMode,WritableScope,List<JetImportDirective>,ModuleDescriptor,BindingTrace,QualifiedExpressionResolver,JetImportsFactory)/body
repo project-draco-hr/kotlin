@@ -1,17 +1,17 @@
 {
   @NotNull JetScope rootScope=module.getPackage(FqName.ROOT).getMemberScope();
-  Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(namespaceScope);
+  Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(fileScope);
   if (lookupMode == LookupMode.EVERYTHING) {
-    namespaceScope.clearImports();
+    fileScope.clearImports();
   }
   for (  ImportPath defaultImportPath : module.getDefaultImports()) {
     TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(trace,"transient trace to resolve default imports");
     JetImportDirective defaultImportDirective=importsFactory.createImportDirective(defaultImportPath);
-    qualifiedExpressionResolver.processImportReference(defaultImportDirective,rootScope,namespaceScope,delayedImporter,temporaryTrace,module,lookupMode);
+    qualifiedExpressionResolver.processImportReference(defaultImportDirective,rootScope,fileScope,delayedImporter,temporaryTrace,module,lookupMode);
   }
   Map<JetImportDirective,Collection<? extends DeclarationDescriptor>> resolvedDirectives=Maps.newHashMap();
   for (  JetImportDirective importDirective : importDirectives) {
-    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScope,namespaceScope,delayedImporter,trace,module,lookupMode);
+    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScope,fileScope,delayedImporter,trace,module,lookupMode);
     if (!descriptors.isEmpty()) {
       resolvedDirectives.put(importDirective,descriptors);
     }
@@ -25,7 +25,7 @@
   delayedImporter.processImports();
   if (lookupMode == LookupMode.EVERYTHING) {
     for (    JetImportDirective importDirective : importDirectives) {
-      reportUselessImport(importDirective,namespaceScope,resolvedDirectives,trace);
+      reportUselessImport(importDirective,fileScope,resolvedDirectives,trace);
     }
   }
 }
