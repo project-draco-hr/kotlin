@@ -21,13 +21,17 @@
     }
     cur=cur.getNext();
   }
+  Map<String,LambdaInfo> recapturedLambdas=new HashMap<String,LambdaInfo>();
   List<CapturedParamInfo> recaptured=new ArrayList<CapturedParamInfo>();
   for (  LambdaInfo info : additionalCaptured) {
     List<CapturedParamInfo> vars=info.getCapturedVars();
     for (    CapturedParamInfo var : vars) {
       CapturedParamInfo recapturedParamInfo=builder.addCapturedParam(getNewFieldName(var.getFieldName()),var.getType(),true,var);
+      recapturedParamInfo.setRecapturedFrom(info);
       recaptured.add(var);
     }
+    recapturedLambdas.put(info.getLambdaClassType().getInternalName(),info);
   }
   invocation.setRecaptured(recaptured);
+  invocation.setRecapturedLambdas(recapturedLambdas);
 }
