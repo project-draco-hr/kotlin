@@ -1,3 +1,27 @@
 {
-  generateDefaultAccessor(callableDescriptor,codegen.v,codegen);
+  InstructionAdapter v=codegen.v;
+  PropertyDescriptor propertyDescriptor=callableDescriptor.getCorrespondingProperty();
+  Type type=codegen.typeMapper.mapType(propertyDescriptor);
+  int paramCode=0;
+  if (codegen.context.getContextKind() != OwnerKind.NAMESPACE) {
+    v.load(0,OBJECT_TYPE);
+    paramCode=1;
+  }
+  StackValue property=codegen.intermediateValueForProperty(propertyDescriptor,true,null);
+  if (callableDescriptor instanceof PropertyGetterDescriptor) {
+    property.put(type,v);
+    v.areturn(type);
+  }
+ else   if (callableDescriptor instanceof PropertySetterDescriptor) {
+    ReceiverParameterDescriptor receiverParameter=propertyDescriptor.getReceiverParameter();
+    if (receiverParameter != null) {
+      paramCode+=codegen.typeMapper.mapType(receiverParameter.getType()).getSize();
+    }
+    v.load(paramCode,type);
+    property.store(type,v);
+    v.visitInsn(RETURN);
+  }
+ else {
+    throw new IllegalStateException("Unknown property accessor: " + callableDescriptor);
+  }
 }
