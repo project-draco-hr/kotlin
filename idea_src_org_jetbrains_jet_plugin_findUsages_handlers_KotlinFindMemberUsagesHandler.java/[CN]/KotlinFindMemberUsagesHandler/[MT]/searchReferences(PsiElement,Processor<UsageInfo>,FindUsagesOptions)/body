@@ -6,21 +6,13 @@
       for (      PsiReference ref : UsagesSearch.instance$.search(request)) {
         processUsage(processor,ref);
       }
-      Iterator<PsiMethod> lightMethods=ApplicationManager.getApplication().runReadAction(new Computable<Iterator<PsiMethod>>(){
-        @Override public Iterator<PsiMethod> compute(){
-          return getLightMethods((JetNamedDeclaration)element).iterator();
-        }
-      }
-);
       if (kotlinOptions.getSearchOverrides()) {
-        while (lightMethods.hasNext()) {
-          OverridingMethodsSearch.search(lightMethods.next(),options.searchScope,true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
-            @Override public boolean execute(            @NotNull PsiMethod element){
-              return processUsage(processor,element.getNavigationElement());
-            }
+        DeclarationsSearchPackage.searchOverriders(new HierarchySearchRequest<PsiElement>(element,options.searchScope,true)).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
+          @Override public boolean execute(          @NotNull PsiMethod method){
+            return processUsage(processor,method.getNavigationElement());
           }
-));
         }
+));
       }
       return true;
     }
