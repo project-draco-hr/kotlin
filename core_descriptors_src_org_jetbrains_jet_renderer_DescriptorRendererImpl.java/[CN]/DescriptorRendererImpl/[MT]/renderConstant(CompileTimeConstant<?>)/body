@@ -1,0 +1,22 @@
+{
+  return value.accept(new DefaultAnnotationArgumentVisitor<String,Void>(){
+    @Override public String visitValue(    @NotNull CompileTimeConstant<?> value,    Void data){
+      return value.toString();
+    }
+    @Override public String visitArrayValue(    ArrayValue value,    Void data){
+      return "{" + StringUtil.join(value.getValue(),new Function<CompileTimeConstant<?>,String>(){
+        @Override public String fun(        CompileTimeConstant<?> constant){
+          return renderConstant(constant);
+        }
+      }
+,", ") + "}";
+    }
+    @Override public String visitAnnotationValue(    AnnotationValue value,    Void data){
+      return renderAnnotation(value.getValue());
+    }
+    @Override public String visitJavaClassValue(    JavaClassValue value,    Void data){
+      return renderType(value.getValue()) + ".class";
+    }
+  }
+,null);
+}
