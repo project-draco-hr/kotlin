@@ -1,5 +1,5 @@
 {
-  @NotNull JetScope rootScope=module.getPackage(FqName.ROOT).getMemberScope();
+  @NotNull JetScope rootScope=JetModuleUtil.getSubpackagesOfRootScope(module);
   Importer.DelayedImporter delayedImporter=new Importer.DelayedImporter(fileScope);
   if (lookupMode == LookupMode.EVERYTHING) {
     fileScope.clearImports();
@@ -10,8 +10,9 @@
     qualifiedExpressionResolver.processImportReference(defaultImportDirective,rootScope,fileScope,delayedImporter,temporaryTrace,module,lookupMode);
   }
   Map<JetImportDirective,Collection<? extends DeclarationDescriptor>> resolvedDirectives=Maps.newHashMap();
+  JetScope rootScopeForFile=JetModuleUtil.getImportsResolutionScope(module,inRootPackage);
   for (  JetImportDirective importDirective : importDirectives) {
-    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScope,fileScope,delayedImporter,trace,module,lookupMode);
+    Collection<? extends DeclarationDescriptor> descriptors=qualifiedExpressionResolver.processImportReference(importDirective,rootScopeForFile,fileScope,delayedImporter,trace,module,lookupMode);
     if (!descriptors.isEmpty()) {
       resolvedDirectives.put(importDirective,descriptors);
     }
