@@ -2,7 +2,11 @@
   if (!getTestName(false).startsWith("AllFilesPresentIn")) {
     try {
       String fileText=FileUtil.loadFile(new File(getTestDataPath(),fileName()));
-      if (InTextDirectivesUtils.isDirectiveDefined(fileText,"RUNTIME")) {
+      List<String> withLibraryDirective=InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText,"WITH_LIBRARY:");
+      if (!withLibraryDirective.isEmpty()) {
+        return new JdkAndMockLibraryProjectDescriptor(PluginTestCaseBase.getTestDataPathBase() + "/" + withLibraryDirective.get(0),true);
+      }
+ else       if (InTextDirectivesUtils.isDirectiveDefined(fileText,"RUNTIME")) {
         return JetWithJdkAndRuntimeLightProjectDescriptor.INSTANCE;
       }
  else       if (InTextDirectivesUtils.isDirectiveDefined(fileText,"JS")) {

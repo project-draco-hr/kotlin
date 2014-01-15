@@ -4,10 +4,10 @@
   }
   JetScope resolutionScope=getInjector().getScopeProvider().getResolutionScopeForDeclaration(classOrObject);
   Name name=safeNameForLazyResolve(classOrObject.getNameAsName());
-  resolutionScope.getClassifier(name);
-  DeclarationDescriptor declaration=getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,classOrObject);
-  if (declaration == null) {
-    throw new IllegalArgumentException("Could not find a classifier for " + classOrObject + " "+ classOrObject.getText());
+  ClassifierDescriptor scopeDescriptor=resolutionScope.getClassifier(name);
+  DeclarationDescriptor descriptor=getBindingContext().get(BindingContext.DECLARATION_TO_DESCRIPTOR,classOrObject);
+  if (descriptor == null) {
+    throw new IllegalArgumentException(String.format("Could not find a classifier for %s.\n" + "Found descriptor: %s (%s).\n",JetPsiUtil.getElementTextWithContext(classOrObject),scopeDescriptor != null ? DescriptorRenderer.DEBUG_TEXT.render(scopeDescriptor) : "null",scopeDescriptor != null ? (scopeDescriptor.getContainingDeclaration().getClass()) : null));
   }
-  return (ClassDescriptor)declaration;
+  return (ClassDescriptor)descriptor;
 }
