@@ -1,0 +1,23 @@
+{
+  Set<PsiMethod> methodsToFind=new HashSet<PsiMethod>();
+  for (  PsiMethod lightMethod : lightMethods) {
+    if (lightMethod == null)     continue;
+    PsiMethod[] superMethods=lightMethod.findDeepestSuperMethods();
+    methodsToFind.add(lightMethod);
+    ContainerUtil.addAll(methodsToFind,superMethods);
+  }
+  if (methodsToFind.isEmpty())   return;
+  Set<PsiReference> references=ContainerUtil.newTroveSet(new TObjectHashingStrategy<PsiReference>(){
+    @Override public int computeHashCode(    PsiReference object){
+      return object.getElement().hashCode();
+    }
+    @Override public boolean equals(    PsiReference o1,    PsiReference o2){
+      return o1.getElement().equals(o2.getElement());
+    }
+  }
+);
+  for (  PsiMethod superMethod : methodsToFind) {
+    ContainerUtil.addAll(references,MethodReferencesSearch.search(superMethod,searchScope,true));
+  }
+  ContainerUtil.process(references,defaultQueryProcessor(descriptor,methodToDescriptorMap,kotlinOnly));
+}
