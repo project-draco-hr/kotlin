@@ -1,0 +1,14 @@
+{
+  if (!(receiver instanceof ExpressionReceiver))   return false;
+  if (ArgumentTypeResolver.isSubtypeOfForArgumentType(receiver.getType(),receiverType)) {
+    return false;
+  }
+  List<JetType> autoCastTypesExcludingReceiver=getAutoCastVariantsExcludingReceiver(context.trace.getBindingContext(),context.dataFlowInfo,receiver);
+  boolean autoCast=isSubTypeByAutoCast(receiverType,autoCastTypesExcludingReceiver);
+  if (autoCast) {
+    JetExpression expression=((ExpressionReceiver)receiver).getExpression();
+    DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(receiver,context.trace.getBindingContext());
+    recordCastOrError(expression,receiverType,context.trace,dataFlowValue.isStableIdentifier(),true);
+  }
+  return autoCast;
+}

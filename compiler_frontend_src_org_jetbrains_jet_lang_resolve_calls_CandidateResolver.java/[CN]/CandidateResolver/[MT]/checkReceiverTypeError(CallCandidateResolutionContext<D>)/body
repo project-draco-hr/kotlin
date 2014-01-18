@@ -1,0 +1,26 @@
+{
+  ResolvedCallImpl<D> candidateCall=context.candidateCall;
+  D candidateDescriptor=candidateCall.getCandidateDescriptor();
+  if (candidateDescriptor instanceof ExpressionAsFunctionDescriptor)   return SUCCESS;
+  ReceiverParameterDescriptor receiverDescriptor=candidateDescriptor.getReceiverParameter();
+  ReceiverParameterDescriptor expectedThisObjectDescriptor=candidateDescriptor.getExpectedThisObject();
+  ReceiverParameterDescriptor receiverParameterDescriptor;
+  ReceiverValue receiverArgument;
+  if (receiverDescriptor != null && candidateCall.getReceiverArgument().exists()) {
+    receiverParameterDescriptor=receiverDescriptor;
+    receiverArgument=candidateCall.getReceiverArgument();
+  }
+ else   if (expectedThisObjectDescriptor != null && candidateCall.getThisObject().exists()) {
+    receiverParameterDescriptor=expectedThisObjectDescriptor;
+    receiverArgument=candidateCall.getThisObject();
+  }
+ else {
+    return SUCCESS;
+  }
+  JetType erasedReceiverType=CallResolverUtil.getErasedReceiverType(receiverParameterDescriptor,candidateDescriptor);
+  boolean isSubtypeByAutoCast=AutoCastUtils.isSubTypeByAutoCast(receiverArgument,erasedReceiverType,context);
+  if (!isSubtypeByAutoCast) {
+    return RECEIVER_TYPE_ERROR;
+  }
+  return SUCCESS;
+}
