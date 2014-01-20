@@ -3,7 +3,13 @@
     return findClassOrObjectUsages(element,(JetClassOrObject)element,allElementsToDelete,result);
   }
   if (element instanceof JetNamedFunction) {
-    return findFunctionUsages((JetNamedFunction)element,allElementsToDelete,result);
+    JetNamedFunction function=(JetNamedFunction)element;
+    if (function.isLocal()) {
+      return findLocalDeclarationUsages(function,allElementsToDelete,result);
+    }
+    PsiMethod method=LightClassUtil.getLightClassMethod((JetNamedFunction)element);
+    if (method != null)     return findPsiMethodUsages(method,allElementsToDelete,result);
+    return getSearchInfo(element,allElementsToDelete);
   }
   if (element instanceof PsiMethod) {
     return findPsiMethodUsages((PsiMethod)element,allElementsToDelete,result);
@@ -11,7 +17,7 @@
   if (element instanceof JetProperty) {
     JetProperty property=(JetProperty)element;
     if (property.isLocal()) {
-      return findLocalVariableUsages(property,allElementsToDelete,result);
+      return findLocalDeclarationUsages(property,allElementsToDelete,result);
     }
     return findPropertyUsages(property,allElementsToDelete,result);
   }
