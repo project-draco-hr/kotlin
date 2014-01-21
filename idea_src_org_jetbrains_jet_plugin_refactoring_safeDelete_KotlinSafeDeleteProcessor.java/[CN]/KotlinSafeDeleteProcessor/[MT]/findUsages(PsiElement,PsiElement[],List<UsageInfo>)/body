@@ -5,7 +5,7 @@
   if (element instanceof JetNamedFunction) {
     JetNamedFunction function=(JetNamedFunction)element;
     if (function.isLocal()) {
-      return findLocalDeclarationUsages(function,allElementsToDelete,result);
+      return findKotlinDeclarationUsages(function,allElementsToDelete,result);
     }
     PsiMethod method=LightClassUtil.getLightClassMethod((JetNamedFunction)element);
     if (method != null)     return delegateToJavaProcessor(method,allElementsToDelete,result);
@@ -16,10 +16,15 @@
   }
   if (element instanceof JetProperty) {
     JetProperty property=(JetProperty)element;
-    if (property.isLocal()) {
-      return findLocalDeclarationUsages(property,allElementsToDelete,result);
+    NonCodeUsageSearchInfo searchInfo=findKotlinDeclarationUsages(property,allElementsToDelete,result);
+    if (property.isLocal())     return searchInfo;
+    Condition<PsiElement> insideDeleted=searchInfo.getInsideDeletedCondition();
+    for (    PsiMethod method : LightClassUtil.getLightClassPropertyMethods(property)) {
+      NonCodeUsageSearchInfo accessorSearchInfo=delegateToJavaProcessor(method,allElementsToDelete,result);
+      if (accessorSearchInfo == null)       continue;
+      insideDeleted=Conditions.or(insideDeleted,accessorSearchInfo.getInsideDeletedCondition());
     }
-    return findPropertyUsages(property,allElementsToDelete,result);
+    return insideDeleted != null ? new NonCodeUsageSearchInfo(insideDeleted,element) : getSearchInfo(element,allElementsToDelete);
   }
   if (element instanceof JetTypeParameter) {
     return findTypeParameterUsages((JetTypeParameter)element,allElementsToDelete,result);
