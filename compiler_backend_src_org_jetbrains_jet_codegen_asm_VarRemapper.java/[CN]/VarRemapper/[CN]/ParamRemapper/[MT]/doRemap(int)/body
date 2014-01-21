@@ -2,19 +2,19 @@
   int remappedIndex;
   if (index < allParamsSize) {
     ParameterInfo info=params.get(index);
-    remappedIndex=remapIndex[index];
-    if (info.isSkipped || remappedIndex == -1) {
+    StackValue remapped=remapIndex[index];
+    if (info.isSkipped || remapped == null) {
       throw new RuntimeException("Trying to access skipped parameter: " + info.type + " at "+ index);
     }
     if (info.isRemapped()) {
-      return remappedIndex;
+      return remapped;
+    }
+ else {
+      remappedIndex=((StackValue.Local)remapped).index;
     }
   }
  else {
     remappedIndex=actualParamsSize - params.totalSize() + index;
   }
-  if (parent == null) {
-    return remappedIndex;
-  }
-  return parent.doRemap(remappedIndex);
+  return StackValue.local(remappedIndex + additionalShift,AsmTypeConstants.OBJECT_TYPE);
 }
