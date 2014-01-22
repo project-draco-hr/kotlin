@@ -1,3 +1,31 @@
 {
-  this(project,storageManager,storageManager.getTracker(),rootDescriptor,declarationProviderFactory,NO_ALIASES,Predicates.<FqNameUnsafe>alwaysFalse(),delegationTrace);
+  LockBasedLazyResolveStorageManager lockBasedLazyResolveStorageManager=new LockBasedLazyResolveStorageManager(storageManager);
+  this.storageManager=lockBasedLazyResolveStorageManager;
+  this.exceptionTracker=storageManager.getTracker();
+  this.trace=lockBasedLazyResolveStorageManager.createSafeTrace(delegationTrace);
+  this.injector=new InjectorForLazyResolve(project,this,rootDescriptor);
+  this.module=rootDescriptor;
+  this.classifierAliases=NO_ALIASES;
+  this.specialClasses=Predicates.alwaysFalse();
+  this.packages=storageManager.createMemoizedFunctionWithNullableValues(new MemoizedFunctionToNullable<FqName,LazyPackageDescriptor>(){
+    @Nullable @Override public LazyPackageDescriptor invoke(    FqName fqName){
+      return createPackage(fqName);
+    }
+  }
+);
+  this.declarationProviderFactory=declarationProviderFactory;
+  this.packageFragmentProvider=new PackageFragmentProvider(){
+    @NotNull @Override public List<PackageFragmentDescriptor> getPackageFragments(    @NotNull FqName fqName){
+      return ContainerUtil.<PackageFragmentDescriptor>createMaybeSingletonList(getPackageFragment(fqName));
+    }
+    @NotNull @Override public Collection<FqName> getSubPackagesOf(    @NotNull FqName fqName){
+      LazyPackageDescriptor packageDescriptor=getPackageFragment(fqName);
+      if (packageDescriptor == null) {
+        return Collections.emptyList();
+      }
+      return packageDescriptor.getDeclarationProvider().getAllDeclaredPackages();
+    }
+  }
+;
+  rootDescriptor.addFragmentProvider(DependencyKind.SOURCES,packageFragmentProvider);
 }
