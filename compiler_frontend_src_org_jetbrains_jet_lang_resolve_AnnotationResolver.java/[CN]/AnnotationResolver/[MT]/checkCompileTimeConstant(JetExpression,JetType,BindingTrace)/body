@@ -1,0 +1,28 @@
+{
+  JetType expressionType=trace.get(BindingContext.EXPRESSION_TYPE,argumentExpression);
+  if (expressionType == null || !expressionType.equals(expectedType)) {
+    return;
+  }
+  if (argumentExpression instanceof JetCallExpression) {
+    Pair<List<JetExpression>,JetType> arrayArgument=getArgumentExpressionsForArrayCall((JetCallExpression)argumentExpression,trace);
+    if (arrayArgument != null) {
+      for (      JetExpression expression : arrayArgument.getFirst()) {
+        checkCompileTimeConstant(expression,arrayArgument.getSecond(),trace);
+      }
+    }
+  }
+  CompileTimeConstant<?> constant=trace.get(BindingContext.COMPILE_TIME_VALUE,argumentExpression);
+  if (constant != null && constant.canBeUsedInAnnotations()) {
+    return;
+  }
+  ClassifierDescriptor descriptor=expressionType.getConstructor().getDeclarationDescriptor();
+  if (descriptor != null && DescriptorUtils.isEnumClass(descriptor)) {
+    trace.report(Errors.ANNOTATION_PARAMETER_MUST_BE_ENUM_CONST.on(argumentExpression));
+  }
+ else   if (descriptor instanceof ClassDescriptor && AnnotationUtils.isJavaLangClass((ClassDescriptor)descriptor)) {
+    trace.report(Errors.ANNOTATION_PARAMETER_MUST_BE_CLASS_LITERAL.on(argumentExpression));
+  }
+ else {
+    trace.report(Errors.ANNOTATION_PARAMETER_MUST_BE_CONST.on(argumentExpression));
+  }
+}

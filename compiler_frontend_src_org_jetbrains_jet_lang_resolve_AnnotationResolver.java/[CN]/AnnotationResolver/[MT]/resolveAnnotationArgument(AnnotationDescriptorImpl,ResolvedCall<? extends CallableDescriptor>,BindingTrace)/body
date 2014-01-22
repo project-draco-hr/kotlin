@@ -2,8 +2,9 @@
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> descriptorToArgument : call.getValueArguments().entrySet()) {
     ValueParameterDescriptor parameterDescriptor=descriptorToArgument.getKey();
     JetType varargElementType=parameterDescriptor.getVarargElementType();
-    List<CompileTimeConstant<?>> constants=resolveValueArguments(descriptorToArgument.getValue(),parameterDescriptor.getType(),trace);
-    if (varargElementType != null && !hasSpread(descriptorToArgument.getValue())) {
+    boolean argumentsAsVararg=varargElementType != null && !hasSpread(descriptorToArgument.getValue());
+    List<CompileTimeConstant<?>> constants=resolveValueArguments(descriptorToArgument.getValue(),argumentsAsVararg ? varargElementType : parameterDescriptor.getType(),trace);
+    if (argumentsAsVararg) {
       JetType arrayType=KotlinBuiltIns.getInstance().getPrimitiveArrayJetTypeByPrimitiveJetType(varargElementType);
       if (arrayType == null) {
         arrayType=KotlinBuiltIns.getInstance().getArrayType(varargElementType);
