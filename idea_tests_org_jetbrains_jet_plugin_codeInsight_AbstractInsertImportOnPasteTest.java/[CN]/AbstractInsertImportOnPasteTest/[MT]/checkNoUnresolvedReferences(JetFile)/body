@@ -1,0 +1,22 @@
+{
+  AnalyzeExhaust exhaust=AnalyzerFacadeWithCache.analyzeFileWithCache(file);
+  for (  Diagnostic diagnostic : exhaust.getBindingContext().getDiagnostics()) {
+    if (Errors.UNRESOLVED_REFERENCE_DIAGNOSTICS.contains(diagnostic.getFactory())) {
+      List<TextRange> textRanges=diagnostic.getTextRanges();
+      String diagnosticText=DefaultErrorMessages.RENDERER.render(diagnostic);
+      if (diagnostic.getPsiFile() == file) {
+        fail(diagnostic.getFactory().getName() + ": " + diagnosticText+ " "+ DiagnosticUtils.atLocation(file,textRanges.get(0)));
+      }
+    }
+  }
+  DebugInfoUtil.markDebugAnnotations(file,exhaust.getBindingContext(),new DebugInfoUtil.DebugInfoReporter(){
+    @Override public void reportElementWithErrorType(    @NotNull JetReferenceExpression expression){
+    }
+    @Override public void reportMissingUnresolved(    @NotNull JetReferenceExpression expression){
+      fail(expression.getText() + " is unresolved but not marked " + DiagnosticUtils.atLocation(file,expression.getTextRange()));
+    }
+    @Override public void reportUnresolvedWithTarget(    @NotNull JetReferenceExpression expression,    @NotNull String target){
+    }
+  }
+);
+}
