@@ -1,2 +1,34 @@
 {
+  final Map<DeclarationDescriptor,List<String>> map=new HashMap<DeclarationDescriptor,List<String>>();
+  packageFromJava.acceptVoid(new DeclarationDescriptorVisitorEmptyBodies<Void,Void>(){
+    @Override public Void visitPackageViewDescriptor(    PackageViewDescriptor descriptor,    Void data){
+      return visitDeclarationRecursively(descriptor,descriptor.getMemberScope());
+    }
+    @Override public Void visitClassDescriptor(    ClassDescriptor descriptor,    Void data){
+      return visitDeclarationRecursively(descriptor,descriptor.getDefaultType().getMemberScope());
+    }
+    @Override public Void visitFunctionDescriptor(    FunctionDescriptor descriptor,    Void data){
+      return visitDeclaration(descriptor);
+    }
+    @Override public Void visitPropertyDescriptor(    PropertyDescriptor descriptor,    Void data){
+      return visitDeclaration(descriptor);
+    }
+    private Void visitDeclaration(    @NotNull DeclarationDescriptor descriptor){
+      AnnotationDescriptor annotation=descriptor.getAnnotations().findAnnotation(new FqName(ANNOTATION_CLASS_NAME));
+      if (annotation == null)       return null;
+      CompileTimeConstant<?> argument=annotation.getAllValueArguments().values().iterator().next();
+      String error=(String)argument.getValue();
+      List<String> errors=Arrays.asList(error.split("\\|"));
+      map.put(descriptor,errors);
+      return null;
+    }
+    private Void visitDeclarationRecursively(    @NotNull DeclarationDescriptor descriptor,    @NotNull JetScope memberScope){
+      for (      DeclarationDescriptor member : memberScope.getAllDescriptors()) {
+        member.acceptVoid(this);
+      }
+      return visitDeclaration(descriptor);
+    }
+  }
+);
+  return map;
 }

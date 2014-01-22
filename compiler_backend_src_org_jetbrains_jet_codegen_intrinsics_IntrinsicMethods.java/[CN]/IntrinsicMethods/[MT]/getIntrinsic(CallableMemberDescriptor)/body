@@ -1,2 +1,20 @@
 {
+  IntrinsicMethod intrinsicMethod=intrinsicsMap.getIntrinsic(descriptor);
+  if (intrinsicMethod != null) {
+    return intrinsicMethod;
+  }
+  if (descriptor instanceof SimpleFunctionDescriptor) {
+    SimpleFunctionDescriptor functionDescriptor=(SimpleFunctionDescriptor)descriptor;
+    if (isEnumClassObject(functionDescriptor.getContainingDeclaration())) {
+      if (isEnumValuesMethod(functionDescriptor)) {
+        return ENUM_VALUES;
+      }
+      if (isEnumValueOfMethod(functionDescriptor)) {
+        return ENUM_VALUE_OF;
+      }
+    }
+  }
+  String value=AnnotationUtils.getIntrinsicAnnotationArgument(descriptor);
+  if (value == null)   return null;
+  return namedMethods.get(value);
 }
