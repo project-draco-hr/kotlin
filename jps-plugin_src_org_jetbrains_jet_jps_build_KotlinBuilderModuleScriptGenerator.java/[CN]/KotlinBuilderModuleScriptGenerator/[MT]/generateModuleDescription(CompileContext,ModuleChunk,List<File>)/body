@@ -5,10 +5,15 @@
   for (  ModuleBuildTarget target : chunk.getTargets()) {
     outputDirs.add(getOutputDir(target));
   }
+  ProjectBuilderLogger logger=context.getLoggingManager().getProjectBuilderLogger();
   for (  ModuleBuildTarget target : chunk.getTargets()) {
     File outputDir=getOutputDir(target);
-    List<File> sourceFiles=KotlinSourceFileCollector.getAllKotlinSourceFiles(target);
-    noSources&=sourceFiles.isEmpty();
+    if (sourceFiles.size() > 0) {
+      noSources=false;
+      if (logger.isEnabled()) {
+        logger.logCompiledFiles(sourceFiles,KotlinBuilder.KOTLIN_BUILDER_NAME,"Compiling files:");
+      }
+    }
     builder.addModule(target.getId(),outputDir.getAbsolutePath(),getKotlinModuleDependencies(context,target),sourceFiles,target.isTests(),outputDirs);
   }
   if (noSources)   return null;
