@@ -16,7 +16,7 @@
         }
       }
 );
-      searchMethod(queryParameters,method);
+      searchNamedElement(queryParameters,method);
     }
   }
  else   if (element instanceof JetProperty) {
@@ -27,7 +27,16 @@
       }
     }
 );
-    searchMethod(queryParameters,propertyMethods.getGetter());
-    searchMethod(queryParameters,propertyMethods.getSetter());
+    searchNamedElement(queryParameters,propertyMethods.getGetter());
+    searchNamedElement(queryParameters,propertyMethods.getSetter());
+  }
+ else   if (element instanceof KotlinLightMethod) {
+    JetDeclaration declaration=((KotlinLightMethod)element).getOrigin();
+    if (declaration instanceof JetProperty || (declaration instanceof JetParameter && ((JetParameter)declaration).getValOrVarNode() != null)) {
+      searchNamedElement(queryParameters,(PsiNamedElement)declaration);
+    }
+ else     if (declaration instanceof JetPropertyAccessor) {
+      searchNamedElement(queryParameters,PsiTreeUtil.getParentOfType(declaration,JetProperty.class));
+    }
   }
 }
