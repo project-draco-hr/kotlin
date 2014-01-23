@@ -1,5 +1,10 @@
 {
   RecursiveDescriptorComparator.Configuration configuration=RecursiveDescriptorComparator.RECURSIVE_ALL.withRenderer(new DescriptorRendererBuilder().setWithDefinedIn(false).setOverrideRenderingPolicy(DescriptorRenderer.OverrideRenderingPolicy.RENDER_OPEN_OVERRIDE).setVerbose(true).setPrettyFunctionTypes(false).build());
-  PackageFragmentDescriptor actualFragment=KotlinBuiltIns.getInstance().getBuiltInsPackageFragment();
-  RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile(actualFragment,configuration,new File("compiler/testData/builtin-classes.txt"));
+  List<JetFile> files=JetTestUtils.loadToJetFiles(getEnvironment(),ContainerUtil.concat(allFilesUnder("core/builtins/native"),allFilesUnder("core/builtins/src")));
+  ModuleDescriptor module=LazyResolveTestUtil.resolveLazily(files,getEnvironment(),false);
+  List<PackageFragmentDescriptor> fragments=module.getPackageFragmentProvider().getPackageFragments(KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME);
+  assertSize(1,fragments);
+  PackageFragmentDescriptor fromLazyResolve=fragments.iterator().next();
+  PackageFragmentDescriptor deserialized=KotlinBuiltIns.getInstance().getBuiltInsPackageFragment();
+  RecursiveDescriptorComparator.validateAndCompareDescriptors(fromLazyResolve,deserialized,configuration,new File("compiler/testData/builtin-classes.txt"));
 }
