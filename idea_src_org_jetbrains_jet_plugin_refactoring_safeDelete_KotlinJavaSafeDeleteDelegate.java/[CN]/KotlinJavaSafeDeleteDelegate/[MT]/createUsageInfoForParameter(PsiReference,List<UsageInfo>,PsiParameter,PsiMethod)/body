@@ -1,2 +1,34 @@
 {
+  if (reference instanceof JetPsiReference) {
+    JetElement element=(JetElement)reference.getElement();
+    PsiElement originalDeclaration=AsJavaPackage.getUnwrapped(method);
+    if (!(originalDeclaration instanceof PsiMethod || originalDeclaration instanceof JetDeclaration))     return;
+    int parameterIndex=method.getParameterList().getParameterIndex(parameter);
+    if (PsiUtilPackage.isExtensionDeclaration(originalDeclaration)) {
+      parameterIndex--;
+    }
+    if (parameterIndex < 0)     return;
+    JetCallExpression callExpression=PsiTreeUtil.getParentOfType(reference.getElement(),JetCallExpression.class,false);
+    if (callExpression == null)     return;
+    JetExpression calleeExpression=callExpression.getCalleeExpression();
+    if (!(calleeExpression instanceof JetReferenceExpression && PsiTreeUtil.isAncestor(calleeExpression,element,false)))     return;
+    BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement(element);
+    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetReferenceExpression)calleeExpression);
+    if (descriptor == null)     return;
+    PsiElement declaration=BindingContextUtils.descriptorToDeclaration(bindingContext,descriptor);
+    if (originalDeclaration.equals(declaration)) {
+      List<? extends ValueArgument> args=callExpression.getValueArguments();
+      int argCount=args.size();
+      if (parameterIndex < argCount) {
+        usages.add(new SafeDeleteValueArgumentListUsageInfo((JetValueArgument)args.get(parameterIndex),parameter));
+      }
+ else {
+        List<JetExpression> lambdaArgs=callExpression.getFunctionLiteralArguments();
+        int lambdaIndex=parameterIndex - argCount;
+        if (lambdaIndex < lambdaArgs.size()) {
+          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(lambdaArgs.get(lambdaIndex),parameter,true));
+        }
+      }
+    }
+  }
 }
