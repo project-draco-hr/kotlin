@@ -1,0 +1,20 @@
+{
+  JetDeclaration declaration=method.getOrigin();
+  if (declaration == null)   return null;
+  int jetIndex=PsiUtilPackage.isExtensionDeclaration(declaration) ? index - 1 : index;
+  if (jetIndex < 0)   return null;
+  if (declaration instanceof JetNamedFunction) {
+    List<JetParameter> paramList=((JetNamedFunction)declaration).getValueParameters();
+    return jetIndex < paramList.size() ? paramList.get(jetIndex) : null;
+  }
+  if (jetIndex != 0)   return null;
+  JetPropertyAccessor setter=null;
+  if (declaration instanceof JetPropertyAccessor) {
+    JetPropertyAccessor accessor=(JetPropertyAccessor)declaration;
+    setter=accessor.isSetter() ? accessor : null;
+  }
+ else   if (declaration instanceof JetProperty) {
+    setter=((JetProperty)declaration).getSetter();
+  }
+  return setter != null ? setter.getParameter() : null;
+}
