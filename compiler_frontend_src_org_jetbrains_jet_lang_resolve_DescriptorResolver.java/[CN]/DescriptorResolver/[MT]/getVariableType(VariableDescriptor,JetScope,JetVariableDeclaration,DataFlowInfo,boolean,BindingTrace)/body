@@ -8,12 +8,12 @@
         final JetProperty property=(JetProperty)variable;
         final JetExpression propertyDelegateExpression=property.getDelegateExpression();
         if (propertyDelegateExpression != null) {
-          return DeferredType.create(trace,createRecursionIntolerantLazyValueWithDefault(ErrorUtils.createErrorType("Recursive dependency"),new Function0<JetType>(){
+          return DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<JetType>(){
             @Override public JetType invoke(){
               return resolveDelegatedPropertyType(property,(PropertyDescriptor)variableDescriptor,scope,propertyDelegateExpression,dataFlowInfo,trace);
             }
           }
-));
+);
         }
       }
       if (!notLocal) {
@@ -23,14 +23,14 @@
     }
  else {
       if (notLocal) {
-        return DeferredType.create(trace,createRecursionIntolerantLazyValueWithDefault(ErrorUtils.createErrorType("Recursive dependency"),new Function0<JetType>(){
+        return DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<JetType>(){
           @Override public JetType invoke(){
             JetType type=resolveInitializerType(scope,initializer,dataFlowInfo,trace);
             EvaluatePackage.recordCompileTimeValueForInitializerIfNeeded(variableDescriptor,initializer,type,trace);
             return transformAnonymousTypeIfNeeded(variableDescriptor,variable,type,trace);
           }
         }
-));
+);
       }
  else {
         return resolveInitializerType(scope,initializer,dataFlowInfo,trace);

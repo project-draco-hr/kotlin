@@ -10,12 +10,12 @@
   ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor> handler=new ObservableBindingTrace.RecordHandler<PsiElement,ClassDescriptor>(){
     @Override public void handleRecord(    WritableSlice<PsiElement,ClassDescriptor> slice,    PsiElement declaration,    final ClassDescriptor descriptor){
       if (slice == CLASS && declaration == expression.getObjectDeclaration()) {
-        JetType defaultType=DeferredType.create(context.trace,createRecursionIntolerantLazyValueWithDefault(ErrorUtils.createErrorType("Recursive dependency"),new Function0<JetType>(){
+        JetType defaultType=DeferredType.createRecursionIntolerant(storageManager,context.trace,new Function0<JetType>(){
           @Override public JetType invoke(){
             return descriptor.getDefaultType();
           }
         }
-));
+);
         result[0]=defaultType;
         if (!context.trace.get(PROCESSED,expression)) {
           temporaryTrace.record(EXPRESSION_TYPE,expression,defaultType);
