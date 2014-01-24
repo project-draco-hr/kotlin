@@ -1,14 +1,21 @@
 {
-  BindingContext bindingContext=AnalyzerFacadeWithCache.analyzeFileWithCache((JetFile)declaration.getContainingFile()).getBindingContext();
-  DeclarationDescriptor declarationDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
-  if (declarationDescriptor instanceof LocalVariableDescriptor) {
+  final BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement(declaration);
+  CallableDescriptor declarationDescriptor=(CallableDescriptor)bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
+  if (declarationDescriptor == null || declarationDescriptor instanceof LocalVariableDescriptor) {
     return Collections.singletonList(declaration);
   }
-  List<? extends PsiElement> superDeclarations=getSuperDeclarations(declaration);
-  if (ignore != null) {
-    superDeclarations.removeAll(ignore);
+  final Project project=declaration.getProject();
+  Map<PsiElement,CallableDescriptor> overriddenElementsToDescriptor=ContainerUtil.map2Map(OverridingUtil.getAllOverriddenDescriptors(declarationDescriptor),new Function<CallableDescriptor,Pair<PsiElement,CallableDescriptor>>(){
+    @Override public Pair<PsiElement,CallableDescriptor> fun(    CallableDescriptor descriptor){
+      return new Pair<PsiElement,CallableDescriptor>(DescriptorToDeclarationUtil.getDeclaration(project,descriptor,bindingContext),descriptor);
+    }
   }
-  if (superDeclarations.isEmpty())   return Collections.singletonList(declaration);
-  java.util.List<String> superClasses=getClassDescriptions(bindingContext,superDeclarations);
-  return askUserForMethodsToSearch(declaration,declarationDescriptor,superDeclarations,superClasses,actionStringKey);
+);
+  overriddenElementsToDescriptor.remove(null);
+  if (ignore != null) {
+    overriddenElementsToDescriptor.keySet().removeAll(ignore);
+  }
+  if (overriddenElementsToDescriptor.isEmpty())   return Collections.singletonList(declaration);
+  List<String> superClasses=getClassDescriptions(overriddenElementsToDescriptor);
+  return askUserForMethodsToSearch(declaration,declarationDescriptor,overriddenElementsToDescriptor,superClasses,actionStringKey);
 }
