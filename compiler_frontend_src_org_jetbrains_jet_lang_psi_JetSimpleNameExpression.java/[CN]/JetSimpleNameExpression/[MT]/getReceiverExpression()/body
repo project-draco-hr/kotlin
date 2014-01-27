@@ -11,7 +11,22 @@
     parent=callExpression.getParent();
     if (parent instanceof JetQualifiedExpression) {
       JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)parent;
-      return qualifiedExpression.getReceiverExpression();
+      JetExpression parentsReceiver=qualifiedExpression.getReceiverExpression();
+      if (parentsReceiver != callExpression) {
+        return parentsReceiver;
+      }
+    }
+  }
+ else   if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationReference() == this) {
+    return ((JetBinaryExpression)parent).getLeft();
+  }
+ else   if (parent instanceof JetUnaryExpression && ((JetUnaryExpression)parent).getOperationReference() == this) {
+    return ((JetUnaryExpression)parent).getBaseExpression();
+  }
+ else   if (parent instanceof JetUserType) {
+    JetUserType qualifier=((JetUserType)parent).getQualifier();
+    if (qualifier != null) {
+      return qualifier.getReferenceExpression();
     }
   }
   return null;
