@@ -1,0 +1,20 @@
+{
+  for (  final CallableMemberDescriptor member : getAlreadyCompiledCallables()) {
+    generateCallableMemberTasks.put(member,new Runnable(){
+      @Override public void run(){
+        DeserializedSimpleFunctionDescriptor deserializedFunction=(DeserializedSimpleFunctionDescriptor)member;
+        FieldOwnerContext context=CodegenContext.STATIC.intoPackageFacade(Type.getObjectType(getPackagePartInternalName(deserializedFunction)),compiledPackageFragment);
+        FunctionCodegen fuCo=new FunctionCodegen(context,v.getClassBuilder(),state,getMemberCodegen(context));
+        JvmMethodSignature signature=typeMapper.mapSignature(deserializedFunction,OwnerKind.PACKAGE);
+        fuCo.generateMethod(null,signature,deserializedFunction,new FunctionGenerationStrategy(){
+          @Override public void generateBody(          @NotNull MethodVisitor mv,          @NotNull JvmMethodSignature signature,          @NotNull MethodContext context,          @Nullable MemberCodegen parentCodegen){
+            throw new IllegalStateException("shouldn't be called");
+          }
+        }
+);
+        v.getClassBuilder().getSerializationBindings().put(METHOD_FOR_FUNCTION,deserializedFunction,signature.getAsmMethod());
+      }
+    }
+);
+  }
+}
