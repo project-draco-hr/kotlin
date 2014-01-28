@@ -1,8 +1,16 @@
 {
   boolean shouldPut=false == (stackValue != null && stackValue instanceof StackValue.Local);
   if (shouldPut) {
-    if ((stackValue instanceof StackValue.Composed || stackValue instanceof StackValue.Field) && codegen.getContext().getContextDescriptor() instanceof AnonymousFunctionDescriptor) {
-      if (descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor)) {
+    if (codegen.getContext().getContextDescriptor() instanceof AnonymousFunctionDescriptor) {
+      Type internalName=asmTypeForAnonymousClass(bindingContext,(FunctionDescriptor)codegen.getContext().getContextDescriptor());
+      String owner=null;
+      if (stackValue instanceof StackValue.Field) {
+        owner=((StackValue.Field)stackValue).owner.getInternalName();
+      }
+      if (stackValue instanceof StackValue.Composed) {
+        owner=internalName.getInternalName();
+      }
+      if (descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor) && internalName.getInternalName().equals(owner)) {
         return false;
       }
     }
