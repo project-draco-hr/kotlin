@@ -1,22 +1,7 @@
 {
   if (condition instanceof JetWhenConditionInRange) {
     JetWhenConditionInRange conditionInRange=(JetWhenConditionInRange)condition;
-    JetExpression rangeExpression=conditionInRange.getRangeExpression();
-    while (rangeExpression instanceof JetParenthesizedExpression) {
-      rangeExpression=((JetParenthesizedExpression)rangeExpression).getExpression();
-    }
-    JetSimpleNameExpression operationReference=conditionInRange.getOperationReference();
-    boolean inverted=operationReference.getReferencedNameElementType() == JetTokens.NOT_IN;
-    if (isIntRangeExpr(rangeExpression)) {
-      getInIntRange(new StackValue.Local(subjectLocal,subjectType),(JetBinaryExpression)rangeExpression,inverted);
-    }
- else {
-      invokeFunctionByReference(operationReference);
-      if (inverted) {
-        genInvertBoolean(v);
-      }
-    }
-    return StackValue.onStack(Type.BOOLEAN_TYPE);
+    return generateIn(StackValue.local(subjectLocal,subjectType),conditionInRange.getRangeExpression(),conditionInRange.getOperationReference());
   }
   StackValue.Local match=subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType);
   if (condition instanceof JetWhenConditionIsPattern) {
