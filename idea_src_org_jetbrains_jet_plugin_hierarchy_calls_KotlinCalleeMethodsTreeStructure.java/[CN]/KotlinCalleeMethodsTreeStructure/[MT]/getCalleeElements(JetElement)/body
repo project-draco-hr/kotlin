@@ -1,22 +1,13 @@
 {
-  final ArrayList<PsiElement> result=new ArrayList<PsiElement>();
-  JetVisitorVoid visitor=new CalleeReferenceVisitorBase(bindingContext,false){
-    @Override protected void processDeclaration(    JetReferenceExpression reference,    PsiElement declaration){
-      result.add(declaration);
-    }
-  }
-;
+  List<JetElement> elementsToAnalyze=new ArrayList<JetElement>();
   if (rootElement instanceof JetNamedFunction) {
-    JetExpression body=((JetNamedFunction)rootElement).getBodyExpression();
-    if (body != null) {
-      body.accept(visitor);
-    }
+    elementsToAnalyze.add(((JetNamedFunction)rootElement).getBodyExpression());
   }
  else   if (rootElement instanceof JetProperty) {
     for (    JetPropertyAccessor accessor : ((JetProperty)rootElement).getAccessors()) {
       JetExpression body=accessor.getBodyExpression();
       if (body != null) {
-        body.accept(visitor);
+        elementsToAnalyze.add(body);
       }
     }
   }
@@ -24,21 +15,30 @@
     JetClassOrObject classOrObject=(JetClassOrObject)rootElement;
     for (    JetDelegationSpecifier specifier : classOrObject.getDelegationSpecifiers()) {
       if (specifier instanceof JetCallElement) {
-        specifier.accept(visitor);
+        elementsToAnalyze.add(specifier);
       }
     }
     JetClassBody body=classOrObject.getBody();
     if (body != null) {
       for (      JetClassInitializer initializer : body.getAnonymousInitializers()) {
-        initializer.getBody().accept(visitor);
+        elementsToAnalyze.add(initializer.getBody());
       }
       for (      JetProperty property : body.getProperties()) {
         JetExpression initializer=property.getInitializer();
         if (initializer != null) {
-          initializer.accept(visitor);
+          elementsToAnalyze.add(initializer);
         }
       }
     }
+  }
+  final ArrayList<PsiElement> result=new ArrayList<PsiElement>();
+  for (  JetElement element : elementsToAnalyze) {
+    element.accept(new CalleeReferenceVisitorBase(AnalyzerFacadeWithCache.getContextForElement(element),false){
+      @Override protected void processDeclaration(      JetReferenceExpression reference,      PsiElement declaration){
+        result.add(declaration);
+      }
+    }
+);
   }
   return result;
 }
