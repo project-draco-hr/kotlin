@@ -1,9 +1,16 @@
 {
-  StackValue remap=remap(var);
-  if (remap instanceof StackValue.Local) {
-    mv.visitVarInsn(opcode,((StackValue.Local)remap).index);
+  RemapInfo remapInfo=remap(var);
+  StackValue value=remapInfo.value;
+  if (value instanceof StackValue.Local) {
+    if (remapInfo.parameterInfo != null) {
+      opcode=value.type.getOpcode(Opcodes.ILOAD);
+    }
+    mv.visitVarInsn(opcode,((StackValue.Local)value).index);
+    if (remapInfo.parameterInfo != null) {
+      value.coerce(value.type,remapInfo.parameterInfo.type,mv);
+    }
   }
  else {
-    remap.put(remap.type,mv);
+    value.put(remapInfo.parameterInfo.type,mv);
   }
 }
