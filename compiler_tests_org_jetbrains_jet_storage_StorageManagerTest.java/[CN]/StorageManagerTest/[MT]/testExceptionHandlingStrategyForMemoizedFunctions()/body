@@ -1,0 +1,21 @@
+{
+class RethrownException extends RuntimeException {
+  }
+  LockBasedStorageManager m=LockBasedStorageManager.createWithExceptionHandling(new LockBasedStorageManager.ExceptionHandlingStrategy(){
+    @NotNull @Override public RuntimeException handleException(    @NotNull Throwable throwable){
+      throw new RethrownException();
+    }
+  }
+);
+  try {
+    m.createMemoizedFunction(new Function1<Object,Object>(){
+      @Nullable @Override public Object invoke(      @Nullable Object o){
+        throw new RuntimeException();
+      }
+    }
+).invoke("");
+    fail("Exception should have occurred");
+  }
+ catch (  RethrownException ignored) {
+  }
+}
