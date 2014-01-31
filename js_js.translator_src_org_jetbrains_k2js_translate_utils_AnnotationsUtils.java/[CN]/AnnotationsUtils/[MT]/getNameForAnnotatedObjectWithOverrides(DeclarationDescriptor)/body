@@ -1,0 +1,20 @@
+{
+  Set<DeclarationDescriptor> descriptors;
+  if (declarationDescriptor instanceof CallableMemberDescriptor && ((CallableMemberDescriptor)declarationDescriptor).getKind() != CallableMemberDescriptor.Kind.DECLARATION) {
+    Set<CallableMemberDescriptor> overriddenDeclarations=BindingContextUtils.getAllOverriddenDeclarations((CallableMemberDescriptor)declarationDescriptor);
+    descriptors=ContainerUtil.<CallableMemberDescriptor,DeclarationDescriptor>map2Set(overriddenDeclarations,Function.ID);
+  }
+ else {
+    descriptors=ContainerUtil.newHashSet(declarationDescriptor);
+  }
+  for (  DeclarationDescriptor descriptor : descriptors) {
+    for (    PredefinedAnnotation annotation : PredefinedAnnotation.values()) {
+      if (!hasAnnotationOrInsideAnnotatedClass(descriptor,annotation)) {
+        continue;
+      }
+      String name=getNameForAnnotatedObject(descriptor,annotation);
+      return name != null ? name : descriptor.getName().asString();
+    }
+  }
+  return null;
+}
