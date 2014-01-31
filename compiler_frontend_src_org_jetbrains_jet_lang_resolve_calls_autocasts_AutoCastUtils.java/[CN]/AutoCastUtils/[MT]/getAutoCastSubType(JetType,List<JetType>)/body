@@ -1,0 +1,15 @@
+{
+  Set<JetType> subTypes=Sets.newHashSet();
+  for (  JetType autoCastType : autoCastTypes) {
+    JetType effectiveAutoCastType=TypeUtils.makeNotNullable(autoCastType);
+    if (ArgumentTypeResolver.isSubtypeOfForArgumentType(effectiveAutoCastType,receiverParameterType)) {
+      subTypes.add(autoCastType);
+    }
+  }
+  if (subTypes.isEmpty())   return null;
+  JetType intersection=TypeUtils.intersect(JetTypeChecker.INSTANCE,subTypes);
+  if (intersection == null || !intersection.getConstructor().isDenotable()) {
+    return receiverParameterType;
+  }
+  return intersection;
+}
