@@ -1,0 +1,29 @@
+{
+  List<ParameterInfo> result=new ArrayList<ParameterInfo>();
+  Type[] types=Type.getArgumentTypes(desc);
+  ParameterInfo thiz=new ParameterInfo(AsmTypeConstants.OBJECT_TYPE,true,-1,-1);
+  thiz.setLambda(info);
+  result.add(thiz);
+  int index=1;
+  if (info != null) {
+    List<ValueParameterDescriptor> valueParameters=info.getFunctionDescriptor().getValueParameters();
+    for (    ValueParameterDescriptor parameter : valueParameters) {
+      Type type=typeMapper.mapType(parameter.getType());
+      int paramIndex=index++;
+      result.add(new ParameterInfo(type,false,-1,paramIndex));
+      if (type.getSize() == 2) {
+        result.add(ParameterInfo.STUB);
+      }
+    }
+  }
+ else {
+    for (    Type type : types) {
+      int paramIndex=index++;
+      result.add(new ParameterInfo(type,false,-1,paramIndex));
+      if (type.getSize() == 2) {
+        result.add(ParameterInfo.STUB);
+      }
+    }
+  }
+  return result;
+}

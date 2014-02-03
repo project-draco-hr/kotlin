@@ -1,0 +1,27 @@
+{
+  ClassBuilder classBuilder=createClassBuilder();
+  classBuilder.defineClass(null,V1_6,classAccess,newLambdaType.getInternalName(),signature,superName,interfaces);
+  ParametersBuilder builder=ParametersBuilder.newBuilder();
+  Parameters parameters=getLambdaParameters(builder,invocation);
+  MethodVisitor invokeVisitor=newMethod(classBuilder,invoke);
+  MethodInliner inliner=new MethodInliner(invoke,parameters,info.subInline(info.nameGenerator.subGenerator("lambda")),oldLambdaType,new LambdaFieldRemapper());
+  inliner.doTransformAndMerge(invokeVisitor,new VarRemapper.ParamRemapper(parameters,null),new InlineFieldRemapper(oldLambdaType.getInternalName(),newLambdaType.getInternalName()),false);
+  invokeVisitor.visitMaxs(-1,-1);
+  generateConstructorAndFields(classBuilder,builder,invocation);
+  if (bridge != null) {
+    MethodVisitor invokeBridge=newMethod(classBuilder,bridge);
+    bridge.accept(new MethodVisitor(ASM4,invokeBridge){
+      @Override public void visitMethodInsn(      int opcode,      String owner,      String name,      String desc){
+        if (owner.equals(oldLambdaType.getInternalName())) {
+          super.visitMethodInsn(opcode,newLambdaType.getInternalName(),name,desc);
+        }
+ else {
+          super.visitMethodInsn(opcode,owner,name,desc);
+        }
+      }
+    }
+);
+  }
+  classBuilder.done();
+  invocation.setNewLambdaType(newLambdaType);
+}

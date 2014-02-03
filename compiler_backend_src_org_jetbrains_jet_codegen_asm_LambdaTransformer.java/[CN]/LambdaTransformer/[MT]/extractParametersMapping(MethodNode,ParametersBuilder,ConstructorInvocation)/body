@@ -1,0 +1,33 @@
+{
+  Map<Integer,InlinableAccess> indexToLambda=invocation.getAccess();
+  AbstractInsnNode cur=constructor.instructions.getFirst();
+  cur=cur.getNext();
+  List<LambdaInfo> additionalCaptured=new ArrayList<LambdaInfo>();
+  while (cur != null) {
+    if (cur.getType() == AbstractInsnNode.FIELD_INSN) {
+      FieldInsnNode fieldNode=(FieldInsnNode)cur;
+      VarInsnNode previous=(VarInsnNode)fieldNode.getPrevious();
+      int varIndex=previous.var;
+      paramMapping.put(fieldNode.name,varIndex);
+      CapturedParamInfo info=builder.addCapturedParam(fieldNode.name,Type.getType(fieldNode.desc),false,null);
+      InlinableAccess access=indexToLambda.get(varIndex);
+      if (access != null) {
+        LambdaInfo accessInfo=access.getInfo();
+        if (accessInfo != null) {
+          info.setLambda(accessInfo);
+          additionalCaptured.add(accessInfo);
+        }
+      }
+    }
+    cur=cur.getNext();
+  }
+  List<CapturedParamInfo> recaptured=new ArrayList<CapturedParamInfo>();
+  for (  LambdaInfo info : additionalCaptured) {
+    List<CapturedParamInfo> vars=info.getCapturedVars();
+    for (    CapturedParamInfo var : vars) {
+      CapturedParamInfo recapturedParamInfo=builder.addCapturedParam(getNewFieldName(var.getFieldName()),var.getType(),true,var);
+      recaptured.add(var);
+    }
+  }
+  invocation.setRecaptured(recaptured);
+}

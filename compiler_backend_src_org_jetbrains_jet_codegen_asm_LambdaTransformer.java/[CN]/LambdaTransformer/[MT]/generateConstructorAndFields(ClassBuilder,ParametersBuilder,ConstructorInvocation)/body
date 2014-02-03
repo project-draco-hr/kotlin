@@ -1,0 +1,13 @@
+{
+  List<CapturedParamInfo> infos=builder.buildCaptured();
+  List<Pair<String,Type>> newConstructorSignature=new ArrayList<Pair<String,Type>>();
+  for (  CapturedParamInfo capturedParamInfo : infos) {
+    if (capturedParamInfo.getLambda() == null) {
+      newConstructorSignature.add(new Pair<String,Type>(capturedParamInfo.getFieldName(),capturedParamInfo.getType()));
+    }
+  }
+  List<FieldInfo> fields=AsmUtil.transformCapturedParams(newConstructorSignature,newLambdaType);
+  AsmUtil.genClosureFields(newConstructorSignature,classBuilder);
+  Method newConstructor=ClosureCodegen.generateConstructor(classBuilder,fields,null,Type.getObjectType(superName),state);
+  invocation.setNewConstructorDescriptor(newConstructor.getDescriptor());
+}

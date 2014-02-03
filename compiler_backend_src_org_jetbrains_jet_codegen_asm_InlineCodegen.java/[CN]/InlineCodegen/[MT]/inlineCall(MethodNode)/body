@@ -1,0 +1,12 @@
+{
+  generateClosuresBodies();
+  List<ParameterInfo> realParams=new ArrayList<ParameterInfo>(tempTypes);
+  putClosureParametersOnStack();
+  List<CapturedParamInfo> captured=getAllCaptured();
+  Parameters parameters=new Parameters(realParams,Parameters.addStubs(captured,realParams.size()));
+  InliningInfo info=new InliningInfo(expressionMap,null,null,null,state,codegen.getInlineNameGenerator().subGenerator(functionDescriptor.getName().asString()),codegen.getContext().getContextDescriptor());
+  MethodInliner inliner=new MethodInliner(node,parameters,info,null,new LambdaFieldRemapper());
+  VarRemapper.ParamRemapper remapper=new VarRemapper.ParamRemapper(parameters,new VarRemapper.ShiftRemapper(initialFrameSize,null));
+  inliner.doTransformAndMerge(codegen.getInstructionAdapter(),remapper);
+  generateClosuresBodies();
+}

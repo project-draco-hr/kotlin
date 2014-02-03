@@ -1,15 +1,13 @@
 {
+  List<Pair<String,Type>> allFields=new ArrayList<Pair<String,Type>>();
   ClassifierDescriptor captureThis=closure.getCaptureThis();
-  int access=NO_FLAG_PACKAGE_PRIVATE | ACC_SYNTHETIC | ACC_FINAL;
   if (captureThis != null) {
-    v.newField(null,access,CAPTURED_THIS_FIELD,typeMapper.mapType(captureThis).getDescriptor(),null,null);
+    allFields.add(Pair.create(CAPTURED_THIS_FIELD,typeMapper.mapType(captureThis)));
   }
   JetType captureReceiverType=closure.getCaptureReceiverType();
   if (captureReceiverType != null) {
-    v.newField(null,access,CAPTURED_RECEIVER_FIELD,typeMapper.mapType(captureReceiverType).getDescriptor(),null,null);
+    allFields.add(Pair.create(CAPTURED_RECEIVER_FIELD,typeMapper.mapType(captureReceiverType)));
   }
-  List<Pair<String,Type>> fields=closure.getRecordedFields();
-  for (  Pair<String,Type> field : fields) {
-    v.newField(null,access,field.first,field.second.getDescriptor(),null,null);
-  }
+  allFields.addAll(closure.getRecordedFields());
+  genClosureFields(allFields,v);
 }

@@ -1,0 +1,27 @@
+{
+  this.state=info.state;
+  this.typeMapper=state.getTypeMapper();
+  this.info=info;
+  this.oldLambdaType=Type.getObjectType(lambdaInternalName);
+  newLambdaType=Type.getObjectType(info.nameGenerator.genLambdaClassName());
+  ClassReader reader;
+  try {
+    OutputFile outputFile=state.getFactory().get(lambdaInternalName + ".class");
+    if (outputFile != null) {
+      reader=new ClassReader(outputFile.asByteArray());
+    }
+ else {
+      VirtualFile file=InlineCodegenUtil.findVirtualFile(state.getProject(),new FqName(lambdaInternalName.replace('/','.')),false);
+      if (file == null) {
+        throw new RuntimeException("Couldn't find virtual file for " + lambdaInternalName);
+      }
+      reader=new ClassReader(file.getInputStream());
+    }
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+  constructor=getMethodNode(reader,true,false);
+  invoke=getMethodNode(reader,false,false);
+  bridge=getMethodNode(reader,false,true);
+}

@@ -1,0 +1,16 @@
+{
+  MethodNode transformedNode=node;
+  try {
+    transformedNode=markPlacesForInlineAndRemoveInlinable(transformedNode);
+  }
+ catch (  AnalyzerException e) {
+    throw new RuntimeException(e);
+  }
+  transformedNode=doInline(transformedNode,capturedRemapper);
+  removeClosureAssertions(transformedNode);
+  transformedNode.instructions.resetLabels();
+  Label end=new Label();
+  RemapVisitor visitor=new RemapVisitor(adapter,end,remapper,remapReturn);
+  transformedNode.accept(visitor);
+  visitor.visitLabel(end);
+}
