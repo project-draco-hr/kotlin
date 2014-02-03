@@ -12,7 +12,7 @@
   TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
   OverloadResolutionResultsImpl<F> resultsForFirstNonemptyCandidateSet=null;
   for (  ResolutionTask<D,F> task : prioritizedTasks) {
-    TemporaryBindingTrace taskTrace=TemporaryBindingTrace.create(context.trace,"trace to resolve a task for",task.reference);
+    TemporaryBindingTrace taskTrace=TemporaryBindingTrace.create(context.trace,"trace to resolve a task for",task.call.getCalleeExpression());
     OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.replaceBindingTrace(taskTrace),callTransformer);
     if (results.isSuccess() || results.isAmbiguity()) {
       taskTrace.commit();
@@ -38,7 +38,7 @@
     }
   }
  else {
-    context.trace.report(UNRESOLVED_REFERENCE.on(reference,reference));
+    tracing.unresolvedReference(context.trace);
     argumentTypeResolver.checkTypesWithNoCallee(context,SHAPE_FUNCTION_ARGUMENTS);
   }
   return resultsForFirstNonemptyCandidateSet != null ? resultsForFirstNonemptyCandidateSet : OverloadResolutionResultsImpl.<F>nameNotFound();
