@@ -4,8 +4,8 @@
   Collection<JetFile> files=Lists.newArrayList(psiFile);
   final ModuleDescriptorImpl lazyModule=AnalyzerFacadeForJVM.createJavaModule("<lazy module>");
   lazyModule.addFragmentProvider(DependencyKind.BUILT_INS,KotlinBuiltIns.getInstance().getBuiltInsModule().getPackageFragmentProvider());
-  LockBasedStorageManagerWithExceptionTracking storageManager=LockBasedStorageManagerWithExceptionTracking.create();
-  final ResolveSession resolveSession=new InjectorForLazyResolve(getProject(),storageManager,lazyModule,new FileBasedDeclarationProviderFactory(storageManager,files),new BindingTraceContext()).getResolveSession();
+  GlobalContextImpl globalContext=ContextPackage.GlobalContext();
+  final ResolveSession resolveSession=new InjectorForLazyResolve(getProject(),globalContext,lazyModule,new FileBasedDeclarationProviderFactory(globalContext.getStorageManager(),files),new BindingTraceContext()).getResolveSession();
   final List<DeclarationDescriptor> descriptors=new ArrayList<DeclarationDescriptor>();
   psiFile.accept(new JetVisitorVoid(){
     @Override public void visitJetFile(    @NotNull JetFile file){
