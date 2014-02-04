@@ -1,15 +1,14 @@
 {
-  Set<CallableMemberDescriptor> inheritedFunctions=Sets.newLinkedHashSet();
+  Set<CallableMemberDescriptor> inheritedFunctions=new LinkedHashSet<CallableMemberDescriptor>();
   for (  JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
     for (    DeclarationDescriptor descriptor : supertype.getMemberScope().getAllDescriptors()) {
       if (descriptor instanceof CallableMemberDescriptor) {
-        CallableMemberDescriptor memberDescriptor=(CallableMemberDescriptor)descriptor;
-        inheritedFunctions.add(memberDescriptor);
+        inheritedFunctions.add((CallableMemberDescriptor)descriptor);
       }
     }
   }
   Set<CallableMemberDescriptor> filteredMembers=OverridingUtil.filterOutOverridden(inheritedFunctions);
-  Multimap<CallableMemberDescriptor,CallableMemberDescriptor> factoredMembers=CommonSuppliers.newLinkedHashSetHashSetMultimap();
+  Multimap<CallableMemberDescriptor,CallableMemberDescriptor> factoredMembers=LinkedHashMultimap.create();
   for (  CallableMemberDescriptor one : filteredMembers) {
     if (factoredMembers.values().contains(one))     continue;
     for (    CallableMemberDescriptor another : filteredMembers) {
@@ -19,5 +18,5 @@
       }
     }
   }
-  return factoredMembers;
+  return factoredMembers.keySet();
 }
