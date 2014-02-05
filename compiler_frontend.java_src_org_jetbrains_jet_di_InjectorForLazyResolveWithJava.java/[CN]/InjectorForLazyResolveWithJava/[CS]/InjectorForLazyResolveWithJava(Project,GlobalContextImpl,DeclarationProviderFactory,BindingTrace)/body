@@ -35,7 +35,9 @@
   this.candidateResolver=new CandidateResolver();
   this.jetImportsFactory=new JetImportsFactory();
   this.scopeProvider=new ScopeProvider(getResolveSession());
-  this.annotationDescriptorDeserializer=new AnnotationDescriptorDeserializer(lockBasedStorageManager);
+  this.descriptorDeserializers=new DescriptorDeserializers();
+  this.annotationDescriptorDeserializer=new AnnotationDescriptorDeserializer();
+  this.descriptorDeserializersStorage=new DescriptorDeserializersStorage(lockBasedStorageManager);
   this.resolveSession.setAnnotationResolve(annotationResolver);
   this.resolveSession.setDescriptorResolver(descriptorResolver);
   this.resolveSession.setJetImportFactory(jetImportsFactory);
@@ -87,13 +89,17 @@
   typeResolver.setQualifiedExpressionResolver(qualifiedExpressionResolver);
   candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
   jetImportsFactory.setProject(project);
-  deserializedDescriptorResolver.setAnnotationDeserializer(annotationDescriptorDeserializer);
+  deserializedDescriptorResolver.setAnnotationDeserializer(descriptorDeserializers);
   deserializedDescriptorResolver.setErrorReporter(traceBasedErrorReporter);
   deserializedDescriptorResolver.setJavaDescriptorResolver(javaDescriptorResolver);
   deserializedDescriptorResolver.setJavaPackageFragmentProvider(lazyJavaPackageFragmentProvider);
   deserializedDescriptorResolver.setStorageManager(lockBasedStorageManager);
+  descriptorDeserializers.setAnnotationDescriptorDeserializer(annotationDescriptorDeserializer);
   annotationDescriptorDeserializer.setClassResolver(javaDescriptorResolver);
   annotationDescriptorDeserializer.setErrorReporter(traceBasedErrorReporter);
   annotationDescriptorDeserializer.setKotlinClassFinder(virtualFileFinder);
+  annotationDescriptorDeserializer.setStorage(descriptorDeserializersStorage);
+  descriptorDeserializersStorage.setClassResolver(javaDescriptorResolver);
+  descriptorDeserializersStorage.setErrorReporter(traceBasedErrorReporter);
   javaClassFinder.initialize();
 }

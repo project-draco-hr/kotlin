@@ -1,0 +1,40 @@
+{
+  if (ignoreAnnotation(className))   return null;
+  final ClassDescriptor annotationClass=resolveClass(className,classResolver);
+  final AnnotationDescriptorImpl annotation=new AnnotationDescriptorImpl();
+  annotation.setAnnotationType(annotationClass.getDefaultType());
+  return new KotlinJvmBinaryClass.AnnotationArgumentVisitor(){
+    @Override public void visit(    @Nullable Name name,    @Nullable Object value){
+      if (name != null) {
+        CompileTimeConstant<?> argument=ResolverPackage.resolveCompileTimeConstantValue(value,true,null);
+        setArgumentValueByName(name,argument != null ? argument : ErrorValue.create("Unsupported annotation argument: " + name));
+      }
+    }
+    @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
+      setArgumentValueByName(name,enumEntryValue(enumClassName,enumEntryName));
+    }
+    @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitArray(    @NotNull Name name){
+      return null;
+    }
+    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull JvmClassName enumClassName,    @NotNull Name name){
+      ClassDescriptor enumClass=resolveClass(enumClassName,classResolver);
+      if (enumClass.getKind() == ClassKind.ENUM_CLASS) {
+        ClassifierDescriptor classifier=enumClass.getUnsubstitutedInnerClassesScope().getClassifier(name);
+        if (classifier instanceof ClassDescriptor) {
+          return new EnumValue((ClassDescriptor)classifier);
+        }
+      }
+      return ErrorValue.create("Unresolved enum entry: " + enumClassName.getInternalName() + "."+ name);
+    }
+    @Override public void visitEnd(){
+      result.add(annotation);
+    }
+    private void setArgumentValueByName(    @NotNull Name name,    @NotNull CompileTimeConstant<?> argumentValue){
+      ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(name,annotationClass);
+      if (parameter != null) {
+        annotation.setValueArgument(parameter,argumentValue);
+      }
+    }
+  }
+;
+}
