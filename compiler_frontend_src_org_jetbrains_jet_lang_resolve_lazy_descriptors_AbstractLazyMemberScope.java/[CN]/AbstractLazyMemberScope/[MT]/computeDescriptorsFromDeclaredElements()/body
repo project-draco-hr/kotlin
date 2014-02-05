@@ -1,6 +1,7 @@
 {
-  Collection<DeclarationDescriptor> result=new LinkedHashSet<DeclarationDescriptor>();
-  for (  JetDeclaration declaration : declarationProvider.getAllDeclarations()) {
+  List<JetDeclaration> declarations=declarationProvider.getAllDeclarations();
+  ArrayList<DeclarationDescriptor> result=new ArrayList<DeclarationDescriptor>(declarations.size());
+  for (  JetDeclaration declaration : declarations) {
     if (declaration instanceof JetClassOrObject) {
       JetClassOrObject classOrObject=(JetClassOrObject)declaration;
       result.addAll(classDescriptors.invoke(safeNameForLazyResolve(classOrObject.getNameAsName())));
@@ -23,6 +24,6 @@
       throw new IllegalArgumentException("Unsupported declaration kind: " + declaration);
     }
   }
-  addExtraDescriptors(result);
+  result.trimToSize();
   return result;
 }
