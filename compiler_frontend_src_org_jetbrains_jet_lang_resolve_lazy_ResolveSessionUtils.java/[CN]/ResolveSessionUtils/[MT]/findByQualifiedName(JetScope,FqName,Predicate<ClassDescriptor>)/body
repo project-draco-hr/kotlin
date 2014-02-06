@@ -1,0 +1,20 @@
+{
+  if (path.isRoot())   return null;
+  if (NamePackage.isOneSegmentFQN(path)) {
+    Name shortName=path.shortName();
+    ClassifierDescriptor classifier=jetScope.getClassifier(shortName);
+    if (classifier instanceof ClassDescriptor) {
+      ClassDescriptor resultDescriptor=(ClassDescriptor)classifier;
+      if (filter.apply(resultDescriptor)) {
+        return resultDescriptor;
+      }
+    }
+    return null;
+  }
+  Name firstName=NamePackage.getFirstSegment(path);
+  ClassifierDescriptor classifier=jetScope.getClassifier(firstName);
+  if (classifier instanceof ClassDescriptor) {
+    return findByQualifiedName(((ClassDescriptor)classifier).getUnsubstitutedInnerClassesScope(),NamePackage.withoutFirstSegment(path),filter);
+  }
+  return null;
+}
