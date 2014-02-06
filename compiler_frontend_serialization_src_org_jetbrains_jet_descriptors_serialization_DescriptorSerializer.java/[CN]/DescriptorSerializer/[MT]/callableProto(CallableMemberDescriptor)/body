@@ -3,6 +3,7 @@
   DescriptorSerializer local=createChildSerializer();
   boolean hasGetter=false;
   boolean hasSetter=false;
+  boolean hasConstant=false;
   if (descriptor instanceof PropertyDescriptor) {
     PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
     int propertyFlags=Flags.getAccessorFlags(hasAnnotations(propertyDescriptor),propertyDescriptor.getVisibility(),propertyDescriptor.getModality(),false);
@@ -27,8 +28,9 @@
         }
       }
     }
+    hasConstant=propertyDescriptor.getCompileTimeInitializer() != null;
   }
-  builder.setFlags(Flags.getCallableFlags(hasAnnotations(descriptor),descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),hasGetter,hasSetter));
+  builder.setFlags(Flags.getCallableFlags(hasAnnotations(descriptor),descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),hasGetter,hasSetter,hasConstant));
   for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
     builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
   }
