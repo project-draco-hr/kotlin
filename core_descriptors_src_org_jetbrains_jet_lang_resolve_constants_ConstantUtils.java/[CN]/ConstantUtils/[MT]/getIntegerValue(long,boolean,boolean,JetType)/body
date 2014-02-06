@@ -1,0 +1,25 @@
+{
+  if (TypeUtils.noExpectedType(expectedType) || expectedType.isError()) {
+    return new IntegerValueTypeConstant(value,canBeUsedInAnnotations);
+  }
+  KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
+  JetType notNullExpectedType=TypeUtils.makeNotNullable(expectedType);
+  if (notNullExpectedType.equals(builtIns.getLongType())) {
+    return new LongValue(value,canBeUsedInAnnotations,isPureIntConstant);
+  }
+ else   if (notNullExpectedType.equals(builtIns.getShortType())) {
+    if (value == (long)((short)value)) {
+      return new ShortValue((short)value,canBeUsedInAnnotations,isPureIntConstant);
+    }
+    return getDefaultIntegerValue(value,canBeUsedInAnnotations,isPureIntConstant);
+  }
+  if (notNullExpectedType.equals(builtIns.getByteType())) {
+    if (value == (long)((byte)value)) {
+      return new ByteValue((byte)value,canBeUsedInAnnotations,isPureIntConstant);
+    }
+    return getDefaultIntegerValue(value,canBeUsedInAnnotations,isPureIntConstant);
+  }
+ else {
+    return getDefaultIntegerValue(value,canBeUsedInAnnotations,isPureIntConstant);
+  }
+}

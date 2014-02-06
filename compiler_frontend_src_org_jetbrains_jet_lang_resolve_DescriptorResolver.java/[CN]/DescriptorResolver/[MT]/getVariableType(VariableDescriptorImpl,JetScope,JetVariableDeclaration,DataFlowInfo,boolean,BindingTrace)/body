@@ -25,15 +25,17 @@
       if (notLocal) {
         return DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<JetType>(){
           @Override public JetType invoke(){
-            JetType type=resolveInitializerType(scope,initializer,dataFlowInfo,trace);
-            EvaluatePackage.recordCompileTimeValueForInitializerIfNeeded(variableDescriptor,initializer,type,trace);
-            return transformAnonymousTypeIfNeeded(variableDescriptor,variable,type,trace);
+            JetType initializerType=resolveInitializerType(scope,initializer,dataFlowInfo,trace);
+            setConstantForVariable(variableDescriptor,initializer,initializerType,trace);
+            return transformAnonymousTypeIfNeeded(variableDescriptor,variable,initializerType,trace);
           }
         }
 );
       }
  else {
-        return resolveInitializerType(scope,initializer,dataFlowInfo,trace);
+        JetType initializerType=resolveInitializerType(scope,initializer,dataFlowInfo,trace);
+        setConstantForVariable(variableDescriptor,initializer,initializerType,trace);
+        return initializerType;
       }
     }
   }
