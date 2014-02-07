@@ -1,0 +1,10 @@
+{
+  Collection<JetFile> files=PluginJetFilesProvider.WHOLE_PROJECT_DECLARATION_PROVIDER.fun(file);
+  AnalyzeExhaust analyzeExhaust=MigrateSureInProjectFix.analyzeFiles(file,files);
+  for (  Diagnostic diagnostic : analyzeExhaust.getBindingContext().getDiagnostics()) {
+    if (diagnostic.getFactory() != Errors.VIRTUAL_MEMBER_HIDDEN)     continue;
+    PsiElement element=diagnostic.getPsiElement();
+    if (!isEqualsHashCodeOrToString(element))     continue;
+    element.replace(AddModifierFix.addModifier(element,OVERRIDE_KEYWORD,MODIFIERS_TO_REPLACE,project,false));
+  }
+}
