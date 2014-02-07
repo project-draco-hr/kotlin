@@ -2,7 +2,14 @@
   JetExpression returnedExpression=expression.getReturnedExpression();
   if (returnedExpression != null) {
     gen(returnedExpression,returnType);
-    doFinallyOnReturn();
+    boolean hasFinallyBLocks=hasFinallyBLocks();
+    if (hasFinallyBLocks) {
+      int returnValIndex=myFrameMap.enterTemp(returnType);
+      StackValue.local(returnValIndex,returnType).store(returnType,v);
+      doFinallyOnReturn();
+      StackValue.local(returnValIndex,returnType).put(returnType,v);
+      myFrameMap.leaveTemp(returnType);
+    }
     v.areturn(returnType);
   }
  else {
