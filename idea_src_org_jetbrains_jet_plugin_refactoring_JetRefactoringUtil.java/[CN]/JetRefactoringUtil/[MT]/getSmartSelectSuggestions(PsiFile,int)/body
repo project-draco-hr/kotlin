@@ -1,0 +1,43 @@
+{
+  if (offset < 0) {
+    return new ArrayList<JetExpression>();
+  }
+  PsiElement element=file.findElementAt(offset);
+  if (element == null) {
+    return new ArrayList<JetExpression>();
+  }
+  if (element instanceof PsiWhiteSpace) {
+    return getSmartSelectSuggestions(file,offset - 1);
+  }
+  ArrayList<JetExpression> expressions=new ArrayList<JetExpression>();
+  while (element != null && !(element instanceof JetBlockExpression && !(element.getParent() instanceof JetFunctionLiteral)) && !(element instanceof JetNamedFunction) && !(element instanceof JetClassBody)) {
+    if (element instanceof JetExpression && !(element instanceof JetStatementExpression)) {
+      boolean addExpression=true;
+      if (element.getParent() instanceof JetQualifiedExpression) {
+        JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)element.getParent();
+        if (qualifiedExpression.getReceiverExpression() != element) {
+          addExpression=false;
+        }
+      }
+ else       if (element.getParent() instanceof JetCallElement) {
+        addExpression=false;
+      }
+ else       if (element.getParent() instanceof JetOperationExpression) {
+        JetOperationExpression operationExpression=(JetOperationExpression)element.getParent();
+        if (operationExpression.getOperationReference() == element) {
+          addExpression=false;
+        }
+      }
+      if (addExpression) {
+        JetExpression expression=(JetExpression)element;
+        BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement(expression);
+        JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
+        if (expressionType == null || !(expressionType instanceof PackageType) && !JetTypeChecker.INSTANCE.equalTypes(KotlinBuiltIns.getInstance().getUnitType(),expressionType)) {
+          expressions.add(expression);
+        }
+      }
+    }
+    element=element.getParent();
+  }
+  return expressions;
+}
