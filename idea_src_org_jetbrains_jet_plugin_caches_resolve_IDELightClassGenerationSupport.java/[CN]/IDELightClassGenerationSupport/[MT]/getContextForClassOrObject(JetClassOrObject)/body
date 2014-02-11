@@ -1,28 +1,10 @@
 {
-  Profiler p=Profiler.create((USE_LAZY ? "lazy" : "eager") + " analyze",LOG).start();
-  try {
-    if (USE_LAZY) {
-      ResolveSessionForBodies session=AnalyzerFacadeWithCache.getLazyResolveSessionForFile((JetFile)classOrObject.getContainingFile());
-      if (JetPsiUtil.isLocal(classOrObject)) {
-        BindingContext bindingContext=session.resolveToElement(classOrObject);
-        forceResolveAllContents(bindingContext.get(BindingContext.CLASS,classOrObject));
-        return new LightClassConstructionContext(bindingContext,null);
-      }
-      forceResolveAllContents(session.getClassDescriptor(classOrObject));
-      return new LightClassConstructionContext(session.getBindingContext(),null);
-    }
- else {
-      BindingContext bindingContext;
-      if (JetPsiUtil.isLocal(classOrObject)) {
-        bindingContext=AnalyzerFacadeWithCache.getContextForElement(classOrObject);
-      }
- else {
-        bindingContext=KotlinCacheManager.getInstance(project).getPossiblyIncompleteDeclarationsForLightClassGeneration().getBindingContext();
-      }
-      return new LightClassConstructionContext(bindingContext,null);
-    }
+  ResolveSessionForBodies session=AnalyzerFacadeWithCache.getLazyResolveSessionForFile((JetFile)classOrObject.getContainingFile());
+  if (JetPsiUtil.isLocal(classOrObject)) {
+    BindingContext bindingContext=session.resolveToElement(classOrObject);
+    forceResolveAllContents(bindingContext.get(BindingContext.CLASS,classOrObject));
+    return new LightClassConstructionContext(bindingContext,null);
   }
-  finally {
-    p.end();
-  }
+  forceResolveAllContents(session.getClassDescriptor(classOrObject));
+  return new LightClassConstructionContext(session.getBindingContext(),null);
 }
