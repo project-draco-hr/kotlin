@@ -2,32 +2,21 @@
   String executableFileName=SystemInfo.isWindows ? executableName + ".bat" : executableName;
   File kotlincFile=new File(PathUtil.getKotlinPathsForDistDirectory().getHomePath(),"bin/" + executableFileName);
   assertTrue("kotlinc executable not found, probably you need to invoke 'dist' Ant target: " + kotlincFile.getAbsolutePath(),kotlincFile.exists());
-  String[] args=CliBaseTest.readArgs(argsFilePath,testDataDir,tmpdir.getAbsolutePath());
-  final Process process=Runtime.getRuntime().exec(ArrayUtil.prepend(kotlincFile.getAbsolutePath(),args));
-  final Ref<String> stderr=Ref.create();
-  new Thread(new Runnable(){
-    @Override public void run(){
-      try {
-        stderr.set(FileUtil.loadTextAndClose(process.getErrorStream()));
-      }
- catch (      IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-).start();
-  String output=FileUtil.loadTextAndClose(process.getInputStream());
-  int intExitCode=process.waitFor();
-  ExitCode exitCode=ExitCode.values()[intExitCode];
-  String normalizedOutput=CliBaseTest.getNormalizedCompilerOutput(output,exitCode,testDataDir);
+  List<String> args=CliBaseTest.readArgs(argsFilePath,testDataDir,tmpdir.getAbsolutePath());
+  args.add(0,kotlincFile.getAbsolutePath());
+  ProcessOutput processOutput=ExecUtil.execAndGetOutput(args,null);
+  String stdout=processOutput.getStdout();
+  String stderr=processOutput.getStderr();
+  int exitCode=processOutput.getExitCode();
+  String normalizedOutput=CliBaseTest.getNormalizedCompilerOutput(stdout,ExitCode.values()[exitCode],testDataDir);
   File outFile=new File(argsFilePath.replace(".args",".out"));
   try {
     JetTestUtils.assertEqualsToFile(outFile,normalizedOutput);
   }
  catch (  Exception e) {
-    System.out.println("exitcode " + intExitCode);
-    System.out.println("<stdout>" + output + "</stdout>");
-    System.out.println("<stderr>" + stderr + "</stderr>");
+    System.err.println("exitcode " + exitCode);
+    System.err.println("<stdout>" + stdout + "</stdout>");
+    System.err.println("<stderr>" + stderr + "</stderr>");
     throw e;
   }
 }
