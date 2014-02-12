@@ -3,12 +3,11 @@
   OutputFile file=classes.get(className + ".class");
   assertNotNull(file);
   ClassReader reader=new ClassReader(file.asByteArray());
-  final String intrinsics=JvmClassName.byFqNameWithoutInnerClasses(Intrinsics.class.getName()).getInternalName();
   reader.accept(new ClassVisitor(Opcodes.ASM4){
     @Override public MethodVisitor visitMethod(    int access,    final String callerName,    final String callerDesc,    String signature,    String[] exceptions){
       return new MethodVisitor(Opcodes.ASM4){
         @Override public void visitMethodInsn(        int opcode,        String owner,        String name,        String desc){
-          assertFalse("Intrinsics method is called: " + name + desc+ "  Caller: "+ callerName+ callerDesc,intrinsics.equals(owner));
+          assertFalse("Intrinsics method is called: " + name + desc+ "  Caller: "+ callerName+ callerDesc,"kotlin/jvm/internal/Intrinsics".equals(owner));
         }
       }
 ;
