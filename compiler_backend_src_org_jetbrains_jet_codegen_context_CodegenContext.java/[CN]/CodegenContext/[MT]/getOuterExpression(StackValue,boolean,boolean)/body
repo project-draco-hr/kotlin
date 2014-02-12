@@ -1,13 +1,14 @@
 {
   if (lazyOuterExpression == null || lazyOuterExpression.invoke() == null) {
-    if (ignoreNoOuter) {
-      return null;
+    if (!ignoreNoOuter) {
+      throw new UnsupportedOperationException("Don't know how to generate outer expression for " + getContextDescriptor());
     }
- else {
-      throw new UnsupportedOperationException();
-    }
+    return null;
   }
   if (captureThis) {
+    if (closure == null) {
+      throw new IllegalStateException("Can't capture this for context without closure: " + getContextDescriptor());
+    }
     closure.setCaptureThis();
   }
   return prefix != null ? StackValue.composed(prefix,lazyOuterExpression.invoke()) : lazyOuterExpression.invoke();
