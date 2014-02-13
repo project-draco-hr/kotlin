@@ -1,13 +1,4 @@
 {
-  ResolutionDebugInfo.Data debugInfo=ResolutionDebugInfo.create();
-  if (context.call.getCallType() != Call.CallType.INVOKE) {
-    context.trace.record(ResolutionDebugInfo.RESOLUTION_DEBUG_INFO,context.call.getCallElement(),debugInfo);
-  }
-  context.trace.record(RESOLUTION_SCOPE,context.call.getCalleeExpression(),context.scope);
-  if (context.dataFlowInfo.hasTypeInfoConstraints()) {
-    context.trace.record(NON_DEFAULT_EXPRESSION_DATA_FLOW,context.call.getCalleeExpression(),context.dataFlowInfo);
-  }
-  debugInfo.set(ResolutionDebugInfo.TASKS,prioritizedTasks);
   if (context.checkArguments == CheckValueArgumentsMode.ENABLED) {
     argumentTypeResolver.analyzeArgumentsAndRecordTypes(context);
   }
@@ -18,9 +9,6 @@
     OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.replaceBindingTrace(taskTrace),callTransformer);
     if (results.isSuccess() || results.isAmbiguity()) {
       taskTrace.commit();
-      if (results.isSuccess()) {
-        debugInfo.set(ResolutionDebugInfo.RESULT,results.getResultingCall());
-      }
       return results;
     }
     if (results.getResultCode() == INCOMPLETE_TYPE_INFERENCE) {
@@ -33,15 +21,11 @@
       resultsForFirstNonemptyCandidateSet=results;
     }
   }
-  if (traceForFirstNonemptyCandidateSet != null) {
-    traceForFirstNonemptyCandidateSet.commit();
-    if (resultsForFirstNonemptyCandidateSet.isSingleResult()) {
-      debugInfo.set(ResolutionDebugInfo.RESULT,resultsForFirstNonemptyCandidateSet.getResultingCall());
-    }
-  }
- else {
+  if (traceForFirstNonemptyCandidateSet == null) {
     tracing.unresolvedReference(context.trace);
     argumentTypeResolver.checkTypesWithNoCallee(context,SHAPE_FUNCTION_ARGUMENTS);
+    return OverloadResolutionResultsImpl.<F>nameNotFound();
   }
-  return resultsForFirstNonemptyCandidateSet != null ? resultsForFirstNonemptyCandidateSet : OverloadResolutionResultsImpl.<F>nameNotFound();
+  traceForFirstNonemptyCandidateSet.commit();
+  return resultsForFirstNonemptyCandidateSet;
 }
