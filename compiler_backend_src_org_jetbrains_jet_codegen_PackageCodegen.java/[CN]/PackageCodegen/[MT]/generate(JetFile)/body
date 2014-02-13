@@ -1,7 +1,7 @@
 {
   boolean generateSrcClass=false;
-  Type packagePartType=getPackagePartType(getPackageClassFqName(name),file.getVirtualFile());
-  PackageContext packagePartContext=CodegenContext.STATIC.intoPackagePart(getPackageFragment(file),packagePartType);
+  Type packagePartType=getPackagePartType(getPackageClassFqName(packageFragment.getFqName()),file.getVirtualFile());
+  PackageContext packagePartContext=CodegenContext.STATIC.intoPackagePart(packageFragment,packagePartType);
   for (  JetDeclaration declaration : file.getDeclarations()) {
     if (declaration instanceof JetProperty || declaration instanceof JetNamedFunction) {
       generateSrcClass=true;
@@ -19,7 +19,7 @@
   if (!generateSrcClass)   return null;
   ClassBuilder builder=state.getFactory().forPackagePart(packagePartType,file);
   new PackagePartCodegen(builder,file,packagePartType,packagePartContext,state).generate();
-  FieldOwnerContext packageFacade=CodegenContext.STATIC.intoPackageFacade(packagePartType,getPackageFragment(file));
+  FieldOwnerContext packageFacade=CodegenContext.STATIC.intoPackageFacade(packagePartType,packageFragment);
   MemberCodegen memberCodegen=new MemberCodegen(state,null,packageFacade,null){
     @NotNull @Override public ClassBuilder getBuilder(){
       return v.getClassBuilder();
