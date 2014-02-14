@@ -2,8 +2,8 @@
   this.project=project;
   this.bindingTrace=bindingTrace;
   this.globalContext=org.jetbrains.jet.context.ContextPackage.GlobalContext();
+  this.lockBasedStorageManager=globalContext.getStorageManager();
   this.module=org.jetbrains.jet.lang.resolve.java.AnalyzerFacadeForJVM.createJavaModule("<fake-jdr-module>");
-  this.storageManager=globalContext.getStorageManager();
   this.javaClassFinder=new JavaClassFinderImpl();
   this.virtualFileFinder=org.jetbrains.jet.lang.resolve.kotlin.VirtualFileFinder.SERVICE.getInstance(project);
   this.deserializedDescriptorResolver=new DeserializedDescriptorResolver();
@@ -12,10 +12,10 @@
   this.traceBasedErrorReporter=new TraceBasedErrorReporter();
   this.psiBasedMethodSignatureChecker=new PsiBasedMethodSignatureChecker();
   this.traceBasedJavaResolverCache=new TraceBasedJavaResolverCache();
-  this.globalJavaResolverContext=new GlobalJavaResolverContext(storageManager,getJavaClassFinder(),virtualFileFinder,deserializedDescriptorResolver,psiBasedExternalAnnotationResolver,traceBasedExternalSignatureResolver,traceBasedErrorReporter,psiBasedMethodSignatureChecker,traceBasedJavaResolverCache);
+  this.globalJavaResolverContext=new GlobalJavaResolverContext(lockBasedStorageManager,getJavaClassFinder(),virtualFileFinder,deserializedDescriptorResolver,psiBasedExternalAnnotationResolver,traceBasedExternalSignatureResolver,traceBasedErrorReporter,psiBasedMethodSignatureChecker,traceBasedJavaResolverCache);
   this.lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(globalJavaResolverContext,getModule());
   this.javaDescriptorResolver=new JavaDescriptorResolver(lazyJavaPackageFragmentProvider,getModule());
-  this.annotationDescriptorDeserializer=new AnnotationDescriptorDeserializer(storageManager);
+  this.annotationDescriptorDeserializer=new AnnotationDescriptorDeserializer(lockBasedStorageManager);
   this.javaClassFinder.setProject(project);
   traceBasedExternalSignatureResolver.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
   traceBasedExternalSignatureResolver.setTrace(bindingTrace);
@@ -27,7 +27,7 @@
   deserializedDescriptorResolver.setErrorReporter(traceBasedErrorReporter);
   deserializedDescriptorResolver.setJavaDescriptorResolver(javaDescriptorResolver);
   deserializedDescriptorResolver.setJavaPackageFragmentProvider(lazyJavaPackageFragmentProvider);
-  deserializedDescriptorResolver.setStorageManager(storageManager);
+  deserializedDescriptorResolver.setStorageManager(lockBasedStorageManager);
   annotationDescriptorDeserializer.setErrorReporter(traceBasedErrorReporter);
   annotationDescriptorDeserializer.setJavaDescriptorResolver(javaDescriptorResolver);
   annotationDescriptorDeserializer.setKotlinClassFinder(virtualFileFinder);
