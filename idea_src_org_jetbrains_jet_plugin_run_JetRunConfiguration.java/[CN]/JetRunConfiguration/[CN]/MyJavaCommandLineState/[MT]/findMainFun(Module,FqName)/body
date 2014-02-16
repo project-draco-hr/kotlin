@@ -2,7 +2,9 @@
   String mainFunFqName=packageFqName.child(Name.identifier("main")).asString();
   Collection<JetNamedFunction> mainFunctions=JetTopLevelFunctionsFqnNameIndex.getInstance().get(mainFunFqName,module.getProject(),module.getModuleRuntimeScope(true));
   for (  JetNamedFunction function : mainFunctions) {
-    if (JetMainDetector.isMain(function)) {
+    BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement(function);
+    MainFunctionDetector mainFunctionDetector=new MainFunctionDetector(bindingContext);
+    if (mainFunctionDetector.isMain(function)) {
       return function;
     }
   }
