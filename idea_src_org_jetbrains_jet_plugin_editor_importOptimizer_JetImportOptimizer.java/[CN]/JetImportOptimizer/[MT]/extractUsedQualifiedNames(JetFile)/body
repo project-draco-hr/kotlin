@@ -17,50 +17,21 @@
         visitUserType(type.getQualifier());
       }
     }
-    @Override public void visitReferenceExpression(    @NotNull JetReferenceExpression expression){
-      if (PsiTreeUtil.getParentOfType(expression,JetImportDirective.class) == null && PsiTreeUtil.getParentOfType(expression,JetPackageDirective.class) == null) {
-        PsiReference reference=expression.getReference();
-        if (reference != null) {
-          List<PsiElement> references=new ArrayList<PsiElement>();
-          PsiElement resolve=reference.resolve();
-          if (resolve != null) {
-            references.add(resolve);
-          }
-          if (references.isEmpty() && reference instanceof PsiPolyVariantReference) {
-            for (            ResolveResult resolveResult : ((PsiPolyVariantReference)reference).multiResolve(true)) {
-              references.add(resolveResult.getElement());
-            }
-          }
-          for (          PsiElement psiReference : references) {
-            FqName fqName=getElementUsageFQName(psiReference);
-            if (fqName != null) {
-              usedQualifiedNames.add(fqName);
-            }
+    @Override public void visitJetElement(    @NotNull JetElement element){
+      if (PsiTreeUtil.getParentOfType(element,JetImportDirective.class) != null || PsiTreeUtil.getParentOfType(element,JetPackageDirective.class) != null) {
+        return;
+      }
+      PsiReference reference=element.getReference();
+      if (reference instanceof JetReference) {
+        Collection<DeclarationDescriptor> referencedDescriptors=((JetReference)reference).resolveToDescriptors();
+        for (        DeclarationDescriptor descriptor : referencedDescriptors) {
+          FqName importableFqName=CodeInsightPackage.getImportableFqName(descriptor);
+          if (importableFqName != null) {
+            usedQualifiedNames.add(importableFqName);
           }
         }
       }
-      super.visitReferenceExpression(expression);
-    }
-    @Override public void visitForExpression(    @NotNull JetForExpression expression){
-      BindingContext context=AnalyzerFacadeWithCache.getContextForElement(expression);
-      ResolvedCall<FunctionDescriptor> resolvedCall=context.get(BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL,expression.getLoopRange());
-      addResolvedCallFqName(resolvedCall);
-      super.visitForExpression(expression);
-    }
-    @Override public void visitMultiDeclaration(    @NotNull JetMultiDeclaration declaration){
-      BindingContext context=AnalyzerFacadeWithCache.getContextForElement(declaration);
-      List<JetMultiDeclarationEntry> entries=declaration.getEntries();
-      for (      JetMultiDeclarationEntry entry : entries) {
-        ResolvedCall<FunctionDescriptor> resolvedCall=context.get(BindingContext.COMPONENT_RESOLVED_CALL,entry);
-        addResolvedCallFqName(resolvedCall);
-      }
-      super.visitMultiDeclaration(declaration);
-    }
-    private void addResolvedCallFqName(    @Nullable ResolvedCall resolvedCall){
-      if (resolvedCall != null) {
-        CallableDescriptor resultingDescriptor=resolvedCall.getResultingDescriptor();
-        usedQualifiedNames.add(DescriptorUtils.getFqNameSafe(resultingDescriptor));
-      }
+      super.visitJetElement(element);
     }
   }
 );
