@@ -1,0 +1,18 @@
+{
+  if (inlineClosures) {
+    removeClosureAssertions(node);
+    try {
+      markPlacesForInlineAndRemoveInlinable(node);
+    }
+ catch (    AnalyzerException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  int valueParamSize=originalFunctionFrame.getCurrentSize();
+  int originalSize=codegen.getFrameMap().getCurrentSize();
+  generateClosuresBodies();
+  putClosureParametersOnStack();
+  int additionalParams=codegen.getFrameMap().getCurrentSize() - originalSize;
+  VarRemapper remapper=new VarRemapper.ParamRemapper(initialFrameSize,valueParamSize,additionalParams,tempTypes);
+  doInline(node.access,node.desc,codegen.getMethodVisitor(),node,remapper.doRemap(valueParamSize + additionalParams),inlineClosures,remapper);
+}

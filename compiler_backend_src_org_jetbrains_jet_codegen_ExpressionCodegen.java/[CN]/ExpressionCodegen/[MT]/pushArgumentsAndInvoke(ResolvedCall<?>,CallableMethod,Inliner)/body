@@ -1,0 +1,20 @@
+{
+  inliner.putHiddenParams();
+  int mask=pushMethodArguments(resolvedCall,callable.getValueParameterTypes(),inliner);
+  if (tailRecursionCodegen.isTailRecursion(resolvedCall)) {
+    tailRecursionCodegen.generateTailRecursion(resolvedCall);
+    return;
+  }
+  if (mask == 0) {
+    if (inliner != Inliner.NOT_INLINE) {
+      inliner.inlineCall(callable,getParentCodegen().getBuilder().getVisitor());
+    }
+ else {
+      callable.invokeWithNotNullAssertion(v,state,resolvedCall);
+    }
+  }
+ else {
+    callable.invokeDefaultWithNotNullAssertion(v,state,resolvedCall,mask);
+  }
+  inliner.leaveTemps();
+}

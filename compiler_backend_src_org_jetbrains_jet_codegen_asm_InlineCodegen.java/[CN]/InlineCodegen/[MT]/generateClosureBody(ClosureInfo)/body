@@ -1,0 +1,16 @@
+{
+  JetFunctionLiteral declaration=info.getFunctionLiteral();
+  FunctionDescriptor descriptor=info.getFunctionDescriptor();
+  MethodContext parentContext=codegen.getContext();
+  MethodContext context=parentContext.intoClosure(descriptor,codegen,typeMapper).intoFunction(descriptor);
+  JvmMethodSignature jvmMethodSignature=typeMapper.mapSignature(descriptor);
+  Method asmMethod=jvmMethodSignature.getAsmMethod();
+  MethodNode methodNode=new MethodNode(Opcodes.ASM4,getMethodAsmFlags(descriptor,context.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),jvmMethodSignature.getGenericsSignature(),null);
+  FunctionCodegen.generateMethodBody(methodNode,descriptor,context,jvmMethodSignature,new FunctionGenerationStrategy.FunctionDefault(state,descriptor,declaration){
+    @Override public boolean generateLocalVarTable(){
+      return false;
+    }
+  }
+,codegen.getParentCodegen());
+  return transformClosure(methodNode,info);
+}

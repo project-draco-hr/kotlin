@@ -1,21 +1,3 @@
 {
-  if (closure != null) {
-    if (!ignoreThisAndReceiver) {
-      ClassDescriptor captureThis=closure.getCaptureThis();
-      if (captureThis != null) {
-        generateThisOrOuter(captureThis,false).put(OBJECT_TYPE,v);
-      }
-      JetType captureReceiver=closure.getCaptureReceiverType();
-      if (captureReceiver != null) {
-        v.load(context.isStatic() ? 0 : 1,typeMapper.mapType(captureReceiver));
-      }
-    }
-    for (    Map.Entry<DeclarationDescriptor,EnclosedValueDescriptor> entry : closure.getCaptureVariables().entrySet()) {
-      Type sharedVarType=typeMapper.getSharedVarType(entry.getKey());
-      if (sharedVarType == null) {
-        sharedVarType=typeMapper.mapType((VariableDescriptor)entry.getKey());
-      }
-      entry.getValue().getOuterValue(this).put(sharedVarType,v);
-    }
-  }
+  pushClosureOnStack(closure,ignoreThisAndReceiver,Inliner.NOT_INLINE);
 }

@@ -1,0 +1,23 @@
+{
+  MethodNode node=null;
+  if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
+    VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor,state);
+    node=InlineCodegenUtil.getMethodNode(file.getInputStream(),functionDescriptor.getName().asString(),callableMethod.getAsmMethod().getDescriptor());
+    if (node == null) {
+      throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
+    }
+  }
+ else {
+    PsiElement element=BindingContextUtils.descriptorToDeclaration(bindingContext,functionDescriptor);
+    if (element == null) {
+      throw new RuntimeException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
+    }
+    JvmMethodSignature jvmSignature=typeMapper.mapSignature(functionDescriptor,context.getContextKind());
+    Method asmMethod=jvmSignature.getAsmMethod();
+    node=new MethodNode(Opcodes.ASM4,getMethodAsmFlags(functionDescriptor,context.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
+    FunctionCodegen.generateMethodBody(node,functionDescriptor,context.getParentContext().intoFunction(functionDescriptor),jvmSignature,new FunctionGenerationStrategy.FunctionDefault(state,functionDescriptor,(JetDeclarationWithBody)element),getParentCodegen());
+    node.visitMaxs(20,20);
+    node.visitEnd();
+  }
+  return node;
+}
