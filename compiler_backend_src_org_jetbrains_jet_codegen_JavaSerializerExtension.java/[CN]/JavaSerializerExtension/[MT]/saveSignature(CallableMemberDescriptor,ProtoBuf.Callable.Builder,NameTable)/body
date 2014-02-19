@@ -1,8 +1,9 @@
 {
+  SignatureSerializer signatureSerializer=new SignatureSerializer(nameTable);
   if (callable instanceof FunctionDescriptor) {
     Method method=bindings.get(METHOD_FOR_FUNCTION,(FunctionDescriptor)callable);
     if (method != null) {
-      proto.setExtension(JavaProtoBuf.methodSignature,new SignatureSerializer(nameTable).methodSignature(method));
+      proto.setExtension(JavaProtoBuf.methodSignature,signatureSerializer.methodSignature(method));
     }
   }
  else   if (callable instanceof PropertyDescriptor) {
@@ -28,7 +29,14 @@
       isStaticInOuter=false;
       syntheticMethod=bindings.get(SYNTHETIC_METHOD_FOR_PROPERTY,property);
     }
-    JavaProtoBuf.JavaPropertySignature signature=new SignatureSerializer(nameTable).propertySignature(fieldType,fieldName,isStaticInOuter,syntheticMethod,getterMethod,setterMethod);
+    JavaProtoBuf.JavaPropertySignature signature;
+    if (callable instanceof DeserializedPropertyDescriptor) {
+      DeserializedPropertyDescriptor deserializedCallable=(DeserializedPropertyDescriptor)callable;
+      signature=signatureSerializer.copyPropertySignature(deserializedCallable.getProto().getExtension(JavaProtoBuf.propertySignature),deserializedCallable.getNameResolver());
+    }
+ else {
+      signature=signatureSerializer.propertySignature(fieldType,fieldName,isStaticInOuter,syntheticMethod,getterMethod,setterMethod);
+    }
     proto.setExtension(JavaProtoBuf.propertySignature,signature);
   }
 }
