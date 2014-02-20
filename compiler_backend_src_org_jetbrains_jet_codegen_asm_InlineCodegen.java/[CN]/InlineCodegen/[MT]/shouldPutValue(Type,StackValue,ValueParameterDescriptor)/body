@@ -1,0 +1,25 @@
+{
+  if (stackValue == null) {
+    return true;
+  }
+  if (isPrimitive(type) != isPrimitive(stackValue.type)) {
+    return true;
+  }
+  if (stackValue instanceof StackValue.Local) {
+    return false;
+  }
+  if (codegen.getContext().isInlineClosure() && codegen.getContext().getContextDescriptor() instanceof AnonymousFunctionDescriptor) {
+    Type internalName=asmTypeForAnonymousClass(bindingContext,(FunctionDescriptor)codegen.getContext().getContextDescriptor());
+    String owner=null;
+    if (stackValue instanceof StackValue.Field) {
+      owner=((StackValue.Field)stackValue).owner.getInternalName();
+    }
+    if (stackValue instanceof StackValue.Composed) {
+      owner=internalName.getInternalName();
+    }
+    if (descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor) && internalName.getInternalName().equals(owner)) {
+      return false;
+    }
+  }
+  return true;
+}
