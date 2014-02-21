@@ -8,7 +8,7 @@
     ExpressionReceiver loopRangeReceiver=getExpressionReceiver(facade,loopRange,context.replaceScope(context.scope));
     dataFlowInfo=facade.getTypeInfo(loopRange,context).getDataFlowInfo();
     if (loopRangeReceiver != null) {
-      expectedParameterType=checkIterableConvention(loopRangeReceiver,context);
+      expectedParameterType=components.forLoopConventionsChecker.checkIterableConvention(loopRangeReceiver,context);
     }
   }
   WritableScope loopScope=newWritableScopeImpl(context,"Scope with for-loop index");
@@ -22,12 +22,12 @@
     if (multiParameter != null && loopRange != null) {
       JetType elementType=expectedParameterType == null ? ErrorUtils.createErrorType("Loop range has no type") : expectedParameterType;
       TransientReceiver iteratorNextAsReceiver=new TransientReceiver(elementType);
-      ExpressionTypingUtils.defineLocalVariablesFromMultiDeclaration(loopScope,multiParameter,iteratorNextAsReceiver,loopRange,context);
+      components.expressionTypingUtils.defineLocalVariablesFromMultiDeclaration(loopScope,multiParameter,iteratorNextAsReceiver,loopRange,context);
     }
   }
   JetExpression body=expression.getBody();
   if (body != null) {
-    context.expressionTypingServices.getBlockReturnedTypeWithWritableScope(loopScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(dataFlowInfo),context.trace);
+    components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(loopScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(dataFlowInfo),context.trace);
   }
   return DataFlowUtils.checkType(KotlinBuiltIns.getInstance().getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
 }
