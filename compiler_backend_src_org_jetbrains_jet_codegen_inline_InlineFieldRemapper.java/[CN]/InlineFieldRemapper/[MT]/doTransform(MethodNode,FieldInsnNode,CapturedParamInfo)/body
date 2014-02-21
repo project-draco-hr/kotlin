@@ -1,2 +1,15 @@
 {
+  boolean isRecaptured=isRecapturedLambdaType(fieldInsnNode.owner);
+  if (!isRecaptured && capturedField.getLambda() != null) {
+    return super.doTransform(node,fieldInsnNode,capturedField);
+  }
+  AbstractInsnNode loadThis=getPreviousThis(fieldInsnNode);
+  int opcode=Opcodes.GETSTATIC;
+  String descriptor=Type.getObjectType(newOwnerType).getDescriptor();
+  FieldInsnNode thisStub=new FieldInsnNode(opcode,newOwnerType,"$$$this",descriptor);
+  node.instructions.insertBefore(loadThis,thisStub);
+  node.instructions.remove(loadThis);
+  fieldInsnNode.owner=newOwnerType;
+  fieldInsnNode.name=isRecaptured || capturedField.getRecapturedFrom() != null ? LambdaTransformer.getNewFieldName(capturedField.getFieldName()) : capturedField.getFieldName();
+  return fieldInsnNode;
 }

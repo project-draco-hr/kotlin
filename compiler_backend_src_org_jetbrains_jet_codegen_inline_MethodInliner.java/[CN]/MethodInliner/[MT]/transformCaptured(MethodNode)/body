@@ -1,0 +1,23 @@
+{
+  if (lambdaType == null) {
+    return;
+  }
+  AbstractInsnNode cur=node.instructions.getFirst();
+  while (cur != null) {
+    if (cur.getType() == AbstractInsnNode.FIELD_INSN) {
+      FieldInsnNode fieldInsnNode=(FieldInsnNode)cur;
+      if (lambdaFieldRemapper.canProcess(fieldInsnNode.owner,lambdaType.getInternalName())) {
+        CapturedParamInfo result=this.lambdaFieldRemapper.findField(fieldInsnNode,parameters.getCaptured());
+        if (result == null) {
+          throw new UnsupportedOperationException("Coudn't find field " + fieldInsnNode.owner + "."+ fieldInsnNode.name+ " ("+ fieldInsnNode.desc+ ") in captured vars of "+ lambdaType);
+        }
+        if (result.isSkipped()) {
+        }
+ else {
+          cur=this.lambdaFieldRemapper.doTransform(node,fieldInsnNode,result);
+        }
+      }
+    }
+    cur=cur.getNext();
+  }
+}
