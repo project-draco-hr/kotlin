@@ -1,9 +1,12 @@
 {
-  if (variableDescriptor.isVar())   return;
+  if (!shouldRecordInitializerForProperty(variableDescriptor,variableType))   return;
+  final JetExpression initializer=variable.getInitializer();
+  if (initializer == null)   return;
   variableDescriptor.setCompileTimeInitializer(storageManager.createRecursionTolerantNullableLazyValue(new Function0<CompileTimeConstant<?>>(){
     @Nullable @Override public CompileTimeConstant<?> invoke(){
+      JetType initializerType=expressionTypingServices.safeGetType(scope,initializer,variableType,dataFlowInfo,trace);
       CompileTimeConstant<?> constant=ConstantExpressionEvaluator.object$.evaluate(initializer,trace,initializerType);
-      if ((constant instanceof IntegerValueTypeConstant)) {
+      if (constant instanceof IntegerValueTypeConstant) {
         return EvaluatePackage.createCompileTimeConstantWithType((IntegerValueTypeConstant)constant,initializerType);
       }
       return constant;
