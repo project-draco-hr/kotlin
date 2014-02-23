@@ -1,0 +1,24 @@
+{
+  for (  ClassDescriptorWithResolutionScopes classDescriptor : c.getClasses().values()) {
+    MutableClassDescriptor mutableClassDescriptor=(MutableClassDescriptor)classDescriptor;
+    if (classDescriptor.getKind() == ClassKind.CLASS_OBJECT) {
+      continue;
+    }
+    Collection<DeclarationDescriptor> allDescriptors=mutableClassDescriptor.getScopeForMemberLookup().getOwnDeclaredDescriptors();
+    MutableClassDescriptorLite classObj=mutableClassDescriptor.getClassObjectDescriptor();
+    if (classObj != null) {
+      Collection<DeclarationDescriptor> classObjDescriptors=classObj.getScopeForMemberLookup().getOwnDeclaredDescriptors();
+      if (!classObjDescriptors.isEmpty()) {
+        allDescriptors=Lists.newArrayList(allDescriptors);
+        allDescriptors.addAll(classObjDescriptors);
+      }
+    }
+    Multimap<Name,DeclarationDescriptor> descriptorMap=HashMultimap.create();
+    for (    DeclarationDescriptor desc : allDescriptors) {
+      if (desc instanceof ClassDescriptor || desc instanceof PropertyDescriptor) {
+        descriptorMap.put(desc.getName(),desc);
+      }
+    }
+    reportRedeclarations(descriptorMap);
+  }
+}
