@@ -1,23 +1,13 @@
 {
   this.project=project;
-  this.topDownAnalysisParameters=topDownAnalysisParameters;
-  this.storageManager=topDownAnalysisParameters.getStorageManager();
+  this.globalContext=globalContext;
+  this.storageManager=globalContext.getStorageManager();
   this.bindingTrace=bindingTrace;
   this.moduleDescriptor=moduleDescriptor;
   this.platformToKotlinClassMap=moduleDescriptor.getPlatformToKotlinClassMap();
   this.topDownAnalyzer=new TopDownAnalyzer();
   this.mutablePackageFragmentProvider=new MutablePackageFragmentProvider(getModuleDescriptor());
-  this.javaClassFinder=new JavaClassFinderImpl();
-  this.virtualFileFinder=org.jetbrains.jet.lang.resolve.kotlin.VirtualFileFinder.SERVICE.getInstance(project);
-  this.deserializedDescriptorResolver=new DeserializedDescriptorResolver();
-  this.psiBasedExternalAnnotationResolver=new PsiBasedExternalAnnotationResolver();
-  this.traceBasedExternalSignatureResolver=new TraceBasedExternalSignatureResolver();
-  this.traceBasedErrorReporter=new TraceBasedErrorReporter();
-  this.psiBasedMethodSignatureChecker=new PsiBasedMethodSignatureChecker();
-  this.traceBasedJavaResolverCache=new TraceBasedJavaResolverCache();
-  this.globalJavaResolverContext=new GlobalJavaResolverContext(storageManager,javaClassFinder,virtualFileFinder,deserializedDescriptorResolver,psiBasedExternalAnnotationResolver,traceBasedExternalSignatureResolver,traceBasedErrorReporter,psiBasedMethodSignatureChecker,traceBasedJavaResolverCache);
-  this.lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(globalJavaResolverContext,getModuleDescriptor());
-  this.javaDescriptorResolver=new JavaDescriptorResolver(lazyJavaPackageFragmentProvider,getModuleDescriptor());
+  this.dependencyClassByQualifiedNameResolverDummy=new DependencyClassByQualifiedNameResolverDummyImpl();
   this.bodyResolver=new BodyResolver();
   this.annotationResolver=new AnnotationResolver();
   this.callResolver=new CallResolver();
@@ -45,7 +35,6 @@
   this.overloadResolver=new OverloadResolver();
   this.overrideResolver=new OverrideResolver();
   this.typeHierarchyResolver=new TypeHierarchyResolver();
-  this.annotationDescriptorDeserializer=new AnnotationDescriptorDeserializer(storageManager);
   this.topDownAnalyzer.setBodyResolver(bodyResolver);
   this.topDownAnalyzer.setDeclarationResolver(declarationResolver);
   this.topDownAnalyzer.setModuleDescriptor(moduleDescriptor);
@@ -54,13 +43,6 @@
   this.topDownAnalyzer.setPackageFragmentProvider(mutablePackageFragmentProvider);
   this.topDownAnalyzer.setTrace(bindingTrace);
   this.topDownAnalyzer.setTypeHierarchyResolver(typeHierarchyResolver);
-  javaClassFinder.setProject(project);
-  traceBasedExternalSignatureResolver.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
-  traceBasedExternalSignatureResolver.setTrace(bindingTrace);
-  traceBasedJavaResolverCache.setTrace(bindingTrace);
-  traceBasedErrorReporter.setTrace(bindingTrace);
-  psiBasedMethodSignatureChecker.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
-  psiBasedMethodSignatureChecker.setExternalSignatureResolver(traceBasedExternalSignatureResolver);
   bodyResolver.setAnnotationResolver(annotationResolver);
   bodyResolver.setCallResolver(callResolver);
   bodyResolver.setControlFlowAnalyzer(controlFlowAnalyzer);
@@ -90,7 +72,7 @@
   expressionTypingComponents.setExpressionTypingServices(expressionTypingServices);
   expressionTypingComponents.setExpressionTypingUtils(expressionTypingUtils);
   expressionTypingComponents.setForLoopConventionsChecker(forLoopConventionsChecker);
-  expressionTypingComponents.setGlobalContext(topDownAnalysisParameters);
+  expressionTypingComponents.setGlobalContext(globalContext);
   expressionTypingComponents.setPlatformToKotlinClassMap(platformToKotlinClassMap);
   forLoopConventionsChecker.setExpressionTypingServices(expressionTypingServices);
   forLoopConventionsChecker.setExpressionTypingUtils(expressionTypingUtils);
@@ -122,7 +104,7 @@
   importsResolver.setQualifiedExpressionResolver(qualifiedExpressionResolver);
   importsResolver.setTrace(bindingTrace);
   jetImportsFactory.setProject(project);
-  scriptHeaderResolver.setDependencyClassByQualifiedNameResolver(javaDescriptorResolver);
+  scriptHeaderResolver.setDependencyClassByQualifiedNameResolver(dependencyClassByQualifiedNameResolverDummy);
   scriptHeaderResolver.setPackageFragmentProvider(mutablePackageFragmentProvider);
   scriptHeaderResolver.setTrace(bindingTrace);
   overloadResolver.setTrace(bindingTrace);
@@ -132,13 +114,4 @@
   typeHierarchyResolver.setPackageFragmentProvider(mutablePackageFragmentProvider);
   typeHierarchyResolver.setScriptHeaderResolver(scriptHeaderResolver);
   typeHierarchyResolver.setTrace(bindingTrace);
-  deserializedDescriptorResolver.setAnnotationDeserializer(annotationDescriptorDeserializer);
-  deserializedDescriptorResolver.setErrorReporter(traceBasedErrorReporter);
-  deserializedDescriptorResolver.setJavaDescriptorResolver(javaDescriptorResolver);
-  deserializedDescriptorResolver.setJavaPackageFragmentProvider(lazyJavaPackageFragmentProvider);
-  deserializedDescriptorResolver.setStorageManager(storageManager);
-  annotationDescriptorDeserializer.setErrorReporter(traceBasedErrorReporter);
-  annotationDescriptorDeserializer.setJavaDescriptorResolver(javaDescriptorResolver);
-  annotationDescriptorDeserializer.setKotlinClassFinder(virtualFileFinder);
-  javaClassFinder.initialize();
 }
