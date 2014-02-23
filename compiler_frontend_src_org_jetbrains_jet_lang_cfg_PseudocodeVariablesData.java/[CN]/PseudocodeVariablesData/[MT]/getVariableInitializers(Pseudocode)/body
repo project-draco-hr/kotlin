@@ -1,25 +1,13 @@
 {
-  Set<VariableDescriptor> usedVariables=getUsedVariables(pseudocode);
-  Set<VariableDescriptor> declaredVariables=getDeclaredVariables(pseudocode,false);
+  final Set<VariableDescriptor> declaredVariables=getDeclaredVariables(pseudocode,true);
   Map<VariableDescriptor,VariableInitState> initialMap=Collections.emptyMap();
-  Map<VariableDescriptor,VariableInitState> initialMapForStartInstruction=prepareInitializersMapForStartInstruction(usedVariables,declaredVariables);
-  Map<Instruction,Edges<Map<VariableDescriptor,VariableInitState>>> variableInitializersMap=PseudocodeTraverser.collectData(pseudocode,FORWARD,SKIP_LOCAL_DECLARATIONS,initialMap,initialMapForStartInstruction,new PseudocodeTraverser.InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>>(){
+  InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>> instructionDataMergeStrategy=new InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>>(){
     @Override public Edges<Map<VariableDescriptor,VariableInitState>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableInitState>> incomingEdgesData){
       Map<VariableDescriptor,VariableInitState> enterInstructionData=mergeIncomingEdgesDataForInitializers(incomingEdgesData);
-      Map<VariableDescriptor,VariableInitState> exitInstructionData=addVariableInitStateFromCurrentInstructionIfAny(instruction,enterInstructionData);
+      Map<VariableDescriptor,VariableInitState> exitInstructionData=addVariableInitStateFromCurrentInstructionIfAny(instruction,enterInstructionData,declaredVariables);
       return Edges.create(enterInstructionData,exitInstructionData);
     }
   }
-);
-  for (  LocalFunctionDeclarationInstruction localFunctionDeclarationInstruction : pseudocode.getLocalDeclarations()) {
-    Pseudocode localPseudocode=localFunctionDeclarationInstruction.getBody();
-    Map<Instruction,Edges<Map<VariableDescriptor,VariableInitState>>> initializersForLocalDeclaration=getVariableInitializers(localPseudocode);
-    for (    Instruction instruction : initializersForLocalDeclaration.keySet()) {
-      if (!variableInitializersMap.containsKey(instruction)) {
-        variableInitializersMap.put(instruction,initializersForLocalDeclaration.get(instruction));
-      }
-    }
-    variableInitializersMap.putAll(initializersForLocalDeclaration);
-  }
-  return variableInitializersMap;
+;
+  return PseudocodeTraverser.collectData(pseudocode,FORWARD,ANALYSE_LOCAL_DECLARATIONS,initialMap,initialMap,instructionDataMergeStrategy);
 }
