@@ -3,18 +3,15 @@
   appendDecompiledTextAndPackageName(packageFqName);
   KotlinClassHeader.Kind kind=classFileHeader.getKind();
   if (kind == KotlinClassHeader.Kind.PACKAGE_FACADE) {
-    PackageFragmentDescriptor pf=javaDescriptorResolver.getPackageFragment(packageFqName);
-    if (pf != null) {
-      for (      DeclarationDescriptor member : sortDeclarations(pf.getMemberScope().getAllDescriptors())) {
-        if (!(member instanceof ClassDescriptor)) {
-          appendDescriptor(member,"");
-          builder.append("\n");
-        }
+    for (    DeclarationDescriptor member : sortDeclarations(resolver.resolveDeclarationsInPackage(packageFqName))) {
+      if (!(member instanceof ClassDescriptor)) {
+        appendDescriptor(member,"");
+        builder.append("\n");
       }
     }
   }
  else   if (kind == KotlinClassHeader.Kind.CLASS) {
-    ClassDescriptor cd=javaDescriptorResolver.resolveClass(classFqName);
+    ClassDescriptor cd=resolver.resolveClass(classFqName);
     if (cd != null) {
       appendDescriptor(cd,"");
     }
