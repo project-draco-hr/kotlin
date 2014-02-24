@@ -1,13 +1,11 @@
 {
   final Set<VariableDescriptor> declaredVariables=getDeclaredVariables(pseudocode,true);
-  Map<VariableDescriptor,VariableInitState> initialMap=Collections.emptyMap();
-  InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>> instructionDataMergeStrategy=new InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>>(){
+  return new PseudocodeVariableDataCollector(bindingContext).collectData(pseudocode,FORWARD,new InstructionDataMergeStrategy<Map<VariableDescriptor,VariableInitState>>(){
     @Override public Edges<Map<VariableDescriptor,VariableInitState>> execute(    @NotNull Instruction instruction,    @NotNull Collection<Map<VariableDescriptor,VariableInitState>> incomingEdgesData){
       Map<VariableDescriptor,VariableInitState> enterInstructionData=mergeIncomingEdgesDataForInitializers(incomingEdgesData);
       Map<VariableDescriptor,VariableInitState> exitInstructionData=addVariableInitStateFromCurrentInstructionIfAny(instruction,enterInstructionData,declaredVariables);
       return Edges.create(enterInstructionData,exitInstructionData);
     }
   }
-;
-  return new PseudocodeVariableDataCollector(bindingContext).collectData(pseudocode,FORWARD,ANALYSE_LOCAL_DECLARATIONS,initialMap,initialMap,instructionDataMergeStrategy);
+);
 }

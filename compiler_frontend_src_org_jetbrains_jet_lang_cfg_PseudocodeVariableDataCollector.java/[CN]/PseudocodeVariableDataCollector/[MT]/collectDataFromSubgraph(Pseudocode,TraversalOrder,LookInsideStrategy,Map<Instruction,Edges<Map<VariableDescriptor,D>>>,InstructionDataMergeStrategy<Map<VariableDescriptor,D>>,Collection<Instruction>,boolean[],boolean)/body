@@ -18,23 +18,23 @@
       Pseudocode subroutinePseudocode=functionInstruction.getBody();
       collectDataFromSubgraph(subroutinePseudocode,traversalOrder,lookInside,edgesMap,instructionDataMergeStrategy,previousInstructions,changed,true);
       Instruction lastInstruction=getLastInstruction(subroutinePseudocode,traversalOrder);
-      Edges<D> previousValue=edgesMap.get(instruction);
-      Edges<D> newValue=edgesMap.get(lastInstruction);
+      Edges<Map<VariableDescriptor,D>> previousValue=edgesMap.get(instruction);
+      Edges<Map<VariableDescriptor,D>> newValue=edgesMap.get(lastInstruction);
       if (!previousValue.equals(newValue)) {
         changed[0]=true;
         edgesMap.put(instruction,newValue);
       }
       continue;
     }
-    Edges<D> previousDataValue=edgesMap.get(instruction);
-    Collection<D> incomingEdgesData=Sets.newHashSet();
+    Edges<Map<VariableDescriptor,D>> previousDataValue=edgesMap.get(instruction);
+    Collection<Map<VariableDescriptor,D>> incomingEdgesData=Sets.newHashSet();
     for (    Instruction previousInstruction : allPreviousInstructions) {
-      Edges<D> previousData=edgesMap.get(previousInstruction);
+      Edges<Map<VariableDescriptor,D>> previousData=edgesMap.get(previousInstruction);
       if (previousData != null) {
         incomingEdgesData.add(previousData.out);
       }
     }
-    Edges<D> mergedData=instructionDataMergeStrategy.execute(instruction,incomingEdgesData);
+    Edges<Map<VariableDescriptor,D>> mergedData=instructionDataMergeStrategy.execute(instruction,incomingEdgesData);
     if (!mergedData.equals(previousDataValue)) {
       changed[0]=true;
       edgesMap.put(instruction,mergedData);
