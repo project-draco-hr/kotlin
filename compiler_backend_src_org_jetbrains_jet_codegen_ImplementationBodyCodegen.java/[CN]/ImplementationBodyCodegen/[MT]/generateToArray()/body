@@ -1,8 +1,10 @@
 {
   KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
-  if (isSubclass(descriptor,builtIns.getCollection())) {
-    if (CodegenUtil.getDeclaredFunctionByRawSignature(descriptor,Name.identifier("toArray"),builtIns.getArray()) == null) {
-      MethodVisitor mv=v.getVisitor().visitMethod(ACC_PUBLIC,"toArray","()[Ljava/lang/Object;",null,null);
+  if (!isSubclass(descriptor,builtIns.getCollection()))   return;
+  int access=descriptor.getKind() == ClassKind.TRAIT ? ACC_PUBLIC | ACC_ABSTRACT : ACC_PUBLIC;
+  if (CodegenUtil.getDeclaredFunctionByRawSignature(descriptor,Name.identifier("toArray"),builtIns.getArray()) == null) {
+    MethodVisitor mv=v.getVisitor().visitMethod(access,"toArray","()[Ljava/lang/Object;",null,null);
+    if (descriptor.getKind() != ClassKind.TRAIT) {
       InstructionAdapter iv=new InstructionAdapter(mv);
       mv.visitCode();
       iv.load(0,classAsmType);
@@ -10,8 +12,10 @@
       iv.areturn(Type.getObjectType("[Ljava/lang/Object;"));
       FunctionCodegen.endVisit(mv,"toArray",myClass);
     }
-    if (!isGenericToArrayPresent()) {
-      MethodVisitor mv=v.getVisitor().visitMethod(ACC_PUBLIC,"toArray","([Ljava/lang/Object;)[Ljava/lang/Object;",null,null);
+  }
+  if (!isGenericToArrayPresent()) {
+    MethodVisitor mv=v.getVisitor().visitMethod(access,"toArray","([Ljava/lang/Object;)[Ljava/lang/Object;",null,null);
+    if (descriptor.getKind() != ClassKind.TRAIT) {
       InstructionAdapter iv=new InstructionAdapter(mv);
       mv.visitCode();
       iv.load(0,classAsmType);
