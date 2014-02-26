@@ -1,0 +1,58 @@
+{
+  namedMethods.put("kotlin.javaClass.function",new JavaClassFunction());
+  namedMethods.put("kotlin.javaClass.property",new JavaClassProperty());
+  namedMethods.put("kotlin.arrays.array",new JavaClassArray());
+  namedMethods.put("kotlin.collections.copyToArray",new CopyToArray());
+  namedMethods.put("kotlin.synchronized",new StupidSync());
+  ImmutableList<Name> primitiveCastMethods=OperatorConventions.NUMBER_CONVERSIONS.asList();
+  for (  Name method : primitiveCastMethods) {
+    String methodName=method.asString();
+    declareIntrinsicFunction("Number",methodName,0,NUMBER_CAST);
+    for (    PrimitiveType type : PrimitiveType.NUMBER_TYPES) {
+      declareIntrinsicFunction(type.getTypeName().asString(),methodName,0,NUMBER_CAST);
+    }
+  }
+  for (  PrimitiveType type : PrimitiveType.NUMBER_TYPES) {
+    String typeName=type.getTypeName().asString();
+    declareIntrinsicFunction(typeName,"plus",0,UNARY_PLUS);
+    declareIntrinsicFunction(typeName,"minus",0,UNARY_MINUS);
+    declareIntrinsicFunction(typeName,"inv",0,INV);
+    declareIntrinsicFunction(typeName,"rangeTo",1,RANGE_TO);
+    declareIntrinsicFunction(typeName,"inc",0,INC);
+    declareIntrinsicFunction(typeName,"dec",0,DEC);
+  }
+  for (  PrimitiveType type : PrimitiveType.values()) {
+    String typeName=type.getTypeName().asString();
+    declareIntrinsicFunction(typeName,"equals",1,EQUALS);
+    declareIntrinsicFunction(typeName,"hashCode",0,HASH_CODE);
+    declareIntrinsicFunction(typeName,"toString",0,TO_STRING);
+  }
+  declareBinaryOp("plus",IADD);
+  declareBinaryOp("minus",ISUB);
+  declareBinaryOp("times",IMUL);
+  declareBinaryOp("div",IDIV);
+  declareBinaryOp("mod",IREM);
+  declareBinaryOp("shl",ISHL);
+  declareBinaryOp("shr",ISHR);
+  declareBinaryOp("ushr",IUSHR);
+  declareBinaryOp("and",IAND);
+  declareBinaryOp("or",IOR);
+  declareBinaryOp("xor",IXOR);
+  declareIntrinsicFunction("Boolean","not",0,new Not());
+  declareIntrinsicFunction("String","plus",1,new Concat());
+  declareIntrinsicFunction("CharSequence","get",1,new StringGetChar());
+  declareIntrinsicFunction("String","get",1,new StringGetChar());
+  intrinsicsMap.registerIntrinsic(BUILT_INS_PACKAGE_FQ_NAME,"toString",0,TO_STRING);
+  intrinsicsMap.registerIntrinsic(BUILT_INS_PACKAGE_FQ_NAME,"equals",1,EQUALS);
+  intrinsicsMap.registerIntrinsic(BUILT_INS_PACKAGE_FQ_NAME,"identityEquals",1,IDENTITY_EQUALS);
+  intrinsicsMap.registerIntrinsic(BUILT_INS_PACKAGE_FQ_NAME,"plus",1,STRING_PLUS);
+  intrinsicsMap.registerIntrinsic(BUILT_INS_PACKAGE_FQ_NAME,"arrayOfNulls",1,new NewArray());
+  for (  PrimitiveType type : PrimitiveType.values()) {
+    String typeName=type.getTypeName().asString();
+    declareIntrinsicFunction(typeName,"compareTo",1,new CompareTo());
+    declareIntrinsicFunction(typeName + "Iterator","next",0,ITERATOR_NEXT);
+  }
+  declareIntrinsicProperty("CharSequence","length",new StringLength());
+  declareIntrinsicProperty("String","length",new StringLength());
+  declareArrayMethods();
+}
