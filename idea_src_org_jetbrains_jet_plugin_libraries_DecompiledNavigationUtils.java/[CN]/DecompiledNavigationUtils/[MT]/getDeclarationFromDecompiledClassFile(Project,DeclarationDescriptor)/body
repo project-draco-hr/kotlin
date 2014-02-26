@@ -2,8 +2,11 @@
   DeclarationDescriptor effectiveReferencedDescriptor=getEffectiveReferencedDescriptor(referencedDescriptor);
   VirtualFile virtualFile=findVirtualFileContainingDescriptor(project,effectiveReferencedDescriptor);
   if (virtualFile == null || !DecompiledUtils.isKotlinCompiledFile(virtualFile))   return null;
-  JetDecompiledData data=JetDecompiledData.getDecompiledData(virtualFile,project);
-  JetDeclaration jetDeclaration=data.getDeclarationForDescriptor(effectiveReferencedDescriptor);
+  PsiFile psiFile=PsiManager.getInstance(project).findFile(virtualFile);
+  if (!(psiFile instanceof JetClsFile)) {
+    return null;
+  }
+  JetDeclaration jetDeclaration=((JetClsFile)psiFile).getDeclarationForDescriptor(effectiveReferencedDescriptor);
   if (jetDeclaration != null) {
     return jetDeclaration;
   }
