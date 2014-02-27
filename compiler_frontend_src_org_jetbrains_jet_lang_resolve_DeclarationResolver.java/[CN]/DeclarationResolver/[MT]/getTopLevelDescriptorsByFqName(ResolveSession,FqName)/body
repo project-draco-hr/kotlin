@@ -1,0 +1,16 @@
+{
+  FqName parentFqName=fqName.parent();
+  Set<DeclarationDescriptor> descriptors=new HashSet<DeclarationDescriptor>();
+  LazyPackageDescriptor parentFragment=resolveSession.getPackageFragment(parentFqName);
+  if (parentFragment != null) {
+    descriptors.addAll(KotlinPackage.filter(parentFragment.getMemberScope().getProperties(fqName.shortName()),new Function1<VariableDescriptor,Boolean>(){
+      @Override public Boolean invoke(      VariableDescriptor descriptor){
+        return descriptor.getReceiverParameter() == null;
+      }
+    }
+));
+  }
+  ContainerUtil.addIfNotNull(descriptors,resolveSession.getPackageFragment(fqName));
+  descriptors.addAll(resolveSession.getTopLevelClassDescriptors(fqName));
+  return descriptors;
+}
