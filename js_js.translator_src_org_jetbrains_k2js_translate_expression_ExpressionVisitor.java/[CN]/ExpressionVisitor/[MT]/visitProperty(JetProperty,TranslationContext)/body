@@ -2,10 +2,9 @@
   VariableDescriptor descriptor=BindingContextUtils.getNotNull(context.bindingContext(),BindingContext.VARIABLE,expression);
   JsExpression initializer=translateInitializerForProperty(expression,context);
   JsName name=context.getNameForDescriptor(descriptor);
-  if (descriptor.isVar() && context.bindingContext().get(BindingContext.CAPTURED_IN_CLOSURE,descriptor) != null) {
-    JsNameRef alias=new JsNameRef("v",new JsNameRef(name));
+  if (isVarCapturedInClosure(context.bindingContext(),descriptor)) {
+    JsNameRef alias=getCapturedVarAccessor(name.makeRef());
     initializer=JsAstUtils.wrapValue(alias,initializer == null ? JsLiteral.NULL : initializer);
-    context.aliasingContext().registerAlias(descriptor,alias);
   }
   return newVar(name,initializer).source(expression);
 }
