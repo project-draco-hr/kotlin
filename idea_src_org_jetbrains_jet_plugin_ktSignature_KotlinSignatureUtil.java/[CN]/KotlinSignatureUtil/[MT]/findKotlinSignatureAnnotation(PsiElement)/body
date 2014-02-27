@@ -2,8 +2,16 @@
   if (!(element instanceof PsiModifierListOwner))   return null;
   PsiModifierListOwner annotationOwner=getAnnotationOwner(element);
   PsiModifierList list=annotationOwner.getModifierList();
-  PsiAnnotation ownAnnotation=list == null ? null : list.findAnnotation(KOTLIN_SIGNATURE.asString());
-  PsiAnnotation annotation=ownAnnotation != null ? ownAnnotation : PsiBasedExternalAnnotationResolver.findExternalAnnotation(annotationOwner,KOTLIN_SIGNATURE);
+  PsiAnnotation annotation=list == null ? null : list.findAnnotation(KOTLIN_SIGNATURE.asString());
+  if (annotation == null) {
+    annotation=PsiBasedExternalAnnotationResolver.findExternalAnnotation(annotationOwner,KOTLIN_SIGNATURE);
+    if (annotation == null) {
+      annotation=list == null ? null : list.findAnnotation(OLD_KOTLIN_SIGNATURE.asString());
+      if (annotation == null) {
+        annotation=PsiBasedExternalAnnotationResolver.findExternalAnnotation(annotationOwner,OLD_KOTLIN_SIGNATURE);
+      }
+    }
+  }
   if (annotation == null)   return null;
   if (annotation.getParameterList().getAttributes().length == 0)   return null;
   return annotation;
