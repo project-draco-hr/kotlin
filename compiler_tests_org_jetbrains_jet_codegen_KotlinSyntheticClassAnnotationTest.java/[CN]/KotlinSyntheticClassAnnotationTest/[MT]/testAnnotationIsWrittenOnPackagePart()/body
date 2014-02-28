@@ -1,0 +1,22 @@
+{
+  loadText("package " + PACKAGE_NAME + "\n\nfun foo() = 42\n");
+  String facadeFileName=JvmClassName.byFqNameWithoutInnerClasses(PackageClassUtils.getPackageClassFqName(PACKAGE_NAME)).getInternalName() + ".class";
+  OutputFileCollection outputFiles=generateClassesInFile();
+  for (  OutputFile outputFile : outputFiles.asList()) {
+    String filePath=outputFile.getRelativePath();
+    if (filePath.equals(facadeFileName))     continue;
+    String fqName=filePath.substring(0,filePath.length() - ".class".length()).replace('/','.');
+    Class<?> aClass=generateClass(fqName);
+    Class<? extends Annotation> annotationClass=loadAnnotationClassQuietly(KOTLIN_SYNTHETIC_CLASS.asString());
+    assertTrue("No KotlinSyntheticClass annotation found on a package part",aClass.isAnnotationPresent(annotationClass));
+    Annotation annotation=aClass.getAnnotation(annotationClass);
+    Integer version=(Integer)CodegenTestUtil.getAnnotationAttribute(annotation,"abiVersion");
+    assertNotNull(version);
+    assertTrue("KotlinSyntheticClass annotation is written with an unsupported format",AbiVersionUtil.isAbiVersionCompatible(version));
+    Object kind=CodegenTestUtil.getAnnotationAttribute(annotation,"kind");
+    assertNotNull(kind);
+    assertEquals("KotlinSyntheticClass annotation has the wrong kind","PACKAGE_PART",kind.toString());
+    return;
+  }
+  fail("No package part was found: " + outputFiles.asList());
+}
