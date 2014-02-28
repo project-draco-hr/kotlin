@@ -1,4 +1,6 @@
 {
+  PsiBuilder.Marker qualifiedExpression=mark();
+  boolean simpleName=true;
   while (true) {
     if (myBuilder.newlineBeforeCurrentToken()) {
       errorWithRecovery("Package name must be a '.'-separated identifier list placed on a single line",PACKAGE_NAME_RECOVERY_SET);
@@ -11,11 +13,18 @@
  else {
       nsName.drop();
     }
+    if (!simpleName) {
+      PsiBuilder.Marker precedingMarker=qualifiedExpression.precede();
+      qualifiedExpression.done(DOT_QUALIFIED_EXPRESSION);
+      qualifiedExpression=precedingMarker;
+    }
     if (at(DOT)) {
+      simpleName=false;
       advance();
     }
  else {
       break;
     }
   }
+  qualifiedExpression.drop();
 }
