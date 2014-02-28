@@ -2,7 +2,12 @@
   MethodNode node;
   if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
     VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor,state);
-    node=InlineCodegenUtil.getMethodNode(file.getInputStream(),functionDescriptor.getName().asString(),callableMethod.getAsmMethod().getDescriptor());
+    String methodDesc=callableMethod.getAsmMethod().getDescriptor();
+    DeclarationDescriptor parentDescriptor=functionDescriptor.getContainingDeclaration();
+    if (DescriptorUtils.isTrait(parentDescriptor)) {
+      methodDesc="(" + typeMapper.mapType((ClassDescriptor)parentDescriptor).getDescriptor() + methodDesc.substring(1);
+    }
+    node=InlineCodegenUtil.getMethodNode(file.getInputStream(),functionDescriptor.getName().asString(),methodDesc);
     if (node == null) {
       throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
     }
