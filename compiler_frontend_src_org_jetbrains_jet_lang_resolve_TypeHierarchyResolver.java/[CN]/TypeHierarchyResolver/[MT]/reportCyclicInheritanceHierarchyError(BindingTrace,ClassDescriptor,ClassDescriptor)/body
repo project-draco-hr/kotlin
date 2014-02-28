@@ -1,0 +1,25 @@
+{
+  PsiElement psiElement=BindingContextUtils.classDescriptorToDeclaration(trace.getBindingContext(),classDescriptor);
+  PsiElement elementToMark=null;
+  if (psiElement instanceof JetClassOrObject) {
+    JetClassOrObject classOrObject=(JetClassOrObject)psiElement;
+    for (    JetDelegationSpecifier delegationSpecifier : classOrObject.getDelegationSpecifiers()) {
+      JetTypeReference typeReference=delegationSpecifier.getTypeReference();
+      if (typeReference == null)       continue;
+      JetType supertype=trace.get(TYPE,typeReference);
+      if (supertype != null && supertype.getConstructor() == superclass.getTypeConstructor()) {
+        elementToMark=typeReference;
+      }
+    }
+  }
+  if (elementToMark == null && psiElement instanceof PsiNameIdentifierOwner) {
+    PsiNameIdentifierOwner namedElement=(PsiNameIdentifierOwner)psiElement;
+    PsiElement nameIdentifier=namedElement.getNameIdentifier();
+    if (nameIdentifier != null) {
+      elementToMark=nameIdentifier;
+    }
+  }
+  if (elementToMark != null) {
+    trace.report(CYCLIC_INHERITANCE_HIERARCHY.on(elementToMark));
+  }
+}
