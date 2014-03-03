@@ -4,7 +4,11 @@
     return PackageClassUtils.getPackageClassFqName(getFqName(containerDescriptor).toSafe());
   }
   if (containerDescriptor instanceof ClassDescriptor) {
-    return DeserializedResolverUtils.kotlinFqNameToJavaFqName(getFqName(containerDescriptor),isTrait(containerDescriptor));
+    FqName fqName=DeserializedResolverUtils.kotlinFqNameToJavaFqName(getFqName(containerDescriptor));
+    if (isTrait(containerDescriptor)) {
+      return fqName.parent().child(Name.identifier(fqName.shortName() + JvmAbi.TRAIT_IMPL_SUFFIX));
+    }
+    return fqName;
   }
   return null;
 }
