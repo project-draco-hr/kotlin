@@ -1,15 +1,17 @@
 {
-  KotlinClassHeader.Kind newKind=HEADER_KINDS.get(annotationClassName);
-  if (newKind == null)   return null;
-  if (this.headerKind != null) {
+  if (!ALL_SUPPORTED_ANNOTATIONS.contains(annotation))   return null;
+  if (headerKind != null) {
     return null;
   }
-  headerKind=newKind;
-  if (newKind == CLASS || newKind == PACKAGE_FACADE) {
-    return kotlinClassOrPackageVisitor(annotationClassName);
+  if (annotation.equals(KOTLIN_CLASS_ANNOTATION) || annotation.equals(KOTLIN_PACKAGE_ANNOTATION)) {
+    headerKind=annotation.equals(KOTLIN_CLASS_ANNOTATION) ? CLASS : PACKAGE_FACADE;
+    return kotlinClassOrPackageVisitor(annotation);
   }
- else   if (newKind == SYNTHETIC_CLASS) {
-    return syntheticClassAnnotationVisitor(annotationClassName);
+ else   if (annotation.equals(KOTLIN_SYNTHETIC_CLASS_ANNOTATION)) {
+    return syntheticClassAnnotationVisitor();
+  }
+ else {
+    headerKind=INCOMPATIBLE_ABI_VERSION;
   }
   return null;
 }
