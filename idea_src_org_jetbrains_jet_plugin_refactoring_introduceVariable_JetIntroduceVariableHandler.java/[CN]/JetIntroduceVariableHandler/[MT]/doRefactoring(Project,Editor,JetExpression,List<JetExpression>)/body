@@ -71,7 +71,13 @@
     return;
   }
   final boolean isInplaceAvailableOnDataContext=editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode();
-  final List<JetExpression> allOccurrences=findOccurrences(occurrenceContainer,expression);
+  final List<JetExpression> allOccurrences;
+  if (occurrencesToReplace == null) {
+    allOccurrences=findOccurrences(occurrenceContainer,expression);
+  }
+ else {
+    allOccurrences=occurrencesToReplace;
+  }
   final boolean finalNoTypeInference=noTypeInference;
   final boolean finalNeedParentheses=needParentheses;
   Pass<OccurrencesChooser.ReplaceChoice> callback=new Pass<OccurrencesChooser.ReplaceChoice>(){
@@ -116,7 +122,7 @@
     }
   }
 ;
-  if (isInplaceAvailableOnDataContext) {
+  if (isInplaceAvailableOnDataContext && occurrencesToReplace == null) {
     OccurrencesChooser.<JetExpression>simpleChooser(editor).showChooser(expression,allOccurrences,callback);
   }
  else {
