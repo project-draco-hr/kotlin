@@ -1,4 +1,13 @@
 {
+  if (isAnonymousObject(descriptor)) {
+    writeKotlinSyntheticClassAnnotation(v,KotlinSyntheticClass.Kind.ANONYMOUS_OBJECT);
+    return;
+  }
+  if (!isTopLevelOrInnerClass(descriptor)) {
+    writeKotlinSyntheticClassAnnotation(v,KotlinSyntheticClass.Kind.LOCAL_CLASS);
+    return;
+  }
+  if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
   DescriptorSerializer serializer=new DescriptorSerializer(new JavaSerializerExtension(v.getSerializationBindings()));
   ProtoBuf.Class classProto=serializer.classProto(descriptor).build();
   ClassData data=new ClassData(createNameResolver(serializer.getNameTable()),classProto);
