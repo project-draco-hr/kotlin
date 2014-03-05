@@ -27,17 +27,7 @@
       bound=typeResolver.resolveType(scope,boundTypeReference,trace,false);
       deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(boundTypeReference,bound,constraint.isClassObjectConstraint()));
     }
-    if (typeParameterDescriptor == null) {
-      ClassifierDescriptor classifier=scope.getClassifier(referencedName);
-      if (classifier != null) {
-        trace.report(NAME_IN_CONSTRAINT_IS_NOT_A_TYPE_PARAMETER.on(subjectTypeParameterName,constraint,declaration));
-        trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,classifier);
-      }
- else {
-        trace.report(UNRESOLVED_REFERENCE.on(subjectTypeParameterName,subjectTypeParameterName));
-      }
-    }
- else {
+    if (typeParameterDescriptor != null) {
       trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
       if (bound != null) {
         if (constraint.isClassObjectConstraint()) {
@@ -68,5 +58,8 @@
   }
   for (  UpperBoundCheckerTask checkerTask : deferredUpperBoundCheckerTasks) {
     checkUpperBoundType(checkerTask.upperBound,checkerTask.upperBoundType,checkerTask.isClassObjectConstraint,trace);
+  }
+  if (!(declaration instanceof JetClass)) {
+    checkNamesInConstraints(declaration,descriptor,scope,trace);
   }
 }
