@@ -1,26 +1,19 @@
 {
   return new AnnotationArgumentVisitor(){
     @Override public void visit(    @Nullable Name name,    @Nullable Object value){
-      visitIntValueForSupportedAnnotation(name,value,KOTLIN_SYNTHETIC_CLASS_ANNOTATION);
+      visitIntValueForSupportedAnnotation(name,value,KotlinSyntheticClass.CLASS_NAME);
     }
     @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
       if (enumClassName.getInternalName().equals(KotlinSyntheticClass.KIND_INTERNAL_NAME) && name.equals(KotlinSyntheticClass.KIND_FIELD_NAME)) {
-        String value=enumEntryName.asString();
-        if (value.equals(KotlinSyntheticClass.Kind.PACKAGE_PART.toString())) {
-          headerKind=PACKAGE_PART;
-          return;
-        }
- else         if (value.equals(KotlinSyntheticClass.Kind.TRAIT_IMPL.toString())) {
-          headerKind=TRAIT_IMPL;
-          return;
-        }
+        syntheticClassKind=KotlinSyntheticClass.Kind.valueOfOrNull(enumEntryName.asString());
+        if (syntheticClassKind != null)         return;
       }
       if (isAbiVersionCompatible(version)) {
         throw new IllegalStateException("Unexpected enum entry for synthetic class annotation: " + name + "="+ enumClassName+ "."+ enumEntryName);
       }
     }
     @Nullable @Override public AnnotationArgumentVisitor visitArray(    @NotNull Name name){
-      return unexpectedArgument(name,KOTLIN_SYNTHETIC_CLASS_ANNOTATION);
+      return unexpectedArgument(name,KotlinSyntheticClass.CLASS_NAME);
     }
     @Override public void visitEnd(){
     }
