@@ -3,13 +3,16 @@
   if (classOrObject instanceof JetClass) {
     JetClass jetClass=(JetClass)classOrObject;
     for (    JetTypeConstraint jetTypeConstraint : jetClass.getTypeConstraints()) {
-      if (jetTypeConstraint.isClassObjectConstraint() != forClassObject)       continue;
+      DescriptorResolver.reportUnsupportedClassObjectConstraint(resolveSession.getTrace(),jetTypeConstraint);
       JetSimpleNameExpression constrainedParameterName=jetTypeConstraint.getSubjectTypeParameterName();
       if (constrainedParameterName != null) {
         if (getName().equals(constrainedParameterName.getReferencedNameAsName())) {
           JetTypeReference boundTypeReference=jetTypeConstraint.getBoundTypeReference();
           if (boundTypeReference != null) {
-            upperBounds.add(resolveBoundType(boundTypeReference));
+            JetType boundType=resolveBoundType(boundTypeReference);
+            if (!jetTypeConstraint.isClassObjectConstraint()) {
+              upperBounds.add(boundType);
+            }
           }
         }
       }
