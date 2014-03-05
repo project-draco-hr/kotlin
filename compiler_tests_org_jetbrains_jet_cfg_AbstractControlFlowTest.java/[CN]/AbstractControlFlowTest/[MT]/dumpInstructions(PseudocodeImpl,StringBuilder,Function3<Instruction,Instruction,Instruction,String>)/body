@@ -1,0 +1,21 @@
+{
+  List<Instruction> instructions=pseudocode.getAllInstructions();
+  Set<Instruction> remainedAfterPostProcessInstructions=Sets.newHashSet(pseudocode.getInstructions());
+  List<PseudocodeImpl.PseudocodeLabel> labels=pseudocode.getLabels();
+  int instructionColumnWidth=countInstructionColumnWidth(instructions);
+  for (int i=0; i < instructions.size(); i++) {
+    Instruction instruction=instructions.get(i);
+    for (    PseudocodeImpl.PseudocodeLabel label : labels) {
+      if (label.getTargetInstructionIndex() == i) {
+        out.append(label.getName()).append(":\n");
+      }
+    }
+    StringBuilder line=new StringBuilder();
+    line.append(formatInstruction(instruction,instructionColumnWidth,remainedAfterPostProcessInstructions));
+    Instruction next=i == instructions.size() - 1 ? null : instructions.get(i + 1);
+    Instruction prev=i == 0 ? null : instructions.get(i - 1);
+    line.append(getInstructionData.invoke(instruction,next,prev));
+    out.append(StringUtil.trimTrailing(line.toString()));
+    out.append("\n");
+  }
+}
