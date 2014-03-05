@@ -1,0 +1,27 @@
+{
+  PseudocodeVariablesData pseudocodeVariablesData=new PseudocodeVariablesData(pseudocode,bindingContext);
+  final Map<Instruction,Edges<Map<VariableDescriptor,VariableInitState>>> variableInitializers=pseudocodeVariablesData.getVariableInitializers();
+  final Map<Instruction,Edges<Map<VariableDescriptor,VariableUseState>>> useStatusData=pseudocodeVariablesData.getVariableUseStatusData();
+  final String initPrefix="    INIT:";
+  final String usePrefix="    USE:";
+  final int initializersColumnWidth=countDataColumnWidth(initPrefix,pseudocode.getAllInstructions(),variableInitializers);
+  dumpInstructions(pseudocode,out,new Function3<Instruction,Instruction,Instruction,String>(){
+    @Override public String invoke(    Instruction instruction,    Instruction next,    Instruction prev){
+      StringBuilder result=new StringBuilder();
+      Edges<Map<VariableDescriptor,VariableInitState>> initializersEdges=variableInitializers.get(instruction);
+      Edges<Map<VariableDescriptor,VariableInitState>> previousInitializersEdges=variableInitializers.get(prev);
+      String initializersData="";
+      if (initializersEdges != null && !initializersEdges.equals(previousInitializersEdges)) {
+        initializersData=dumpEdgesData(initPrefix,initializersEdges);
+      }
+      result.append(String.format("%1$-" + initializersColumnWidth + "s",initializersData));
+      Edges<Map<VariableDescriptor,VariableUseState>> useStatusEdges=useStatusData.get(instruction);
+      Edges<Map<VariableDescriptor,VariableUseState>> nextUseStatusEdges=useStatusData.get(next);
+      if (useStatusEdges != null && !useStatusEdges.equals(nextUseStatusEdges)) {
+        result.append(dumpEdgesData(usePrefix,useStatusEdges));
+      }
+      return result.toString();
+    }
+  }
+);
+}
