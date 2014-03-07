@@ -6,16 +6,7 @@
   if (condition != null) {
     generateInstructions(condition,IN_CONDITION);
   }
-  boolean conditionIsTrueConstant=false;
-  if (condition instanceof JetConstantExpression && condition.getNode().getElementType() == JetNodeTypes.BOOLEAN_CONSTANT) {
-    CompileTimeConstant<?> compileTimeConstant=ConstantExpressionEvaluator.object$.evaluate(condition,trace,KotlinBuiltIns.getInstance().getBooleanType());
-    if (compileTimeConstant instanceof BooleanValue) {
-      Boolean value=((BooleanValue)compileTimeConstant).getValue();
-      if (Boolean.TRUE.equals(value)) {
-        conditionIsTrueConstant=true;
-      }
-    }
-  }
+  boolean conditionIsTrueConstant=CompileTimeConstantUtils.canBeReducedToBooleanConstant(condition,trace,true);
   if (!conditionIsTrueConstant) {
     builder.jumpOnFalse(loopInfo.getExitPoint());
   }
