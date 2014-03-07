@@ -1,0 +1,18 @@
+{
+  if (!shouldPatchByMe(fieldInsnNode)) {
+    return parent.patch(fieldInsnNode,node);
+  }
+  AbstractInsnNode previous=fieldInsnNode.getPrevious();
+  AbstractInsnNode nextInstruction=fieldInsnNode.getNext();
+  if (!(nextInstruction instanceof FieldInsnNode)) {
+    throw new IllegalStateException("Instruction after inlined one should be field access: " + nextInstruction);
+  }
+  if (!(previous instanceof FieldInsnNode)) {
+    throw new IllegalStateException("Instruction before inlined one should be field access: " + previous);
+  }
+  FieldInsnNode next=(FieldInsnNode)nextInstruction;
+  node.instructions.remove(next.getPrevious());
+  next.owner=Type.getType(((FieldInsnNode)previous).desc).getInternalName();
+  next.name=node.name.equals("this$0") ? node.name : LambdaTransformer.getNewFieldName(next.name);
+  return next;
+}
