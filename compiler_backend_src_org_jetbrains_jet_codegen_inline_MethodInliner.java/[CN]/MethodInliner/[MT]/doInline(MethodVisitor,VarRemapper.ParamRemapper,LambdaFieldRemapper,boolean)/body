@@ -1,17 +1,17 @@
 {
-  MethodNode transformedNode=node;
-  try {
-    transformedNode=markPlacesForInlineAndRemoveInlinable(transformedNode);
-  }
- catch (  AnalyzerException e) {
-    throw UtilsPackage.rethrow(e);
-  }
+  MethodNode transformedNode=markPlacesForInlineAndRemoveInlinable(node);
   transformedNode=doInline(transformedNode,capturedRemapper);
   removeClosureAssertions(transformedNode);
   transformedNode.instructions.resetLabels();
   Label end=new Label();
-  RemapVisitor visitor=new RemapVisitor(adapter,end,remapper,remapReturn);
-  transformedNode.accept(visitor);
+  RemapVisitor visitor=new RemapVisitor(adapter,end,remapper,remapReturn,nodeRemapper);
+  try {
+    transformedNode.accept(visitor);
+  }
+ catch (  Exception e) {
+    String text=InlineCodegen.getNodeText(transformedNode);
+    throw new RuntimeException(errorPrefix + ": couldn't inline method call '" + transformedNode+ "\ncause: "+ text,e);
+  }
   visitor.visitLabel(end);
   return result;
 }

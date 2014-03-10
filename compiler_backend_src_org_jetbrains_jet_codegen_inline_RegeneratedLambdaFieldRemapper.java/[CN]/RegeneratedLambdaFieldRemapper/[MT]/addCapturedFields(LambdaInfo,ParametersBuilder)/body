@@ -1,0 +1,23 @@
+{
+  if (canProcess(lambdaInfo.getLambdaClassType().getInternalName())) {
+    List<CapturedParamInfo> captured=parameters.getCaptured();
+    for (    CapturedParamInfo originalField : lambdaInfo.getCapturedVars()) {
+      CapturedParamInfo foundField=null;
+      for (      CapturedParamInfo capturedParamInfo : captured) {
+        if (capturedParamInfo.getContainingLambdaName().equals(originalField.getContainingLambdaName())) {
+          if (capturedParamInfo.getFieldName().equals(LambdaTransformer.getNewFieldName(originalField.getFieldName()))) {
+            foundField=originalField;
+            break;
+          }
+        }
+      }
+      if (foundField == null) {
+        throw new IllegalStateException("Captured parameter should exists in outer context: " + originalField.getFieldName());
+      }
+      CapturedParamInfo info=builder.addCapturedParam(foundField,foundField);
+    }
+  }
+ else {
+    parent.addCapturedFields(lambdaInfo,builder);
+  }
+}

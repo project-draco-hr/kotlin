@@ -1,0 +1,15 @@
+{
+  FieldInsnNode fin=new FieldInsnNode(node.getOpcode(),node.owner,node.name.substring(3),node.desc);
+  CapturedParamInfo field=findFieldInMyCaptured(fin);
+  boolean searchInParent=false;
+  if (field == null) {
+    field=findFieldInMyCaptured(new FieldInsnNode(Opcodes.GETSTATIC,oldOwnerType,"this$0",Type.getObjectType(parent.getLambdaInternalName()).getDescriptor()));
+    searchInParent=true;
+    if (field == null) {
+      throw new IllegalStateException("Could find captured this " + getLambdaInternalName());
+    }
+  }
+  String newName=field.getContainingLambdaName().equals(getLambdaInternalName()) ? field.getFieldName() : LambdaTransformer.getNewFieldName(field.getFieldName());
+  StackValue result=StackValue.composed(prefix == null ? StackValue.local(0,Type.getObjectType(getLambdaInternalName())) : prefix,StackValue.field(field.getType(),Type.getObjectType(newOwnerType),newName,false));
+  return searchInParent ? parent.getFieldForInline(node,result) : result;
+}

@@ -1,0 +1,23 @@
+{
+  if (capturedFieldAccess.size() == 1) {
+    return null;
+  }
+  AbstractInsnNode transformed=null;
+  boolean checkParent=!isRoot() && currentInstruction < capturedFieldAccess.size() - 1;
+  if (checkParent) {
+    transformed=parent.transformIfNeeded(capturedFieldAccess,currentInstruction + 1,node);
+  }
+  if (transformed == null) {
+    FieldInsnNode insnNode=(FieldInsnNode)capturedFieldAccess.get(currentInstruction);
+    if (canProcess(insnNode.owner)) {
+      insnNode.name="$$$" + insnNode.name;
+      insnNode.setOpcode(Opcodes.GETSTATIC);
+      for (int i=0; i < currentInstruction; i++) {
+        AbstractInsnNode toRemove=capturedFieldAccess.get(i);
+        node.instructions.remove(toRemove);
+      }
+      transformed=capturedFieldAccess.get(capturedFieldAccess.size() - 1);
+    }
+  }
+  return transformed;
+}
