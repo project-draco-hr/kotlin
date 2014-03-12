@@ -1,0 +1,16 @@
+{
+  MethodNode transformedNode=markPlacesForInlineAndRemoveInlinable(node);
+  transformedNode=doInline(transformedNode,capturedRemapper);
+  removeClosureAssertions(transformedNode);
+  transformedNode.instructions.resetLabels();
+  Label end=new Label();
+  RemapVisitor visitor=new RemapVisitor(adapter,end,remapper,remapReturn,nodeRemapper);
+  try {
+    transformedNode.accept(visitor);
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(errorPrefix + ": couldn't inline method call " + transformedNode+ "\ncause: "+ InlineCodegen.getNodeText(transformedNode),e);
+  }
+  visitor.visitLabel(end);
+  return result;
+}
