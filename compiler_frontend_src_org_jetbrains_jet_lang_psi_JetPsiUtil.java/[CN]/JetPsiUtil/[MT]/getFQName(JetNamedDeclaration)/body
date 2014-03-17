@@ -3,36 +3,9 @@
   if (name == null) {
     return null;
   }
-  PsiElement parent=namedDeclaration.getParent();
-  if (parent instanceof JetClassBody) {
-    parent=parent.getParent();
-  }
-  FqName firstPart=null;
-  if (parent instanceof JetFile) {
-    firstPart=getFQName((JetFile)parent);
-  }
- else   if (parent instanceof JetNamedFunction || parent instanceof JetClass) {
-    firstPart=getFQName((JetNamedDeclaration)parent);
-  }
- else   if (namedDeclaration instanceof JetParameter) {
-    JetClass constructorClass=getClassIfParameterIsProperty((JetParameter)namedDeclaration);
-    if (constructorClass != null) {
-      firstPart=getFQName(constructorClass);
-    }
-  }
- else   if (parent instanceof JetObjectDeclaration) {
-    if (parent.getParent() instanceof JetClassObject) {
-      JetClassOrObject classOrObject=PsiTreeUtil.getParentOfType(parent,JetClassOrObject.class);
-      if (classOrObject != null) {
-        firstPart=getFQName(classOrObject);
-      }
-    }
- else {
-      firstPart=getFQName((JetNamedDeclaration)parent);
-    }
-  }
-  if (firstPart == null) {
+  FqName parentFqName=getParentFqName(namedDeclaration);
+  if (parentFqName == null) {
     return null;
   }
-  return firstPart.child(name);
+  return parentFqName.child(name);
 }
