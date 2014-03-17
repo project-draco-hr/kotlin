@@ -1,7 +1,9 @@
 {
   return new FrameworkSupportInModuleConfigurable(){
+    public JSLibraryStdDescription description;
     @Nullable @Override public CustomLibraryDescription createLibraryDescription(){
-      return new JSLibraryStdDescription();
+      description=new JSLibraryStdDescription(model.getProject());
+      return description;
     }
     @Nullable @Override public JComponent createComponent(){
       return null;
@@ -10,8 +12,9 @@
       return true;
     }
     @Override public void addSupport(    @NotNull Module module,    @NotNull ModifiableRootModel rootModel,    @NotNull ModifiableModelsProvider modifiableModelsProvider){
-      FrameworksCompatibilityUtils.suggestRemoveIncompatibleFramework(rootModel,new JavaRuntimeLibraryDescription(),JavaFrameworkType.getInstance());
+      FrameworksCompatibilityUtils.suggestRemoveIncompatibleFramework(rootModel,JavaRuntimeLibraryDescription.SUITABLE_LIBRARY_KINDS,JavaFrameworkType.getInstance());
       FrameworksCompatibilityUtils.suggestRemoveOldJsLibrary(rootModel);
+      description.finishLibConfiguration(module,rootModel);
     }
   }
 ;
