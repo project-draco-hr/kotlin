@@ -4,27 +4,7 @@
     @Override @SuppressWarnings("unchecked") public void run(){
       JetFile file=(JetFile)sourcePosition.getFile();
       JetTypeMapper typeMapper=prepareTypeMapper(file);
-      PsiElement element=PsiTreeUtil.getParentOfType(sourcePosition.getElementAt(),JetClassOrObject.class,JetFunctionLiteral.class,JetNamedFunction.class);
-      if (element instanceof JetClassOrObject) {
-        result.set(getJvmInternalNameForImpl(typeMapper,(JetClassOrObject)element));
-      }
- else       if (element instanceof JetFunctionLiteral) {
-        Type asmType=asmTypeForAnonymousClass(typeMapper.getBindingContext(),((JetFunctionLiteral)element));
-        result.set(asmType.getInternalName());
-      }
- else       if (element instanceof JetNamedFunction) {
-        PsiElement parent=PsiTreeUtil.getParentOfType(element,JetClassOrObject.class,JetFunctionLiteralExpression.class,JetNamedFunction.class);
-        if (parent instanceof JetClassOrObject) {
-          result.set(getJvmInternalNameForImpl(typeMapper,(JetClassOrObject)parent));
-        }
- else         if (parent instanceof JetFunctionLiteralExpression || parent instanceof JetNamedFunction) {
-          Type asmType=asmTypeForAnonymousClass(typeMapper.getBindingContext(),(JetElement)element);
-          result.set(asmType.getInternalName());
-        }
-      }
-      if (result.isNull()) {
-        result.set(PackageCodegen.getPackagePartInternalName(file));
-      }
+      result.set(getClassNameForElement(sourcePosition.getElementAt(),typeMapper,file));
     }
   }
 );
