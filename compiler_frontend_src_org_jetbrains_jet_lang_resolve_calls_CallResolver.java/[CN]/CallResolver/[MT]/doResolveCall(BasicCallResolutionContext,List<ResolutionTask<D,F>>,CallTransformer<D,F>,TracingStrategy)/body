@@ -2,18 +2,23 @@
   if (context.checkArguments == CheckValueArgumentsMode.ENABLED) {
     argumentTypeResolver.analyzeArgumentsAndRecordTypes(context);
   }
+  Collection<ResolvedCall<F>> allCandidates=Lists.newArrayList();
+  OverloadResolutionResultsImpl<F> successfulResults=null;
   TemporaryBindingTrace traceForFirstNonemptyCandidateSet=null;
   OverloadResolutionResultsImpl<F> resultsForFirstNonemptyCandidateSet=null;
   for (  ResolutionTask<D,F> task : prioritizedTasks) {
+    if (successfulResults != null && !context.collectAllCandidates)     continue;
     TemporaryBindingTrace taskTrace=TemporaryBindingTrace.create(context.trace,"trace to resolve a task for",task.call.getCalleeExpression());
     OverloadResolutionResultsImpl<F> results=performResolutionGuardedForExtraFunctionLiteralArguments(task.replaceBindingTrace(taskTrace),callTransformer);
+    allCandidates.addAll(task.getResolvedCalls());
+    if (successfulResults != null)     continue;
     if (results.isSuccess() || results.isAmbiguity()) {
       taskTrace.commit();
-      return results;
+      successfulResults=results;
     }
     if (results.getResultCode() == INCOMPLETE_TYPE_INFERENCE) {
       results.setTrace(taskTrace);
-      return results;
+      successfulResults=results;
     }
     boolean updateResults=traceForFirstNonemptyCandidateSet == null || (resultsForFirstNonemptyCandidateSet.getResultCode() == CANDIDATES_WITH_WRONG_RECEIVER && results.getResultCode() != CANDIDATES_WITH_WRONG_RECEIVER);
     if (!task.getCandidates().isEmpty() && !results.isNothing() && updateResults) {
@@ -21,11 +26,19 @@
       resultsForFirstNonemptyCandidateSet=results;
     }
   }
-  if (traceForFirstNonemptyCandidateSet == null) {
+  OverloadResolutionResultsImpl<F> results;
+  if (successfulResults != null) {
+    results=successfulResults;
+  }
+ else   if (traceForFirstNonemptyCandidateSet == null) {
     tracing.unresolvedReference(context.trace);
     argumentTypeResolver.checkTypesWithNoCallee(context,SHAPE_FUNCTION_ARGUMENTS);
-    return OverloadResolutionResultsImpl.<F>nameNotFound();
+    results=OverloadResolutionResultsImpl.<F>nameNotFound();
   }
-  traceForFirstNonemptyCandidateSet.commit();
-  return resultsForFirstNonemptyCandidateSet;
+ else {
+    traceForFirstNonemptyCandidateSet.commit();
+    results=resultsForFirstNonemptyCandidateSet;
+  }
+  results.setAllCandidates(context.collectAllCandidates ? allCandidates : null);
+  return results;
 }
