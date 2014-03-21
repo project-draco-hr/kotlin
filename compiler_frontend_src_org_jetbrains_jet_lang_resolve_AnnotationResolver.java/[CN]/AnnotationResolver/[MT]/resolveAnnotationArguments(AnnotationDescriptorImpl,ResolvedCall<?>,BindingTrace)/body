@@ -1,20 +1,10 @@
 {
   for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> descriptorToArgument : resolvedCall.getValueArguments().entrySet()) {
     ValueParameterDescriptor parameterDescriptor=descriptorToArgument.getKey();
-    JetType varargElementType=parameterDescriptor.getVarargElementType();
-    boolean argumentsAsVararg=varargElementType != null && !hasSpread(descriptorToArgument.getValue());
-    List<CompileTimeConstant<?>> constants=resolveValueArguments(descriptorToArgument.getValue(),argumentsAsVararg ? varargElementType : parameterDescriptor.getType(),trace);
-    if (argumentsAsVararg) {
-      JetType arrayType=KotlinBuiltIns.getInstance().getPrimitiveArrayJetTypeByPrimitiveJetType(varargElementType);
-      if (arrayType == null) {
-        arrayType=KotlinBuiltIns.getInstance().getArrayType(varargElementType);
-      }
-      annotationDescriptor.setValueArgument(parameterDescriptor,new ArrayValue(constants,arrayType,true));
-    }
- else {
-      if (!constants.isEmpty()) {
-        annotationDescriptor.setValueArgument(parameterDescriptor,KotlinPackage.last(constants));
-      }
+    ResolvedValueArgument resolvedArgument=descriptorToArgument.getValue();
+    CompileTimeConstant<?> value=getAnnotationArgumentValue(trace,parameterDescriptor,resolvedArgument);
+    if (value != null) {
+      annotationDescriptor.setValueArgument(parameterDescriptor,value);
     }
   }
 }
