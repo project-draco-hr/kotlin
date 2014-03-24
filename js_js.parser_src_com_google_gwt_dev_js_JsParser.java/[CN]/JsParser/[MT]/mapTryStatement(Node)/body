@@ -1,0 +1,33 @@
+{
+  JsTry toTry=new JsTry(makeSourceInfo(tryNode));
+  Node fromTryBody=tryNode.getFirstChild();
+  toTry.setTryBlock(mapBlock(fromTryBody));
+  Node fromCatchNodes=fromTryBody.getNext();
+  Node fromCatchNode=fromCatchNodes.getFirstChild();
+  while (fromCatchNode != null) {
+    assert(fromCatchNode.getType() == TokenStream.CATCH);
+    Node fromCatchVarName=fromCatchNode.getFirstChild();
+    JsCatch catchBlock=new JsCatch(makeSourceInfo(fromCatchNode),getScope(),fromCatchVarName.getString());
+    fromCatchNode=fromCatchNode.getNext();
+    Node fromCondition=fromCatchVarName.getNext();
+    JsExpression toCondition=mapExpression(fromCondition);
+    catchBlock.setCondition(toCondition);
+    if (fromCatchNode == null) {
+      if (toCondition instanceof JsBooleanLiteral) {
+        if (((JsBooleanLiteral)toCondition).getValue()) {
+          catchBlock.setCondition(null);
+        }
+      }
+    }
+    Node fromCatchBody=fromCondition.getNext();
+    pushScope(catchBlock.getScope(),catchBlock.getSourceInfo());
+    catchBlock.setBody(mapBlock(fromCatchBody));
+    popScope();
+    toTry.getCatches().add(catchBlock);
+  }
+  Node fromFinallyNode=fromCatchNodes.getNext();
+  if (fromFinallyNode != null) {
+    toTry.setFinallyBlock(mapBlock(fromFinallyNode));
+  }
+  return toTry;
+}

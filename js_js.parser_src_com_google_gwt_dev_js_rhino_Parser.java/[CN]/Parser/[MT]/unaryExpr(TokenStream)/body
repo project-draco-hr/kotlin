@@ -1,0 +1,38 @@
+{
+  int tt;
+  ts.flags|=ts.TSF_REGEXP;
+  tt=ts.getToken();
+  ts.flags&=~ts.TSF_REGEXP;
+switch (tt) {
+case TokenStream.UNARYOP:
+    sourceAdd((char)ts.UNARYOP);
+  sourceAdd((char)ts.getOp());
+return nf.createUnary(ts.UNARYOP,ts.getOp(),unaryExpr(ts));
+case TokenStream.ADD:
+case TokenStream.SUB:
+sourceAdd((char)ts.UNARYOP);
+sourceAdd((char)tt);
+return nf.createUnary(ts.UNARYOP,tt,unaryExpr(ts));
+case TokenStream.INC:
+case TokenStream.DEC:
+sourceAdd((char)tt);
+return nf.createUnary(tt,ts.PRE,memberExpr(ts,true));
+case TokenStream.DELPROP:
+sourceAdd((char)ts.DELPROP);
+return nf.createUnary(ts.DELPROP,unaryExpr(ts));
+case TokenStream.ERROR:
+break;
+default :
+ts.ungetToken(tt);
+int lineno=ts.getLineno();
+Object pn=memberExpr(ts,true);
+int peeked;
+if (((peeked=ts.peekToken()) == ts.INC || peeked == ts.DEC) && ts.getLineno() == lineno) {
+int pf=ts.getToken();
+sourceAdd((char)pf);
+return nf.createUnary(pf,ts.POST,pn);
+}
+return pn;
+}
+return nf.createName("err");
+}

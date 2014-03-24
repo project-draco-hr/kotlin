@@ -1,0 +1,68 @@
+{
+  StringBuffer sb=null;
+  for (int i=0, L=s.length(); i != L; ++i) {
+    int c=s.charAt(i);
+    if (' ' <= c && c <= '~' && c != '"' && c != '\\') {
+      if (sb != null) {
+        sb.append((char)c);
+      }
+      continue;
+    }
+    if (sb == null) {
+      sb=new StringBuffer(L + 3);
+      sb.append(s);
+      sb.setLength(i);
+    }
+    int escape=-1;
+switch (c) {
+case '\b':
+      escape='b';
+    break;
+case '\f':
+  escape='f';
+break;
+case '\n':
+escape='n';
+break;
+case '\r':
+escape='r';
+break;
+case '\t':
+escape='t';
+break;
+case 0xb:
+escape='v';
+break;
+case '"':
+escape='"';
+break;
+case ' ':
+escape=' ';
+break;
+case '\\':
+escape='\\';
+break;
+}
+if (escape >= 0) {
+sb.append('\\');
+sb.append((char)escape);
+}
+ else {
+int hexSize;
+if (c < 256) {
+sb.append("\\x");
+hexSize=2;
+}
+ else {
+sb.append("\\u");
+hexSize=4;
+}
+for (int shift=(hexSize - 1) * 4; shift >= 0; shift-=4) {
+int digit=0xf & (c >> shift);
+int hc=(digit < 10) ? '0' + digit : 'a' - 10 + digit;
+sb.append((char)hc);
+}
+}
+}
+return (sb == null) ? s : sb.toString();
+}

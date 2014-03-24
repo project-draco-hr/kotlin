@@ -1,0 +1,28 @@
+{
+  SourceInfo info=makeSourceInfo(switchNode);
+  JsSwitch toSwitch=new JsSwitch(info);
+  pushSourceInfo(info);
+  Node fromSwitchExpr=switchNode.getFirstChild();
+  toSwitch.setExpr(mapExpression(fromSwitchExpr));
+  Node fromMember=fromSwitchExpr.getNext();
+  while (fromMember != null) {
+    if (fromMember.getType() == TokenStream.CASE) {
+      JsCase toCase=new JsCase(makeSourceInfo(fromMember));
+      Node fromCaseExpr=fromMember.getFirstChild();
+      toCase.setCaseExpr(mapExpression(fromCaseExpr));
+      Node fromCaseBlock=fromCaseExpr.getNext();
+      mapStatements(toCase.getStmts(),fromCaseBlock);
+      toSwitch.getCases().add(toCase);
+    }
+ else {
+      assert(fromMember.getType() == TokenStream.DEFAULT);
+      JsDefault toDefault=new JsDefault(makeSourceInfo(fromMember));
+      Node fromDefaultBlock=fromMember.getFirstChild();
+      mapStatements(toDefault.getStmts(),fromDefaultBlock);
+      toSwitch.getCases().add(toDefault);
+    }
+    fromMember=fromMember.getNext();
+  }
+  popSourceInfo();
+  return toSwitch;
+}

@@ -1,0 +1,32 @@
+{
+  lastExprEndLine=ts.getLineno();
+  int tt;
+  while ((tt=ts.getToken()) > ts.EOF) {
+    if (tt == ts.DOT) {
+      sourceAdd((char)ts.DOT);
+      mustMatchToken(ts,ts.NAME,"msg.no.name.after.dot");
+      String s=ts.getString();
+      sourceAddString(ts.NAME,s);
+      pn=nf.createBinary(ts.DOT,pn,nf.createName(ts.getString()));
+      lastExprEndLine=ts.getLineno();
+    }
+ else     if (tt == ts.LB) {
+      sourceAdd((char)ts.LB);
+      pn=nf.createBinary(ts.LB,pn,expr(ts,false));
+      mustMatchToken(ts,ts.RB,"msg.no.bracket.index");
+      sourceAdd((char)ts.RB);
+      lastExprEndLine=ts.getLineno();
+    }
+ else     if (allowCallSyntax && tt == ts.LP) {
+      pn=nf.createUnary(ts.CALL,pn);
+      sourceAdd((char)ts.LP);
+      pn=argumentList(ts,pn);
+      lastExprEndLine=ts.getLineno();
+    }
+ else {
+      ts.ungetToken(tt);
+      break;
+    }
+  }
+  return pn;
+}

@@ -1,0 +1,31 @@
+{
+  if (keys == null) {
+    if (check && keyCount != 0)     Context.codeBug();
+    if (check && occupiedCount != 0)     Context.codeBug();
+    int N=1 << power;
+    keys=new Object[N];
+    values=new int[2 * N];
+  }
+ else {
+    if (keyCount * 2 >= occupiedCount) {
+      ++power;
+    }
+    int N=1 << power;
+    Object[] oldKeys=keys;
+    int[] oldValues=values;
+    int oldN=oldKeys.length;
+    keys=new Object[N];
+    values=new int[2 * N];
+    int remaining=keyCount;
+    occupiedCount=keyCount=0;
+    for (int i=0; remaining != 0; ++i) {
+      Object key=oldKeys[i];
+      if (key != null && key != DELETED) {
+        int keyHash=oldValues[oldN + i];
+        int index=insertNewKey(key,keyHash);
+        values[index]=oldValues[i];
+        --remaining;
+      }
+    }
+  }
+}

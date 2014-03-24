@@ -1,0 +1,45 @@
+{
+  int c=in.read();
+  if (!Character.isJavaIdentifierStart((char)c)) {
+    in.unread();
+    reportSyntaxError("msg.jsni.expected.identifier",null);
+    return false;
+  }
+  addToString(c);
+  for (; ; ) {
+    c=in.read();
+    if (Character.isJavaIdentifierPart((char)c)) {
+      addToString(c);
+    }
+ else {
+      break;
+    }
+  }
+  while (c == '[') {
+    if (']' == in.peek()) {
+      addToString('[');
+      addToString(in.read());
+      c=in.read();
+    }
+ else {
+      break;
+    }
+  }
+  if (c == sepChar) {
+    addToString(c);
+    if (jsniMatchQualifiedTypeName(sepChar,endChar)) {
+      return true;
+    }
+ else {
+      return false;
+    }
+  }
+ else   if (c == endChar) {
+    addToString(c);
+    return true;
+  }
+ else {
+    in.unread();
+    return true;
+  }
+}

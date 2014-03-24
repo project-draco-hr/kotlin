@@ -1,0 +1,33 @@
+{
+  if (checkSelf && !(end == offset))   Context.codeBug();
+  char[] tempBuffer=buffer;
+  buffer=otherBuffer;
+  otherBuffer=tempBuffer;
+  if (buffer == null) {
+    buffer=new char[BUFLEN];
+  }
+  if (lineStart >= 0) {
+    otherStart=lineStart;
+  }
+ else {
+    otherStart=0;
+  }
+  otherEnd=end;
+  prevStart=lineStart=(otherBuffer == null) ? 0 : -1;
+  offset=0;
+  end=in.read(buffer,0,buffer.length);
+  if (end < 0) {
+    end=0;
+    hitEOF=true;
+    return false;
+  }
+  if (lastWasCR) {
+    if (buffer[0] == '\n') {
+      offset++;
+      if (end == 1)       return fill();
+    }
+    lineStart=offset;
+    lastWasCR=false;
+  }
+  return true;
+}

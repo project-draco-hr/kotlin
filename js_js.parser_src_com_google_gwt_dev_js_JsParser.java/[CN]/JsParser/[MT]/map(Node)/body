@@ -1,0 +1,122 @@
+{
+switch (node.getType()) {
+case TokenStream.SCRIPT:
+{
+      JsBlock block=new JsBlock(makeSourceInfo(node));
+      mapStatements(block.getStatements(),node);
+      return block;
+    }
+case TokenStream.DEBUGGER:
+  return mapDebuggerStatement(node);
+case TokenStream.VOID:
+return null;
+case TokenStream.EXPRSTMT:
+return mapExprStmt(node);
+case TokenStream.REGEXP:
+return mapRegExp(node);
+case TokenStream.ADD:
+return mapBinaryOperation(JsBinaryOperator.ADD,node);
+case TokenStream.SUB:
+return mapBinaryOperation(JsBinaryOperator.SUB,node);
+case TokenStream.MUL:
+return mapBinaryOperation(JsBinaryOperator.MUL,node);
+case TokenStream.DIV:
+return mapBinaryOperation(JsBinaryOperator.DIV,node);
+case TokenStream.MOD:
+return mapBinaryOperation(JsBinaryOperator.MOD,node);
+case TokenStream.AND:
+return mapBinaryOperation(JsBinaryOperator.AND,node);
+case TokenStream.OR:
+return mapBinaryOperation(JsBinaryOperator.OR,node);
+case TokenStream.BITAND:
+return mapBinaryOperation(JsBinaryOperator.BIT_AND,node);
+case TokenStream.BITOR:
+return mapBinaryOperation(JsBinaryOperator.BIT_OR,node);
+case TokenStream.BITXOR:
+return mapBinaryOperation(JsBinaryOperator.BIT_XOR,node);
+case TokenStream.ASSIGN:
+return mapAssignmentVariant(node);
+case TokenStream.RELOP:
+return mapRelationalVariant(node);
+case TokenStream.EQOP:
+return mapEqualityVariant(node);
+case TokenStream.SHOP:
+return mapShiftVariant(node);
+case TokenStream.UNARYOP:
+return mapUnaryVariant(node);
+case TokenStream.INC:
+return mapIncDecFixity(JsUnaryOperator.INC,node);
+case TokenStream.DEC:
+return mapIncDecFixity(JsUnaryOperator.DEC,node);
+case TokenStream.HOOK:
+return mapConditional(node);
+case TokenStream.STRING:
+{
+SourceInfo info=makeSourceInfoDistinct(node);
+info.addCorrelation(info.getCorrelator().by(Literal.STRING));
+return new JsStringLiteral(info,node.getString());
+}
+case TokenStream.NUMBER:
+return mapNumber(node);
+case TokenStream.CALL:
+return mapCall(node);
+case TokenStream.GETPROP:
+return mapGetProp(node);
+case TokenStream.SETPROP:
+return mapSetProp(node);
+case TokenStream.DELPROP:
+return mapDeleteProp(node);
+case TokenStream.IF:
+return mapIfStatement(node);
+case TokenStream.WHILE:
+return mapDoOrWhileStatement(true,node);
+case TokenStream.DO:
+return mapDoOrWhileStatement(false,node);
+case TokenStream.FOR:
+return mapForStatement(node);
+case TokenStream.WITH:
+return mapWithStatement(node);
+case TokenStream.GETELEM:
+return mapGetElem(node);
+case TokenStream.SETELEM:
+return mapSetElem(node);
+case TokenStream.FUNCTION:
+return mapFunction(node);
+case TokenStream.BLOCK:
+return mapBlock(node);
+case TokenStream.SETNAME:
+return mapBinaryOperation(JsBinaryOperator.ASG,node);
+case TokenStream.NAME:
+case TokenStream.BINDNAME:
+return mapName(node);
+case TokenStream.RETURN:
+return mapReturn(node);
+case TokenStream.BREAK:
+return mapBreak(node);
+case TokenStream.CONTINUE:
+return mapContinue(node);
+case TokenStream.OBJLIT:
+return mapObjectLit(node);
+case TokenStream.ARRAYLIT:
+return mapArrayLit(node);
+case TokenStream.VAR:
+return mapVar(node);
+case TokenStream.PRIMARY:
+return mapPrimary(node);
+case TokenStream.COMMA:
+return mapBinaryOperation(JsBinaryOperator.COMMA,node);
+case TokenStream.NEW:
+return mapNew(node);
+case TokenStream.THROW:
+return mapThrowStatement(node);
+case TokenStream.TRY:
+return mapTryStatement(node);
+case TokenStream.SWITCH:
+return mapSwitchStatement(node);
+case TokenStream.LABEL:
+return mapLabel(node);
+default :
+int tokenType=node.getType();
+throw createParserException("Unexpected top-level token type: " + tokenType,node);
+}
+}

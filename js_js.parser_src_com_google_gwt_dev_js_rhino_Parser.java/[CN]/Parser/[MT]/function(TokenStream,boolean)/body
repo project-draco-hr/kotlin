@@ -1,0 +1,85 @@
+{
+  int baseLineno=ts.getLineno();
+  String name;
+  Object memberExprNode=null;
+  if (ts.matchToken(ts.NAME)) {
+    name=ts.getString();
+    if (!ts.matchToken(ts.LP)) {
+      if (Context.getContext().hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)) {
+        sourceAddString(ts.NAME,name);
+        Object memberExprHead=nf.createName(name);
+        name=null;
+        memberExprNode=memberExprTail(ts,false,memberExprHead);
+      }
+      mustMatchToken(ts,ts.LP,"msg.no.paren.parms");
+    }
+  }
+ else   if (ts.matchToken(ts.LP)) {
+    name=null;
+  }
+ else {
+    name=null;
+    if (Context.getContext().hasFeature(Context.FEATURE_MEMBER_EXPR_AS_FUNCTION_NAME)) {
+      memberExprNode=memberExpr(ts,false);
+    }
+    mustMatchToken(ts,ts.LP,"msg.no.paren.parms");
+  }
+  if (memberExprNode != null) {
+    sourceAdd((char)ts.ASSIGN);
+    sourceAdd((char)ts.NOP);
+  }
+  sourceAdd((char)ts.FUNCTION);
+  sourceAdd((char)functionNumber);
+  ++functionNumber;
+  int savedSourceTop=sourceTop;
+  int savedFunctionNumber=functionNumber;
+  Object args;
+  Object body;
+  String source;
+  try {
+    functionNumber=0;
+    sourceAdd((char)ts.FUNCTION);
+    if (name != null) {
+      sourceAddString(ts.NAME,name);
+    }
+    sourceAdd((char)ts.LP);
+    args=nf.createLeaf(ts.LP);
+    if (!ts.matchToken(ts.GWT)) {
+      boolean first=true;
+      do {
+        if (!first)         sourceAdd((char)ts.COMMA);
+        first=false;
+        mustMatchToken(ts,ts.NAME,"msg.no.parm");
+        String s=ts.getString();
+        nf.addChildToBack(args,nf.createName(s));
+        sourceAddString(ts.NAME,s);
+      }
+ while (ts.matchToken(ts.COMMA));
+      mustMatchToken(ts,ts.GWT,"msg.no.paren.after.parms");
+    }
+    sourceAdd((char)ts.GWT);
+    mustMatchToken(ts,ts.LC,"msg.no.brace.body");
+    sourceAdd((char)ts.LC);
+    sourceAdd((char)ts.EOL);
+    body=parseFunctionBody(ts);
+    mustMatchToken(ts,ts.RC,"msg.no.brace.after.body");
+    sourceAdd((char)ts.RC);
+    source=sourceToString(savedSourceTop);
+  }
+  finally {
+    sourceTop=savedSourceTop;
+    functionNumber=savedFunctionNumber;
+  }
+  Object pn=nf.createFunction(name,args,body,ts.getSourceName(),baseLineno,ts.getLineno(),source,isExpr || memberExprNode != null);
+  if (memberExprNode != null) {
+    pn=nf.createBinary(ts.ASSIGN,ts.NOP,memberExprNode,pn);
+  }
+  if (!isExpr) {
+    if (memberExprNode != null) {
+      sourceAdd((char)ts.SEMI);
+    }
+    sourceAdd((char)ts.EOL);
+    wellTerminated(ts,ts.FUNCTION);
+  }
+  return pn;
+}

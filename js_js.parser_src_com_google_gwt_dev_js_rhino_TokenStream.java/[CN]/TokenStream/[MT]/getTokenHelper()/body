@@ -1,0 +1,527 @@
+{
+  int c;
+  tokenno++;
+  if (this.pushbackToken != EOF) {
+    int result=this.pushbackToken;
+    this.pushbackToken=EOF;
+    return result;
+  }
+  do {
+    c=in.read();
+    if (c == '\n') {
+      flags&=~TSF_DIRTYLINE;
+      if ((flags & TSF_NEWLINES) != 0)       break;
+    }
+  }
+ while (isJSSpace(c) || c == '\n');
+  if (c == EOF_CHAR)   return EOF;
+  if (c != '-' && c != '\n')   flags|=TSF_DIRTYLINE;
+  boolean identifierStart;
+  boolean isUnicodeEscapeStart=false;
+  if (c == '\\') {
+    c=in.read();
+    if (c == 'u') {
+      identifierStart=true;
+      isUnicodeEscapeStart=true;
+      stringBufferTop=0;
+    }
+ else {
+      identifierStart=false;
+      c='\\';
+      in.unread();
+    }
+  }
+ else {
+    identifierStart=Character.isJavaIdentifierStart((char)c);
+    if (identifierStart) {
+      stringBufferTop=0;
+      addToString(c);
+    }
+    if (c == '@') {
+      stringBufferTop=0;
+      addToString(c);
+      return jsniMatchReference();
+    }
+  }
+  if (identifierStart) {
+    boolean containsEscape=isUnicodeEscapeStart;
+    for (; ; ) {
+      if (isUnicodeEscapeStart) {
+        int escapeVal=0;
+        for (int i=0; i != 4; ++i) {
+          c=in.read();
+          escapeVal=(escapeVal << 4) | xDigitToInt(c);
+          if (escapeVal < 0) {
+            break;
+          }
+        }
+        if (escapeVal < 0) {
+          reportSyntaxError("msg.invalid.escape",null);
+          return ERROR;
+        }
+        addToString(escapeVal);
+        isUnicodeEscapeStart=false;
+      }
+ else {
+        c=in.read();
+        if (c == '\\') {
+          c=in.read();
+          if (c == 'u') {
+            isUnicodeEscapeStart=true;
+            containsEscape=true;
+          }
+ else {
+            reportSyntaxError("msg.illegal.character",null);
+            return ERROR;
+          }
+        }
+ else {
+          if (!Character.isJavaIdentifierPart((char)c)) {
+            break;
+          }
+          addToString(c);
+        }
+      }
+    }
+    in.unread();
+    String str=getStringFromBuffer();
+    if (!containsEscape) {
+      int result=stringToKeyword(str);
+      if (result != EOF) {
+        if (result != RESERVED) {
+          return result;
+        }
+ else         if (!RESERVED_KEYWORD_AS_IDENTIFIER) {
+          return result;
+        }
+ else {
+          Object[] errArgs={str};
+          reportSyntaxWarning("msg.reserved.keyword",errArgs);
+        }
+      }
+    }
+    this.string=str;
+    return NAME;
+  }
+  if (isDigit(c) || (c == '.' && isDigit(in.peek()))) {
+    stringBufferTop=0;
+    int base=10;
+    if (c == '0') {
+      c=in.read();
+      if (c == 'x' || c == 'X') {
+        base=16;
+        c=in.read();
+      }
+ else       if (isDigit(c)) {
+        base=8;
+      }
+ else {
+        addToString('0');
+      }
+    }
+    if (base == 16) {
+      while (0 <= xDigitToInt(c)) {
+        addToString(c);
+        c=in.read();
+      }
+    }
+ else {
+      while ('0' <= c && c <= '9') {
+        if (base == 8 && c >= '8') {
+          Object[] errArgs={c == '8' ? "8" : "9"};
+          reportSyntaxWarning("msg.bad.octal.literal",errArgs);
+          base=10;
+        }
+        addToString(c);
+        c=in.read();
+      }
+    }
+    boolean isInteger=true;
+    if (base == 10 && (c == '.' || c == 'e' || c == 'E')) {
+      isInteger=false;
+      if (c == '.') {
+        do {
+          addToString(c);
+          c=in.read();
+        }
+ while (isDigit(c));
+      }
+      if (c == 'e' || c == 'E') {
+        addToString(c);
+        c=in.read();
+        if (c == '+' || c == '-') {
+          addToString(c);
+          c=in.read();
+        }
+        if (!isDigit(c)) {
+          reportSyntaxError("msg.missing.exponent",null);
+          return ERROR;
+        }
+        do {
+          addToString(c);
+          c=in.read();
+        }
+ while (isDigit(c));
+      }
+    }
+    in.unread();
+    String numString=getStringFromBuffer();
+    double dval;
+    if (base == 10 && !isInteger) {
+      try {
+        dval=(Double.valueOf(numString)).doubleValue();
+      }
+ catch (      NumberFormatException ex) {
+        Object[] errArgs={ex.getMessage()};
+        reportSyntaxError("msg.caught.nfe",errArgs);
+        return ERROR;
+      }
+    }
+ else {
+      dval=ScriptRuntime.stringToNumber(numString,0,base);
+    }
+    this.number=dval;
+    return NUMBER;
+  }
+  if (c == '"' || c == '\'') {
+    int quoteChar=c;
+    int val=0;
+    stringBufferTop=0;
+    c=in.read();
+    strLoop:     while (c != quoteChar) {
+      if (c == '\n' || c == EOF_CHAR) {
+        in.unread();
+        reportSyntaxError("msg.unterminated.string.lit",null);
+        return ERROR;
+      }
+      if (c == '\\') {
+        c=in.read();
+switch (c) {
+case 'b':
+          c='\b';
+        break;
+case 'f':
+      c='\f';
+    break;
+case 'n':
+  c='\n';
+break;
+case 'r':
+c='\r';
+break;
+case 't':
+c='\t';
+break;
+case 'v':
+c=0xb;
+break;
+case 'u':
+{
+int escapeStart=stringBufferTop;
+addToString('u');
+int escapeVal=0;
+for (int i=0; i != 4; ++i) {
+c=in.read();
+escapeVal=(escapeVal << 4) | xDigitToInt(c);
+if (escapeVal < 0) {
+continue strLoop;
+}
+addToString(c);
+}
+stringBufferTop=escapeStart;
+c=escapeVal;
+}
+break;
+case 'x':
+{
+c=in.read();
+int escapeVal=xDigitToInt(c);
+if (escapeVal < 0) {
+addToString('x');
+continue strLoop;
+}
+ else {
+int c1=c;
+c=in.read();
+escapeVal=(escapeVal << 4) | xDigitToInt(c);
+if (escapeVal < 0) {
+addToString('x');
+addToString(c1);
+continue strLoop;
+}
+ else {
+c=escapeVal;
+}
+}
+}
+break;
+case '\n':
+c=in.read();
+continue strLoop;
+default :
+if ('0' <= c && c < '8') {
+val=c - '0';
+c=in.read();
+if ('0' <= c && c < '8') {
+val=8 * val + c - '0';
+c=in.read();
+if ('0' <= c && c < '8' && val <= 037) {
+val=8 * val + c - '0';
+c=in.read();
+}
+}
+in.unread();
+c=val;
+}
+}
+}
+addToString(c);
+c=in.read();
+}
+this.string=getStringFromBuffer();
+return STRING;
+}
+switch (c) {
+case '\n':
+return EOL;
+case ';':
+return SEMI;
+case '[':
+return LB;
+case ']':
+return RB;
+case '{':
+return LC;
+case '}':
+return RC;
+case '(':
+return LP;
+case ')':
+return GWT;
+case ',':
+return COMMA;
+case '?':
+return HOOK;
+case ':':
+return COLON;
+case '.':
+return DOT;
+case '|':
+if (in.match('|')) {
+return OR;
+}
+ else if (in.match('=')) {
+this.op=BITOR;
+return ASSIGN;
+}
+ else {
+return BITOR;
+}
+case '^':
+if (in.match('=')) {
+this.op=BITXOR;
+return ASSIGN;
+}
+ else {
+return BITXOR;
+}
+case '&':
+if (in.match('&')) {
+return AND;
+}
+ else if (in.match('=')) {
+this.op=BITAND;
+return ASSIGN;
+}
+ else {
+return BITAND;
+}
+case '=':
+if (in.match('=')) {
+if (in.match('=')) this.op=SHEQ;
+ else this.op=EQ;
+return EQOP;
+}
+ else {
+this.op=NOP;
+return ASSIGN;
+}
+case '!':
+if (in.match('=')) {
+if (in.match('=')) this.op=SHNE;
+ else this.op=NE;
+return EQOP;
+}
+ else {
+this.op=NOT;
+return UNARYOP;
+}
+case '<':
+if (in.match('!')) {
+if (in.match('-')) {
+if (in.match('-')) {
+skipLine();
+return RETRY_TOKEN;
+}
+in.unread();
+}
+in.unread();
+}
+if (in.match('<')) {
+if (in.match('=')) {
+this.op=LSH;
+return ASSIGN;
+}
+ else {
+this.op=LSH;
+return SHOP;
+}
+}
+ else {
+if (in.match('=')) {
+this.op=LE;
+return RELOP;
+}
+ else {
+this.op=LT;
+return RELOP;
+}
+}
+case '>':
+if (in.match('>')) {
+if (in.match('>')) {
+if (in.match('=')) {
+this.op=URSH;
+return ASSIGN;
+}
+ else {
+this.op=URSH;
+return SHOP;
+}
+}
+ else {
+if (in.match('=')) {
+this.op=RSH;
+return ASSIGN;
+}
+ else {
+this.op=RSH;
+return SHOP;
+}
+}
+}
+ else {
+if (in.match('=')) {
+this.op=GE;
+return RELOP;
+}
+ else {
+this.op=GT;
+return RELOP;
+}
+}
+case '*':
+if (in.match('=')) {
+this.op=MUL;
+return ASSIGN;
+}
+ else {
+return MUL;
+}
+case '/':
+if (in.match('/')) {
+skipLine();
+return RETRY_TOKEN;
+}
+if (in.match('*')) {
+while ((c=in.read()) != -1 && !(c == '*' && in.match('/'))) {
+;
+}
+if (c == EOF_CHAR) {
+reportSyntaxError("msg.unterminated.comment",null);
+return ERROR;
+}
+return RETRY_TOKEN;
+}
+if ((flags & TSF_REGEXP) != 0) {
+stringBufferTop=0;
+while ((c=in.read()) != '/') {
+if (c == '\n' || c == EOF_CHAR) {
+in.unread();
+reportSyntaxError("msg.unterminated.re.lit",null);
+return ERROR;
+}
+if (c == '\\') {
+addToString(c);
+c=in.read();
+}
+addToString(c);
+}
+int reEnd=stringBufferTop;
+while (true) {
+if (in.match('g')) addToString('g');
+ else if (in.match('i')) addToString('i');
+ else if (in.match('m')) addToString('m');
+ else break;
+}
+if (isAlpha(in.peek())) {
+reportSyntaxError("msg.invalid.re.flag",null);
+return ERROR;
+}
+this.string=new String(stringBuffer,0,reEnd);
+this.regExpFlags=new String(stringBuffer,reEnd,stringBufferTop - reEnd);
+return REGEXP;
+}
+if (in.match('=')) {
+this.op=DIV;
+return ASSIGN;
+}
+ else {
+return DIV;
+}
+case '%':
+this.op=MOD;
+if (in.match('=')) {
+return ASSIGN;
+}
+ else {
+return MOD;
+}
+case '~':
+this.op=BITNOT;
+return UNARYOP;
+case '+':
+if (in.match('=')) {
+this.op=ADD;
+return ASSIGN;
+}
+ else if (in.match('+')) {
+return INC;
+}
+ else {
+return ADD;
+}
+case '-':
+if (in.match('=')) {
+this.op=SUB;
+c=ASSIGN;
+}
+ else if (in.match('-')) {
+if (0 == (flags & TSF_DIRTYLINE)) {
+if (in.match('>')) {
+skipLine();
+return RETRY_TOKEN;
+}
+}
+c=DEC;
+}
+ else {
+c=SUB;
+}
+flags|=TSF_DIRTYLINE;
+return c;
+default :
+reportSyntaxError("msg.illegal.character",null);
+return ERROR;
+}
+}

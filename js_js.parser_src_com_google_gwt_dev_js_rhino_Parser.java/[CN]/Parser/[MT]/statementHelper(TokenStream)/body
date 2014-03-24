@@ -1,0 +1,357 @@
+{
+  Object pn=null;
+  boolean skipsemi=false;
+  int tt;
+  int lastExprType=0;
+  tt=ts.getToken();
+switch (tt) {
+case TokenStream.IF:
+{
+      skipsemi=true;
+      sourceAdd((char)ts.IF);
+      int lineno=ts.getLineno();
+      Object cond=condition(ts);
+      sourceAdd((char)ts.LC);
+      sourceAdd((char)ts.EOL);
+      Object ifTrue=statement(ts);
+      Object ifFalse=null;
+      if (ts.matchToken(ts.ELSE)) {
+        sourceAdd((char)ts.RC);
+        sourceAdd((char)ts.ELSE);
+        sourceAdd((char)ts.LC);
+        sourceAdd((char)ts.EOL);
+        ifFalse=statement(ts);
+      }
+      sourceAdd((char)ts.RC);
+      sourceAdd((char)ts.EOL);
+      pn=nf.createIf(cond,ifTrue,ifFalse,lineno);
+      break;
+    }
+case TokenStream.SWITCH:
+{
+    skipsemi=true;
+    sourceAdd((char)ts.SWITCH);
+    pn=nf.createSwitch(ts.getLineno());
+    Object cur_case=null;
+    Object case_statements;
+    mustMatchToken(ts,ts.LP,"msg.no.paren.switch");
+    sourceAdd((char)ts.LP);
+    nf.addChildToBack(pn,expr(ts,false));
+    mustMatchToken(ts,ts.GWT,"msg.no.paren.after.switch");
+    sourceAdd((char)ts.GWT);
+    mustMatchToken(ts,ts.LC,"msg.no.brace.switch");
+    sourceAdd((char)ts.LC);
+    sourceAdd((char)ts.EOL);
+    while ((tt=ts.getToken()) != ts.RC && tt != ts.EOF) {
+switch (tt) {
+case TokenStream.CASE:
+        sourceAdd((char)ts.CASE);
+      cur_case=nf.createUnary(ts.CASE,expr(ts,false));
+    sourceAdd((char)ts.COLON);
+  sourceAdd((char)ts.EOL);
+break;
+case TokenStream.DEFAULT:
+cur_case=nf.createLeaf(ts.DEFAULT);
+sourceAdd((char)ts.DEFAULT);
+sourceAdd((char)ts.COLON);
+sourceAdd((char)ts.EOL);
+break;
+default :
+reportError(ts,"msg.bad.switch");
+break;
+}
+mustMatchToken(ts,ts.COLON,"msg.no.colon.case");
+case_statements=nf.createLeaf(TokenStream.BLOCK);
+((Node)case_statements).setIsSyntheticBlock(true);
+while ((tt=ts.peekToken()) != ts.RC && tt != ts.CASE && tt != ts.DEFAULT && tt != ts.EOF) {
+nf.addChildToBack(case_statements,statement(ts));
+}
+nf.addChildToBack(cur_case,case_statements);
+nf.addChildToBack(pn,cur_case);
+}
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+break;
+}
+case TokenStream.WHILE:
+{
+skipsemi=true;
+sourceAdd((char)ts.WHILE);
+int lineno=ts.getLineno();
+Object cond=condition(ts);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+Object body=statement(ts);
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+pn=nf.createWhile(cond,body,lineno);
+break;
+}
+case TokenStream.DO:
+{
+sourceAdd((char)ts.DO);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+int lineno=ts.getLineno();
+Object body=statement(ts);
+sourceAdd((char)ts.RC);
+mustMatchToken(ts,ts.WHILE,"msg.no.while.do");
+sourceAdd((char)ts.WHILE);
+Object cond=condition(ts);
+pn=nf.createDoWhile(body,cond,lineno);
+break;
+}
+case TokenStream.FOR:
+{
+skipsemi=true;
+sourceAdd((char)ts.FOR);
+int lineno=ts.getLineno();
+Object init;
+Object cond;
+Object incr=null;
+Object body;
+mustMatchToken(ts,ts.LP,"msg.no.paren.for");
+sourceAdd((char)ts.LP);
+tt=ts.peekToken();
+if (tt == ts.SEMI) {
+init=nf.createLeaf(ts.VOID);
+}
+ else {
+if (tt == ts.VAR) {
+ts.getToken();
+init=variables(ts,true);
+}
+ else {
+init=expr(ts,true);
+}
+}
+tt=ts.peekToken();
+if (tt == ts.RELOP && ts.getOp() == ts.IN) {
+ts.matchToken(ts.RELOP);
+sourceAdd((char)ts.IN);
+cond=expr(ts,false);
+}
+ else {
+mustMatchToken(ts,ts.SEMI,"msg.no.semi.for");
+sourceAdd((char)ts.SEMI);
+if (ts.peekToken() == ts.SEMI) {
+cond=nf.createLeaf(ts.VOID);
+}
+ else {
+cond=expr(ts,false);
+}
+mustMatchToken(ts,ts.SEMI,"msg.no.semi.for.cond");
+sourceAdd((char)ts.SEMI);
+if (ts.peekToken() == ts.GWT) {
+incr=nf.createLeaf(ts.VOID);
+}
+ else {
+incr=expr(ts,false);
+}
+}
+mustMatchToken(ts,ts.GWT,"msg.no.paren.for.ctrl");
+sourceAdd((char)ts.GWT);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+body=statement(ts);
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+if (incr == null) {
+pn=nf.createForIn(init,cond,body,lineno);
+}
+ else {
+pn=nf.createFor(init,cond,incr,body,lineno);
+}
+break;
+}
+case TokenStream.TRY:
+{
+int lineno=ts.getLineno();
+Object tryblock;
+Object catchblocks=null;
+Object finallyblock=null;
+skipsemi=true;
+sourceAdd((char)ts.TRY);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+tryblock=statement(ts);
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+catchblocks=nf.createLeaf(TokenStream.BLOCK);
+boolean sawDefaultCatch=false;
+int peek=ts.peekToken();
+if (peek == ts.CATCH) {
+while (ts.matchToken(ts.CATCH)) {
+if (sawDefaultCatch) {
+reportError(ts,"msg.catch.unreachable");
+}
+sourceAdd((char)ts.CATCH);
+mustMatchToken(ts,ts.LP,"msg.no.paren.catch");
+sourceAdd((char)ts.LP);
+mustMatchToken(ts,ts.NAME,"msg.bad.catchcond");
+String varName=ts.getString();
+sourceAddString(ts.NAME,varName);
+Object catchCond=null;
+if (ts.matchToken(ts.IF)) {
+sourceAdd((char)ts.IF);
+catchCond=expr(ts,false);
+}
+ else {
+sawDefaultCatch=true;
+}
+mustMatchToken(ts,ts.GWT,"msg.bad.catchcond");
+sourceAdd((char)ts.GWT);
+mustMatchToken(ts,ts.LC,"msg.no.brace.catchblock");
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+nf.addChildToBack(catchblocks,nf.createCatch(varName,catchCond,statements(ts),ts.getLineno()));
+mustMatchToken(ts,ts.RC,"msg.no.brace.after.body");
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+}
+}
+ else if (peek != ts.FINALLY) {
+mustMatchToken(ts,ts.FINALLY,"msg.try.no.catchfinally");
+}
+if (ts.matchToken(ts.FINALLY)) {
+sourceAdd((char)ts.FINALLY);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+finallyblock=statement(ts);
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+}
+pn=nf.createTryCatchFinally(tryblock,catchblocks,finallyblock,lineno);
+break;
+}
+case TokenStream.THROW:
+{
+int lineno=ts.getLineno();
+sourceAdd((char)ts.THROW);
+pn=nf.createThrow(expr(ts,false),lineno);
+if (lineno == ts.getLineno()) wellTerminated(ts,ts.ERROR);
+break;
+}
+case TokenStream.BREAK:
+{
+int lineno=ts.getLineno();
+sourceAdd((char)ts.BREAK);
+String label=matchLabel(ts);
+if (label != null) {
+sourceAddString(ts.NAME,label);
+}
+pn=nf.createBreak(label,lineno);
+break;
+}
+case TokenStream.CONTINUE:
+{
+int lineno=ts.getLineno();
+sourceAdd((char)ts.CONTINUE);
+String label=matchLabel(ts);
+if (label != null) {
+sourceAddString(ts.NAME,label);
+}
+pn=nf.createContinue(label,lineno);
+break;
+}
+case TokenStream.DEBUGGER:
+{
+int lineno=ts.getLineno();
+sourceAdd((char)ts.DEBUGGER);
+pn=nf.createDebugger(lineno);
+break;
+}
+case TokenStream.WITH:
+{
+reportError(ts,"msg.jsni.unsupported.with");
+skipsemi=true;
+sourceAdd((char)ts.WITH);
+int lineno=ts.getLineno();
+mustMatchToken(ts,ts.LP,"msg.no.paren.with");
+sourceAdd((char)ts.LP);
+Object obj=expr(ts,false);
+mustMatchToken(ts,ts.GWT,"msg.no.paren.after.with");
+sourceAdd((char)ts.GWT);
+sourceAdd((char)ts.LC);
+sourceAdd((char)ts.EOL);
+Object body=statement(ts);
+sourceAdd((char)ts.RC);
+sourceAdd((char)ts.EOL);
+pn=nf.createWith(obj,body,lineno);
+break;
+}
+case TokenStream.VAR:
+{
+int lineno=ts.getLineno();
+pn=variables(ts,false);
+if (ts.getLineno() == lineno) wellTerminated(ts,ts.ERROR);
+break;
+}
+case TokenStream.RETURN:
+{
+Object retExpr=null;
+int lineno=0;
+sourceAdd((char)ts.RETURN);
+if ((ts.flags & ts.TSF_FUNCTION) == 0) reportError(ts,"msg.bad.return");
+ts.flags|=ts.TSF_REGEXP;
+tt=ts.peekTokenSameLine();
+ts.flags&=~ts.TSF_REGEXP;
+if (tt != ts.EOF && tt != ts.EOL && tt != ts.SEMI && tt != ts.RC) {
+lineno=ts.getLineno();
+retExpr=expr(ts,false);
+if (ts.getLineno() == lineno) wellTerminated(ts,ts.ERROR);
+ts.flags|=ts.TSF_RETURN_EXPR;
+}
+ else {
+ts.flags|=ts.TSF_RETURN_VOID;
+}
+pn=nf.createReturn(retExpr,lineno);
+break;
+}
+case TokenStream.LC:
+skipsemi=true;
+pn=statements(ts);
+mustMatchToken(ts,ts.RC,"msg.no.brace.block");
+break;
+case TokenStream.ERROR:
+case TokenStream.EOL:
+case TokenStream.SEMI:
+pn=nf.createLeaf(ts.VOID);
+skipsemi=true;
+break;
+default :
+{
+lastExprType=tt;
+int tokenno=ts.getTokenno();
+ts.ungetToken(tt);
+int lineno=ts.getLineno();
+pn=expr(ts,false);
+if (ts.peekToken() == ts.COLON) {
+if (lastExprType != ts.NAME || (ts.getTokenno() != tokenno)) reportError(ts,"msg.bad.label");
+ts.getToken();
+String name=ts.getString();
+pn=nf.createLabel(name,lineno);
+nf.addChildToBack(pn,statement(ts));
+sourceAdd((char)ts.COLON);
+sourceAdd((char)ts.EOL);
+return pn;
+}
+if (lastExprType == ts.FUNCTION) {
+if (nf.getLeafType(pn) != ts.FUNCTION) {
+reportError(ts,"msg.syntax");
+}
+}
+pn=nf.createExprStatement(pn,lineno);
+if (ts.getLineno() == lineno || (lastExprType == ts.FUNCTION && ts.getLineno() == lastExprEndLine)) {
+wellTerminated(ts,lastExprType);
+}
+break;
+}
+}
+ts.matchToken(ts.SEMI);
+if (!skipsemi) {
+sourceAdd((char)ts.SEMI);
+sourceAdd((char)ts.EOL);
+}
+return pn;
+}

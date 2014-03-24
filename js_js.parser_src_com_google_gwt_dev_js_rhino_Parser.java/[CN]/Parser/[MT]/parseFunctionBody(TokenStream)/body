@@ -1,0 +1,25 @@
+{
+  int oldflags=ts.flags;
+  ts.flags&=~(TokenStream.TSF_RETURN_EXPR | TokenStream.TSF_RETURN_VOID);
+  ts.flags|=TokenStream.TSF_FUNCTION;
+  Object pn=nf.createBlock(ts.getLineno());
+  try {
+    int tt;
+    while ((tt=ts.peekToken()) > ts.EOF && tt != ts.RC) {
+      if (tt == TokenStream.FUNCTION) {
+        ts.getToken();
+        nf.addChildToBack(pn,function(ts,false));
+      }
+ else {
+        nf.addChildToBack(pn,statement(ts));
+      }
+    }
+  }
+ catch (  JavaScriptException e) {
+    this.ok=false;
+  }
+ finally {
+    ts.flags=oldflags;
+  }
+  return pn;
+}

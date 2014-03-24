@@ -1,0 +1,80 @@
+{
+  char[] buffer;
+  int p;
+  int pInt;
+  int q;
+  int digit;
+  double di;
+  double df;
+  buffer=new char[DTOBASESTR_BUFFER_SIZE];
+  p=0;
+  if (d < 0.0) {
+    buffer[p++]='-';
+    d=-d;
+  }
+  if (Double.isNaN(d))   return "NaN";
+ else   if (Double.isInfinite(d))   return "Infinity";
+  pInt=p;
+  di=(int)d;
+  BigInteger b=BigInteger.valueOf((int)di);
+  String intDigits=b.toString(base);
+  intDigits.getChars(0,intDigits.length(),buffer,p);
+  p+=intDigits.length();
+  df=d - di;
+  if (df != 0.0) {
+    buffer[p++]='.';
+    long dBits=Double.doubleToLongBits(d);
+    int word0=(int)(dBits >> 32);
+    int word1=(int)(dBits);
+    int[] e=new int[1];
+    int[] bbits=new int[1];
+    b=d2b(df,e,bbits);
+    int s2=-(word0 >>> Exp_shift1 & Exp_mask >> Exp_shift1);
+    if (s2 == 0)     s2=-1;
+    s2+=Bias + P;
+    BigInteger mlo=BigInteger.valueOf(1);
+    BigInteger mhi=mlo;
+    if ((word1 == 0) && ((word0 & Bndry_mask) == 0) && ((word0 & (Exp_mask & Exp_mask << 1)) != 0)) {
+      s2+=Log2P;
+      mhi=BigInteger.valueOf(1 << Log2P);
+    }
+    b=b.shiftLeft(e[0] + s2);
+    BigInteger s=BigInteger.valueOf(1);
+    s=s.shiftLeft(s2);
+    BigInteger bigBase=BigInteger.valueOf(base);
+    boolean done=false;
+    do {
+      b=b.multiply(bigBase);
+      BigInteger[] divResult=b.divideAndRemainder(s);
+      b=divResult[1];
+      digit=(char)(divResult[0].intValue());
+      if (mlo == mhi)       mlo=mhi=mlo.multiply(bigBase);
+ else {
+        mlo=mlo.multiply(bigBase);
+        mhi=mhi.multiply(bigBase);
+      }
+      int j=b.compareTo(mlo);
+      BigInteger delta=s.subtract(mhi);
+      int j1=(delta.signum() <= 0) ? 1 : b.compareTo(delta);
+      if (j1 == 0 && ((word1 & 1) == 0)) {
+        if (j > 0)         digit++;
+        done=true;
+      }
+ else       if (j < 0 || (j == 0 && ((word1 & 1) == 0))) {
+        if (j1 > 0) {
+          b=b.shiftLeft(1);
+          j1=b.compareTo(s);
+          if (j1 > 0)           digit++;
+        }
+        done=true;
+      }
+ else       if (j1 > 0) {
+        digit++;
+        done=true;
+      }
+      buffer[p++]=BASEDIGIT(digit);
+    }
+ while (!done);
+  }
+  return new String(buffer,0,p);
+}

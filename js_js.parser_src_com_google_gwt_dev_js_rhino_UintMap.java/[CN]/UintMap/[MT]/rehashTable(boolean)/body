@@ -1,0 +1,42 @@
+{
+  if (keys != null) {
+    if (keyCount * 2 >= occupiedCount) {
+      ++power;
+    }
+  }
+  int N=1 << power;
+  int[] old=keys;
+  int oldShift=ivaluesShift;
+  if (oldShift == 0 && !ensureIntSpace) {
+    keys=new int[N];
+  }
+ else {
+    ivaluesShift=N;
+    keys=new int[N * 2];
+  }
+  for (int i=0; i != N; ++i) {
+    keys[i]=EMPTY;
+  }
+  Object[] oldValues=values;
+  if (oldValues != null) {
+    values=new Object[N];
+  }
+  int oldCount=keyCount;
+  occupiedCount=0;
+  if (oldCount != 0) {
+    keyCount=0;
+    for (int i=0, remaining=oldCount; remaining != 0; ++i) {
+      int key=old[i];
+      if (key != EMPTY && key != DELETED) {
+        int index=insertNewKey(key);
+        if (oldValues != null) {
+          values[index]=oldValues[i];
+        }
+        if (oldShift != 0) {
+          keys[ivaluesShift + index]=old[oldShift + i];
+        }
+        --remaining;
+      }
+    }
+  }
+}

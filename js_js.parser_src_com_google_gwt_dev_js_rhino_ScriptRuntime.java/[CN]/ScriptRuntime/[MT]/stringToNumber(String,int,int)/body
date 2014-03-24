@@ -1,0 +1,67 @@
+{
+  char digitMax='9';
+  char lowerCaseBound='a';
+  char upperCaseBound='A';
+  int len=s.length();
+  if (radix < 10) {
+    digitMax=(char)('0' + radix - 1);
+  }
+  if (radix > 10) {
+    lowerCaseBound=(char)('a' + radix - 10);
+    upperCaseBound=(char)('A' + radix - 10);
+  }
+  int end;
+  double sum=0.0;
+  for (end=start; end < len; end++) {
+    char c=s.charAt(end);
+    int newDigit;
+    if ('0' <= c && c <= digitMax)     newDigit=c - '0';
+ else     if ('a' <= c && c < lowerCaseBound)     newDigit=c - 'a' + 10;
+ else     if ('A' <= c && c < upperCaseBound)     newDigit=c - 'A' + 10;
+ else     break;
+    sum=sum * radix + newDigit;
+  }
+  if (start == end) {
+    return NaN;
+  }
+  if (sum >= 9007199254740992.0) {
+    if (radix == 10) {
+      try {
+        return Double.valueOf(s.substring(start,end)).doubleValue();
+      }
+ catch (      NumberFormatException nfe) {
+        return NaN;
+      }
+    }
+ else     if (radix == 2 || radix == 4 || radix == 8 || radix == 16 || radix == 32) {
+      BinaryDigitReader bdr=new BinaryDigitReader(radix,s,start,end);
+      int bit;
+      sum=0.0;
+      do {
+        bit=bdr.getNextBinaryDigit();
+      }
+ while (bit == 0);
+      if (bit == 1) {
+        sum=1.0;
+        for (int j=52; j != 0; j--) {
+          bit=bdr.getNextBinaryDigit();
+          if (bit < 0)           return sum;
+          sum=sum * 2 + bit;
+        }
+        int bit54=bdr.getNextBinaryDigit();
+        if (bit54 >= 0) {
+          double factor=2.0;
+          int sticky=0;
+          int bit3;
+          while ((bit3=bdr.getNextBinaryDigit()) >= 0) {
+            sticky|=bit3;
+            factor*=2;
+          }
+          sum+=bit54 & (bit | sticky);
+          sum*=factor;
+        }
+      }
+    }
+  }
+  return sum;
+}

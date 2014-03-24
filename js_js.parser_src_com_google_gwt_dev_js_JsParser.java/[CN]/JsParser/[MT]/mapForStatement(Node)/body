@@ -1,0 +1,59 @@
+{
+  Node fromInit=forNode.getFirstChild();
+  Node fromTest=fromInit.getNext();
+  Node fromIncr=fromTest.getNext();
+  Node fromBody=fromIncr.getNext();
+  SourceInfo info=makeSourceInfo(forNode);
+  if (fromBody == null) {
+    Node fromIter=forNode.getFirstChild();
+    Node fromObjExpr=fromIter.getNext();
+    fromBody=fromObjExpr.getNext();
+    JsForIn toForIn;
+    if (fromIter.getType() == TokenStream.VAR) {
+      Node fromIterVarName=fromIter.getFirstChild();
+      String fromName=fromIterVarName.getString();
+      JsName toName=getScope().declareName(fromName);
+      toForIn=new JsForIn(info,toName);
+      Node fromIterInit=fromIterVarName.getFirstChild();
+      if (fromIterInit != null) {
+        toForIn.setIterExpr(mapOptionalExpression(fromIterInit));
+      }
+    }
+ else {
+      toForIn=new JsForIn(info);
+      toForIn.setIterExpr(mapExpression(fromIter));
+    }
+    toForIn.setObjExpr(mapExpression(fromObjExpr));
+    JsStatement bodyStmt=mapStatement(fromBody);
+    if (bodyStmt != null) {
+      toForIn.setBody(bodyStmt);
+    }
+ else {
+      toForIn.setBody(new JsEmpty(info));
+    }
+    return toForIn;
+  }
+ else {
+    JsFor toFor=new JsFor(info);
+    JsNode initThingy=map(fromInit);
+    if (initThingy != null) {
+      if (initThingy instanceof JsVars) {
+        toFor.setInitVars((JsVars)initThingy);
+      }
+ else {
+        assert(initThingy instanceof JsExpression);
+        toFor.setInitExpr((JsExpression)initThingy);
+      }
+    }
+    toFor.setCondition(mapOptionalExpression(fromTest));
+    toFor.setIncrExpr(mapOptionalExpression(fromIncr));
+    JsStatement bodyStmt=mapStatement(fromBody);
+    if (bodyStmt != null) {
+      toFor.setBody(bodyStmt);
+    }
+ else {
+      toFor.setBody(new JsEmpty(info));
+    }
+    return toFor;
+  }
+}

@@ -1,0 +1,50 @@
+{
+  int index=-1;
+  int firstDeleted=-1;
+  int[] keys=this.keys;
+  if (keys != null) {
+    int fraction=key * A;
+    index=fraction >>> (32 - power);
+    int entry=keys[index];
+    if (entry == key) {
+      return index;
+    }
+    if (entry != EMPTY) {
+      if (entry == DELETED) {
+        firstDeleted=index;
+      }
+      int mask=(1 << power) - 1;
+      int step=tableLookupStep(fraction,mask,power);
+      int n=0;
+      do {
+        if (check) {
+          if (n >= occupiedCount)           Context.codeBug();
+          ++n;
+        }
+        index=(index + step) & mask;
+        entry=keys[index];
+        if (entry == key) {
+          return index;
+        }
+        if (entry == DELETED && firstDeleted < 0) {
+          firstDeleted=index;
+        }
+      }
+ while (entry != EMPTY);
+    }
+  }
+  if (check && keys != null && keys[index] != EMPTY)   Context.codeBug();
+  if (firstDeleted >= 0) {
+    index=firstDeleted;
+  }
+ else {
+    if (keys == null || occupiedCount * 4 >= (1 << power) * 3) {
+      rehashTable(intType);
+      return insertNewKey(key);
+    }
+    ++occupiedCount;
+  }
+  keys[index]=key;
+  ++keyCount;
+  return index;
+}

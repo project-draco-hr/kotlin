@@ -1,0 +1,34 @@
+{
+  int i=offset;
+  while (true) {
+    if (i == end) {
+      if (end == buffer.length) {
+        char[] tmp=new char[buffer.length * 2];
+        System.arraycopy(buffer,0,tmp,0,end);
+        buffer=tmp;
+      }
+      int charsRead=0;
+      try {
+        charsRead=in.read(buffer,end,buffer.length - end);
+      }
+ catch (      IOException ioe) {
+        break;
+      }
+      if (charsRead < 0)       break;
+      end+=charsRead;
+    }
+    int c=buffer[i];
+    if ((c & EOL_HINT_MASK) == 0 && eolChar(c))     break;
+    i++;
+  }
+  int start=lineStart;
+  if (lineStart < 0) {
+    StringBuffer sb=new StringBuffer(otherEnd - otherStart + i);
+    sb.append(otherBuffer,otherStart,otherEnd - otherStart);
+    sb.append(buffer,0,i);
+    return sb.toString();
+  }
+ else {
+    return new String(buffer,lineStart,i - lineStart);
+  }
+}

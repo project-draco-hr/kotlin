@@ -1,0 +1,36 @@
+{
+  this.ok=true;
+  sourceTop=0;
+  functionNumber=0;
+  int tt;
+  int baseLineno=ts.getLineno();
+  Object tempBlock=nf.createLeaf(TokenStream.BLOCK);
+  ((Node)tempBlock).setIsSyntheticBlock(true);
+  while (true) {
+    ts.flags|=ts.TSF_REGEXP;
+    tt=ts.getToken();
+    ts.flags&=~ts.TSF_REGEXP;
+    if (tt <= ts.EOF) {
+      break;
+    }
+    if (tt == ts.FUNCTION) {
+      try {
+        nf.addChildToBack(tempBlock,function(ts,false));
+      }
+ catch (      JavaScriptException e) {
+        this.ok=false;
+        break;
+      }
+    }
+ else {
+      ts.ungetToken(tt);
+      nf.addChildToBack(tempBlock,statement(ts));
+    }
+  }
+  if (!this.ok) {
+    return null;
+  }
+  Object pn=nf.createScript(tempBlock,ts.getSourceName(),baseLineno,ts.getLineno(),sourceToString(0));
+  ((Node)pn).setIsSyntheticBlock(true);
+  return pn;
+}
