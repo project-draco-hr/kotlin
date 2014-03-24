@@ -1,24 +1,20 @@
 {
-  if (owner.getContextKind() == OwnerKind.TRAIT_IMPL) {
-    return;
-  }
-  Method method=state.getTypeMapper().mapSignature(functionDescriptor).getAsmMethod();
+  if (functionDescriptor instanceof ConstructorDescriptor)   return;
+  if (owner.getContextKind() == OwnerKind.TRAIT_IMPL)   return;
+  Method method=typeMapper.mapSignature(functionDescriptor).getAsmMethod();
   Queue<FunctionDescriptor> bfsQueue=new LinkedList<FunctionDescriptor>();
   Set<FunctionDescriptor> visited=new HashSet<FunctionDescriptor>();
-  bfsQueue.offer(functionDescriptor.getOriginal());
-  visited.add(functionDescriptor.getOriginal());
   for (  FunctionDescriptor overriddenDescriptor : functionDescriptor.getOverriddenDescriptors()) {
     FunctionDescriptor orig=overriddenDescriptor.getOriginal();
-    if (!visited.contains(orig)) {
-      bfsQueue.offer(overriddenDescriptor);
-      visited.add(overriddenDescriptor);
+    if (visited.add(orig)) {
+      bfsQueue.offer(orig);
     }
   }
   Set<Method> bridgesToGenerate=new HashSet<Method>();
   while (!bfsQueue.isEmpty()) {
     FunctionDescriptor descriptor=bfsQueue.poll();
     if (descriptor.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
-      Method overridden=state.getTypeMapper().mapSignature(descriptor.getOriginal()).getAsmMethod();
+      Method overridden=typeMapper.mapSignature(descriptor).getAsmMethod();
       if (differentMethods(method,overridden)) {
         bridgesToGenerate.add(overridden);
       }
@@ -26,13 +22,15 @@
     }
     for (    FunctionDescriptor overriddenDescriptor : descriptor.getOverriddenDescriptors()) {
       FunctionDescriptor orig=overriddenDescriptor.getOriginal();
-      if (!visited.contains(orig)) {
+      if (visited.add(orig)) {
         bfsQueue.offer(orig);
-        visited.add(orig);
       }
     }
   }
-  for (  Method overridden : bridgesToGenerate) {
-    generateBridge(state,v,functionDescriptor,overridden);
+  if (!bridgesToGenerate.isEmpty()) {
+    PsiElement origin=callableDescriptorToDeclaration(bindingContext,functionDescriptor);
+    for (    Method bridge : bridgesToGenerate) {
+      generateBridge(origin,bridge,method);
+    }
   }
 }
