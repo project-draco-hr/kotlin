@@ -2,10 +2,15 @@
   if (annotationEntryElements.isEmpty())   return Annotations.EMPTY;
   List<AnnotationDescriptor> result=Lists.newArrayList();
   for (  JetAnnotationEntry entryElement : annotationEntryElements) {
-    AnnotationDescriptorImpl descriptor=trace.get(BindingContext.ANNOTATION,entryElement);
+    AnnotationDescriptor descriptor=trace.get(BindingContext.ANNOTATION,entryElement);
     if (descriptor == null) {
-      descriptor=new AnnotationDescriptorImpl();
-      descriptor.setAnnotationType(resolveAnnotationType(scope,entryElement,trace));
+      if (TopDownAnalyzer.LAZY) {
+        descriptor=new LazyAnnotationDescriptor(new LazyAnnotationsContext(this,storageManager,scope,trace),entryElement);
+      }
+ else {
+        descriptor=new AnnotationDescriptorImpl();
+        ((AnnotationDescriptorImpl)descriptor).setAnnotationType(resolveAnnotationType(scope,entryElement,trace));
+      }
       trace.record(BindingContext.ANNOTATION,entryElement,descriptor);
     }
     if (shouldResolveArguments) {
