@@ -1,12 +1,16 @@
 {
-  PsiElement child=getFirstChild();
-  while (child != null) {
-    IElementType tt=child.getNode().getElementType();
-    if (tt == JetTokens.LPAR || tt == JetTokens.COLON)     break;
-    if (child instanceof JetTypeReference) {
-      return (JetTypeReference)child;
+  PsiJetFunctionStub stub=getStub();
+  if (stub != null) {
+    if (!stub.isExtension()) {
+      return null;
     }
-    child=child.getNextSibling();
+    List<JetTypeReference> childTypeReferences=getStubOrPsiChildrenAsList(JetStubElementTypes.TYPE_REFERENCE);
+    if (!childTypeReferences.isEmpty()) {
+      return childTypeReferences.get(0);
+    }
+ else {
+      return null;
+    }
   }
-  return null;
+  return getReceiverTypeRefByTree();
 }

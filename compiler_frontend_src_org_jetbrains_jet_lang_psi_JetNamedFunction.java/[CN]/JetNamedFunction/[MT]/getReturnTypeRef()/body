@@ -1,15 +1,12 @@
 {
-  boolean colonPassed=false;
-  PsiElement child=getFirstChild();
-  while (child != null) {
-    IElementType tt=child.getNode().getElementType();
-    if (tt == JetTokens.COLON) {
-      colonPassed=true;
+  PsiJetFunctionStub stub=getStub();
+  if (stub != null) {
+    List<JetTypeReference> typeReferences=getStubOrPsiChildrenAsList(JetStubElementTypes.TYPE_REFERENCE);
+    int returnTypeIndex=stub.isExtension() ? 1 : 0;
+    if (returnTypeIndex >= typeReferences.size()) {
+      return null;
     }
-    if (colonPassed && child instanceof JetTypeReference) {
-      return (JetTypeReference)child;
-    }
-    child=child.getNextSibling();
+    return typeReferences.get(returnTypeIndex);
   }
-  return null;
+  return getReturnTypeRefByPsi();
 }
