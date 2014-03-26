@@ -22,8 +22,7 @@
     returnType=KotlinBuiltIns.getInstance().getUnitType();
   }
  else {
-    JetExpression bodyExpression=function.getBodyExpression();
-    if (bodyExpression != null) {
+    if (function.hasBody()) {
       returnType=DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<JetType>(){
         @Override public JetType invoke(){
           JetType type=expressionTypingServices.getBodyExpressionType(trace,scope,dataFlowInfo,function,functionDescriptor);
@@ -36,8 +35,7 @@
       returnType=ErrorUtils.createErrorType("No type, no body");
     }
   }
-  boolean hasBody=function.getBodyExpression() != null;
-  Modality modality=resolveModalityFromModifiers(function,getDefaultModality(containingDescriptor,hasBody));
+  Modality modality=resolveModalityFromModifiers(function,getDefaultModality(containingDescriptor,function.hasBody()));
   Visibility visibility=resolveVisibilityFromModifiers(function,getDefaultVisibility(function,containingDescriptor));
   functionDescriptor.initialize(receiverType,getExpectedThisObjectIfNeeded(containingDescriptor),typeParameterDescriptors,valueParameterDescriptors,returnType,modality,visibility);
   BindingContextUtils.recordFunctionDeclarationToDescriptor(trace,function,functionDescriptor);
