@@ -1,0 +1,15 @@
+{
+  if (descriptor.getModality() == Modality.ABSTRACT) {
+    throw new IllegalArgumentException("Only non-abstract functions have implementations: " + descriptor);
+  }
+  if (descriptor.getKind() != CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+    return descriptor;
+  }
+  for (  FunctionDescriptor overriddenSubstituted : descriptor.getOverriddenDescriptors()) {
+    FunctionDescriptor overridden=overriddenSubstituted.getOriginal();
+    if (overridden.getModality() != Modality.ABSTRACT) {
+      return findNonAbstractDeclaration(overridden);
+    }
+  }
+  throw new IllegalStateException("No non-abstract declaration found for non-abstract function: " + descriptor + "\nOverridden: "+ descriptor.getOverriddenDescriptors());
+}

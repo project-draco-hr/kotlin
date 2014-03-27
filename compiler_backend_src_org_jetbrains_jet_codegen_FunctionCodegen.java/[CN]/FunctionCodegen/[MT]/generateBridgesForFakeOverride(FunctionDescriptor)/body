@@ -1,0 +1,12 @@
+{
+  if (owner.getContextKind() == OwnerKind.TRAIT_IMPL)   return;
+  if (descriptor.getModality() == Modality.ABSTRACT)   return;
+  if (!hasAbstractSuperFunction(descriptor))   return;
+  FunctionDescriptor implementation=findNonAbstractDeclaration(descriptor);
+  Set<Method> bridgesToGenerate=findAllReachableDeclarations(descriptor);
+  bridgesToGenerate.removeAll(findAllReachableDeclarations(implementation));
+  Method method=typeMapper.mapSignature(implementation).getAsmMethod();
+  for (  Method bridge : bridgesToGenerate) {
+    generateBridge(null,bridge,method);
+  }
+}

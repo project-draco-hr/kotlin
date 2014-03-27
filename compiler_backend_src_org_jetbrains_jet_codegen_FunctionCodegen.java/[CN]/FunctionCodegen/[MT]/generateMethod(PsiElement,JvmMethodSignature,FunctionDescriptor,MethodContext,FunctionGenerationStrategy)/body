@@ -1,6 +1,7 @@
 {
+  OwnerKind methodContextKind=methodContext.getContextKind();
   Method asmMethod=jvmSignature.getAsmMethod();
-  MethodVisitor mv=v.newMethod(origin,getMethodAsmFlags(functionDescriptor,methodContext.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),getThrownExceptions(functionDescriptor,typeMapper));
+  MethodVisitor mv=v.newMethod(origin,getMethodAsmFlags(functionDescriptor,methodContextKind),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),getThrownExceptions(functionDescriptor,typeMapper));
   if (owner instanceof PackageFacadeContext) {
     Type ownerType=((PackageFacadeContext)owner).getDelegateToClassType();
     v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,functionDescriptor,shortNameByAsmType(ownerType));
@@ -11,12 +12,13 @@
   AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(functionDescriptor);
   generateParameterAnnotations(functionDescriptor,mv,jvmSignature);
   generateJetValueParameterAnnotations(mv,functionDescriptor,jvmSignature);
-  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,methodContext.getContextKind())) {
-    generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,state.getTypeMapper()),new Label(),new Label(),methodContext.getContextKind());
-    return;
+  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,methodContextKind)) {
+    generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),methodContextKind);
   }
-  generateMethodBody(mv,functionDescriptor,methodContext,jvmSignature,strategy,getParentCodegen());
-  endVisit(mv,null,origin);
-  generateBridgeIfNeeded(functionDescriptor);
-  methodContext.recordSyntheticAccessorIfNeeded(functionDescriptor,bindingContext);
+ else {
+    generateMethodBody(mv,functionDescriptor,methodContext,jvmSignature,strategy,getParentCodegen());
+    endVisit(mv,null,origin);
+    methodContext.recordSyntheticAccessorIfNeeded(functionDescriptor,bindingContext);
+  }
+  generateBridges(functionDescriptor);
 }

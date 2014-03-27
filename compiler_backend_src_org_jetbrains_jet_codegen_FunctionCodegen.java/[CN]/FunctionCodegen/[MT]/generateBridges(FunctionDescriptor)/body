@@ -1,0 +1,14 @@
+{
+  if (descriptor instanceof ConstructorDescriptor)   return;
+  if (owner.getContextKind() == OwnerKind.TRAIT_IMPL)   return;
+  if (isTrait(descriptor.getContainingDeclaration()))   return;
+  Set<Method> bridgesToGenerate=findAllReachableDeclarations(descriptor);
+  Method method=typeMapper.mapSignature(descriptor).getAsmMethod();
+  bridgesToGenerate.remove(method);
+  if (!bridgesToGenerate.isEmpty()) {
+    PsiElement origin=callableDescriptorToDeclaration(bindingContext,descriptor);
+    for (    Method bridge : bridgesToGenerate) {
+      generateBridge(origin,bridge,method);
+    }
+  }
+}
