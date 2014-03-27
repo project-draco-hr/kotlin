@@ -1,42 +1,24 @@
 {
-  boolean noDeclaration=declared.getKind() != CallableMemberDescriptor.Kind.DECLARATION;
-  if (!noDeclaration) {
+  boolean isDeclaration=declared.getKind() == CallableMemberDescriptor.Kind.DECLARATION;
+  if (isDeclaration) {
     JetModifierListOwner declaration=(JetModifierListOwner)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),declared);
-    if (!declaration.hasModifier(JetTokens.OVERRIDE_KEYWORD)) {
+    if (declaration != null && !declaration.hasModifier(JetTokens.OVERRIDE_KEYWORD)) {
       return;
     }
   }
   for (  ValueParameterDescriptor parameterFromSubclass : declared.getValueParameters()) {
-    JetParameter parameter=noDeclaration ? null : (JetParameter)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),parameterFromSubclass);
-    JetClassOrObject classElement=noDeclaration ? (JetClassOrObject)BindingContextUtils.descriptorToDeclaration(trace.getBindingContext(),declared.getContainingDeclaration()) : null;
-    if (parameterFromSubclass.declaresDefaultValue() && !noDeclaration) {
-      trace.report(DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.on(parameter));
-    }
-    boolean superWithDefault=false;
+    int defaultsInSuper=0;
     for (    ValueParameterDescriptor parameterFromSuperclass : parameterFromSubclass.getOverriddenDescriptors()) {
       if (parameterFromSuperclass.declaresDefaultValue()) {
-        if (!superWithDefault) {
-          superWithDefault=true;
-        }
- else {
-          if (noDeclaration) {
-            trace.report(MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE.on(classElement,parameterFromSubclass));
-          }
- else {
-            trace.report(MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES.on(parameter,parameterFromSubclass));
-          }
-          break;
-        }
+        defaultsInSuper++;
       }
-      DeclarationDescriptor superFunction=parameterFromSuperclass.getContainingDeclaration();
-      if (declared.hasStableParameterNames() && superFunction instanceof CallableDescriptor && ((CallableDescriptor)superFunction).hasStableParameterNames()&& !parameterFromSuperclass.getName().equals(parameterFromSubclass.getName())) {
-        if (noDeclaration) {
-          trace.report(DIFFERENT_NAMES_FOR_THE_SAME_PARAMETER_IN_SUPERTYPES.on(classElement,declared.getOverriddenDescriptors(),parameterFromSuperclass.getIndex() + 1));
-        }
+    }
+    boolean multipleDefaultsInSuper=defaultsInSuper > 1;
+    if (isDeclaration) {
+      checkNameAndDefaultForDeclaredParameter(parameterFromSubclass,multipleDefaultsInSuper);
+    }
  else {
-          trace.report(PARAMETER_NAME_CHANGED_ON_OVERRIDE.on(parameter,(ClassDescriptor)superFunction.getContainingDeclaration(),parameterFromSuperclass));
-        }
-      }
+      checkNameAndDefaultForFakeOverrideParameter(declared,parameterFromSubclass,multipleDefaultsInSuper);
     }
   }
 }
