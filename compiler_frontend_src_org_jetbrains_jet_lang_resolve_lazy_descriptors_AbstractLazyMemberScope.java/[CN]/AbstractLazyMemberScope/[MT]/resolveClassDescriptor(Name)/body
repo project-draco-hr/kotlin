@@ -2,7 +2,8 @@
   Collection<JetClassLikeInfo> classOrObjectDeclarations=declarationProvider.getClassOrObjectDeclarations(name);
   return ContainerUtil.mapNotNull(classOrObjectDeclarations,new Function<JetClassLikeInfo,ClassDescriptor>(){
     @Override public ClassDescriptor fun(    JetClassLikeInfo classLikeInfo){
-      return new LazyClassDescriptor(resolveSession,thisDescriptor,name,classLikeInfo);
+      BindingTrace traceForMembers=classLikeInfo instanceof JetScriptInfo ? TemporaryBindingTrace.create(resolveSession.getTrace(),"A trace for script class, needed to avoid rewrites on members") : resolveSession.getTrace();
+      return new LazyClassDescriptor(resolveSession,thisDescriptor,name,classLikeInfo,traceForMembers);
     }
   }
 );
