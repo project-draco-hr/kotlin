@@ -1,0 +1,16 @@
+{
+  PsiClass psiClass=ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>(){
+    @Override public PsiClass compute(){
+      return JavaPsiFacade.getInstance(myProject).findClass(className,GlobalSearchScope.allScope(myProject));
+    }
+  }
+);
+  if (psiClass instanceof KotlinLightClassForPackage) {
+    PsiElement element=psiClass.getNavigationElement();
+    if (element instanceof JetFile) {
+      createBreakpoints((JetFile)element);
+      return;
+    }
+  }
+  createBreakpoints(psiClass.getContainingFile());
+}
