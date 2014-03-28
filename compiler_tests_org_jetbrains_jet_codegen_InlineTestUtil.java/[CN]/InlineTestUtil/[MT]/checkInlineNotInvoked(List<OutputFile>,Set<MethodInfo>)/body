@@ -1,0 +1,33 @@
+{
+  final List<NotInlinedCall> notInlined=new ArrayList<NotInlinedCall>();
+  for (  OutputFile file : files) {
+    ClassReader cr=new ClassReader(file.asByteArray());
+    final String[] className={null};
+    cr.accept(new ClassVisitor(Opcodes.ASM4){
+      @Override public void visit(      int version,      int access,      String name,      String signature,      String superName,      String[] interfaces){
+        className[0]=name;
+        super.visit(version,access,name,signature,superName,interfaces);
+      }
+      @Override public MethodVisitor visitMethod(      int access,      String name,      String desc,      String signature,      String[] exceptions){
+        return new MethodNode(Opcodes.ASM4,access,name,desc,signature,exceptions){
+          @Override public void visitMethodInsn(          int opcode,          String owner,          String name,          String desc){
+            MethodInfo methodCall=new MethodInfo(owner,name,desc);
+            if (inlinedMethods.contains(methodCall)) {
+              MethodInfo fromCall=new MethodInfo(className[0],this.name,this.desc);
+              if (methodCall.owner.startsWith(fromCall.owner + "-")) {
+                return;
+              }
+              if (methodCall.owner.endsWith(JvmAbi.TRAIT_IMPL_SUFFIX) && !fromCall.owner.equals(methodCall.owner)) {
+                return;
+              }
+              notInlined.add(new NotInlinedCall(fromCall,methodCall));
+            }
+          }
+        }
+;
+      }
+    }
+,0);
+  }
+  return notInlined;
+}
