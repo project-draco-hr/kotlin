@@ -1,5 +1,4 @@
 {
-  boolean nestedClass=classOrObject.getParent() != classOrObject.getContainingFile();
   Collection<String> psiModifiers=Sets.newHashSet();
   List<Pair<JetModifierKeywordToken,String>> jetTokenToPsiModifier=Lists.newArrayList(Pair.create(PUBLIC_KEYWORD,PsiModifier.PUBLIC),Pair.create(INTERNAL_KEYWORD,PsiModifier.PUBLIC),Pair.create(PROTECTED_KEYWORD,PsiModifier.PROTECTED),Pair.create(FINAL_KEYWORD,PsiModifier.FINAL));
   for (  Pair<JetModifierKeywordToken,String> tokenAndModifier : jetTokenToPsiModifier) {
@@ -8,7 +7,7 @@
     }
   }
   if (classOrObject.hasModifier(PRIVATE_KEYWORD)) {
-    psiModifiers.add(nestedClass ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
+    psiModifiers.add(classOrObject.isTopLevel() ? PsiModifier.PUBLIC : PsiModifier.PRIVATE);
   }
   if (!psiModifiers.contains(PsiModifier.PRIVATE) && !psiModifiers.contains(PsiModifier.PROTECTED)) {
     psiModifiers.add(PsiModifier.PUBLIC);
@@ -19,7 +18,7 @@
  else   if (!classOrObject.hasModifier(OPEN_KEYWORD)) {
     psiModifiers.add(PsiModifier.FINAL);
   }
-  if (nestedClass && !classOrObject.hasModifier(INNER_KEYWORD)) {
+  if (!classOrObject.isTopLevel() && !classOrObject.hasModifier(INNER_KEYWORD)) {
     psiModifiers.add(PsiModifier.STATIC);
   }
   return ArrayUtil.toStringArray(psiModifiers);
