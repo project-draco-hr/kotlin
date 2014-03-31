@@ -1,18 +1,24 @@
 {
-  ConstructorDescriptor primaryConstructor=null;
   if (GENERATE_CONSTRUCTORS_FOR.contains(thisDescriptor.getKind())) {
-    JetClassOrObject classOrObject=declarationProvider.getOwnerInfo().getCorrespondingClassOrObject();
-    if (!thisDescriptor.getKind().isSingleton()) {
+    JetClassLikeInfo ownerInfo=declarationProvider.getOwnerInfo();
+    JetClassOrObject classOrObject=ownerInfo.getCorrespondingClassOrObject();
+    if (ownerInfo instanceof JetScriptInfo) {
+      ScriptDescriptor scriptDescriptor=resolveSession.getScriptDescriptor(((JetScriptInfo)ownerInfo).getScript());
+      ConstructorDescriptorImpl constructor=ScriptDescriptorImpl.createConstructor(scriptDescriptor,scriptDescriptor.getScriptCodeDescriptor().getValueParameters());
+      setDeferredReturnType(constructor);
+      return constructor;
+    }
+ else     if (!thisDescriptor.getKind().isSingleton() && classOrObject instanceof JetClass) {
       JetClass jetClass=(JetClass)classOrObject;
       ConstructorDescriptorImpl constructor=resolveSession.getDescriptorResolver().resolvePrimaryConstructorDescriptor(thisDescriptor.getScopeForClassHeaderResolution(),thisDescriptor,jetClass,trace);
-      primaryConstructor=constructor;
       setDeferredReturnType(constructor);
+      return constructor;
     }
  else {
       ConstructorDescriptorImpl constructor=DescriptorResolver.createAndRecordPrimaryConstructorForObject(classOrObject,thisDescriptor,trace);
       setDeferredReturnType(constructor);
-      primaryConstructor=constructor;
+      return constructor;
     }
   }
-  return primaryConstructor;
+  return null;
 }
