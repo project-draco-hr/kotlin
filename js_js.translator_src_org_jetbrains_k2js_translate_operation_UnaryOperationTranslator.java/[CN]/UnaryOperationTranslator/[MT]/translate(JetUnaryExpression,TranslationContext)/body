@@ -1,7 +1,10 @@
 {
   IElementType operationToken=expression.getOperationReference().getReferencedNameElementType();
   if (operationToken == JetTokens.EXCLEXCL) {
-    return sure(translateAsExpression(getBaseExpression(expression),context),context);
+    JetExpression baseExpression=getBaseExpression(expression);
+    JetType type=BindingContextUtils.getNotNull(context.bindingContext(),BindingContext.EXPRESSION_TYPE,baseExpression);
+    JsExpression translatedExpression=translateAsExpression(baseExpression,context);
+    return type.isNullable() ? sure(translatedExpression,context) : translatedExpression;
   }
   if (IncrementTranslator.isIncrement(operationToken)) {
     return IncrementTranslator.translate(expression,context);
