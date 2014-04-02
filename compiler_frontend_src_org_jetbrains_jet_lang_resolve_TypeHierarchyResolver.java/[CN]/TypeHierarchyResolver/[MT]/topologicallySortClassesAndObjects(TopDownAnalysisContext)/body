@@ -1,16 +1,6 @@
 {
-  List<ClassDescriptor> orderedClasses=DFS.topologicalOrder((Iterable)c.getAllClasses(),new DFS.Neighbors<ClassDescriptor>(){
-    @NotNull @Override public Iterable<ClassDescriptor> getNeighbors(    ClassDescriptor current){
-      List<ClassDescriptor> result=Lists.newArrayList();
-      for (      JetType supertype : current.getDefaultType().getConstructor().getSupertypes()) {
-        DeclarationDescriptor descriptor=supertype.getConstructor().getDeclarationDescriptor();
-        if (descriptor instanceof ClassDescriptor) {
-          result.add((ClassDescriptor)descriptor);
-        }
-      }
-      return result;
-    }
-  }
-);
-  return KotlinPackage.filterIsInstance(orderedClasses,MutableClassDescriptor.class);
+  Collection<ClassDescriptor> sourceClasses=(Collection)c.getAllClasses();
+  List<ClassDescriptor> allClassesOrdered=DFS.topologicalOrder(sourceClasses,CLASS_INHERITANCE_EDGES);
+  allClassesOrdered.retainAll(sourceClasses);
+  return (List)allClassesOrdered;
 }
