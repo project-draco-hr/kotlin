@@ -1,26 +1,17 @@
 {
   configureByFile(path);
-  DirectiveBasedActionUtils.checkForUnexpectedErrors((JetFile)getFile());
   String fileText=FileUtil.loadFile(new File(path),true);
-  String isApplicableString=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// IS_APPLICABLE: ");
-  boolean isApplicableExpected=isApplicableString == null || isApplicableString.equals("true");
-  Assert.assertTrue("isAvailable() for " + intentionAction.getClass() + " should return "+ isApplicableExpected,isApplicableExpected == intentionAction.isAvailable(getProject(),getEditor(),getFile()));
-  String intentionTextString=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// INTENTION_TEXT: ");
-  if (intentionTextString != null) {
-    assertEquals("Intention text mismatch.",intentionTextString,intentionAction.getText());
-  }
-  String shouldFailString=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// SHOULD_FAIL_WITH: ");
+  boolean isWithRuntime=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// WITH_RUNTIME") != null;
   try {
-    if (isApplicableExpected) {
-      intentionAction.invoke(getProject(),getEditor(),getFile());
-      if (shouldFailString == null) {
-        String canonicalPathToExpectedFile=PathUtil.getCanonicalPath(path + ".after");
-        checkResultByFile(canonicalPathToExpectedFile);
-      }
+    if (isWithRuntime) {
+      ConfigLibraryUtil.configureKotlinRuntime(getModule(),getFullJavaJDK());
     }
-    assertNull("Expected test to fail.",shouldFailString);
+    DirectiveBasedActionUtils.checkForUnexpectedErrors((JetFile)getFile());
+    doTestFor(path,intentionAction,fileText);
   }
- catch (  IntentionTestException e) {
-    assertEquals("Failure message mismatch.",shouldFailString,e.getMessage());
+  finally {
+    if (isWithRuntime) {
+      ConfigLibraryUtil.unConfigureKotlinRuntime(getModule(),getProjectJDK());
+    }
   }
 }
