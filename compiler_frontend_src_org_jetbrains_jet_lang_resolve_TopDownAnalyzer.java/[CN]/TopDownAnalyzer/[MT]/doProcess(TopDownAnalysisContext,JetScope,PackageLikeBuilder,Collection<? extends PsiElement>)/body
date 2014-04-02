@@ -1,2 +1,18 @@
 {
+  c.debug("Enter");
+  if (c.getTopDownAnalysisParameters().isLazyTopDownAnalysis()) {
+    ResolveSession resolveSession=new InjectorForLazyResolve(project,new GlobalContextImpl((LockBasedStorageManager)c.getStorageManager(),c.getExceptionTracker()),(ModuleDescriptorImpl)moduleDescriptor,new FileBasedDeclarationProviderFactory(c.getStorageManager(),getFiles(declarations)),trace).getResolveSession();
+    lazyTopDownAnalyzer.analyzeDeclarations(resolveSession,c.getTopDownAnalysisParameters(),declarations);
+    return;
+  }
+  typeHierarchyResolver.process(c,outerScope,owner,declarations);
+  declarationResolver.process(c);
+  overrideResolver.process(c);
+  lockScopes(c);
+  overloadResolver.process(c);
+  if (!c.getTopDownAnalysisParameters().isAnalyzingBootstrapLibrary()) {
+    bodyResolver.resolveBodies(c);
+  }
+  c.debug("Exit");
+  c.printDebugOutput(System.out);
 }
