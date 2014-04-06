@@ -1,0 +1,24 @@
+{
+  int[] keys=new int[transitions.size()];
+  Label[] labels=new Label[transitions.size()];
+  int i=0;
+  for (  Map.Entry<Integer,Label> transition : transitions.entrySet()) {
+    keys[i]=transition.getKey();
+    labels[i]=transition.getValue();
+    i++;
+  }
+  int hi=keys[keys.length - 1];
+  int lo=keys[0];
+  long emptyCells=((long)hi - (long)lo + 1) - keys.length;
+  boolean useTableSwitch=keys.length > 0 && 10L * emptyCells <= (long)keys.length;
+  if (!useTableSwitch) {
+    v.lookupswitch(defaultLabel,keys,labels);
+    return;
+  }
+  Label[] sparseLabels=new Label[hi - lo + 1];
+  Arrays.fill(sparseLabels,defaultLabel);
+  for (i=0; i < keys.length; i++) {
+    sparseLabels[keys[i] - lo]=labels[i];
+  }
+  v.tableswitch(lo,hi,defaultLabel,sparseLabels);
+}
