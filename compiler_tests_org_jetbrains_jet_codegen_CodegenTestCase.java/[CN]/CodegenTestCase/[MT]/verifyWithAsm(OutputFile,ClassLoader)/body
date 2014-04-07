@@ -9,14 +9,16 @@
     try {
       analyzer.analyze(classNode.name,method);
     }
- catch (    AnalyzerException e) {
+ catch (    Throwable e) {
       System.out.println(file.asText());
       System.err.println(classNode.name + "::" + method.name+ method.desc);
-      TraceMethodVisitor tmv=new TraceMethodVisitor(new Textifier());
-      e.node.accept(tmv);
-      PrintWriter pw=new PrintWriter(System.err);
-      tmv.p.print(pw);
-      pw.flush();
+      if (e instanceof AnalyzerException) {
+        TraceMethodVisitor tmv=new TraceMethodVisitor(new Textifier());
+        ((AnalyzerException)e).node.accept(tmv);
+        PrintWriter pw=new PrintWriter(System.err);
+        tmv.p.print(pw);
+        pw.flush();
+      }
       e.printStackTrace();
       noErrors=false;
     }
