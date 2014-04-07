@@ -19,17 +19,17 @@
   Label onException=null;
   if (hasCatches) {
     onException=builder.createUnboundLabel("onException");
-    builder.nondeterministicJump(onException);
+    builder.nondeterministicJump(onException,expression);
   }
   Label onExceptionToFinallyBlock=null;
   if (finallyBlock != null) {
     onExceptionToFinallyBlock=builder.createUnboundLabel("onExceptionToFinallyBlock");
-    builder.nondeterministicJump(onExceptionToFinallyBlock);
+    builder.nondeterministicJump(onExceptionToFinallyBlock,expression);
   }
   generateInstructions(expression.getTryBlock(),context);
   if (hasCatches) {
     Label afterCatches=builder.createUnboundLabel("afterCatches");
-    builder.jump(afterCatches);
+    builder.jump(afterCatches,expression);
     builder.bindLabel(onException);
     LinkedList<Label> catchLabels=Lists.newLinkedList();
     int catchClausesSize=catchClauses.size();
@@ -37,7 +37,7 @@
       catchLabels.add(builder.createUnboundLabel("catch " + i));
     }
     if (!catchLabels.isEmpty()) {
-      builder.nondeterministicJump(catchLabels);
+      builder.nondeterministicJump(catchLabels,expression);
     }
     boolean isFirst=true;
     for (    JetCatchClause catchClause : catchClauses) {
@@ -57,7 +57,7 @@
       if (catchBody != null) {
         generateInstructions(catchBody,NOT_IN_CONDITION);
       }
-      builder.jump(afterCatches);
+      builder.jump(afterCatches,expression);
       builder.exitLexicalScope(catchClause);
     }
     builder.bindLabel(afterCatches);
@@ -65,10 +65,10 @@
   if (finallyBlock != null) {
     builder.exitTryFinally();
     Label skipFinallyToErrorBlock=builder.createUnboundLabel("skipFinallyToErrorBlock");
-    builder.jump(skipFinallyToErrorBlock);
+    builder.jump(skipFinallyToErrorBlock,expression);
     builder.bindLabel(onExceptionToFinallyBlock);
     finallyBlockGenerator.generate();
-    builder.jumpToError();
+    builder.jumpToError(expression);
     builder.bindLabel(skipFinallyToErrorBlock);
     finallyBlockGenerator.generate();
   }
