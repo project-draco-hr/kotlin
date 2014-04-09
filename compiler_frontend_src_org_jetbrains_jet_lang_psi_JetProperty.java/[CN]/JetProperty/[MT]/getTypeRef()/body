@@ -1,15 +1,18 @@
 {
-  ASTNode node=getNode().getFirstChildNode();
-  boolean passedColon=false;
-  while (node != null) {
-    IElementType tt=node.getElementType();
-    if (tt == JetTokens.COLON) {
-      passedColon=true;
+  PsiJetPropertyStub stub=getStub();
+  if (stub != null) {
+    if (!stub.hasReturnTypeRef()) {
+      return null;
     }
- else     if (tt == JetNodeTypes.TYPE_REFERENCE && passedColon) {
-      return (JetTypeReference)node.getPsi();
+ else {
+      List<JetTypeReference> typeReferences=getStubOrPsiChildrenAsList(JetStubElementTypes.TYPE_REFERENCE);
+      int returnTypeRefPositionInPsi=stub.hasReceiverTypeRef() ? 1 : 0;
+      if (typeReferences.size() <= returnTypeRefPositionInPsi) {
+        LOG.error("Invalid stub structure built for property:\n" + getText());
+        return null;
+      }
+      return typeReferences.get(returnTypeRefPositionInPsi);
     }
-    node=node.getTreeNext();
   }
-  return null;
+  return getTypeRefByTree();
 }
