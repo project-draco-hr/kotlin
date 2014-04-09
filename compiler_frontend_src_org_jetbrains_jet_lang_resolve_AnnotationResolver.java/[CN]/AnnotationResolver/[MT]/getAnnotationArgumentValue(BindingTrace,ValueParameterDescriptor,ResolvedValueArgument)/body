@@ -3,11 +3,17 @@
   boolean argumentsAsVararg=varargElementType != null && !hasSpread(resolvedArgument);
   List<CompileTimeConstant<?>> constants=resolveValueArguments(resolvedArgument,argumentsAsVararg ? varargElementType : parameterDescriptor.getType(),trace);
   if (argumentsAsVararg) {
+    boolean usesVariableAsConstant=KotlinPackage.any(constants,new Function1<CompileTimeConstant<?>,Boolean>(){
+      @Override public Boolean invoke(      CompileTimeConstant<?> constant){
+        return constant.usesVariableAsConstant();
+      }
+    }
+);
     JetType arrayType=KotlinBuiltIns.getInstance().getPrimitiveArrayJetTypeByPrimitiveJetType(varargElementType);
     if (arrayType == null) {
       arrayType=KotlinBuiltIns.getInstance().getArrayType(varargElementType);
     }
-    return new ArrayValue(constants,arrayType,true);
+    return new ArrayValue(constants,arrayType,true,usesVariableAsConstant);
   }
  else {
     return !constants.isEmpty() ? KotlinPackage.last(constants) : null;
