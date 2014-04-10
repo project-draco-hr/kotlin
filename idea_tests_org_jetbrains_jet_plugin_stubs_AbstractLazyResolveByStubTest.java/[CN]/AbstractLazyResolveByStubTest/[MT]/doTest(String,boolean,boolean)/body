@@ -1,0 +1,16 @@
+{
+  configureByFile(path);
+  AstAccessControl.instance$.prohibitAstAccessForKotlinFiles(getProject(),getTestRootDisposable());
+  configureModule(getModule(),JetWithJdkAndRuntimeLightProjectDescriptor.INSTANCE);
+  ResolveSessionForBodies resolveSession=KotlinCacheService.object$.getInstance(getFile().getProject()).getLazyResolveSession((JetFile)getFile());
+  ModuleDescriptor module=resolveSession.getModuleDescriptor();
+  PackageViewDescriptor packageViewDescriptor=module.getPackage(new FqName("test"));
+  Assert.assertNotNull(packageViewDescriptor);
+  File fileToCompareTo=new File(FileUtil.getNameWithoutExtension(path) + ".txt");
+  RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile(packageViewDescriptor,RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT.filterRecursion(new Predicate<FqName>(){
+    @Override public boolean apply(    FqName fqName){
+      return !KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.equals(fqName);
+    }
+  }
+).checkPrimaryConstructors(checkPrimaryConstructors).checkPropertyAccessors(checkPropertyAccessors).withValidationStrategy(FORBID_ERROR_TYPES),fileToCompareTo);
+}
