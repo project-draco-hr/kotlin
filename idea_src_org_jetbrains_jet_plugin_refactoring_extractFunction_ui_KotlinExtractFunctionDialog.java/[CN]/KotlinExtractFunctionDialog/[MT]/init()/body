@@ -1,0 +1,31 @@
+{
+  super.init();
+  functionNameLabel.setLabelFor(functionNameField);
+  functionNameField.setText(originalDescriptor.getName());
+  functionNameField.addDocumentListener(new DocumentAdapter(){
+    @Override public void documentChanged(    DocumentEvent event){
+      update(true);
+    }
+  }
+);
+  boolean enableVisibility=isVisibilitySectionAvailable();
+  visibilityBox.setEnabled(enableVisibility);
+  if (enableVisibility) {
+    String visibility=originalDescriptor.getVisibility();
+    visibilityBox.setSelectedItem(visibility.isEmpty() ? "internal" : visibility);
+  }
+  parameterTablePanel=new KotlinParameterTablePanel(){
+    @Override protected void updateSignature(){
+      KotlinExtractFunctionDialog.this.update(true);
+    }
+    @Override protected void onEnterAction(){
+      doOKAction();
+    }
+    @Override protected void onCancelAction(){
+      doCancelAction();
+    }
+  }
+;
+  parameterTablePanel.init(originalDescriptor.getParameters());
+  inputParametersPanel.add(parameterTablePanel);
+}
