@@ -2,10 +2,11 @@
   if (insideModule) {
     JetFile file=BindingContextUtils.getContainingFile(bindingContext,descriptor);
     if (file != null) {
-      return PackageCodegen.getPackagePartInternalName(file);
+      return PackagePartClassUtils.getPackagePartInternalName(file);
     }
     if (descriptor instanceof DeserializedCallableMemberDescriptor && IncrementalCompilation.ENABLED) {
-      return PackageCodegen.getPackagePartInternalName((DeserializedCallableMemberDescriptor)descriptor);
+      FqName packagePartFqName=PackagePartClassUtils.getPackagePartFqName((DeserializedCallableMemberDescriptor)descriptor);
+      return AsmUtil.internalNameByFqNameWithoutInnerClasses(packagePartFqName);
     }
   }
   return PackageClassUtils.getPackageClassFqName(packageFragment.getFqName()).asString().replace('.','/');
