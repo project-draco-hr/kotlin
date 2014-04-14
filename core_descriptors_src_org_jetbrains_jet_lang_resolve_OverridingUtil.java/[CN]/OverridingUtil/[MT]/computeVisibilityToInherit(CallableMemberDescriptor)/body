@@ -1,0 +1,16 @@
+{
+  Set<? extends CallableMemberDescriptor> overriddenDescriptors=memberDescriptor.getOverriddenDescriptors();
+  Visibility maxVisibility=findMaxVisibility(overriddenDescriptors);
+  if (maxVisibility == null) {
+    return null;
+  }
+  if (memberDescriptor.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+    for (    CallableMemberDescriptor overridden : overriddenDescriptors) {
+      if (overridden.getModality() != Modality.ABSTRACT && !overridden.getVisibility().equals(maxVisibility)) {
+        return null;
+      }
+    }
+    return maxVisibility;
+  }
+  return maxVisibility.normalize();
+}
