@@ -1,20 +1,10 @@
 {
   setUpFixture(testPath);
   String fileText=FileUtil.loadFile(new File(testPath),true);
-  Integer invocationCount=ExpectedCompletionUtils.getInvocationCount(fileText);
-  myFixture.complete(completionType(),invocationCount == null ? 0 : invocationCount);
-  ExpectedCompletionUtils.assertDirectivesValid(fileText,getAdditionalDirectives());
-  ExpectedCompletionUtils.CompletionProposal[] expected=ExpectedCompletionUtils.itemsShouldExist(fileText,getPlatform());
-  ExpectedCompletionUtils.CompletionProposal[] unexpected=ExpectedCompletionUtils.itemsShouldAbsent(fileText,getPlatform());
-  Integer itemsNumber=ExpectedCompletionUtils.getExpectedNumber(fileText,getPlatform());
-  assertTrue("Should be some assertions about completion",expected.length != 0 || unexpected.length != 0 || itemsNumber != null);
-  LookupElement[] items=myFixture.getLookupElements();
-  if (items == null) {
-    items=new LookupElement[0];
+  UtilPackage.testCompletion(fileText,getPlatform(),new Function1<Integer,LookupElement[]>(){
+    @Override public LookupElement[] invoke(    Integer invocationCount){
+      return myFixture.complete(completionType(),invocationCount);
+    }
   }
-  ExpectedCompletionUtils.assertContainsRenderedItems(expected,items,ExpectedCompletionUtils.isWithOrder(fileText));
-  ExpectedCompletionUtils.assertNotContainsRenderedItems(unexpected,items);
-  if (itemsNumber != null) {
-    assertEquals(String.format("Invalid number of completion items: %s",ExpectedCompletionUtils.listToString(ExpectedCompletionUtils.getItemsInformation(items))),itemsNumber.intValue(),items.length);
-  }
+);
 }
