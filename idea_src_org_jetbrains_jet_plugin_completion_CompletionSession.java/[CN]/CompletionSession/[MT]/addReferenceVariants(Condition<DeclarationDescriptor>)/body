@@ -1,8 +1,10 @@
 {
-  addReferenceVariants(new Function1<DeclarationDescriptor,Iterable<LookupElement>>(){
-    @Override public Iterable<LookupElement> invoke(    DeclarationDescriptor descriptor){
-      return filterCondition.value(descriptor) ? Collections.singletonList(DescriptorLookupConverter.createLookupElement(getResolveSession(),getExpressionBindingContext(),descriptor)) : Collections.<LookupElement>emptyList();
+  Collection<DeclarationDescriptor> descriptors=TipsManager.getReferenceVariants(jetReference.getExpression(),getExpressionBindingContext());
+  Collection<DeclarationDescriptor> filterDescriptors=Collections2.filter(descriptors,new Predicate<DeclarationDescriptor>(){
+    @Override public boolean apply(    @Nullable DeclarationDescriptor descriptor){
+      return descriptor != null && filterCondition.value(descriptor);
     }
   }
 );
+  jetResult.addAllElements(filterDescriptors);
 }
