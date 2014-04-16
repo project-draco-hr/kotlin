@@ -1,0 +1,18 @@
+{
+  boolean isDefaultAccessor=accessor == null || accessor.getBodyExpression() == null;
+  if (kind == OwnerKind.TRAIT_IMPL && isDefaultAccessor)   return;
+  FunctionGenerationStrategy strategy;
+  if (isDefaultAccessor) {
+    if (p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null) {
+      strategy=new DefaultPropertyWithDelegateAccessorStrategy(state,accessorDescriptor);
+    }
+ else {
+      strategy=new DefaultPropertyAccessorStrategy(state,accessorDescriptor);
+    }
+  }
+ else {
+    strategy=new FunctionGenerationStrategy.FunctionDefault(state,accessorDescriptor,accessor);
+  }
+  JvmMethodSignature signature=typeMapper.mapSignature(accessorDescriptor,kind);
+  functionCodegen.generateMethod(accessor != null ? accessor : p,signature,accessorDescriptor,strategy);
+}

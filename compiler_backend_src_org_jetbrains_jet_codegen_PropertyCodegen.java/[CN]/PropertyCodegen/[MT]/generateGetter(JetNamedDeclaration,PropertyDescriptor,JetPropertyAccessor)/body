@@ -1,21 +1,3 @@
 {
-  boolean defaultGetter=getter == null || getter.getBodyExpression() == null;
-  PropertyGetterDescriptor getterDescriptor=propertyDescriptor.getGetter();
-  getterDescriptor=getterDescriptor != null ? getterDescriptor : DescriptorFactory.createDefaultGetter(propertyDescriptor);
-  JvmMethodSignature signature=typeMapper.mapSignature(getterDescriptor,kind);
-  if (kind != OwnerKind.TRAIT_IMPL || !defaultGetter) {
-    FunctionGenerationStrategy strategy;
-    if (defaultGetter) {
-      if (p instanceof JetProperty && ((JetProperty)p).getDelegateExpression() != null) {
-        strategy=new DefaultPropertyWithDelegateAccessorStrategy(state,getterDescriptor);
-      }
- else {
-        strategy=new DefaultPropertyAccessorStrategy(state,getterDescriptor);
-      }
-    }
- else {
-      strategy=new FunctionGenerationStrategy.FunctionDefault(state,getterDescriptor,getter);
-    }
-    functionCodegen.generateMethod(getter != null ? getter : p,signature,getterDescriptor,strategy);
-  }
+  generateAccessor(p,getter,descriptor.getGetter() != null ? descriptor.getGetter() : DescriptorFactory.createDefaultGetter(descriptor));
 }
