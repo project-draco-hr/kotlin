@@ -1,15 +1,14 @@
 {
-  if (classObjectPropertiesToCopy != null) {
-    for (    PropertyAndDefaultValue propertyInfo : classObjectPropertiesToCopy) {
-      PropertyDescriptor propertyDescriptor=propertyInfo.descriptor;
-      FieldVisitor fv=v.newField(null,ACC_STATIC | ACC_FINAL | ACC_PUBLIC,context.getFieldName(propertyDescriptor),typeMapper.mapType(propertyDescriptor).getDescriptor(),null,propertyInfo.defaultValue);
-      AnnotationCodegen.forField(fv,typeMapper).genAnnotations(propertyDescriptor);
-      if (state.getClassBuilderMode() == ClassBuilderMode.FULL && propertyInfo.defaultValue == null) {
-        ExpressionCodegen codegen=createOrGetClInitCodegen();
-        int classObjectIndex=putClassObjectInLocalVar(codegen);
-        StackValue.local(classObjectIndex,OBJECT_TYPE).put(OBJECT_TYPE,codegen.v);
-        copyFieldFromClassObject(propertyDescriptor);
-      }
+  if (classObjectPropertiesToCopy == null)   return;
+  for (  PropertyAndDefaultValue info : classObjectPropertiesToCopy) {
+    PropertyDescriptor property=info.descriptor;
+    FieldVisitor fv=v.newField(null,ACC_STATIC | ACC_FINAL | ACC_PUBLIC,context.getFieldName(property),typeMapper.mapType(property).getDescriptor(),null,info.defaultValue);
+    AnnotationCodegen.forField(fv,typeMapper).genAnnotations(property);
+    if (state.getClassBuilderMode() == ClassBuilderMode.FULL && info.defaultValue == null) {
+      ExpressionCodegen codegen=createOrGetClInitCodegen();
+      int classObjectIndex=putClassObjectInLocalVar(codegen);
+      StackValue.local(classObjectIndex,OBJECT_TYPE).put(OBJECT_TYPE,codegen.v);
+      copyFieldFromClassObject(property);
     }
   }
 }
