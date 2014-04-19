@@ -1,16 +1,35 @@
 {
-  CommonCodeStyleSettings jetCommonSettings=mySettings.getCommonSettings(JetLanguage.INSTANCE);
+  final CommonCodeStyleSettings jetCommonSettings=mySettings.getCommonSettings(JetLanguage.INSTANCE);
   JetCodeStyleSettings jetSettings=mySettings.getCustomSettings(JetCodeStyleSettings.class);
-  NodeAlignmentStrategy strategy=myAlignmentStrategy;
   IElementType parentType=myNode.getElementType();
   if (parentType == VALUE_PARAMETER_LIST) {
-    strategy=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS,VALUE_PARAMETER,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
+    return getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS,VALUE_PARAMETER,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
   }
  else   if (parentType == VALUE_ARGUMENT_LIST) {
-    strategy=getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,VALUE_ARGUMENT,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
+    return getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,VALUE_ARGUMENT,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
   }
  else   if (parentType == WHEN) {
-    strategy=getAlignmentForCaseBranch(jetSettings.ALIGN_IN_COLUMNS_CASE_BRANCH);
+    return getAlignmentForCaseBranch(jetSettings.ALIGN_IN_COLUMNS_CASE_BRANCH);
   }
-  return strategy;
+ else   if (parentType == BINARY_EXPRESSION) {
+    return NodeAlignmentStrategy.fromTypes(AlignmentStrategy.wrap(createAlignment(jetCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION,getAlignment())));
+  }
+ else   if (parentType == PARENTHESIZED) {
+    return new NodeAlignmentStrategy(){
+      Alignment bracketsAlignment=jetCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION ? Alignment.createAlignment() : null;
+      @Nullable @Override public Alignment getAlignment(      @NotNull ASTNode childNode){
+        IElementType childNodeType=childNode.getElementType();
+        ASTNode prev=getPrevWithoutWhitespace(childNode);
+        if ((prev != null && prev.getElementType() == TokenType.ERROR_ELEMENT) || childNodeType == TokenType.ERROR_ELEMENT) {
+          return bracketsAlignment;
+        }
+        if (childNodeType == LPAR || childNodeType == RPAR) {
+          return bracketsAlignment;
+        }
+        return null;
+      }
+    }
+;
+  }
+  return myAlignmentStrategy;
 }
