@@ -1,21 +1,33 @@
 {
-  if (!JetPluginUtil.isInSource(element) || JetPluginUtil.isKtFileInGradleProjectInWrongFolder(element)) {
+  if (!(JetPluginUtil.isInSource(element) || element.getContainingFile() instanceof JetCodeFragmentImpl) || JetPluginUtil.isKtFileInGradleProjectInWrongFolder(element)) {
     return;
   }
   for (  HighlightingVisitor visitor : getBeforeAnalysisVisitors(holder)) {
     element.accept(visitor);
   }
   JetFile file=(JetFile)element.getContainingFile();
-  AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResults(file);
-  if (analyzeExhaust.isError()) {
-    HighlighterPackage.updateHighlightingResult(file,true);
-    throw new ProcessCanceledException(analyzeExhaust.getError());
+  BindingContext bindingContext;
+  if (file instanceof JetCodeFragmentImpl) {
+    if (element instanceof JetElement) {
+      ResolveSessionForBodies resolveSession=ResolvePackage.getLazyResolveSession((JetElement)element);
+      bindingContext=resolveSession.resolveToElement((JetElement)element);
+    }
+ else {
+      return;
+    }
   }
-  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+ else {
+    AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResults(file);
+    if (analyzeExhaust.isError()) {
+      HighlighterPackage.updateHighlightingResult(file,true);
+      throw new ProcessCanceledException(analyzeExhaust.getError());
+    }
+    bindingContext=analyzeExhaust.getBindingContext();
+  }
   for (  HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
     element.accept(visitor);
   }
-  if (JetPluginUtil.isInSource(element,false)) {
+  if (JetPluginUtil.isInSource(element,false) || file instanceof JetCodeFragmentImpl) {
     ElementAnnotator elementAnnotator=new ElementAnnotator(element,holder);
     for (    Diagnostic diagnostic : bindingContext.getDiagnostics().forElement(element)) {
       elementAnnotator.registerDiagnosticAnnotations(diagnostic);

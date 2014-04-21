@@ -1,0 +1,14 @@
+{
+  JetExpression codeFragmentExpression=codeFragment.getExpression();
+  if (codeFragmentExpression == null)   return;
+  PsiElement contextElement=codeFragment.getContext();
+  if (!(contextElement instanceof JetExpression))   return;
+  JetExpression contextExpression=(JetExpression)contextElement;
+  BindingContext contextForElement=resolveToElement(contextExpression);
+  JetScope scopeForContextElement=contextForElement.get(BindingContext.RESOLUTION_SCOPE,contextExpression);
+  if (scopeForContextElement != null) {
+    DataFlowInfo dataFlowInfoForContextElement=contextForElement.get(BindingContext.EXPRESSION_DATA_FLOW_INFO,contextExpression);
+    InjectorForMacros injectorForMacros=new InjectorForMacros(codeFragment.getProject(),resolveSession.getModuleDescriptor());
+    injectorForMacros.getExpressionTypingServices().getType(scopeForContextElement,codeFragmentExpression,TypeUtils.NO_EXPECTED_TYPE,dataFlowInfoForContextElement == null ? DataFlowInfo.EMPTY : dataFlowInfoForContextElement,trace);
+  }
+}
