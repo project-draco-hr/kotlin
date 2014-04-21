@@ -1,0 +1,20 @@
+{
+  if (notificationAlarm.isDisposed()) {
+    return;
+  }
+  notificationAlarm.cancelAllRequests();
+  notificationAlarm.addRequest(new Runnable(){
+    @Override public void run(){
+      DumbService.getInstance(myProject).smartInvokeLater(new Runnable(){
+        @Override public void run(){
+          Collection<Sdk> sdks=collectSdksWithoutAnnotations();
+          if (!sdks.isEmpty()) {
+            AbsentSdkAnnotationsNotificationManager.instance$.notify(myProject,sdks);
+          }
+        }
+      }
+);
+    }
+  }
+,TimeUnit.SECONDS.toMillis(1));
+}
