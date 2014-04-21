@@ -1,0 +1,45 @@
+{
+  Map<Integer,LambdaInfo> indexToLambda=invocation.getLambdasToInline();
+  List<LambdaInfo> capturedLambdas=new ArrayList<LambdaInfo>();
+  CapturedParamOwner owner=new CapturedParamOwner(){
+    @Override public Type getType(){
+      return Type.getObjectType(invocation.getOwnerInternalName());
+    }
+  }
+;
+  AbstractInsnNode cur=constructor.instructions.getFirst();
+  while (cur != null) {
+    if (cur.getType() == AbstractInsnNode.FIELD_INSN) {
+      FieldInsnNode fieldNode=(FieldInsnNode)cur;
+      CapturedParamInfo info=builder.addCapturedParam(owner,fieldNode.name,Type.getType(fieldNode.desc),false,null);
+      boolean isPrevVarNode=fieldNode.getPrevious() instanceof VarInsnNode;
+      boolean isPrevPrevVarNode=isPrevVarNode && fieldNode.getPrevious().getPrevious() instanceof VarInsnNode;
+      if (isPrevPrevVarNode) {
+        VarInsnNode node=(VarInsnNode)fieldNode.getPrevious().getPrevious();
+        if (node.var == 0) {
+          VarInsnNode previous=(VarInsnNode)fieldNode.getPrevious();
+          int varIndex=previous.var;
+          LambdaInfo lambdaInfo=indexToLambda.get(varIndex);
+          if (lambdaInfo != null) {
+            info.setLambda(lambdaInfo);
+            capturedLambdas.add(lambdaInfo);
+          }
+        }
+      }
+    }
+    cur=cur.getNext();
+  }
+  Map<String,LambdaInfo> capturedLambdasToInline=new HashMap<String,LambdaInfo>();
+  List<CapturedParamInfo> allRecapturedParameters=new ArrayList<CapturedParamInfo>();
+  for (  LambdaInfo info : capturedLambdas) {
+    for (    CapturedParamInfo var : info.getCapturedVars()) {
+      CapturedParamInfo recapturedParamInfo=builder.addCapturedParam(var,getNewFieldName(var.getOriginalFieldName()));
+      StackValue composed=StackValue.composed(StackValue.local(0,oldObjectType),StackValue.field(var.getType(),oldObjectType,recapturedParamInfo.getNewFieldName(),false));
+      recapturedParamInfo.setRemapValue(composed);
+      allRecapturedParameters.add(var);
+    }
+    capturedLambdasToInline.put(info.getLambdaClassType().getInternalName(),info);
+  }
+  invocation.setAllRecapturedParameters(allRecapturedParameters);
+  invocation.setCapturedLambdasToInline(capturedLambdasToInline);
+}

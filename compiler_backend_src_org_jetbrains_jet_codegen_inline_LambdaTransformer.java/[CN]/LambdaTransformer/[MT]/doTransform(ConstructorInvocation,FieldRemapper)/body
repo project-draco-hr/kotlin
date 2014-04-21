@@ -1,28 +1,40 @@
 {
-  ClassBuilder classBuilder=createClassBuilder();
-  classBuilder.defineClass(null,V1_6,classAccess,newLambdaType.getInternalName(),signature,superName,interfaces);
-  ParametersBuilder builder=ParametersBuilder.newBuilder();
-  Parameters parameters=getLambdaParameters(builder,invocation);
-  MethodVisitor invokeVisitor=newMethod(classBuilder,invoke);
-  RegeneratedLambdaFieldRemapper remapper=new RegeneratedLambdaFieldRemapper(oldLambdaType.getInternalName(),newLambdaType.getInternalName(),parameters,invocation.getCapturedLambdasToInline(),parentRemapper);
-  MethodInliner inliner=new MethodInliner(invoke,parameters,inliningContext.subInline(inliningContext.nameGenerator.subGenerator("lambda")),remapper,isSameModule,"Transformer for " + invocation.getOwnerInternalName());
-  InlineResult result=inliner.doInline(invokeVisitor,new LocalVarRemapper(parameters,0),false);
-  invokeVisitor.visitMaxs(-1,-1);
-  generateConstructorAndFields(classBuilder,builder,invocation);
-  if (bridge != null) {
-    MethodVisitor invokeBridge=newMethod(classBuilder,bridge);
-    bridge.accept(new MethodVisitor(InlineCodegenUtil.API,invokeBridge){
-      @Override public void visitMethodInsn(      int opcode,      String owner,      String name,      String desc,      boolean itf){
-        if (owner.equals(oldLambdaType.getInternalName())) {
-          super.visitMethodInsn(opcode,newLambdaType.getInternalName(),name,desc,itf);
-        }
- else {
-          super.visitMethodInsn(opcode,owner,name,desc,itf);
-        }
-      }
+  final ClassBuilder classBuilder=createClassBuilder();
+  final List<MethodNode> methodsToTransform=new ArrayList<MethodNode>();
+  final List<FieldNode> fieldToAdd=new ArrayList<FieldNode>();
+  reader.accept(new ClassVisitor(InlineCodegenUtil.API,classBuilder.getVisitor()){
+    @Override public void visit(    int version,    int access,    String name,    String signature,    String superName,    String[] interfaces){
+      LambdaTransformer.this.superName=superName;
+      classBuilder.defineClass(null,V1_6,access,newLambdaType.getInternalName(),signature,superName,interfaces);
     }
-);
+    @Override public MethodVisitor visitMethod(    int access,    String name,    String desc,    String signature,    String[] exceptions){
+      MethodNode node=new MethodNode(access,name,desc,signature,exceptions);
+      if (name.equals("<init>")) {
+        if (constructor != null)         throw new RuntimeException("Lambda, SAM or anonymous object should have only one constructor");
+        constructor=node;
+      }
+ else {
+        methodsToTransform.add(node);
+      }
+      return node;
+    }
+    @Override public FieldVisitor visitField(    int access,    String name,    String desc,    String signature,    Object value){
+      addUniqueField(name);
+      FieldNode fieldNode=new FieldNode(access,name,desc,signature,value);
+      fieldToAdd.add(fieldNode);
+      return fieldNode;
+    }
   }
+,ClassReader.SKIP_FRAMES);
+  ParametersBuilder capturedBuilder=ParametersBuilder.newBuilder();
+  extractParametersMappingAndPatchConstructor(constructor,capturedBuilder,invocation);
+  InlineResult result=InlineResult.create();
+  for (  MethodNode next : methodsToTransform) {
+    MethodVisitor visitor=newMethod(classBuilder,next);
+    InlineResult funResult=inlineMethod(invocation,parentRemapper,visitor,next,capturedBuilder);
+    result.addAllClassesToRemove(funResult);
+  }
+  generateConstructorAndFields(classBuilder,capturedBuilder,invocation);
   classBuilder.done();
   invocation.setNewLambdaType(newLambdaType);
   return result;

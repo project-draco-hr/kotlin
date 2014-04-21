@@ -3,18 +3,17 @@
   this.state=inliningContext.state;
   this.typeMapper=state.getTypeMapper();
   this.inliningContext=inliningContext;
-  this.oldLambdaType=Type.getObjectType(lambdaInternalName);
+  this.oldObjectType=Type.getObjectType(objectInternalName);
   this.newLambdaType=newLambdaType;
-  ClassReader reader;
   try {
-    OutputFile outputFile=state.getFactory().get(lambdaInternalName + ".class");
+    OutputFile outputFile=state.getFactory().get(objectInternalName + ".class");
     if (outputFile != null) {
       reader=new ClassReader(outputFile.asByteArray());
     }
  else {
-      VirtualFile file=InlineCodegenUtil.findVirtualFile(state.getProject(),lambdaInternalName);
+      VirtualFile file=InlineCodegenUtil.findVirtualFile(state.getProject(),objectInternalName);
       if (file == null) {
-        throw new RuntimeException("Couldn't find virtual file for " + lambdaInternalName);
+        throw new RuntimeException("Couldn't find virtual file for " + objectInternalName);
       }
       reader=new ClassReader(file.getInputStream());
     }
@@ -22,7 +21,4 @@
  catch (  IOException e) {
     throw new RuntimeException(e);
   }
-  constructor=getMethodNode(reader,true,false);
-  invoke=getMethodNode(reader,false,false);
-  bridge=getMethodNode(reader,false,true);
 }
