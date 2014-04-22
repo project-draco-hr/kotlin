@@ -1,9 +1,16 @@
 {
   configureByFile(getTestName(false) + ".kt","");
-  UtilPackage.testCompletion(getFile().getText(),TargetPlatform.JVM,new Function1<Integer,LookupElement[]>(){
-    @Override public LookupElement[] invoke(    Integer invocationCount){
-      complete(invocationCount);
-      return myItems;
+  boolean shouldFail=testPath.contains("NoSpecifiedType");
+  AstAccessControl.instance$.testWithControlledAccessToAst(shouldFail,getFile().getVirtualFile(),getProject(),getTestRootDisposable(),new Function0<Unit>(){
+    @Override public Unit invoke(){
+      UtilPackage.testCompletion(getFile().getText(),TargetPlatform.JVM,new Function1<Integer,LookupElement[]>(){
+        @Override public LookupElement[] invoke(        Integer invocationCount){
+          complete(invocationCount);
+          return myItems;
+        }
+      }
+);
+      return Unit.VALUE;
     }
   }
 );
