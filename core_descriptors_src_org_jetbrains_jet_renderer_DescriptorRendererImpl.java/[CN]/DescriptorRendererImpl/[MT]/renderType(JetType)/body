@@ -1,3 +1,21 @@
 {
-  return escape(renderTypeWithoutEscape(type));
+  if (type == CANT_INFER_LAMBDA_PARAM_TYPE || type == DONT_CARE) {
+    return "???";
+  }
+  if (ErrorUtils.isUninferredParameter(type)) {
+    if (uninferredTypeParameterAsName) {
+      return renderError(((UninferredParameterType)type).getTypeParameterDescriptor().getName().toString());
+    }
+    return "???";
+  }
+  if (type instanceof LazyType && debugMode) {
+    return type.toString();
+  }
+  if (type.isError()) {
+    return renderDefaultType(type);
+  }
+  if (KotlinBuiltIns.getInstance().isExactFunctionOrExtensionFunctionType(type) && prettyFunctionTypes) {
+    return renderFunctionType(type);
+  }
+  return renderDefaultType(type);
 }
