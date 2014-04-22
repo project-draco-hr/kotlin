@@ -1,0 +1,18 @@
+{
+  data.init();
+  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+  ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    @Override public void run(){
+      TreeUtil.clearCaches((TreeElement)myFile.getNode());
+    }
+  }
+);
+  if (!DumbService.isDumb(getProject())) {
+    CacheManager.SERVICE.getInstance(myProject).getFilesWithWord("XXX",UsageSearchContext.IN_COMMENTS,GlobalSearchScope.allScope(myProject),true);
+  }
+  Collection<HighlightInfo> infos=doHighlighting();
+  String text=myEditor.getDocument().getText();
+  data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()),getProject()),text);
+  data.checkResult(infos,text);
+  return infos;
+}
