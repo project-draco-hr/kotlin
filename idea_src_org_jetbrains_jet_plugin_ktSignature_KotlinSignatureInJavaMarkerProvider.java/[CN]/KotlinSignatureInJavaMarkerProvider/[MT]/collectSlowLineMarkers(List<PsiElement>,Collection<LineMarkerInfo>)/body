@@ -13,7 +13,7 @@
   if (module != null && !ProjectStructureUtil.isUsedInKotlinJavaModule(module)) {
     return;
   }
-  BindingTrace trace=createDelegatingTrace(project);
+  BindingContext bindingContext=ResolvePackage.getLazyResolveSession(project,TargetPlatform.JVM).getBindingContext();
   JavaDescriptorResolver javaDescriptorResolver=JavaResolveExtension.instance$.get(project);
   for (  PsiElement element : elements) {
     if (!(element instanceof PsiMember)) {
@@ -23,9 +23,9 @@
     if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
       continue;
     }
-    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,trace);
+    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,bindingContext);
     if (memberDescriptor == null)     continue;
-    List<String> errors=trace.get(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
+    List<String> errors=bindingContext.get(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
     boolean hasSignatureAnnotation=KotlinSignatureUtil.findKotlinSignatureAnnotation(element) != null;
     if (errors != null || hasSignatureAnnotation) {
       result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
