@@ -1,0 +1,10 @@
+{
+  GlobalContextImpl globalContext=ContextPackage.GlobalContext();
+  DeclarationProviderFactory declarationProviderFactory=DeclarationProviderFactoryService.createDeclarationProviderFactory(project,globalContext.getStorageManager(),files);
+  InjectorForLazyResolveWithJava resolveWithJava=new InjectorForLazyResolveWithJava(project,globalContext,declarationProviderFactory,trace);
+  resolveWithJava.getModule().addFragmentProvider(DependencyKind.BINARIES,resolveWithJava.getJavaDescriptorResolver().getPackageFragmentProvider());
+  if (addBuiltIns) {
+    resolveWithJava.getModule().addFragmentProvider(DependencyKind.BUILT_INS,KotlinBuiltIns.getInstance().getBuiltInsModule().getPackageFragmentProvider());
+  }
+  return new JvmSetup(resolveWithJava.getResolveSession(),resolveWithJava.getJavaDescriptorResolver());
+}

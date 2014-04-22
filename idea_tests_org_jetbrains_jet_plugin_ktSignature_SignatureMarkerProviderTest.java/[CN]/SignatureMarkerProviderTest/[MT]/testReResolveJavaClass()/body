@@ -1,11 +1,10 @@
 {
   Project project;
   project=myFixture.getProject();
-  myFixture.configureByText(JetFileType.INSTANCE,"val t: Thread? = null");
+  PsiFile file=myFixture.configureByText(JetFileType.INSTANCE,"val t: Thread? = null");
   PsiClass psiClass=JavaPsiFacade.getInstance(project).findClass("java.lang.Thread",GlobalSearchScope.allScope(project));
-  BindingContext context=KotlinCacheManager.getInstance(project).getDeclarationsFromProject(TargetPlatform.JVM).getBindingContext();
+  BindingContext context=ResolvePackage.getBindingContext((JetFile)file);
   ClassDescriptor preResolvedClass=context.get(BindingContext.CLASS,psiClass);
-  InjectorForJavaDescriptorResolver injector=InjectorForJavaDescriptorResolverUtil.create(project,KotlinSignatureInJavaMarkerProvider.createDelegatingTrace(project));
-  ClassDescriptor reResolvedClass=injector.getJavaDescriptorResolver().resolveClass(new FqName("java.lang.Thread"));
+  ClassDescriptor reResolvedClass=JavaResolveExtension.instance$.get(project).resolveClass(new FqName("java.lang.Thread"));
   assertSame(preResolvedClass,reResolvedClass);
 }
