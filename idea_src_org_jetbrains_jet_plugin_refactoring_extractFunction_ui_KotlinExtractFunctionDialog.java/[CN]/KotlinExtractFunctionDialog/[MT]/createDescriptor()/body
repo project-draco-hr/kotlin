@@ -1,15 +1,16 @@
 {
+  ExtractionDescriptor descriptor=originalDescriptor.getDescriptor();
   List<KotlinParameterTablePanel.ParameterInfo> parameterInfos=parameterTablePanel.getParameterInfos();
   Map<Parameter,Parameter> oldToNewParameters=ContainerUtil.newLinkedHashMap();
   for (  KotlinParameterTablePanel.ParameterInfo parameterInfo : parameterInfos) {
     oldToNewParameters.put(parameterInfo.getOriginalParameter(),parameterInfo.toParameter());
   }
-  ControlFlow controlFlow=originalDescriptor.getControlFlow();
+  ControlFlow controlFlow=descriptor.getControlFlow();
   if (controlFlow instanceof ParameterUpdate) {
     controlFlow=new ParameterUpdate(oldToNewParameters.get(((ParameterUpdate)controlFlow).getParameter()));
   }
   Map<Integer,Replacement> replacementMap=ContainerUtil.newHashMap();
-  for (  Map.Entry<Integer,Replacement> e : originalDescriptor.getReplacementMap().entrySet()) {
+  for (  Map.Entry<Integer,Replacement> e : descriptor.getReplacementMap().entrySet()) {
     Integer offset=e.getKey();
     Replacement replacement=e.getValue();
     if (replacement instanceof ParameterReplacement) {
@@ -24,5 +25,5 @@
       replacementMap.put(offset,replacement);
     }
   }
-  return new ExtractionDescriptor(originalDescriptor.getExtractionData(),getFunctionName(),getVisibility(),ContainerUtil.newArrayList(oldToNewParameters.values()),originalDescriptor.getReceiverParameter(),replacementMap,controlFlow);
+  return new ExtractionDescriptor(descriptor.getExtractionData(),getFunctionName(),getVisibility(),ContainerUtil.newArrayList(oldToNewParameters.values()),descriptor.getReceiverParameter(),replacementMap,controlFlow);
 }
