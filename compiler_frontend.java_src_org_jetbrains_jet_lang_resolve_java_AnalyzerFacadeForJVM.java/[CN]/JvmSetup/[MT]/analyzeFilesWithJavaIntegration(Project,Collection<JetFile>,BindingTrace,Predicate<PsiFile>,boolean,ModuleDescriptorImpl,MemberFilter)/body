@@ -1,4 +1,14 @@
 {
   GlobalContext globalContext=ContextPackage.GlobalContext();
-  return analyzeFilesWithJavaIntegrationInGlobalContext(project,files,trace,filesToAnalyzeCompletely,storeContextForBodiesResolve,module,globalContext,memberFilter);
+  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.create(globalContext.getStorageManager(),globalContext.getExceptionTracker(),filesToAnalyzeCompletely,false,false);
+  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module,memberFilter);
+  try {
+    module.addFragmentProvider(DependencyKind.BINARIES,injector.getJavaDescriptorResolver().getPackageFragmentProvider());
+    TopDownAnalysisContext topDownAnalysisContext=injector.getTopDownAnalyzer().analyzeFiles(topDownAnalysisParameters,files);
+    BodiesResolveContext bodiesResolveContext=storeContextForBodiesResolve ? new CachedBodiesResolveContext(topDownAnalysisContext) : null;
+    return AnalyzeExhaust.success(trace.getBindingContext(),bodiesResolveContext,module);
+  }
+  finally {
+    injector.destroy();
+  }
 }
