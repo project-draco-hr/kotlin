@@ -1,0 +1,27 @@
+{
+  List<JetProperty> delegatedProperties=new ArrayList<JetProperty>();
+  for (  JetDeclaration declaration : container.getDeclarations()) {
+    if (declaration instanceof JetProperty) {
+      JetProperty property=(JetProperty)declaration;
+      if (property.getDelegate() != null) {
+        delegatedProperties.add(property);
+      }
+    }
+  }
+  if (delegatedProperties.isEmpty())   return;
+  v.newField(null,ACC_PRIVATE | ACC_STATIC | ACC_FINAL| ACC_SYNTHETIC,JvmAbi.PROPERTY_METADATA_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE,null,null);
+  InstructionAdapter iv=createOrGetClInitCodegen().v;
+  iv.iconst(delegatedProperties.size());
+  iv.newarray(PROPERTY_METADATA_TYPE);
+  for (int i=0, size=delegatedProperties.size(); i < size; i++) {
+    VariableDescriptor property=BindingContextUtils.getNotNull(bindingContext,VARIABLE,delegatedProperties.get(i));
+    iv.dup();
+    iv.iconst(i);
+    iv.anew(PROPERTY_METADATA_IMPL_TYPE);
+    iv.dup();
+    iv.visitLdcInsn(property.getName().asString());
+    iv.invokespecial(PROPERTY_METADATA_IMPL_TYPE.getInternalName(),"<init>","(Ljava/lang/String;)V");
+    iv.astore(PROPERTY_METADATA_IMPL_TYPE);
+  }
+  iv.putstatic(thisAsmType.getInternalName(),JvmAbi.PROPERTY_METADATA_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE);
+}
