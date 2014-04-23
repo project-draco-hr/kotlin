@@ -1,2 +1,77 @@
 {
+  DeclarationDescriptor functionParent=functionDescriptor.getOriginal().getContainingDeclaration();
+  functionDescriptor=unwrapFakeOverride(functionDescriptor.getOriginal());
+  JvmMethodSignature signature;
+  Type owner;
+  Type ownerForDefaultImpl;
+  Type ownerForDefaultParam;
+  int invokeOpcode;
+  Type thisClass;
+  if (functionParent instanceof ClassDescriptor) {
+    FunctionDescriptor declarationFunctionDescriptor=findAnyDeclaration(functionDescriptor);
+    ClassDescriptor currentOwner=(ClassDescriptor)functionParent;
+    ClassDescriptor declarationOwner=(ClassDescriptor)declarationFunctionDescriptor.getContainingDeclaration();
+    boolean originalIsInterface=isInterface(declarationOwner);
+    boolean currentIsInterface=isInterface(currentOwner);
+    ClassDescriptor receiver;
+    if (currentIsInterface && !originalIsInterface) {
+      receiver=declarationOwner;
+    }
+ else {
+      receiver=currentOwner;
+    }
+    boolean isInterface=originalIsInterface && currentIsInterface;
+    ClassDescriptor declarationOwnerForDefault=(ClassDescriptor)findBaseDeclaration(functionDescriptor).getContainingDeclaration();
+    ownerForDefaultParam=mapClass(declarationOwnerForDefault);
+    ownerForDefaultImpl=isInterface(declarationOwnerForDefault) ? mapTraitImpl(declarationOwnerForDefault) : ownerForDefaultParam;
+    if (isInterface) {
+      invokeOpcode=superCall ? INVOKESTATIC : INVOKEINTERFACE;
+    }
+ else {
+      if (isAccessor(functionDescriptor)) {
+        invokeOpcode=INVOKESTATIC;
+      }
+ else {
+        boolean isPrivateFunInvocation=isCallInsideSameClassAsDeclared(functionDescriptor,context) && functionDescriptor.getVisibility() == Visibilities.PRIVATE;
+        invokeOpcode=superCall || isPrivateFunInvocation ? INVOKESPECIAL : INVOKEVIRTUAL;
+      }
+    }
+    if (isInterface && superCall) {
+      signature=mapSignature(functionDescriptor,OwnerKind.TRAIT_IMPL);
+      owner=mapTraitImpl(receiver);
+    }
+ else {
+      signature=mapSignature(functionDescriptor.getOriginal());
+      owner=mapClass(receiver);
+    }
+    thisClass=mapType(receiver.getDefaultType());
+  }
+ else {
+    signature=mapSignature(functionDescriptor.getOriginal());
+    owner=mapOwner(functionDescriptor,isCallInsideSameModuleAsDeclared(functionDescriptor,context));
+    ownerForDefaultParam=owner;
+    ownerForDefaultImpl=owner;
+    if (functionParent instanceof PackageFragmentDescriptor) {
+      invokeOpcode=INVOKESTATIC;
+      thisClass=null;
+    }
+ else     if (functionDescriptor instanceof ConstructorDescriptor) {
+      invokeOpcode=INVOKESPECIAL;
+      thisClass=null;
+    }
+ else {
+      invokeOpcode=INVOKEVIRTUAL;
+      thisClass=owner;
+    }
+  }
+  Type calleeType=isLocalNamedFun(functionDescriptor) ? owner : null;
+  Type receiverParameterType;
+  ReceiverParameterDescriptor receiverParameter=functionDescriptor.getOriginal().getReceiverParameter();
+  if (receiverParameter != null) {
+    receiverParameterType=mapType(receiverParameter.getType());
+  }
+ else {
+    receiverParameterType=null;
+  }
+  return new CallableMethod(owner,ownerForDefaultImpl,ownerForDefaultParam,signature,invokeOpcode,thisClass,receiverParameterType,calleeType);
 }
