@@ -1,30 +1,15 @@
 {
-  PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
   if (context.getFile() instanceof JetFile) {
-    final JetFile jetFile=(JetFile)context.getFile();
-    ApplicationManager.getApplication().runReadAction(new Runnable(){
-      @Override public void run(){
+    if (item.getObject() instanceof JetLookupObject) {
+      JetLookupObject lookupObject=(JetLookupObject)item.getObject();
+      DeclarationDescriptor descriptor=lookupObject.getDescriptor();
+      if (descriptor != null) {
+        String text=DescriptorUtils.getFqName(descriptor).asString();
         int startOffset=context.getStartOffset();
-        PsiElement element=context.getFile().findElementAt(startOffset);
-        if (element == null) {
-          return;
-        }
-        if (context.getFile() instanceof JetFile && item.getObject() instanceof JetLookupObject) {
-          JetLookupObject lookupObject=(JetLookupObject)item.getObject();
-          DeclarationDescriptor descriptor=lookupObject.getDescriptor();
-          PsiElement targetElement=lookupObject.getPsiElement();
-          if (descriptor != null) {
-            FqName fqn=DescriptorUtils.getFqNameSafe(descriptor);
-            if (targetElement != null) {
-              ImportInsertHelper.addImportDirectiveOrChangeToFqName(fqn,jetFile,context.getStartOffset(),targetElement);
-            }
- else             if (ProjectStructureUtil.isJsKotlinModule(jetFile)) {
-              ImportInsertHelper.addImportDirectiveIfNeeded(fqn,jetFile);
-            }
-          }
-        }
+        context.getDocument().replaceString(startOffset,context.getTailOffset(),text);
+        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+        ShortenReferences.instance$.process((JetFile)context.getFile(),startOffset,startOffset + text.length());
       }
     }
-);
   }
 }
