@@ -1,6 +1,6 @@
 {
-  DeclarationDescriptor functionParent=functionDescriptor.getOriginal().getContainingDeclaration();
-  functionDescriptor=unwrapFakeOverride(functionDescriptor.getOriginal());
+  DeclarationDescriptor functionParent=descriptor.getOriginal().getContainingDeclaration();
+  FunctionDescriptor functionDescriptor=unwrapFakeOverride(descriptor.getOriginal());
   JvmMethodSignature signature;
   Type owner;
   Type ownerForDefaultImpl;
@@ -13,38 +13,32 @@
     ClassDescriptor declarationOwner=(ClassDescriptor)declarationFunctionDescriptor.getContainingDeclaration();
     boolean originalIsInterface=isInterface(declarationOwner);
     boolean currentIsInterface=isInterface(currentOwner);
-    ClassDescriptor receiver;
-    if (currentIsInterface && !originalIsInterface) {
-      receiver=declarationOwner;
-    }
- else {
-      receiver=currentOwner;
-    }
-    boolean isInterface=originalIsInterface && currentIsInterface;
-    ClassDescriptor declarationOwnerForDefault=(ClassDescriptor)findBaseDeclaration(functionDescriptor).getContainingDeclaration();
-    ownerForDefaultParam=mapClass(declarationOwnerForDefault);
-    ownerForDefaultImpl=isInterface(declarationOwnerForDefault) ? mapTraitImpl(declarationOwnerForDefault) : ownerForDefaultParam;
-    if (isInterface) {
-      invokeOpcode=superCall ? INVOKESTATIC : INVOKEINTERFACE;
+    boolean isInterface=currentIsInterface && originalIsInterface;
+    ClassDescriptor ownerForDefault=(ClassDescriptor)findBaseDeclaration(functionDescriptor).getContainingDeclaration();
+    ownerForDefaultParam=mapClass(ownerForDefault);
+    ownerForDefaultImpl=isInterface(ownerForDefault) ? mapTraitImpl(ownerForDefault) : ownerForDefaultParam;
+    if (isInterface && superCall) {
+      invokeOpcode=INVOKESTATIC;
+      signature=mapSignature(functionDescriptor,OwnerKind.TRAIT_IMPL);
+      owner=mapTraitImpl(currentOwner);
+      thisClass=mapClass(currentOwner);
     }
  else {
       if (isAccessor(functionDescriptor)) {
         invokeOpcode=INVOKESTATIC;
       }
+ else       if (isInterface) {
+        invokeOpcode=INVOKEINTERFACE;
+      }
  else {
         boolean isPrivateFunInvocation=isCallInsideSameClassAsDeclared(functionDescriptor,context) && functionDescriptor.getVisibility() == Visibilities.PRIVATE;
         invokeOpcode=superCall || isPrivateFunInvocation ? INVOKESPECIAL : INVOKEVIRTUAL;
       }
-    }
-    if (isInterface && superCall) {
-      signature=mapSignature(functionDescriptor,OwnerKind.TRAIT_IMPL);
-      owner=mapTraitImpl(receiver);
-    }
- else {
       signature=mapSignature(functionDescriptor.getOriginal());
+      ClassDescriptor receiver=currentIsInterface && !originalIsInterface ? declarationOwner : currentOwner;
       owner=mapClass(receiver);
+      thisClass=owner;
     }
-    thisClass=mapType(receiver.getDefaultType());
   }
  else {
     signature=mapSignature(functionDescriptor.getOriginal());
