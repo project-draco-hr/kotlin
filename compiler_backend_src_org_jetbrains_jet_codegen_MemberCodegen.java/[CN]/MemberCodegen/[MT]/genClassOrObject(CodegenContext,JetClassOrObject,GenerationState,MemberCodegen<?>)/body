@@ -1,0 +1,18 @@
+{
+  ClassDescriptor descriptor=state.getBindingContext().get(BindingContext.CLASS,aClass);
+  if (descriptor == null || ErrorUtils.isError(descriptor)) {
+    badDescriptor(descriptor,state.getClassBuilderMode());
+    return;
+  }
+  if (descriptor.getName().equals(SpecialNames.NO_NAME_PROVIDED)) {
+    badDescriptor(descriptor,state.getClassBuilderMode());
+  }
+  ClassBuilder classBuilder=state.getFactory().forClassImplementation(descriptor,aClass.getContainingFile());
+  ClassContext classContext=parentContext.intoClass(descriptor,OwnerKind.IMPLEMENTATION,state);
+  new ImplementationBodyCodegen(aClass,classContext,classBuilder,state,parentCodegen).generate();
+  if (aClass instanceof JetClass && ((JetClass)aClass).isTrait()) {
+    ClassBuilder traitImplBuilder=state.getFactory().forTraitImplementation(descriptor,state,aClass.getContainingFile());
+    ClassContext traitImplContext=parentContext.intoClass(descriptor,OwnerKind.TRAIT_IMPL,state);
+    new TraitImplBodyCodegen(aClass,traitImplContext,traitImplBuilder,state,parentCodegen).generate();
+  }
+}
