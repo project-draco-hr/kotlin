@@ -16,23 +16,12 @@
     return;
   }
   CallCandidateResolutionContext<?> contextForArgument=storedContextForArgument.replaceContextDependency(INDEPENDENT).replaceBindingTrace(context.trace).replaceExpectedType(expectedType);
-  JetType type;
-  if (contextForArgument.candidateCall.hasIncompleteTypeParameters() && !contextForArgument.candidateCall.isCompleted()) {
-    type=completeTypeInferenceDependentOnExpectedTypeForCall(contextForArgument,true);
-  }
- else {
-    completeNestedCallsInference(contextForArgument);
-    JetType recordedType=context.trace.get(BindingContext.EXPRESSION_TYPE,expression);
-    if (recordedType != null && !recordedType.getConstructor().isDenotable()) {
-      type=ArgumentTypeResolver.updateResultArgumentTypeIfNotDenotable(context,expression);
-    }
- else {
-      type=contextForArgument.candidateCall.getResultingDescriptor().getReturnType();
-    }
-    checkValueArgumentTypes(contextForArgument);
+  JetType type=completeTypeInferenceDependentOnExpectedTypeForCall(contextForArgument,true);
+  JetType recordedType=context.trace.get(BindingContext.EXPRESSION_TYPE,expression);
+  if (recordedType != null && !recordedType.getConstructor().isDenotable()) {
+    type=ArgumentTypeResolver.updateResultArgumentTypeIfNotDenotable(context,expression);
   }
   JetType result=BindingContextUtils.updateRecordedType(type,expression,context.trace,isFairSafeCallExpression(expression,context.trace));
-  markResultingCallAsCompleted(context,keyExpression);
   completeTypeInferenceForAllCandidates(context,keyExpression);
   DataFlowUtils.checkType(result,expression,contextForArgument);
 }
