@@ -1,0 +1,30 @@
+{
+  if (candidates.size() == 1) {
+    return OverloadResolutionResultsImpl.success(candidates.iterator().next());
+  }
+  Set<MutableResolvedCall<D>> cleanCandidates=Sets.newLinkedHashSet(candidates);
+  for (Iterator<MutableResolvedCall<D>> iterator=cleanCandidates.iterator(); iterator.hasNext(); ) {
+    MutableResolvedCall<D> candidate=iterator.next();
+    if (candidate.isDirty()) {
+      iterator.remove();
+    }
+  }
+  if (cleanCandidates.isEmpty()) {
+    cleanCandidates=candidates;
+  }
+  MutableResolvedCall<D> maximallySpecific=OverloadingConflictResolver.INSTANCE.findMaximallySpecific(cleanCandidates,false);
+  if (maximallySpecific != null) {
+    return OverloadResolutionResultsImpl.success(maximallySpecific);
+  }
+  if (discriminateGenerics) {
+    MutableResolvedCall<D> maximallySpecificGenericsDiscriminated=OverloadingConflictResolver.INSTANCE.findMaximallySpecific(cleanCandidates,true);
+    if (maximallySpecificGenericsDiscriminated != null) {
+      return OverloadResolutionResultsImpl.success(maximallySpecificGenericsDiscriminated);
+    }
+  }
+  Set<MutableResolvedCall<D>> noOverrides=OverrideResolver.filterOutOverridden(candidates,MAP_TO_RESULT);
+  if (noOverrides.size() == 1) {
+    return OverloadResolutionResultsImpl.success(noOverrides.iterator().next());
+  }
+  return OverloadResolutionResultsImpl.ambiguity(noOverrides);
+}
