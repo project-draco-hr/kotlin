@@ -7,15 +7,14 @@
     return results;
   }
   MutableResolvedCall<D> resolvedCall=results.getResultingCall();
-  ResolvedCallImpl<D> callToCompleteInference=resolvedCall.getCallToCompleteTypeArgumentInference();
-  Set<ValueArgument> unmappedArguments=callToCompleteInference.getUnmappedArguments();
+  Set<ValueArgument> unmappedArguments=resolvedCall.getUnmappedArguments();
   argumentTypeResolver.checkUnmappedArgumentTypes(context,unmappedArguments);
   candidateResolver.completeUnmappedArguments(context,unmappedArguments);
-  CallCandidateResolutionContext<D> callCandidateResolutionContext=CallCandidateResolutionContext.createForCallBeingAnalyzed(callToCompleteInference,context,tracing);
+  CallCandidateResolutionContext<D> callCandidateResolutionContext=CallCandidateResolutionContext.createForCallBeingAnalyzed(resolvedCall,context,tracing);
   candidateResolver.completeTypeInferenceDependentOnExpectedTypeForCall(callCandidateResolutionContext,false);
   resolvedCall.markCallAsCompleted();
   candidateResolver.completeTypeInferenceForAllCandidates(context,results);
-  if (callToCompleteInference.getStatus().isSuccess()) {
+  if (resolvedCall.getStatus().isSuccess()) {
     return OverloadResolutionResultsImpl.success(resolvedCall);
   }
   return results;
