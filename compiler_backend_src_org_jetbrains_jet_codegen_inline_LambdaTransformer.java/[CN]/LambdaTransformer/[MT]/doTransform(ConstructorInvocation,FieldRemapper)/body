@@ -1,13 +1,8 @@
 {
-  final ClassBuilder classBuilder=createClassBuilder();
+  ClassBuilder classBuilder=createClassBuilder();
   final List<MethodNode> methodsToTransform=new ArrayList<MethodNode>();
-  final List<FieldNode> fieldToAdd=new ArrayList<FieldNode>();
   reader.accept(new ClassVisitor(InlineCodegenUtil.API,classBuilder.getVisitor()){
-    @Override public void visit(    int version,    int access,    String name,    String signature,    String superName,    String[] interfaces){
-      LambdaTransformer.this.superName=superName;
-      classBuilder.defineClass(null,V1_6,access,newLambdaType.getInternalName(),signature,superName,interfaces);
-    }
-    @Override public MethodVisitor visitMethod(    int access,    String name,    String desc,    String signature,    String[] exceptions){
+    @Override public MethodVisitor visitMethod(    int access,    @NotNull String name,    @NotNull String desc,    String signature,    String[] exceptions){
       MethodNode node=new MethodNode(access,name,desc,signature,exceptions);
       if (name.equals("<init>")) {
         if (constructor != null)         throw new RuntimeException("Lambda, SAM or anonymous object should have only one constructor");
@@ -18,23 +13,28 @@
       }
       return node;
     }
-    @Override public FieldVisitor visitField(    int access,    String name,    String desc,    String signature,    Object value){
+    @Override public FieldVisitor visitField(    int access,    @NotNull String name,    @NotNull String desc,    String signature,    Object value){
       addUniqueField(name);
-      FieldNode fieldNode=new FieldNode(access,name,desc,signature,value);
-      fieldToAdd.add(fieldNode);
-      return fieldNode;
+      if (InlineCodegenUtil.isCapturedFieldName(name)) {
+        return null;
+      }
+ else {
+        return super.visitField(access,name,desc,signature,value);
+      }
     }
   }
 ,ClassReader.SKIP_FRAMES);
-  ParametersBuilder capturedBuilder=ParametersBuilder.newBuilder();
-  extractParametersMappingAndPatchConstructor(constructor,capturedBuilder,invocation);
+  ParametersBuilder allCapturedParamBuilder=ParametersBuilder.newBuilder();
+  ParametersBuilder constructorParamBuilder=ParametersBuilder.newBuilder();
+  extractParametersMappingAndPatchConstructor(constructor,allCapturedParamBuilder,constructorParamBuilder,invocation);
   InlineResult result=InlineResult.create();
   for (  MethodNode next : methodsToTransform) {
     MethodVisitor visitor=newMethod(classBuilder,next);
-    InlineResult funResult=inlineMethod(invocation,parentRemapper,visitor,next,capturedBuilder);
+    InlineResult funResult=inlineMethod(invocation,parentRemapper,visitor,next,allCapturedParamBuilder);
     result.addAllClassesToRemove(funResult);
   }
-  generateConstructorAndFields(classBuilder,capturedBuilder,invocation);
+  InlineResult constructorResult=generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,invocation,parentRemapper);
+  result.addAllClassesToRemove(constructorResult);
   classBuilder.done();
   invocation.setNewLambdaType(newLambdaType);
   return result;
