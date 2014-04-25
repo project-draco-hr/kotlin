@@ -21,14 +21,22 @@
       PsiElement tokenAt=context.getFile().findElementAt(Math.max(0,offset));
       if (tokenAt != null) {
         PsiElement parent=tokenAt.getParent();
-        if (parent instanceof JetExpression) {
+        if (parent instanceof JetExpression && !(parent instanceof JetBlockExpression)) {
           JetExpression expression=(JetExpression)parent;
           parent=expression.getParent();
           while (parent instanceof JetExpression && parent.getFirstChild() == expression) {
             expression=(JetExpression)parent;
             parent=expression.getParent();
           }
-          context.setReplacementOffset(expression.getTextRange().getEndOffset());
+          int expressionEnd=expression.getTextRange().getEndOffset();
+          if (expression instanceof JetCallExpression) {
+            JetExpression calleeExpression=((JetCallExpression)expression).getCalleeExpression();
+            context.setReplacementOffset(calleeExpression != null ? calleeExpression.getTextRange().getEndOffset() : expressionEnd);
+          }
+ else {
+            context.setReplacementOffset(expressionEnd);
+          }
+          context.getOffsetMap().addOffset(SmartCompletion.OLD_ARGUMENTS_REPLACEMENT_OFFSET,expressionEnd);
         }
       }
     }
