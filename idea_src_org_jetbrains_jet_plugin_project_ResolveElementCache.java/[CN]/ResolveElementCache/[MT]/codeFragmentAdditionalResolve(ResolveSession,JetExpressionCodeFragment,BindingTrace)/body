@@ -7,7 +7,9 @@
   BindingContext contextForElement=resolveToElement(contextExpression);
   JetScope scopeForContextElement=contextForElement.get(BindingContext.RESOLUTION_SCOPE,contextExpression);
   if (scopeForContextElement != null) {
+    JetScope codeFragmentScope=resolveSession.getScopeProvider().getFileScope(codeFragment);
+    ChainedScope chainedScope=new ChainedScope(scopeForContextElement.getContainingDeclaration(),"Scope for resolve code fragment",scopeForContextElement,codeFragmentScope);
     DataFlowInfo dataFlowInfoForContextElement=contextForElement.get(BindingContext.EXPRESSION_DATA_FLOW_INFO,contextExpression);
-    AnalyzerPackage.computeTypeInContext(codeFragment.getExpression(),scopeForContextElement,trace,dataFlowInfoForContextElement == null ? DataFlowInfo.EMPTY : dataFlowInfoForContextElement,TypeUtils.NO_EXPECTED_TYPE,resolveSession.getModuleDescriptor());
+    AnalyzerPackage.computeTypeInContext(codeFragment.getExpression(),chainedScope,trace,dataFlowInfoForContextElement == null ? DataFlowInfo.EMPTY : dataFlowInfoForContextElement,TypeUtils.NO_EXPECTED_TYPE,resolveSession.getModuleDescriptor());
   }
 }
