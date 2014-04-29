@@ -1,20 +1,21 @@
 {
   PsiBuilder.Marker list=mark();
   myBuilder.disableNewlines();
-  expect(LPAR,"Expecting an argument list",EXPRESSION_FOLLOW);
-  if (!at(RPAR)) {
-    while (true) {
-      while (at(COMMA))       errorAndAdvance("Expecting an argument");
-      parseValueArgument();
-      if (!at(COMMA))       break;
-      advance();
-      if (at(RPAR)) {
-        error("Expecting an argument");
-        break;
+  if (expect(LPAR,"Expecting an argument list",EXPRESSION_FOLLOW)) {
+    if (!at(RPAR)) {
+      while (true) {
+        while (at(COMMA))         errorAndAdvance("Expecting an argument");
+        parseValueArgument();
+        if (!at(COMMA))         break;
+        advance();
+        if (at(RPAR)) {
+          error("Expecting an argument");
+          break;
+        }
       }
     }
+    expect(RPAR,"Expecting ')'",EXPRESSION_FOLLOW);
   }
-  expect(RPAR,"Expecting ')'",EXPRESSION_FOLLOW);
   myBuilder.restoreNewlinesState();
   list.done(VALUE_ARGUMENT_LIST);
 }
