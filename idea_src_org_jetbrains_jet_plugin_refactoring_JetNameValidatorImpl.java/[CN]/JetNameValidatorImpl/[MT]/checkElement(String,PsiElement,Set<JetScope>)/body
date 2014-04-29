@@ -1,0 +1,34 @@
+{
+  if (!(sibling instanceof JetElement))   return true;
+  final BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement((JetElement)sibling);
+  final Name identifier=Name.identifier(name);
+  final Ref<Boolean> result=new Ref<Boolean>(true);
+  JetVisitorVoid visitor=new JetVisitorVoid(){
+    @Override public void visitElement(    @NotNull PsiElement element){
+      if (result.get()) {
+        element.acceptChildren(this);
+      }
+    }
+    @Override public void visitExpression(    @NotNull JetExpression expression){
+      JetScope resolutionScope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
+      if (!visitedScopes.add(resolutionScope))       return;
+      if (resolutionScope != null) {
+        boolean noConflict;
+        if (myTarget == Target.PROPERTIES) {
+          noConflict=resolutionScope.getProperties(identifier).isEmpty() && resolutionScope.getLocalVariable(identifier) == null;
+        }
+ else {
+          noConflict=resolutionScope.getFunctions(identifier).isEmpty() && resolutionScope.getClassifier(identifier) == null;
+        }
+        if (!noConflict) {
+          result.set(false);
+          return;
+        }
+      }
+      super.visitExpression(expression);
+    }
+  }
+;
+  sibling.accept(visitor);
+  return result.get();
+}
