@@ -3,12 +3,17 @@
   JavaClassNameCompletionContributor.addAllClasses(parameters,false,JavaCompletionSorting.addJavaSorting(parameters,tempResult).getPrefixMatcher(),new Consumer<LookupElement>(){
     @Override public void consume(    LookupElement lookupElement){
       if (lookupElement instanceof JavaPsiClassReferenceElement) {
-        JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
+        final JavaPsiClassReferenceElement javaPsiReferenceElement=(JavaPsiClassReferenceElement)lookupElement;
         PsiClass psiClass=javaPsiReferenceElement.getObject();
         if (addJavaClassAsJetLookupElement(psiClass,jetCompletionResult)) {
           return;
         }
-        jetCompletionResult.addElement(DescriptorLookupConverter.setCustomInsertHandler(javaPsiReferenceElement));
+        jetCompletionResult.addElement(new LookupElementDecorator<LookupElement>(javaPsiReferenceElement){
+          @Override public void handleInsert(          InsertionContext context){
+            JetJavaClassInsertHandler.INSTANCE.handleInsert(context,javaPsiReferenceElement);
+          }
+        }
+);
       }
     }
   }
