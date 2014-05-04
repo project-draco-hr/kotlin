@@ -5,12 +5,10 @@
   candidateCall.addStatus(checkReceiverTypeError(context));
   if (ErrorUtils.isError(candidate)) {
     candidateCall.addStatus(SUCCESS);
-    markAllArgumentsAsUnmapped(context);
     return;
   }
   if (!checkOuterClassMemberIsAccessible(context)) {
     candidateCall.addStatus(OTHER_ERROR);
-    markAllArgumentsAsUnmapped(context);
     return;
   }
   DeclarationDescriptorWithVisibility invisibleMember=Visibilities.findInvisibleMember(candidate,context.scope.getContainingDeclaration());
@@ -22,7 +20,6 @@
     Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
     ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
     if (!argumentMappingStatus.isSuccess()) {
-      candidateCall.addUnmappedArguments(unmappedArguments);
       if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR && !CallResolverUtil.isInvokeCallOnExpressionWithBothReceivers(context.call)) {
         candidateCall.addStatus(RECEIVER_PRESENCE_ERROR);
         return;
