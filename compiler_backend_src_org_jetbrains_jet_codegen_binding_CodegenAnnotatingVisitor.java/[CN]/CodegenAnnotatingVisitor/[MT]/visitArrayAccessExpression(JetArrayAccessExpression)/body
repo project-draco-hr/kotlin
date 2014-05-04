@@ -1,21 +1,15 @@
 {
   super.visitArrayAccessExpression(expression);
-  FunctionDescriptor operationDescriptor=(FunctionDescriptor)bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
-  if (operationDescriptor == null) {
-    return;
-  }
+  DeclarationDescriptor operationDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
+  if (!(operationDescriptor instanceof FunctionDescriptor))   return;
   boolean isSetter=operationDescriptor.getName().asString().equals("set");
-  FunctionDescriptor original=SamCodegenUtil.getOriginalIfSamAdapter(operationDescriptor);
-  if (original == null) {
-    return;
-  }
+  FunctionDescriptor original=SamCodegenUtil.getOriginalIfSamAdapter((FunctionDescriptor)operationDescriptor);
+  if (original == null)   return;
   List<JetExpression> indexExpressions=expression.getIndexExpressions();
   List<ValueParameterDescriptor> parameters=original.getValueParameters();
   for (  ValueParameterDescriptor valueParameter : parameters) {
     JavaClassDescriptor samInterface=getInterfaceIfSamType(valueParameter.getType());
-    if (samInterface == null) {
-      continue;
-    }
+    if (samInterface == null)     continue;
     if (isSetter && valueParameter.getIndex() == parameters.size() - 1) {
       PsiElement parent=expression.getParent();
       if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == EQ) {
