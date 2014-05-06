@@ -1,0 +1,26 @@
+{
+  int n=KotlinBuiltIns.FUNCTION_TRAIT_COUNT;
+  functions=new ArrayList<ClassDescriptor>(n);
+  extensionFunctions=new ArrayList<ClassDescriptor>(n);
+  kFunctions=new ArrayList<ClassDescriptor>(n);
+  kMemberFunctions=new ArrayList<ClassDescriptor>(n);
+  kExtensionFunctions=new ArrayList<ClassDescriptor>(n);
+  ModuleDescriptor module=new ModuleDescriptorImpl(Name.special("<fake module for functions impl>"),Collections.<ImportPath>emptyList(),JavaToKotlinClassMap.getInstance());
+  MutablePackageFragmentDescriptor kotlin=new MutablePackageFragmentDescriptor(module,new FqName("kotlin"));
+  MutablePackageFragmentDescriptor reflect=new MutablePackageFragmentDescriptor(module,new FqName("kotlin.reflect"));
+  KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
+  for (int i=0; i < n; i++) {
+    createFunctionImpl(functions,kotlin,"FunctionImpl" + i,builtIns.getFunction(i));
+    createFunctionImpl(extensionFunctions,kotlin,"ExtensionFunctionImpl" + i,builtIns.getExtensionFunction(i));
+    createFunctionImpl(kFunctions,reflect,"KFunctionImpl" + i,reflectionTypes.getKFunction(i));
+    createFunctionImpl(kMemberFunctions,reflect,"KMemberFunctionImpl" + i,reflectionTypes.getKMemberFunction(i));
+    createFunctionImpl(kExtensionFunctions,reflect,"KExtensionFunctionImpl" + i,reflectionTypes.getKExtensionFunction(i));
+  }
+  ImmutableMap.Builder<ClassDescriptor,ClassDescriptor> builder=ImmutableMap.builder();
+  for (int i=0; i < n; i++) {
+    builder.put(reflectionTypes.getKFunction(i),kFunctions.get(i));
+    builder.put(reflectionTypes.getKMemberFunction(i),kMemberFunctions.get(i));
+    builder.put(reflectionTypes.getKExtensionFunction(i),kExtensionFunctions.get(i));
+  }
+  kFunctionToImpl=builder.build();
+}
