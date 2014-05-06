@@ -1,16 +1,13 @@
 {
-  final Ref<DeclarationDescriptor> resultingDescriptor=Ref.create();
-  DelegatingBindingTrace trace=new DelegatingBindingTrace(context,"trace in PsiCodegenPredictor"){
-    @Override public <K,V>void record(    WritableSlice<K,V> slice,    K key,    V value){
-      super.record(slice,key,value);
-      if (slice == CodegenBinding.ASM_TYPE && key instanceof DeclarationDescriptor && value instanceof Type) {
-        if (classInternalName.equals(((Type)value).getInternalName())) {
-          resultingDescriptor.set((DeclarationDescriptor)key);
-        }
-      }
+  Project project=allPackageFiles.iterator().next().getProject();
+  GenerationState state=new GenerationState(project,ClassBuilderFactories.THROW_EXCEPTION,context,new ArrayList<JetFile>(allPackageFiles));
+  state.beforeCompile();
+  BindingTrace trace=state.getBindingTrace();
+  for (  ClassDescriptor classDescriptor : trace.getKeys(CodegenBinding.ASM_TYPE)) {
+    Type type=trace.get(CodegenBinding.ASM_TYPE,classDescriptor);
+    if (type != null && classInternalName.equals(type.getInternalName())) {
+      return BindingContextUtils.getContainingFile(trace.getBindingContext(),classDescriptor);
     }
   }
-;
-  CodegenBinding.initTrace(trace,allPackageFiles,GenerationState.GenerateClassFilter.GENERATE_ALL);
-  return resultingDescriptor.isNull() ? null : BindingContextUtils.getContainingFile(trace.getBindingContext(),resultingDescriptor.get());
+  return null;
 }
