@@ -3,16 +3,12 @@
   Collection<JetFile> files=stubGenerationStrategy.getFiles();
   checkForBuiltIns(packageFqName,files);
   LightClassConstructionContext context=stubGenerationStrategy.getContext(files);
-  Throwable error=context.getError();
-  if (error != null) {
-    throw new IllegalStateException("failed to analyze: " + error,error);
-  }
   PsiJavaFileStub javaFileStub=createJavaFileStub(packageFqName,getRepresentativeVirtualFile(files));
   BindingContext bindingContext;
   try {
     Stack<StubElement> stubStack=new Stack<StubElement>();
     stubStack.push(javaFileStub);
-    GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getBindingContext(),Lists.newArrayList(files),false,false,stubGenerationStrategy.getGenerateClassFilter(),true);
+    GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getModule(),context.getBindingContext(),Lists.newArrayList(files),false,false,stubGenerationStrategy.getGenerateClassFilter(),true);
     state.beforeCompile();
     bindingContext=state.getBindingContext();
     stubGenerationStrategy.generate(state,files);
