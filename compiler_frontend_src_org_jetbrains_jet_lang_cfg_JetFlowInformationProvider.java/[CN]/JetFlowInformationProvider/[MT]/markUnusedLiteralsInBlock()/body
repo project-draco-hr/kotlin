@@ -2,12 +2,11 @@
   final Map<Instruction,DiagnosticFactory<?>> reportedDiagnosticMap=Maps.newHashMap();
   PseudocodeTraverserPackage.traverse(pseudocode,FORWARD,new FunctionVoid1<Instruction>(){
     @Override public void execute(    @NotNull Instruction instruction){
-      if (!(instruction instanceof ReadValueInstruction))       return;
+      if (!(instruction instanceof ReadValueInstruction || instruction instanceof MagicInstruction))       return;
+      JetElement element=((JetElementInstruction)instruction).getElement();
+      if (!(element instanceof JetFunctionLiteralExpression || element instanceof JetConstantExpression || element instanceof JetStringTemplateExpression|| element instanceof JetSimpleNameExpression))       return;
+      if (!(element instanceof JetStringTemplateExpression || instruction instanceof ReadValueInstruction))       return;
       VariableContext ctxt=new VariableContext(instruction,reportedDiagnosticMap);
-      JetElement element=((ReadValueInstruction)instruction).getElement();
-      if (!(element instanceof JetFunctionLiteralExpression || element instanceof JetConstantExpression || element instanceof JetStringTemplateExpression|| element instanceof JetSimpleNameExpression)) {
-        return;
-      }
       PsiElement parent=element.getParent();
       if (parent instanceof JetBlockExpression) {
         if (!JetPsiUtil.isImplicitlyUsed(element)) {

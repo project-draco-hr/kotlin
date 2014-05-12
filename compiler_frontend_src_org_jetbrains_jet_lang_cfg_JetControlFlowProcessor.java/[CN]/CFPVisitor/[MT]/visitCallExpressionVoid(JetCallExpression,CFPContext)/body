@@ -1,15 +1,23 @@
 {
   mark(expression);
-  if (!generateCall(expression.getCalleeExpression())) {
+  JetExpression calleeExpression=expression.getCalleeExpression();
+  if (!generateCall(calleeExpression)) {
+    List<JetExpression> inputExpressions=new ArrayList<JetExpression>();
     for (    ValueArgument argument : expression.getValueArguments()) {
       JetExpression argumentExpression=argument.getArgumentExpression();
       if (argumentExpression != null) {
         generateInstructions(argumentExpression,NOT_IN_CONDITION);
+        inputExpressions.add(argumentExpression);
       }
     }
     for (    JetExpression functionLiteral : expression.getFunctionLiteralArguments()) {
       generateInstructions(functionLiteral,NOT_IN_CONDITION);
+      inputExpressions.add(functionLiteral);
     }
-    generateInstructions(expression.getCalleeExpression(),NOT_IN_CONDITION);
+    generateInstructions(calleeExpression,NOT_IN_CONDITION);
+    inputExpressions.add(calleeExpression);
+    inputExpressions.add(generateAndGetReceiverIfAny(expression));
+    createNonSyntheticValue(inputExpressions,calleeExpression != null ? calleeExpression : expression);
   }
+  copyValue(calleeExpression,expression);
 }

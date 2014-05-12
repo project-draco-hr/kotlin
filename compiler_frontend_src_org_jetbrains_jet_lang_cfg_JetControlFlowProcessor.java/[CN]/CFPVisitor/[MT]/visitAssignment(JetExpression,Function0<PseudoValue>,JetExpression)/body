@@ -1,0 +1,24 @@
+{
+  JetExpression left=JetPsiUtil.deparenthesize(lhs);
+  if (left == null) {
+    builder.compilationError(lhs,"No lValue in assignment");
+    return;
+  }
+  if (left instanceof JetArrayAccessExpression) {
+    generateArrayAssignment((JetArrayAccessExpression)left,rhsDeferredValue,parentExpression);
+    return;
+  }
+  PseudoValue rhsValue=rhsDeferredValue.invoke();
+  PseudoValue receiverValue=null;
+  if (left instanceof JetSimpleNameExpression || left instanceof JetProperty) {
+  }
+ else   if (left instanceof JetQualifiedExpression) {
+    JetExpression receiverExpression=((JetQualifiedExpression)left).getReceiverExpression();
+    generateInstructions(receiverExpression,NOT_IN_CONDITION);
+    receiverValue=builder.getBoundValue(receiverExpression);
+  }
+ else {
+    builder.unsupported(parentExpression);
+  }
+  recordWrite(left,rhsValue,receiverValue,parentExpression);
+}

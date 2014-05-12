@@ -1,0 +1,20 @@
+{
+  ResolvedCall<FunctionDescriptor> setResolvedCall=trace.get(BindingContext.INDEXED_LVALUE_SET,lhs);
+  if (setResolvedCall == null) {
+    generateArrayAccess(lhs,null);
+    return;
+  }
+  if (((JetOperationExpression)parentExpression).getOperationReference().getReferencedNameElementType() == EQ) {
+    mark(lhs);
+  }
+  generateArrayAccessArguments(lhs);
+  List<JetExpression> inputExpressions=new ArrayList<JetExpression>();
+  inputExpressions.add(lhs.getArrayExpression());
+  inputExpressions.addAll(lhs.getIndexExpressions());
+  List<PseudoValue> inputValues=elementsToValues(inputExpressions);
+  PseudoValue rhsValue=rhsDeferredValue.invoke();
+  if (rhsValue != null) {
+    inputValues.add(rhsValue);
+  }
+  builder.call(parentExpression,setResolvedCall,inputValues);
+}

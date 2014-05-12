@@ -1,13 +1,15 @@
 {
   mark(expression);
+  List<JetExpression> branches=new ArrayList<JetExpression>(2);
   JetExpression condition=expression.getCondition();
   if (condition != null) {
     generateInstructions(condition,IN_CONDITION);
   }
   Label elseLabel=builder.createUnboundLabel();
-  builder.jumpOnFalse(elseLabel,expression);
+  builder.jumpOnFalse(elseLabel,expression,builder.getBoundValue(condition));
   JetExpression thenBranch=expression.getThen();
   if (thenBranch != null) {
+    branches.add(thenBranch);
     generateInstructions(thenBranch,context);
   }
  else {
@@ -18,10 +20,12 @@
   builder.bindLabel(elseLabel);
   JetExpression elseBranch=expression.getElse();
   if (elseBranch != null) {
+    branches.add(elseBranch);
     generateInstructions(elseBranch,context);
   }
  else {
     builder.loadUnit(expression);
   }
   builder.bindLabel(resultLabel);
+  mergeValues(branches,expression);
 }

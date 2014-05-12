@@ -1,13 +1,13 @@
 {
-  generateInstructions(declaration.getInitializer(),NOT_IN_CONDITION);
+  JetExpression initializer=declaration.getInitializer();
+  generateInstructions(initializer,NOT_IN_CONDITION);
+  List<PseudoValue> inputValues=elementsToValues(Collections.singletonList(initializer));
   for (  JetMultiDeclarationEntry entry : declaration.getEntries()) {
     builder.declareVariable(entry);
     ResolvedCall<FunctionDescriptor> resolvedCall=trace.get(BindingContext.COMPONENT_RESOLVED_CALL,entry);
-    if (resolvedCall != null) {
-      builder.call(entry,resolvedCall);
-    }
+    PseudoValue writtenValue=resolvedCall != null ? builder.call(entry,resolvedCall,inputValues) : builder.magic(entry,null,inputValues,true);
     if (generateWriteForEntries) {
-      builder.write(entry,entry);
+      builder.write(entry,entry,writtenValue != null ? writtenValue : createSyntheticValue(entry),null);
     }
   }
 }

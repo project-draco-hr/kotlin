@@ -1,13 +1,13 @@
 {
   mark(expression);
   JetExpression selectorExpression=expression.getSelectorExpression();
-  if (selectorExpression == null) {
-    generateInstructions(expression.getReceiverExpression(),NOT_IN_CONDITION);
-    return;
+  JetExpression receiverExpression=expression.getReceiverExpression();
+  if (selectorExpression instanceof JetCallExpression || selectorExpression instanceof JetSimpleNameExpression) {
+    generateInstructions(selectorExpression,NOT_IN_CONDITION);
+    copyValue(selectorExpression,expression);
   }
-  generateInstructions(selectorExpression,NOT_IN_CONDITION);
-  JetExpression calleeExpression=JetPsiUtil.getCalleeExpressionIfAny(selectorExpression);
-  if (calleeExpression == null || getResolvedCall(calleeExpression) == null) {
-    generateInstructions(expression.getReceiverExpression(),NOT_IN_CONDITION);
+ else {
+    generateInstructions(receiverExpression,NOT_IN_CONDITION);
+    createNonSyntheticValue(Collections.singletonList(receiverExpression),expression);
   }
 }

@@ -6,15 +6,21 @@
   if (baseExpression == null)   return;
   if (JetTokens.EXCLEXCL == operationType) {
     generateInstructions(baseExpression,NOT_IN_CONDITION);
-    builder.predefinedOperation(expression,NOT_NULL_ASSERTION);
+    builder.predefinedOperation(expression,NOT_NULL_ASSERTION,elementsToValues(Collections.singletonList(baseExpression)));
   }
  else {
-    if (!generateCall(expression.getOperationReference())) {
+    boolean resolved=generateCall(operationSign);
+    if (!resolved) {
       generateInstructions(baseExpression,NOT_IN_CONDITION);
     }
-    boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
-    if (incrementOrDecrement) {
-      visitAssignment(baseExpression,null,expression);
+    if (isIncrementOrDecrement(operationType)) {
+      visitAssignment(baseExpression,getDeferredValue(operationSign,false),expression);
+    }
+ else     if (resolved) {
+      copyValue(operationSign,expression);
+    }
+ else {
+      createNonSyntheticValue(Collections.singletonList(baseExpression),expression);
     }
   }
 }
