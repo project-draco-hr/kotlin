@@ -1,10 +1,6 @@
 {
   JetBlockExpression bodyExpression=expression.getFunctionLiteral().getBodyExpression();
   if (bodyExpression == null)   return null;
-  Name callerName=getCallerName(expression);
-  if (callerName != null) {
-    context.labelResolver.enterLabeledElement(callerName,expression);
-  }
   JetType expectedType=context.expectedType;
   boolean functionTypeExpected=!noExpectedType(expectedType) && KotlinBuiltIns.getInstance().isFunctionOrExtensionFunctionType(expectedType);
   AnonymousFunctionDescriptor functionDescriptor=createFunctionDescriptor(expression,context,functionTypeExpected);
@@ -15,9 +11,6 @@
   JetType resultType=KotlinBuiltIns.getInstance().getFunctionType(Annotations.EMPTY,receiver,valueParametersTypes,safeReturnType);
   if (!noExpectedType(expectedType) && KotlinBuiltIns.getInstance().isFunctionOrExtensionFunctionType(expectedType)) {
     return JetTypeInfo.create(resultType,context.dataFlowInfo);
-  }
-  if (callerName != null) {
-    context.labelResolver.exitLabeledElement(expression);
   }
   return DataFlowUtils.checkType(resultType,expression,context,context.dataFlowInfo);
 }
