@@ -1,3 +1,22 @@
 {
-  return analyzeFiles(files,filesToAnalyzeCompletely,config,false);
+  Project project=config.getProject();
+  ModuleDescriptorImpl owner=createJsModule("<module>");
+  Predicate<PsiFile> completely=Predicates.and(notLibFiles(config.getLibFiles()),filesToAnalyzeCompletely);
+  GlobalContextImpl globalContext=ContextPackage.GlobalContext();
+  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.create(globalContext.getStorageManager(),globalContext.getExceptionTracker(),completely,false,false);
+  ModuleDescriptor libraryModule=config.getLibraryModule();
+  if (libraryModule != null) {
+    owner.addFragmentProvider(DependencyKind.BINARIES,libraryModule.getPackageFragmentProvider());
+  }
+  BindingContext libraryContext=config.getLibraryContext();
+  BindingTrace trace=libraryContext == null ? new BindingTraceContext() : new DelegatingBindingTrace(libraryContext,"trace with preanalyzed library");
+  InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,trace,owner);
+  try {
+    Collection<JetFile> allFiles=libraryModule != null ? files : Config.withJsLibAdded(files,config);
+    injector.getTopDownAnalyzer().analyzeFiles(topDownAnalysisParameters,allFiles);
+    return AnalyzeExhaust.success(trace.getBindingContext(),owner);
+  }
+  finally {
+    injector.destroy();
+  }
 }
