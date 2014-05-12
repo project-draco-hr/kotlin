@@ -1,4 +1,12 @@
 {
   this.reflectionTypes=reflectionTypes;
-  this.fakeModule=new ModuleDescriptorImpl(Name.special("<fake module for functions impl>"),Collections.<ImportPath>emptyList(),JavaToKotlinClassMap.getInstance());
+  ModuleDescriptor fakeModule=new ModuleDescriptorImpl(Name.special("<fake module for functions impl>"),Collections.<ImportPath>emptyList(),JavaToKotlinClassMap.getInstance());
+  MutablePackageFragmentDescriptor kotlinJvmInternal=new MutablePackageFragmentDescriptor(fakeModule,new FqName("kotlin.jvm.internal"));
+  MutableClassDescriptor functionImpl=createClass(kotlinJvmInternal,"FunctionImpl");
+  TypeParameterDescriptor funR=createTypeParameter(functionImpl,Variance.OUT_VARIANCE,"R",0);
+  MutableClassDescriptor extensionFunctionImpl=createClass(kotlinJvmInternal,"ExtensionFunctionImpl");
+  TypeParameterDescriptor extFunT=createTypeParameter(extensionFunctionImpl,Variance.IN_VARIANCE,"T",0);
+  TypeParameterDescriptor extFunR=createTypeParameter(extensionFunctionImpl,Variance.OUT_VARIANCE,"R",1);
+  this.functionImpl=initializeFunctionImplClass(functionImpl,Arrays.asList(funR));
+  this.extensionFunctionImpl=initializeFunctionImplClass(extensionFunctionImpl,Arrays.asList(extFunT,extFunR));
 }

@@ -6,7 +6,7 @@
   if (receiverParameter != null) {
     typeArguments.add(new TypeProjectionImpl(receiverParameter.getType()));
   }
- else   if (kFunction && expectedThisObject != null) {
+ else   if (expectedThisObject != null) {
     typeArguments.add(new TypeProjectionImpl(expectedThisObject.getType()));
   }
   for (  ValueParameterDescriptor parameter : descriptor.getValueParameters()) {
@@ -14,26 +14,15 @@
   }
   typeArguments.add(new TypeProjectionImpl(descriptor.getReturnType()));
   ClassDescriptor classDescriptor;
-  if (kFunction) {
-    KFunctions kFunctions=getKFunctionsImplList().get(arity);
-    if (expectedThisObject != null) {
-      classDescriptor=kFunctions.kMemberFunctionImpl;
-    }
- else     if (receiverParameter != null) {
-      classDescriptor=kFunctions.kExtensionFunctionImpl;
-    }
- else {
-      classDescriptor=kFunctions.kFunctionImpl;
-    }
+  KFunctions kFunctions=getKFunctionsImplList().get(arity);
+  if (expectedThisObject != null) {
+    classDescriptor=kFunctions.kMemberFunctionImpl;
+  }
+ else   if (receiverParameter != null) {
+    classDescriptor=kFunctions.kExtensionFunctionImpl;
   }
  else {
-    Functions functions=getFunctionsImplList().get(arity);
-    if (receiverParameter != null) {
-      classDescriptor=functions.extensionFunctionImpl;
-    }
- else {
-      classDescriptor=functions.functionImpl;
-    }
+    classDescriptor=kFunctions.kFunctionImpl;
   }
   return new JetTypeImpl(classDescriptor.getDefaultType().getAnnotations(),classDescriptor.getTypeConstructor(),false,typeArguments,classDescriptor.getMemberScope(typeArguments));
 }
