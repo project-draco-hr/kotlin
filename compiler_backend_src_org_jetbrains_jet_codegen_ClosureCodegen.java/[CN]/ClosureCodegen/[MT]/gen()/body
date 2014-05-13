@@ -1,13 +1,16 @@
 {
   ClassBuilder cv=state.getFactory().newVisitor(asmType,fun.getContainingFile());
-  FunctionDescriptor interfaceFunction;
-  if (samInterface == null) {
-    interfaceFunction=getInvokeFunction(funDescriptor);
+  FunctionDescriptor erasedInterfaceFunction;
+  if (samType == null) {
+    erasedInterfaceFunction=getErasedInvokeFunction(funDescriptor);
   }
  else {
-    interfaceFunction=SingleAbstractMethodUtils.getAbstractMethodOfSamInterface(samInterface);
+    erasedInterfaceFunction=samType.getAbstractMethod().getOriginal();
   }
   BothSignatureWriter sw=new BothSignatureWriter(BothSignatureWriter.Mode.CLASS);
+  if (samType != null) {
+    typeMapper.writeFormalTypeParameters(samType.getType().getConstructor().getParameters(),sw);
+  }
   sw.writeSuperclass();
   Type superClassAsmType=typeMapper.mapSupertype(superClassType,sw);
   sw.writeSuperclassEnd();
@@ -21,8 +24,8 @@
   cv.defineClass(fun,V1_6,ACC_FINAL | ACC_SUPER | visibilityFlag,asmType.getInternalName(),sw.makeJavaGenericSignature(),superClassAsmType.getInternalName(),superInterfaceAsmTypes);
   cv.visitSource(fun.getContainingFile().getName(),null);
   writeKotlinSyntheticClassAnnotation(cv,syntheticClassKind);
-  JvmMethodSignature jvmMethodSignature=typeMapper.mapSignature(funDescriptor).replaceName(interfaceFunction.getName().toString());
-  generateBridge(cv,typeMapper.mapSignature(interfaceFunction).getAsmMethod(),jvmMethodSignature.getAsmMethod());
+  JvmMethodSignature jvmMethodSignature=typeMapper.mapSignature(funDescriptor).replaceName(erasedInterfaceFunction.getName().toString());
+  generateBridge(cv,typeMapper.mapSignature(erasedInterfaceFunction).getAsmMethod(),jvmMethodSignature.getAsmMethod());
   FunctionCodegen fc=new FunctionCodegen(context,cv,state,getParentCodegen());
   fc.generateMethod(fun,jvmMethodSignature,funDescriptor,strategy);
   this.constructor=generateConstructor(cv,superClassAsmType);
