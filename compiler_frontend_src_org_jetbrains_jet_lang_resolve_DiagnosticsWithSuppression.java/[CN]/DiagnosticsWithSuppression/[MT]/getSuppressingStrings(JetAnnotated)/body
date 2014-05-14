@@ -2,16 +2,16 @@
   ImmutableSet.Builder<String> builder=ImmutableSet.builder();
   for (  JetAnnotationEntry annotationEntry : annotated.getAnnotationEntries()) {
     AnnotationDescriptor annotationDescriptor=context.get(BindingContext.ANNOTATION,annotationEntry);
-    if (annotationDescriptor == null) {
-      continue;
-    }
-    if (!suppressClass.equals(annotationDescriptor.getType().getConstructor().getDeclarationDescriptor()))     continue;
-    Map<ValueParameterDescriptor,CompileTimeConstant<?>> arguments=annotationDescriptor.getAllValueArguments();
-    CompileTimeConstant<?> value=arguments.get(suppressParameter);
-    if (value instanceof ArrayValue) {
-      ArrayValue arrayValue=(ArrayValue)value;
-      List<CompileTimeConstant<?>> values=arrayValue.getValue();
-      addStrings(builder,values);
+    if (annotationDescriptor == null)     continue;
+    if (!KotlinBuiltIns.getInstance().isSuppressAnnotation(annotationDescriptor))     continue;
+    for (    CompileTimeConstant<?> arrayValue : annotationDescriptor.getAllValueArguments().values()) {
+      if ((arrayValue instanceof ArrayValue)) {
+        for (        CompileTimeConstant<?> value : ((ArrayValue)arrayValue).getValue()) {
+          if (value instanceof StringValue) {
+            builder.add(String.valueOf(((StringValue)value).getValue()).toLowerCase());
+          }
+        }
+      }
     }
   }
   return builder.build();
