@@ -4,6 +4,11 @@
   InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module,memberFilter);
   try {
     module.addFragmentProvider(DependencyKind.BINARIES,injector.getJavaDescriptorResolver().getPackageFragmentProvider());
+    if (incrementalCacheDir != null && moduleIds != null) {
+      for (      String moduleId : moduleIds) {
+        module.addFragmentProvider(DependencyKind.SOURCES,new IncrementalPackageFragmentProvider(files,module,globalContext.getStorageManager(),injector.getDescriptorDeserializers(),new IncrementalCache(incrementalCacheDir),moduleId,injector.getJavaDescriptorResolver()));
+      }
+    }
     injector.getTopDownAnalyzer().analyzeFiles(topDownAnalysisParameters,files);
     return AnalyzeExhaust.success(trace.getBindingContext(),module);
   }
