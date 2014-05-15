@@ -6,24 +6,12 @@
     element.accept(visitor);
   }
   JetFile file=(JetFile)element.getContainingFile();
-  BindingContext bindingContext;
-  if (file instanceof JetCodeFragment) {
-    if (element instanceof JetElement) {
-      ResolveSessionForBodies resolveSession=ResolvePackage.getLazyResolveSession((JetElement)element);
-      bindingContext=resolveSession.resolveToElement((JetElement)element);
-    }
- else {
-      return;
-    }
+  AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResults(file);
+  if (analyzeExhaust.isError()) {
+    HighlighterPackage.updateHighlightingResult(file,true);
+    throw new ProcessCanceledException(analyzeExhaust.getError());
   }
- else {
-    AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResults(file);
-    if (analyzeExhaust.isError()) {
-      HighlighterPackage.updateHighlightingResult(file,true);
-      throw new ProcessCanceledException(analyzeExhaust.getError());
-    }
-    bindingContext=analyzeExhaust.getBindingContext();
-  }
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
   for (  HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
     element.accept(visitor);
   }
