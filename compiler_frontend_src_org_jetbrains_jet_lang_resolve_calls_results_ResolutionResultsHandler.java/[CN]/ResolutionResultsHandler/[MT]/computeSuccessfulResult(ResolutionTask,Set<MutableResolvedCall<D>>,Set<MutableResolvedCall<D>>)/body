@@ -1,0 +1,29 @@
+{
+  Set<MutableResolvedCall<D>> successfulAndIncomplete=Sets.newLinkedHashSet();
+  successfulAndIncomplete.addAll(successfulCandidates);
+  successfulAndIncomplete.addAll(incompleteCandidates);
+  OverloadResolutionResultsImpl<D> results=chooseAndReportMaximallySpecific(successfulAndIncomplete,true);
+  if (results.isSingleResult()) {
+    MutableResolvedCall<D> resultingCall=results.getResultingCall();
+    resultingCall.getTrace().moveAllMyDataTo(task.trace);
+    if (resultingCall.getStatus() == INCOMPLETE_TYPE_INFERENCE) {
+      return OverloadResolutionResultsImpl.incompleteTypeInference(resultingCall);
+    }
+  }
+  if (results.isAmbiguity()) {
+    task.tracing.recordAmbiguity(task.trace,results.getResultingCalls());
+    boolean allCandidatesIncomplete=allIncomplete(results.getResultingCalls());
+    if (task.checkArguments == CheckValueArgumentsMode.DISABLED || !BindingContextUtilPackage.hasUnresolvedArguments(task.call,task.trace.getBindingContext())) {
+      if (allCandidatesIncomplete) {
+        task.tracing.cannotCompleteResolve(task.trace,results.getResultingCalls());
+      }
+ else {
+        task.tracing.ambiguity(task.trace,results.getResultingCalls());
+      }
+    }
+    if (allCandidatesIncomplete) {
+      return OverloadResolutionResultsImpl.incompleteTypeInference(results.getResultingCalls());
+    }
+  }
+  return results;
+}
