@@ -1,2 +1,32 @@
 {
+  Call call=context.call;
+  tracing.bindCall(context.trace,call);
+  OverloadResolutionResultsImpl<F> results=null;
+  TemporaryBindingTrace traceToResolveCall=TemporaryBindingTrace.create(context.trace,"trace to resolve call",call);
+  if (!CallResolverUtil.isInvokeCallOnVariable(call)) {
+    ResolutionResultsCache.CachedData data=context.resolutionResultsCache.get(call);
+    if (data != null) {
+      DelegatingBindingTrace deltasTraceForResolve=data.getResolutionTrace();
+      deltasTraceForResolve.addAllMyDataTo(traceToResolveCall);
+      results=(OverloadResolutionResultsImpl<F>)data.getResolutionResults();
+    }
+  }
+  if (results == null) {
+    BasicCallResolutionContext newContext=context.replaceBindingTrace(traceToResolveCall);
+    results=doResolveCallAndRecordDebugInfo(newContext,prioritizedTasks,callTransformer,tracing);
+    DelegatingBindingTrace deltasTraceForTypeInference=((OverloadResolutionResultsImpl)results).getTrace();
+    if (deltasTraceForTypeInference != null) {
+      deltasTraceForTypeInference.addAllMyDataTo(traceToResolveCall);
+    }
+    completeTypeInferenceDependentOnFunctionLiterals(newContext,results,tracing);
+    cacheResults(context,results,traceToResolveCall,tracing);
+  }
+  traceToResolveCall.commit();
+  if (context.contextDependency == ContextDependency.INDEPENDENT) {
+    results=callCompleter.completeCall(context,results,tracing);
+  }
+  if (results.isSingleResult()) {
+    context.callResolverExtension.run(results.getResultingCall(),context);
+  }
+  return results;
 }
