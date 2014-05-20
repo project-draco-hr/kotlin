@@ -1,25 +1,10 @@
 {
   PsiElement psi=node.getPsi();
-  if (PsiTreeUtil.getParentOfType(psi,JetFunctionLiteral.class) != null) {
-    return false;
+  if (ArrayUtil.contains(psi.getClass(),ALWAYS_CREATE_STUB_FOR)) {
+    return true;
   }
-  JetBlockExpression blockExpression=PsiTreeUtil.getParentOfType(psi,JetBlockExpression.class);
-  if (blockExpression != null) {
-    return false;
+  if (psi instanceof JetDeclaration) {
+    return shouldCreateStubForDeclaration((JetDeclaration)psi);
   }
-  @SuppressWarnings("unchecked") JetWithExpressionInitializer withInitializer=PsiTreeUtil.getParentOfType(psi,JetWithExpressionInitializer.class,true,JetBlockExpression.class);
-  if (withInitializer != null) {
-    JetExpression initializer=withInitializer.getInitializer();
-    if (PsiTreeUtil.isAncestor(initializer,psi,true)) {
-      return false;
-    }
-  }
-  @SuppressWarnings("unchecked") JetPropertyDelegate delegate=PsiTreeUtil.getParentOfType(psi,JetPropertyDelegate.class,true,JetBlockExpression.class);
-  if (delegate != null) {
-    JetExpression delegateExpression=delegate.getExpression();
-    if (PsiTreeUtil.isAncestor(delegateExpression,psi,true)) {
-      return false;
-    }
-  }
-  return super.shouldCreateStub(node);
+  return createStubDependingOnParent(node);
 }
