@@ -1,0 +1,50 @@
+{
+  FrameMap frameMap=new FrameMap();
+  if (!aStatic) {
+    frameMap.enterTemp(OBJECT_TYPE);
+  }
+  ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,signature.getReturnType(),methodContext,state,parentCodegen);
+  Type[] argTypes=signature.getAsmMethod().getArgumentTypes();
+  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
+  Iterator<ValueParameterDescriptor> iterator=paramDescrs.iterator();
+  int countOfExtraVarsInMethodArgs=0;
+  for (  JvmMethodParameterSignature parameterSignature : signature.getValueParameters()) {
+    if (parameterSignature.getKind() != JvmMethodParameterKind.VALUE) {
+      countOfExtraVarsInMethodArgs++;
+      frameMap.enterTemp(parameterSignature.getAsmType());
+    }
+ else {
+      frameMap.enter(iterator.next(),parameterSignature.getAsmType());
+    }
+  }
+  int maskIndex=frameMap.enterTemp(Type.INT_TYPE);
+  CallGenerator generator=codegen.getOrCreateCallGenerator(functionDescriptor,function);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,aStatic,signature);
+  generator.putHiddenParams();
+  for (int index=0; index < paramDescrs.size(); index++) {
+    ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
+    Type t=argTypes[countOfExtraVarsInMethodArgs + index];
+    int parameterIndex=frameMap.getIndex(parameterDescriptor);
+    if (parameterDescriptor.declaresDefaultValue()) {
+      iv.load(maskIndex,Type.INT_TYPE);
+      iv.iconst(1 << index);
+      iv.and(Type.INT_TYPE);
+      Label loadArg=new Label();
+      iv.ifeq(loadArg);
+      loadStrategy.putValueOnStack(parameterDescriptor,codegen);
+      iv.store(parameterIndex,t);
+      iv.mark(loadArg);
+    }
+    generator.putValueIfNeeded(parameterDescriptor,t,StackValue.local(parameterIndex,t));
+  }
+  CallableMethod method;
+  if (functionDescriptor instanceof ConstructorDescriptor) {
+    method=state.getTypeMapper().mapToCallableMethod((ConstructorDescriptor)functionDescriptor);
+  }
+ else {
+    method=state.getTypeMapper().mapToCallableMethod(functionDescriptor,false,methodContext);
+  }
+  generator.genCallWithoutNullAssertion(method,codegen);
+  iv.areturn(signature.getReturnType());
+}

@@ -1,0 +1,38 @@
+{
+  JvmMethodSignature jvmSignature=typeMapper.mapSignature(functionDescriptor,context.getContextKind());
+  Method asmMethod;
+  if (callDefault) {
+    asmMethod=typeMapper.mapDefaultMethod(functionDescriptor,context.getContextKind(),context);
+  }
+ else {
+    asmMethod=jvmSignature.getAsmMethod();
+  }
+  MethodNode node;
+  if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
+    VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor,state);
+    node=InlineCodegenUtil.getMethodNode(file.getInputStream(),asmMethod.getName(),asmMethod.getDescriptor());
+    if (node == null) {
+      throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
+    }
+  }
+ else {
+    PsiElement element=BindingContextUtils.descriptorToDeclaration(bindingContext,functionDescriptor);
+    if (element == null) {
+      throw new RuntimeException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
+    }
+    node=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(functionDescriptor,context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
+    MethodVisitor maxCalcAdapter=InlineCodegenUtil.wrapWithMaxLocalCalc(node);
+    MethodContext methodContext=context.getParentContext().intoFunction(functionDescriptor);
+    MemberCodegen<?> parentCodegen=codegen.getParentCodegen();
+    if (callDefault) {
+      boolean isStatic=isStatic(codegen.getContext().getContextKind());
+      FunctionCodegen.generateDefaultImplBody(methodContext,jvmSignature,functionDescriptor,isStatic,maxCalcAdapter,DefaultParameterValueLoader.DEFAULT,(JetNamedFunction)element,parentCodegen,state);
+    }
+ else {
+      FunctionCodegen.generateMethodBody(maxCalcAdapter,functionDescriptor,methodContext,jvmSignature,new FunctionGenerationStrategy.FunctionDefault(state,functionDescriptor,(JetDeclarationWithBody)element),parentCodegen);
+    }
+    maxCalcAdapter.visitMaxs(-1,-1);
+    maxCalcAdapter.visitEnd();
+  }
+  return node;
+}

@@ -1,0 +1,24 @@
+{
+  DeclarationDescriptor contextClass=owner.getContextDescriptor().getContainingDeclaration();
+  if (kind != OwnerKind.TRAIT_IMPL && contextClass instanceof ClassDescriptor && ((ClassDescriptor)contextClass).getKind() == ClassKind.TRAIT) {
+    return;
+  }
+  if (!isDefaultNeeded(functionDescriptor)) {
+    return;
+  }
+  Method jvmSignature=signature.getAsmMethod();
+  int flags=getVisibilityAccessFlag(functionDescriptor) | getDeprecatedAccessFlag(functionDescriptor);
+  boolean isConstructor="<init>".equals(jvmSignature.getName());
+  Method defaultMethod=typeMapper.mapDefaultMethod(functionDescriptor,kind,owner);
+  MethodVisitor mv=v.newMethod(null,flags | (isConstructor ? 0 : ACC_STATIC),defaultMethod.getName(),defaultMethod.getDescriptor(),null,getThrownExceptions(functionDescriptor,typeMapper));
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    if (this.owner instanceof PackageFacadeContext) {
+      mv.visitCode();
+      generateStaticDelegateMethodBody(mv,defaultMethod,(PackageFacadeContext)this.owner);
+      endVisit(mv,"default method delegation",callableDescriptorToDeclaration(state.getBindingContext(),functionDescriptor));
+    }
+ else {
+      generateDefaultImpl(owner,signature,functionDescriptor,isStatic(kind),mv,loadStrategy,function);
+    }
+  }
+}
