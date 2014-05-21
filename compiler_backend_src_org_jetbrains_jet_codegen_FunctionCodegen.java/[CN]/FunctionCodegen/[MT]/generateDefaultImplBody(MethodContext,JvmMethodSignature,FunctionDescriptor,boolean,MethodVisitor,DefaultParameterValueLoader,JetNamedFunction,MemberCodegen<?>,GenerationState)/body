@@ -1,6 +1,6 @@
 {
   FrameMap frameMap=new FrameMap();
-  if (!aStatic) {
+  if (!isStatic) {
     frameMap.enterTemp(OBJECT_TYPE);
   }
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,signature.getReturnType(),methodContext,state,parentCodegen);
@@ -20,7 +20,7 @@
   int maskIndex=frameMap.enterTemp(Type.INT_TYPE);
   CallGenerator generator=codegen.getOrCreateCallGenerator(functionDescriptor,function);
   InstructionAdapter iv=new InstructionAdapter(mv);
-  loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,aStatic,signature);
+  loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,isStatic,signature);
   generator.putHiddenParams();
   for (int index=0; index < paramDescrs.size(); index++) {
     ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
@@ -45,6 +45,6 @@
  else {
     method=state.getTypeMapper().mapToCallableMethod(functionDescriptor,false,methodContext);
   }
-  generator.genCallWithoutNullAssertion(method,codegen);
+  generator.genCallWithoutAssertions(method,codegen);
   iv.areturn(signature.getReturnType());
 }
