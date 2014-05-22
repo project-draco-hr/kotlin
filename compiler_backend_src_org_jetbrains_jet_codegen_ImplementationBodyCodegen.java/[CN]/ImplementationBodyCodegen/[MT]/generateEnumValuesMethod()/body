@@ -1,6 +1,12 @@
 {
   Type type=typeMapper.mapType(KotlinBuiltIns.getInstance().getArrayType(descriptor.getDefaultType()));
-  MethodVisitor mv=v.newMethod(myClass,ACC_PUBLIC | ACC_STATIC,"values","()" + type.getDescriptor(),null,null);
+  FunctionDescriptor valuesFunction=findEnumFunction("values",new Function1<FunctionDescriptor,Boolean>(){
+    @Override public Boolean invoke(    FunctionDescriptor descriptor){
+      return DescriptorUtils.isEnumValuesMethod(descriptor);
+    }
+  }
+);
+  MethodVisitor mv=v.newMethod(myClass,valuesFunction,ACC_PUBLIC | ACC_STATIC,"values","()" + type.getDescriptor(),null,null);
   if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
   mv.visitCode();
   mv.visitFieldInsn(GETSTATIC,classAsmType.getInternalName(),VALUES,type.getDescriptor());

@@ -1,4 +1,19 @@
 {
   List<FieldInfo> args=calculateConstructorParameters(typeMapper,closure,asmType);
-  return generateConstructor(cv,args,fun,superClassAsmType,state,visibilityFlag);
+  Type[] argTypes=fieldListToTypeArray(args);
+  Method constructor=new Method("<init>",Type.VOID_TYPE,argTypes);
+  MethodVisitor mv=cv.newMethod(fun,funDescriptor,visibilityFlag,"<init>",constructor.getDescriptor(),null,ArrayUtil.EMPTY_STRING_ARRAY);
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    mv.visitCode();
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    int k=1;
+    for (    FieldInfo fieldInfo : args) {
+      k=AsmUtil.genAssignInstanceFieldFromParam(fieldInfo,k,iv);
+    }
+    iv.load(0,superClassAsmType);
+    iv.invokespecial(superClassAsmType.getInternalName(),"<init>","()V");
+    iv.visitInsn(RETURN);
+    FunctionCodegen.endVisit(iv,"constructor",fun);
+  }
+  return constructor;
 }
