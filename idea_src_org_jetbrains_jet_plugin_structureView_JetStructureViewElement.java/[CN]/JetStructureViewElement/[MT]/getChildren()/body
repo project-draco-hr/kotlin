@@ -1,26 +1,9 @@
 {
-  if (myElement instanceof JetFile) {
-    JetFile jetFile=(JetFile)myElement;
-    context=ResolvePackage.getBindingContext(jetFile);
-    return wrapDeclarations(jetFile.getDeclarations());
-  }
- else   if (myElement instanceof JetClass) {
-    JetClass jetClass=(JetClass)myElement;
-    List<JetDeclaration> declarations=new ArrayList<JetDeclaration>();
-    for (    JetParameter parameter : jetClass.getPrimaryConstructorParameters()) {
-      if (parameter.hasValOrVarNode()) {
-        declarations.add(parameter);
-      }
+  List<JetDeclaration> childrenDeclarations=getChildrenDeclarations();
+  return ArrayUtil.toObjectArray(ContainerUtil.map(childrenDeclarations,new Function<JetDeclaration,TreeElement>(){
+    @Override public TreeElement fun(    JetDeclaration declaration){
+      return new JetStructureViewElement(declaration);
     }
-    declarations.addAll(jetClass.getDeclarations());
-    return wrapDeclarations(declarations);
   }
- else   if (myElement instanceof JetClassOrObject) {
-    return wrapDeclarations(((JetClassOrObject)myElement).getDeclarations());
-  }
- else   if (myElement instanceof JetClassObject) {
-    JetObjectDeclaration objectDeclaration=((JetClassObject)myElement).getObjectDeclaration();
-    return wrapDeclarations(objectDeclaration.getDeclarations());
-  }
-  return EMPTY_ARRAY;
+),TreeElement.class);
 }
