@@ -6,7 +6,7 @@
   }
 ;
   List<LambdaInfo> capturedLambdas=new ArrayList<LambdaInfo>();
-  List<CapturedParamInfo> capturedToInline=new ArrayList<CapturedParamInfo>();
+  List<CapturedParamInfo> constructorAdditionalFakeParams=new ArrayList<CapturedParamInfo>();
   Map<Integer,LambdaInfo> indexToLambda=invocation.getLambdasToInline();
   Set<Integer> capturedParams=new HashSet<Integer>();
   AbstractInsnNode cur=constructor.instructions.getFirst();
@@ -26,8 +26,8 @@
             if (lambdaInfo != null) {
               info.setLambda(lambdaInfo);
               capturedLambdas.add(lambdaInfo);
-              capturedToInline.add(info);
             }
+            constructorAdditionalFakeParams.add(info);
             capturedParams.add(varIndex);
             constructor.instructions.remove(previous.getPrevious());
             constructor.instructions.remove(previous);
@@ -65,9 +65,7 @@
     }
     capturedLambdasToInline.put(info.getLambdaClassType().getInternalName(),info);
   }
-  for (  CapturedParamInfo info : capturedToInline) {
-    constructorParamBuilder.addCapturedParamCopy(info);
-  }
   invocation.setAllRecapturedParameters(allRecapturedParameters);
   invocation.setCapturedLambdasToInline(capturedLambdasToInline);
+  return constructorAdditionalFakeParams;
 }
