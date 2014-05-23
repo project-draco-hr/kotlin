@@ -1,15 +1,12 @@
 {
   Collection<JetFile> filesForPackage=lightClassGenerationSupport.findFilesForPackage(qualifiedName,scope);
-  if (!filesForPackage.isEmpty() && PackageCodegen.shouldGeneratePackageClass(filesForPackage)) {
-    KotlinLightClassForPackage lightClass=KotlinLightClassForPackage.create(psiManager,qualifiedName,scope,filesForPackage);
-    if (lightClass != null) {
-      answer.add(lightClass);
-      if (filesForPackage.size() > 1) {
-        for (        JetFile file : filesForPackage) {
-          FakeLightClassForFileOfPackage fakeLightClass=new FakeLightClassForFileOfPackage(psiManager,lightClass,file);
-          answer.add(fakeLightClass);
-        }
-      }
+  if (!shouldGeneratePackageClass(filesForPackage))   return;
+  KotlinLightClassForPackage lightClass=KotlinLightClassForPackage.create(psiManager,qualifiedName,scope,filesForPackage);
+  if (lightClass == null)   return;
+  answer.add(lightClass);
+  if (filesForPackage.size() > 1) {
+    for (    JetFile file : filesForPackage) {
+      answer.add(new FakeLightClassForFileOfPackage(psiManager,lightClass,file));
     }
   }
 }

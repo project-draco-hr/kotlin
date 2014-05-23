@@ -1,2 +1,30 @@
 {
+  List<JvmSerializationBindings> bindings=new ArrayList<JvmSerializationBindings>(files.size() + 1);
+  Map<CallableMemberDescriptor,Runnable> generateCallableMemberTasks=new HashMap<CallableMemberDescriptor,Runnable>();
+  for (  JetFile file : files) {
+    try {
+      ClassBuilder builder=generate(file,generateCallableMemberTasks);
+      if (builder != null) {
+        bindings.add(builder.getSerializationBindings());
+      }
+    }
+ catch (    ProcessCanceledException e) {
+      throw e;
+    }
+catch (    Throwable e) {
+      VirtualFile vFile=file.getVirtualFile();
+      errorHandler.reportException(e,vFile == null ? "no file" : vFile.getUrl());
+      DiagnosticUtils.throwIfRunningOnServer(e);
+      if (ApplicationManager.getApplication().isInternal()) {
+        e.printStackTrace();
+      }
+    }
+  }
+  if (generateCallableMemberTasks.isEmpty())   return;
+  generateDelegationsToPreviouslyCompiled(generateCallableMemberTasks);
+  for (  CallableMemberDescriptor member : Ordering.from(MemberComparator.INSTANCE).sortedCopy(generateCallableMemberTasks.keySet())) {
+    generateCallableMemberTasks.get(member).run();
+  }
+  bindings.add(v.getClassBuilder().getSerializationBindings());
+  writeKotlinPackageAnnotationIfNeeded(JvmSerializationBindings.union(bindings));
 }
