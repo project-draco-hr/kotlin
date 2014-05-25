@@ -3,8 +3,15 @@
     actualText.append(this.clearText);
     return true;
   }
+  Set<Diagnostic> jvmSignatureDiagnostics=new HashSet<Diagnostic>();
+  Collection<JetDeclaration> declarations=PsiTreeUtil.findChildrenOfType(jetFile,JetDeclaration.class);
+  for (  JetDeclaration declaration : declarations) {
+    Diagnostics diagnostics=AsJavaPackage.getJvmSignatureDiagnostics(declaration);
+    if (diagnostics == null)     continue;
+    jvmSignatureDiagnostics.addAll(diagnostics.forElement(declaration));
+  }
   final boolean[] ok={true};
-  List<Diagnostic> diagnostics=ContainerUtil.filter(CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,jetFile),whatDiagnosticsToConsider);
+  List<Diagnostic> diagnostics=ContainerUtil.filter(KotlinPackage.plus(CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,jetFile),jvmSignatureDiagnostics),whatDiagnosticsToConsider);
   CheckerTestUtil.diagnosticsDiff(diagnosedRanges,diagnostics,new CheckerTestUtil.DiagnosticDiffCallbacks(){
     @Override public void missingDiagnostic(    String type,    int expectedStart,    int expectedEnd){
       String message="Missing " + type + DiagnosticUtils.atLocation(jetFile,new TextRange(expectedStart,expectedEnd));
