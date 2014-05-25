@@ -5,10 +5,11 @@
   LightClassConstructionContext context=stubGenerationStrategy.getContext(files);
   PsiJavaFileStub javaFileStub=createJavaFileStub(packageFqName,getRepresentativeVirtualFile(files));
   BindingContext bindingContext;
+  BindingTraceContext forExtraDiagnostics=new BindingTraceContext();
   try {
     Stack<StubElement> stubStack=new Stack<StubElement>();
     stubStack.push(javaFileStub);
-    GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getModule(),context.getBindingContext(),Lists.newArrayList(files),false,false,stubGenerationStrategy.getGenerateClassFilter(),true,null,null,new BindingTraceContext());
+    GenerationState state=new GenerationState(project,new KotlinLightClassBuilderFactory(stubStack),Progress.DEAF,context.getModule(),context.getBindingContext(),Lists.newArrayList(files),false,false,stubGenerationStrategy.getGenerateClassFilter(),true,null,null,forExtraDiagnostics);
     state.beforeCompile();
     bindingContext=state.getBindingContext();
     stubGenerationStrategy.generate(state,files);
@@ -24,5 +25,6 @@ catch (  RuntimeException e) {
     logErrorWithOSInfo(e,packageFqName,null);
     throw e;
   }
-  return Result.create(stubGenerationStrategy.createLightClassData(javaFileStub,bindingContext),local ? PsiModificationTracker.MODIFICATION_COUNT : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  Diagnostics extraDiagnostics=forExtraDiagnostics.getBindingContext().getDiagnostics();
+  return Result.create(stubGenerationStrategy.createLightClassData(javaFileStub,bindingContext,extraDiagnostics),local ? PsiModificationTracker.MODIFICATION_COUNT : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
 }

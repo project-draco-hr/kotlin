@@ -6,10 +6,10 @@
     @NotNull @Override public LightClassConstructionContext getContext(    @NotNull Collection<JetFile> files){
       return LightClassGenerationSupport.getInstance(classOrObject.getProject()).getContextForClassOrObject(classOrObject);
     }
-    @NotNull @Override public OutermostKotlinClassLightClassData createLightClassData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext){
+    @NotNull @Override public OutermostKotlinClassLightClassData createLightClassData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext,    Diagnostics extraDiagnostics){
       ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
       if (classDescriptor == null) {
-        return new OutermostKotlinClassLightClassData(javaFileStub,"",classOrObject,null,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
+        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,"",classOrObject,null,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
       }
       String jvmInternalName=CodegenBinding.getJvmInternalName(bindingContext,classDescriptor);
       Collection<ClassDescriptor> allInnerClasses=CodegenBinding.getAllInnerClasses(bindingContext,classDescriptor);
@@ -20,7 +20,7 @@
         InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(CodegenBinding.getJvmInternalName(bindingContext,innerClassDescriptor),innerClass,innerClassDescriptor);
         innerClassesMap.put(innerClass,innerLightClassData);
       }
-      return new OutermostKotlinClassLightClassData(javaFileStub,jvmInternalName,classOrObject,classDescriptor,innerClassesMap);
+      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,jvmInternalName,classOrObject,classDescriptor,innerClassesMap);
     }
     @NotNull @Override public Collection<JetFile> getFiles(){
       return Collections.singletonList(getFile());

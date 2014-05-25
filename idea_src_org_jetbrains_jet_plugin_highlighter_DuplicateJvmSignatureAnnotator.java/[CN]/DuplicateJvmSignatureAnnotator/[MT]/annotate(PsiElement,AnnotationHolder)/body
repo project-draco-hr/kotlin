@@ -1,0 +1,18 @@
+{
+  Diagnostics diagnostics;
+  PsiElement parent=element.getParent();
+  if (parent instanceof JetFile) {
+    if (TargetPlatformDetector.getPlatform((JetFile)parent) != TargetPlatform.JVM)     return;
+    diagnostics=getDiagnosticsForPackage((JetFile)parent);
+  }
+ else   if (parent instanceof JetClassBody) {
+    PsiElement parentsParent=parent.getParent();
+    if (!(parentsParent instanceof JetClassOrObject))     return;
+    if (TargetPlatformDetector.getPlatform(((JetClassBody)parent).getContainingJetFile()) != TargetPlatform.JVM)     return;
+    diagnostics=getDiagnosticsForNonLocalClass((JetClassOrObject)parentsParent);
+  }
+ else {
+    return;
+  }
+  JetPsiChecker.annotateElement(element,holder,diagnostics);
+}
