@@ -3,14 +3,6 @@
   boolean isObjectLiteral=DescriptorUtils.isAnonymousObject(descriptor);
   boolean isLocalOrAnonymousClass=isObjectLiteral || !(parentDescriptor instanceof PackageFragmentDescriptor || parentDescriptor instanceof ClassDescriptor);
   if (isLocalOrAnonymousClass && state.getClassBuilderMode() != ClassBuilderMode.LIGHT_CLASSES) {
-    String outerClassName=getOuterClassName(descriptor,typeMapper);
-    FunctionDescriptor function=AsmUtil.isDeclarationInsideInlineFunction(descriptor) ? null : DescriptorUtils.getParentOfType(descriptor,FunctionDescriptor.class);
-    if (function != null) {
-      Method method=typeMapper.mapSignature(function).getAsmMethod();
-      v.visitOuterClass(outerClassName,method.getName(),method.getDescriptor());
-    }
- else {
-      v.visitOuterClass(outerClassName,null,null);
-    }
+    writeOuterClassAndEnclosingMethod(descriptor,descriptor,typeMapper,v);
   }
 }
