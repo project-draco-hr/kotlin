@@ -1,13 +1,18 @@
 {
   PropertyDescriptor newDescriptor=(PropertyDescriptor)descriptor.copy(descriptor.getContainingDeclaration(),Modality.OPEN,descriptor.getVisibility(),descriptor.getKind(),true);
   newDescriptor.addOverriddenDescriptor(descriptor);
-  StringBuilder bodyBuilder=new StringBuilder();
-  String initializer=CodeInsightUtils.defaultInitializer(descriptor.getType());
-  if (initializer != null) {
-    bodyBuilder.append(" = ").append(initializer);
+  StringBuilder body=new StringBuilder();
+  String defaultInitializer=CodeInsightUtils.defaultInitializer(descriptor.getType());
+  String initializer=defaultInitializer != null ? " = " + defaultInitializer : " = ?";
+  if (descriptor.getReceiverParameter() != null) {
+    body.append("\nget()");
+    body.append(initializer);
+    if (descriptor.isVar()) {
+      body.append("\nset(value) {}");
+    }
   }
  else {
-    bodyBuilder.append(" = ?");
+    body.append(initializer);
   }
-  return JetPsiFactory.createProperty(project,OVERRIDE_RENDERER.render(newDescriptor) + bodyBuilder.toString());
+  return JetPsiFactory.createProperty(project,OVERRIDE_RENDERER.render(newDescriptor) + body);
 }
