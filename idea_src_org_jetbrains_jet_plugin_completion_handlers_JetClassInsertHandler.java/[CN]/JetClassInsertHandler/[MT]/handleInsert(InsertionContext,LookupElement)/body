@@ -8,9 +8,19 @@
         Document document=context.getDocument();
         if (!isAfterDot(document,startOffset)) {
           String text=DescriptorUtils.getFqName(descriptor).asString();
-          document.replaceString(startOffset,context.getTailOffset(),text);
-          PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+          document.replaceString(startOffset,context.getTailOffset(),text + ".");
+          PsiDocumentManager psiDocumentManager=PsiDocumentManager.getInstance(context.getProject());
+          psiDocumentManager.commitAllDocuments();
+          RangeMarker rangeMarker=document.createRangeMarker(startOffset,startOffset + text.length());
           ShortenReferences.instance$.process((JetFile)context.getFile(),startOffset,startOffset + text.length());
+          psiDocumentManager.commitAllDocuments();
+          psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+          if (rangeMarker.isValid()) {
+            int endOffset=rangeMarker.getEndOffset();
+            if (endOffset < document.getTextLength() && document.getCharsSequence().charAt(endOffset) == '.') {
+              document.deleteString(endOffset,endOffset + 1);
+            }
+          }
         }
       }
     }
