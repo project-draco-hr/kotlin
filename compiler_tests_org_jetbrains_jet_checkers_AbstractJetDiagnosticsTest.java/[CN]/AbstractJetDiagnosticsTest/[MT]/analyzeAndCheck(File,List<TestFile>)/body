@@ -6,23 +6,26 @@
   }
 );
   CliLightClassGenerationSupport support=CliLightClassGenerationSupport.getInstanceForCli(getProject());
-  BindingTrace trace=support.getTrace();
+  BindingTrace supportTrace=support.getTrace();
   List<JetFile> allJetFiles=new ArrayList<JetFile>();
   Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule);
+  Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
   for (  Map.Entry<TestModule,List<TestFile>> entry : groupedByModule.entrySet()) {
     TestModule testModule=entry.getKey();
     List<? extends TestFile> testFilesInModule=entry.getValue();
     List<JetFile> jetFiles=getJetFiles(testFilesInModule);
     allJetFiles.addAll(jetFiles);
     ModuleDescriptorImpl module=modules.get(testModule);
-    AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,trace,Predicates.<PsiFile>alwaysTrue(),module == null ? support.getModule() : module,MemberFilter.ALWAYS_TRUE);
+    BindingTrace moduleTrace=groupedByModule.size() > 1 ? new DelegatingBindingTrace(supportTrace.getBindingContext(),"Trace for module " + module) : supportTrace;
+    moduleBindings.put(testModule,moduleTrace.getBindingContext());
+    AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module == null ? support.getModule() : module,MemberFilter.ALWAYS_TRUE);
   }
   boolean ok=true;
   StringBuilder actualText=new StringBuilder();
   for (  TestFile testFile : testFiles) {
-    ok&=testFile.getActualText(trace.getBindingContext(),actualText);
+    ok&=testFile.getActualText(moduleBindings.get(testFile.getModule()),actualText);
   }
   JetTestUtils.assertEqualsToFile(testDataFile,actualText.toString());
   assertTrue("Diagnostics mismatch. See the output above",ok);
-  checkAllResolvedCallsAreCompleted(allJetFiles,trace.getBindingContext());
+  checkAllResolvedCallsAreCompleted(allJetFiles,supportTrace.getBindingContext());
 }
