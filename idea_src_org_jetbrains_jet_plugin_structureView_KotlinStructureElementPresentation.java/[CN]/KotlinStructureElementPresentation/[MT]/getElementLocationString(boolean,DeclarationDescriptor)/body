@@ -1,0 +1,13 @@
+{
+  if (!(isInherited && descriptor instanceof CallableMemberDescriptor))   return null;
+  CallableMemberDescriptor callableMemberDescriptor=(CallableMemberDescriptor)descriptor;
+  if (callableMemberDescriptor.getKind() == CallableMemberDescriptor.Kind.DECLARATION) {
+    return withRightArrow(ONLY_NAMES_WITH_SHORT_TYPES.render(callableMemberDescriptor.getContainingDeclaration()));
+  }
+  Set<CallableMemberDescriptor> overridingDescriptors=filterOutOverridden(getAllOverriddenDeclarations(callableMemberDescriptor));
+  CallableMemberDescriptor firstOverriding=ContainerUtil.getFirstItem(overridingDescriptors);
+  if (firstOverriding != null) {
+    return withRightArrow(ONLY_NAMES_WITH_SHORT_TYPES.render(firstOverriding.getContainingDeclaration()));
+  }
+  throw new IllegalStateException("At least one element should be returned");
+}
