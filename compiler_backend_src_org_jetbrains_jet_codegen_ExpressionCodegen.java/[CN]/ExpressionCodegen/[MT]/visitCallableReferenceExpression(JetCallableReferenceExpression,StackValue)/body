@@ -39,7 +39,13 @@
     v.anew(propertyType);
     v.dup();
     v.visitLdcInsn(descriptor.getName().asString());
-    v.getstatic(reflectionFieldOwner,reflectionFieldName,ownerType.getDescriptor());
+    if (containingDeclaration instanceof JavaClassDescriptor) {
+      v.aconst(Type.getObjectType(reflectionFieldOwner));
+      v.invokestatic("kotlin/reflect/jvm/internal/InternalPackage","foreignKotlinClass",Type.getMethodDescriptor(K_CLASS_IMPL_TYPE,getType(Class.class)),false);
+    }
+ else {
+      v.getstatic(reflectionFieldOwner,reflectionFieldName,ownerType.getDescriptor());
+    }
     String constructorDesc;
     if (receiverParameter != null) {
       putJavaLangClassInstance(v,typeMapper.mapType(receiverParameter));
