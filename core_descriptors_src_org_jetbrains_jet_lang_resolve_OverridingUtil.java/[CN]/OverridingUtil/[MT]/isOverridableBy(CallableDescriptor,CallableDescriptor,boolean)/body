@@ -1,0 +1,80 @@
+{
+  if (superDescriptor instanceof FunctionDescriptor) {
+    if (!(subDescriptor instanceof FunctionDescriptor))     return OverrideCompatibilityInfo.memberKindMismatch();
+  }
+ else   if (superDescriptor instanceof PropertyDescriptor) {
+    if (!(subDescriptor instanceof PropertyDescriptor))     return OverrideCompatibilityInfo.memberKindMismatch();
+  }
+ else {
+    throw new IllegalArgumentException("This type of CallableDescriptor cannot be checked for overridability: " + superDescriptor);
+  }
+  if (!superDescriptor.getName().equals(subDescriptor.getName())) {
+    return OverrideCompatibilityInfo.nameMismatch();
+  }
+  OverrideCompatibilityInfo receiverAndParameterResult=checkReceiverAndParameterCount(superDescriptor,subDescriptor);
+  if (receiverAndParameterResult != null) {
+    return receiverAndParameterResult;
+  }
+  List<JetType> superValueParameters=compiledValueParameters(superDescriptor);
+  List<JetType> subValueParameters=compiledValueParameters(subDescriptor);
+  List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
+  List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
+  if (superTypeParameters.size() != subTypeParameters.size()) {
+    for (int i=0; i < superValueParameters.size(); ++i) {
+      JetType superValueParameterType=getUpperBound(superValueParameters.get(i));
+      JetType subValueParameterType=getUpperBound(subValueParameters.get(i));
+      if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameterType,subValueParameterType)) {
+        return OverrideCompatibilityInfo.typeParameterNumberMismatch();
+      }
+    }
+    return OverrideCompatibilityInfo.valueParameterTypeMismatch(null,null,OverrideCompatibilityInfo.Result.CONFLICT);
+  }
+  final Map<TypeConstructor,TypeConstructor> matchingTypeConstructors=new HashMap<TypeConstructor,TypeConstructor>();
+  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
+    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
+    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
+    matchingTypeConstructors.put(superTypeParameter.getTypeConstructor(),subTypeParameter.getTypeConstructor());
+  }
+  JetTypeChecker.TypeConstructorEquality localEqualityAxioms=new JetTypeChecker.TypeConstructorEquality(){
+    @Override public boolean equals(    @NotNull TypeConstructor a,    @NotNull TypeConstructor b){
+      if (equalityAxioms.equals(a,b))       return true;
+      TypeConstructor img1=matchingTypeConstructors.get(a);
+      TypeConstructor img2=matchingTypeConstructors.get(b);
+      if (!(img1 != null && img1.equals(b)) && !(img2 != null && img2.equals(a))) {
+        return false;
+      }
+      return true;
+    }
+  }
+;
+  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
+    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
+    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
+    if (!areTypesEquivalent(superTypeParameter.getUpperBoundsAsType(),subTypeParameter.getUpperBoundsAsType(),localEqualityAxioms)) {
+      return OverrideCompatibilityInfo.boundsMismatch(superTypeParameter,subTypeParameter);
+    }
+  }
+  for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
+    JetType superValueParameter=superValueParameters.get(i);
+    JetType subValueParameter=subValueParameters.get(i);
+    if (!areTypesEquivalent(superValueParameter,subValueParameter,localEqualityAxioms)) {
+      return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,INCOMPATIBLE);
+    }
+  }
+  if (checkReturnType) {
+    JetType superReturnType=superDescriptor.getReturnType();
+    JetType subReturnType=subDescriptor.getReturnType();
+    if (superReturnType != null && subReturnType != null) {
+      boolean bothErrors=subReturnType.isError() && superReturnType.isError();
+      if (!bothErrors && !JetTypeChecker.INSTANCE.isSubtypeOf(subReturnType,superReturnType,localEqualityAxioms)) {
+        return OverrideCompatibilityInfo.returnTypeMismatch(superReturnType,subReturnType);
+      }
+    }
+  }
+  for (  ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
+    if (!externalCondition.isOverridable(superDescriptor,subDescriptor)) {
+      return OverrideCompatibilityInfo.externalConditionFailed(externalCondition.getClass());
+    }
+  }
+  return OverrideCompatibilityInfo.success();
+}

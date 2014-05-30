@@ -1,0 +1,16 @@
+{
+  OverridingUtil.OverrideCompatibilityInfo receiverAndParameterResult=OverridingUtil.checkReceiverAndParameterCount(superDescriptor,subDescriptor);
+  if (receiverAndParameterResult != null) {
+    return receiverAndParameterResult;
+  }
+  List<JetType> superValueParameters=OverridingUtil.compiledValueParameters(superDescriptor);
+  List<JetType> subValueParameters=OverridingUtil.compiledValueParameters(subDescriptor);
+  for (int i=0; i < superValueParameters.size(); ++i) {
+    JetType superValueParameterType=OverridingUtil.getUpperBound(superValueParameters.get(i));
+    JetType subValueParameterType=OverridingUtil.getUpperBound(subValueParameters.get(i));
+    if (!JetTypeChecker.INSTANCE.equalTypes(superValueParameterType,subValueParameterType)) {
+      return OverridingUtil.OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameterType,subValueParameterType,INCOMPATIBLE);
+    }
+  }
+  return OverridingUtil.OverrideCompatibilityInfo.success();
+}
