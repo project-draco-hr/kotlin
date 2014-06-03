@@ -2,11 +2,15 @@
   if (!asFunctionInline && Type.VOID_TYPE != type) {
     boolean couldBeRemapped=!shouldPutValue(type,stackValue,valueParameterDescriptor);
     StackValue remappedIndex=couldBeRemapped ? stackValue : null;
-    ParameterInfo info=new ParameterInfo(type,false,couldBeRemapped ? -1 : codegen.getFrameMap().enterTemp(type),remappedIndex);
-    if (capturedParamIndex >= 0 && couldBeRemapped) {
-      CapturedParamInfo capturedParamInfo=activeLambda.getCapturedVars().get(capturedParamIndex);
-      capturedParamInfo.setRemapValue(remappedIndex != null ? remappedIndex : StackValue.local(info.getIndex(),info.getType()));
+    ParameterInfo info;
+    if (capturedParamIndex >= 0) {
+      CapturedParamDesc capturedParamInfoInLambda=activeLambda.getCapturedVars().get(capturedParamIndex);
+      info=invocationParamBuilder.addCapturedParam(capturedParamInfoInLambda,capturedParamInfoInLambda.getFieldName());
+      info.setRemapValue(remappedIndex);
     }
-    doWithParameter(info);
+ else {
+      info=invocationParamBuilder.addNextParameter(type,false,remappedIndex);
+    }
+    putParameterOnStack(info);
   }
 }

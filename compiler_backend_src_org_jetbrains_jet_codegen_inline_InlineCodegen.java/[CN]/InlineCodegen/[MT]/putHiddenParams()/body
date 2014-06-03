@@ -1,20 +1,14 @@
 {
-  List<JvmMethodParameterSignature> types=jvmSignature.getValueParameters();
+  List<JvmMethodParameterSignature> valueParameters=jvmSignature.getValueParameters();
   if (!isStaticMethod(functionDescriptor,context)) {
-    Type type=AsmTypeConstants.OBJECT_TYPE;
-    ParameterInfo info=new ParameterInfo(type,false,codegen.getFrameMap().enterTemp(type),-1);
-    recordParamInfo(info,false);
+    invocationParamBuilder.addNextParameter(AsmTypeConstants.OBJECT_TYPE,false,null);
   }
-  for (  JvmMethodParameterSignature param : types) {
+  for (  JvmMethodParameterSignature param : valueParameters) {
     if (param.getKind() == JvmMethodParameterKind.VALUE) {
       break;
     }
-    Type type=param.getAsmType();
-    ParameterInfo info=new ParameterInfo(type,false,codegen.getFrameMap().enterTemp(type),-1);
-    recordParamInfo(info,false);
+    invocationParamBuilder.addNextParameter(param.getAsmType(),false,null);
   }
-  for (ListIterator<? extends ParameterInfo> iterator=actualParameters.listIterator(actualParameters.size()); iterator.hasPrevious(); ) {
-    ParameterInfo param=iterator.previous();
-    putParameterOnStack(param);
-  }
+  List<ParameterInfo> infos=invocationParamBuilder.listNotCaptured();
+  putParameterOnStack(infos.toArray(new ParameterInfo[infos.size()]));
 }
