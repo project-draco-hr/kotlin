@@ -1,0 +1,39 @@
+{
+  CompilerConfiguration compilerConfiguration=configuration.copy();
+  for (  Module module : modules) {
+    compilerConfiguration.addAll(CommonConfigurationKeys.SOURCE_ROOTS_KEY,getAbsolutePaths(directory,module));
+    for (    String classpathRoot : module.getClasspathRoots()) {
+      compilerConfiguration.add(JVMConfigurationKeys.CLASSPATH_KEY,new File(classpathRoot));
+    }
+    for (    String annotationsRoot : module.getAnnotationsRoots()) {
+      compilerConfiguration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,new File(annotationsRoot));
+    }
+  }
+  Disposable parentDisposable=Disposer.newDisposable();
+  JetCoreEnvironment moduleEnvironment=null;
+  try {
+    moduleEnvironment=JetCoreEnvironment.createForProduction(parentDisposable,compilerConfiguration);
+    AnalyzeExhaust exhaust=analyze(moduleEnvironment);
+    if (exhaust == null) {
+      return null;
+    }
+    exhaust.throwIfError();
+    Map<Module,ClassFileFactory> result=Maps.newHashMap();
+    for (    Module module : modules) {
+      List<JetFile> jetFiles=JetCoreEnvironment.getJetFiles(moduleEnvironment,getAbsolutePaths(directory,module),new Function1<String,Unit>(){
+        @Override public Unit invoke(        String s){
+          return null;
+        }
+      }
+);
+      GenerationState generationState=generate(moduleEnvironment,exhaust,jetFiles);
+      result.put(module,generationState.getFactory());
+    }
+    return result;
+  }
+  finally {
+    if (moduleEnvironment != null) {
+      Disposer.dispose(parentDisposable);
+    }
+  }
+}

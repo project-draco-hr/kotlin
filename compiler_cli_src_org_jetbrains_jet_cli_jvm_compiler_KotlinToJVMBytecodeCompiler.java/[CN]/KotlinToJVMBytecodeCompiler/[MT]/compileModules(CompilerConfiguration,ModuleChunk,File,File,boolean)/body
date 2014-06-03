@@ -1,26 +1,11 @@
 {
   List<Module> modules=chunk.getModules();
-  if (COMPILE_CHUNK_AS_ONE_MODULE && modules.size() > 1) {
-    modules=Collections.<Module>singletonList(new ChunkAsOneModule(chunk));
+  Map<Module,ClassFileFactory> outputFiles=compileModule(configuration,modules,directory);
+  if (outputFiles == null) {
+    return false;
   }
   for (  Module module : modules) {
-    ClassFileFactory outputFiles=compileModule(configuration,module,directory);
-    if (outputFiles == null) {
-      return false;
-    }
-    OutputDirector outputDir=new OutputDirector(){
-      @NotNull @Override public File getOutputDirectory(      @NotNull Collection<? extends File> sourceFiles){
-        for (        File sourceFile : sourceFiles) {
-          Module module=chunk.findModuleBySourceFile(sourceFile);
-          if (module != null) {
-            return new File(module.getOutputDirectory());
-          }
-        }
-        throw new IllegalStateException("No module found for source files: " + sourceFiles);
-      }
-    }
-;
-    writeOutput(configuration,outputFiles,outputDir,jarPath,jarRuntime,null);
+    writeOutput(configuration,outputFiles.get(module),new File(module.getOutputDirectory()),jarPath,jarRuntime,null);
   }
   return true;
 }

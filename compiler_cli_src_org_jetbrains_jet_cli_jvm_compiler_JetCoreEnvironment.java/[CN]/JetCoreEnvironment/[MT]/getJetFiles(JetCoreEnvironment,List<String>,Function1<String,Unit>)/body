@@ -1,0 +1,33 @@
+{
+  final List<JetFile> result=Lists.newArrayList();
+  for (  String sourceRootPath : sourceRoots) {
+    if (sourceRootPath == null) {
+      continue;
+    }
+    VirtualFile vFile=environment.getMyApplicationEnvironment().getLocalFileSystem().findFileByPath(sourceRootPath);
+    if (vFile == null) {
+      reportError.invoke("Source file or directory not found: " + sourceRootPath);
+      continue;
+    }
+    if (!vFile.isDirectory() && vFile.getFileType() != JetFileType.INSTANCE) {
+      reportError.invoke("Source entry is not a Kotlin file: " + sourceRootPath);
+      continue;
+    }
+    IoPackage.recurse(new File(sourceRootPath),new Function1<File,Unit>(){
+      @Override public Unit invoke(      File file){
+        if (file.isFile()) {
+          VirtualFile fileByPath=environment.getMyApplicationEnvironment().getLocalFileSystem().findFileByPath(file.getAbsolutePath());
+          if (fileByPath != null) {
+            PsiFile psiFile=PsiManager.getInstance(environment.getProject()).findFile(fileByPath);
+            if (psiFile instanceof JetFile) {
+              result.add((JetFile)psiFile);
+            }
+          }
+        }
+        return null;
+      }
+    }
+);
+  }
+  return result;
+}
