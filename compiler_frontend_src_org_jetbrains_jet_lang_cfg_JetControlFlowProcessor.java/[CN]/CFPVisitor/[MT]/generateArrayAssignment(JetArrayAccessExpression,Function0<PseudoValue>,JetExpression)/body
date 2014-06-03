@@ -7,14 +7,8 @@
   if (((JetOperationExpression)parentExpression).getOperationReference().getReferencedNameElementType() == EQ) {
     mark(lhs);
   }
-  generateArrayAccessArguments(lhs);
-  List<JetExpression> inputExpressions=new ArrayList<JetExpression>();
-  inputExpressions.add(lhs.getArrayExpression());
-  inputExpressions.addAll(lhs.getIndexExpressions());
-  List<PseudoValue> inputValues=elementsToValues(inputExpressions);
-  PseudoValue rhsValue=rhsDeferredValue.invoke();
-  if (rhsValue != null) {
-    inputValues.add(rhsValue);
-  }
-  builder.call(parentExpression,setResolvedCall,inputValues);
+  generateInstructions(lhs.getArrayExpression(),NOT_IN_CONDITION);
+  Map<PseudoValue,ReceiverValue> receiverValues=getReceiverValues(setResolvedCall,false);
+  SmartFMap<PseudoValue,ValueParameterDescriptor> argumentValues=getArraySetterArguments(rhsDeferredValue,setResolvedCall);
+  builder.call(parentExpression,setResolvedCall,receiverValues,argumentValues);
 }
