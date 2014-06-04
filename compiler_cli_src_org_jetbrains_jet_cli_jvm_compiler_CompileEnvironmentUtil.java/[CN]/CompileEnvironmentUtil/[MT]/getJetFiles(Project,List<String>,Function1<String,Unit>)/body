@@ -1,10 +1,11 @@
 {
+  final VirtualFileSystem localFileSystem=VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
   final List<JetFile> result=Lists.newArrayList();
   for (  String sourceRootPath : sourceRoots) {
     if (sourceRootPath == null) {
       continue;
     }
-    VirtualFile vFile=environment.getMyApplicationEnvironment().getLocalFileSystem().findFileByPath(sourceRootPath);
+    VirtualFile vFile=localFileSystem.findFileByPath(sourceRootPath);
     if (vFile == null) {
       reportError.invoke("Source file or directory not found: " + sourceRootPath);
       continue;
@@ -16,15 +17,15 @@
     IoPackage.recurse(new File(sourceRootPath),new Function1<File,Unit>(){
       @Override public Unit invoke(      File file){
         if (file.isFile()) {
-          VirtualFile fileByPath=environment.getMyApplicationEnvironment().getLocalFileSystem().findFileByPath(file.getAbsolutePath());
+          VirtualFile fileByPath=localFileSystem.findFileByPath(file.getAbsolutePath());
           if (fileByPath != null) {
-            PsiFile psiFile=PsiManager.getInstance(environment.getProject()).findFile(fileByPath);
+            PsiFile psiFile=PsiManager.getInstance(project).findFile(fileByPath);
             if (psiFile instanceof JetFile) {
               result.add((JetFile)psiFile);
             }
           }
         }
-        return null;
+        return Unit.VALUE;
       }
     }
 );
