@@ -12,14 +12,15 @@
     throw new FileComparisonFailure("'// INFO:' directive was expected",textData,textData + "\n\n//INFO: " + info,testDataFile.getAbsolutePath());
   }
  else   if (directives.size() == 1) {
+    assertNotNull(info);
     String expectedInfo=directives.get(0);
-    if (info != null && expectedInfo.endsWith("...")) {
+    if (expectedInfo.endsWith("...")) {
       if (!info.startsWith(StringUtil.trimEnd(expectedInfo,"..."))) {
-        throw new ComparisonFailure(null,expectedInfo,info);
+        wrapToFileComparisonFailure(info,path,textData);
       }
     }
- else {
-      Assert.assertEquals(expectedInfo,info);
+ else     if (!expectedInfo.equals(info)) {
+      wrapToFileComparisonFailure(info,path,textData);
     }
   }
  else {
