@@ -1,8 +1,14 @@
 {
   Collection<PsiElement> elements=new LinkedHashSet<PsiElement>();
+  boolean allDelegatedToTraitImpls=KotlinPackage.all(data.getSignatureOrigins(),new Function1<JvmDeclarationOrigin,Boolean>(){
+    @Override public Boolean invoke(    JvmDeclarationOrigin origin){
+      return origin.getOriginKind() == JvmDeclarationOriginKind.DELEGATION_TO_TRAIT_IMPL;
+    }
+  }
+);
   for (  JvmDeclarationOrigin origin : data.getSignatureOrigins()) {
     PsiElement element=origin.getElement();
-    if (element == null) {
+    if (element == null || allDelegatedToTraitImpls) {
       element=data.getClassOrigin().getElement();
     }
     if (element != null) {
