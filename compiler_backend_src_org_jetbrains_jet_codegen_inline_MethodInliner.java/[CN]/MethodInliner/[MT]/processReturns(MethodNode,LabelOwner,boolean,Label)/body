@@ -1,0 +1,36 @@
+{
+  if (!remapReturn) {
+    return Collections.emptyList();
+  }
+  List<FinallyBlockInfo> result=new ArrayList<FinallyBlockInfo>();
+  InsnList instructions=node.instructions;
+  AbstractInsnNode insnNode=instructions.getFirst();
+  while (insnNode != null) {
+    if (InlineCodegenUtil.isReturnOpcode(insnNode.getOpcode())) {
+      AbstractInsnNode previous=insnNode.getPrevious();
+      MethodInsnNode flagNode;
+      boolean isLocalReturn=true;
+      String labelName=null;
+      if (previous != null && previous instanceof MethodInsnNode && InlineCodegenUtil.NON_LOCAL_RETURN.equals(((MethodInsnNode)previous).owner)) {
+        flagNode=(MethodInsnNode)previous;
+        labelName=flagNode.name;
+      }
+      if (labelName != null) {
+        isLocalReturn=labelOwner.isMyLabel(labelName);
+        if (isLocalReturn) {
+          instructions.remove(previous);
+        }
+      }
+      if (isLocalReturn && endLabel != null) {
+        LabelNode labelNode=(LabelNode)endLabel.info;
+        JumpInsnNode jumpInsnNode=new JumpInsnNode(Opcodes.GOTO,labelNode);
+        instructions.insert(insnNode,jumpInsnNode);
+        instructions.remove(insnNode);
+        insnNode=jumpInsnNode;
+      }
+      result.add(new FinallyBlockInfo(isLocalReturn ? insnNode : insnNode.getPrevious(),getReturnType(insnNode.getOpcode())));
+    }
+    insnNode=insnNode.getNext();
+  }
+  return result;
+}

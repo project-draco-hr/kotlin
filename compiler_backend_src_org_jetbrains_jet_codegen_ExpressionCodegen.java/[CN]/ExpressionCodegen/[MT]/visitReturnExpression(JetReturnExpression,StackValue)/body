@@ -1,20 +1,19 @@
 {
   JetExpression returnedExpression=expression.getReturnedExpression();
+  CallableMemberDescriptor descriptor=getContext().getContextDescriptor();
+  NonLocalReturnInfo nonLocalReturn=getNonLocalReturnInfo(descriptor,expression);
+  boolean isNonLocalReturn=nonLocalReturn != null;
+  if (isNonLocalReturn && !state.isInlineEnabled()) {
+    throw new CompilationException("Non local returns requires enabled inlining",null,expression);
+  }
+  Type returnType=isNonLocalReturn ? nonLocalReturn.returnType : this.returnType;
   if (returnedExpression != null) {
     gen(returnedExpression,returnType);
-    boolean hasFinallyBLocks=hasFinallyBLocks();
-    if (hasFinallyBLocks) {
-      int returnValIndex=myFrameMap.enterTemp(returnType);
-      StackValue.local(returnValIndex,returnType).store(returnType,v);
-      doFinallyOnReturn();
-      StackValue.local(returnValIndex,returnType).put(returnType,v);
-      myFrameMap.leaveTemp(returnType);
-    }
-    v.areturn(returnType);
   }
- else {
-    doFinallyOnReturn();
-    v.visitInsn(RETURN);
+  generateFinallyBlocksIfNeeded(returnType);
+  if (isNonLocalReturn) {
+    InlineCodegenUtil.generateGlobalReturnFlag(v,nonLocalReturn.labelName);
   }
+  v.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
   return StackValue.none();
 }
