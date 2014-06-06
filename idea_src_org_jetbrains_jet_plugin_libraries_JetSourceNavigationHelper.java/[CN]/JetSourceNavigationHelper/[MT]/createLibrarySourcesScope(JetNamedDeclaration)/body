@@ -6,11 +6,15 @@
   }
   Project project=decompiledDeclaration.getProject();
   ProjectFileIndex projectFileIndex=ProjectFileIndex.SERVICE.getInstance(project);
-  GlobalSearchScope resultScope=GlobalSearchScope.EMPTY_SCOPE;
-  for (  OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(libraryFile)) {
-    for (    VirtualFile sourceDir : orderEntry.getFiles(OrderRootType.SOURCES)) {
-      resultScope=resultScope.uniteWith(GlobalSearchScopesCore.directoryScope(project,sourceDir,true));
+  if (!projectFileIndex.isInLibraryClasses(libraryFile)) {
+    return GlobalSearchScope.EMPTY_SCOPE;
+  }
+  Set<VirtualFile> sourceRootSet=Sets.newLinkedHashSet();
+  for (  OrderEntry entry : projectFileIndex.getOrderEntriesForFile(libraryFile)) {
+    if (entry instanceof LibraryOrSdkOrderEntry) {
+      VirtualFile[] sourceRoots=((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES);
+      KotlinPackage.addAll(sourceRootSet,sourceRoots);
     }
   }
-  return resultScope;
+  return new LibraryScopeBaseFix(project,VirtualFile.EMPTY_ARRAY,ArrayUtil.toObjectArray(sourceRootSet,VirtualFile.class));
 }
