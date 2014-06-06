@@ -1,0 +1,19 @@
+{
+  DelegationFieldsInfo result=new DelegationFieldsInfo();
+  int n=0;
+  for (  JetDelegationSpecifier specifier : delegationSpecifiers) {
+    if (specifier instanceof JetDelegatorByExpressionSpecifier) {
+      JetExpression expression=((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression();
+      PropertyDescriptor propertyDescriptor=getDelegatePropertyIfAny(expression);
+      ClassDescriptor superClassDescriptor=getSuperClass(specifier);
+      if (propertyDescriptor != null && !propertyDescriptor.isVar() && Boolean.TRUE.equals(bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor))) {
+        result.addField((JetDelegatorByExpressionSpecifier)specifier,propertyDescriptor);
+      }
+ else {
+        result.addField((JetDelegatorByExpressionSpecifier)specifier,typeMapper.mapType(superClassDescriptor),"$delegate_" + n);
+      }
+      n++;
+    }
+  }
+  return result;
+}
