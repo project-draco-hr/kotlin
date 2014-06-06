@@ -1,2 +1,41 @@
 {
+  ResolvedCall<?> resolvedCall=resolvedCall(expression.getCallableReference());
+  FunctionDescriptor functionDescriptor=bindingContext.get(FUNCTION,expression);
+  if (functionDescriptor != null) {
+    CallableReferenceGenerationStrategy strategy=new CallableReferenceGenerationStrategy(state,functionDescriptor,resolvedCall);
+    ClosureCodegen closureCodegen=new ClosureCodegen(state,expression,functionDescriptor,null,context,KotlinSyntheticClass.Kind.CALLABLE_REFERENCE_WRAPPER,this,strategy,getParentCodegen());
+    closureCodegen.gen();
+    return closureCodegen.putInstanceOnStack(v,this);
+  }
+  VariableDescriptor variableDescriptor=bindingContext.get(VARIABLE,expression);
+  if (variableDescriptor != null) {
+    VariableDescriptor descriptor=(VariableDescriptor)resolvedCall.getResultingDescriptor();
+    String reflectionFieldOwner;
+    Type propertyType;
+    Type ownerType;
+    String reflectionFieldName;
+    DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+    if (containingDeclaration instanceof PackageFragmentDescriptor) {
+      reflectionFieldOwner=PackageClassUtils.getPackageClassInternalName(((PackageFragmentDescriptor)containingDeclaration).getFqName());
+      propertyType=descriptor.isVar() ? K_MUTABLE_TOP_LEVEL_PROPERTY_IMPL_TYPE : K_TOP_LEVEL_PROPERTY_IMPL_TYPE;
+      ownerType=K_PACKAGE_IMPL_TYPE;
+      reflectionFieldName=JvmAbi.KOTLIN_PACKAGE_FIELD_NAME;
+    }
+ else     if (containingDeclaration instanceof ClassDescriptor) {
+      reflectionFieldOwner=typeMapper.mapClass((ClassDescriptor)containingDeclaration).getInternalName();
+      propertyType=descriptor.isVar() ? K_MUTABLE_MEMBER_PROPERTY_IMPL_TYPE : K_MEMBER_PROPERTY_IMPL_TYPE;
+      ownerType=K_CLASS_IMPL_TYPE;
+      reflectionFieldName=JvmAbi.KOTLIN_CLASS_FIELD_NAME;
+    }
+ else {
+      throw new UnsupportedOperationException("Unsupported callable reference container: " + containingDeclaration);
+    }
+    v.anew(propertyType);
+    v.dup();
+    v.visitLdcInsn(descriptor.getName().asString());
+    v.getstatic(reflectionFieldOwner,reflectionFieldName,ownerType.getDescriptor());
+    v.invokespecial(propertyType.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,JAVA_STRING_TYPE,ownerType),false);
+    return StackValue.onStack(propertyType);
+  }
+  throw new UnsupportedOperationException("Unsupported callable reference expression: " + expression.getText());
 }
