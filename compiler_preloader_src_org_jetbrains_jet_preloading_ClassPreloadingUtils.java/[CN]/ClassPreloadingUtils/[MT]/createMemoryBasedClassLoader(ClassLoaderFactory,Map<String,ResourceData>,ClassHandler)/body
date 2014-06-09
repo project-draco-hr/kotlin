@@ -1,5 +1,6 @@
 {
   return new ClassLoader(null){
+    private final ClassLoader parent=parentFactory == null ? null : parentFactory.create(this);
     @Override public Class<?> loadClass(    String name) throws ClassNotFoundException {
       Class<?> aClass=super.loadClass(name);
       if (aClass == null) {
@@ -24,10 +25,24 @@
       }
       return definedClass;
     }
+    @Override public URL getResource(    String name){
+      URL resource=super.getResource(name);
+      if (resource == null && parent != null) {
+        return parent.getResource(name);
+      }
+      return resource;
+    }
     @Override protected URL findResource(    String name){
       ResourceData resourceData=preloadedResources.get(name);
       if (resourceData == null)       return null;
       return resourceData.getURL();
+    }
+    @Override public Enumeration<URL> getResources(    String name) throws IOException {
+      Enumeration<URL> resources=super.getResources(name);
+      if (!resources.hasMoreElements() && parent != null) {
+        return parent.getResources(name);
+      }
+      return resources;
     }
     @Override protected Enumeration<URL> findResources(    String name) throws IOException {
       URL resource=findResource(name);
