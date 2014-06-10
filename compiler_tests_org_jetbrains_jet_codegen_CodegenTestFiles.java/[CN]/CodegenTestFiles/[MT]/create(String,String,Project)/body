@@ -18,22 +18,28 @@
       String type=scriptParametersMatcher.group(2);
       String valueString=scriptParametersMatcher.group(3);
       Object value;
+      JetType jetType;
+      KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
       if (type.equals("kotlin.String")) {
         value=valueString;
+        jetType=builtIns.getStringType();
       }
  else       if (type.equals("kotlin.Long")) {
         value=Long.parseLong(valueString);
+        jetType=builtIns.getLongType();
       }
  else       if (type.equals("kotlin.Int")) {
         value=Integer.parseInt(valueString);
+        jetType=builtIns.getIntType();
       }
  else       if (type.equals("kotlin.Array<kotlin.String>")) {
         value=valueString.split(" ");
+        jetType=builtIns.getArrayType(builtIns.getStringType());
       }
  else {
         throw new AssertionError("TODO: " + type);
       }
-      scriptParameterTypes.add(new AnalyzerScriptParameter(Name.identifier(name),JetTypeName.parse(type)));
+      scriptParameterTypes.add(new AnalyzerScriptParameter(Name.identifier(name),jetType));
       scriptParameterValues.add(value);
     }
     JetScriptDefinitionProvider.getInstance(project).addScriptDefinition(new JetScriptDefinition(".kts",scriptParameterTypes));
