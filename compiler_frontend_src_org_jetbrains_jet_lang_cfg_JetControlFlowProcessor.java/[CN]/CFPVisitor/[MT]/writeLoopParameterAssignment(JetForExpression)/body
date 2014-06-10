@@ -2,7 +2,10 @@
   JetParameter loopParameter=expression.getLoopParameter();
   JetMultiDeclaration multiDeclaration=expression.getMultiParameter();
   JetExpression loopRange=expression.getLoopRange();
-  PseudoValue value=builder.magic(loopRange != null ? loopRange : expression,null,Collections.singletonList(builder.getBoundValue(loopRange)),true);
+  JetType loopRangeType=trace.get(BindingContext.EXPRESSION_TYPE,loopRange);
+  TypePredicate loopRangeTypeSet=loopRangeType != null ? new SingleType(loopRangeType) : AllTypes.instance$;
+  PseudoValue loopRangeValue=builder.getBoundValue(loopRange);
+  PseudoValue value=builder.magic(loopRange != null ? loopRange : expression,null,Collections.singletonList(loopRangeValue),Collections.singletonMap(loopRangeValue,loopRangeTypeSet),true);
   if (loopParameter != null) {
     generateInitializer(loopParameter,value);
   }
