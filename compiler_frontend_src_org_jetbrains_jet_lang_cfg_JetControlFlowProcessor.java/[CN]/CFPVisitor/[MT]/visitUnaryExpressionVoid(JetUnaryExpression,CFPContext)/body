@@ -7,20 +7,19 @@
   if (JetTokens.EXCLEXCL == operationType) {
     generateInstructions(baseExpression,NOT_IN_CONDITION);
     builder.predefinedOperation(expression,NOT_NULL_ASSERTION,elementsToValues(Collections.singletonList(baseExpression)));
+    return;
+  }
+  boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
+  ResolvedCall<?> resolvedCall=getResolvedCall(operationSign);
+  PseudoValue rhsValue;
+  if (resolvedCall != null) {
+    rhsValue=generateCall(incrementOrDecrement ? null : expression,operationSign,resolvedCall).getOutputValue();
   }
  else {
-    boolean resolved=generateCall(operationSign);
-    if (!resolved) {
-      generateInstructions(baseExpression,NOT_IN_CONDITION);
-    }
-    if (isIncrementOrDecrement(operationType)) {
-      visitAssignment(baseExpression,getDeferredValue(operationSign,false),expression);
-    }
- else     if (resolved) {
-      copyValue(operationSign,expression);
-    }
- else {
-      createNonSyntheticValue(expression,baseExpression);
-    }
+    generateInstructions(baseExpression,NOT_IN_CONDITION);
+    rhsValue=createNonSyntheticValue(expression,baseExpression);
+  }
+  if (incrementOrDecrement) {
+    visitAssignment(baseExpression,getValueAsFunction(rhsValue),expression);
   }
 }
