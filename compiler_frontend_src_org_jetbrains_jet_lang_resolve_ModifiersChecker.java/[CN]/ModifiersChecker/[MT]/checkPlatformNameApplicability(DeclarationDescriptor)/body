@@ -1,0 +1,20 @@
+{
+  if (!DescriptorUtils.isTopLevelDeclaration(descriptor) || !(descriptor instanceof FunctionDescriptor)) {
+    AnnotationDescriptor annotation=descriptor.getAnnotations().findAnnotation(new FqName("kotlin.platform.platformName"));
+    if (annotation != null) {
+      JetAnnotationEntry annotationEntry=trace.get(BindingContext.ANNOTATION_DESCRIPTOR_TO_PSI_ELEMENT,annotation);
+      if (annotationEntry != null) {
+        trace.report(INAPPLICABLE_ANNOTATION.on(annotationEntry));
+      }
+    }
+  }
+  if (descriptor instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+    if (propertyDescriptor.getGetter() != null) {
+      checkPlatformNameApplicability(propertyDescriptor.getGetter());
+    }
+    if (propertyDescriptor.getSetter() != null) {
+      checkPlatformNameApplicability(propertyDescriptor.getSetter());
+    }
+  }
+}
