@@ -7,17 +7,19 @@
   checkCallWithReceiver(context,targetDescriptor,resolvedCall.getThisObject(),expression);
   checkCallWithReceiver(context,targetDescriptor,resolvedCall.getReceiverArgument(),expression);
   if (inlinableParameters.contains(targetDescriptor)) {
-    if (!couldAccessVariable(expression)) {
+    if (!isInsideCall(expression)) {
       context.trace.report(Errors.USAGE_IS_NOT_INLINABLE.on(expression,expression,descriptor));
     }
   }
-  for (  ResolvedValueArgument value : resolvedCall.getValueArguments().values()) {
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
+    ResolvedValueArgument value=entry.getValue();
+    ValueParameterDescriptor valueDescriptor=entry.getKey();
     if (!(value instanceof DefaultValueArgument)) {
       for (      ValueArgument argument : value.getArguments()) {
-        checkValueParameter(context,targetDescriptor,argument,value instanceof VarargValueArgument);
+        checkValueParameter(context,targetDescriptor,argument,valueDescriptor);
       }
     }
   }
   checkVisibility(targetDescriptor,expression,context);
-  checkRecursion(targetDescriptor,expression,context);
+  checkRecursion(context,targetDescriptor,expression);
 }
