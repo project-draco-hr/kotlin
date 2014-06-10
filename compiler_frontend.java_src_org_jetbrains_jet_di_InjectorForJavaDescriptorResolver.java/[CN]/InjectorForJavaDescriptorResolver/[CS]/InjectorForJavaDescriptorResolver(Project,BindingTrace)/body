@@ -14,15 +14,18 @@
   this.traceBasedJavaResolverCache=new TraceBasedJavaResolverCache();
   this.javaPropertyInitializerEvaluator=new JavaPropertyInitializerEvaluatorImpl();
   this.javaSourceElementFactory=new JavaSourceElementFactoryImpl();
-  this.globalJavaResolverContext=new GlobalJavaResolverContext(lockBasedStorageManager,getJavaClassFinder(),virtualFileFinder,deserializedDescriptorResolver,psiBasedExternalAnnotationResolver,traceBasedExternalSignatureResolver,traceBasedErrorReporter,psiBasedMethodSignatureChecker,traceBasedJavaResolverCache,javaPropertyInitializerEvaluator,javaSourceElementFactory);
+  this.singleModuleClassResolver=new SingleModuleClassResolver();
+  this.globalJavaResolverContext=new GlobalJavaResolverContext(lockBasedStorageManager,getJavaClassFinder(),virtualFileFinder,deserializedDescriptorResolver,psiBasedExternalAnnotationResolver,traceBasedExternalSignatureResolver,traceBasedErrorReporter,psiBasedMethodSignatureChecker,traceBasedJavaResolverCache,javaPropertyInitializerEvaluator,javaSourceElementFactory,singleModuleClassResolver);
   this.lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(globalJavaResolverContext,getModule());
   this.javaDescriptorResolver=new JavaDescriptorResolver(lazyJavaPackageFragmentProvider,getModule());
+  this.globalSearchScope=com.intellij.psi.search.GlobalSearchScope.allScope(project);
   this.javaClassDataFinder=new JavaClassDataFinder(virtualFileFinder,deserializedDescriptorResolver);
   this.annotationDescriptorLoader=new AnnotationDescriptorLoader();
   this.constantDescriptorLoader=new ConstantDescriptorLoader();
   this.deserializationGlobalContextForJava=new DeserializationGlobalContextForJava(lockBasedStorageManager,getModule(),javaClassDataFinder,annotationDescriptorLoader,constantDescriptorLoader,lazyJavaPackageFragmentProvider);
   this.descriptorLoadersStorage=new DescriptorLoadersStorage(lockBasedStorageManager);
   this.javaClassFinder.setProject(project);
+  this.javaClassFinder.setScope(globalSearchScope);
   traceBasedExternalSignatureResolver.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
   traceBasedExternalSignatureResolver.setProject(project);
   traceBasedExternalSignatureResolver.setTrace(bindingTrace);
@@ -30,6 +33,7 @@
   traceBasedErrorReporter.setTrace(bindingTrace);
   psiBasedMethodSignatureChecker.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
   psiBasedMethodSignatureChecker.setExternalSignatureResolver(traceBasedExternalSignatureResolver);
+  singleModuleClassResolver.setResolver(javaDescriptorResolver);
   deserializedDescriptorResolver.setContext(deserializationGlobalContextForJava);
   deserializedDescriptorResolver.setErrorReporter(traceBasedErrorReporter);
   annotationDescriptorLoader.setErrorReporter(traceBasedErrorReporter);

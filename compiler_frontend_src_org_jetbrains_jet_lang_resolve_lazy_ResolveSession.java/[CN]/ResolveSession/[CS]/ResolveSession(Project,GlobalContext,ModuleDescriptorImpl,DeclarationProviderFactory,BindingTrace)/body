@@ -1,0 +1,33 @@
+{
+  LockBasedLazyResolveStorageManager lockBasedLazyResolveStorageManager=new LockBasedLazyResolveStorageManager((LockBasedStorageManager)globalContext.getStorageManager());
+  this.storageManager=lockBasedLazyResolveStorageManager;
+  this.exceptionTracker=globalContext.getExceptionTracker();
+  this.trace=lockBasedLazyResolveStorageManager.createSafeTrace(delegationTrace);
+  this.module=rootDescriptor;
+  this.packages=storageManager.createMemoizedFunctionWithNullableValues(new MemoizedFunctionToNullable<FqName,LazyPackageDescriptor>(){
+    @Nullable @Override public LazyPackageDescriptor invoke(    FqName fqName){
+      return createPackage(fqName);
+    }
+  }
+);
+  this.declarationProviderFactory=declarationProviderFactory;
+  this.packageFragmentProvider=new PackageFragmentProvider(){
+    @NotNull @Override public List<PackageFragmentDescriptor> getPackageFragments(    @NotNull FqName fqName){
+      return ContainerUtil.<PackageFragmentDescriptor>createMaybeSingletonList(getPackageFragment(fqName));
+    }
+    @NotNull @Override public Collection<FqName> getSubPackagesOf(    @NotNull FqName fqName){
+      LazyPackageDescriptor packageDescriptor=getPackageFragment(fqName);
+      if (packageDescriptor == null) {
+        return Collections.emptyList();
+      }
+      return packageDescriptor.getDeclarationProvider().getAllDeclaredSubPackages();
+    }
+  }
+;
+  this.scriptDescriptors=storageManager.createMemoizedFunction(new Function1<JetScript,LazyScriptDescriptor>(){
+    @Override public LazyScriptDescriptor invoke(    JetScript script){
+      return new LazyScriptDescriptor(ResolveSession.this,scriptBodyResolver,script,ScriptHeaderResolver.getScriptPriority(script));
+    }
+  }
+);
+}

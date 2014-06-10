@@ -2,9 +2,13 @@
   PsiFile psiFile=location.getPsiElement().getContainingFile();
   if (psiFile instanceof JetFile) {
     JetFile jetFile=(JetFile)psiFile;
-    AnalyzerFacade facade=AnalyzerFacadeProvider.getAnalyzerFacadeForFile(jetFile);
-    ResolveSession resolveSession=facade.createSetup(jetFile.getProject(),Collections.<JetFile>emptyList(),GlobalSearchScope.fileScope(jetFile)).getLazyResolveSession();
-    MainFunctionDetector mainFunctionDetector=new MainFunctionDetector(resolveSession);
+    final ResolveSessionForBodies session=ResolvePackage.getLazyResolveSession(jetFile);
+    MainFunctionDetector mainFunctionDetector=new MainFunctionDetector(new NotNullFunction<JetNamedFunction,FunctionDescriptor>(){
+      @NotNull @Override public FunctionDescriptor fun(      JetNamedFunction function){
+        return (FunctionDescriptor)session.resolveToDescriptor(function);
+      }
+    }
+);
     if (mainFunctionDetector.hasMain(jetFile.getDeclarations())) {
       return jetFile;
     }
