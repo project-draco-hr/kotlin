@@ -1,9 +1,6 @@
 {
   JetSimpleNameExpression operationReference=expression.getOperationReference();
   IElementType operationType=operationReference.getReferencedNameElementType();
-  if (!ImmutableSet.of(ANDAND,OROR,EQ,ELVIS).contains(operationType)) {
-    mark(expression);
-  }
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
   if (operationType == ANDAND) {
@@ -47,11 +44,12 @@
       }
     }
  else {
-      generateBothArguments(expression);
+      generateBothArgumentsAndMark(expression);
     }
   }
  else   if (operationType == ELVIS) {
     generateInstructions(left,NOT_IN_CONDITION);
+    mark(expression);
     Label afterElvis=builder.createUnboundLabel();
     builder.jumpOnTrue(afterElvis,expression,builder.getBoundValue(left));
     if (right != null) {
@@ -62,7 +60,7 @@
   }
  else {
     if (!generateCall(expression,operationReference)) {
-      generateBothArguments(expression);
+      generateBothArgumentsAndMark(expression);
     }
   }
 }
