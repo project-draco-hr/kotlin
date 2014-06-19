@@ -1,0 +1,39 @@
+{
+  super(outerContext.getStorageManager(),outerContext.getNameResolver().getClassId(classProto.getFqName()).getRelativeClassName().shortName());
+  this.classProto=classProto;
+  this.classId=outerContext.getNameResolver().getClassId(classProto.getFqName());
+  List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(classProto.getTypeParameterCount());
+  this.context=outerContext.withTypes(this).childContext(this,classProto.getTypeParameterList(),typeParameters);
+  this.containingDeclaration=outerContext.getStorageManager().createLazyValue(new Function0<DeclarationDescriptor>(){
+    @Override public DeclarationDescriptor invoke(){
+      return computeContainingDeclaration();
+    }
+  }
+);
+  this.typeConstructor=new DeserializedClassTypeConstructor(typeParameters);
+  this.memberScope=new DeserializedClassMemberScope();
+  int flags=classProto.getFlags();
+  this.modality=modality(Flags.MODALITY.get(flags));
+  this.visibility=visibility(Flags.VISIBILITY.get(flags));
+  this.kind=classKind(Flags.CLASS_KIND.get(flags));
+  this.isInner=Flags.INNER.get(flags);
+  this.annotations=context.getStorageManager().createLazyValue(new Function0<Annotations>(){
+    @Override public Annotations invoke(){
+      return computeAnnotations();
+    }
+  }
+);
+  this.primaryConstructor=context.getStorageManager().createNullableLazyValue(new Function0<ConstructorDescriptor>(){
+    @Override public ConstructorDescriptor invoke(){
+      return computePrimaryConstructor();
+    }
+  }
+);
+  this.classObjectDescriptor=context.getStorageManager().createNullableLazyValue(new Function0<ClassDescriptor>(){
+    @Override public ClassDescriptor invoke(){
+      return computeClassObjectDescriptor();
+    }
+  }
+);
+  this.nestedClasses=new NestedClassDescriptors();
+}
