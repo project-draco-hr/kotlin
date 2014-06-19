@@ -12,14 +12,10 @@
  else   if (OperatorConventions.ASSIGNMENT_OPERATIONS.containsKey(operationType)) {
     ResolvedCall<?> resolvedCall=getResolvedCall(operationReference);
     if (resolvedCall != null) {
-      CallableDescriptor descriptor=resolvedCall.getResultingDescriptor();
+      PseudoValue rhsValue=generateCall(operationReference,resolvedCall).getOutputValue();
       Name assignMethodName=OperatorConventions.getNameForOperationSymbol((JetToken)expression.getOperationToken());
-      if (descriptor.getName().equals(assignMethodName)) {
-        generateCall(expression,operationReference,resolvedCall);
-      }
- else {
-        Function0<PseudoValue> rhsDeferredValue=getValueAsFunction(generateCall(null,operationReference,resolvedCall).getOutputValue());
-        visitAssignment(left,rhsDeferredValue,expression);
+      if (!resolvedCall.getResultingDescriptor().getName().equals(assignMethodName)) {
+        visitAssignment(left,getValueAsFunction(rhsValue),expression);
       }
     }
  else {
@@ -38,7 +34,7 @@
     mergeValues(Arrays.asList(left,right),expression);
   }
  else {
-    if (!generateCall(expression,operationReference)) {
+    if (!generateCall(operationReference,true)) {
       generateBothArgumentsAndMark(expression);
     }
   }
