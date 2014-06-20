@@ -1,0 +1,19 @@
+{
+  final Map<JetType,Boolean> filterCache=new HashMap<JetType,Boolean>();
+  return Collections2.filter(extensions,new Predicate<CallableDescriptor>(){
+    @Override public boolean apply(    CallableDescriptor callableDescriptor){
+      ReceiverParameterDescriptor receiverParameter=callableDescriptor.getReceiverParameter();
+      if (receiverParameter == null) {
+        return false;
+      }
+      JetType type=receiverParameter.getType();
+      if (filterCache.containsKey(type)) {
+        return filterCache.get(type);
+      }
+      boolean isExtensionCallable=checkIsExtensionCallable(receiverArgument,callableDescriptor);
+      filterCache.put(type,isExtensionCallable);
+      return isExtensionCallable;
+    }
+  }
+);
+}
