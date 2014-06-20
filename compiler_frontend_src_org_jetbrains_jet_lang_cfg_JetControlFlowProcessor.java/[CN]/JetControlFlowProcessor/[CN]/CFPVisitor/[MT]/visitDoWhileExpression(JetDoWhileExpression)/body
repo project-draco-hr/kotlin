@@ -1,0 +1,19 @@
+{
+  builder.enterLexicalScope(expression);
+  mark(expression);
+  LoopInfo loopInfo=builder.enterLoop(expression,null,null);
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    generateInstructions(body);
+  }
+  builder.bindLabel(loopInfo.getConditionEntryPoint());
+  JetExpression condition=expression.getCondition();
+  if (condition != null) {
+    generateInstructions(condition);
+  }
+  builder.jumpOnTrue(loopInfo.getEntryPoint(),expression,builder.getBoundValue(condition));
+  builder.exitLoop(expression);
+  builder.loadUnit(expression);
+  builder.exitLexicalScope(expression);
+}

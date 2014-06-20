@@ -1,0 +1,24 @@
+{
+  builder.enterLexicalScope(expression);
+  JetExpression loopRange=expression.getLoopRange();
+  if (loopRange != null) {
+    generateInstructions(loopRange);
+  }
+  declareLoopParameter(expression);
+  Label loopExitPoint=builder.createUnboundLabel();
+  Label conditionEntryPoint=builder.createUnboundLabel();
+  builder.bindLabel(conditionEntryPoint);
+  builder.nondeterministicJump(loopExitPoint,expression,null);
+  LoopInfo loopInfo=builder.enterLoop(expression,loopExitPoint,conditionEntryPoint);
+  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  writeLoopParameterAssignment(expression);
+  mark(expression);
+  JetExpression body=expression.getBody();
+  if (body != null) {
+    generateInstructions(body);
+  }
+  builder.nondeterministicJump(loopInfo.getEntryPoint(),expression,null);
+  builder.exitLoop(expression);
+  builder.loadUnit(expression);
+  builder.exitLexicalScope(expression);
+}
