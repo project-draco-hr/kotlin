@@ -3,29 +3,8 @@
   IElementType operationType=operationReference.getReferencedNameElementType();
   JetExpression left=expression.getLeft();
   JetExpression right=expression.getRight();
-  if (operationType == ANDAND) {
-    generateInstructions(left,IN_CONDITION);
-    Label resultLabel=builder.createUnboundLabel();
-    builder.jumpOnFalse(resultLabel,expression,builder.getBoundValue(left));
-    if (right != null) {
-      generateInstructions(right,IN_CONDITION);
-    }
-    builder.bindLabel(resultLabel);
-    if (!context.inCondition()) {
-      predefinedOperation(expression,AND);
-    }
-  }
- else   if (operationType == OROR) {
-    generateInstructions(left,IN_CONDITION);
-    Label resultLabel=builder.createUnboundLabel();
-    builder.jumpOnTrue(resultLabel,expression,builder.getBoundValue(left));
-    if (right != null) {
-      generateInstructions(right,IN_CONDITION);
-    }
-    builder.bindLabel(resultLabel);
-    if (!context.inCondition()) {
-      predefinedOperation(expression,OR);
-    }
+  if (operationType == ANDAND || operationType == OROR) {
+    generateBooleanOperation(expression);
   }
  else   if (operationType == EQ) {
     visitAssignment(left,getDeferredValue(right),expression);
