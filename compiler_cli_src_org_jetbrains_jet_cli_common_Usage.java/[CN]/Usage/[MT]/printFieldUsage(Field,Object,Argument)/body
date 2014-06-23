@@ -1,0 +1,53 @@
+{
+  String prefix=argument.prefix();
+  Class<?> type=field.getType();
+  String description=argument.description();
+  StringBuilder sb=new StringBuilder("  ");
+  sb.append(prefix);
+  if (argument.value().equals("")) {
+    sb.append(field.getName());
+  }
+ else {
+    sb.append(argument.value());
+  }
+  if (!argument.alias().equals("")) {
+    sb.append(" (");
+    sb.append(prefix);
+    sb.append(argument.alias());
+    sb.append(")");
+  }
+  if (type == Boolean.TYPE || type == Boolean.class) {
+    sb.append(" [flag] ");
+    sb.append(description);
+  }
+ else {
+    sb.append(" [");
+    if (type.isArray()) {
+      sb.append(type.getComponentType().getSimpleName());
+      sb.append("[");
+      sb.append(argument.delimiter());
+      sb.append("]");
+    }
+ else {
+      sb.append(type.getSimpleName());
+    }
+    sb.append("] ");
+    sb.append(description);
+    if (defaultValue != null) {
+      sb.append(" (");
+      if (type.isArray()) {
+        int len=Array.getLength(defaultValue);
+        List<Object> list=new ArrayList<Object>(len);
+        for (int i=0; i < len; i++) {
+          list.add(Array.get(defaultValue,i));
+        }
+        sb.append(list);
+      }
+ else {
+        sb.append(defaultValue);
+      }
+      sb.append(")");
+    }
+  }
+  out.println(sb);
+}
