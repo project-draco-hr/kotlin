@@ -1,10 +1,11 @@
 {
-  List<JetFile> files=Lists.newArrayList(JetFilesProvider.getInstance(getProject()).allInScope(GlobalSearchScope.allScope(getProject())));
+  Project project=getProject();
+  List<JetFile> files=new ArrayList<JetFile>(JetAllPackagesIndex.getInstance().get(FqName.ROOT.asString(),project,GlobalSearchScope.allScope(project)));
   final List<Breakpoint> breakpoints=Lists.newArrayList();
   for (  JetFile file : files) {
     breakpoints.addAll(extractBreakpointsInfo(file,file.getText()));
   }
-  GenerationState state=GenerationUtils.compileManyFilesGetGenerationStateForTest(getProject(),files);
+  GenerationState state=GenerationUtils.compileManyFilesGetGenerationStateForTest(project,files);
   Map<String,ReferenceType> referencesByName=getReferenceMap(state.getFactory());
   DebugProcess debugProcess=createDebugProcess(referencesByName);
   final PositionManager positionManager=createPositionManager(debugProcess,files,state);
