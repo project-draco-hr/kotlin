@@ -1,0 +1,29 @@
+{
+  if (type instanceof JavaClassifierType) {
+    JavaClassifierType classifierType=(JavaClassifierType)type;
+    JavaClassifier classifier=classifierType.getClassifier();
+    if (classifier instanceof JavaTypeParameter) {
+      return substitute((JavaTypeParameter)classifier);
+    }
+ else     if (classifier instanceof JavaClass) {
+      JavaClass javaClass=(JavaClass)classifier;
+      Map<JavaTypeParameter,JavaType> substMap=new HashMap<JavaTypeParameter,JavaType>();
+      processClass(javaClass,classifierType.getSubstitutor(),substMap);
+      return javaClass.createImmediateType(new JavaTypeSubstitutorImpl(substMap));
+    }
+    return type;
+  }
+ else   if (type instanceof JavaPrimitiveType) {
+    return type;
+  }
+ else   if (type instanceof JavaArrayType) {
+    JavaType componentType=((JavaArrayType)type).getComponentType();
+    JavaType substitutedComponentType=substitute(componentType);
+    if (substitutedComponentType == componentType)     return type;
+    return substitutedComponentType.createArrayType();
+  }
+ else   if (type instanceof JavaWildcardType) {
+    return substituteWildcardType((JavaWildcardType)type);
+  }
+  return type;
+}
