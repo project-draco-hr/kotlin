@@ -1,13 +1,14 @@
 {
-  FqName fqName=file.getPackageFqName();
+  final FqName fqName=file.getPackageFqName();
   CachedValue<JetTypeMapper> value=myTypeMappers.get(fqName);
   if (value == null) {
     value=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<JetTypeMapper>(){
       @Override public Result<JetTypeMapper> compute(){
-        Collection<JetFile> packageFiles=JetFilesProvider.getInstance(file.getProject()).allPackageFiles(file);
+        Project project=file.getProject();
+        Collection<JetFile> packageFiles=findFilesWithExactPackage(fqName,GlobalSearchScope.allScope(project),project);
         AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResultsForElements(packageFiles);
         analyzeExhaust.throwIfError();
-        GenerationState state=new GenerationState(file.getProject(),ClassBuilderFactories.THROW_EXCEPTION,analyzeExhaust.getModuleDescriptor(),analyzeExhaust.getBindingContext(),new ArrayList<JetFile>(packageFiles));
+        GenerationState state=new GenerationState(project,ClassBuilderFactories.THROW_EXCEPTION,analyzeExhaust.getModuleDescriptor(),analyzeExhaust.getBindingContext(),new ArrayList<JetFile>(packageFiles));
         state.beforeCompile();
         return new Result<JetTypeMapper>(state.getTypeMapper(),PsiModificationTracker.MODIFICATION_COUNT);
       }
