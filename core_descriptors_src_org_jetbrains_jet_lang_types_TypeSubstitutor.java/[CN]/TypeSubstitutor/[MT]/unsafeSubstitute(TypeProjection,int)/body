@@ -1,11 +1,18 @@
 {
   assertRecursionDepth(recursionDepth,originalProjection,substitution);
   JetType type=originalProjection.getType();
+  Variance originalProjectionKind=originalProjection.getProjectionKind();
+  if (type instanceof FlexibleType) {
+    FlexibleType flexibleType=(FlexibleType)type;
+    TypeProjection substitutedLower=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getLowerBound()),recursionDepth + 1);
+    TypeProjection substitutedUpper=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getUpperBound()),recursionDepth + 1);
+    return new TypeProjectionImpl(originalProjectionKind,new DelegatingFlexibleType(substitutedLower.getType(),substitutedUpper.getType()));
+  }
   if (KotlinBuiltIns.getInstance().isNothing(type) || type.isError())   return originalProjection;
   TypeProjection replacement=substitution.get(type.getConstructor());
   if (replacement != null) {
     TypeParameterDescriptor typeParameter=(TypeParameterDescriptor)type.getConstructor().getDeclarationDescriptor();
-switch (conflictType(originalProjection.getProjectionKind(),replacement.getProjectionKind())) {
+switch (conflictType(originalProjectionKind,replacement.getProjectionKind())) {
 case OUT_IN_IN_POSITION:
       throw new SubstitutionException("Out-projection in in-position");
 case IN_IN_OUT_POSITION:
@@ -13,7 +20,7 @@ case IN_IN_OUT_POSITION:
 case NO_CONFLICT:
   boolean resultingIsNullable=type.isNullable() || replacement.getType().isNullable();
 JetType substitutedType=TypeUtils.makeNullableAsSpecified(replacement.getType(),resultingIsNullable);
-Variance resultingProjectionKind=combine(originalProjection.getProjectionKind(),replacement.getProjectionKind());
+Variance resultingProjectionKind=combine(originalProjectionKind,replacement.getProjectionKind());
 return new TypeProjectionImpl(resultingProjectionKind,substitutedType);
 default :
 throw new IllegalStateException();
@@ -22,6 +29,6 @@ throw new IllegalStateException();
  else {
 List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);
 JetType substitutedType=new JetTypeImpl(type.getAnnotations(),type.getConstructor(),type.isNullable(),substitutedArguments,new SubstitutingScope(type.getMemberScope(),this));
-return new TypeProjectionImpl(originalProjection.getProjectionKind(),substitutedType);
+return new TypeProjectionImpl(originalProjectionKind,substitutedType);
 }
 }
