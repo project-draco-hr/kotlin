@@ -1,0 +1,22 @@
+{
+  JetExpression calleeExpression=expression.getCalleeExpression();
+  if (!generateCall(calleeExpression,true)) {
+    List<JetExpression> inputExpressions=new ArrayList<JetExpression>();
+    for (    ValueArgument argument : expression.getValueArguments()) {
+      JetExpression argumentExpression=argument.getArgumentExpression();
+      if (argumentExpression != null) {
+        generateInstructions(argumentExpression);
+        inputExpressions.add(argumentExpression);
+      }
+    }
+    for (    JetExpression functionLiteral : expression.getFunctionLiteralArguments()) {
+      generateInstructions(functionLiteral);
+      inputExpressions.add(functionLiteral);
+    }
+    generateInstructions(calleeExpression);
+    inputExpressions.add(calleeExpression);
+    inputExpressions.add(generateAndGetReceiverIfAny(expression));
+    mark(expression);
+    createNonSyntheticValue(expression,inputExpressions);
+  }
+}

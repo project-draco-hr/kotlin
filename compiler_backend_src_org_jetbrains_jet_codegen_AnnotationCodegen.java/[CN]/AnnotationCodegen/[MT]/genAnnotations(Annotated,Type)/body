@@ -1,0 +1,39 @@
+{
+  if (annotated == null) {
+    return;
+  }
+  if (!(annotated instanceof DeclarationDescriptor)) {
+    return;
+  }
+  PsiElement psiElement;
+  if (annotated instanceof CallableMemberDescriptor && ((CallableMemberDescriptor)annotated).getKind() == DELEGATION) {
+    psiElement=null;
+  }
+ else {
+    psiElement=descriptorToDeclaration(bindingContext,(DeclarationDescriptor)annotated);
+  }
+  JetModifierList modifierList=null;
+  if (annotated instanceof ConstructorDescriptor && psiElement instanceof JetClass) {
+    modifierList=((JetClass)psiElement).getPrimaryConstructorModifierList();
+  }
+ else   if (psiElement instanceof JetModifierListOwner) {
+    modifierList=((JetModifierListOwner)psiElement).getModifierList();
+  }
+  if (modifierList == null) {
+    generateAdditionalAnnotations(annotated,returnType,Collections.<String>emptySet());
+    return;
+  }
+  Set<String> annotationDescriptorsAlreadyPresent=new HashSet<String>();
+  List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
+  for (  JetAnnotationEntry annotationEntry : annotationEntries) {
+    ResolvedCall<?> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,annotationEntry.getCalleeExpression());
+    if (resolvedCall == null)     continue;
+    AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
+    if (annotationDescriptor == null)     continue;
+    String descriptor=genAnnotation(annotationDescriptor);
+    if (descriptor != null) {
+      annotationDescriptorsAlreadyPresent.add(descriptor);
+    }
+  }
+  generateAdditionalAnnotations(annotated,returnType,annotationDescriptorsAlreadyPresent);
+}

@@ -1,0 +1,23 @@
+{
+  JetParameter loopParameter=expression.getLoopParameter();
+  JetMultiDeclaration multiDeclaration=expression.getMultiParameter();
+  JetExpression loopRange=expression.getLoopRange();
+  TypePredicate loopRangeTypePredicate=AllTypes.instance$;
+  ResolvedCall<?> iteratorResolvedCall=trace.get(BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL,loopRange);
+  if (iteratorResolvedCall != null) {
+    ReceiverValue iteratorReceiver=getExplicitReceiverValue(iteratorResolvedCall);
+    if (iteratorReceiver.exists()) {
+      loopRangeTypePredicate=PseudocodePackage.getReceiverTypePredicate(iteratorResolvedCall,iteratorReceiver);
+    }
+  }
+  PseudoValue loopRangeValue=builder.getBoundValue(loopRange);
+  PseudoValue value=builder.magic(loopRange != null ? loopRange : expression,null,Collections.singletonList(loopRangeValue),Collections.singletonMap(loopRangeValue,loopRangeTypePredicate),true).getOutputValue();
+  if (loopParameter != null) {
+    generateInitializer(loopParameter,value);
+  }
+ else   if (multiDeclaration != null) {
+    for (    JetMultiDeclarationEntry entry : multiDeclaration.getEntries()) {
+      generateInitializer(entry,value);
+    }
+  }
+}

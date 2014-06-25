@@ -1,19 +1,20 @@
 {
-  List<Diagnostic> list=Lists.newArrayList(diagnostics);
-  Collections.sort(list,DIAGNOSTIC_COMPARATOR);
-  List<DiagnosticDescriptor> diagnosticDescriptors=Lists.newArrayList();
-  DiagnosticDescriptor currentDiagnosticDescriptor=null;
-  for (  Diagnostic diagnostic : list) {
-    List<TextRange> textRanges=diagnostic.getTextRanges();
+  LinkedListMultimap<TextRange,Diagnostic> diagnosticsGroupedByRanges=LinkedListMultimap.create();
+  for (  Diagnostic diagnostic : diagnostics) {
     if (!diagnostic.isValid())     continue;
-    TextRange textRange=textRanges.get(0);
-    if (currentDiagnosticDescriptor != null && currentDiagnosticDescriptor.equalRange(textRange)) {
-      currentDiagnosticDescriptor.diagnostics.add(diagnostic);
-    }
- else {
-      currentDiagnosticDescriptor=new DiagnosticDescriptor(textRange.getStartOffset(),textRange.getEndOffset(),diagnostic);
-      diagnosticDescriptors.add(currentDiagnosticDescriptor);
+    for (    TextRange textRange : diagnostic.getTextRanges()) {
+      diagnosticsGroupedByRanges.put(textRange,diagnostic);
     }
   }
+  List<DiagnosticDescriptor> diagnosticDescriptors=Lists.newArrayList();
+  for (  TextRange range : diagnosticsGroupedByRanges.keySet()) {
+    diagnosticDescriptors.add(new DiagnosticDescriptor(range.getStartOffset(),range.getEndOffset(),diagnosticsGroupedByRanges.get(range)));
+  }
+  Collections.sort(diagnosticDescriptors,new Comparator<DiagnosticDescriptor>(){
+    @Override public int compare(    DiagnosticDescriptor d1,    DiagnosticDescriptor d2){
+      return (d1.start != d2.start) ? d1.start - d2.start : d2.end - d1.end;
+    }
+  }
+);
   return diagnosticDescriptors;
 }

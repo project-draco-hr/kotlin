@@ -19,19 +19,12 @@
   DataFlowInfo commonDataFlowInfo=null;
   DataFlowInfo elseDataFlowInfo=context.dataFlowInfo;
   for (  JetWhenEntry whenEntry : expression.getEntries()) {
-    DataFlowInfos infosForCondition=getDataFlowInfosForEntryCondition(whenEntry,context,subjectExpression,subjectType,subjectDataFlowValue);
-    DataFlowInfo dataFlowInfoForEntryBody;
-    if (infosForCondition == null) {
-      dataFlowInfoForEntryBody=elseDataFlowInfo;
-    }
- else {
-      dataFlowInfoForEntryBody=infosForCondition.thenInfo.and(elseDataFlowInfo);
-      elseDataFlowInfo=elseDataFlowInfo.and(infosForCondition.elseInfo);
-    }
+    DataFlowInfos infosForCondition=getDataFlowInfosForEntryCondition(whenEntry,context.replaceDataFlowInfo(elseDataFlowInfo),subjectExpression,subjectType,subjectDataFlowValue);
+    elseDataFlowInfo=elseDataFlowInfo.and(infosForCondition.elseInfo);
     JetExpression bodyExpression=whenEntry.getExpression();
     if (bodyExpression != null) {
       WritableScope scopeToExtend=newWritableScopeImpl(context,"Scope extended in when entry");
-      ExpressionTypingContext newContext=contextWithExpectedType.replaceScope(scopeToExtend).replaceDataFlowInfo(dataFlowInfoForEntryBody).replaceContextDependency(INDEPENDENT);
+      ExpressionTypingContext newContext=contextWithExpectedType.replaceScope(scopeToExtend).replaceDataFlowInfo(infosForCondition.thenInfo).replaceContextDependency(INDEPENDENT);
       CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
       JetTypeInfo typeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext,context.trace);
       JetType type=typeInfo.getType();
