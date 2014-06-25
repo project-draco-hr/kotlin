@@ -3,6 +3,16 @@
     mv.visitMaxs(-1,-1);
   }
   super.visitEnd();
-  methodTransformer.transform("fake",methodNode);
-  methodNode.accept(delegate);
+  if (methodNode.instructions.size() > 0) {
+    methodTransformer.transform("fake",methodNode);
+  }
+  methodNode.accept(new EndIgnoringMethodVisitorDecorator(OptimizationUtils.API,delegate));
+  if (methodNode.instructions.size() == 0) {
+    List<LocalVariableNode> localVariables=methodNode.localVariables;
+    int n=localVariables == null ? 0 : localVariables.size();
+    for (int i=0; i < n; ++i) {
+      localVariables.get(i).accept(delegate);
+    }
+  }
+  delegate.visitEnd();
 }
