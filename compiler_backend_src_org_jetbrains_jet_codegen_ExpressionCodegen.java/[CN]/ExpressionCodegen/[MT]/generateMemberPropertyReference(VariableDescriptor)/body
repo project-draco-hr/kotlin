@@ -1,0 +1,15 @@
+{
+  ClassDescriptor containingClass=(ClassDescriptor)descriptor.getContainingDeclaration();
+  Type classAsmType=typeMapper.mapClass(containingClass);
+  if (containingClass instanceof JavaClassDescriptor) {
+    v.aconst(classAsmType);
+    v.invokestatic(REFLECTION_INTERNAL_PACKAGE,"foreignKotlinClass",Type.getMethodDescriptor(K_CLASS_IMPL_TYPE,getType(Class.class)),false);
+  }
+ else {
+    v.getstatic(classAsmType.getInternalName(),JvmAbi.KOTLIN_CLASS_FIELD_NAME,K_CLASS_IMPL_TYPE.getDescriptor());
+  }
+  Method factoryMethod=descriptor.isVar() ? method("mutableMemberProperty",K_MUTABLE_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE) : method("memberProperty",K_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE);
+  v.visitLdcInsn(descriptor.getName().asString());
+  v.invokevirtual(K_CLASS_IMPL_TYPE.getInternalName(),factoryMethod.getName(),factoryMethod.getDescriptor(),false);
+  return StackValue.onStack(factoryMethod.getReturnType());
+}

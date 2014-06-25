@@ -1,0 +1,21 @@
+{
+  PackageFragmentDescriptor containingPackage=(PackageFragmentDescriptor)descriptor.getContainingDeclaration();
+  String packageClassInternalName=PackageClassUtils.getPackageClassInternalName(containingPackage.getFqName());
+  ReceiverParameterDescriptor receiverParameter=descriptor.getReceiverParameter();
+  Method factoryMethod;
+  if (receiverParameter != null) {
+    Type[] parameterTypes=new Type[]{JAVA_STRING_TYPE,K_PACKAGE_IMPL_TYPE,getType(Class.class)};
+    factoryMethod=descriptor.isVar() ? method("mutableExtensionProperty",K_MUTABLE_EXTENSION_PROPERTY_IMPL_TYPE,parameterTypes) : method("extensionProperty",K_EXTENSION_PROPERTY_IMPL_TYPE,parameterTypes);
+  }
+ else {
+    Type[] parameterTypes=new Type[]{JAVA_STRING_TYPE,K_PACKAGE_IMPL_TYPE};
+    factoryMethod=descriptor.isVar() ? method("mutableTopLevelProperty",K_MUTABLE_TOP_LEVEL_PROPERTY_IMPL_TYPE,parameterTypes) : method("topLevelProperty",K_TOP_LEVEL_PROPERTY_IMPL_TYPE,parameterTypes);
+  }
+  v.visitLdcInsn(descriptor.getName().asString());
+  v.getstatic(packageClassInternalName,JvmAbi.KOTLIN_PACKAGE_FIELD_NAME,K_PACKAGE_IMPL_TYPE.getDescriptor());
+  if (receiverParameter != null) {
+    putJavaLangClassInstance(v,typeMapper.mapType(receiverParameter));
+  }
+  v.invokestatic(REFLECTION_INTERNAL_PACKAGE,factoryMethod.getName(),factoryMethod.getDescriptor(),false);
+  return StackValue.onStack(factoryMethod.getReturnType());
+}

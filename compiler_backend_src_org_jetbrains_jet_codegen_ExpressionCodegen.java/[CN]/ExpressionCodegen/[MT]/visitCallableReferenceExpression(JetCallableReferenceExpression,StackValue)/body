@@ -10,45 +10,16 @@
   VariableDescriptor variableDescriptor=bindingContext.get(VARIABLE,expression);
   if (variableDescriptor != null) {
     VariableDescriptor descriptor=(VariableDescriptor)resolvedCall.getResultingDescriptor();
-    ReceiverParameterDescriptor receiverParameter=descriptor.getReceiverParameter();
-    String reflectionFieldOwner;
-    Type ownerType;
-    String reflectionFieldName;
-    Method factory;
     DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
     if (containingDeclaration instanceof PackageFragmentDescriptor) {
-      reflectionFieldOwner=PackageClassUtils.getPackageClassInternalName(((PackageFragmentDescriptor)containingDeclaration).getFqName());
-      ownerType=K_PACKAGE_IMPL_TYPE;
-      reflectionFieldName=JvmAbi.KOTLIN_PACKAGE_FIELD_NAME;
-      if (receiverParameter != null) {
-        factory=descriptor.isVar() ? method("mutableExtensionProperty",K_MUTABLE_EXTENSION_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType,getType(Class.class)) : method("extensionProperty",K_EXTENSION_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType,getType(Class.class));
-      }
- else {
-        factory=descriptor.isVar() ? method("mutableTopLevelProperty",K_MUTABLE_TOP_LEVEL_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType) : method("topLevelProperty",K_TOP_LEVEL_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType);
-      }
+      return generateTopLevelPropertyReference(descriptor);
     }
  else     if (containingDeclaration instanceof ClassDescriptor) {
-      reflectionFieldOwner=typeMapper.mapClass((ClassDescriptor)containingDeclaration).getInternalName();
-      ownerType=K_CLASS_IMPL_TYPE;
-      reflectionFieldName=JvmAbi.KOTLIN_CLASS_FIELD_NAME;
-      factory=descriptor.isVar() ? method("mutableMemberProperty",K_MUTABLE_MEMBER_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType) : method("memberProperty",K_MEMBER_PROPERTY_IMPL_TYPE,JAVA_STRING_TYPE,ownerType);
+      return generateMemberPropertyReference(descriptor);
     }
  else {
       throw new UnsupportedOperationException("Unsupported callable reference container: " + containingDeclaration);
     }
-    v.visitLdcInsn(descriptor.getName().asString());
-    if (containingDeclaration instanceof JavaClassDescriptor) {
-      v.aconst(Type.getObjectType(reflectionFieldOwner));
-      v.invokestatic(REFLECTION_INTERNAL_PACKAGE,"foreignKotlinClass",Type.getMethodDescriptor(K_CLASS_IMPL_TYPE,getType(Class.class)),false);
-    }
- else {
-      v.getstatic(reflectionFieldOwner,reflectionFieldName,ownerType.getDescriptor());
-    }
-    if (receiverParameter != null) {
-      putJavaLangClassInstance(v,typeMapper.mapType(receiverParameter));
-    }
-    v.invokestatic(REFLECTION_INTERNAL_PACKAGE,factory.getName(),factory.getDescriptor(),false);
-    return StackValue.onStack(factory.getReturnType());
   }
   throw new UnsupportedOperationException("Unsupported callable reference expression: " + expression.getText());
 }
