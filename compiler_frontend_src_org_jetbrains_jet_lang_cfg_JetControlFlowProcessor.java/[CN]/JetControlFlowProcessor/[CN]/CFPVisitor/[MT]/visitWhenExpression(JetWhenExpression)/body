@@ -24,18 +24,13 @@
       JetWhenCondition condition=conditions[i];
       condition.accept(conditionVisitor);
       if (i + 1 < conditions.length) {
-        PseudoValue conditionValue=createSyntheticValue(condition,subjectExpression,condition);
-        builder.nondeterministicJump(bodyLabel,expression,conditionValue);
+        builder.nondeterministicJump(bodyLabel,expression,builder.getBoundValue(condition));
       }
     }
     if (!isElse) {
       nextLabel=builder.createUnboundLabel();
-      PseudoValue conditionValue=null;
       JetWhenCondition lastCondition=KotlinPackage.lastOrNull(conditions);
-      if (lastCondition != null) {
-        conditionValue=createSyntheticValue(lastCondition,subjectExpression,lastCondition);
-      }
-      builder.nondeterministicJump(nextLabel,expression,conditionValue);
+      builder.nondeterministicJump(nextLabel,expression,builder.getBoundValue(lastCondition));
     }
     builder.bindLabel(bodyLabel);
     JetExpression whenEntryExpression=whenEntry.getExpression();
