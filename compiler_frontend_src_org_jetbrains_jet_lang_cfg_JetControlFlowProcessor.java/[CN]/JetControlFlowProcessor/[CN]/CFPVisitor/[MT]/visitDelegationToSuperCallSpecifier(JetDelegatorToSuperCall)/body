@@ -1,6 +1,14 @@
 {
-  List<? extends ValueArgument> valueArguments=call.getValueArguments();
-  for (  ValueArgument valueArgument : valueArguments) {
-    generateInstructions(valueArgument.getArgumentExpression());
+  if (!generateCall(call)) {
+    List<JetExpression> arguments=KotlinPackage.map(call.getValueArguments(),new Function1<ValueArgument,JetExpression>(){
+      @Override public JetExpression invoke(      ValueArgument valueArgument){
+        return valueArgument.getArgumentExpression();
+      }
+    }
+);
+    for (    JetExpression argument : arguments) {
+      generateInstructions(argument);
+    }
+    createNonSyntheticValue(call,arguments);
   }
 }
