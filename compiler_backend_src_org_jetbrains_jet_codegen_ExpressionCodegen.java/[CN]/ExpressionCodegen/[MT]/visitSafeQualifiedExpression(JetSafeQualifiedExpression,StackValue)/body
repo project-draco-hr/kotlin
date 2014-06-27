@@ -1,26 +1,17 @@
 {
-  JetExpression receiver=expression.getReceiverExpression();
-  JetExpression selector=expression.getSelectorExpression();
-  Type type=boxType(expressionType(expression));
-  Type receiverType=expressionType(receiver);
-  gen(receiver,receiverType);
-  if (isPrimitive(receiverType)) {
-    StackValue propValue=genQualified(StackValue.onStack(receiverType),selector);
-    propValue.put(type,v);
-    return StackValue.onStack(type);
-  }
   Label ifnull=new Label();
   Label end=new Label();
-  v.dup();
-  v.ifnull(ifnull);
-  StackValue propValue=genQualified(StackValue.onStack(receiverType),selector);
-  propValue.put(type,v);
-  v.goTo(end);
-  v.mark(ifnull);
-  v.pop();
-  if (!type.equals(Type.VOID_TYPE)) {
-    v.aconst(null);
+  Type type=boxType(expressionType(expression));
+  StackValue value=generateSafeQualifiedExpression(expression,ifnull);
+  value.put(type,v);
+  if (!isPrimitive(expressionType(expression.getReceiverExpression()))) {
+    v.goTo(end);
+    v.mark(ifnull);
+    v.pop();
+    if (!type.equals(Type.VOID_TYPE)) {
+      v.aconst(null);
+    }
+    v.mark(end);
   }
-  v.mark(end);
   return StackValue.onStack(type);
 }
