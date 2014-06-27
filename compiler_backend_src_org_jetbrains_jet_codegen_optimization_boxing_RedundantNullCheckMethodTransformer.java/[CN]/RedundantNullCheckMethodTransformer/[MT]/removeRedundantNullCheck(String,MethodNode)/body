@@ -1,0 +1,22 @@
+{
+  InsnList insnList=methodNode.instructions;
+  Frame<BasicValue>[] frames=runAnalyzer(new Analyzer<BasicValue>(new BoxingInterpreter(insnList)),owner,methodNode);
+  List<AbstractInsnNode> insnsToOptimize=new ArrayList<AbstractInsnNode>();
+  for (int i=0; i < insnList.size(); i++) {
+    Frame<BasicValue> frame=frames[i];
+    AbstractInsnNode insn=insnList.get(i);
+    if (insn.getOpcode() == Opcodes.IFNULL && frame.getStack(frame.getStackSize() - 1) instanceof BoxedBasicValue) {
+      insnsToOptimize.add(insn);
+    }
+  }
+  for (  AbstractInsnNode insn : insnsToOptimize) {
+    if (insn.getPrevious() != null && insn.getPrevious().getOpcode() == Opcodes.DUP) {
+      insnList.remove(insn.getPrevious());
+    }
+ else {
+      insnList.insertBefore(insn,new InsnNode(Opcodes.POP));
+    }
+    insnList.remove(insn);
+  }
+  return insnsToOptimize.size() > 0;
+}
