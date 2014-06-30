@@ -4,9 +4,12 @@
     if (file != null) {
       return PackagePartClassUtils.getPackagePartInternalName(file);
     }
-    if (descriptor instanceof DeserializedCallableMemberDescriptor && IncrementalCompilation.ENABLED) {
-      FqName packagePartFqName=PackagePartClassUtils.getPackagePartFqName((DeserializedCallableMemberDescriptor)descriptor);
-      return AsmUtil.internalNameByFqNameWithoutInnerClasses(packagePartFqName);
+    DeclarationDescriptor descriptorToCheck=descriptor instanceof PropertyAccessorDescriptor ? ((PropertyAccessorDescriptor)descriptor).getCorrespondingProperty() : descriptor;
+    if (descriptorToCheck instanceof DeserializedCallableMemberDescriptor) {
+      if (descriptor.getContainingDeclaration() instanceof IncrementalPackageFragmentProvider.IncrementalPackageFragment || isContainedByCompiledPartOfOurModule(descriptor)) {
+        FqName packagePartFqName=PackagePartClassUtils.getPackagePartFqName((DeserializedCallableMemberDescriptor)descriptorToCheck);
+        return AsmUtil.internalNameByFqNameWithoutInnerClasses(packagePartFqName);
+      }
     }
   }
   return PackageClassUtils.getPackageClassInternalName(packageFragment.getFqName());

@@ -1,0 +1,22 @@
+{
+  if (outDirectory == null) {
+    return false;
+  }
+  if (!(descriptor.getContainingDeclaration() instanceof JavaPackageFragmentDescriptor)) {
+    return false;
+  }
+  JavaPackageFragmentDescriptor packageFragment=(JavaPackageFragmentDescriptor)descriptor.getContainingDeclaration();
+  JetScope packageScope=packageFragment.getMemberScope();
+  if (!(packageScope instanceof LazyPackageFragmentScopeForJavaPackage)) {
+    return false;
+  }
+  KotlinJvmBinaryClass binaryClass=((LazyPackageFragmentScopeForJavaPackage)packageScope).getKotlinBinaryClass();
+  if (binaryClass instanceof VirtualFileKotlinClass) {
+    VirtualFile file=((VirtualFileKotlinClass)binaryClass).getFile();
+    if (file.getFileSystem().getProtocol() == StandardFileSystems.FILE_PROTOCOL) {
+      File ioFile=VfsUtilCore.virtualToIoFile(file);
+      return ioFile.getAbsolutePath().startsWith(outDirectory.getAbsolutePath() + File.separator);
+    }
+  }
+  return false;
+}
