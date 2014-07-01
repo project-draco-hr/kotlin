@@ -4,13 +4,14 @@
     @Override public void visitWhenConditionInRange(    @NotNull JetWhenConditionInRange condition){
       JetExpression rangeExpression=condition.getRangeExpression();
       if (rangeExpression == null)       return;
-      if (expectedCondition) {
+      if (subjectExpression == null) {
         context.trace.report(EXPECTED_CONDITION.on(condition));
         DataFlowInfo dataFlowInfo=facade.getTypeInfo(rangeExpression,context).getDataFlowInfo();
         newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
         return;
       }
-      JetTypeInfo typeInfo=facade.checkInExpression(condition,condition.getOperationReference(),subjectExpression,rangeExpression,context);
+      ValueArgument argumentForSubject=CallMaker.makeExternalValueArgument(subjectExpression);
+      JetTypeInfo typeInfo=facade.checkInExpression(condition,condition.getOperationReference(),argumentForSubject,rangeExpression,context);
       DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
       newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
       if (!KotlinBuiltIns.getInstance().getBooleanType().equals(typeInfo.getType())) {
@@ -18,7 +19,7 @@
       }
     }
     @Override public void visitWhenConditionIsPattern(    @NotNull JetWhenConditionIsPattern condition){
-      if (expectedCondition) {
+      if (subjectExpression == null) {
         context.trace.report(EXPECTED_CONDITION.on(condition));
       }
       if (condition.getTypeRef() != null) {
