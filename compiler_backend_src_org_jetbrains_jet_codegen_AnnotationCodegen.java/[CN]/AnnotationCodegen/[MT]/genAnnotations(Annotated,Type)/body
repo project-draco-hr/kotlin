@@ -19,20 +19,28 @@
  else   if (psiElement instanceof JetModifierListOwner) {
     modifierList=((JetModifierListOwner)psiElement).getModifierList();
   }
-  if (modifierList == null) {
-    generateAdditionalAnnotations(annotated,returnType,Collections.<String>emptySet());
-    return;
-  }
   Set<String> annotationDescriptorsAlreadyPresent=new HashSet<String>();
-  List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
-  for (  JetAnnotationEntry annotationEntry : annotationEntries) {
-    ResolvedCall<?> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,annotationEntry.getCalleeExpression());
-    if (resolvedCall == null)     continue;
-    AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
-    if (annotationDescriptor == null)     continue;
-    String descriptor=genAnnotation(annotationDescriptor);
-    if (descriptor != null) {
-      annotationDescriptorsAlreadyPresent.add(descriptor);
+  if (modifierList == null) {
+    if (annotated instanceof DeserializedCallableMemberDescriptor || annotated instanceof PropertyAccessorDescriptor && ((PropertyAccessorDescriptor)annotated).getCorrespondingProperty() instanceof DeserializedPropertyDescriptor) {
+      for (      AnnotationDescriptor annotation : annotated.getAnnotations()) {
+        String descriptor=genAnnotation(annotation);
+        if (descriptor != null) {
+          annotationDescriptorsAlreadyPresent.add(descriptor);
+        }
+      }
+    }
+  }
+ else {
+    List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
+    for (    JetAnnotationEntry annotationEntry : annotationEntries) {
+      ResolvedCall<?> resolvedCall=bindingContext.get(BindingContext.RESOLVED_CALL,annotationEntry.getCalleeExpression());
+      if (resolvedCall == null)       continue;
+      AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
+      if (annotationDescriptor == null)       continue;
+      String descriptor=genAnnotation(annotationDescriptor);
+      if (descriptor != null) {
+        annotationDescriptorsAlreadyPresent.add(descriptor);
+      }
     }
   }
   generateAdditionalAnnotations(annotated,returnType,annotationDescriptorsAlreadyPresent);
