@@ -1,14 +1,24 @@
 {
   Call call=CallMaker.makeCall(reference,receiver,null,reference,ThrowingList.<ValueArgument>instance());
-  TemporaryBindingTrace trace=TemporaryBindingTrace.create(context.trace,"trace to resolve as function",reference);
-  ExpressionTypingContext contextForResolve=context.replaceBindingTrace(trace).replaceExpectedType(NO_EXPECTED_TYPE);
-  ResolvedCall<FunctionDescriptor> function=components.expressionTypingServices.getCallExpressionResolver().getResolvedCallForFunction(call,reference,contextForResolve,CheckValueArgumentsMode.DISABLED,result);
-  if (!result[0])   return null;
-  if (function instanceof VariableAsFunctionResolvedCall) {
-    context.trace.report(UNSUPPORTED.on(reference,"References to variables aren't supported yet"));
-    context.trace.report(UNRESOLVED_REFERENCE.on(reference,reference));
-    return null;
+  TemporaryTraceAndCache funTrace=TemporaryTraceAndCache.create(context,"trace to resolve callable reference as function",reference);
+  ResolvedCall<FunctionDescriptor> function=components.expressionTypingServices.getCallExpressionResolver().getResolvedCallForFunction(call,reference,context.replaceTraceAndCache(funTrace).replaceExpectedType(NO_EXPECTED_TYPE),CheckValueArgumentsMode.DISABLED,result);
+  if (result[0]) {
+    funTrace.commit();
+    if (function instanceof VariableAsFunctionResolvedCall) {
+      context.trace.report(UNSUPPORTED.on(reference,"References to variables aren't supported yet"));
+      return null;
+    }
+    return function != null ? function.getResultingDescriptor() : null;
   }
-  trace.commit();
-  return function != null ? function.getResultingDescriptor() : null;
+  TemporaryTraceAndCache varTrace=TemporaryTraceAndCache.create(context,"trace to resolve callable reference as variable",reference);
+  OverloadResolutionResults<VariableDescriptor> variableResults=components.expressionTypingServices.getCallResolver().resolveSimpleProperty(BasicCallResolutionContext.create(context.replaceTraceAndCache(varTrace).replaceExpectedType(NO_EXPECTED_TYPE),call,CheckValueArgumentsMode.DISABLED));
+  if (!variableResults.isNothing()) {
+    ResolvedCall<VariableDescriptor> variable=OverloadResolutionResultsUtil.getResultingCall(variableResults,context.contextDependency);
+    varTrace.commit();
+    if (variable != null) {
+      result[0]=true;
+      return variable.getResultingDescriptor();
+    }
+  }
+  return null;
 }
