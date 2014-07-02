@@ -1,2 +1,27 @@
 {
+  ClassDescriptor classDecl=constructorDescriptor.getContainingDeclaration();
+  iv.load(0,OBJECT_TYPE);
+  if (classDecl.getKind() == ClassKind.ENUM_CLASS || classDecl.getKind() == ClassKind.ENUM_ENTRY) {
+    iv.load(1,OBJECT_TYPE);
+    iv.load(2,Type.INT_TYPE);
+  }
+  CallableMethod method=typeMapper.mapToCallableMethod(constructorDescriptor);
+  ResolvedCall<?> resolvedCall=BindingContextUtilPackage.getResolvedCallWithAssert(superCall,bindingContext);
+  ConstructorDescriptor superConstructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
+  CalculatedClosure closureForSuper=bindingContext.get(CLOSURE,superConstructor.getContainingDeclaration());
+  if (closureForSuper != null && closureForSuper.getCaptureThis() != null) {
+    iv.load(((ConstructorFrameMap)codegen.myFrameMap).getOuterThisIndex(),OBJECT_TYPE);
+  }
+  CallableMethod superCallable=typeMapper.mapToCallableMethod(superConstructor);
+  if (isAnonymousObject(descriptor) && superCall instanceof JetDelegatorToSuperCall) {
+    int nextVar=findFirstSuperArgument(method);
+    for (    Type t : superCallable.getAsmMethod().getArgumentTypes()) {
+      iv.load(nextVar,t);
+      nextVar+=t.getSize();
+    }
+    superCallable.invokeWithNotNullAssertion(codegen.v,state,resolvedCall);
+  }
+ else {
+    codegen.invokeMethodWithArguments(null,superCallable,resolvedCall,StackValue.none());
+  }
 }

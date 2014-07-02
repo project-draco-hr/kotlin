@@ -1,2 +1,17 @@
 {
+  JetFile containingFile=inlinedExpressions.get(0).getContainingJetFile();
+  List<JetCallExpression> callsToAddArguments=Lists.newArrayList();
+  ResolveSessionForBodies resolveSessionForBodies=ResolvePackage.getLazyResolveSession(containingFile);
+  for (  JetExpression inlinedExpression : inlinedExpressions) {
+    BindingContext context=resolveSessionForBodies.resolveToElement(inlinedExpression);
+    Call call=BindingContextUtilPackage.getCallWithAssert(inlinedExpression,context);
+    JetElement callElement=call.getCallElement();
+    if (callElement instanceof JetCallExpression && hasIncompleteTypeInferenceDiagnostic(call,context) && call.getTypeArgumentList() == null) {
+      callsToAddArguments.add((JetCallExpression)callElement);
+    }
+  }
+  for (  JetCallExpression call : callsToAddArguments) {
+    call.addAfter(JetPsiFactory.createTypeArguments(containingFile.getProject(),"<" + typeArguments + ">"),call.getCalleeExpression());
+    ShortenReferences.instance$.process(call.getTypeArgumentList());
+  }
 }

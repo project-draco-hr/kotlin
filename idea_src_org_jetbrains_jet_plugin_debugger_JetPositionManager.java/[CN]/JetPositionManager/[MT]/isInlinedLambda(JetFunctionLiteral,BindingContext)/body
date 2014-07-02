@@ -10,14 +10,8 @@
   while (parent instanceof ValueArgument || parent instanceof JetValueArgumentList) {
     parent=parent.getParent();
   }
-  if ((parent == null || !(parent instanceof JetBinaryExpression)) && !(parent instanceof JetCallExpression))   return false;
-  ResolvedCall<?> call=null;
-  if (parent instanceof JetCallExpression) {
-    call=context.get(BindingContext.RESOLVED_CALL,((JetCallExpression)parent).getCalleeExpression());
-  }
-  if (parent instanceof JetBinaryExpression) {
-    call=context.get(BindingContext.RESOLVED_CALL,((JetBinaryExpression)parent).getOperationReference());
-  }
+  if (!(parent instanceof JetElement))   return false;
+  ResolvedCall<?> call=BindingContextUtilPackage.getResolvedCall((JetElement)parent,context);
   if (call == null)   return false;
   InlineStrategy inlineType=InlineUtil.getInlineType(call.getResultingDescriptor());
   if (!inlineType.isInline())   return false;
