@@ -1,8 +1,15 @@
 {
-  for (  BoxedBasicValue value : analyze(owner,node)) {
-    for (    AbstractInsnNode insnNode : value.getAssociatedInsns()) {
-      node.instructions.remove(insnNode);
-    }
+  RedundantBoxingInterpreter interpreter=new RedundantBoxingInterpreter(node.instructions);
+  Analyzer<BasicValue> analyzer=new Analyzer<BasicValue>(interpreter);
+  Frame<BasicValue>[] frames=runAnalyzer(analyzer,owner,node);
+  Set<BoxedBasicValue> valuesToOptimize=filterSafeToRemoveValues(interpreter.getCandidatesBoxedValues());
+  if (valuesToOptimize.size() > 0) {
+    findValuesClashingWithVariables(node,frames);
+    valuesToOptimize=filterSafeToRemoveValues(valuesToOptimize);
+    adaptLocalVariableTableForBoxedValues(node,frames);
+    int[] remapping=variablesRemapping(valuesToOptimize,node);
+    applyVariablesRemapping(node,remapping);
+    adaptInstructionsForBoxedValues(node,frames,valuesToOptimize);
   }
   super.transform(owner,node);
 }

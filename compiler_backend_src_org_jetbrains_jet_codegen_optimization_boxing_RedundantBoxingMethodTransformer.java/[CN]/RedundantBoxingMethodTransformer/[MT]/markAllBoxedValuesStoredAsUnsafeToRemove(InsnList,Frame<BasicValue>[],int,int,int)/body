@@ -1,0 +1,18 @@
+{
+  boolean wasChanges=false;
+  for (int i=from; i <= to; i++) {
+    AbstractInsnNode insn=insnList.get(i);
+    if (insn.getOpcode() == Opcodes.ASTORE && ((VarInsnNode)insn).var == varIndex) {
+      if (frames[i] == null) {
+        continue;
+      }
+      BasicValue top=frames[i].getStack(frames[i].getStackSize() - 1);
+      if (!(top instanceof BoxedBasicValue) || !((BoxedBasicValue)top).isSafeToRemove()) {
+        continue;
+      }
+      wasChanges|=true;
+      ((BoxedBasicValue)top).propagateRemovingAsUnsafe();
+    }
+  }
+  return wasChanges;
+}
