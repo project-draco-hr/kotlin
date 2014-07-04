@@ -1,22 +1,11 @@
 {
-  KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
-  ClassDescriptor annotationClass=builtIns.getInlineOptionsClassAnnotation();
-  AnnotationDescriptor optionsAnnotation=getAnnotation(descriptor.getAnnotations(),annotationClass);
-  if (optionsAnnotation != null) {
-    ValueParameterDescriptor parameterDescriptor=annotationClass.getConstructors().iterator().next().getValueParameters().get(0);
-    CompileTimeConstant<?> argument=optionsAnnotation.getValueArgument(parameterDescriptor);
-    if (argument == null) {
-      return false;
-    }
- else {
-      if (argument instanceof ArrayValue) {
-        List<CompileTimeConstant<?>> values=((ArrayValue)argument).getValue();
-        for (        CompileTimeConstant<?> value : values) {
-          if (value instanceof EnumValue) {
-            if (((EnumValue)value).getValue().getName().asString().equals(option.name())) {
-              return true;
-            }
-          }
+  CompileTimeConstant<?> argument=AnnotationUtil.instance$.getAnnotationSingleArgument(descriptor,KotlinBuiltIns.getInstance().getInlineOptionsClassAnnotation());
+  if (argument instanceof ArrayValue) {
+    List<CompileTimeConstant<?>> values=((ArrayValue)argument).getValue();
+    for (    CompileTimeConstant<?> value : values) {
+      if (value instanceof EnumValue) {
+        if (((EnumValue)value).getValue().getName().asString().equals(option.name())) {
+          return true;
         }
       }
     }
