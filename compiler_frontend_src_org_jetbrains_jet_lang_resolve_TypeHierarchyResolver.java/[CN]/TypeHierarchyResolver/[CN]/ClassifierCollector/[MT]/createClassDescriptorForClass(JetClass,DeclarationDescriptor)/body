@@ -1,11 +1,13 @@
 {
   ClassKind kind=getClassKind(klass);
   boolean isInner=kind == ClassKind.CLASS && klass.isInner();
-  MutableClassDescriptor mutableClassDescriptor=new MutableClassDescriptor(containingDeclaration,outerScope,kind,isInner,JetPsiUtil.safeName(klass.getName()));
-  c.getDeclaredClasses().put(klass,mutableClassDescriptor);
-  trace.record(FQNAME_TO_CLASS_DESCRIPTOR,JetNamedDeclarationUtil.getUnsafeFQName(klass),mutableClassDescriptor);
-  createClassObjectForEnumClass(mutableClassDescriptor);
-  JetScope classScope=mutableClassDescriptor.getScopeForMemberDeclarationResolution();
-  prepareForDeferredCall(classScope,mutableClassDescriptor,klass);
-  return mutableClassDescriptor;
+  MutableClassDescriptor descriptor=new MutableClassDescriptor(containingDeclaration,outerScope,kind,isInner,JetPsiUtil.safeName(klass.getName()));
+  c.getDeclaredClasses().put(klass,descriptor);
+  trace.record(FQNAME_TO_CLASS_DESCRIPTOR,JetNamedDeclarationUtil.getUnsafeFQName(klass),descriptor);
+  if (descriptor.getKind() == ClassKind.ENUM_CLASS) {
+    ClassDescriptor classObject=new EnumClassObjectDescriptor(LockBasedStorageManager.NO_LOCKS,descriptor);
+    descriptor.getBuilder().setClassObjectDescriptor(classObject);
+  }
+  prepareForDeferredCall(descriptor.getScopeForMemberDeclarationResolution(),descriptor,klass);
+  return descriptor;
 }
