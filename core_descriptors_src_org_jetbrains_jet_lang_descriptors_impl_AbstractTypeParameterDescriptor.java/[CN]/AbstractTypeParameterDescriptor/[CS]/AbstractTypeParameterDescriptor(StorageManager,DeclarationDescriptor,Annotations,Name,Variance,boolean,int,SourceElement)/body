@@ -1,0 +1,35 @@
+{
+  super(containingDeclaration,annotations,name,source);
+  this.variance=variance;
+  this.reified=isReified;
+  this.index=index;
+  this.typeConstructor=storageManager.createLazyValue(new Function0<TypeConstructor>(){
+    @Override public TypeConstructor invoke(){
+      return createTypeConstructor();
+    }
+  }
+);
+  this.defaultType=storageManager.createLazyValue(new Function0<JetType>(){
+    @Override public JetType invoke(){
+      return new JetTypeImpl(Annotations.EMPTY,getTypeConstructor(),false,Collections.<TypeProjection>emptyList(),new LazyScopeAdapter(storageManager.createLazyValue(new Function0<JetScope>(){
+        @Override public JetScope invoke(){
+          return getUpperBoundsAsType().getMemberScope();
+        }
+      }
+)));
+    }
+  }
+);
+  this.upperBounds=storageManager.createLazyValue(new Function0<Set<JetType>>(){
+    @Override public Set<JetType> invoke(){
+      return resolveUpperBounds();
+    }
+  }
+);
+  this.upperBoundsAsType=storageManager.createLazyValue(new Function0<JetType>(){
+    @Override public JetType invoke(){
+      return computeUpperBoundsAsType();
+    }
+  }
+);
+}
