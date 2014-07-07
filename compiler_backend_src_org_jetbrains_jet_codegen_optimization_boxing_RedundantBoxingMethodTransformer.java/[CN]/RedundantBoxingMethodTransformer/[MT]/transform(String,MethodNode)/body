@@ -1,15 +1,14 @@
 {
   RedundantBoxingInterpreter interpreter=new RedundantBoxingInterpreter(node.instructions);
   Analyzer<BasicValue> analyzer=new Analyzer<BasicValue>(interpreter);
-  Frame<BasicValue>[] frames=runAnalyzer(analyzer,owner,node);
+  Frame<BasicValue>[] frames=runAnalyzer(analyzer,internalClassName,node);
   Set<BoxedBasicValue> valuesToOptimize=filterSafeToRemoveValues(interpreter.getCandidatesBoxedValues());
-  if (valuesToOptimize.size() > 0) {
+  if (!valuesToOptimize.isEmpty()) {
     findValuesClashingWithVariables(node,frames);
     valuesToOptimize=filterSafeToRemoveValues(valuesToOptimize);
     adaptLocalVariableTableForBoxedValues(node,frames);
-    int[] remapping=buildVariablesRemapping(valuesToOptimize,node);
-    applyVariablesRemapping(node,remapping);
+    applyVariablesRemapping(node,buildVariablesRemapping(valuesToOptimize,node));
     adaptInstructionsForBoxedValues(node,frames,valuesToOptimize);
   }
-  super.transform(owner,node);
+  super.transform(internalClassName,node);
 }
