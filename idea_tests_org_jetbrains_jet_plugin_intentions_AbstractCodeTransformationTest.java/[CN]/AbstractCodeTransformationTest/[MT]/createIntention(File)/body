@@ -1,0 +1,19 @@
+{
+  List<File> candidateFiles=Lists.newArrayList();
+  File current=testDataFile.getParentFile();
+  while (current != null) {
+    File candidate=new File(current,".intention");
+    if (candidate.exists()) {
+      candidateFiles.add(candidate);
+    }
+    current=current.getParentFile();
+  }
+  if (candidateFiles.isEmpty()) {
+    throw new AssertionError(".intention file is not found for " + testDataFile + "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class.");
+  }
+  if (candidateFiles.size() > 1) {
+    throw new AssertionError("Several .intention files are available for " + testDataFile + "\nPlease remove some of them\n"+ candidateFiles);
+  }
+  String className=FileUtil.loadFile(candidateFiles.get(0)).trim();
+  return (IntentionAction)Class.forName(className).newInstance();
+}

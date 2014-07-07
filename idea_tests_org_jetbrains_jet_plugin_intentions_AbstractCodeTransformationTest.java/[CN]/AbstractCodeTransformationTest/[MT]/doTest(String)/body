@@ -1,0 +1,20 @@
+{
+  IntentionAction intentionAction=createIntention(new File(path));
+  configureByFile(path);
+  String fileText=FileUtil.loadFile(new File(path),true);
+  String minJavaVersion=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// MIN_JAVA_VERSION: ");
+  if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion))   return;
+  boolean isWithRuntime=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// WITH_RUNTIME") != null;
+  try {
+    if (isWithRuntime) {
+      ConfigLibraryUtil.configureKotlinRuntime(getModule(),getFullJavaJDK());
+    }
+    DirectiveBasedActionUtils.checkForUnexpectedErrors((JetFile)getFile());
+    doTestFor(path,intentionAction,fileText);
+  }
+  finally {
+    if (isWithRuntime) {
+      ConfigLibraryUtil.unConfigureKotlinRuntime(getModule(),getProjectJDK());
+    }
+  }
+}
