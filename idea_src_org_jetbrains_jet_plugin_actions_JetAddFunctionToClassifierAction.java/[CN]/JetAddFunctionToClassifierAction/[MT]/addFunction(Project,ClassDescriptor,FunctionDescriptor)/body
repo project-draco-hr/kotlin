@@ -1,0 +1,33 @@
+{
+  final String signatureString=CodeInsightUtils.createFunctionSignatureStringFromDescriptor(functionDescriptor,false);
+  PsiDocumentManager.getInstance(project).commitAllDocuments();
+  final JetClass classifierDeclaration=(JetClass)DescriptorToDeclarationUtil.getDeclaration(project,typeDescriptor);
+  CommandProcessor.getInstance().executeCommand(project,new Runnable(){
+    @Override public void run(){
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          JetClassBody body=classifierDeclaration.getBody();
+          if (body == null) {
+            PsiElement whitespaceBefore=classifierDeclaration.add(JetPsiFactory.createWhiteSpace(project));
+            body=(JetClassBody)classifierDeclaration.addAfter(JetPsiFactory.createEmptyClassBody(project),whitespaceBefore);
+            classifierDeclaration.addAfter(JetPsiFactory.createNewLine(project),body);
+          }
+          String functionBody="";
+          if (typeDescriptor.getKind() != ClassKind.TRAIT && functionDescriptor.getModality() != Modality.ABSTRACT) {
+            functionBody="{}";
+            JetType returnType=functionDescriptor.getReturnType();
+            if (returnType == null || !KotlinBuiltIns.getInstance().isUnit(returnType)) {
+              functionBody="{ throw UnsupportedOperationException() }";
+            }
+          }
+          JetNamedFunction functionElement=JetPsiFactory.createFunction(project,signatureString + functionBody);
+          PsiElement anchor=body.getRBrace();
+          JetNamedFunction insertedFunctionElement=(JetNamedFunction)body.addBefore(functionElement,anchor);
+          ShortenReferences.instance$.process(insertedFunctionElement);
+        }
+      }
+);
+    }
+  }
+,JetBundle.message("add.function.to.type.action"),null);
+}
