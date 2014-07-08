@@ -1,15 +1,30 @@
 {
-  InsnList insnList=node.instructions;
   boolean needToRepeat=false;
   for (  LocalVariableNode localVariableNode : node.localVariables) {
     if (Type.getType(localVariableNode.desc).getSort() != Type.OBJECT) {
       continue;
     }
-    int index=localVariableNode.index;
-    int from=insnList.indexOf(localVariableNode.start) + 1;
-    int to=insnList.indexOf(localVariableNode.end) - 1;
-    if (isThereUnsafeStoreInstruction(insnList,frames,from,to,index)) {
-      needToRepeat|=markAllBoxedValuesStoredAsUnsafeToRemove(insnList,frames,values,from,to,index);
+    List<BasicValue> usedValues=getValuesStoredOrLoadedToVariable(localVariableNode,node,frames);
+    Collection<BasicValue> boxed=Collections2.filter(usedValues,new Predicate<BasicValue>(){
+      @Override public boolean apply(      BasicValue input){
+        return input instanceof BoxedBasicValue;
+      }
+    }
+);
+    if (boxed.isEmpty())     continue;
+    final BoxedBasicValue firstBoxed=(BoxedBasicValue)boxed.iterator().next();
+    if (!Collections2.filter(usedValues,new Predicate<BasicValue>(){
+      @Override public boolean apply(      BasicValue input){
+        return input == null || !(input instanceof BoxedBasicValue) || !((BoxedBasicValue)input).isSafeToRemove() || !((BoxedBasicValue)input).getPrimitiveType().equals(firstBoxed.getPrimitiveType());
+      }
+    }
+).isEmpty()) {
+      for (      BasicValue value : usedValues) {
+        if (value instanceof BoxedBasicValue && ((BoxedBasicValue)value).isSafeToRemove()) {
+          values.remove((BoxedBasicValue)value);
+          needToRepeat=true;
+        }
+      }
     }
   }
   return needToRepeat;
