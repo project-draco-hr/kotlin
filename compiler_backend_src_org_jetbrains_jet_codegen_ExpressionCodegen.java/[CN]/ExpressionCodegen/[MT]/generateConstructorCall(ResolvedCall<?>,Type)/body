@@ -1,0 +1,16 @@
+{
+  v.anew(type);
+  v.dup();
+  ConstructorDescriptor constructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
+  ReceiverParameterDescriptor expectedThisObject=constructor.getExpectedThisObject();
+  if (expectedThisObject != null) {
+    Type receiverType=typeMapper.mapType(expectedThisObject.getType());
+    generateReceiverValue(resolvedCall.getThisObject(),receiverType);
+  }
+  MutableClosure closure=bindingContext.get(CLOSURE,constructor.getContainingDeclaration());
+  pushClosureOnStack(closure,expectedThisObject != null,defaultCallGenerator);
+  ConstructorDescriptor originalOfSamAdapter=(ConstructorDescriptor)SamCodegenUtil.getOriginalIfSamAdapter(constructor);
+  CallableMethod method=typeMapper.mapToCallableMethod(originalOfSamAdapter == null ? constructor : originalOfSamAdapter);
+  invokeMethodWithArguments(null,method,resolvedCall,StackValue.none());
+  return StackValue.onStack(type);
+}
