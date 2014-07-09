@@ -1,0 +1,18 @@
+{
+  BasicValue value=super.naryOperation(insn,values);
+  if (isBoxing(insn)) {
+    int index=insnList.indexOf(insn);
+    if (!boxingPlaces.containsKey(index)) {
+      BoxedBasicValue boxedBasicValue=new BoxedBasicValue(value.getType(),values.get(0).getType(),insn);
+      candidatesBoxedValues.add(boxedBasicValue);
+      boxingPlaces.put(index,boxedBasicValue);
+    }
+    return boxingPlaces.get(index);
+  }
+  if (isUnboxing(insn) && values.get(0) instanceof BoxedBasicValue && value.getType().equals(((BoxedBasicValue)values.get(0)).getBoxedType())) {
+    BoxedBasicValue boxedBasicValue=(BoxedBasicValue)values.get(0);
+    boxedBasicValue.addInsn(insn);
+    boxedBasicValue.setWasUnboxed(true);
+  }
+  return value;
+}
