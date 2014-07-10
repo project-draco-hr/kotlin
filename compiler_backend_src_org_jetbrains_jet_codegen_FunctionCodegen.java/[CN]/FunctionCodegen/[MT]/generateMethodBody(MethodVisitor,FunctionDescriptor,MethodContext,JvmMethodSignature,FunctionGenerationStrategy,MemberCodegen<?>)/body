@@ -7,7 +7,15 @@
     generateStaticDelegateMethodBody(mv,signature.getAsmMethod(),(PackageFacadeContext)context.getParentContext());
   }
  else {
-    FrameMap frameMap=strategy.getFrameMap(typeMapper,context);
+    FrameMap frameMap=new FrameMap();
+    if (context.getContextKind() == OwnerKind.IMPLEMENTATION) {
+      frameMap.enterTemp(OBJECT_TYPE);
+    }
+    for (    JvmMethodParameterSignature parameter : signature.getValueParameters()) {
+      if (parameter.getKind() != JvmMethodParameterKind.VALUE) {
+        frameMap.enterTemp(parameter.getAsmType());
+      }
+    }
     for (    ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
       frameMap.enter(parameter,typeMapper.mapType(parameter));
     }
@@ -17,7 +25,7 @@
     if (!JetTypeMapper.isAccessor(functionDescriptor)) {
       genNotNullAssertionsForParameters(new InstructionAdapter(mv),parentCodegen.state,functionDescriptor,frameMap);
     }
-    strategy.generateBody(mv,signature,context,parentCodegen);
+    strategy.generateBody(mv,frameMap,signature,context,parentCodegen);
   }
   Label methodEnd=new Label();
   mv.visitLabel(methodEnd);
