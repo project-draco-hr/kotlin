@@ -4,9 +4,13 @@
   String[] classpath=(this.compileClasspath != null ? this.compileClasspath.list() : null);
   String[] externalAnnotationsPath=(this.externalAnnotations != null) ? this.externalAnnotations.list() : null;
   if (!CompilerArgumentsUtil.checkOption(inline)) {
-    throw new CompileEnvironmentException(CompilerArgumentsUtil.getWrongInlineOptionErrorMessage(inline));
+    throw new CompileEnvironmentException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("inline",inline));
+  }
+  if (!CompilerArgumentsUtil.checkOption(optimize)) {
+    throw new CompileEnvironmentException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("optimize",optimize));
   }
   boolean enableInline=CompilerArgumentsUtil.optionToBooleanFlag(inline,InlineCodegenUtil.DEFAULT_INLINE_FLAG);
+  boolean enableOptimization=CompilerArgumentsUtil.optionToBooleanFlag(optimize,OptimizationUtils.DEFAULT_OPTIMIZATION_FLAG);
   if (this.src != null) {
     if ((this.output == null) && (this.jar == null)) {
       throw new CompileEnvironmentException("\"output\" or \"jar\" should be specified");
@@ -15,10 +19,10 @@
     String destination=getPath(this.output != null ? this.output : this.jar);
     log(String.format("Compiling [%s] => [%s]",Arrays.toString(source),destination));
     if (this.output != null) {
-      compiler.sourcesToDir(source,destination,stdlibPath,classpath,externalAnnotationsPath,enableInline);
+      compiler.sourcesToDir(source,destination,stdlibPath,classpath,externalAnnotationsPath,enableInline,enableOptimization);
     }
  else {
-      compiler.sourcesToJar(source,destination,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline);
+      compiler.sourcesToJar(source,destination,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline,enableOptimization);
     }
   }
  else   if (this.module != null) {
@@ -28,7 +32,7 @@
     String modulePath=getPath(this.module);
     String jarPath=(this.jar != null ? getPath(this.jar) : null);
     log(jarPath != null ? String.format("Compiling [%s] => [%s]",modulePath,jarPath) : String.format("Compiling [%s]",modulePath));
-    compiler.moduleToJar(modulePath,jarPath,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline);
+    compiler.moduleToJar(modulePath,jarPath,this.includeRuntime,stdlibPath,classpath,externalAnnotationsPath,enableInline,enableOptimization);
   }
  else {
     throw new CompileEnvironmentException("\"src\" or \"module\" should be specified");
