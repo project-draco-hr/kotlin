@@ -2,11 +2,9 @@
   if (!super.contains(file)) {
     return false;
   }
-  if (includeLibraries && JavaClassFileType.INSTANCE == file.getFileType()) {
-    return index.isInLibraryClasses(file);
+  if (index.isInSourceContent(file)) {
+    return !JetModuleTypeManager.getInstance().isKtFileInGradleProjectInWrongFolder(file,project);
   }
-  if (JetModuleTypeManager.getInstance().isKtFileInGradleProjectInWrongFolder(file,getProject())) {
-    return false;
-  }
-  return file.getFileType().equals(JetFileType.INSTANCE) && (index.isInSourceContent(file) || includeLibraries && index.isInLibrarySource(file));
+  if (!includeLibraries)   return false;
+  return index.isInLibraryClasses(file) || index.isInLibrarySource(file);
 }
