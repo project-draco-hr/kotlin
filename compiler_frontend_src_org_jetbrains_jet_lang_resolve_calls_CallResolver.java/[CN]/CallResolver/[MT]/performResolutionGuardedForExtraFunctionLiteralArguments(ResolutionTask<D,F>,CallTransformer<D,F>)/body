@@ -3,7 +3,10 @@
   ImmutableSet<OverloadResolutionResults.Code> someFailed=ImmutableSet.of(MANY_FAILED_CANDIDATES,SINGLE_CANDIDATE_ARGUMENT_MISMATCH);
   if (someFailed.contains(results.getResultCode()) && !task.call.getFunctionLiteralArguments().isEmpty() && task.contextDependency == ContextDependency.INDEPENDENT) {
     DelegatingCall callWithoutFLArgs=new DelegatingCall(task.call){
-      @NotNull @Override public List<JetExpression> getFunctionLiteralArguments(){
+      @NotNull @Override public List<? extends ValueArgument> getValueArguments(){
+        return CallUtilPackage.getValueArgumentsInParentheses(task.call);
+      }
+      @NotNull @Override public List<JetFunctionLiteralArgument> getFunctionLiteralArguments(){
         return Collections.emptyList();
       }
     }

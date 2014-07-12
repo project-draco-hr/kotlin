@@ -1,9 +1,10 @@
 {
   D candidate=candidateCall.getCandidateDescriptor();
   List<ValueParameterDescriptor> valueParameters=candidate.getValueParameters();
-  List<JetExpression> functionLiteralArguments=call.getFunctionLiteralArguments();
+  List<JetFunctionLiteralArgument> functionLiteralArguments=call.getFunctionLiteralArguments();
   if (!functionLiteralArguments.isEmpty()) {
-    JetExpression possiblyLabeledFunctionLiteral=functionLiteralArguments.get(0);
+    JetFunctionLiteralArgument functionLiteralArgument=functionLiteralArguments.get(0);
+    JetExpression possiblyLabeledFunctionLiteral=functionLiteralArgument.getArgumentExpression();
     if (valueParameters.isEmpty()) {
       report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
       setStatus(ERROR);
@@ -20,12 +21,12 @@
           setStatus(WEAK_ERROR);
         }
  else {
-          putVararg(valueParameterDescriptor,CallMaker.makeValueArgument(possiblyLabeledFunctionLiteral));
+          putVararg(valueParameterDescriptor,functionLiteralArgument);
         }
       }
     }
     for (int i=1; i < functionLiteralArguments.size(); i++) {
-      JetExpression argument=functionLiteralArguments.get(i);
+      JetExpression argument=functionLiteralArguments.get(i).getArgumentExpression();
       report(MANY_FUNCTION_LITERAL_ARGUMENTS.on(argument));
       setStatus(WEAK_ERROR);
     }

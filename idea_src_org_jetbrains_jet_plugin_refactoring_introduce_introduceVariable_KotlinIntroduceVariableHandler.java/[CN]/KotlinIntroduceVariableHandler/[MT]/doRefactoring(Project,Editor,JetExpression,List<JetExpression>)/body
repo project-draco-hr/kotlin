@@ -8,7 +8,6 @@
   }
   final JetExpression expression=_expression;
   boolean noTypeInference=false;
-  boolean needParentheses=false;
   if (expression.getParent() instanceof JetQualifiedExpression) {
     JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)expression.getParent();
     if (qualifiedExpression.getReceiverExpression() != expression) {
@@ -20,15 +19,6 @@
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
     return;
   }
- else   if (expression.getParent() instanceof JetCallElement) {
-    if (expression instanceof JetFunctionLiteralExpression) {
-      needParentheses=true;
-    }
- else {
-      showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
-      return;
-    }
-  }
  else   if (expression.getParent() instanceof JetOperationExpression) {
     JetOperationExpression operationExpression=(JetOperationExpression)expression.getParent();
     if (operationExpression.getOperationReference() == expression) {
@@ -37,7 +27,7 @@
     }
   }
   ResolveSessionForBodies resolveSession=ResolvePackage.getLazyResolveSession(expression);
-  BindingContext bindingContext=resolveSession.resolveToElement(expression);
+  final BindingContext bindingContext=resolveSession.resolveToElement(expression);
   final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
   JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
   if (scope != null) {
@@ -78,7 +68,6 @@
     allOccurrences=occurrencesToReplace;
   }
   final boolean finalNoTypeInference=noTypeInference;
-  final boolean finalNeedParentheses=needParentheses;
   Pass<OccurrencesChooser.ReplaceChoice> callback=new Pass<OccurrencesChooser.ReplaceChoice>(){
     @Override public void pass(    OccurrencesChooser.ReplaceChoice replaceChoice){
       boolean replaceOccurrence=container != expression.getParent();
@@ -99,7 +88,7 @@
       final Ref<JetProperty> propertyRef=new Ref<JetProperty>();
       final ArrayList<JetExpression> references=new ArrayList<JetExpression>();
       final Ref<JetExpression> reference=new Ref<JetExpression>();
-      final Runnable introduceRunnable=introduceVariable(expression,suggestedNames,allReplaces,commonContainer,commonParent,replaceOccurrence,propertyRef,references,reference,finalNoTypeInference,finalNeedParentheses,expressionType);
+      final Runnable introduceRunnable=introduceVariable(expression,suggestedNames,allReplaces,commonContainer,commonParent,replaceOccurrence,propertyRef,references,reference,finalNoTypeInference,expressionType,bindingContext);
       final boolean finalReplaceOccurrence=replaceOccurrence;
       CommandProcessor.getInstance().executeCommand(project,new Runnable(){
         @Override public void run(){
