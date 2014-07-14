@@ -5,7 +5,8 @@
   Project project=container.getProject();
   List<PsiElement> resultStatements=new ArrayList<PsiElement>();
   List<JetProperty> propertiesDeclarations=new ArrayList<JetProperty>();
-  PsiElement dummyFirstStatement=container.addBefore(createExpression(project,"dummyStatement "),statements[0]);
+  JetPsiFactory psiFactory=JetPsiFactory(project);
+  PsiElement dummyFirstStatement=container.addBefore(psiFactory.createExpression("dummyStatement "),statements[0]);
   try {
     SearchScope scope=new LocalSearchScope(container);
     int lastStatementOffset=statements[statements.length - 1].getTextRange().getEndOffset();
@@ -16,13 +17,13 @@
           JetProperty declaration=createVariableDeclaration(property,generateDefaultInitializers);
           declaration=(JetProperty)container.addBefore(declaration,dummyFirstStatement);
           propertiesDeclarations.add(declaration);
-          container.addAfter(createNewLine(project),declaration);
+          container.addAfter(psiFactory.createNewLine(),declaration);
           JetBinaryExpression assignment=createVariableAssignment(property);
           resultStatements.add(property.replace(assignment));
         }
  else {
           PsiElement newStatement=container.addBefore(statement,dummyFirstStatement);
-          container.addAfter(createNewLine(project),newStatement);
+          container.addAfter(psiFactory.createNewLine(),newStatement);
           container.deleteChildRange(statement,statement);
         }
       }

@@ -1,11 +1,14 @@
 {
   JetParameterList parameterList;
+  JetPsiFactory psiFactory=JetPsiFactory(element.getProject());
   if (element instanceof JetFunction) {
     JetFunction function=(JetFunction)element;
     parameterList=function.getValueParameterList();
     if (changeInfo.isNameChanged()) {
       PsiElement identifier=function.getNameIdentifier();
-      if (identifier != null)       identifier.replace(JetPsiFactory.createIdentifier(element.getProject(),changeInfo.getNewName()));
+      if (identifier != null) {
+        identifier.replace(psiFactory.createIdentifier(changeInfo.getNewName()));
+      }
     }
     if (changeInfo.isReturnTypeChanged()) {
       SpecifyTypeExplicitlyAction.removeTypeAnnotation(function);
@@ -16,7 +19,7 @@
  else   parameterList=((JetClass)element).getPrimaryConstructorParameterList();
   if (changeInfo.isParameterSetOrOrderChanged()) {
     String parametersText=changeInfo.getNewParametersSignature(element,isInherited,0);
-    JetParameterList newParameterList=JetPsiFactory.createParameterList(getProject(),parametersText);
+    JetParameterList newParameterList=psiFactory.createParameterList(parametersText);
     if (parameterList != null)     parameterList=(JetParameterList)parameterList.replace(newParameterList);
  else     if (element instanceof JetClass) {
       PsiElement anchor=((JetClass)element).getTypeParameterList();

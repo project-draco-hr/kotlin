@@ -2,23 +2,28 @@
   ASTNode valOrVarAstNode=parameter.getValOrVarNode();
   PsiElement valOrVarNode=valOrVarAstNode != null ? valOrVarAstNode.getPsi() : null;
   JetValVar valOrVar=parameterInfo.getValOrVar();
+  JetPsiFactory psiFactory=JetPsiFactory(getProject());
   if (valOrVarNode != null) {
-    if (valOrVar == JetValVar.None)     valOrVarNode.delete();
- else     valOrVarNode.replace(JetPsiFactory.createValOrVarNode(getProject(),valOrVar.toString()).getPsi());
+    if (valOrVar == JetValVar.None) {
+      valOrVarNode.delete();
+    }
+ else {
+      valOrVarNode.replace(psiFactory.createValOrVarNode(valOrVar.toString()).getPsi());
+    }
   }
  else   if (valOrVar != JetValVar.None) {
     PsiElement firstChild=parameter.getFirstChild();
-    parameter.addBefore(JetPsiFactory.createValOrVarNode(getProject(),valOrVar.toString()).getPsi(),firstChild);
-    parameter.addBefore(JetPsiFactory.createWhiteSpace(getProject()),firstChild);
+    parameter.addBefore(psiFactory.createValOrVarNode(valOrVar.toString()).getPsi(),firstChild);
+    parameter.addBefore(psiFactory.createWhiteSpace(),firstChild);
   }
   if (parameterInfo.isTypeChanged()) {
-    JetTypeReference newType=JetPsiFactory.createType(getProject(),parameterInfo.getTypeText());
+    JetTypeReference newType=psiFactory.createType(parameterInfo.getTypeText());
     JetTypeReference typeReference=parameter.getTypeReference();
     if (typeReference != null)     typeReference.replace(newType);
   }
   PsiElement identifier=parameter.getNameIdentifier();
   if (identifier != null) {
     String newName=parameterInfo.getInheritedName(isInherited,element,changeInfo.getFunctionDescriptor());
-    identifier.replace(JetPsiFactory.createIdentifier(parameter.getProject(),newName));
+    identifier.replace(psiFactory.createIdentifier(newName));
   }
 }

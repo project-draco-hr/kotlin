@@ -6,11 +6,12 @@
     @Override public void run(){
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         @Override public void run(){
+          JetPsiFactory psiFactory=PsiPackage.JetPsiFactory(project);
           JetClassBody body=classifierDeclaration.getBody();
           if (body == null) {
-            PsiElement whitespaceBefore=classifierDeclaration.add(JetPsiFactory.createWhiteSpace(project));
-            body=(JetClassBody)classifierDeclaration.addAfter(JetPsiFactory.createEmptyClassBody(project),whitespaceBefore);
-            classifierDeclaration.addAfter(JetPsiFactory.createNewLine(project),body);
+            PsiElement whitespaceBefore=classifierDeclaration.add(psiFactory.createWhiteSpace());
+            body=(JetClassBody)classifierDeclaration.addAfter(psiFactory.createEmptyClassBody(),whitespaceBefore);
+            classifierDeclaration.addAfter(psiFactory.createNewLine(),body);
           }
           String functionBody="";
           if (typeDescriptor.getKind() != ClassKind.TRAIT && functionDescriptor.getModality() != Modality.ABSTRACT) {
@@ -20,7 +21,7 @@
               functionBody="{ throw UnsupportedOperationException() }";
             }
           }
-          JetNamedFunction functionElement=JetPsiFactory.createFunction(project,signatureString + functionBody);
+          JetNamedFunction functionElement=psiFactory.createFunction(signatureString + functionBody);
           PsiElement anchor=body.getRBrace();
           JetNamedFunction insertedFunctionElement=(JetNamedFunction)body.addBefore(functionElement,anchor);
           ShortenReferences.instance$.process(insertedFunctionElement);

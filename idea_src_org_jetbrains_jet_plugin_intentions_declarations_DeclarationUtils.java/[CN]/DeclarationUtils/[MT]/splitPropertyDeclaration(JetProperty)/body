@@ -4,12 +4,13 @@
   assertNotNull(parent);
   JetExpression initializer=property.getInitializer();
   assertNotNull(initializer);
-  JetBinaryExpression newInitializer=JetPsiFactory.createBinaryExpression(project,JetPsiFactory.createSimpleName(project,property.getName()),"=",initializer);
+  JetPsiFactory psiFactory=JetPsiFactory(project);
+  JetBinaryExpression newInitializer=psiFactory.createBinaryExpression(psiFactory.createSimpleName(property.getName()),"=",initializer);
   newInitializer=(JetBinaryExpression)parent.addAfter(newInitializer,property);
-  parent.addAfter(JetPsiFactory.createNewLine(project),property);
+  parent.addAfter(psiFactory.createNewLine(),property);
   JetType inferredType=getPropertyTypeIfNeeded(property);
   String typeStr=inferredType != null ? DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(inferredType) : JetPsiUtil.getNullableText(property.getTypeRef());
-  property=(JetProperty)property.replace(JetPsiFactory.createProperty(project,property.getNameIdentifier().getText(),typeStr,property.isVar()));
+  property=(JetProperty)property.replace(psiFactory.createProperty(property.getNameIdentifier().getText(),typeStr,property.isVar()));
   if (inferredType != null) {
     ShortenReferences.instance$.process(property.getTypeRef());
   }
