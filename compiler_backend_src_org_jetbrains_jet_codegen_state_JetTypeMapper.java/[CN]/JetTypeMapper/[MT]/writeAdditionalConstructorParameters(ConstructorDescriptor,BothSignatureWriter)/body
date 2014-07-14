@@ -2,24 +2,16 @@
   CalculatedClosure closure=bindingContext.get(CodegenBinding.CLOSURE,descriptor.getContainingDeclaration());
   ClassDescriptor captureThis=getExpectedThisObjectForConstructorCall(descriptor,closure);
   if (captureThis != null) {
-    sw.writeParameterType(JvmMethodParameterKind.OUTER);
-    mapType(captureThis.getDefaultType(),sw,JetTypeMapperMode.VALUE);
-    sw.writeParameterTypeEnd();
+    writeParameter(sw,JvmMethodParameterKind.OUTER,captureThis.getDefaultType());
   }
   JetType captureReceiverType=closure != null ? closure.getCaptureReceiverType() : null;
   if (captureReceiverType != null) {
-    sw.writeParameterType(JvmMethodParameterKind.RECEIVER);
-    mapType(captureReceiverType,sw,JetTypeMapperMode.VALUE);
-    sw.writeParameterTypeEnd();
+    writeParameter(sw,JvmMethodParameterKind.RECEIVER,captureReceiverType);
   }
   ClassDescriptor containingDeclaration=descriptor.getContainingDeclaration();
   if (containingDeclaration.getKind() == ClassKind.ENUM_CLASS || containingDeclaration.getKind() == ClassKind.ENUM_ENTRY) {
-    sw.writeParameterType(JvmMethodParameterKind.ENUM_NAME);
-    mapType(KotlinBuiltIns.getInstance().getStringType(),sw,JetTypeMapperMode.VALUE);
-    sw.writeParameterTypeEnd();
-    sw.writeParameterType(JvmMethodParameterKind.ENUM_ORDINAL);
-    mapType(KotlinBuiltIns.getInstance().getIntType(),sw,JetTypeMapperMode.VALUE);
-    sw.writeParameterTypeEnd();
+    writeParameter(sw,JvmMethodParameterKind.ENUM_NAME,KotlinBuiltIns.getInstance().getStringType());
+    writeParameter(sw,JvmMethodParameterKind.ENUM_ORDINAL,KotlinBuiltIns.getInstance().getIntType());
   }
   if (closure == null)   return;
   for (  DeclarationDescriptor variableDescriptor : closure.getCaptureVariables().keySet()) {
@@ -38,17 +30,13 @@
       type=null;
     }
     if (type != null) {
-      sw.writeParameterType(JvmMethodParameterKind.CAPTURED_LOCAL_VARIABLE);
-      sw.writeAsmType(type);
-      sw.writeParameterTypeEnd();
+      writeParameter(sw,JvmMethodParameterKind.CAPTURED_LOCAL_VARIABLE,type);
     }
   }
   ResolvedCall<ConstructorDescriptor> superCall=closure.getSuperCall();
   if (superCall != null && isAnonymousObject(descriptor.getContainingDeclaration())) {
     for (    JvmMethodParameterSignature parameter : mapSignature(superCall.getResultingDescriptor()).getValueParameters()) {
-      sw.writeParameterType(JvmMethodParameterKind.SUPER_OF_ANONYMOUS_CALL_PARAM);
-      sw.writeAsmType(parameter.getAsmType());
-      sw.writeParameterTypeEnd();
+      writeParameter(sw,JvmMethodParameterKind.SUPER_OF_ANONYMOUS_CALL_PARAM,parameter.getAsmType());
     }
   }
 }

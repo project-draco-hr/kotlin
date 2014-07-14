@@ -1,14 +1,11 @@
 {
+  Type thisType;
   if (kind == OwnerKind.TRAIT_IMPL) {
-    ClassDescriptor containingDeclaration=(ClassDescriptor)descriptor.getContainingDeclaration();
-    Type type=getTraitImplThisParameterType(containingDeclaration,this);
-    sw.writeParameterType(JvmMethodParameterKind.THIS);
-    sw.writeAsmType(type);
-    sw.writeParameterTypeEnd();
+    thisType=getTraitImplThisParameterType((ClassDescriptor)descriptor.getContainingDeclaration(),this);
   }
  else   if (isAccessor(descriptor) && descriptor.getExpectedThisObject() != null) {
-    sw.writeParameterType(JvmMethodParameterKind.THIS);
-    mapType(((ClassifierDescriptor)descriptor.getContainingDeclaration()).getDefaultType(),sw,JetTypeMapperMode.VALUE);
-    sw.writeParameterTypeEnd();
+    thisType=mapClass((ClassifierDescriptor)descriptor.getContainingDeclaration());
   }
+ else   return;
+  writeParameter(sw,JvmMethodParameterKind.THIS,thisType);
 }
