@@ -1,0 +1,22 @@
+{
+  prepareConfiguration();
+  boolean hasElse=expression.getElseExpression() != null;
+  generateSubject();
+  generateSwitchInstructionByTransitionsTable(transitionsTable,(hasElse || !isStatement) ? elseLabel : endLabel);
+  Iterator<Label> entryLabelsIterator=entryLabels.iterator();
+  for (  JetWhenEntry entry : expression.getEntries()) {
+    v.visitLabel(entryLabelsIterator.next());
+    FrameMap.Mark mark=codegen.myFrameMap.mark();
+    codegen.gen(entry.getExpression(),resultType);
+    mark.dropTo();
+    if (!entry.isElse()) {
+      v.goTo(endLabel);
+    }
+  }
+  if (!hasElse && !isStatement) {
+    v.visitLabel(elseLabel);
+    codegen.putUnitInstanceOntoStackForNonExhaustiveWhen(expression);
+  }
+  codegen.markLineNumber(expression);
+  v.mark(endLabel);
+}
