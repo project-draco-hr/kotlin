@@ -1,26 +1,33 @@
 {
-  ClassDescriptor classDecl=constructorDescriptor.getContainingDeclaration();
   iv.load(0,OBJECT_TYPE);
-  if (classDecl.getKind() == ClassKind.ENUM_CLASS || classDecl.getKind() == ClassKind.ENUM_ENTRY) {
-    iv.load(1,OBJECT_TYPE);
-    iv.load(2,Type.INT_TYPE);
-  }
-  ResolvedCall<?> resolvedCall=BindingContextUtilPackage.getResolvedCallWithAssert(superCall,bindingContext);
+  ResolvedCall<?> resolvedCall=getResolvedCallWithAssert(superCall,bindingContext);
   ConstructorDescriptor superConstructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
-  CalculatedClosure closureForSuper=bindingContext.get(CLOSURE,superConstructor.getContainingDeclaration());
-  if (closureForSuper != null && closureForSuper.getCaptureThis() != null) {
-    iv.load(((ConstructorFrameMap)codegen.myFrameMap).getOuterThisIndex(),OBJECT_TYPE);
-  }
   CallableMethod superCallable=typeMapper.mapToCallableMethod(superConstructor);
-  if (isAnonymousObject(descriptor) && superCall instanceof JetDelegatorToSuperCall) {
-    int nextVar=findFirstSuperArgument(typeMapper.mapToCallableMethod(constructorDescriptor));
-    for (    Type t : superCallable.getAsmMethod().getArgumentTypes()) {
-      iv.load(nextVar,t);
-      nextVar+=t.getSize();
+  CallableMethod callable=typeMapper.mapToCallableMethod(constructorDescriptor);
+  List<JvmMethodParameterSignature> superParameters=superCallable.getValueParameters();
+  List<JvmMethodParameterSignature> parameters=callable.getValueParameters();
+  int offset=1;
+  int superIndex=0;
+  for (  JvmMethodParameterSignature parameter : parameters) {
+    if (superIndex >= superParameters.size())     break;
+    JvmMethodParameterKind kind=parameter.getKind();
+    Type type=parameter.getAsmType();
+    if (superParameters.get(superIndex).getKind() == JvmMethodParameterKind.VALUE && kind == JvmMethodParameterKind.SUPER_CALL_PARAM) {
+      break;
     }
-    superCallable.invokeWithNotNullAssertion(codegen.v,state,resolvedCall);
+    if (kind == JvmMethodParameterKind.SUPER_CALL_PARAM || kind == JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL || (kind == JvmMethodParameterKind.OUTER && superConstructor.getContainingDeclaration().isInner())) {
+      iv.load(offset,type);
+      superIndex++;
+    }
+    offset+=type.getSize();
+  }
+  ArgumentGenerator argumentGenerator;
+  if (isAnonymousObject(descriptor) && superCall instanceof JetDelegatorToSuperCall) {
+    List<JvmMethodParameterSignature> superValues=superParameters.subList(superIndex,superParameters.size());
+    argumentGenerator=new ObjectSuperCallArgumentGenerator(superValues,iv,offset);
   }
  else {
-    codegen.invokeMethodWithArguments(superCallable,resolvedCall,StackValue.none());
+    argumentGenerator=new CallBasedArgumentGenerator(codegen,codegen.defaultCallGenerator,superConstructor.getValueParameters(),superCallable.getValueParameterTypes());
   }
+  codegen.invokeMethodWithArguments(superCallable,resolvedCall,StackValue.none(),codegen.defaultCallGenerator,argumentGenerator);
 }
