@@ -1,9 +1,11 @@
 {
-  if (context.isInlineFunction()) {
-    return false;
-  }
-  PropertyAccessorDescriptor accessorDescriptor=forGetter ? propertyDescriptor.getGetter() : propertyDescriptor.getSetter();
-  boolean isExtensionProperty=propertyDescriptor.getReceiverParameter() != null;
-  boolean specialTypeProperty=isDelegated || isExtensionProperty || DescriptorUtils.isClassObject(propertyDescriptor.getContainingDeclaration())|| JetTypeMapper.isAccessor(propertyDescriptor);
-  return isInsideClass && !specialTypeProperty && (accessorDescriptor == null || accessorDescriptor.isDefault() && (!isExternallyAccessible(propertyDescriptor) || accessorDescriptor.getModality() == Modality.FINAL));
+  if (JetTypeMapper.isAccessor(property))   return false;
+  if (context.isInlineFunction())   return false;
+  if (!isInsideClass)   return false;
+  if (isDelegated || property.getReceiverParameter() != null)   return false;
+  if (DescriptorUtils.isClassObject(property.getContainingDeclaration()))   return false;
+  PropertyAccessorDescriptor accessor=forGetter ? property.getGetter() : property.getSetter();
+  if (accessor == null)   return true;
+  if (!accessor.isDefault())   return false;
+  return property.getVisibility() == Visibilities.PRIVATE || accessor.getModality() == FINAL;
 }
