@@ -1,0 +1,25 @@
+{
+  for (  int hashCode : hashCodesToStringAndEntryLabel.keySet()) {
+    v.visitLabel(transitionsTable.get(hashCode));
+    List<Pair<String,Label>> items=hashCodesToStringAndEntryLabel.get(hashCode);
+    Label nextLabel=null;
+    for (int i=0; i < items.size(); i++) {
+      if (nextLabel != null) {
+        v.visitLabel(nextLabel);
+      }
+      Pair<String,Label> stringAndEntryLabel=items.get(i);
+      v.load(tempVarIndex,subjectType);
+      v.aconst(stringAndEntryLabel.first);
+      v.invokevirtual(subjectType.getInternalName(),"equals",EQUALS_METHOD_DESC,false);
+      if (i + 1 < items.size()) {
+        nextLabel=new Label();
+      }
+ else {
+        nextLabel=defaultLabel;
+      }
+      v.ifeq(nextLabel);
+      v.goTo(stringAndEntryLabel.getSecond());
+    }
+  }
+  super.generateEntries();
+}
