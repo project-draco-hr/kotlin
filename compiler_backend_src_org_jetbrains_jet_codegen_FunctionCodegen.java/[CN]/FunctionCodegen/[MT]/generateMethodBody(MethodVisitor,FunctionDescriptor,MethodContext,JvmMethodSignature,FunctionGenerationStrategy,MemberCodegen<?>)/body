@@ -7,18 +7,7 @@
     generateStaticDelegateMethodBody(mv,signature.getAsmMethod(),(PackageFacadeContext)context.getParentContext());
   }
  else {
-    FrameMap frameMap=new FrameMap();
-    if (context.getContextKind() == OwnerKind.IMPLEMENTATION) {
-      frameMap.enterTemp(OBJECT_TYPE);
-    }
-    for (    JvmMethodParameterSignature parameter : signature.getValueParameters()) {
-      if (parameter.getKind() != JvmMethodParameterKind.VALUE) {
-        frameMap.enterTemp(parameter.getAsmType());
-      }
-    }
-    for (    ValueParameterDescriptor parameter : functionDescriptor.getValueParameters()) {
-      frameMap.enter(parameter,typeMapper.mapType(parameter));
-    }
+    FrameMap frameMap=createFrameMap(parentCodegen.state,functionDescriptor,signature,isStatic(context.getContextKind()));
     Label methodEntry=new Label();
     mv.visitLabel(methodEntry);
     context.setMethodStartLabel(methodEntry);

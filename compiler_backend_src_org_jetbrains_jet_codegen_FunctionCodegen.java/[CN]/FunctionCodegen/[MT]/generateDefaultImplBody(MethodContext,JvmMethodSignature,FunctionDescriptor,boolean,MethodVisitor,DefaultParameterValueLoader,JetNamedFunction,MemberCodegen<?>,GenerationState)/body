@@ -1,30 +1,20 @@
 {
-  FrameMap frameMap=new FrameMap();
-  if (!isStatic) {
-    frameMap.enterTemp(OBJECT_TYPE);
-  }
+  FrameMap frameMap=createFrameMap(state,functionDescriptor,signature,isStatic);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,signature.getReturnType(),methodContext,state,parentCodegen);
-  Type[] argTypes=signature.getAsmMethod().getArgumentTypes();
-  List<ValueParameterDescriptor> paramDescrs=functionDescriptor.getValueParameters();
-  Iterator<ValueParameterDescriptor> iterator=paramDescrs.iterator();
-  int countOfExtraVarsInMethodArgs=0;
-  for (  JvmMethodParameterSignature parameterSignature : signature.getValueParameters()) {
-    if (parameterSignature.getKind() != JvmMethodParameterKind.VALUE) {
-      countOfExtraVarsInMethodArgs++;
-      frameMap.enterTemp(parameterSignature.getAsmType());
-    }
- else {
-      frameMap.enter(iterator.next(),parameterSignature.getAsmType());
-    }
-  }
   int maskIndex=frameMap.enterTemp(Type.INT_TYPE);
   CallGenerator generator=codegen.getOrCreateCallGenerator(functionDescriptor,function);
   InstructionAdapter iv=new InstructionAdapter(mv);
   loadExplicitArgumentsOnStack(iv,OBJECT_TYPE,isStatic,signature);
   generator.putHiddenParams();
-  for (int index=0; index < paramDescrs.size(); index++) {
-    ValueParameterDescriptor parameterDescriptor=paramDescrs.get(index);
-    Type t=argTypes[countOfExtraVarsInMethodArgs + index];
+  List<JvmMethodParameterSignature> mappedParameters=signature.getValueParameters();
+  int capturedArgumentsCount=0;
+  while (capturedArgumentsCount < mappedParameters.size() && mappedParameters.get(capturedArgumentsCount).getKind() != JvmMethodParameterKind.VALUE) {
+    capturedArgumentsCount++;
+  }
+  List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
+  for (int index=0; index < valueParameters.size(); index++) {
+    ValueParameterDescriptor parameterDescriptor=valueParameters.get(index);
+    Type type=mappedParameters.get(capturedArgumentsCount + index).getAsmType();
     int parameterIndex=frameMap.getIndex(parameterDescriptor);
     if (parameterDescriptor.declaresDefaultValue()) {
       iv.load(maskIndex,Type.INT_TYPE);
@@ -33,10 +23,10 @@
       Label loadArg=new Label();
       iv.ifeq(loadArg);
       loadStrategy.putValueOnStack(parameterDescriptor,codegen);
-      iv.store(parameterIndex,t);
+      iv.store(parameterIndex,type);
       iv.mark(loadArg);
     }
-    generator.putValueIfNeeded(parameterDescriptor,t,StackValue.local(parameterIndex,t));
+    generator.putValueIfNeeded(parameterDescriptor,type,StackValue.local(parameterIndex,type));
   }
   CallableMethod method;
   if (functionDescriptor instanceof ConstructorDescriptor) {
