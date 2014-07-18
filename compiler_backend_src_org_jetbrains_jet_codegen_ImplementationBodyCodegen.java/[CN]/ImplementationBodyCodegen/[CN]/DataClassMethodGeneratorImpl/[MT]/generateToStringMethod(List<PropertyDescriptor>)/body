@@ -1,5 +1,6 @@
 {
   FunctionDescriptor toString=CodegenUtil.getDeclaredFunctionByRawSignature(descriptor,Name.identifier(CodegenUtil.TO_STRING_METHOD_NAME),KotlinBuiltIns.getInstance().getString());
+  MethodContext context=ImplementationBodyCodegen.this.context.intoFunction(toString);
   MethodVisitor mv=v.newMethod(OtherOrigin(toString),ACC_PUBLIC,"toString","()Ljava/lang/String;",null,null);
   InstructionAdapter iv=new InstructionAdapter(mv);
   mv.visitCode();
@@ -14,7 +15,7 @@
       iv.aconst(", " + propertyDescriptor.getName().asString() + "=");
     }
     genInvokeAppendMethod(iv,JAVA_STRING_TYPE);
-    Type type=genPropertyOnStack(iv,propertyDescriptor,0);
+    Type type=genPropertyOnStack(iv,context,propertyDescriptor,0);
     if (type.getSort() == Type.ARRAY) {
       Type elementType=correctElementType(type);
       if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
