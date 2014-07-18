@@ -5,15 +5,30 @@
     private final Map<ValueParameterDescriptor,CompileTimeConstant<?>> arguments=new HashMap<ValueParameterDescriptor,CompileTimeConstant<?>>();
     @Override public void visit(    @Nullable Name name,    @Nullable Object value){
       if (name != null) {
-        CompileTimeConstant<?> argument=ConstantsPackage.createCompileTimeConstant(value,true,false,false,null);
-        setArgumentValueByName(name,argument != null ? argument : ErrorValue.create("Unsupported annotation argument: " + name));
+        setArgumentValueByName(name,createConstant(name,value));
       }
     }
     @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
       setArgumentValueByName(name,enumEntryValue(enumClassName,enumEntryName));
     }
-    @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitArray(    @NotNull Name name){
-      return null;
+    @Nullable @Override public AnnotationArrayArgumentVisitor visitArray(    @NotNull final Name name){
+      return new KotlinJvmBinaryClass.AnnotationArrayArgumentVisitor(){
+        private final ArrayList<CompileTimeConstant<?>> elements=new ArrayList<CompileTimeConstant<?>>();
+        @Override public void visit(        @Nullable Object value){
+          elements.add(createConstant(name,value));
+        }
+        @Override public void visitEnum(        @NotNull JvmClassName enumClassName,        @NotNull Name enumEntryName){
+          elements.add(enumEntryValue(enumClassName,enumEntryName));
+        }
+        @Override public void visitEnd(){
+          ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(name,annotationClass);
+          if (parameter != null) {
+            elements.trimToSize();
+            arguments.put(parameter,new ArrayValue(elements,parameter.getType(),true,false));
+          }
+        }
+      }
+;
     }
     @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull JvmClassName enumClassName,    @NotNull Name name){
       ClassDescriptor enumClass=resolveClass(enumClassName,moduleDescriptor);
@@ -27,6 +42,10 @@
     }
     @Override public void visitEnd(){
       result.add(new AnnotationDescriptorImpl(annotationClass.getDefaultType(),arguments));
+    }
+    @NotNull private CompileTimeConstant<?> createConstant(    @Nullable Name name,    @Nullable Object value){
+      CompileTimeConstant<?> argument=ConstantsPackage.createCompileTimeConstant(value,true,false,false,null);
+      return argument != null ? argument : ErrorValue.create("Unsupported annotation argument: " + name);
     }
     private void setArgumentValueByName(    @NotNull Name name,    @NotNull CompileTimeConstant<?> argumentValue){
       ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(name,annotationClass);

@@ -6,7 +6,7 @@
     @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
       unexpectedArgument(name,annotationClassName);
     }
-    @Override @Nullable public AnnotationArgumentVisitor visitArray(    @NotNull Name name){
+    @Override @Nullable public AnnotationArrayArgumentVisitor visitArray(    @NotNull Name name){
       if (name.asString().equals(DATA_FIELD_NAME)) {
         return stringArrayVisitor();
       }
@@ -15,20 +15,17 @@
       }
       return null;
     }
-    @NotNull private AnnotationArgumentVisitor stringArrayVisitor(){
+    @NotNull private AnnotationArrayArgumentVisitor stringArrayVisitor(){
       final List<String> strings=new ArrayList<String>(1);
-      return new AnnotationArgumentVisitor(){
-        @Override public void visit(        @Nullable Name name,        @Nullable Object value){
+      return new AnnotationArrayArgumentVisitor(){
+        @Override public void visit(        @Nullable Object value){
           if (!(value instanceof String)) {
             throw new IllegalStateException("Unexpected argument value: " + value);
           }
           strings.add((String)value);
         }
-        @Override public void visitEnum(        @NotNull Name name,        @NotNull JvmClassName enumClassName,        @NotNull Name enumEntryName){
-          unexpectedArgument(name,annotationClassName);
-        }
-        @Nullable @Override public AnnotationArgumentVisitor visitArray(        @NotNull Name name){
-          return unexpectedArgument(name,annotationClassName);
+        @Override public void visitEnum(        @NotNull JvmClassName enumClassName,        @NotNull Name enumEntryName){
+          unexpectedArgument(null,annotationClassName);
         }
         @Override public void visitEnd(){
           annotationData=strings.toArray(new String[strings.size()]);
