@@ -1,13 +1,23 @@
 {
   String defaultPath=getDefaultPathToJarFile(project);
   boolean showPathPanelForJava=needToChooseJarPath(project);
-  List<Module> nonConfiguredModules=ConfigureKotlinInProjectUtils.getNonConfiguredModules(project,this);
+  List<Module> nonConfiguredModules=!ApplicationManager.getApplication().isUnitTestMode() ? ConfigureKotlinInProjectUtils.getNonConfiguredModules(project,this) : Arrays.asList(ModuleManager.getInstance(project).getModules());
   if (nonConfiguredModules.size() > 1 || showPathPanelForJava) {
-    CreateJavaLibraryDialogWithModules dialog=new CreateJavaLibraryDialogWithModules(project,nonConfiguredModules,defaultPath,showPathPanelForJava);
-    dialog.show();
-    if (!dialog.isOK())     return;
-    for (    Module module : dialog.getModulesToConfigure()) {
-      configureModuleWithLibrary(module,defaultPath,dialog.getCopyIntoPath());
+    List<Module> modulesToConfigure;
+    String copyLibIntoPath;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      CreateJavaLibraryDialogWithModules dialog=new CreateJavaLibraryDialogWithModules(project,nonConfiguredModules,defaultPath,showPathPanelForJava);
+      dialog.show();
+      if (!dialog.isOK())       return;
+      modulesToConfigure=dialog.getModulesToConfigure();
+      copyLibIntoPath=dialog.getCopyIntoPath();
+    }
+ else {
+      modulesToConfigure=nonConfiguredModules;
+      copyLibIntoPath=defaultPath;
+    }
+    for (    Module module : modulesToConfigure) {
+      configureModuleWithLibrary(module,defaultPath,copyLibIntoPath);
     }
   }
  else {
