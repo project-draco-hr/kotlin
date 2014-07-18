@@ -4,13 +4,21 @@
   Call call=CallMaker.makePropertyCall(receiver,callOperationNode,nameExpression);
   BasicCallResolutionContext contextForVariable=BasicCallResolutionContext.create(context.replaceTraceAndCache(temporaryForVariable),call,CheckValueArgumentsMode.ENABLED);
   OverloadResolutionResults<VariableDescriptor> resolutionResult=callResolver.resolveSimpleProperty(contextForVariable);
+  JetScope receiverScope=receiver.exists() ? receiver.getType().getMemberScope() : context.scope;
   if (resolutionResult.isSuccess()) {
+    result[0]=true;
+    if (resolutionResult.getResultingDescriptor() instanceof FakeCallableDescriptorForObject) {
+      FakeCallableDescriptorForObject fakeCallableDescriptorForObject=(FakeCallableDescriptorForObject)resolutionResult.getResultingDescriptor();
+      ClassDescriptor classDescriptor=fakeCallableDescriptorForObject.getClassDescriptor();
+      context.trace.record(REFERENCE_TARGET,nameExpression,classDescriptor);
+      checkClassObjectVisibility(classDescriptor,nameExpression,context);
+      return getExtendedClassObjectType(nameExpression,fakeCallableDescriptorForObject.getType(),classDescriptor,receiverScope);
+    }
     temporaryForVariable.commit();
     checkSuper(receiver,resolutionResult,context.trace,nameExpression);
-    result[0]=true;
-    return resolutionResult.isSingleResult() ? resolutionResult.getResultingDescriptor().getReturnType() : null;
+    return resolutionResult.getResultingDescriptor().getReturnType();
   }
-  ExpressionTypingContext newContext=receiver.exists() ? context.replaceScope(receiver.getType().getMemberScope()) : context;
+  ExpressionTypingContext newContext=context.replaceScope(receiverScope);
   TemporaryTraceAndCache temporaryForPackageOrClassObject=TemporaryTraceAndCache.create(context,"trace to resolve as package or class object",nameExpression);
   JetType jetType=lookupPackageOrClassObject(nameExpression,newContext.replaceTraceAndCache(temporaryForPackageOrClassObject));
   if (jetType != null) {
