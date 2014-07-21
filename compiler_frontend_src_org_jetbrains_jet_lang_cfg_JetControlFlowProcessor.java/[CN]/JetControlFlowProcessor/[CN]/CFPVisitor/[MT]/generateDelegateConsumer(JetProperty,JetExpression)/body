@@ -1,0 +1,13 @@
+{
+  DeclarationDescriptor descriptor=trace.get(BindingContext.DECLARATION_TO_DESCRIPTOR,property);
+  if (!(descriptor instanceof PropertyDescriptor))   return;
+  List<PseudoValue> values=Collections.singletonList(builder.getBoundValue(delegate));
+  List<TypePredicate> typePredicates=KotlinPackage.map(((PropertyDescriptor)descriptor).getAccessors(),new Function1<PropertyAccessorDescriptor,TypePredicate>(){
+    @Override public TypePredicate invoke(    PropertyAccessorDescriptor descriptor){
+      return getTypePredicateByReceiverValue(trace.get(BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL,descriptor));
+    }
+  }
+);
+  Map<PseudoValue,TypePredicate> valuesToTypePredicates=PseudocodePackage.expectedTypeFor(PseudocodePackage.and(typePredicates),values);
+  builder.magic(property,null,values,valuesToTypePredicates,MagicKind.VALUE_CONSUMER);
+}
