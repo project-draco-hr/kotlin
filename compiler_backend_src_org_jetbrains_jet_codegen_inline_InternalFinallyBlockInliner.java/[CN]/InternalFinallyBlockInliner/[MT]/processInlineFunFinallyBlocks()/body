@@ -1,0 +1,66 @@
+{
+  int nextTempNonLocalVarIndex=initAndGetVarIndexForNonLocalReturnValue();
+  Stack<TryCatchBlockNodeInfo> coveringTryCatchBlocks=new Stack<TryCatchBlockNodeInfo>();
+  InsnList instructions=inlineFun.instructions;
+  AbstractInsnNode curIns=instructions.getLast();
+  while (curIns != null) {
+    updateCoveringTryBlocks(coveringTryCatchBlocks,curIns);
+    if (!InlineCodegenUtil.isReturnOpcode(curIns.getOpcode()) || !InlineCodegenUtil.isMarkedReturn(curIns)) {
+      curIns=curIns.getPrevious();
+      continue;
+    }
+    AbstractInsnNode instrInsertFinallyBefore=curIns.getPrevious();
+    AbstractInsnNode nextPrev=instrInsertFinallyBefore.getPrevious();
+    Type nonLocalReturnType=InlineCodegenUtil.getReturnType(curIns.getOpcode());
+    List<TryBlockCluster> clusters=InlinePackage.doClustering(coveringTryCatchBlocks);
+    ListIterator<TryBlockCluster> tryCatchBlockIterator=clusters.listIterator(clusters.size());
+    while (tryCatchBlockIterator.hasPrevious()) {
+      TryBlockCluster originalFinallyCluster=tryCatchBlockIterator.previous();
+      List<TryCatchBlockNodeInfo> clusterBlocks=originalFinallyCluster.getBlocks();
+      TryCatchBlockNodeInfo originalFinallyBlock=clusterBlocks.get(0);
+      FinallyBlockInfo finallyInfo=findFinallyBlockBody(originalFinallyBlock,inlineFunTryBlockInfo);
+      if (finallyInfo == null)       continue;
+      instructions.resetLabels();
+      List<TryCatchBlockNodePosition> tryCatchBlockInlinedInFinally=findTryCatchBlocksInlinedInFinally(finallyInfo);
+      Set<LabelNode> labelsInsideFinally=rememberOriginalLabelNodes(finallyInfo);
+      MethodNode finallyBlockCopy=createEmptyMethodNode();
+      Label newFinallyStart=new Label();
+      Label newFinallyEnd=new Label();
+      if (nonLocalReturnType != Type.VOID_TYPE) {
+        finallyBlockCopy.visitVarInsn(nonLocalReturnType.getOpcode(Opcodes.ISTORE),nextTempNonLocalVarIndex);
+      }
+      finallyBlockCopy.visitLabel(newFinallyStart);
+      AbstractInsnNode currentIns=finallyInfo.startIns;
+      while (currentIns != finallyInfo.endInsExclusive) {
+        if (false && InlineCodegenUtil.isReturnOpcode(currentIns.getOpcode()) && !InlineCodegenUtil.isMarkedReturn(currentIns)) {
+          Type localReturnType=InlineCodegenUtil.getReturnType(currentIns.getOpcode());
+          substituteReturnValueInFinally(nextTempNonLocalVarIndex,nonLocalReturnType,finallyBlockCopy,localReturnType,true);
+          instrInsertFinallyBefore.accept(finallyBlockCopy);
+          curIns.accept(finallyBlockCopy);
+        }
+ else {
+          boolean isInsOrJumpInsideFinally=!(currentIns instanceof JumpInsnNode) || labelsInsideFinally.contains(((JumpInsnNode)currentIns).label);
+          if (isInsOrJumpInsideFinally) {
+            currentIns.accept(finallyBlockCopy);
+          }
+ else {
+            finallyBlockCopy.instructions.add(new JumpInsnNode(currentIns.getOpcode(),((JumpInsnNode)currentIns).label));
+          }
+        }
+        currentIns=currentIns.getNext();
+      }
+      finallyBlockCopy.visitLabel(newFinallyEnd);
+      if (nonLocalReturnType != Type.VOID_TYPE) {
+        finallyBlockCopy.visitVarInsn(nonLocalReturnType.getOpcode(Opcodes.ILOAD),nextTempNonLocalVarIndex);
+        nextTempNonLocalVarIndex+=nonLocalReturnType.getSize();
+      }
+      InlineCodegenUtil.insertNodeBefore(finallyBlockCopy,inlineFun,instrInsertFinallyBefore);
+      nextPrev=updateExceptionTable(coveringTryCatchBlocks,nextPrev,clusterBlocks,newFinallyStart,newFinallyEnd,tryCatchBlockInlinedInFinally);
+    }
+    curIns=nextPrev;
+  }
+  inlineFun.tryCatchBlocks.clear();
+  for (  TryCatchBlockNodeInfo info : inlineFunTryBlockInfo) {
+    inlineFun.tryCatchBlocks.add(info.getNode());
+  }
+}

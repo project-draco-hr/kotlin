@@ -1,0 +1,25 @@
+{
+  List<TryCatchBlockNodeInfo> sameDefaultHandler=new ArrayList<TryCatchBlockNodeInfo>();
+  LabelNode defaultHandler=null;
+  boolean afterStartBlock=false;
+  for (  TryCatchBlockNodeInfo block : tryCatchBlocks) {
+    if (tryCatchBlock == block) {
+      afterStartBlock=true;
+    }
+    if (afterStartBlock) {
+      if (block.getNode().type == null && (firstLabelInChain(tryCatchBlock.getNode().start) == firstLabelInChain(block.getNode().start) && firstLabelInChain(tryCatchBlock.getNode().end) == firstLabelInChain(block.getNode().end) || defaultHandler == firstLabelInChain(block.getNode().handler))) {
+        sameDefaultHandler.add(block);
+        if (defaultHandler == null) {
+          defaultHandler=firstLabelInChain(block.getNode().handler);
+        }
+      }
+    }
+  }
+  if (sameDefaultHandler.isEmpty()) {
+    return null;
+  }
+  TryCatchBlockNodeInfo nextIntervalWithSameDefaultHandler=sameDefaultHandler.get(1);
+  AbstractInsnNode startFinallyChain=tryCatchBlock.getNode().end;
+  AbstractInsnNode endFinallyChainExclusive=skipLastGotoIfNeeded(nextIntervalWithSameDefaultHandler.getNode().handler,nextIntervalWithSameDefaultHandler.getNode().start);
+  return new FinallyBlockInfo(startFinallyChain.getNext(),endFinallyChainExclusive);
+}
