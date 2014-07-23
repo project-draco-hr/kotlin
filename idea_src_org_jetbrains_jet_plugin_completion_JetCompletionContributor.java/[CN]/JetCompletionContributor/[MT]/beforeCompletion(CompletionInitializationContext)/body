@@ -17,7 +17,7 @@
       }
     }
     context.setReplacementOffset(context.getReplacementOffset());
-    if (context.getCompletionType() == CompletionType.SMART) {
+    if (context.getCompletionType() == CompletionType.SMART && !isAtEndOfLine(offset,context.getEditor().getDocument())) {
       PsiElement tokenAt=context.getFile().findElementAt(Math.max(0,offset));
       if (tokenAt != null) {
         PsiElement parent=tokenAt.getParent();
@@ -29,10 +29,6 @@
             parent=expression.getParent();
           }
           int expressionEnd=expression.getTextRange().getEndOffset();
-          String text=context.getFile().getText();
-          while (expressionEnd > 0 && Character.isWhitespace(text.charAt(expressionEnd - 1))) {
-            expressionEnd--;
-          }
           int suggestedReplacementOffset;
           if (expression instanceof JetCallExpression) {
             JetExpression calleeExpression=((JetCallExpression)expression).getCalleeExpression();
