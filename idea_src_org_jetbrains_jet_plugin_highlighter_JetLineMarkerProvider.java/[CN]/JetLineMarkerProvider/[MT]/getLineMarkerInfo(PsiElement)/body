@@ -4,18 +4,10 @@
   if (!(element instanceof JetNamedFunction || element instanceof JetProperty))   return null;
   BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement((JetElement)element);
   DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,element);
-  if (!(descriptor instanceof CallableMemberDescriptor)) {
-    return null;
-  }
+  if (!(descriptor instanceof CallableMemberDescriptor))   return null;
   Set<? extends CallableMemberDescriptor> overriddenMembers=OverrideResolver.getDirectlyOverriddenDeclarations((CallableMemberDescriptor)descriptor);
-  if (overriddenMembers.size() == 0) {
-    return null;
-  }
-  boolean allOverriddenAbstract=true;
-  for (  CallableMemberDescriptor function : overriddenMembers) {
-    allOverriddenAbstract&=function.getModality() == Modality.ABSTRACT;
-  }
-  return new LineMarkerInfo<JetElement>((JetElement)element,element.getTextOffset(),allOverriddenAbstract ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_ALL,new Function<JetElement,String>(){
+  if (overriddenMembers.isEmpty())   return null;
+  return new LineMarkerInfo<JetElement>((JetElement)element,element.getTextOffset(),isImplementsAndNotOverrides((CallableMemberDescriptor)descriptor,overriddenMembers) ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_ALL,new Function<JetElement,String>(){
     @Override public String fun(    JetElement element){
       return calculateTooltipString(element);
     }
