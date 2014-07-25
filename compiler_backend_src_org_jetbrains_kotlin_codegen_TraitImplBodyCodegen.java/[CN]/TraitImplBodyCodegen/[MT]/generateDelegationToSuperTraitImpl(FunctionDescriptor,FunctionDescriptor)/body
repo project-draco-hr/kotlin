@@ -1,0 +1,27 @@
+{
+  final FunctionDescriptor delegateTo=(FunctionDescriptor)firstSuperMethodFromKotlin(descriptor,implementation);
+  if (delegateTo == null)   return;
+  if (delegateTo instanceof JavaMethodDescriptor)   return;
+  functionCodegen.generateMethod(DiagnosticsPackage.DelegationToTraitImpl(descriptorToDeclaration(descriptor),descriptor),descriptor,new FunctionGenerationStrategy.CodegenBased<FunctionDescriptor>(state,descriptor){
+    @Override public void doGenerateBody(    @NotNull ExpressionCodegen codegen,    @NotNull JvmMethodSignature signature){
+      InstructionAdapter iv=codegen.v;
+      CallableMethod method=typeMapper.mapToCallableMethod(delegateTo,true,context);
+      List<JvmMethodParameterSignature> myParameters=signature.getValueParameters();
+      List<JvmMethodParameterSignature> calleeParameters=method.getValueParameters();
+      if (myParameters.size() != calleeParameters.size()) {
+        throw new AssertionError(String.format("Method from super interface has a different signature.\n" + "This method:\n%s\n%s\n%s\nSuper method:\n%s\n%s\n%s",callableDescriptor,signature,myParameters,delegateTo,method,calleeParameters));
+      }
+      int k=0;
+      Iterator<JvmMethodParameterSignature> it=calleeParameters.iterator();
+      for (      JvmMethodParameterSignature parameter : myParameters) {
+        Type type=parameter.getAsmType();
+        StackValue.local(k,type).put(it.next().getAsmType(),iv);
+        k+=type.getSize();
+      }
+      method.genInvokeInstruction(iv);
+      StackValue.coerce(method.getReturnType(),signature.getReturnType(),iv);
+      iv.areturn(signature.getReturnType());
+    }
+  }
+);
+}
