@@ -1,8 +1,14 @@
 {
-  List<String> searchTextList=InTextDirectivesUtils.findListWithPrefixes(editor.getDocument().getText(),"// SEARCH_TEXT:");
+  String documentText=editor.getDocument().getText();
+  List<String> searchTextList=InTextDirectivesUtils.findListWithPrefixes(documentText,"// SEARCH_TEXT:");
   Assert.assertFalse("There's no search text in test data file given. Use '// SEARCH_TEXT:' directive",searchTextList.isEmpty());
-  List<String> expectedReferences=InTextDirectivesUtils.findListWithPrefixes(editor.getDocument().getText(),"// REF:");
-  boolean enableCheckbox=InTextDirectivesUtils.isDirectiveDefined(editor.getDocument().getText(),"// CHECK_BOX");
+  List<String> expectedReferences=KotlinPackage.map(InTextDirectivesUtils.findLinesWithPrefixesRemoved(documentText,"// REF:"),new Function1<String,String>(){
+    @Override public String invoke(    String input){
+      return input.trim();
+    }
+  }
+);
+  boolean enableCheckbox=InTextDirectivesUtils.isDirectiveDefined(documentText,"// CHECK_BOX");
   String searchText=searchTextList.get(0);
   List<Object> elementsByName=new ArrayList<Object>();
   String[] names=model.getNames(enableCheckbox);
