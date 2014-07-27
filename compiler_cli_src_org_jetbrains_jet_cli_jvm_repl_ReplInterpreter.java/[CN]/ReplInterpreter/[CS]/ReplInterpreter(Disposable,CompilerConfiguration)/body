@@ -1,12 +1,14 @@
 {
-  jetCoreEnvironment=JetCoreEnvironment.createForProduction(disposable,configuration);
-  Project project=jetCoreEnvironment.getProject();
-  trace=new BindingTraceContext();
-  module=AnalyzerFacadeForJVM.createJavaModule("<repl>");
+  JetCoreEnvironment environment=JetCoreEnvironment.createForProduction(disposable,configuration);
+  Project project=environment.getProject();
+  this.psiFileFactory=(PsiFileFactoryImpl)PsiFileFactory.getInstance(project);
+  this.trace=new BindingTraceContext();
+  this.module=AnalyzerFacadeForJVM.createJavaModule("<repl>");
   TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.createForLocalDeclarations(new LockBasedStorageManager(),new ExceptionTracker(),Predicates.<PsiFile>alwaysTrue());
-  injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module);
-  topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
-  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(injector.getTopDownAnalyzer().getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
+  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module);
+  this.topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
+  this.topDownAnalyzer=injector.getTopDownAnalyzer();
+  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(topDownAnalyzer.getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
   module.addDependencyOnModule(module);
   module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
   module.seal();
@@ -19,5 +21,5 @@
       throw UtilsPackage.rethrow(e);
     }
   }
-  classLoader=new ReplClassLoader(new URLClassLoader(classpath.toArray(new URL[0])));
+  this.classLoader=new ReplClassLoader(new URLClassLoader(classpath.toArray(new URL[classpath.size()])));
 }
