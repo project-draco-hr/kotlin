@@ -1,7 +1,7 @@
 {
   CompilerConfiguration configuration=JetTestUtils.compilerConfigurationForTests(ConfigurationKind.ALL,TestJdkKind.FULL_JDK);
   ReplInterpreter repl=new ReplInterpreter(getTestRootDisposable(),configuration);
-  for (  ReplSessionTestFile.OneLine line : ReplSessionTestFile.load(new File(path))) {
+  for (  OneLine line : loadLines(new File(path))) {
     String expected=StringUtil.convertLineSeparators(line.expected).replaceFirst("\n$","");
     ReplInterpreter.LineResult lineResult=repl.eval(line.code);
     Object actual;
@@ -15,10 +15,10 @@
       actual=lineResult.getErrorText();
     }
     String actualString=StringUtil.convertLineSeparators(actual != null ? actual.toString() : "null").replaceFirst("\n$","");
-    if (line.matchType == EQUALS) {
+    if (line.matchType == MatchType.EQUALS) {
       Assert.assertEquals("after evaluation of: " + line.code,expected,actualString);
     }
- else     if (line.matchType == SUBSTRING) {
+ else     if (line.matchType == MatchType.SUBSTRING) {
       Assert.assertTrue("must contain substring: " + expected + ", actual: "+ actualString,actualString.contains(expected));
     }
   }
