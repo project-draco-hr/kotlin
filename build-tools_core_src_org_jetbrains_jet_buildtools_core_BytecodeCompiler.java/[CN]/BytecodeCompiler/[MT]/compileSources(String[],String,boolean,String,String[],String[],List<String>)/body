@@ -1,0 +1,21 @@
+{
+  try {
+    JetCoreEnvironment environment=JetCoreEnvironment.createForProduction(Disposer.newDisposable(),createConfiguration(stdlib,classpath,externalAnnotationsPath,src,args));
+    boolean isJar=destination.endsWith(".jar");
+    File jar=isJar ? new File(destination) : null;
+    File outputDir=isJar ? null : new File(destination);
+    boolean success=KotlinToJVMBytecodeCompiler.compileBunchOfSources(environment,jar,outputDir,includeRuntime);
+    if (!success) {
+      throw new CompileEnvironmentException(errorMessage(src,false));
+    }
+  }
+ catch (  BuildException e) {
+    throw e;
+  }
+catch (  CompileEnvironmentException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    throw new CompileEnvironmentException(errorMessage(src,true),e);
+  }
+}
