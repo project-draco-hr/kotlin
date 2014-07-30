@@ -2,9 +2,12 @@
   GlobalContextImpl globalContext=ContextPackage.GlobalContext();
   DeclarationProviderFactory declarationProviderFactory=DeclarationProviderFactoryService.OBJECT$.createDeclarationProviderFactory(project,globalContext.getStorageManager(),syntheticFiles,filesScope);
   InjectorForLazyResolveWithJava resolveWithJava=new InjectorForLazyResolveWithJava(project,globalContext,declarationProviderFactory,trace);
-  resolveWithJava.getModule().addFragmentProvider(DependencyKind.BINARIES,resolveWithJava.getJavaDescriptorResolver().getPackageFragmentProvider());
+  ModuleDescriptorImpl module=resolveWithJava.getModule();
+  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(resolveWithJava.getResolveSession().getPackageFragmentProvider(),resolveWithJava.getJavaDescriptorResolver().getPackageFragmentProvider())));
+  module.addDependencyOnModule(module);
   if (addBuiltIns) {
-    resolveWithJava.getModule().addFragmentProvider(DependencyKind.BUILT_INS,KotlinBuiltIns.getInstance().getBuiltInsModule().getPackageFragmentProvider());
+    module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
   }
+  module.seal();
   return new JvmSetup(resolveWithJava.getResolveSession(),resolveWithJava.getJavaDescriptorResolver());
 }

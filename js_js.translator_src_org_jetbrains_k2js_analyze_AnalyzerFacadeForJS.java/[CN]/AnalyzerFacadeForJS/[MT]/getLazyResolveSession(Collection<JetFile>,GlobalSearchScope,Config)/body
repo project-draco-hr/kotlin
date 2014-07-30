@@ -2,6 +2,10 @@
   GlobalContextImpl globalContext=ContextPackage.GlobalContext();
   DeclarationProviderFactory declarationProviderFactory=DeclarationProviderFactoryService.OBJECT$.createDeclarationProviderFactory(config.getProject(),globalContext.getStorageManager(),Config.withJsLibAdded(syntheticFiles,config),filesScope);
   ModuleDescriptorImpl module=createJsModule("<lazy module>");
-  module.addFragmentProvider(DependencyKind.BUILT_INS,KotlinBuiltIns.getInstance().getBuiltInsModule().getPackageFragmentProvider());
-  return new InjectorForLazyResolve(config.getProject(),globalContext,module,declarationProviderFactory,new BindingTraceContext()).getResolveSession();
+  module.addDependencyOnModule(module);
+  module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
+  module.seal();
+  ResolveSession session=new InjectorForLazyResolve(config.getProject(),globalContext,module,declarationProviderFactory,new BindingTraceContext()).getResolveSession();
+  module.initialize(session.getPackageFragmentProvider());
+  return session;
 }

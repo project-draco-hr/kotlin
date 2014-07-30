@@ -6,9 +6,10 @@
   TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.createForLocalDeclarations(new LockBasedStorageManager(),new ExceptionTracker(),Predicates.<PsiFile>alwaysTrue());
   injector=new InjectorForTopDownAnalyzerForJvm(project,topDownAnalysisParameters,trace,module);
   topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
-  module.addFragmentProvider(SOURCES,injector.getTopDownAnalyzer().getPackageFragmentProvider());
-  module.addFragmentProvider(BUILT_INS,KotlinBuiltIns.getInstance().getBuiltInsModule().getPackageFragmentProvider());
-  module.addFragmentProvider(BINARIES,injector.getJavaDescriptorResolver().getPackageFragmentProvider());
+  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(injector.getTopDownAnalyzer().getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
+  module.addDependencyOnModule(module);
+  module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
+  module.seal();
   List<URL> classpath=Lists.newArrayList();
   for (  File file : configuration.getList(JVMConfigurationKeys.CLASSPATH_KEY)) {
     try {

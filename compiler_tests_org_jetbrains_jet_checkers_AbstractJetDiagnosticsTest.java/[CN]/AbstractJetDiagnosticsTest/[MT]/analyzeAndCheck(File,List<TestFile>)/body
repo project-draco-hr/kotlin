@@ -18,7 +18,14 @@
     ModuleDescriptorImpl module=modules.get(testModule);
     BindingTrace moduleTrace=groupedByModule.size() > 1 ? new DelegatingBindingTrace(supportTrace.getBindingContext(),"Trace for module " + module) : supportTrace;
     moduleBindings.put(testModule,moduleTrace.getBindingContext());
-    AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module == null ? support.getModule() : module,null,null);
+    if (module == null) {
+      module=support.newModule();
+    }
+ else {
+      module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
+      module.seal();
+    }
+    AnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module,null,null);
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
   boolean ok=true;
