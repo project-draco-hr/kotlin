@@ -25,14 +25,18 @@
   arguments.noJdkAnnotations=true;
   arguments.annotations=getFullAnnotationsPath(log,annotationPaths);
   log.info("Using kotlin annotations from " + arguments.annotations);
-  arguments.inline=inline;
-  arguments.optimize=optimize;
-  if (!CompilerArgumentsUtil.checkOption(arguments.inline)) {
-    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("inline",arguments.inline));
+  arguments.noInline=!CompilerArgumentsUtil.optionToBooleanFlag(inline,true);
+  arguments.noOptimize=!CompilerArgumentsUtil.optionToBooleanFlag(optimize,true);
+  if (!CompilerArgumentsUtil.checkOption(inline)) {
+    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("inline",inline));
   }
-  if (!CompilerArgumentsUtil.checkOption(arguments.optimize)) {
-    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("optimize",arguments.optimize));
+  if (!CompilerArgumentsUtil.checkOption(optimize)) {
+    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("optimize",optimize));
   }
-  log.info("Method inlining is " + CompilerArgumentsUtil.optionToBooleanFlag(arguments.inline,InlineCodegenUtil.DEFAULT_INLINE_FLAG));
-  log.info("Optimization mode is " + CompilerArgumentsUtil.optionToBooleanFlag(arguments.optimize,OptimizationUtils.DEFAULT_OPTIMIZATION_FLAG));
+  if (arguments.noInline) {
+    log.info("Method inlining is turned off");
+  }
+  if (arguments.noOptimize) {
+    log.info("Optimization is turned off");
+  }
 }
