@@ -33,8 +33,14 @@
     }
   }
   configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,MessageCollectorPlainTextToStream.PLAIN_TEXT_TO_SYSTEM_ERR);
-  configuration.put(DISABLE_INLINE,!enableInline);
-  configuration.put(DISABLE_OPTIMIZATION,!enableOptimization);
+  K2JVMCompilerArguments arguments=new K2JVMCompilerArguments();
+  try {
+    Args.parse(arguments,ArrayUtil.toStringArray(args));
+  }
+ catch (  IllegalArgumentException e) {
+    throw new BuildException(e.getMessage());
+  }
+  K2JVMCompiler.putAdvancedOptions(configuration,arguments);
   configuration.addAll(CLIConfigurationKeys.COMPILER_PLUGINS,getCompilerPlugins());
   return configuration;
 }
