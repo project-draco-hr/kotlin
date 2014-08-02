@@ -4,12 +4,14 @@
   ResolutionContext contextForReceiver=context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
   JetTypeInfo receiverTypeInfo=expressionTypingServices.getTypeInfo(receiverExpression,contextForReceiver);
   JetType receiverType=receiverTypeInfo.getType();
-  if (selectorExpression == null)   return JetTypeInfo.create(null,context.dataFlowInfo);
+  QualifierReceiver qualifierReceiver=context.trace.get(BindingContext.QUALIFIER_RECEIVER,receiverExpression);
   if (receiverType == null)   receiverType=ErrorUtils.createErrorType("Type for " + expression.getText());
   context=context.replaceDataFlowInfo(receiverTypeInfo.getDataFlowInfo());
-  JetTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(new ExpressionReceiver(receiverExpression,receiverType),expression.getOperationTokenNode(),selectorExpression,context);
+  ReceiverValue receiver=qualifierReceiver == null ? new ExpressionReceiver(receiverExpression,receiverType) : qualifierReceiver;
+  JetTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,expression.getOperationTokenNode(),selectorExpression,context);
   JetType selectorReturnType=selectorReturnTypeInfo.getType();
-  if (!(receiverType instanceof PackageType) && expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
+  resolveDeferredReceiverInQualifiedExpression(qualifierReceiver,expression,context);
+  if (expression.getOperationSign() == JetTokens.SAFE_ACCESS) {
     if (selectorReturnType != null && !KotlinBuiltIns.getInstance().isUnit(selectorReturnType)) {
       if (receiverType.isNullable()) {
         selectorReturnType=TypeUtils.makeNullable(selectorReturnType);

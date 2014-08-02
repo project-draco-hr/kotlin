@@ -4,31 +4,23 @@
   Call call=CallMaker.makePropertyCall(receiver,callOperationNode,nameExpression);
   BasicCallResolutionContext contextForVariable=BasicCallResolutionContext.create(context.replaceTraceAndCache(temporaryForVariable),call,CheckValueArgumentsMode.ENABLED);
   OverloadResolutionResults<VariableDescriptor> resolutionResult=callResolver.resolveSimpleProperty(contextForVariable);
-  JetScope receiverScope=receiver.exists() ? receiver.getType().getMemberScope() : context.scope;
-  if (resolutionResult.isSuccess()) {
-    result[0]=true;
-    if (resolutionResult.getResultingDescriptor() instanceof FakeCallableDescriptorForObject) {
-      FakeCallableDescriptorForObject fakeCallableDescriptorForObject=(FakeCallableDescriptorForObject)resolutionResult.getResultingDescriptor();
-      ClassDescriptor classDescriptor=fakeCallableDescriptorForObject.getClassDescriptor();
-      context.trace.record(REFERENCE_TARGET,nameExpression,classDescriptor);
-      checkClassObjectVisibility(classDescriptor,nameExpression,context);
-      return getExtendedClassObjectType(nameExpression,fakeCallableDescriptorForObject.getType(),classDescriptor,receiverScope);
+  boolean isLHSOfDot=JetPsiUtil.isLHSOfDot(nameExpression);
+  if (!resolutionResult.isNothing()) {
+    boolean isQualifier=isLHSOfDot && resolutionResult.isSingleResult() && resolutionResult.getResultingDescriptor() instanceof FakeCallableDescriptorForObject;
+    if (!isQualifier) {
+      result[0]=true;
+      temporaryForVariable.commit();
+      checkSuper(receiver,resolutionResult,context.trace,nameExpression);
+      return resolutionResult.isSingleResult() ? resolutionResult.getResultingDescriptor().getReturnType() : null;
     }
-    temporaryForVariable.commit();
-    checkSuper(receiver,resolutionResult,context.trace,nameExpression);
-    return resolutionResult.getResultingDescriptor().getReturnType();
   }
-  ExpressionTypingContext newContext=context.replaceScope(receiverScope);
-  TemporaryTraceAndCache temporaryForPackageOrClassObject=TemporaryTraceAndCache.create(context,"trace to resolve as package or class object",nameExpression);
-  JetType jetType=lookupPackageOrClassObject(nameExpression,newContext.replaceTraceAndCache(temporaryForPackageOrClassObject));
-  if (jetType != null) {
-    temporaryForPackageOrClassObject.commit();
-    context.trace.record(RESOLUTION_SCOPE,nameExpression,context.scope);
-    if (context.dataFlowInfo.hasTypeInfoConstraints()) {
-      context.trace.record(NON_DEFAULT_EXPRESSION_DATA_FLOW,nameExpression,context.dataFlowInfo);
-    }
+  QualifierReceiver qualifierReceiver=createQualifierReceiver(nameExpression,receiver,context);
+  if (qualifierReceiver != null) {
     result[0]=true;
-    return jetType;
+    if (!isLHSOfDot) {
+      resolveAsStandaloneExpression(qualifierReceiver,context);
+    }
+    return null;
   }
   temporaryForVariable.commit();
   result[0]=!resolutionResult.isNothing();

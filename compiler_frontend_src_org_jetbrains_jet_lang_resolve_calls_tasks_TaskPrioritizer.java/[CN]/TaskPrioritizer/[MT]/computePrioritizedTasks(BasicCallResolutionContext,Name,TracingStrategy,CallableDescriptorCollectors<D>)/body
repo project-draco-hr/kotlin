@@ -1,20 +1,17 @@
 {
-  List<Pair<JetScope,ReceiverValue>> variants=new ArrayList<Pair<JetScope,ReceiverValue>>(2);
   ReceiverValue explicitReceiver=context.call.getExplicitReceiver();
-  if (explicitReceiver.exists() && explicitReceiver.getType() instanceof PackageType) {
-    JetType receiverType=explicitReceiver.getType();
-    variants.add(Pair.create(receiverType.getMemberScope(),NO_RECEIVER));
-    ReceiverValue value=((PackageType)receiverType).getReceiverValue();
-    if (value.exists()) {
-      variants.add(Pair.create(context.scope,value));
+  ResolutionTaskHolder<D,F> result=new ResolutionTaskHolder<D,F>(context,new MyPriorityProvider<D>(context),tracing);
+  TaskPrioritizerContext<D,F> taskPrioritizerContext=new TaskPrioritizerContext<D,F>(name,result,context,context.scope,callableDescriptorCollectors);
+  if (explicitReceiver instanceof QualifierReceiver) {
+    QualifierReceiver qualifierReceiver=(QualifierReceiver)explicitReceiver;
+    doComputeTasks(NO_RECEIVER,taskPrioritizerContext.replaceScope(qualifierReceiver.getNestedClassesAndPackageMembersScope()));
+    ReceiverValue classObjectReceiver=qualifierReceiver.getClassObjectReceiver();
+    if (classObjectReceiver.exists()) {
+      doComputeTasks(classObjectReceiver,taskPrioritizerContext);
     }
   }
  else {
-    variants.add(Pair.create(context.scope,explicitReceiver));
-  }
-  ResolutionTaskHolder<D,F> result=new ResolutionTaskHolder<D,F>(context,new MyPriorityProvider<D>(context),tracing);
-  for (  Pair<JetScope,ReceiverValue> pair : variants) {
-    doComputeTasks(pair.second,new TaskPrioritizerContext<D,F>(name,result,context,pair.first,callableDescriptorCollectors));
+    doComputeTasks(explicitReceiver,taskPrioritizerContext);
   }
   return result.getTasks();
 }
