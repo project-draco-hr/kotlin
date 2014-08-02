@@ -1,2 +1,97 @@
 {
+  Rule<JsName> namesForStandardClasses=new Rule<JsName>(){
+    @Override @Nullable public JsName apply(    @NotNull DeclarationDescriptor data){
+      if (!standardClasses.isStandardObject(data)) {
+        return null;
+      }
+      return standardClasses.getStandardObjectName(data);
+    }
+  }
+;
+  Rule<JsName> memberDeclarationsInsideParentsScope=new Rule<JsName>(){
+    @Override @Nullable public JsName apply(    @NotNull DeclarationDescriptor descriptor){
+      JsScope scope=getEnclosingScope(descriptor);
+      return scope.declareFreshName(getSuggestedName(descriptor));
+    }
+  }
+;
+  Rule<JsName> constructorOrClassObjectHasTheSameNameAsTheClass=new Rule<JsName>(){
+    @Override public JsName apply(    @NotNull DeclarationDescriptor descriptor){
+      if (descriptor instanceof ConstructorDescriptor || (DescriptorUtils.isClassObject(descriptor))) {
+        return getNameForDescriptor(descriptor.getContainingDeclaration());
+      }
+      return null;
+    }
+  }
+;
+  Rule<JsName> propertyOrPropertyAccessor=new Rule<JsName>(){
+    @Override public JsName apply(    @NotNull DeclarationDescriptor descriptor){
+      PropertyDescriptor propertyDescriptor;
+      if (descriptor instanceof PropertyAccessorDescriptor) {
+        propertyDescriptor=((PropertyAccessorDescriptor)descriptor).getCorrespondingProperty();
+      }
+ else       if (descriptor instanceof PropertyDescriptor) {
+        propertyDescriptor=(PropertyDescriptor)descriptor;
+      }
+ else {
+        return null;
+      }
+      String nameFromAnnotation=getNameForAnnotatedObjectWithOverrides(propertyDescriptor);
+      if (nameFromAnnotation != null) {
+        return declarePropertyOrPropertyAccessorName(descriptor,nameFromAnnotation,false);
+      }
+      String propertyName=propertyDescriptor.getName().asString();
+      if (!isExtension(propertyDescriptor)) {
+        if (propertyDescriptor.getVisibility() == Visibilities.PRIVATE) {
+          propertyName=getMangledName(propertyDescriptor,propertyName);
+        }
+        return declarePropertyOrPropertyAccessorName(descriptor,propertyName,false);
+      }
+ else {
+        if (descriptor instanceof PropertyDescriptor) {
+          return declarePropertyOrPropertyAccessorName(descriptor,propertyName,true);
+        }
+ else {
+          String propertyJsName=getNameForDescriptor(propertyDescriptor).getIdent();
+          boolean isGetter=descriptor instanceof PropertyGetterDescriptor;
+          String accessorName=Namer.getNameForAccessor(propertyJsName,isGetter,false);
+          return declarePropertyOrPropertyAccessorName(descriptor,accessorName,false);
+        }
+      }
+    }
+  }
+;
+  Rule<JsName> predefinedObjectsHasUnobfuscatableNames=new Rule<JsName>(){
+    @Override public JsName apply(    @NotNull DeclarationDescriptor descriptor){
+      if (descriptor instanceof CallableMemberDescriptor && !((CallableMemberDescriptor)descriptor).getOverriddenDescriptors().isEmpty()) {
+        return null;
+      }
+      String name=getNameForAnnotatedObjectWithOverrides(descriptor);
+      if (name != null)       return getEnclosingScope(descriptor).declareName(name);
+      return null;
+    }
+  }
+;
+  Rule<JsName> overridingDescriptorsReferToOriginalName=new Rule<JsName>(){
+    @Override public JsName apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!(descriptor instanceof FunctionDescriptor)) {
+        return null;
+      }
+      FunctionDescriptor overriddenDescriptor=getOverriddenDescriptor((FunctionDescriptor)descriptor);
+      if (overriddenDescriptor == null) {
+        return null;
+      }
+      JsScope scope=getEnclosingScope(descriptor);
+      JsName result=getNameForDescriptor(overriddenDescriptor);
+      scope.declareName(result.getIdent());
+      return result;
+    }
+  }
+;
+  addRule(namesForStandardClasses);
+  addRule(constructorOrClassObjectHasTheSameNameAsTheClass);
+  addRule(propertyOrPropertyAccessor);
+  addRule(predefinedObjectsHasUnobfuscatableNames);
+  addRule(overridingDescriptorsReferToOriginalName);
+  addRule(memberDeclarationsInsideParentsScope);
 }
