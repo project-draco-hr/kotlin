@@ -25,13 +25,11 @@
   arguments.noJdkAnnotations=true;
   arguments.annotations=getFullAnnotationsPath(log,annotationPaths);
   log.info("Using kotlin annotations from " + arguments.annotations);
-  arguments.noInline=!CompilerArgumentsUtil.optionToBooleanFlag(inline,true);
-  arguments.noOptimize=!CompilerArgumentsUtil.optionToBooleanFlag(optimize,true);
-  if (!CompilerArgumentsUtil.checkOption(inline)) {
-    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("inline",inline));
+  try {
+    Args.parse(arguments,ArrayUtil.toStringArray(args));
   }
-  if (!CompilerArgumentsUtil.checkOption(optimize)) {
-    throw new MojoExecutionException(CompilerArgumentsUtil.getWrongCheckOptionErrorMessage("optimize",optimize));
+ catch (  IllegalArgumentException e) {
+    throw new MojoExecutionException(e.getMessage());
   }
   if (arguments.noInline) {
     log.info("Method inlining is turned off");
