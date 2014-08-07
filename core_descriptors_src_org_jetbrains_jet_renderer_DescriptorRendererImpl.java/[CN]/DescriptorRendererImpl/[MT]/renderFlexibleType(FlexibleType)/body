@@ -1,0 +1,28 @@
+{
+  JetType lower=type.getLowerBound();
+  JetType upper=type.getUpperBound();
+  String lowerRendered=renderDefaultType(lower);
+  String upperRendered=renderDefaultType(upper);
+  if (differsOnlyInNullability(lowerRendered,upperRendered)) {
+    return lowerRendered + "!";
+  }
+  String kotlinPrefix="kotlin.";
+  String mutablePrefix="Mutable";
+  if (lowerRendered.startsWith(kotlinPrefix + mutablePrefix)) {
+    String lowerWithoutPrefix=lowerRendered.substring(mutablePrefix.length() + kotlinPrefix.length());
+    if (differsOnlyInNullability(lowerWithoutPrefix,upperRendered.substring(kotlinPrefix.length()))) {
+      return kotlinPrefix + "(" + mutablePrefix+ ")"+ lowerWithoutPrefix+ "!";
+    }
+  }
+ else {
+    String arrayPrefix="kotlin.Array<";
+    String covariantArrayPrefix="kotlin.Array<out ";
+    if (lowerRendered.startsWith(arrayPrefix) && upperRendered.startsWith(covariantArrayPrefix)) {
+      String lowerWithoutPrefix=lowerRendered.substring(arrayPrefix.length());
+      if (differsOnlyInNullability(lowerWithoutPrefix,upperRendered.substring(covariantArrayPrefix.length()))) {
+        return arrayPrefix + "(out) " + lowerWithoutPrefix+ "!";
+      }
+    }
+  }
+  return "(" + renderType(lower) + ".."+ renderType(upper)+ ")";
+}
