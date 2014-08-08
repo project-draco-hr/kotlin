@@ -3,20 +3,22 @@
   String defaultPathToJsFile=getDefaultPathToJsFile(project);
   boolean showPathToJarPanel=needToChooseJarPath(project);
   boolean showPathToJsFilePanel=needToChooseJsFilePath(project);
-  List<Module> nonConfiguredModules=ConfigureKotlinInProjectUtils.getNonConfiguredModules(project,this);
+  List<Module> nonConfiguredModules=!ApplicationManager.getApplication().isUnitTestMode() ? ConfigureKotlinInProjectUtils.getNonConfiguredModules(project,this) : Arrays.asList(ModuleManager.getInstance(project).getModules());
+  List<Module> modulesToConfigure=nonConfiguredModules;
+  String copyLibraryIntoPath=null;
+  String jsFilesIntoPath=null;
   if (nonConfiguredModules.size() > 1 || showPathToJarPanel || showPathToJsFilePanel) {
     CreateJavaScriptLibraryDialogWithModules dialog=new CreateJavaScriptLibraryDialogWithModules(project,nonConfiguredModules,defaultPathToJar,defaultPathToJsFile,showPathToJarPanel,showPathToJsFilePanel);
-    dialog.show();
-    if (!dialog.isOK())     return;
-    for (    Module module : dialog.getModulesToConfigure()) {
-      configureModuleWithLibrary(module,defaultPathToJar,dialog.getCopyLibraryIntoPath());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.show();
+      if (!dialog.isOK())       return;
     }
-    configureModuleWithJsFile(defaultPathToJsFile,dialog.getCopyJsIntoPath());
+    modulesToConfigure=dialog.getModulesToConfigure();
+    copyLibraryIntoPath=dialog.getCopyLibraryIntoPath();
+    jsFilesIntoPath=dialog.getCopyJsIntoPath();
   }
- else {
-    for (    Module module : nonConfiguredModules) {
-      configureModuleWithLibrary(module,defaultPathToJar,null);
-    }
-    configureModuleWithJsFile(defaultPathToJsFile,null);
+  for (  Module module : modulesToConfigure) {
+    configureModuleWithLibrary(module,defaultPathToJar,copyLibraryIntoPath);
   }
+  configureModuleWithJsFile(defaultPathToJsFile,jsFilesIntoPath);
 }
