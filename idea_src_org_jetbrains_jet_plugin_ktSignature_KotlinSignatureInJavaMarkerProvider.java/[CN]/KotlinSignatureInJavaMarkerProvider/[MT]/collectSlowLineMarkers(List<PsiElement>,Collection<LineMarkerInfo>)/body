@@ -23,10 +23,11 @@
     if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
       continue;
     }
-    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,member,bindingContext);
+    PsiModifierListOwner annotationOwner=KotlinSignatureUtil.getAnnotationOwner(element);
+    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,annotationOwner);
     if (memberDescriptor == null)     continue;
     List<String> errors=bindingContext.get(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
-    boolean hasSignatureAnnotation=KotlinSignatureUtil.findKotlinSignatureAnnotation(element) != null;
+    boolean hasSignatureAnnotation=KotlinSignatureUtil.findKotlinSignatureAnnotation(annotationOwner) != null;
     if (errors != null || hasSignatureAnnotation) {
       result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
     }
