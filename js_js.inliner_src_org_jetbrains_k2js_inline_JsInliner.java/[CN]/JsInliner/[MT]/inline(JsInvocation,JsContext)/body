@@ -1,2 +1,24 @@
 {
+  JsInliningContext inliningContext=getInliningContext();
+  FunctionContext functionContext=getFunctionContext();
+  functionContext.declareFunctionConstructorCalls(call.getArguments());
+  InlineableResult inlineableResult=getInlineableCallReplacement(call,inliningContext);
+  JsStatement inlineableBody=inlineableResult.getInlineableBody();
+  JsExpression resultExpression=inlineableResult.getResultExpression();
+  StatementContext statementContext=inliningContext.getStatementContext();
+  if (resultExpression == null) {
+    statementContext.removeCurrentStatement();
+  }
+ else {
+    context.replaceMe(resultExpression);
+  }
+  statementContext.shiftCurrentStatementForward();
+  InsertionPoint<JsStatement> insertionPoint=statementContext.getInsertionPoint();
+  if (inlineableBody instanceof JsBlock) {
+    JsBlock block=(JsBlock)inlineableBody;
+    insertionPoint.insertAllAfter(block.getStatements());
+  }
+ else {
+    insertionPoint.insertAfter(inlineableBody);
+  }
 }
