@@ -7,14 +7,11 @@
     files.add(new File(stdlibDir,file).getPath());
   }
   for (  EcmaVersion version : ecmaVersions) {
-    K2JSCompiler compiler=new K2JSCompiler();
-    K2JSCompilerArguments arguments=new K2JSCompilerArguments();
-    arguments.outputFile=getOutputFilePath(getTestName(false) + ".compiler.kt",version);
-    arguments.freeArgs=files;
-    arguments.verbose=true;
-    arguments.libraryFiles=new String[]{generatedJsDefinitionsDir};
-    System.out.println("Compiling with version: " + version + " to: "+ arguments.outputFile);
-    ExitCode answer=compiler.exec(System.out,MessageRenderer.PLAIN,arguments);
+    String outputFile=getOutputFilePath(getTestName(false) + ".compiler.kt",version);
+    System.out.println("Compiling with version: " + version + " to: "+ outputFile);
+    List<String> args=new ArrayList<String>(Arrays.asList("-output",outputFile,"-library-files",generatedJsDefinitionsDir,"-verbose"));
+    args.addAll(files);
+    ExitCode answer=new K2JSCompiler().exec(System.out,ArrayUtil.toStringArray(args));
     assertEquals("Compile failed",ExitCode.OK,answer);
   }
 }
