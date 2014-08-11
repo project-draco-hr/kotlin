@@ -1,0 +1,32 @@
+{
+  loadFileByFullPath(filename);
+  try {
+    FqName fqName=ScriptNameUtil.classNameForScript(myFiles.getPsiFile().getScript());
+    Class<?> scriptClass=generateClass(fqName.asString());
+    Constructor constructor=getTheOnlyConstructor(scriptClass);
+    Object scriptInstance=constructor.newInstance(myFiles.getScriptParameterValues().toArray());
+    assertFalse("expecting at least one expectation",myFiles.getExpectedValues().isEmpty());
+    for (    Pair<String,String> nameValue : myFiles.getExpectedValues()) {
+      String fieldName=nameValue.first;
+      String expectedValue=nameValue.second;
+      if (expectedValue.equals("<nofield>")) {
+        try {
+          scriptClass.getDeclaredField(fieldName);
+          fail("must have no field " + fieldName);
+        }
+ catch (        NoSuchFieldException e) {
+          continue;
+        }
+      }
+      Field field=scriptClass.getDeclaredField(fieldName);
+      field.setAccessible(true);
+      Object result=field.get(scriptInstance);
+      String resultString=result != null ? result.toString() : "null";
+      assertEquals("comparing field " + fieldName,expectedValue,resultString);
+    }
+  }
+ catch (  Throwable e) {
+    System.out.println(generateToText());
+    throw UtilsPackage.rethrow(e);
+  }
+}
