@@ -10,21 +10,18 @@
   if (isEnumEntry(memberDescriptor)) {
     return NO_FLAG_PACKAGE_PRIVATE;
   }
+  if (memberDescriptor instanceof ConstructorDescriptor && isAnonymousObject(memberDescriptor.getContainingDeclaration())) {
+    return NO_FLAG_PACKAGE_PRIVATE;
+  }
   if (memberVisibility != Visibilities.PRIVATE) {
     return null;
   }
   if (memberDescriptor instanceof ConstructorDescriptor) {
-    if (isAnonymousObject(containingDeclaration)) {
-      return NO_FLAG_PACKAGE_PRIVATE;
-    }
     ClassKind kind=((ClassDescriptor)containingDeclaration).getKind();
-    if (kind == ClassKind.OBJECT) {
+    if (kind == ClassKind.OBJECT || kind == ClassKind.ENUM_ENTRY) {
       return NO_FLAG_PACKAGE_PRIVATE;
     }
- else     if (kind == ClassKind.ENUM_ENTRY) {
-      return NO_FLAG_PACKAGE_PRIVATE;
-    }
- else     if (kind == ClassKind.ENUM_CLASS) {
+    if (kind == ClassKind.ENUM_CLASS) {
       return ACC_PROTECTED;
     }
   }

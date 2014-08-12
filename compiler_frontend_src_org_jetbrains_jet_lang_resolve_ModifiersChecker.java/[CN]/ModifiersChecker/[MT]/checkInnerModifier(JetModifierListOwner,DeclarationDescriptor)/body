@@ -1,13 +1,15 @@
 {
-  JetModifierList modifierList=modifierListOwner.getModifierList();
-  if (modifierList != null && modifierList.hasModifier(INNER_KEYWORD)) {
+  if (modifierListOwner.hasModifier(INNER_KEYWORD)) {
     if (isIllegalInner(descriptor)) {
-      checkIllegalInThisContextModifiers(modifierList,Collections.singletonList(INNER_KEYWORD));
+      checkIllegalInThisContextModifiers(modifierListOwner.getModifierList(),Collections.singletonList(INNER_KEYWORD));
     }
+    return;
   }
- else {
-    if (modifierListOwner instanceof JetClass && !(modifierListOwner instanceof JetEnumEntry) && isIllegalNestedClass(descriptor)) {
-      trace.report(Errors.NESTED_CLASS_NOT_ALLOWED.on((JetClass)modifierListOwner));
+  if (modifierListOwner instanceof JetClass && !(modifierListOwner instanceof JetEnumEntry)) {
+    JetClass aClass=(JetClass)modifierListOwner;
+    boolean localEnumError=aClass.isLocal() && aClass.isEnum();
+    if (!localEnumError && isIllegalNestedClass(descriptor)) {
+      trace.report(NESTED_CLASS_NOT_ALLOWED.on(aClass));
     }
   }
 }
