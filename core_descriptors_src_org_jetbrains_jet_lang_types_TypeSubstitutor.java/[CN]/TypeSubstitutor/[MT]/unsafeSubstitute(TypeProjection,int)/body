@@ -2,7 +2,7 @@
   assertRecursionDepth(recursionDepth,originalProjection,substitution);
   JetType type=originalProjection.getType();
   Variance originalProjectionKind=originalProjection.getProjectionKind();
-  if (type instanceof FlexibleType) {
+  if (type instanceof FlexibleType && !TypesPackage.isCustomTypeVariable(type)) {
     FlexibleType flexibleType=(FlexibleType)type;
     TypeProjection substitutedLower=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getLowerBound()),recursionDepth + 1);
     TypeProjection substitutedUpper=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getUpperBound()),recursionDepth + 1);
@@ -18,8 +18,15 @@ case OUT_IN_IN_POSITION:
 case IN_IN_OUT_POSITION:
     return TypeUtils.makeStarProjection(typeParameter);
 case NO_CONFLICT:
+  JetType substitutedType;
+if (TypesPackage.isCustomTypeVariable(type)) {
+  CustomTypeVariable typeVariable=(CustomTypeVariable)type;
+  substitutedType=typeVariable.substitutionResult(replacement.getType());
+}
+ else {
   boolean resultingIsNullable=type.isNullable() || replacement.getType().isNullable();
-JetType substitutedType=TypeUtils.makeNullableAsSpecified(replacement.getType(),resultingIsNullable);
+  substitutedType=TypeUtils.makeNullableAsSpecified(replacement.getType(),resultingIsNullable);
+}
 Variance resultingProjectionKind=combine(originalProjectionKind,replacement.getProjectionKind());
 return new TypeProjectionImpl(resultingProjectionKind,substitutedType);
 default :
