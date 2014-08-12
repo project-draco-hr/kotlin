@@ -1,19 +1,13 @@
 {
   CompilerConfiguration configuration=environment.getConfiguration();
-  File incrementalCacheDir=configuration.get(JVMConfigurationKeys.INCREMENTAL_CACHE_BASE_DIR);
-  IncrementalCacheProvider incrementalCacheProvider=IncrementalCacheProvider.OBJECT$.getInstance();
+  IncrementalCacheProvider incrementalCacheProvider=configuration.get(JVMConfigurationKeys.INCREMENTAL_CACHE_PROVIDER);
   Collection<FqName> packagesWithRemovedFiles;
-  if (incrementalCacheDir == null || moduleId == null || incrementalCacheProvider == null) {
+  if (moduleId == null || incrementalCacheProvider == null) {
     packagesWithRemovedFiles=null;
   }
  else {
-    IncrementalCache incrementalCache=incrementalCacheProvider.getIncrementalCache(incrementalCacheDir);
-    try {
-      packagesWithRemovedFiles=IncrementalPackage.getPackagesWithRemovedFiles(incrementalCache,moduleId,environment.getSourceFiles());
-    }
-  finally {
-      incrementalCache.close();
-    }
+    IncrementalCache incrementalCache=incrementalCacheProvider.getIncrementalCache(moduleId);
+    packagesWithRemovedFiles=IncrementalPackage.getPackagesWithRemovedFiles(incrementalCache,moduleId,environment.getSourceFiles());
   }
   BindingTraceContext diagnosticHolder=new BindingTraceContext();
   GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,Progress.DEAF,exhaust.getModuleDescriptor(),exhaust.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),packagesWithRemovedFiles,moduleId,diagnosticHolder,outputDirectory);

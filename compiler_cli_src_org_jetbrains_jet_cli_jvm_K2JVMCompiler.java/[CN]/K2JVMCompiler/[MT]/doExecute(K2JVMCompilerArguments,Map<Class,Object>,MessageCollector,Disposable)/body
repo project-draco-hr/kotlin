@@ -2,6 +2,10 @@
   KotlinPaths paths=arguments.kotlinHome != null ? new KotlinPathsFromHomeDir(new File(arguments.kotlinHome)) : PathUtil.getKotlinPathsForCompiler();
   messageCollector.report(CompilerMessageSeverity.LOGGING,"Using Kotlin home directory " + paths.getHomePath(),CompilerMessageLocation.NO_LOCATION);
   CompilerConfiguration configuration=new CompilerConfiguration();
+  IncrementalCacheProvider incrementalCacheProvider=(IncrementalCacheProvider)services.get(IncrementalCacheProvider.class);
+  if (incrementalCacheProvider != null) {
+    configuration.put(JVMConfigurationKeys.INCREMENTAL_CACHE_PROVIDER,incrementalCacheProvider);
+  }
   try {
     configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(paths,arguments));
     configuration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,getAnnotationsPath(paths,arguments));
