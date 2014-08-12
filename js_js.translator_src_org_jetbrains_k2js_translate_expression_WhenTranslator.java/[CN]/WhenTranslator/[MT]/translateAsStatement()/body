@@ -1,0 +1,29 @@
+{
+  JsIf currentIf=null;
+  JsIf resultIf=null;
+  for (  JetWhenEntry entry : whenExpression.getEntries()) {
+    JsBlock statementBlock=new JsBlock();
+    JsStatement statement=translateEntryExpression(entry,context(),statementBlock);
+    if (resultIf == null && entry.isElse()) {
+      context().addStatementsToCurrentBlockFrom(statementBlock);
+      return statement;
+    }
+    statement=JsAstUtils.mergeStatementInBlockIfNeeded(statement,statementBlock);
+    if (resultIf == null) {
+      currentIf=new JsIf(translateConditions(entry,context()),statement);
+      resultIf=currentIf;
+    }
+ else {
+      if (entry.isElse()) {
+        currentIf.setElseStatement(statement);
+        return resultIf;
+      }
+      JsBlock conditionsBlock=new JsBlock();
+      JsIf nextIf=new JsIf(translateConditions(entry,context().innerBlock(conditionsBlock)),statement);
+      JsStatement statementToAdd=JsAstUtils.mergeStatementInBlockIfNeeded(nextIf,conditionsBlock);
+      currentIf.setElseStatement(statementToAdd);
+      currentIf=nextIf;
+    }
+  }
+  return resultIf;
+}

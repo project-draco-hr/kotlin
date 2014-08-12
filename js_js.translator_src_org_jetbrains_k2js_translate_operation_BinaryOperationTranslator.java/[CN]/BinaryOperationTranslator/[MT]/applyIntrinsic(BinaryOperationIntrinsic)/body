@@ -1,3 +1,15 @@
 {
-  return intrinsic.apply(expression,translateLeftExpression(context(),expression),translateRightExpression(context(),expression),context());
+  JsExpression leftExpression=translateLeftExpression(context(),expression);
+  JsBlock rightBlock=new JsBlock();
+  JsExpression rightExpression=translateRightExpression(context(),expression,rightBlock);
+  if (rightBlock.isEmpty()) {
+    return intrinsic.apply(expression,leftExpression,rightExpression,context());
+  }
+  if (TranslationUtils.isCacheNeeded(leftExpression)) {
+    TemporaryVariable temporaryVariable=context().declareTemporary(null);
+    context().addStatementToCurrentBlock(JsAstUtils.assignment(temporaryVariable.reference(),leftExpression).makeStmt());
+    leftExpression=temporaryVariable.reference();
+  }
+  context().addStatementsToCurrentBlockFrom(rightBlock);
+  return intrinsic.apply(expression,leftExpression,rightExpression,context());
 }
