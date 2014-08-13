@@ -1,0 +1,14 @@
+{
+  try {
+    ByteArrayOutputStream outStream=new ByteArrayOutputStream();
+    Class<?> compilerClass=getCompilerClass();
+    Object compilerObject=compilerClass.newInstance();
+    Method execMethod=compilerClass.getMethod("exec",PrintStream.class,String[].class);
+    String newClasspath=classpath.contains(sourcesPath) ? classpath : classpath + File.pathSeparator + sourcesPath;
+    Enum<?> invocationResult=(Enum<?>)execMethod.invoke(compilerObject,new PrintStream(outStream),new String[]{sourcesPath,"-d",outDir.getAbsolutePath(),"-classpath",newClasspath});
+    assertEquals(new String(outStream.toByteArray()),ExitCode.OK.name(),invocationResult.name());
+  }
+ catch (  Throwable e) {
+    throw UtilsPackage.rethrow(e);
+  }
+}
