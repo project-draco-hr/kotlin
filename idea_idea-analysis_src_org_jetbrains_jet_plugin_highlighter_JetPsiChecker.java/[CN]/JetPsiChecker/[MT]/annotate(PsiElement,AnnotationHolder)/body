@@ -1,0 +1,18 @@
+{
+  if (!(ProjectRootsUtil.isInSource(element) || element.getContainingFile() instanceof JetCodeFragment) || JetModuleTypeManager.getInstance().isKtFileInGradleProjectInWrongFolder(element)) {
+    return;
+  }
+  for (  HighlightingVisitor visitor : getBeforeAnalysisVisitors(holder)) {
+    element.accept(visitor);
+  }
+  JetFile file=(JetFile)element.getContainingFile();
+  AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResults(file);
+  if (analyzeExhaust.isError()) {
+    throw new ProcessCanceledException(analyzeExhaust.getError());
+  }
+  BindingContext bindingContext=analyzeExhaust.getBindingContext();
+  for (  HighlightingVisitor visitor : getAfterAnalysisVisitor(holder,bindingContext)) {
+    element.accept(visitor);
+  }
+  annotateElement(element,holder,bindingContext.getDiagnostics());
+}

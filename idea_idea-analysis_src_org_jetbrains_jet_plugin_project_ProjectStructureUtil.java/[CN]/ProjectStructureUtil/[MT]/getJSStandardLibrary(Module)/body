@@ -1,0 +1,21 @@
+{
+  return ApplicationManager.getApplication().runReadAction(new Computable<Library>(){
+    @Override public Library compute(){
+      final Ref<Library> jsLibrary=Ref.create();
+      ModuleRootManager.getInstance(module).orderEntries().librariesOnly().forEachLibrary(new Processor<Library>(){
+        @Override public boolean process(        Library library){
+          List<VirtualFile> classes=Arrays.asList(library.getFiles(OrderRootType.CLASSES));
+          boolean detected=JsLibraryStdDetectionUtil.getJsLibraryStdVersion(classes) != null;
+          if (detected) {
+            jsLibrary.set(library);
+            return false;
+          }
+          return true;
+        }
+      }
+);
+      return jsLibrary.get();
+    }
+  }
+);
+}

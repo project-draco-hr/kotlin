@@ -1,0 +1,30 @@
+{
+  if (!isDebugInfoEnabled() || !ProjectRootsUtil.isInSource(element) || JetModuleTypeManager.getInstance().isKtFileInGradleProjectInWrongFolder(element)) {
+    return;
+  }
+  if (element instanceof JetFile && !(element instanceof JetCodeFragment)) {
+    JetFile file=(JetFile)element;
+    try {
+      BindingContext bindingContext=ResolvePackage.getBindingContext(file);
+      DebugInfoUtil.markDebugAnnotations(file,bindingContext,new DebugInfoUtil.DebugInfoReporter(){
+        @Override public void reportElementWithErrorType(        @NotNull JetReferenceExpression expression){
+          holder.createErrorAnnotation(expression,"[DEBUG] Resolved to error element").setTextAttributes(JetHighlightingColors.RESOLVED_TO_ERROR);
+        }
+        @Override public void reportMissingUnresolved(        @NotNull JetReferenceExpression expression){
+          holder.createErrorAnnotation(expression,"[DEBUG] Reference is not resolved to anything, but is not marked unresolved").setTextAttributes(JetHighlightingColors.DEBUG_INFO);
+        }
+        @Override public void reportUnresolvedWithTarget(        @NotNull JetReferenceExpression expression,        @NotNull String target){
+          holder.createErrorAnnotation(expression,"[DEBUG] Reference marked as unresolved is actually resolved to " + target).setTextAttributes(JetHighlightingColors.DEBUG_INFO);
+        }
+      }
+);
+    }
+ catch (    ProcessCanceledException e) {
+      throw e;
+    }
+catch (    Throwable e) {
+      holder.createErrorAnnotation(element,e.getClass().getCanonicalName() + ": " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+}
