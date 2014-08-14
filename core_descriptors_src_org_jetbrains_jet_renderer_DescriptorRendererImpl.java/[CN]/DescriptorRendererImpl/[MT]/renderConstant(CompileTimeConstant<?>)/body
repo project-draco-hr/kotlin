@@ -4,12 +4,15 @@
       return value.toString();
     }
     @Override public String visitArrayValue(    ArrayValue value,    Void data){
-      return "{" + StringUtil.join(value.getValue(),new Function<CompileTimeConstant<?>,String>(){
-        @Override public String fun(        CompileTimeConstant<?> constant){
+      List<CompileTimeConstant<?>> elements=value.getValue();
+      if (elements.isEmpty())       return "{}";
+      List<String> renderedElements=KotlinPackage.map(elements,new Function1<CompileTimeConstant<?>,String>(){
+        @Override public String invoke(        CompileTimeConstant<?> constant){
           return renderConstant(constant);
         }
       }
-,", ") + "}";
+);
+      return "{" + StringUtil.join(renderedElements,", ") + "}";
     }
     @Override public String visitAnnotationValue(    AnnotationValue value,    Void data){
       return renderAnnotation(value.getValue());
