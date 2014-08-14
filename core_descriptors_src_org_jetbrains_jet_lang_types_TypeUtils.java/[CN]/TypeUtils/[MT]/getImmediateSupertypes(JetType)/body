@@ -1,5 +1,13 @@
 {
-  List<JetType> result=Lists.newArrayList();
-  collectImmediateSupertypes(type,result);
+  boolean isNullable=type.isNullable();
+  TypeSubstitutor substitutor=TypeSubstitutor.create(type);
+  Collection<JetType> originalSupertypes=type.getConstructor().getSupertypes();
+  List<JetType> result=new ArrayList<JetType>(originalSupertypes.size());
+  for (  JetType supertype : originalSupertypes) {
+    JetType substitutedType=substitutor.substitute(supertype,Variance.INVARIANT);
+    if (substitutedType != null) {
+      result.add(makeNullableIfNeeded(substitutedType,isNullable));
+    }
+  }
   return result;
 }
