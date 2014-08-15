@@ -1,8 +1,20 @@
 {
-  checkForLoadErrorsAndCompare(javaPackage,bindingContext,new Runnable(){
-    @Override public void run(){
-      validateAndCompareDescriptorWithFile(javaPackage,configuration,txtFile);
-    }
+  boolean fail=false;
+  try {
+    ExpectedLoadErrorsUtil.checkForLoadErrors(javaPackage,bindingContext);
   }
-);
+ catch (  ComparisonFailure e) {
+    System.err.println("Expected: " + e.getExpected());
+    System.err.println("Actual  : " + e.getActual());
+    e.printStackTrace();
+    fail=true;
+  }
+catch (  AssertionError e) {
+    e.printStackTrace();
+    fail=true;
+  }
+  validateAndCompareDescriptorWithFile(javaPackage,configuration,txtFile);
+  if (fail) {
+    fail("See error above");
+  }
 }
