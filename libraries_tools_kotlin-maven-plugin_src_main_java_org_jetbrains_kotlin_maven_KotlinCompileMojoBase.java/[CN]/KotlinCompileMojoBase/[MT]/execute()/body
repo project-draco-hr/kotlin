@@ -1,5 +1,5 @@
 {
-  getLog().info("Kotlin Compiler version " + KotlinVersion.VERSION);
+  LOG.info("Kotlin Compiler version " + KotlinVersion.VERSION);
   List<String> sources=getSources();
   if (sources != null && sources.size() > 0) {
     boolean sourcesExists=false;
@@ -10,31 +10,30 @@
       }
     }
     if (!sourcesExists) {
-      getLog().warn("No sources found skipping Kotlin compile");
+      LOG.warn("No sources found skipping Kotlin compile");
       return;
     }
   }
-  CommonCompilerArguments arguments=createCompilerArguments();
+  A arguments=createCompilerArguments();
   configureCompilerArguments(arguments);
-  CLICompiler compiler=createCompiler();
+  CLICompiler<A> compiler=createCompiler();
   printCompilerArgumentsIfDebugEnabled(arguments,compiler);
-  final Log log=getLog();
   MessageCollector messageCollector=new MessageCollector(){
     @Override public void report(    @NotNull CompilerMessageSeverity severity,    @NotNull String message,    @NotNull CompilerMessageLocation location){
       String path=location.getPath();
       String position=path == null ? "" : path + ": (" + (location.getLine() + ", " + location.getColumn())+ ") ";
       String text=position + message;
       if (CompilerMessageSeverity.VERBOSE.contains(severity)) {
-        log.debug(text);
+        LOG.debug(text);
       }
  else       if (CompilerMessageSeverity.ERRORS.contains(severity)) {
-        log.error(text);
+        LOG.error(text);
       }
  else       if (severity == CompilerMessageSeverity.INFO) {
-        log.info(text);
+        LOG.info(text);
       }
  else {
-        log.warn(text);
+        LOG.warn(text);
       }
     }
   }

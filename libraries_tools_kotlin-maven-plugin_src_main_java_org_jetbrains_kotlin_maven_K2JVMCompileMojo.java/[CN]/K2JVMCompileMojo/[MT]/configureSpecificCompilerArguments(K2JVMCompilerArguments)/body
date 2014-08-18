@@ -1,0 +1,36 @@
+{
+  LOG.info("Classes directory is " + output);
+  arguments.destination=output;
+  arguments.noStdlib=true;
+  ArrayList<String> classpathList=new ArrayList<String>();
+  if (module != null) {
+    LOG.info("Compiling Kotlin module " + module);
+    arguments.module=module;
+  }
+ else {
+    classpathList.addAll(getSources());
+  }
+  classpathList.addAll(classpath);
+  if (classpathList.remove(output)) {
+    LOG.debug("Removed target directory from compiler classpath (" + output + ")");
+  }
+  if (classpathList.size() > 0) {
+    String classPathString=join(classpathList,File.pathSeparator);
+    LOG.info("Classpath: " + classPathString);
+    arguments.classpath=classPathString;
+  }
+  LOG.info("Classes directory is " + output);
+  arguments.destination=output;
+  arguments.noJdkAnnotations=true;
+  arguments.annotations=getFullAnnotationsPath(LOG,annotationPaths);
+  LOG.info("Using kotlin annotations from " + arguments.annotations);
+  try {
+    Args.parse(arguments,ArrayUtil.toStringArray(args));
+  }
+ catch (  IllegalArgumentException e) {
+    throw new MojoExecutionException(e.getMessage());
+  }
+  if (arguments.noOptimize) {
+    LOG.info("Optimization is turned off");
+  }
+}

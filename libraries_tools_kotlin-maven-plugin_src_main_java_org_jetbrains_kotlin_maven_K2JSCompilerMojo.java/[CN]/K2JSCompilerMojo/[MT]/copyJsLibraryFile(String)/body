@@ -1,11 +1,13 @@
 {
   try {
-    outputKotlinJSDir.mkdirs();
     final InputStream inputStream=MetaInfServices.loadClasspathResource(jsLib);
     if (inputStream == null) {
-      System.out.println("WARNING: Could not find " + jsLib + " on the classpath!");
+      LOG.warn("Could not find " + jsLib + " on the classpath!");
     }
  else {
+      if (!outputKotlinJSDir.exists() && !outputKotlinJSDir.mkdirs()) {
+        throw new MojoExecutionException("Could not create output directory '" + outputKotlinJSDir + "'.");
+      }
       InputSupplier<InputStream> inputSupplier=new InputSupplier<InputStream>(){
         @Override public InputStream getInput() throws IOException {
           return inputStream;
