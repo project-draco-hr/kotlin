@@ -10,13 +10,22 @@
   Type methodOwner=method.getOwner();
   v.load(0,methodOwner);
   int mask=0;
+  List<Integer> masks=new ArrayList<Integer>(1);
   for (  ValueParameterDescriptor parameterDescriptor : constructorDescriptor.getValueParameters()) {
     Type paramType=state.getTypeMapper().mapType(parameterDescriptor.getType());
     pushDefaultValueOnStack(paramType,v);
-    mask|=(1 << parameterDescriptor.getIndex());
+    int i=parameterDescriptor.getIndex();
+    if (i != 0 && i % Integer.SIZE == 0) {
+      masks.add(mask);
+      mask=0;
+    }
+    mask|=(1 << (i % Integer.SIZE));
   }
-  v.iconst(mask);
-  String desc=method.getAsmMethod().getDescriptor().replace(")","I)");
+  masks.add(mask);
+  for (  int m : masks) {
+    v.iconst(m);
+  }
+  String desc=JetTypeMapper.getDefaultDescriptor(method.getAsmMethod(),false);
   v.invokespecial(methodOwner.getInternalName(),"<init>",desc,false);
   v.areturn(Type.VOID_TYPE);
   endVisit(mv,"default constructor for " + methodOwner.getInternalName(),null);

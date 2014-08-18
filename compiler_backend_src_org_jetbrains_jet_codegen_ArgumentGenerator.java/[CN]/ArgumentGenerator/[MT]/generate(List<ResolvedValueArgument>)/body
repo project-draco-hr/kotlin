@@ -1,13 +1,20 @@
 {
+  List<Integer> masks=new ArrayList<Integer>(1);
+  boolean maskIsNeeded=false;
   int mask=0;
   int n=valueArguments.size();
   for (int i=0; i < n; i++) {
+    if (i != 0 && i % Integer.SIZE == 0) {
+      masks.add(mask);
+      mask=0;
+    }
     ResolvedValueArgument argument=valueArguments.get(i);
     if (argument instanceof ExpressionValueArgument) {
       generateExpression(i,(ExpressionValueArgument)argument);
     }
  else     if (argument instanceof DefaultValueArgument) {
-      mask|=1 << i;
+      maskIsNeeded=true;
+      mask|=1 << (i % Integer.SIZE);
       generateDefault(i,(DefaultValueArgument)argument);
     }
  else     if (argument instanceof VarargValueArgument) {
@@ -17,5 +24,9 @@
       generateOther(i,argument);
     }
   }
-  return mask;
+  if (!maskIsNeeded) {
+    return Collections.emptyList();
+  }
+  masks.add(mask);
+  return masks;
 }
