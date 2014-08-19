@@ -11,21 +11,11 @@
   }
   String kotlinPrefix="kotlin.";
   String mutablePrefix="Mutable";
-  if (lowerRendered.startsWith(kotlinPrefix + mutablePrefix)) {
-    String lowerWithoutPrefix=lowerRendered.substring(mutablePrefix.length() + kotlinPrefix.length());
-    if (differsOnlyInNullability(lowerWithoutPrefix,upperRendered.substring(kotlinPrefix.length()))) {
-      return kotlinPrefix + "(" + mutablePrefix+ ")"+ lowerWithoutPrefix+ "!";
-    }
-  }
- else {
-    String arrayPrefix="kotlin.Array<";
-    String covariantArrayPrefix="kotlin.Array<out ";
-    if (lowerRendered.startsWith(arrayPrefix) && upperRendered.startsWith(covariantArrayPrefix)) {
-      String lowerWithoutPrefix=lowerRendered.substring(arrayPrefix.length());
-      if (differsOnlyInNullability(lowerWithoutPrefix,upperRendered.substring(covariantArrayPrefix.length()))) {
-        return arrayPrefix + "(out) " + lowerWithoutPrefix+ "!";
-      }
-    }
-  }
+  String simpleCollection=replacePrefixes(lowerRendered,kotlinPrefix + mutablePrefix,upperRendered,kotlinPrefix,kotlinPrefix + "(" + mutablePrefix+ ")");
+  if (simpleCollection != null)   return simpleCollection;
+  String mutableEntry=replacePrefixes(lowerRendered,kotlinPrefix + "MutableMap.MutableEntry",upperRendered,kotlinPrefix + "Map.Entry",kotlinPrefix + "(Mutable)Map.(Mutable)Entry");
+  if (mutableEntry != null)   return mutableEntry;
+  String array=replacePrefixes(lowerRendered,kotlinPrefix + "Array<",upperRendered,kotlinPrefix + "Array<out ",kotlinPrefix + "Array<(out) ");
+  if (array != null)   return array;
   return "(" + renderType(lower) + ".."+ renderType(upper)+ ")";
 }
