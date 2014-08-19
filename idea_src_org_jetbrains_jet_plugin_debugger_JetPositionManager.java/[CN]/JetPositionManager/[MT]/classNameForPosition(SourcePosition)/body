@@ -3,8 +3,9 @@
   ApplicationManager.getApplication().runReadAction(new Runnable(){
     @Override @SuppressWarnings("unchecked") public void run(){
       JetFile file=(JetFile)sourcePosition.getFile();
-      JetTypeMapper typeMapper=prepareTypeMapper(file);
-      result.set(getClassNameForElement(sourcePosition.getElementAt(),typeMapper,file));
+      boolean isInLibrary=LibraryUtil.findLibraryEntry(file.getVirtualFile(),file.getProject()) != null;
+      JetTypeMapper typeMapper=!isInLibrary ? prepareTypeMapper(file) : createTypeMapperForLibraryFile(sourcePosition);
+      result.set(getClassNameForElement(sourcePosition.getElementAt(),typeMapper,file,isInLibrary));
     }
   }
 );
