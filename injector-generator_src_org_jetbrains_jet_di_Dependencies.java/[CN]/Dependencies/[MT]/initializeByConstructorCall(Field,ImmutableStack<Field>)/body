@@ -1,18 +1,22 @@
 {
-  Expression initialization=field.getInitialization();
-  DiType type=((InstantiateType)initialization).getType();
-  if (type.getClazz().isInterface()) {
-    throw new IllegalArgumentException("cannot instantiate interface: " + type.getClazz().getName() + " needed for "+ neededFor);
+  DiType type=((InstantiateType)field.getInitialization()).getType();
+  Class<?> clazz=type.getClazz();
+  if (clazz.isInterface()) {
+    throw new IllegalArgumentException("cannot instantiate interface: " + clazz.getName() + " needed for "+ neededFor);
   }
-  if (Modifier.isAbstract(type.getClazz().getModifiers())) {
-    throw new IllegalArgumentException("cannot instantiate abstract class: " + type.getClazz().getName() + " needed for "+ neededFor);
+  if (Modifier.isAbstract(clazz.getModifiers())) {
+    throw new IllegalArgumentException("cannot instantiate abstract class: " + clazz.getName() + " needed for "+ neededFor);
   }
-  Constructor<?>[] constructors=type.getClazz().getConstructors();
+  if (isKotlinSingletonObject(clazz)) {
+    field.setInitialization(new ObjectInstanceFieldAccess(clazz));
+    return;
+  }
+  Constructor<?>[] constructors=clazz.getConstructors();
   if (constructors.length == 0 || !Modifier.isPublic(constructors[0].getModifiers())) {
-    throw new IllegalArgumentException("No constructor: " + type.getClazz().getName() + " needed for "+ neededFor);
+    throw new IllegalArgumentException("No constructor: " + clazz.getName() + " needed for "+ neededFor);
   }
   if (constructors.length > 1) {
-    throw new IllegalArgumentException("Too many constructors in " + type.getClazz().getName() + " needed for "+ neededFor);
+    throw new IllegalArgumentException("Too many constructors in " + clazz.getName() + " needed for "+ neededFor);
   }
   Constructor<?> constructor=constructors[0];
   ConstructorCall dependency=new ConstructorCall(constructor);
