@@ -1,0 +1,25 @@
+{
+  this.classLoader=classLoader;
+  this.moduleDescriptor=moduleDescriptor;
+  this.lockBasedStorageManager=new LockBasedStorageManager();
+  this.reflectJavaClassFinder=new ReflectJavaClassFinder(classLoader);
+  this.reflectKotlinClassFinder=new ReflectKotlinClassFinder(classLoader);
+  this.runtimeErrorReporter=RuntimeErrorReporter.INSTANCE$;
+  this.deserializedDescriptorResolver=new DeserializedDescriptorResolver(runtimeErrorReporter);
+  this.externalAnnotationResolver=ExternalAnnotationResolver.EMPTY;
+  this.externalSignatureResolver=ExternalSignatureResolver.DO_NOTHING;
+  this.methodSignatureChecker=MethodSignatureChecker.DO_NOTHING;
+  this.javaResolverCache=JavaResolverCache.EMPTY;
+  this.javaPropertyInitializerEvaluator=JavaPropertyInitializerEvaluator.DO_NOTHING;
+  this.samConversionResolver=SamConversionResolver.EMPTY;
+  this.runtimeSourceElementFactory=RuntimeSourceElementFactory.INSTANCE$;
+  this.singleModuleClassResolver=new SingleModuleClassResolver();
+  this.globalJavaResolverContext=new GlobalJavaResolverContext(lockBasedStorageManager,reflectJavaClassFinder,reflectKotlinClassFinder,deserializedDescriptorResolver,externalAnnotationResolver,externalSignatureResolver,runtimeErrorReporter,methodSignatureChecker,javaResolverCache,javaPropertyInitializerEvaluator,samConversionResolver,runtimeSourceElementFactory,singleModuleClassResolver);
+  this.lazyJavaPackageFragmentProvider=new LazyJavaPackageFragmentProvider(globalJavaResolverContext,getModuleDescriptor());
+  this.javaDescriptorResolver=new JavaDescriptorResolver(lazyJavaPackageFragmentProvider,getModuleDescriptor());
+  this.javaClassDataFinder=new JavaClassDataFinder(reflectKotlinClassFinder,deserializedDescriptorResolver);
+  this.binaryClassAnnotationAndConstantLoader=new BinaryClassAnnotationAndConstantLoaderImpl(getModuleDescriptor(),lockBasedStorageManager,reflectKotlinClassFinder,runtimeErrorReporter);
+  this.deserializationComponentsForJava=new DeserializationComponentsForJava(lockBasedStorageManager,getModuleDescriptor(),javaClassDataFinder,binaryClassAnnotationAndConstantLoader,lazyJavaPackageFragmentProvider);
+  singleModuleClassResolver.setResolver(javaDescriptorResolver);
+  deserializedDescriptorResolver.setComponents(deserializationComponentsForJava);
+}
