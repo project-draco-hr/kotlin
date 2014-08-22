@@ -5,8 +5,6 @@
     }
   }
 );
-  CliLightClassGenerationSupport support=CliLightClassGenerationSupport.getInstanceForCli(getProject());
-  BindingTrace supportTrace=support.getTrace();
   List<JetFile> allJetFiles=new ArrayList<JetFile>();
   Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule);
   Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
@@ -17,16 +15,8 @@
     List<JetFile> jetFiles=getJetFiles(testFilesInModule,true);
     allJetFiles.addAll(jetFiles);
     ModuleDescriptorImpl module=modules.get(testModule);
-    BindingTrace moduleTrace=groupedByModule.size() > 1 ? new DelegatingBindingTrace(supportTrace.getBindingContext(),"Trace for module " + module) : supportTrace;
+    BindingTrace moduleTrace=CliLightClassGenerationSupport.createTrace();
     moduleBindings.put(testModule,moduleTrace.getBindingContext());
-    if (module == null) {
-      module=support.newModule();
-      modules.put(entry.getKey(),module);
-    }
- else {
-      module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
-      module.seal();
-    }
     ExceptionTracker tracker=new ExceptionTracker();
     GlobalContext context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
     analyzeModuleContents(context,jetFiles,module,moduleTrace,testModule);
@@ -48,7 +38,7 @@
   Throwable exceptionFromDescriptorValidation=null;
   try {
     File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
-    validateAndCompareDescriptorWithFile(expectedFile,testFiles,support,modules);
+    validateAndCompareDescriptorWithFile(expectedFile,testFiles,modules);
   }
  catch (  Throwable e) {
     exceptionFromDescriptorValidation=e;
@@ -60,7 +50,6 @@
   }
   JetTestUtils.assertEqualsToFile(testDataFile,actualText.toString());
   assertTrue("Diagnostics mismatch. See the output above",ok);
-  checkAllResolvedCallsAreCompleted(allJetFiles,supportTrace.getBindingContext());
   if (exceptionFromDescriptorValidation != null) {
     throw UtilsPackage.rethrow(exceptionFromDescriptorValidation);
   }

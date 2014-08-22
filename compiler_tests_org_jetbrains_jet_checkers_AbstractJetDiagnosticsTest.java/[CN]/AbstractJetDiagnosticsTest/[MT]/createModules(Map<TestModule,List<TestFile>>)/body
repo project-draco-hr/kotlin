@@ -1,8 +1,7 @@
 {
   Map<TestModule,ModuleDescriptorImpl> modules=new HashMap<TestModule,ModuleDescriptorImpl>();
   for (  TestModule testModule : groupedByModule.keySet()) {
-    if (testModule == null)     continue;
-    ModuleDescriptorImpl module=createModule(testModule);
+    ModuleDescriptorImpl module=testModule == null ? TopDownAnalyzerFacadeForJVM.createAnalyzeModule() : createModule(testModule);
     modules.put(testModule,module);
   }
   for (  TestModule testModule : groupedByModule.keySet()) {
@@ -12,6 +11,8 @@
     for (    TestModule dependency : testModule.getDependencies()) {
       module.addDependencyOnModule(modules.get(dependency));
     }
+    module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
+    module.seal();
   }
   return modules;
 }

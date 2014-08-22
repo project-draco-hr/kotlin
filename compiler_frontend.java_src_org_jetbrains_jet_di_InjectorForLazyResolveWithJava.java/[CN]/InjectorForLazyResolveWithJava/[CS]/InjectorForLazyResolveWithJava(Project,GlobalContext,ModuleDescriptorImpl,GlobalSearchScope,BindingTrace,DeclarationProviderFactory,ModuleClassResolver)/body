@@ -25,6 +25,7 @@
   this.javaDescriptorResolver=new JavaDescriptorResolver(lazyJavaPackageFragmentProvider,module);
   this.javaFlexibleTypeCapabilitiesProvider=new JavaFlexibleTypeCapabilitiesProvider();
   this.lazyResolveToken=new LazyResolveToken();
+  this.javaLazyAnalyzerPostConstruct=new JavaLazyAnalyzerPostConstruct();
   this.additionalCheckerProvider=org.jetbrains.jet.lang.resolve.kotlin.JavaDeclarationCheckerProvider.INSTANCE$;
   this.annotationResolver=new AnnotationResolver();
   this.callResolver=new CallResolver();
@@ -58,6 +59,7 @@
   this.resolveSession.setScopeProvider(scopeProvider);
   this.resolveSession.setScriptBodyResolver(scriptBodyResolver);
   this.resolveSession.setTypeResolver(typeResolver);
+  javaClassFinder.setComponentPostConstruct(javaLazyAnalyzerPostConstruct);
   javaClassFinder.setProject(project);
   javaClassFinder.setScope(moduleContentScope);
   traceBasedExternalSignatureResolver.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
@@ -67,6 +69,9 @@
   traceBasedErrorReporter.setTrace(bindingTrace);
   psiBasedMethodSignatureChecker.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
   psiBasedMethodSignatureChecker.setExternalSignatureResolver(traceBasedExternalSignatureResolver);
+  javaLazyAnalyzerPostConstruct.setCodeAnalyzer(resolveSession);
+  javaLazyAnalyzerPostConstruct.setProject(project);
+  javaLazyAnalyzerPostConstruct.setTrace(bindingTrace);
   annotationResolver.setCallResolver(callResolver);
   annotationResolver.setStorageManager(storageManager);
   annotationResolver.setTypeResolver(typeResolver);
@@ -111,4 +116,5 @@
   scriptBodyResolver.setExpressionTypingServices(expressionTypingServices);
   deserializedDescriptorResolver.setComponents(deserializationComponentsForJava);
   javaClassFinder.initialize();
+  javaLazyAnalyzerPostConstruct.postCreate();
 }

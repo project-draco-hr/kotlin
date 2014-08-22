@@ -27,6 +27,7 @@
   this.javaClassDataFinder=new JavaClassDataFinder(virtualFileFinder,deserializedDescriptorResolver);
   this.binaryClassAnnotationAndConstantLoader=new BinaryClassAnnotationAndConstantLoaderImpl(module,storageManager,virtualFileFinder,traceBasedErrorReporter);
   this.deserializationComponentsForJava=new DeserializationComponentsForJava(storageManager,module,javaClassDataFinder,binaryClassAnnotationAndConstantLoader,lazyJavaPackageFragmentProvider);
+  this.javaLazyAnalyzerPostConstruct=new JavaLazyAnalyzerPostConstruct();
   this.javaFlexibleTypeCapabilitiesProvider=new JavaFlexibleTypeCapabilitiesProvider();
   this.additionalCheckerProvider=org.jetbrains.jet.lang.resolve.kotlin.JavaDeclarationCheckerProvider.INSTANCE$;
   this.bodyResolver=new BodyResolver();
@@ -75,6 +76,7 @@
   this.resolveSession.setScopeProvider(scopeProvider);
   this.resolveSession.setScriptBodyResolver(scriptBodyResolver);
   this.resolveSession.setTypeResolver(typeResolver);
+  javaClassFinder.setComponentPostConstruct(javaLazyAnalyzerPostConstruct);
   javaClassFinder.setProject(project);
   javaClassFinder.setScope(moduleContentScope);
   traceBasedExternalSignatureResolver.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
@@ -85,6 +87,9 @@
   psiBasedMethodSignatureChecker.setExternalAnnotationResolver(psiBasedExternalAnnotationResolver);
   psiBasedMethodSignatureChecker.setExternalSignatureResolver(traceBasedExternalSignatureResolver);
   singleModuleClassResolver.setResolver(javaDescriptorResolver);
+  javaLazyAnalyzerPostConstruct.setCodeAnalyzer(resolveSession);
+  javaLazyAnalyzerPostConstruct.setProject(project);
+  javaLazyAnalyzerPostConstruct.setTrace(bindingTrace);
   bodyResolver.setAnnotationResolver(annotationResolver);
   bodyResolver.setCallResolver(callResolver);
   bodyResolver.setControlFlowAnalyzer(controlFlowAnalyzer);
@@ -153,4 +158,5 @@
   overrideResolver.setTrace(bindingTrace);
   deserializedDescriptorResolver.setComponents(deserializationComponentsForJava);
   javaClassFinder.initialize();
+  javaLazyAnalyzerPostConstruct.postCreate();
 }
