@@ -3,15 +3,15 @@
   PsiElement parent=expression.getParent();
   boolean inPositionForCompletionWithReceiver=parent instanceof JetCallExpression || parent instanceof JetQualifiedExpression;
   if (receiverExpression != null && inPositionForCompletionWithReceiver) {
+    Set<DeclarationDescriptor> descriptors=new HashSet<DeclarationDescriptor>();
     JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
-    QualifierReceiver qualifierReceiver=context.get(BindingContext.QUALIFIER_RECEIVER,receiverExpression);
-    if (qualifierReceiver != null && resolutionScope != null) {
-      return includeExternalCallableExtensions(excludePrivateDescriptors(qualifierReceiver.getScope().getAllDescriptors()),resolutionScope,qualifierReceiver);
+    Qualifier qualifier=context.get(BindingContext.QUALIFIER,receiverExpression);
+    if (qualifier != null && resolutionScope != null) {
+      descriptors.addAll(new HashSet<DeclarationDescriptor>(excludePrivateDescriptors(qualifier.getScope().getAllDescriptors())));
     }
     JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
     if (expressionType != null && resolutionScope != null && !expressionType.isError()) {
       ExpressionReceiver receiverValue=new ExpressionReceiver(receiverExpression,expressionType);
-      Set<DeclarationDescriptor> descriptors=new HashSet<DeclarationDescriptor>();
       DataFlowInfo info=context.get(BindingContext.NON_DEFAULT_EXPRESSION_DATA_FLOW,expression);
       if (info == null) {
         info=DataFlowInfo.EMPTY;
@@ -20,9 +20,8 @@
       for (      JetType variant : variantsForExplicitReceiver) {
         descriptors.addAll(includeExternalCallableExtensions(excludePrivateDescriptors(variant.getMemberScope().getAllDescriptors()),resolutionScope,receiverValue));
       }
-      return descriptors;
     }
-    return Collections.emptyList();
+    return descriptors;
   }
  else {
     return getVariantsNoReceiver(expression,context);
