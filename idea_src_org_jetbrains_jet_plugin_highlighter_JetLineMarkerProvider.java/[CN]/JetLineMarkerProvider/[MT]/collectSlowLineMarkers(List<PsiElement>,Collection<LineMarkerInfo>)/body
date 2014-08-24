@@ -1,5 +1,7 @@
 {
-  if (elements.isEmpty() || DumbService.getInstance(elements.get(0).getProject()).isDumb() || !ProjectRootsUtil.isInSourceWithGradleCheck(elements.get(0))) {
+  if (elements.isEmpty())   return;
+  PsiElement first=KotlinPackage.first(elements);
+  if (DumbService.getInstance(first.getProject()).isDumb() || !ProjectRootsUtil.isInSourceWithGradleCheck(elements.get(0))) {
     return;
   }
   Set<JetNamedFunction> functions=Sets.newHashSet();
@@ -9,10 +11,14 @@
       collectInheritingClasses((JetClass)element,result);
     }
     if (element instanceof JetNamedFunction) {
-      functions.add((JetNamedFunction)element);
+      JetNamedFunction function=(JetNamedFunction)element;
+      functions.add(function);
+      collectSuperDeclarationMarker(function,result);
     }
     if (element instanceof JetProperty) {
-      properties.add((JetProperty)element);
+      JetProperty property=(JetProperty)element;
+      properties.add(property);
+      collectSuperDeclarationMarker(property,result);
     }
   }
   collectOverridingAccessors(functions,result);

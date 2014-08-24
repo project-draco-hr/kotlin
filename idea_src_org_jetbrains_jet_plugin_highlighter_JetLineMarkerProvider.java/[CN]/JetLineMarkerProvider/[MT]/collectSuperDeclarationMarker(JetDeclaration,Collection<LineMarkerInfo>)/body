@@ -1,0 +1,15 @@
+{
+  assert(declaration instanceof JetNamedFunction || declaration instanceof JetProperty);
+  if (!declaration.hasModifier(JetTokens.OVERRIDE_KEYWORD))   return;
+  DeclarationDescriptor descriptor=ResolvePackage.getLazyResolveSession(declaration).resolveToDescriptor(declaration);
+  if (!(descriptor instanceof CallableMemberDescriptor))   return;
+  Set<? extends CallableMemberDescriptor> overriddenMembers=getDirectlyOverriddenDeclarations((CallableMemberDescriptor)descriptor);
+  if (overriddenMembers.isEmpty())   return;
+  LineMarkerInfo<JetElement> marker=new LineMarkerInfo<JetElement>(declaration,declaration.getTextOffset(),isImplementsAndNotOverrides((CallableMemberDescriptor)descriptor,overriddenMembers) ? IMPLEMENTING_MARK : OVERRIDING_MARK,Pass.UPDATE_OVERRIDEN_MARKERS,new Function<JetElement,String>(){
+    @Override public String fun(    JetElement element){
+      return calculateTooltipString(element);
+    }
+  }
+,new KotlinSuperNavigationHandler());
+  result.add(marker);
+}
