@@ -1,0 +1,28 @@
+{
+  try {
+    myFixture.configureByFile(path);
+    Project project=myFixture.getProject();
+    Document document=myFixture.getEditor().getDocument();
+    ExpectedHighlightingData data=new ExpectedHighlightingData(document,false,false,false,myFixture.getFile());
+    data.init();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    myFixture.doHighlighting();
+    List<LineMarkerInfo> markers=DaemonCodeAnalyzerImpl.getLineMarkers(document,project);
+    try {
+      data.checkLineMarkers(markers,document.getText());
+    }
+ catch (    AssertionError error) {
+      try {
+        String actualTextWithTestData=HighlightTestDataUtil.insertInfoTags(markers,false,myFixture.getFile().getText());
+        JetTestUtils.assertEqualsToFile(new File(getTestDataPath(),fileName()),actualTextWithTestData);
+      }
+ catch (      FileComparisonFailure failure) {
+        throw new FileComparisonFailure(error.getMessage() + "\n" + failure.getMessage(),failure.getExpected(),failure.getActual(),failure.getFilePath());
+      }
+    }
+    assertNavigationElements(markers);
+  }
+ catch (  Exception exc) {
+    throw new RuntimeException(exc);
+  }
+}

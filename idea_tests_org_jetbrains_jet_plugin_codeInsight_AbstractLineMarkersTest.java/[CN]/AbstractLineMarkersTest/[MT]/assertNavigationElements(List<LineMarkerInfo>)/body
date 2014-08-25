@@ -1,0 +1,34 @@
+{
+  List<String> navigationDataComments=JetTestUtils.getLastCommentsInFile((JetFile)myFixture.getFile(),JetTestUtils.CommentType.BLOCK_COMMENT,false);
+  if (navigationDataComments.isEmpty())   return;
+  for (  String navigationComment : navigationDataComments) {
+    final String description=getLineMarkerDescription(navigationComment);
+    LineMarkerInfo navigateMarker=ContainerUtil.find(markers,new Condition<LineMarkerInfo>(){
+      @Override public boolean value(      LineMarkerInfo marker){
+        String tooltip=marker.getLineMarkerTooltip();
+        return tooltip != null && tooltip.startsWith(description);
+      }
+    }
+);
+    assertNotNull(String.format("Can't find marker for navigation check with description \"%s\"",description),navigateMarker);
+    GutterIconNavigationHandler handler=navigateMarker.getNavigationHandler();
+    if (handler instanceof JetLineMarkerProvider.KotlinSuperNavigationHandler) {
+      PsiElement element=navigateMarker.getElement();
+      handler.navigate(null,element);
+      List<NavigatablePsiElement> navigateElements=((JetLineMarkerProvider.KotlinSuperNavigationHandler)handler).getNavigationElements();
+      Collections.sort(navigateElements,new Comparator<NavigatablePsiElement>(){
+        @Override public int compare(        @NotNull NavigatablePsiElement first,        @NotNull NavigatablePsiElement second){
+          String elementFirstStr=ReferenceUtils.renderAsGotoImplementation(first);
+          String elementSecondStr=ReferenceUtils.renderAsGotoImplementation(second);
+          return elementFirstStr.compareTo(elementSecondStr);
+        }
+      }
+);
+      String actualNavigationData=NavigationTestUtils.getNavigateElementsText(myFixture.getProject(),navigateElements);
+      assertSameLines(getExpectedNavigationText(navigationComment),actualNavigationData);
+    }
+ else {
+      Assert.fail("Only JetLineMarkerProvider.KotlinSuperNavigationHandler are supported in navigate check");
+    }
+  }
+}
