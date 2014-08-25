@@ -1,0 +1,22 @@
+{
+  PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor=new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
+  OverridingMethodsSearch.search(method,true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
+  boolean isAbstract=method.hasModifierProperty(PsiModifier.ABSTRACT);
+  if (processor.isOverflow()) {
+    return isAbstract ? DaemonBundle.message("method.is.implemented.too.many") : DaemonBundle.message("method.is.overridden.too.many");
+  }
+  PsiMethod[] javaOverridings=processor.toArray(PsiMethod.EMPTY_ARRAY);
+  List<PsiMethod> filter=ContainerUtil.filter(javaOverridings,new Condition<PsiMethod>(){
+    @Override public boolean value(    PsiMethod method){
+      return !(method instanceof KotlinLightMethodFromTrait);
+    }
+  }
+);
+  PsiMethod[] overridings=filter.toArray(new PsiMethod[filter.size()]);
+  if (overridings.length == 0)   return null;
+  Comparator<PsiMethod> comparator=new MethodCellRenderer(false).getComparator();
+  Arrays.sort(overridings,comparator);
+  String start=isAbstract ? DaemonBundle.message("method.is.implemented.header") : DaemonBundle.message("method.is.overriden.header");
+  @NonNls String pattern="&nbsp;&nbsp;&nbsp;&nbsp;{1}";
+  return GutterIconTooltipHelper.composeText(overridings,start,pattern);
+}

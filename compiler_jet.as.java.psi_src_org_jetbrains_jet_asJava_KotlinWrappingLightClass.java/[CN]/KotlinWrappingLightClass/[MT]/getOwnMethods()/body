@@ -1,8 +1,11 @@
 {
-  return ContainerUtil.map(getDelegate().getMethods(),new Function<PsiMethod,PsiMethod>(){
-    @Override public PsiMethod fun(    PsiMethod method){
+  return KotlinPackage.map(getDelegate().getMethods(),new Function1<PsiMethod,PsiMethod>(){
+    @Override public PsiMethod invoke(    PsiMethod method){
       JetDeclaration declaration=ClsWrapperStubPsiFactory.getOriginalDeclaration(method);
-      return declaration != null ? new KotlinLightMethodForDeclaration(myManager,method,declaration,KotlinWrappingLightClass.this) : new LightMethod(myManager,method,KotlinWrappingLightClass.this);
+      if (declaration != null) {
+        return !isMethodFromTrait(declaration) ? new KotlinLightMethodForDeclaration(myManager,method,declaration,KotlinWrappingLightClass.this) : new KotlinLightMethodFromTrait(myManager,method,declaration,KotlinWrappingLightClass.this);
+      }
+      return new LightMethod(myManager,method,KotlinWrappingLightClass.this);
     }
   }
 );
