@@ -1,2 +1,19 @@
 {
+  boolean hasFlexible=false;
+  List<JetType> upper=new ArrayList<JetType>(types.size());
+  List<JetType> lower=new ArrayList<JetType>(types.size());
+  for (  JetType type : types) {
+    if (TypesPackage.isFlexible(type)) {
+      hasFlexible=true;
+      FlexibleType flexibleType=(FlexibleType)type;
+      upper.add(flexibleType.getUpperBound());
+      lower.add(flexibleType.getLowerBound());
+    }
+ else {
+      upper.add(type);
+      lower.add(type);
+    }
+  }
+  if (!hasFlexible)   return commonSuperTypeForInflexible(types);
+  return new DelegatingFlexibleType(commonSuperTypeForInflexible(lower),commonSuperTypeForInflexible(upper));
 }
