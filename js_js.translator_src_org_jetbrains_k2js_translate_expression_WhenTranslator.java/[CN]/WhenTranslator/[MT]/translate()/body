@@ -1,4 +1,7 @@
 {
+  if (expressionToMatch != null && JsAstUtils.isEmptyExpression(expressionToMatch)) {
+    return context().getEmptyStatement();
+  }
   JsIf currentIf=null;
   JsIf resultIf=null;
   for (  JetWhenEntry entry : whenExpression.getEntries()) {
@@ -10,7 +13,7 @@
     }
     statement=JsAstUtils.mergeStatementInBlockIfNeeded(statement,statementBlock);
     if (resultIf == null) {
-      currentIf=new JsIf(translateConditions(entry,context()),statement);
+      currentIf=JsAstUtils.newJsIf(translateConditions(entry,context()),statement);
       resultIf=currentIf;
     }
  else {
@@ -19,7 +22,7 @@
         return resultIf;
       }
       JsBlock conditionsBlock=new JsBlock();
-      JsIf nextIf=new JsIf(translateConditions(entry,context().innerBlock(conditionsBlock)),statement);
+      JsIf nextIf=JsAstUtils.newJsIf(translateConditions(entry,context().innerBlock(conditionsBlock)),statement);
       JsStatement statementToAdd=JsAstUtils.mergeStatementInBlockIfNeeded(nextIf,conditionsBlock);
       currentIf.setElseStatement(statementToAdd);
       currentIf=nextIf;

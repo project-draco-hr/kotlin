@@ -1,4 +1,11 @@
 {
   JetExpression returned=jetReturnExpression.getReturnedExpression();
-  return new JsReturn(returned != null ? translateAsExpression(returned,context) : null).source(jetReturnExpression);
+  if (returned == null) {
+    return new JsReturn(null).source(jetReturnExpression);
+  }
+  JsExpression jsReturnExpression=translateAsExpression(returned,context);
+  if (JsAstUtils.isEmptyExpression(jsReturnExpression)) {
+    return context.getEmptyExpression();
+  }
+  return new JsReturn(jsReturnExpression).source(jetReturnExpression);
 }
