@@ -1,7 +1,8 @@
 {
-  Label continueLabel=new Label();
-  v.mark(continueLabel);
+  Label beginLoopLabel=new Label();
+  v.mark(beginLoopLabel);
   Label breakLabel=new Label();
+  Label continueLabel=new Label();
   blockStackElements.push(new LoopBlockStackElement(breakLabel,continueLabel,targetLabel(expression)));
   JetExpression body=expression.getBody();
   JetExpression condition=expression.getCondition();
@@ -11,15 +12,16 @@
     List<JetElement> statements=new ArrayList<JetElement>(doWhileStatements.size() + 1);
     statements.addAll(doWhileStatements);
     statements.add(condition);
-    conditionValue=generateBlock(statements,true);
+    conditionValue=generateBlock(statements,true,continueLabel);
   }
  else {
     if (body != null) {
       gen(body,Type.VOID_TYPE);
     }
+    v.mark(continueLabel);
     conditionValue=gen(condition);
   }
-  conditionValue.condJump(continueLabel,false,v);
+  conditionValue.condJump(beginLoopLabel,false,v);
   v.mark(breakLabel);
   blockStackElements.pop();
   return StackValue.none();

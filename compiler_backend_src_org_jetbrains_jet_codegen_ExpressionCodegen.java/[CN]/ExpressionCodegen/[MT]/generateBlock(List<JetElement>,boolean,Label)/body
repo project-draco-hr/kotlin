@@ -1,0 +1,42 @@
+{
+  Label blockEnd=new Label();
+  List<Function<StackValue,Void>> leaveTasks=Lists.newArrayList();
+  StackValue answer=StackValue.none();
+  for (Iterator<JetElement> iterator=statements.iterator(); iterator.hasNext(); ) {
+    JetElement statement=iterator.next();
+    if (statement instanceof JetNamedDeclaration) {
+      JetNamedDeclaration declaration=(JetNamedDeclaration)statement;
+      if (JetPsiUtil.isScriptDeclaration(declaration)) {
+        continue;
+      }
+    }
+    if (statement instanceof JetMultiDeclaration) {
+      JetMultiDeclaration multiDeclaration=(JetMultiDeclaration)statement;
+      for (      JetMultiDeclarationEntry entry : multiDeclaration.getEntries()) {
+        generateLocalVariableDeclaration(entry,blockEnd,leaveTasks);
+      }
+    }
+    if (statement instanceof JetVariableDeclaration) {
+      generateLocalVariableDeclaration((JetVariableDeclaration)statement,blockEnd,leaveTasks);
+    }
+    if (statement instanceof JetNamedFunction) {
+      generateLocalFunctionDeclaration((JetNamedFunction)statement,leaveTasks);
+    }
+    boolean isExpression=!iterator.hasNext() && lastStatementIsExpression;
+    if (isExpression && labelBeforeLastExpression != null) {
+      v.mark(labelBeforeLastExpression);
+    }
+    StackValue result=isExpression ? gen(statement) : genStatement(statement);
+    if (!iterator.hasNext()) {
+      answer=result;
+    }
+ else {
+      result.put(Type.VOID_TYPE,v);
+    }
+  }
+  v.mark(blockEnd);
+  for (  Function<StackValue,Void> task : Lists.reverse(leaveTasks)) {
+    task.fun(answer);
+  }
+  return answer;
+}
