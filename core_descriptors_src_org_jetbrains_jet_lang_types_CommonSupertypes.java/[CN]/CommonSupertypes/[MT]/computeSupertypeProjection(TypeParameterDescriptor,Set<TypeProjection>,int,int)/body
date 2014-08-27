@@ -2,6 +2,9 @@
   if (typeProjections.size() == 1) {
     return typeProjections.iterator().next();
   }
+  if (recursionDepth >= maxDepth) {
+    return new TypeProjectionImpl(OUT_VARIANCE,KotlinBuiltIns.getInstance().getNullableAnyType());
+  }
   Set<JetType> ins=new HashSet<JetType>();
   Set<JetType> outs=new HashSet<JetType>();
   Variance variance=parameterDescriptor.getVariance();
@@ -36,18 +39,18 @@ outs=null;
 }
 if (outs != null) {
 Variance projectionKind=variance == OUT_VARIANCE ? Variance.INVARIANT : OUT_VARIANCE;
-return new TypeProjectionImpl(projectionKind,commonSupertype(outs));
+return new TypeProjectionImpl(projectionKind,findCommonSupertype(outs,recursionDepth + 1,maxDepth));
 }
 if (ins != null) {
 JetType intersection=TypeUtils.intersect(JetTypeChecker.DEFAULT,ins);
 if (intersection == null) {
-return new TypeProjectionImpl(OUT_VARIANCE,commonSupertype(parameterDescriptor.getUpperBounds()));
+return new TypeProjectionImpl(OUT_VARIANCE,findCommonSupertype(parameterDescriptor.getUpperBounds(),recursionDepth + 1,maxDepth));
 }
 Variance projectionKind=variance == IN_VARIANCE ? Variance.INVARIANT : IN_VARIANCE;
 return new TypeProjectionImpl(projectionKind,intersection);
 }
  else {
 Variance projectionKind=variance == OUT_VARIANCE ? Variance.INVARIANT : OUT_VARIANCE;
-return new TypeProjectionImpl(projectionKind,commonSupertype(parameterDescriptor.getUpperBounds()));
+return new TypeProjectionImpl(projectionKind,findCommonSupertype(parameterDescriptor.getUpperBounds(),recursionDepth + 1,maxDepth));
 }
 }
