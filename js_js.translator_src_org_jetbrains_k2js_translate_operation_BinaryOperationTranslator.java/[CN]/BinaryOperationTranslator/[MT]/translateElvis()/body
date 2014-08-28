@@ -1,2 +1,16 @@
 {
+  JsExpression leftExpression=Translation.translateAsExpression(leftJetExpression,context());
+  JsBlock rightBlock=new JsBlock();
+  JsNode rightNode=Translation.translateExpression(rightJetExpression,context(),rightBlock);
+  if (rightNode instanceof JsExpression && rightBlock.isEmpty()) {
+    return TranslationUtils.notNullConditional(leftExpression,(JsExpression)rightNode,context());
+  }
+  TemporaryVariable result=context().declareTemporary(leftExpression);
+  context().addStatementToCurrentBlock(result.assignmentExpression().makeStmt());
+  JsExpression testExpression=TranslationUtils.isNullCheck(result.reference());
+  JsExpression rightExpression=JsAstUtils.convertToExpression(rightNode,context(),rightBlock);
+  rightBlock.getStatements().add(JsAstUtils.assignment(result.reference(),rightExpression).makeStmt());
+  JsIf ifStatement=new JsIf(testExpression,rightBlock);
+  context().addStatementToCurrentBlock(ifStatement);
+  return result.reference();
 }
