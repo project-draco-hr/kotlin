@@ -1,36 +1,9 @@
 {
   File[] files=dir.listFiles();
   Assert.assertNotNull("Folder with testData is empty: " + dir.getAbsolutePath(),files);
-  Set<String> excludedFiles=SpecialFiles.getExcludedFiles();
-  Set<String> filesCompiledWithoutStdLib=SpecialFiles.getFilesCompiledWithoutStdLib();
-  for (  File file : files) {
-    if (excludedFiles.contains(file.getName())) {
-      continue;
-    }
-    if (file.isDirectory()) {
-      generateTestMethodsForDirectory(p,file);
-    }
- else {
-      String text=FileUtil.loadFile(file,true);
-      if (hasBoxMethod(text)) {
-        String generatedTestName=generateTestName(file.getName());
-        String packageName=file.getPath().replaceAll("\\\\|-|\\.|/","_");
-        text=changePackage(packageName,text);
-        OutputFileCollection outputFiles;
-        if (filesCompiledWithoutStdLib.contains(file.getName())) {
-          outputFiles=compileFromText(file.getAbsolutePath(),text,environmentWithMockJdk);
-        }
- else {
-          outputFiles=compileFromText(file.getAbsolutePath(),text,environmentWithFullJdk);
-        }
-        generateTestMethod(p,generatedTestName,StringUtil.escapeStringCharacters(file.getPath()));
-        File outputDir=new File(pathManager.getOutputForCompiledFiles());
-        if (!outputDir.exists()) {
-          outputDir.mkdirs();
-        }
-        Assert.assertTrue("Cannot create directory for compiled files",outputDir.exists());
-        OutputUtilsPackage.writeAllTo(outputFiles,outputDir);
-      }
-    }
-  }
+  FilesWriter holderFull=new FilesWriter(true);
+  FilesWriter holderMock=new FilesWriter(false);
+  processFiles(p,files,holderFull,holderMock);
+  holderFull.writeFilesOnDisk();
+  holderMock.writeFilesOnDisk();
 }
