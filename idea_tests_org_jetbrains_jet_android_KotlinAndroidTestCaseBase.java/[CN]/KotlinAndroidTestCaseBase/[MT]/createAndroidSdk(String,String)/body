@@ -1,0 +1,41 @@
+{
+  Sdk sdk=ProjectJdkTable.getInstance().createSdk("android_test_sdk",AndroidSdkType.getInstance());
+  SdkModificator sdkModificator=sdk.getSdkModificator();
+  sdkModificator.setHomePath(sdkPath);
+  VirtualFile androidJar;
+  if (platformDir.equals(getDefaultPlatformDir())) {
+    String androidJarPath=sdkPath + "/../android.jar!/";
+    androidJar=JarFileSystem.getInstance().findFileByPath(androidJarPath);
+  }
+ else {
+    androidJar=LocalFileSystem.getInstance().findFileByPath(sdkPath + "/platforms/" + platformDir+ "/android.jar");
+  }
+  sdkModificator.addRoot(androidJar,OrderRootType.CLASSES);
+  VirtualFile resFolder=LocalFileSystem.getInstance().findFileByPath(sdkPath + "/platforms/" + platformDir+ "/data/res");
+  sdkModificator.addRoot(resFolder,OrderRootType.CLASSES);
+  VirtualFile docsFolder=LocalFileSystem.getInstance().findFileByPath(sdkPath + "/docs/reference");
+  if (docsFolder != null) {
+    sdkModificator.addRoot(docsFolder,JavadocOrderRootType.getInstance());
+  }
+  AndroidSdkAdditionalData data=new AndroidSdkAdditionalData(sdk);
+  AndroidSdkData sdkData=AndroidSdkData.getSdkData(sdkPath);
+  assertNotNull(sdkData);
+  IAndroidTarget target=sdkData.findTargetByName("Android 4.2");
+  if (target == null) {
+    IAndroidTarget[] targets=sdkData.getTargets();
+    for (    IAndroidTarget t : targets) {
+      if (t.getLocation().contains(platformDir)) {
+        target=t;
+        break;
+      }
+    }
+    if (target == null && targets.length > 0) {
+      target=targets[targets.length - 1];
+    }
+  }
+  assertNotNull(target);
+  data.setBuildTarget(target);
+  sdkModificator.setSdkAdditionalData(data);
+  sdkModificator.commitChanges();
+  return sdk;
+}
