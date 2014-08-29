@@ -1,2 +1,16 @@
 {
+  CompilerConfiguration configuration=base.copy();
+  List<String> sourceRoots=Lists.newArrayList();
+  for (  Module module : chunk) {
+    sourceRoots.addAll(getAbsolutePaths(directory,module));
+    for (    String classpathRoot : module.getClasspathRoots()) {
+      configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,new File(classpathRoot));
+    }
+    for (    String annotationsRoot : module.getAnnotationsRoots()) {
+      configuration.add(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,new File(annotationsRoot));
+    }
+    configuration.add(JVMConfigurationKeys.MODULE_IDS,module.getModuleName());
+  }
+  CompileEnvironmentUtil.addSourceFilesCheckingForDuplicates(configuration,sourceRoots);
+  return configuration;
 }

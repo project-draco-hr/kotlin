@@ -1,5 +1,6 @@
 {
   final VirtualFileSystem localFileSystem=VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
+  final Set<VirtualFile> processedFiles=Sets.newHashSet();
   final List<JetFile> result=Lists.newArrayList();
   for (  String sourceRootPath : sourceRoots) {
     if (sourceRootPath == null) {
@@ -17,9 +18,10 @@
     IoPackage.recurse(new File(sourceRootPath),new Function1<File,Unit>(){
       @Override public Unit invoke(      File file){
         if (file.isFile()) {
-          VirtualFile fileByPath=localFileSystem.findFileByPath(file.getAbsolutePath());
-          if (fileByPath != null) {
-            PsiFile psiFile=PsiManager.getInstance(project).findFile(fileByPath);
+          VirtualFile virtualFile=localFileSystem.findFileByPath(file.getAbsolutePath());
+          if (virtualFile != null && !processedFiles.contains(virtualFile)) {
+            processedFiles.add(virtualFile);
+            PsiFile psiFile=PsiManager.getInstance(project).findFile(virtualFile);
             if (psiFile instanceof JetFile) {
               result.add((JetFile)psiFile);
             }
