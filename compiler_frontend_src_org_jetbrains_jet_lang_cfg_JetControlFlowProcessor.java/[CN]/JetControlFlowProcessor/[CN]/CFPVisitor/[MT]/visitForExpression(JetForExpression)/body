@@ -5,20 +5,19 @@
     generateInstructions(loopRange);
   }
   declareLoopParameter(expression);
-  Label loopExitPoint=builder.createUnboundLabel("'for' loop exit point");
-  Label conditionEntryPoint=builder.createUnboundLabel("'for' loop condition entry point");
-  builder.bindLabel(conditionEntryPoint);
-  builder.nondeterministicJump(loopExitPoint,expression,null);
-  LoopInfo loopInfo=builder.enterLoop(expression,loopExitPoint,conditionEntryPoint);
-  builder.bindLabel(loopInfo.getBodyEntryPoint());
+  LoopInfo loopInfo=builder.enterLoop(expression);
+  builder.bindLabel(loopInfo.getConditionEntryPoint());
+  builder.nondeterministicJump(loopInfo.getExitPoint(),expression,null);
   writeLoopParameterAssignment(expression);
   mark(expression);
+  builder.enterLoopBody(expression);
   JetExpression body=expression.getBody();
   if (body != null) {
     generateInstructions(body);
   }
-  builder.nondeterministicJump(loopInfo.getEntryPoint(),expression,null);
-  builder.exitLoop(expression);
+  builder.jump(loopInfo.getEntryPoint(),expression);
+  builder.exitLoopBody(expression);
+  builder.bindLabel(loopInfo.getExitPoint());
   builder.loadUnit(expression);
   builder.exitLexicalScope(expression);
 }
