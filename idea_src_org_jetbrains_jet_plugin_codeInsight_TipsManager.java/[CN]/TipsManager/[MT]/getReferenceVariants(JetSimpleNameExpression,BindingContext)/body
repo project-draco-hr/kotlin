@@ -5,18 +5,20 @@
   if (receiverExpression != null && inPositionForCompletionWithReceiver) {
     Set<DeclarationDescriptor> descriptors=new HashSet<DeclarationDescriptor>();
     JetScope resolutionScope=context.get(BindingContext.RESOLUTION_SCOPE,expression);
+    if (resolutionScope == null)     return descriptors;
     Qualifier qualifier=context.get(BindingContext.QUALIFIER,receiverExpression);
-    if (qualifier != null && resolutionScope != null) {
-      descriptors.addAll(new HashSet<DeclarationDescriptor>(excludePrivateDescriptors(qualifier.getScope().getAllDescriptors())));
+    if (qualifier != null) {
+      descriptors.addAll(excludePrivateDescriptors(qualifier.getScope().getAllDescriptors()));
     }
     JetType expressionType=context.get(BindingContext.EXPRESSION_TYPE,receiverExpression);
-    if (expressionType != null && resolutionScope != null && !expressionType.isError()) {
+    if (expressionType != null && !expressionType.isError()) {
       ExpressionReceiver receiverValue=new ExpressionReceiver(receiverExpression,expressionType);
       DataFlowInfo info=getDataFlowInfo(context,expression);
       List<JetType> variantsForExplicitReceiver=AutoCastUtils.getAutoCastVariants(receiverValue,context,info);
       for (      JetType variant : variantsForExplicitReceiver) {
-        descriptors.addAll(includeExternalCallableExtensions(excludePrivateDescriptors(variant.getMemberScope().getAllDescriptors()),resolutionScope,receiverValue));
+        descriptors.addAll(excludePrivateDescriptors(variant.getMemberScope().getAllDescriptors()));
       }
+      descriptors.addAll(externalCallableExtensions(resolutionScope,receiverValue,context,info));
     }
     return descriptors;
   }
