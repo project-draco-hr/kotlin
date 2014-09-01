@@ -13,6 +13,10 @@
   generateParameterAnnotations(functionDescriptor,mv,jvmSignature);
   generateJetValueParameterAnnotations(mv,functionDescriptor,jvmSignature);
   generateBridges(functionDescriptor);
+  if (JvmCodegenUtil.isPlatformStaticInClassObject(functionDescriptor)) {
+    MemberCodegen<?> codegen=getParentCodegen().getParentCodegen();
+    ((ImplementationBodyCodegen)codegen).addAdditionalTask(new PlatformStaticGenerator(functionDescriptor,origin,state));
+  }
   if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,methodContextKind)) {
     generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),methodContextKind);
     mv.visitEnd();
