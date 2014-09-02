@@ -1,6 +1,14 @@
 {
   if (explicitReceiverKind == ExplicitReceiverKind.NO_EXPLICIT_RECEIVER) {
-    trace.report(NESTED_CLASS_SHOULD_BE_QUALIFIED.on(reference,classDescriptor));
+    String qualifiedName;
+    FqName fqName=getFqNameFromTopLevelClass(DescriptorUtilPackage.getImportableDescriptor(classDescriptor));
+    if (reference.getParent() instanceof JetCallableReferenceExpression) {
+      qualifiedName=fqName.parent() + "::" + classDescriptor.getName();
+    }
+ else {
+      qualifiedName=fqName.asString();
+    }
+    trace.report(NESTED_CLASS_SHOULD_BE_QUALIFIED.on(reference,classDescriptor,qualifiedName));
   }
  else {
     trace.report(NESTED_CLASS_ACCESSED_VIA_INSTANCE_REFERENCE.on(reference,classDescriptor));
