@@ -9,18 +9,22 @@
     @NotNull @Override public OutermostKotlinClassLightClassData createLightClassData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext,    Diagnostics extraDiagnostics){
       ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
       if (classDescriptor == null) {
-        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,"",classOrObject,null,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
+        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,FqName.ROOT,classOrObject,null,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
       }
-      String jvmInternalName=CodegenBinding.getJvmInternalName(bindingContext,classDescriptor);
+      FqName fqName=predictClassFqName(bindingContext,classDescriptor);
       Collection<ClassDescriptor> allInnerClasses=CodegenBinding.getAllInnerClasses(bindingContext,classDescriptor);
       Map<JetClassOrObject,InnerKotlinClassLightClassData> innerClassesMap=ContainerUtil.newHashMap();
       for (      ClassDescriptor innerClassDescriptor : allInnerClasses) {
         JetClassOrObject innerClass=(JetClassOrObject)descriptorToDeclaration(innerClassDescriptor);
         if (innerClass == null)         continue;
-        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(CodegenBinding.getJvmInternalName(bindingContext,innerClassDescriptor),innerClass,innerClassDescriptor);
+        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(predictClassFqName(bindingContext,innerClassDescriptor),innerClass,innerClassDescriptor);
         innerClassesMap.put(innerClass,innerLightClassData);
       }
-      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,jvmInternalName,classOrObject,classDescriptor,innerClassesMap);
+      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,fqName,classOrObject,classDescriptor,innerClassesMap);
+    }
+    @NotNull private FqName predictClassFqName(    BindingContext bindingContext,    ClassDescriptor classDescriptor){
+      Type asmType=CodegenBinding.getAsmType(bindingContext,classDescriptor);
+      return JvmClassName.byInternalName(asmType.getClassName().replace('.','/')).getFqNameForClassNameWithoutDollars();
     }
     @NotNull @Override public Collection<JetFile> getFiles(){
       return Collections.singletonList(getFile());
