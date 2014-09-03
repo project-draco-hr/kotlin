@@ -1,15 +1,11 @@
 {
-  Set<SuccessfulLookupResult> results=Sets.newHashSet();
+  Set<SuccessfulLookupResult> results=Sets.newLinkedHashSet();
   for (  DeclarationDescriptor declarationDescriptor : declarationDescriptors) {
     if (declarationDescriptor instanceof PackageViewDescriptor) {
       addResult(results,lookupSimpleNameReference(selector,((PackageViewDescriptor)declarationDescriptor).getMemberScope(),lookupMode,true));
     }
     if (declarationDescriptor instanceof ClassDescriptor) {
-      addResult(results,lookupSimpleNameReference(selector,getAppropriateScope((ClassDescriptor)declarationDescriptor,lookupMode),lookupMode,false));
-      ClassDescriptor classObjectDescriptor=((ClassDescriptor)declarationDescriptor).getClassObjectDescriptor();
-      if (classObjectDescriptor != null) {
-        addResult(results,lookupSimpleNameReference(selector,getAppropriateScope(classObjectDescriptor,lookupMode),lookupMode,false));
-      }
+      addResultsForClass(results,selector,lookupMode,(ClassDescriptor)declarationDescriptor);
     }
   }
   return filterAndStoreResolutionResult(results,selector,trace,scopeToCheckVisibility,lookupMode,storeResult);
