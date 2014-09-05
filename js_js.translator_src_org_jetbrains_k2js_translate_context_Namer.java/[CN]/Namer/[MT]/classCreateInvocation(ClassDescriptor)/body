@@ -1,10 +1,18 @@
 {
-  ClassKind kind=descriptor.getKind();
-  if (kind == TRAIT) {
+switch (descriptor.getKind()) {
+case TRAIT:
     return traitCreationMethodReference();
-  }
-  if (kind.isSingleton() || DescriptorUtils.isAnonymousObject(descriptor)) {
-    return objectCreationMethodReference();
-  }
-  return classCreationMethodReference();
+case ENUM_CLASS:
+  return enumClassCreationMethodReference();
+case ENUM_ENTRY:
+case OBJECT:
+case CLASS_OBJECT:
+return objectCreationMethodReference();
+case ANNOTATION_CLASS:
+throw new IllegalStateException("Can't create annotation class instance: " + descriptor);
+case CLASS:
+return DescriptorUtils.isAnonymousObject(descriptor) ? objectCreationMethodReference() : classCreationMethodReference();
+default :
+throw new UnsupportedOperationException("Unsupported class kind: " + descriptor);
+}
 }

@@ -67,9 +67,22 @@
     }
   }
 ;
+  Rule<JsNameRef> staticMembersHaveContainerQualifier=new Rule<JsNameRef>(){
+    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+      if (descriptor instanceof CallableDescriptor && !isNativeObject(descriptor)) {
+        CallableDescriptor callableDescriptor=(CallableDescriptor)descriptor;
+        if (DescriptorUtils.isStaticDeclaration(callableDescriptor)) {
+          return getQualifiedReference(callableDescriptor.getContainingDeclaration());
+        }
+      }
+      return null;
+    }
+  }
+;
   addRule(libraryObjectsHaveKotlinQualifier);
   addRule(constructorOrClassObjectHasTheSameQualifierAsTheClass);
   addRule(standardObjectsHaveKotlinQualifier);
   addRule(packageLevelDeclarationsHaveEnclosingPackagesNamesAsQualifier);
   addRule(nativeObjectsHaveNativePartOfFullQualifier);
+  addRule(staticMembersHaveContainerQualifier);
 }
