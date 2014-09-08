@@ -1,0 +1,44 @@
+{
+  if (at(LBRACKET)) {
+    PsiBuilder.Marker annotation=mark();
+    myBuilder.disableNewlines();
+    advance();
+    if (mode.isFileAnnotationParsingMode) {
+      if (mode == FILE_ANNOTATIONS_WHEN_PACKAGE_OMITTED && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
+        annotation.rollbackTo();
+        myBuilder.restoreNewlinesState();
+        return false;
+      }
+      String message="Expecting \"" + FILE_KEYWORD.getValue() + COLON.getValue()+ "\" prefix for file annotations";
+      expect(FILE_KEYWORD,message);
+      expect(COLON,message,TokenSet.create(IDENTIFIER,RBRACKET));
+    }
+ else     if (at(FILE_KEYWORD) && lookahead(1) == COLON) {
+      errorAndAdvance("File annotations are only allowed before package declaration",2);
+    }
+    if (!at(IDENTIFIER)) {
+      error("Expecting a list of attributes");
+    }
+ else {
+      parseAnnotationEntry();
+      while (at(COMMA)) {
+        errorAndAdvance("No commas needed to separate attributes");
+      }
+      while (at(IDENTIFIER)) {
+        parseAnnotationEntry();
+        while (at(COMMA)) {
+          errorAndAdvance("No commas needed to separate attributes");
+        }
+      }
+    }
+    expect(RBRACKET,"Expecting ']' to close an attribute annotation");
+    myBuilder.restoreNewlinesState();
+    annotation.done(ANNOTATION);
+    return true;
+  }
+ else   if (mode.allowShortAnnotations && at(IDENTIFIER)) {
+    parseAnnotationEntry();
+    return true;
+  }
+  return false;
+}

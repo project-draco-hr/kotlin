@@ -1,12 +1,16 @@
 {
-  PsiBuilder.Marker packageDirective=mark();
   PsiBuilder.Marker firstEntry=mark();
-  parseModifierList(MODIFIER_LIST,true);
+  parseFileAnnotationList(FILE_ANNOTATIONS_BEFORE_PACKAGE);
+  PsiBuilder.Marker packageDirective=mark();
+  parseModifierList(MODIFIER_LIST,REGULAR_ANNOTATIONS_ALLOW_SHORTS);
   if (at(PACKAGE_KEYWORD)) {
     advance();
     parsePackageName();
     if (at(LBRACE)) {
+      packageDirective.drop();
       firstEntry.rollbackTo();
+      parseFileAnnotationList(false);
+      packageDirective=mark();
       packageDirective.done(PACKAGE_DIRECTIVE);
       return;
     }
@@ -15,6 +19,8 @@
   }
  else {
     firstEntry.rollbackTo();
+    parseFileAnnotationList(FILE_ANNOTATIONS_WHEN_PACKAGE_OMITTED);
+    packageDirective=mark();
   }
   packageDirective.done(PACKAGE_DIRECTIVE);
   parseImportDirectives();
