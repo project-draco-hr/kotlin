@@ -1,0 +1,28 @@
+{
+  if (test == null) {
+    List<Class> innerClasses=collectDeclaredClasses(klass,false);
+    Set<Class> unprocessedInnerClasses=unprocessedClasses(innerClasses);
+    if (unprocessedInnerClasses.isEmpty()) {
+      if (!innerClasses.isEmpty() && !hasTestMethods(klass)) {
+        test=new FakeEmptyClassTest(klass);
+      }
+ else {
+        test=new TestSuite(klass.asSubclass(TestCase.class));
+      }
+    }
+ else {
+      List<Class> classes=Lists.newArrayList();
+      classes.add(klass);
+      classes.addAll(unprocessedInnerClasses);
+      List<Class> filtered=KotlinPackage.filter(classes,new Function1<Class,Boolean>(){
+        @Override public Boolean invoke(        Class aClass){
+          boolean hasInnerClasses=aClass.getDeclaredClasses().length > 0;
+          return !hasInnerClasses || hasTestMethods(aClass);
+        }
+      }
+);
+      test=new TestSuite(filtered.toArray(new Class[filtered.size()]));
+    }
+  }
+  return test;
+}
