@@ -1,15 +1,15 @@
 {
   Type type=typeMapper.mapType(KotlinBuiltIns.getInstance().getArrayType(descriptor.getDefaultType()));
-  FunctionDescriptor valuesFunction=findEnumFunction("values",new Function1<FunctionDescriptor,Boolean>(){
+  FunctionDescriptor valuesFunction=KotlinPackage.single(descriptor.getStaticScope().getFunctions(ENUM_VALUES),new Function1<FunctionDescriptor,Boolean>(){
     @Override public Boolean invoke(    FunctionDescriptor descriptor){
       return CodegenUtil.isEnumValuesMethod(descriptor);
     }
   }
 );
-  MethodVisitor mv=v.newMethod(OtherOrigin(myClass,valuesFunction),ACC_PUBLIC | ACC_STATIC,"values","()" + type.getDescriptor(),null,null);
+  MethodVisitor mv=v.newMethod(OtherOrigin(myClass,valuesFunction),ACC_PUBLIC | ACC_STATIC,ENUM_VALUES.asString(),"()" + type.getDescriptor(),null,null);
   if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
   mv.visitCode();
-  mv.visitFieldInsn(GETSTATIC,classAsmType.getInternalName(),VALUES,type.getDescriptor());
+  mv.visitFieldInsn(GETSTATIC,classAsmType.getInternalName(),ENUM_VALUES_FIELD_NAME,type.getDescriptor());
   mv.visitMethodInsn(INVOKEVIRTUAL,type.getInternalName(),"clone","()Ljava/lang/Object;",false);
   mv.visitTypeInsn(CHECKCAST,type.getInternalName());
   mv.visitInsn(ARETURN);
