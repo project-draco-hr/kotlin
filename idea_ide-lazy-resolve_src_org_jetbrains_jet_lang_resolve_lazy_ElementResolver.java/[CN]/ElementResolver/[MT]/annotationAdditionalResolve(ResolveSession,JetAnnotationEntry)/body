@@ -1,8 +1,18 @@
 {
+  Annotations annotations=null;
   JetDeclaration declaration=PsiTreeUtil.getParentOfType(jetAnnotationEntry,JetDeclaration.class);
   if (declaration != null) {
     Annotated descriptor=resolveSession.resolveToDescriptor(declaration);
-    AnnotationResolver.resolveAnnotationsArguments(descriptor,resolveSession.getTrace());
-    ForceResolveUtil.forceResolveAllContents(descriptor.getAnnotations());
+    annotations=descriptor.getAnnotations();
+  }
+ else {
+    JetFileAnnotationList fileAnnotationList=PsiTreeUtil.getParentOfType(jetAnnotationEntry,JetFileAnnotationList.class);
+    if (fileAnnotationList != null) {
+      annotations=resolveSession.getFileAnnotations(fileAnnotationList.getContainingJetFile());
+    }
+  }
+  if (annotations != null) {
+    AnnotationResolver.resolveAnnotationsArguments(annotations,resolveSession.getTrace());
+    ForceResolveUtil.forceResolveAllContents(annotations);
   }
 }
