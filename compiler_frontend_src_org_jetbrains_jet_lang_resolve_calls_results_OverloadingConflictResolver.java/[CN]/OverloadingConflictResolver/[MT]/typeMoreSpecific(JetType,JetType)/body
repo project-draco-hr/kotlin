@@ -1,3 +1,13 @@
 {
-  return JetTypeChecker.DEFAULT.isSubtypeOf(specific,general) || numericTypeMoreSpecific(specific,general);
+  boolean isSubtype=JetTypeChecker.DEFAULT.isSubtypeOf(specific,general) || numericTypeMoreSpecific(specific,general);
+  if (!isSubtype)   return false;
+  boolean specificIsFlexible=TypesPackage.isFlexible(specific);
+  boolean generalIsFlexible=TypesPackage.isFlexible(general);
+  if (specificIsFlexible && !generalIsFlexible) {
+    return false;
+  }
+ else   if (!specificIsFlexible && generalIsFlexible) {
+    if (specific.isNullable())     return false;
+  }
+  return true;
 }
