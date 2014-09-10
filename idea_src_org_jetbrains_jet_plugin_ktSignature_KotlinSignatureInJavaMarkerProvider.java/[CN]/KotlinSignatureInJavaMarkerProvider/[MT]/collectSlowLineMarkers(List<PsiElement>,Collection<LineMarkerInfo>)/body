@@ -15,18 +15,10 @@
     return;
   }
   for (  PsiElement element : elements) {
-    if (!(element instanceof PsiMember) || element instanceof PsiClass) {
+    PsiModifierListOwner annotationOwner=KotlinSignatureUtil.getAnalyzableAnnotationOwner(element);
+    if (annotationOwner == null) {
       continue;
     }
-    PsiMember member=(PsiMember)element;
-    if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
-      continue;
-    }
-    PsiClass containingClass=member.getContainingClass();
-    if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
-      continue;
-    }
-    PsiModifierListOwner annotationOwner=KotlinSignatureUtil.getAnnotationOwner(element);
     JavaResolveExtension resolveExtension=JavaResolveExtension.INSTANCE$;
     BindingContext bindingContext=resolveExtension.getContext(project,annotationOwner);
     JavaDescriptorResolver javaDescriptorResolver=resolveExtension.getResolver(project,annotationOwner);
