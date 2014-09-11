@@ -1,4 +1,8 @@
 {
+  final String originalFileText=FileUtil.loadFile(new File(getTestDataPath() + beforeFileName),true);
+  if (InTextDirectivesUtils.findStringWithPrefixes(originalFileText,"// WITH_RUNTIME") != null) {
+    ConfigLibraryUtil.configureKotlinRuntime(myModule,PluginTestCaseBase.fullJdk());
+  }
   if (withExtraFile) {
     configureByFiles(null,beforeFileName,beforeFileName.replace(".Main.",".data.Sample."));
   }
@@ -8,7 +12,7 @@
   CommandProcessor.getInstance().executeCommand(getProject(),new Runnable(){
     @Override public void run(){
       try {
-        Pair<String,Boolean> pair=LightQuickFixTestCase.parseActionHint(getFile(),FileUtil.loadFile(new File(getTestDataPath() + beforeFileName),true));
+        Pair<String,Boolean> pair=LightQuickFixTestCase.parseActionHint(getFile(),originalFileText);
         String text=pair.getFirst();
         boolean actionShouldBeAvailable=pair.getSecond();
         DirectiveBasedActionUtils.checkForUnexpectedErrors((JetFile)getFile());
