@@ -1,0 +1,13 @@
+{
+  Set<Class> classes=new LinkedHashSet<Class>(collectDeclaredClasses(root,true));
+  Map<Class,TestSuite> classSuites=new HashMap<Class,TestSuite>();
+  for (  Class aClass : classes) {
+    classSuites.put(aClass,hasTestMethods(aClass) ? new TestSuite(aClass) : new TestSuite(aClass.getCanonicalName()));
+  }
+  for (  Class aClass : classes) {
+    if (aClass.getEnclosingClass() != null && classes.contains(aClass.getEnclosingClass())) {
+      classSuites.get(aClass.getEnclosingClass()).addTest(classSuites.get(aClass));
+    }
+  }
+  return classSuites.get(root);
+}
