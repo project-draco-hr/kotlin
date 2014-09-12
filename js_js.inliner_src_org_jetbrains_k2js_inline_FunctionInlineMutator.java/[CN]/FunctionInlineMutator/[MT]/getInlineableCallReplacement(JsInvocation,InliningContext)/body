@@ -2,5 +2,13 @@
   FunctionInlineMutator mutator=new FunctionInlineMutator(call,inliningContext);
   mutator.process();
   JsStatement inlineableBody=mutator.body;
-  return new InlineableResult(inlineableBody,call);
+  if (mutator.breakLabel != null) {
+    mutator.breakLabel.setStatement(inlineableBody);
+    inlineableBody=mutator.breakLabel;
+  }
+  JsExpression resultExpression=null;
+  if (mutator.isResultNeeded) {
+    resultExpression=mutator.resultExpr;
+  }
+  return new InlineableResult(inlineableBody,resultExpression);
 }
