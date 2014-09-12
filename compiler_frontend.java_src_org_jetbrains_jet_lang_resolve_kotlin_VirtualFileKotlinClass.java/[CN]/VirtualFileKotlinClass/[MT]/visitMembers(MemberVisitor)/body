@@ -1,11 +1,11 @@
 {
   try {
     new ClassReader(file.contentsToByteArray()).accept(new ClassVisitor(ASM5){
-      @Override public FieldVisitor visitField(      int access,      String name,      String desc,      String signature,      Object value){
+      @Override public FieldVisitor visitField(      int access,      @NotNull String name,      @NotNull String desc,      String signature,      Object value){
         final AnnotationVisitor v=memberVisitor.visitField(Name.guess(name),desc,value);
         if (v == null)         return null;
         return new FieldVisitor(ASM5){
-          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(          String desc,          boolean visible){
+          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(          @NotNull String desc,          boolean visible){
             return convertAnnotationVisitor(v,desc);
           }
           @Override public void visitEnd(){
@@ -14,14 +14,14 @@
         }
 ;
       }
-      @Override public MethodVisitor visitMethod(      int access,      String name,      String desc,      String signature,      String[] exceptions){
+      @Override public MethodVisitor visitMethod(      int access,      @NotNull String name,      @NotNull String desc,      String signature,      String[] exceptions){
         final MethodAnnotationVisitor v=memberVisitor.visitMethod(Name.guess(name),desc);
         if (v == null)         return null;
         return new MethodVisitor(ASM5){
-          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(          String desc,          boolean visible){
+          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(          @NotNull String desc,          boolean visible){
             return convertAnnotationVisitor(v,desc);
           }
-          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitParameterAnnotation(          int parameter,          String desc,          boolean visible){
+          @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitParameterAnnotation(          int parameter,          @NotNull String desc,          boolean visible){
             AnnotationArgumentVisitor av=v.visitParameterAnnotation(parameter,classNameFromAsmDesc(desc));
             return av == null ? null : convertAnnotationVisitor(av);
           }
