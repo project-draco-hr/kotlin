@@ -1,21 +1,28 @@
 {
   final ReadKotlinClassHeaderAnnotationVisitor readHeaderVisitor=new ReadKotlinClassHeaderAnnotationVisitor();
-  final Ref<JvmClassName> classNameRef=Ref.create();
+  final Ref<String> classNameRef=Ref.create();
+  final InnerClassesInfo innerClasses=new InnerClassesInfo();
   new ClassReader(fileContents).accept(new ClassVisitor(ASM5){
     @Override public void visit(    int version,    int access,    @NotNull String name,    String signature,    String superName,    String[] interfaces){
-      classNameRef.set(JvmClassName.byInternalName(name));
+      classNameRef.set(name);
+    }
+    @Override public void visitInnerClass(    @NotNull String name,    String outerName,    String innerName,    int access){
+      if (outerName != null && innerName != null) {
+        innerClasses.add(name,outerName,innerName);
+      }
     }
     @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(    @NotNull String desc,    boolean visible){
-      return convertAnnotationVisitor(readHeaderVisitor,desc);
+      return convertAnnotationVisitor(readHeaderVisitor,desc,innerClasses);
     }
     @Override public void visitEnd(){
       readHeaderVisitor.visitEnd();
     }
   }
 ,SKIP_CODE | SKIP_DEBUG | SKIP_FRAMES);
-  JvmClassName className=classNameRef.get();
+  String className=classNameRef.get();
   if (className == null)   return null;
   KotlinClassHeader header=readHeaderVisitor.createHeader();
   if (header == null)   return null;
-  return factory.invoke(className,header);
+  ClassId id=resolveNameByInternalName(className,innerClasses);
+  return factory.invoke(JvmClassName.byClassId(id),header,innerClasses);
 }

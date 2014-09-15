@@ -5,7 +5,7 @@
       if (v == null)       return null;
       return new FieldVisitor(ASM5){
         @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(        @NotNull String desc,        boolean visible){
-          return convertAnnotationVisitor(v,desc);
+          return convertAnnotationVisitor(v,desc,innerClasses);
         }
         @Override public void visitEnd(){
           v.visitEnd();
@@ -18,11 +18,11 @@
       if (v == null)       return null;
       return new MethodVisitor(ASM5){
         @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitAnnotation(        @NotNull String desc,        boolean visible){
-          return convertAnnotationVisitor(v,desc);
+          return convertAnnotationVisitor(v,desc,innerClasses);
         }
         @Override public org.jetbrains.org.objectweb.asm.AnnotationVisitor visitParameterAnnotation(        int parameter,        @NotNull String desc,        boolean visible){
-          AnnotationArgumentVisitor av=v.visitParameterAnnotation(parameter,classNameFromAsmDesc(desc));
-          return av == null ? null : convertAnnotationVisitor(av);
+          AnnotationArgumentVisitor av=v.visitParameterAnnotation(parameter,JvmClassName.byClassId(resolveNameByDesc(desc,innerClasses)));
+          return av == null ? null : convertAnnotationVisitor(av,innerClasses);
         }
         @Override public void visitEnd(){
           v.visitEnd();
