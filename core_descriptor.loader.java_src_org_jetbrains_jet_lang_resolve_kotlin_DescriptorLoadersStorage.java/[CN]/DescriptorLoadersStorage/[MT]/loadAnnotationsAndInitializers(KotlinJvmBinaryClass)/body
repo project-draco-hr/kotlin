@@ -38,14 +38,14 @@ class AnnotationVisitorForMethod extends MemberAnnotationVisitor implements Kotl
       public AnnotationVisitorForMethod(      @NotNull MemberSignature signature){
         super(signature);
       }
-      @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitParameterAnnotation(      int index,      @NotNull JvmClassName className){
+      @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitParameterAnnotation(      int index,      @NotNull ClassId classId){
         MemberSignature paramSignature=MemberSignature.fromMethodSignatureAndParameterIndex(signature,index);
         List<AnnotationDescriptor> result=memberAnnotations.get(paramSignature);
         if (result == null) {
           result=new ArrayList<AnnotationDescriptor>();
           memberAnnotations.put(paramSignature,result);
         }
-        return AnnotationDescriptorLoader.resolveAnnotation(className,result,module);
+        return AnnotationDescriptorLoader.resolveAnnotation(classId,result,module);
       }
     }
 class MemberAnnotationVisitor implements KotlinJvmBinaryClass.AnnotationVisitor {
@@ -54,8 +54,8 @@ class MemberAnnotationVisitor implements KotlinJvmBinaryClass.AnnotationVisitor 
       public MemberAnnotationVisitor(      @NotNull MemberSignature signature){
         this.signature=signature;
       }
-      @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitAnnotation(      @NotNull JvmClassName className){
-        return AnnotationDescriptorLoader.resolveAnnotation(className,result,module);
+      @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitAnnotation(      @NotNull ClassId classId){
+        return AnnotationDescriptorLoader.resolveAnnotation(classId,result,module);
       }
       @Override public void visitEnd(){
         if (!result.isEmpty()) {

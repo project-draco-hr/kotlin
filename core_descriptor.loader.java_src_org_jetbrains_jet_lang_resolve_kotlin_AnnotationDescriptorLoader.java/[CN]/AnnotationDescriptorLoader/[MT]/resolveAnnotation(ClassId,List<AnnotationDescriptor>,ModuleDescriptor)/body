@@ -1,6 +1,6 @@
 {
-  if (JvmAnnotationNames.isSpecialAnnotation(className))   return null;
-  final ClassDescriptor annotationClass=resolveClass(className,moduleDescriptor);
+  if (JvmAnnotationNames.isSpecialAnnotation(classId))   return null;
+  final ClassDescriptor annotationClass=resolveClass(classId,moduleDescriptor);
   return new KotlinJvmBinaryClass.AnnotationArgumentVisitor(){
     private final Map<ValueParameterDescriptor,CompileTimeConstant<?>> arguments=new HashMap<ValueParameterDescriptor,CompileTimeConstant<?>>();
     @Override public void visit(    @Nullable Name name,    @Nullable Object value){
@@ -8,8 +8,8 @@
         setArgumentValueByName(name,createConstant(name,value));
       }
     }
-    @Override public void visitEnum(    @NotNull Name name,    @NotNull JvmClassName enumClassName,    @NotNull Name enumEntryName){
-      setArgumentValueByName(name,enumEntryValue(enumClassName,enumEntryName));
+    @Override public void visitEnum(    @NotNull Name name,    @NotNull ClassId enumClassId,    @NotNull Name enumEntryName){
+      setArgumentValueByName(name,enumEntryValue(enumClassId,enumEntryName));
     }
     @Nullable @Override public AnnotationArrayArgumentVisitor visitArray(    @NotNull final Name name){
       return new KotlinJvmBinaryClass.AnnotationArrayArgumentVisitor(){
@@ -17,8 +17,8 @@
         @Override public void visit(        @Nullable Object value){
           elements.add(createConstant(name,value));
         }
-        @Override public void visitEnum(        @NotNull JvmClassName enumClassName,        @NotNull Name enumEntryName){
-          elements.add(enumEntryValue(enumClassName,enumEntryName));
+        @Override public void visitEnum(        @NotNull ClassId enumClassId,        @NotNull Name enumEntryName){
+          elements.add(enumEntryValue(enumClassId,enumEntryName));
         }
         @Override public void visitEnd(){
           ValueParameterDescriptor parameter=DescriptorResolverUtils.getAnnotationParameterByName(name,annotationClass);
@@ -30,15 +30,15 @@
       }
 ;
     }
-    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull JvmClassName enumClassName,    @NotNull Name name){
-      ClassDescriptor enumClass=resolveClass(enumClassName,moduleDescriptor);
+    @NotNull private CompileTimeConstant<?> enumEntryValue(    @NotNull ClassId enumClassId,    @NotNull Name name){
+      ClassDescriptor enumClass=resolveClass(enumClassId,moduleDescriptor);
       if (enumClass.getKind() == ClassKind.ENUM_CLASS) {
         ClassifierDescriptor classifier=enumClass.getUnsubstitutedInnerClassesScope().getClassifier(name);
         if (classifier instanceof ClassDescriptor) {
           return new EnumValue((ClassDescriptor)classifier,false);
         }
       }
-      return ErrorValue.create("Unresolved enum entry: " + enumClassName.getInternalName() + "."+ name);
+      return ErrorValue.create("Unresolved enum entry: " + enumClassId + "."+ name);
     }
     @Override public void visitEnd(){
       result.add(new AnnotationDescriptorImpl(annotationClass.getDefaultType(),arguments));
