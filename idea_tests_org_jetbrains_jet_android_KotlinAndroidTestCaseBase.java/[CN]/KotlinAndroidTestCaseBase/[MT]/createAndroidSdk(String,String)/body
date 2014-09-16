@@ -2,13 +2,12 @@
   Sdk sdk=ProjectJdkTable.getInstance().createSdk("android_test_sdk",AndroidSdkType.getInstance());
   SdkModificator sdkModificator=sdk.getSdkModificator();
   sdkModificator.setHomePath(sdkPath);
-  VirtualFile androidJar;
   if (platformDir.equals(getDefaultPlatformDir())) {
     String androidJarPath=sdkPath + "/../android.jar!/";
-    androidJar=JarFileSystem.getInstance().findFileByPath(androidJarPath);
+    androidJar=VirtualFileManager.getInstance().findFileByUrl("jar://" + androidJarPath);
   }
  else {
-    androidJar=LocalFileSystem.getInstance().findFileByPath(sdkPath + "/platforms/" + platformDir+ "/android.jar");
+    androidJar=VirtualFileManager.getInstance().findFileByUrl("jar://" + sdkPath + "/platforms/"+ platformDir+ "/android.jar!/");
   }
   sdkModificator.addRoot(androidJar,OrderRootType.CLASSES);
   VirtualFile resFolder=LocalFileSystem.getInstance().findFileByPath(sdkPath + "/platforms/" + platformDir+ "/data/res");
@@ -35,10 +34,6 @@
   }
   assertNotNull(target);
   data.setBuildTarget(target);
-  data.setJavaSdk(PluginTestCaseBase.fullJdk());
-  for (  VirtualFile f : PluginTestCaseBase.fullJdk().getRootProvider().getFiles(OrderRootType.CLASSES)) {
-    sdkModificator.addRoot(f,OrderRootType.CLASSES);
-  }
   sdkModificator.setSdkAdditionalData(data);
   sdkModificator.commitChanges();
   return sdk;
