@@ -1,0 +1,20 @@
+{
+  JetExpression call=JetPsiUtil.getParentCallIfPresent(lambdaExpression);
+  if (call != null) {
+    ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(call,bindingContext);
+    CallableDescriptor resultingDescriptor=resolvedCall == null ? null : resolvedCall.getResultingDescriptor();
+    if (resultingDescriptor instanceof SimpleFunctionDescriptor && ((SimpleFunctionDescriptor)resultingDescriptor).getInlineStrategy().isInline()) {
+      ValueArgument argument=CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(),lambdaExpression);
+      if (argument != null) {
+        ArgumentMapping mapping=resolvedCall.getArgumentMapping(argument);
+        if (mapping instanceof ArgumentMatch) {
+          ValueParameterDescriptor parameter=((ArgumentMatch)mapping).getValueParameter();
+          if (!InlineUtil.hasNoinlineAnnotation(parameter)) {
+            return !checkNonLocalReturn || allowsNonLocalReturns(parameter);
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
