@@ -1,0 +1,16 @@
+{
+  final Set<Name> packagesNames=LazyResolveTestUtil.getTopLevelPackagesFromFileList(getJetFiles(testFiles));
+  Predicate<DeclarationDescriptor> stepIntoFilter=new Predicate<DeclarationDescriptor>(){
+    @Override public boolean apply(    DeclarationDescriptor descriptor){
+      if (descriptor instanceof PackageViewDescriptor) {
+        FqName fqName=((PackageViewDescriptor)descriptor).getFqName();
+        if (fqName.isRoot())         return true;
+        Name firstName=fqName.pathSegments().get(0);
+        return packagesNames.contains(firstName);
+      }
+      return true;
+    }
+  }
+;
+  return RECURSIVE.filterRecursion(stepIntoFilter).withValidationStrategy(DescriptorValidator.ValidationVisitor.ALLOW_ERROR_TYPES);
+}

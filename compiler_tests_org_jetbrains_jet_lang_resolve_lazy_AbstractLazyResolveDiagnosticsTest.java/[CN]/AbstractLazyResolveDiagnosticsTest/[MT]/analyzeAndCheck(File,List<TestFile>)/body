@@ -8,11 +8,11 @@
   String txtFileRelativePath=path.replaceAll("\\.kt$|\\.kts$",".txt");
   File txtFile=new File("compiler/testData/lazyResolve/diagnostics/" + txtFileRelativePath);
   final Set<Name> names=LazyResolveTestUtil.getTopLevelPackagesFromFileList(jetFiles);
-  validateAndCompareDescriptors(expected,actual,RECURSIVE.filterRecursion(new Predicate<FqName>(){
-    @Override public boolean apply(    FqName fqName){
-      if (fqName.isRoot())       return true;
-      if (fqName.parent().isRoot()) {
-        return names.contains(fqName.shortName());
+  validateAndCompareDescriptors(expected,actual,RECURSIVE.filterRecursion(new Predicate<DeclarationDescriptor>(){
+    @Override public boolean apply(    DeclarationDescriptor descriptor){
+      if (descriptor instanceof PackageViewDescriptor) {
+        FqName fqName=((PackageViewDescriptor)descriptor).getFqName();
+        return fqName.isRoot() || !fqName.parent().isRoot() || names.contains(fqName.shortName());
       }
       return true;
     }
