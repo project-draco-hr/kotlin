@@ -1,6 +1,6 @@
 {
-  Label blockEnd=new Label();
-  List<Function<StackValue,Void>> leaveTasks=Lists.newArrayList();
+  final Label blockEnd=new Label();
+  final List<Function<StackValue,Void>> leaveTasks=Lists.newArrayList();
   StackValue answer=StackValue.none();
   for (Iterator<JetElement> iterator=statements.iterator(); iterator.hasNext(); ) {
     JetElement possiblyLabeledStatement=iterator.next();
@@ -35,9 +35,14 @@
       result.put(Type.VOID_TYPE,v);
     }
   }
-  v.mark(blockEnd);
-  for (  Function<StackValue,Void> task : Lists.reverse(leaveTasks)) {
-    task.fun(answer);
+  return new StackValueWithLeaveTask(answer,new ExtensionFunction0<StackValueWithLeaveTask,Unit>(){
+    @Override public Unit invoke(    StackValueWithLeaveTask wrapper){
+      v.mark(blockEnd);
+      for (      Function<StackValue,Void> task : Lists.reverse(leaveTasks)) {
+        task.fun(wrapper.getStackValue());
+      }
+      return Unit.INSTANCE$;
+    }
   }
-  return answer;
+);
 }

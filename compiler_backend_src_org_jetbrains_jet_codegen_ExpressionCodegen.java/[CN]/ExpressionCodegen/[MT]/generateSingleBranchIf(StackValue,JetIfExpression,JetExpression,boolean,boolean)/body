@@ -1,20 +1,25 @@
 {
-  Label elseLabel=new Label();
-  condition.condJump(elseLabel,inverse,v);
-  if (isStatement) {
-    gen(expression,Type.VOID_TYPE);
-    v.mark(elseLabel);
-    return StackValue.none();
-  }
+  Type targetType=isStatement ? Type.VOID_TYPE : expressionType(ifExpression);
+  return StackValue.operation(targetType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      Label elseLabel=new Label();
+      condition.condJump(elseLabel,inverse,v);
+      if (isStatement) {
+        gen(expression,Type.VOID_TYPE);
+        v.mark(elseLabel);
+      }
  else {
-    Type targetType=expressionType(ifExpression);
-    gen(expression,targetType);
-    Label end=new Label();
-    v.goTo(end);
-    v.mark(elseLabel);
-    StackValue.putUnitInstance(v);
-    markStartLineNumber(ifExpression);
-    v.mark(end);
-    return StackValue.onStack(targetType);
+        Type targetType=expressionType(ifExpression);
+        gen(expression,targetType);
+        Label end=new Label();
+        v.goTo(end);
+        v.mark(elseLabel);
+        StackValue.putUnitInstance(v);
+        markStartLineNumber(ifExpression);
+        v.mark(end);
+      }
+      return null;
+    }
   }
+);
 }

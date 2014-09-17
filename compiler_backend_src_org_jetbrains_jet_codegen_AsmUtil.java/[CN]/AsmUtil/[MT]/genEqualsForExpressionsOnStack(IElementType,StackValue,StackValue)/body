@@ -1,0 +1,22 @@
+{
+  final Type leftType=left.type;
+  final Type rightType=right.type;
+  if (isPrimitive(leftType) && leftType == rightType) {
+    return StackValue.cmp(opToken,leftType,left,right);
+  }
+  if (opToken == JetTokens.EQEQEQ || opToken == JetTokens.EXCLEQEQEQ) {
+    return StackValue.cmp(opToken,leftType,left,right);
+  }
+  return StackValue.operation(Type.BOOLEAN_TYPE,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter v){
+      left.put(leftType,v);
+      right.put(rightType,v);
+      v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,"areEqual","(Ljava/lang/Object;Ljava/lang/Object;)Z",false);
+      if (opToken == JetTokens.EXCLEQ || opToken == JetTokens.EXCLEQEQEQ) {
+        genInvertBoolean(v);
+      }
+      return Unit.INSTANCE$;
+    }
+  }
+);
+}

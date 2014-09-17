@@ -3,23 +3,22 @@
   if (closure != null) {
     EnclosedValueDescriptor answer=closure.getCaptureVariables().get(d);
     if (answer != null) {
-      StackValue innerValue=answer.getInnerValue();
-      return result == null ? innerValue : StackValue.composed(result,innerValue);
+      return StackValue.changeReceiverForFieldAndSharedVar(answer.getInnerValue(),result);
     }
     for (    LocalLookup.LocalLookupCase aCase : LocalLookup.LocalLookupCase.values()) {
       if (aCase.isCase(d)) {
         Type classType=state.getTypeMapper().mapType(getThisDescriptor());
-        StackValue innerValue=aCase.innerValue(d,enclosingLocalLookup,state,closure,classType);
+        StackValue.StackValueWithSimpleReceiver innerValue=aCase.innerValue(d,enclosingLocalLookup,state,closure,classType);
         if (innerValue == null) {
           break;
         }
  else {
-          return result == null ? innerValue : composedOrStatic(result,innerValue);
+          return StackValue.changeReceiverForFieldAndSharedVar(innerValue,result);
         }
       }
     }
-    myOuter=getOuterExpression(null,ignoreNoOuter,false);
-    result=result == null || myOuter == null ? myOuter : StackValue.composed(result,myOuter);
+    myOuter=getOuterExpression(result,ignoreNoOuter,false);
+    result=myOuter;
   }
   StackValue resultValue;
   if (myOuter != null && getEnclosingClass() == d) {

@@ -2,16 +2,13 @@
   Label ifnull=new Label();
   Type type=boxType(expressionType(expression));
   StackValue value=generateSafeQualifiedExpression(expression,ifnull);
-  value.put(type,v);
+  StackValue newReceiver=StackValue.lazyCast(value,type);
+  StackValue result;
   if (!isPrimitive(expressionType(expression.getReceiverExpression()))) {
-    Label end=new Label();
-    v.goTo(end);
-    v.mark(ifnull);
-    v.pop();
-    if (!type.equals(Type.VOID_TYPE)) {
-      v.aconst(null);
-    }
-    v.mark(end);
+    result=new StackValue.SafeFallback(type,ifnull,newReceiver);
   }
-  return StackValue.onStack(type);
+ else {
+    result=newReceiver;
+  }
+  return result;
 }

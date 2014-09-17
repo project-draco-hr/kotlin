@@ -1,6 +1,6 @@
 {
   StringBuilder constantValue=new StringBuilder("");
-  JetStringTemplateEntry[] entries=expression.getEntries();
+  final JetStringTemplateEntry[] entries=expression.getEntries();
   if (entries.length == 1 && entries[0] instanceof JetStringTemplateEntryWithExpression) {
     JetExpression expr=entries[0].getExpression();
     return genToString(v,gen(expr),expressionType(expr));
@@ -22,18 +22,23 @@
     return StackValue.constant(constantValue.toString(),type);
   }
  else {
-    genStringBuilderConstructor(v);
-    for (    JetStringTemplateEntry entry : entries) {
-      if (entry instanceof JetStringTemplateEntryWithExpression) {
-        invokeAppend(entry.getExpression());
-      }
+    return StackValue.operation(AsmTypeConstants.JAVA_STRING_TYPE,new Function1<InstructionAdapter,Unit>(){
+      @Override public Unit invoke(      InstructionAdapter adapter){
+        genStringBuilderConstructor(v);
+        for (        JetStringTemplateEntry entry : entries) {
+          if (entry instanceof JetStringTemplateEntryWithExpression) {
+            invokeAppend(entry.getExpression());
+          }
  else {
-        String text=entry instanceof JetEscapeStringTemplateEntry ? ((JetEscapeStringTemplateEntry)entry).getUnescapedValue() : entry.getText();
-        v.aconst(text);
-        genInvokeAppendMethod(v,JAVA_STRING_TYPE);
+            String text=entry instanceof JetEscapeStringTemplateEntry ? ((JetEscapeStringTemplateEntry)entry).getUnescapedValue() : entry.getText();
+            v.aconst(text);
+            genInvokeAppendMethod(v,JAVA_STRING_TYPE);
+          }
+        }
+        v.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;",false);
+        return Unit.INSTANCE$;
       }
     }
-    v.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;",false);
-    return StackValue.onStack(AsmTypeConstants.JAVA_STRING_TYPE);
+);
   }
 }

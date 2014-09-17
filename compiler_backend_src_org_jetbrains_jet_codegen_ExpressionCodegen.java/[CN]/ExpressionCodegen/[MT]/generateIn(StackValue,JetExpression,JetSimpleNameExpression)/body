@@ -1,14 +1,19 @@
 {
-  JetExpression deparenthesized=JetPsiUtil.deparenthesize(rangeExpression);
-  if (isIntRangeExpr(deparenthesized)) {
-    genInIntRange(leftValue,(JetBinaryExpression)deparenthesized);
-  }
+  final JetExpression deparenthesized=JetPsiUtil.deparenthesize(rangeExpression);
+  return StackValue.operation(Type.BOOLEAN_TYPE,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      if (isIntRangeExpr(deparenthesized)) {
+        genInIntRange(leftValue,(JetBinaryExpression)deparenthesized);
+      }
  else {
-    ResolvedCall<? extends CallableDescriptor> resolvedCall=getResolvedCallWithAssert(operationReference,bindingContext);
-    invokeFunction(resolvedCall,StackValue.none());
+        ResolvedCall<? extends CallableDescriptor> resolvedCall=getResolvedCallWithAssert(operationReference,bindingContext);
+        invokeFunctionNotLazy(resolvedCall,StackValue.none());
+      }
+      if (operationReference.getReferencedNameElementType() == JetTokens.NOT_IN) {
+        genInvertBoolean(v);
+      }
+      return null;
+    }
   }
-  if (operationReference.getReferencedNameElementType() == JetTokens.NOT_IN) {
-    genInvertBoolean(v);
-  }
-  return StackValue.onStack(Type.BOOLEAN_TYPE);
+);
 }

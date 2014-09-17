@@ -5,17 +5,17 @@
   JetExpression right=expression.getRight();
   Callable callable=resolveToCallable(descriptor,false);
   Type type;
+  StackValue leftValue;
+  StackValue rightValue;
   if (callable instanceof IntrinsicMethod) {
     type=comparisonOperandType(expressionType(left),expressionType(right));
-    StackValue recv=gen(left);
-    recv.put(type,v);
-    gen(right,type);
+    leftValue=genLazy(left,type);
+    rightValue=genLazy(right,type);
   }
  else {
-    StackValue result=invokeFunction(resolvedCall,receiver);
     type=Type.INT_TYPE;
-    result.put(type,v);
-    v.iconst(0);
+    leftValue=StackValue.lazyCast(invokeFunction(resolvedCall,receiver),type);
+    rightValue=StackValue.constant(0,type);
   }
-  return StackValue.cmp(expression.getOperationToken(),type);
+  return StackValue.cmp(expression.getOperationToken(),type,leftValue,rightValue);
 }

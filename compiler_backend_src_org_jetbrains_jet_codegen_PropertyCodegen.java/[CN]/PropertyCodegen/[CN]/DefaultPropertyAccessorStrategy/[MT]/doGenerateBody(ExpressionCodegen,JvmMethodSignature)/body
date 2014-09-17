@@ -1,12 +1,7 @@
 {
   InstructionAdapter v=codegen.v;
   PropertyDescriptor propertyDescriptor=callableDescriptor.getCorrespondingProperty();
-  int paramCode=0;
-  if (codegen.getContext().getContextKind() != OwnerKind.PACKAGE) {
-    v.load(0,OBJECT_TYPE);
-    paramCode=1;
-  }
-  StackValue property=codegen.intermediateValueForProperty(propertyDescriptor,true,null);
+  StackValue property=codegen.intermediateValueForProperty(propertyDescriptor,true,null,StackValue.local(0,OBJECT_TYPE));
   if (callableDescriptor instanceof PropertyGetterDescriptor) {
     Type type=signature.getReturnType();
     property.put(type,v);
@@ -14,12 +9,13 @@
   }
  else   if (callableDescriptor instanceof PropertySetterDescriptor) {
     ReceiverParameterDescriptor receiverParameter=propertyDescriptor.getExtensionReceiverParameter();
+    int paramCode=codegen.getContext().getContextKind() != OwnerKind.PACKAGE ? 1 : 0;
     if (receiverParameter != null) {
       paramCode+=codegen.typeMapper.mapType(receiverParameter.getType()).getSize();
     }
     Type type=codegen.typeMapper.mapType(propertyDescriptor);
-    v.load(paramCode,type);
-    property.store(type,v);
+    StackValue.Local value=StackValue.local(paramCode,type);
+    property.store(value,codegen.v);
     v.visitInsn(RETURN);
   }
  else {

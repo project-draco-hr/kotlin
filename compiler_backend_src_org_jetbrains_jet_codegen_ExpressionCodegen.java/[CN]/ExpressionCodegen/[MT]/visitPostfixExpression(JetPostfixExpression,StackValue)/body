@@ -1,28 +1,35 @@
 {
   if (expression.getOperationReference().getReferencedNameElementType() == JetTokens.EXCLEXCL) {
-    StackValue base=genQualified(receiver,expression.getBaseExpression());
+    final StackValue base=genQualified(receiver,expression.getBaseExpression());
     if (isPrimitive(base.type)) {
       return base;
     }
-    base.put(base.type,v);
-    v.dup();
-    Label ok=new Label();
-    v.ifnonnull(ok);
-    v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,"throwNpe","()V",false);
-    v.mark(ok);
-    return StackValue.onStack(base.type);
+ else {
+      return StackValue.operation(base.type,new Function1<InstructionAdapter,Unit>(){
+        @Override public Unit invoke(        InstructionAdapter v){
+          base.put(base.type,v);
+          v.dup();
+          Label ok=new Label();
+          v.ifnonnull(ok);
+          v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,"throwNpe","()V",false);
+          v.mark(ok);
+          return null;
+        }
+      }
+);
+    }
   }
   DeclarationDescriptor originalOperation=bindingContext.get(REFERENCE_TARGET,expression.getOperationReference());
   String originalOperationName=originalOperation != null ? originalOperation.getName().asString() : null;
-  ResolvedCall<?> resolvedCall=getResolvedCallWithAssert(expression,bindingContext);
+  final ResolvedCall<?> resolvedCall=getResolvedCallWithAssert(expression,bindingContext);
   DeclarationDescriptor op=resolvedCall.getResultingDescriptor();
   if (!(op instanceof FunctionDescriptor) || originalOperation == null) {
     throw new UnsupportedOperationException("Don't know how to generate this postfix expression: " + originalOperationName + " "+ op);
   }
-  Type asmResultType=expressionType(expression);
-  Type asmBaseType=expressionType(expression.getBaseExpression());
+  final Type asmResultType=expressionType(expression);
+  final Type asmBaseType=expressionType(expression.getBaseExpression());
   DeclarationDescriptor cls=op.getContainingDeclaration();
-  int increment;
+  final int increment;
   if (originalOperationName.equals("inc")) {
     increment=1;
   }
@@ -32,7 +39,7 @@
  else {
     throw new UnsupportedOperationException("Unsupported postfix operation: " + originalOperationName + " "+ op);
   }
-  boolean isPrimitiveNumberClassDescriptor=isPrimitiveNumberClassDescriptor(cls);
+  final boolean isPrimitiveNumberClassDescriptor=isPrimitiveNumberClassDescriptor(cls);
   if (isPrimitiveNumberClassDescriptor && AsmUtil.isPrimitive(asmBaseType)) {
     JetExpression operand=expression.getBaseExpression();
     if (operand instanceof JetReferenceExpression && asmResultType == Type.INT_TYPE) {
@@ -42,20 +49,26 @@
       }
     }
   }
-  StackValue value=gen(expression.getBaseExpression());
-  value.dupReceiver(v);
-  Type type=expressionType(expression.getBaseExpression());
-  value.put(type,v);
-  pushReceiverAndValueViaDup(value,type);
-  Type storeType;
-  if (isPrimitiveNumberClassDescriptor && AsmUtil.isPrimitive(asmBaseType)) {
-    genIncrement(asmResultType,increment,v);
-    storeType=type;
-  }
+  return StackValue.operation(asmResultType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      StackValue value=gen(expression.getBaseExpression());
+      value=StackValue.complexReceiver(value,StackValue.RECEIVER_WRITE,StackValue.RECEIVER_READ);
+      Type type=expressionType(expression.getBaseExpression());
+      value.put(type,v);
+      pushReceiverAndValueViaDup(value,type);
+      Type storeType;
+      if (isPrimitiveNumberClassDescriptor && AsmUtil.isPrimitive(asmBaseType)) {
+        genIncrement(asmResultType,increment,v);
+        storeType=type;
+      }
  else {
-    StackValue result=invokeFunction(resolvedCall,StackValue.onStack(type));
-    storeType=result.type;
+        StackValue result=invokeFunction(resolvedCall,StackValue.onStack(type));
+        result.put(result.type,v);
+        storeType=result.type;
+      }
+      value.store(storeType,v);
+      return Unit.INSTANCE$;
+    }
   }
-  value.store(storeType,v);
-  return StackValue.onStack(asmResultType);
+);
 }

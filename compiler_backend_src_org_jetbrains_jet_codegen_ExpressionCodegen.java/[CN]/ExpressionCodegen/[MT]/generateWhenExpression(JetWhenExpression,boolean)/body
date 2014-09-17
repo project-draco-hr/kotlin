@@ -1,56 +1,61 @@
 {
-  JetExpression expr=expression.getSubjectExpression();
-  Type subjectType=expressionType(expr);
-  Type resultType=isStatement ? Type.VOID_TYPE : expressionType(expression);
-  SwitchCodegen switchCodegen=SwitchCodegenUtil.buildAppropriateSwitchCodegenIfPossible(expression,isStatement,this);
-  if (switchCodegen != null) {
-    switchCodegen.generate();
-    return StackValue.onStack(resultType);
-  }
-  int subjectLocal=expr != null ? myFrameMap.enterTemp(subjectType) : -1;
-  if (subjectLocal != -1) {
-    gen(expr,subjectType);
-    tempVariables.put(expr,StackValue.local(subjectLocal,subjectType));
-    v.store(subjectLocal,subjectType);
-  }
-  Label end=new Label();
-  boolean hasElse=JetPsiUtil.checkWhenExpressionHasSingleElse(expression);
-  Label nextCondition=null;
-  for (  JetWhenEntry whenEntry : expression.getEntries()) {
-    if (nextCondition != null) {
-      v.mark(nextCondition);
-    }
-    nextCondition=new Label();
-    FrameMap.Mark mark=myFrameMap.mark();
-    Label thisEntry=new Label();
-    if (!whenEntry.isElse()) {
-      JetWhenCondition[] conditions=whenEntry.getConditions();
-      for (int i=0; i < conditions.length; i++) {
-        StackValue conditionValue=generateWhenCondition(subjectType,subjectLocal,conditions[i]);
-        conditionValue.condJump(nextCondition,true,v);
-        if (i < conditions.length - 1) {
-          v.goTo(thisEntry);
+  final JetExpression expr=expression.getSubjectExpression();
+  final Type subjectType=expressionType(expr);
+  final Type resultType=isStatement ? Type.VOID_TYPE : expressionType(expression);
+  return StackValue.operation(resultType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      SwitchCodegen switchCodegen=SwitchCodegenUtil.buildAppropriateSwitchCodegenIfPossible(expression,isStatement,ExpressionCodegen.this);
+      if (switchCodegen != null) {
+        switchCodegen.generate();
+        return Unit.INSTANCE$;
+      }
+      int subjectLocal=expr != null ? myFrameMap.enterTemp(subjectType) : -1;
+      if (subjectLocal != -1) {
+        gen(expr,subjectType);
+        tempVariables.put(expr,StackValue.local(subjectLocal,subjectType));
+        v.store(subjectLocal,subjectType);
+      }
+      Label end=new Label();
+      boolean hasElse=JetPsiUtil.checkWhenExpressionHasSingleElse(expression);
+      Label nextCondition=null;
+      for (      JetWhenEntry whenEntry : expression.getEntries()) {
+        if (nextCondition != null) {
           v.mark(nextCondition);
-          nextCondition=new Label();
+        }
+        nextCondition=new Label();
+        FrameMap.Mark mark=myFrameMap.mark();
+        Label thisEntry=new Label();
+        if (!whenEntry.isElse()) {
+          JetWhenCondition[] conditions=whenEntry.getConditions();
+          for (int i=0; i < conditions.length; i++) {
+            StackValue conditionValue=generateWhenCondition(subjectType,subjectLocal,conditions[i]);
+            conditionValue.condJump(nextCondition,true,v);
+            if (i < conditions.length - 1) {
+              v.goTo(thisEntry);
+              v.mark(nextCondition);
+              nextCondition=new Label();
+            }
+          }
+        }
+        v.visitLabel(thisEntry);
+        gen(whenEntry.getExpression(),resultType);
+        mark.dropTo();
+        if (!whenEntry.isElse()) {
+          v.goTo(end);
         }
       }
-    }
-    v.visitLabel(thisEntry);
-    gen(whenEntry.getExpression(),resultType);
-    mark.dropTo();
-    if (!whenEntry.isElse()) {
-      v.goTo(end);
+      if (!hasElse && nextCondition != null) {
+        v.mark(nextCondition);
+        if (!isStatement) {
+          putUnitInstanceOntoStackForNonExhaustiveWhen(expression);
+        }
+      }
+      markLineNumber(expression,isStatement);
+      v.mark(end);
+      myFrameMap.leaveTemp(subjectType);
+      tempVariables.remove(expr);
+      return null;
     }
   }
-  if (!hasElse && nextCondition != null) {
-    v.mark(nextCondition);
-    if (!isStatement) {
-      putUnitInstanceOntoStackForNonExhaustiveWhen(expression);
-    }
-  }
-  markLineNumber(expression,isStatement);
-  v.mark(end);
-  myFrameMap.leaveTemp(subjectType);
-  tempVariables.remove(expr);
-  return StackValue.onStack(resultType);
+);
 }

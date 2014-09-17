@@ -1,15 +1,20 @@
 {
-  v.anew(type);
-  v.dup();
-  ConstructorDescriptor constructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
-  ReceiverParameterDescriptor dispatchReceiver=constructor.getDispatchReceiverParameter();
-  if (dispatchReceiver != null) {
-    Type receiverType=typeMapper.mapType(dispatchReceiver.getType());
-    generateReceiverValue(resolvedCall.getDispatchReceiver(),receiverType);
+  return StackValue.functionCall(objectType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      v.anew(objectType);
+      v.dup();
+      ConstructorDescriptor constructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
+      ReceiverParameterDescriptor dispatchReceiver=constructor.getDispatchReceiverParameter();
+      if (dispatchReceiver != null) {
+        Type receiverType=typeMapper.mapType(dispatchReceiver.getType());
+        generateReceiverValue(resolvedCall.getDispatchReceiver(),receiverType);
+      }
+      pushClosureOnStack(constructor.getContainingDeclaration(),dispatchReceiver == null,defaultCallGenerator);
+      ConstructorDescriptor originalOfSamAdapter=(ConstructorDescriptor)SamCodegenUtil.getOriginalIfSamAdapter(constructor);
+      CallableMethod method=typeMapper.mapToCallableMethod(originalOfSamAdapter == null ? constructor : originalOfSamAdapter);
+      invokeMethodWithArguments(method,resolvedCall,StackValue.none());
+      return Unit.INSTANCE$;
+    }
   }
-  pushClosureOnStack(constructor.getContainingDeclaration(),dispatchReceiver == null,defaultCallGenerator);
-  ConstructorDescriptor originalOfSamAdapter=(ConstructorDescriptor)SamCodegenUtil.getOriginalIfSamAdapter(constructor);
-  CallableMethod method=typeMapper.mapToCallableMethod(originalOfSamAdapter == null ? constructor : originalOfSamAdapter);
-  invokeMethodWithArguments(method,resolvedCall,StackValue.none());
-  return StackValue.onStack(type);
+);
 }

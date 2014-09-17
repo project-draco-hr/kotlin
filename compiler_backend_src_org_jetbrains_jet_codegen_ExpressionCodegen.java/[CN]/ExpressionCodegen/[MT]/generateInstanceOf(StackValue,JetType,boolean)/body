@@ -1,21 +1,27 @@
 {
-  expressionToGen.put(OBJECT_TYPE,v);
-  if (leaveExpressionOnStack) {
-    v.dup();
-  }
-  if (jetType.isNullable()) {
-    Label nope=new Label();
-    Label end=new Label();
-    v.dup();
-    v.ifnull(nope);
-    generateInstanceOfInstruction(jetType);
-    v.goTo(end);
-    v.mark(nope);
-    v.pop();
-    v.iconst(1);
-    v.mark(end);
-  }
+  return StackValue.operation(Type.BOOLEAN_TYPE,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter v){
+      expressionToGen.put(OBJECT_TYPE,v);
+      if (leaveExpressionOnStack) {
+        v.dup();
+      }
+      if (jetType.isNullable()) {
+        Label nope=new Label();
+        Label end=new Label();
+        v.dup();
+        v.ifnull(nope);
+        generateInstanceOfInstruction(jetType);
+        v.goTo(end);
+        v.mark(nope);
+        v.pop();
+        v.iconst(1);
+        v.mark(end);
+      }
  else {
-    generateInstanceOfInstruction(jetType);
+        generateInstanceOfInstruction(jetType);
+      }
+      return null;
+    }
   }
+);
 }

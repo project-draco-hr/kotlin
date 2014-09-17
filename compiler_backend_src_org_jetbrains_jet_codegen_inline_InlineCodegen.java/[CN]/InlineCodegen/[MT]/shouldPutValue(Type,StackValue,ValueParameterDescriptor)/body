@@ -8,12 +8,15 @@
   if (stackValue instanceof StackValue.Local) {
     return false;
   }
-  if (stackValue instanceof StackValue.Composed) {
-    if (codegen.getContext().isInliningLambda() && codegen.getContext().getContextDescriptor() instanceof AnonymousFunctionDescriptor) {
-      if (descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor)) {
-        return false;
-      }
-    }
+  StackValue receiver=null;
+  if (stackValue instanceof StackValue.Field) {
+    receiver=((StackValue.Field)stackValue).receiver;
   }
-  return true;
+ else   if (stackValue instanceof StackValue.FieldForSharedVar) {
+    receiver=((StackValue.Field)((StackValue.FieldForSharedVar)stackValue).receiver).receiver;
+  }
+  if (!(receiver instanceof StackValue.Local)) {
+    return true;
+  }
+  return !(codegen.getContext().isInliningLambda() && descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor));
 }

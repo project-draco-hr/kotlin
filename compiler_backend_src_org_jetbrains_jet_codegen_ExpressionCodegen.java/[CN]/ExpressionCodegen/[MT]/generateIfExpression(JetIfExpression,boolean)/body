@@ -1,12 +1,11 @@
 {
-  Type asmType=isStatement ? Type.VOID_TYPE : expressionType(expression);
-  StackValue condition=gen(expression.getCondition());
-  JetExpression thenExpression=expression.getThen();
-  JetExpression elseExpression=expression.getElse();
+  final Type asmType=isStatement ? Type.VOID_TYPE : expressionType(expression);
+  final StackValue condition=gen(expression.getCondition());
+  final JetExpression thenExpression=expression.getThen();
+  final JetExpression elseExpression=expression.getElse();
   if (isEmptyExpression(thenExpression)) {
     if (isEmptyExpression(elseExpression)) {
-      condition.put(asmType,v);
-      return StackValue.onStack(asmType);
+      return StackValue.lazyCast(condition,asmType);
     }
     return generateSingleBranchIf(condition,expression,elseExpression,false,isStatement);
   }
@@ -15,14 +14,19 @@
       return generateSingleBranchIf(condition,expression,thenExpression,true,isStatement);
     }
   }
-  Label elseLabel=new Label();
-  condition.condJump(elseLabel,true,v);
-  Label end=new Label();
-  gen(thenExpression,asmType);
-  v.goTo(end);
-  v.mark(elseLabel);
-  gen(elseExpression,asmType);
-  markLineNumber(expression,isStatement);
-  v.mark(end);
-  return StackValue.onStack(asmType);
+  return StackValue.operation(asmType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    @JetValueParameter(name="p1") InstructionAdapter adapter){
+      Label elseLabel=new Label();
+      condition.condJump(elseLabel,true,v);
+      Label end=new Label();
+      gen(thenExpression,asmType);
+      v.goTo(end);
+      v.mark(elseLabel);
+      gen(elseExpression,asmType);
+      markLineNumber(expression,isStatement);
+      v.mark(end);
+      return Unit.INSTANCE$;
+    }
+  }
+);
 }
