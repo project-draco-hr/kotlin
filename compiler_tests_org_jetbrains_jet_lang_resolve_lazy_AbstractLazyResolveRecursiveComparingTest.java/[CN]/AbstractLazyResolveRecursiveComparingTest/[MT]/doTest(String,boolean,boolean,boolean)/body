@@ -13,13 +13,5 @@
   PackageViewDescriptor expected=eagerModule.getPackage(test);
   Assert.assertNotNull("Package for name " + test + " is null after eager resolve",expected);
   File serializeResultsTo=new File(FileUtil.getNameWithoutExtension(testFileName) + ".txt");
-  RecursiveDescriptorComparator.validateAndCompareDescriptors(expected,actual,RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT.filterRecursion(new Predicate<DeclarationDescriptor>(){
-    @Override public boolean apply(    DeclarationDescriptor descriptor){
-      if (descriptor instanceof PackageViewDescriptor) {
-        return !KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAME.equals(((PackageViewDescriptor)descriptor).getFqName());
-      }
-      return true;
-    }
-  }
-).checkPrimaryConstructors(checkPrimaryConstructors).checkPropertyAccessors(checkPropertyAccessors).withValidationStrategy(allowErrorTypes ? ALLOW_ERROR_TYPES : FORBID_ERROR_TYPES),serializeResultsTo);
+  RecursiveDescriptorComparator.validateAndCompareDescriptors(expected,actual,RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT.filterRecursion(RecursiveDescriptorComparator.SKIP_BUILT_INS_PACKAGES).checkPrimaryConstructors(checkPrimaryConstructors).checkPropertyAccessors(checkPropertyAccessors).withValidationStrategy(allowErrorTypes ? ALLOW_ERROR_TYPES : FORBID_ERROR_TYPES),serializeResultsTo);
 }
