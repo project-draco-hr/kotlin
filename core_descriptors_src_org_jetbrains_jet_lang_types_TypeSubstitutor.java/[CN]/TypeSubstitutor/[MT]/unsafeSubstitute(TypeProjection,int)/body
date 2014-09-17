@@ -2,10 +2,9 @@
   assertRecursionDepth(recursionDepth,originalProjection,substitution);
   JetType type=originalProjection.getType();
   Variance originalProjectionKind=originalProjection.getProjectionKind();
-  if (type instanceof FlexibleType && !TypesPackage.isCustomTypeVariable(type)) {
-    FlexibleType flexibleType=(FlexibleType)type;
-    TypeProjection substitutedLower=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getLowerBound()),recursionDepth + 1);
-    TypeProjection substitutedUpper=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,flexibleType.getUpperBound()),recursionDepth + 1);
+  if (type.isFlexible() && !TypesPackage.isCustomTypeVariable(type)) {
+    TypeProjection substitutedLower=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,type.getLowerBound()),recursionDepth + 1);
+    TypeProjection substitutedUpper=unsafeSubstitute(new TypeProjectionImpl(originalProjectionKind,type.getUpperBound()),recursionDepth + 1);
     return new TypeProjectionImpl(originalProjectionKind,DelegatingFlexibleType.OBJECT$.create(substitutedLower.getType(),substitutedUpper.getType()));
   }
   if (KotlinBuiltIns.getInstance().isNothing(type) || type.isError())   return originalProjection;
