@@ -1,15 +1,7 @@
 {
   DeclarationDescriptor containing=innerClass.getContainingDeclaration();
-  String outerClassInternalName=containing instanceof ClassDescriptor ? getInternalNameForImpl((ClassDescriptor)containing) : null;
-  String innerClassInternalName;
-  String innerName;
-  if (isClassObject(innerClass)) {
-    innerName=JvmAbi.CLASS_OBJECT_CLASS_NAME;
-    innerClassInternalName=outerClassInternalName + JvmAbi.CLASS_OBJECT_SUFFIX;
-  }
- else {
-    innerName=innerClass.getName().isSpecial() ? null : innerClass.getName().asString();
-    innerClassInternalName=getInternalNameForImpl(innerClass);
-  }
+  String outerClassInternalName=containing instanceof ClassDescriptor ? typeMapper.mapClass((ClassDescriptor)containing).getInternalName() : null;
+  String innerName=isClassObject(innerClass) ? JvmAbi.CLASS_OBJECT_CLASS_NAME : innerClass.getName().isSpecial() ? null : innerClass.getName().asString();
+  String innerClassInternalName=typeMapper.mapClass(innerClass).getInternalName();
   v.visitInnerClass(innerClassInternalName,outerClassInternalName,innerName,calculateInnerClassAccessFlags(innerClass));
 }
