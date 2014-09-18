@@ -1,20 +1,4 @@
 {
-  int innerClassAccess=getVisibilityAccessFlag(innerClass);
-  if (innerClass.getModality() == Modality.FINAL) {
-    innerClassAccess|=ACC_FINAL;
-  }
- else   if (innerClass.getModality() == Modality.ABSTRACT) {
-    innerClassAccess|=ACC_ABSTRACT;
-  }
-  if (innerClass.getKind() == ClassKind.TRAIT) {
-    innerClassAccess|=ACC_INTERFACE;
-  }
- else   if (innerClass.getKind() == ClassKind.ENUM_CLASS) {
-    innerClassAccess|=ACC_ENUM;
-  }
-  if (!innerClass.isInner()) {
-    innerClassAccess|=ACC_STATIC;
-  }
   DeclarationDescriptor containing=innerClass.getContainingDeclaration();
   String outerClassInternalName=containing instanceof ClassDescriptor ? getInternalNameForImpl((ClassDescriptor)containing) : null;
   String innerClassInternalName;
@@ -27,5 +11,5 @@
     innerName=innerClass.getName().isSpecial() ? null : innerClass.getName().asString();
     innerClassInternalName=getInternalNameForImpl(innerClass);
   }
-  v.visitInnerClass(innerClassInternalName,outerClassInternalName,innerName,innerClassAccess);
+  v.visitInnerClass(innerClassInternalName,outerClassInternalName,innerName,calculateInnerClassAccessFlags(innerClass));
 }
