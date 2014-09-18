@@ -1,7 +1,11 @@
 {
-  ScriptDescriptor descriptor=bindingTrace.getBindingContext().get(SCRIPT,jetScript);
+  ScriptDescriptor descriptor=trace.getBindingContext().get(SCRIPT,script);
   if (descriptor == null) {
-    throw new IllegalStateException("Descriptor is not found for PSI " + jetScript);
+    throw new IllegalStateException("Script descriptor is not found for PSI: " + JetPsiUtil.getElementTextWithContext(script));
   }
-  registerClassNameForScript(bindingTrace,descriptor,asmType);
+  String simpleName=asmType.getInternalName().substring(asmType.getInternalName().lastIndexOf('/') + 1);
+  ClassDescriptorImpl classDescriptor=new ClassDescriptorImpl(descriptor,Name.special("<script-" + simpleName + ">"),Modality.FINAL,Collections.singleton(KotlinBuiltIns.getInstance().getAnyType()),toSourceElement(script));
+  classDescriptor.initialize(JetScope.EMPTY,Collections.<ConstructorDescriptor>emptySet(),null);
+  recordClosure(trace,script,classDescriptor,null,asmType);
+  trace.record(CLASS_FOR_SCRIPT,descriptor,classDescriptor);
 }
