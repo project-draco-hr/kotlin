@@ -1,2 +1,19 @@
 {
+  List<Class> innerClasses=collectDeclaredClasses(klass,false);
+  Set<Class> unprocessedInnerClasses=unprocessedClasses(innerClasses);
+  if (unprocessedInnerClasses.isEmpty()) {
+    if (!innerClasses.isEmpty() && !hasTestMethods(klass)) {
+      isFakeTest=true;
+      return new FakeEmptyClassTest(klass);
+    }
+ else {
+      return new TestSuite(klass.asSubclass(TestCase.class));
+    }
+  }
+ else   if (unprocessedInnerClasses.size() == innerClasses.size()) {
+    return createTreeTestSuite(klass);
+  }
+ else {
+    return new TestSuite(klass.asSubclass(TestCase.class));
+  }
 }
