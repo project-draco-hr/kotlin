@@ -1,0 +1,26 @@
+{
+  if (codegen.getContext().getContextKind() != OwnerKind.PACKAGE) {
+    codegen.v.load(0,OBJECT_TYPE);
+  }
+  CodegenContext<? extends ClassOrPackageFragmentDescriptor> ownerContext=codegen.getContext().getClassOrPackageParentContext();
+  final Type owner;
+  if (ownerContext instanceof ClassContext) {
+    owner=typeMapper.mapClass(((ClassContext)ownerContext).getContextDescriptor());
+  }
+ else   if (ownerContext instanceof PackageContext) {
+    owner=((PackageContext)ownerContext).getPackagePartType();
+  }
+ else {
+    throw new UnsupportedOperationException("Unknown context: " + ownerContext);
+  }
+  codegen.tempVariables.put(resolvedCall.getCall().getValueArguments().get(propertyMetadataArgumentIndex).asElement(),new StackValue(PROPERTY_METADATA_TYPE){
+    @Override public void put(    Type type,    InstructionAdapter v){
+      v.getstatic(owner.getInternalName(),JvmAbi.PROPERTY_METADATA_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE);
+      v.iconst(indexInPropertyMetadataArray);
+      StackValue.arrayElement(PROPERTY_METADATA_TYPE).put(type,v);
+    }
+  }
+);
+  StackValue delegatedProperty=codegen.intermediateValueForProperty(propertyDescriptor,true,null);
+  return codegen.invokeFunction(resolvedCall,delegatedProperty);
+}
