@@ -9,14 +9,15 @@
         super.visit(version,access,name,signature,superName,interfaces);
       }
       @Override public MethodVisitor visitMethod(      int access,      @NotNull String name,      @NotNull String desc,      String signature,      String[] exceptions){
+        FqName classFqName=JvmClassName.byInternalName(className.get()).getFqNameForClassNameWithoutDollars();
+        if (PackageClassUtils.isPackageClassFqName(classFqName)) {
+          return super.visitMethod(access,name,desc,signature,exceptions);
+        }
         return new MethodNode(Opcodes.ASM4,access,name,desc,signature,exceptions){
           @Override public void visitMethodInsn(          int opcode,          @NotNull String owner,          String name,          @NotNull String desc,          boolean itf){
             MethodInfo methodCall=new MethodInfo(owner,name,desc);
             if (inlinedMethods.contains(methodCall)) {
               MethodInfo fromCall=new MethodInfo(className.get(),this.name,this.desc);
-              if (methodCall.owner.startsWith(fromCall.owner + "-")) {
-                return;
-              }
               if (methodCall.owner.endsWith(JvmAbi.TRAIT_IMPL_SUFFIX) && !fromCall.owner.equals(methodCall.owner)) {
                 return;
               }
