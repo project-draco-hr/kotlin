@@ -1,7 +1,10 @@
 {
   loadFile(TEST_FOLDER + "/" + testDataFile+ ".kt");
   OutputFileCollection outputFiles=generateClassesInFile();
-  OutputFile outputFile=outputFiles.get(kotlinClassName.replace('.','/') + ".class");
-  assertNotNull("Couldn't find kotlin class: " + kotlinClassName,outputFile);
-  return new ClassReader(outputFile.asByteArray());
+  for (  OutputFile file : outputFiles.asList()) {
+    if (file.getRelativePath().matches(internalNameRegexp + "\\.class")) {
+      return new ClassReader(file.asByteArray());
+    }
+  }
+  throw new AssertionError("Couldn't find class by regexp: " + internalNameRegexp + " in:\n"+ join(outputFiles.asList(),"\n"));
 }
