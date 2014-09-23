@@ -20,11 +20,12 @@
     MessageCollectorUtil.reportException(messageCollector,t);
     return INTERNAL_ERROR;
   }
-  if (arguments.androidRes != null) {
-    configuration.put(JVMConfigurationKeys.ANDROID_RES_PATH,arguments.androidRes);
+  try {
+    PluginCliParser.processPluginOptions(arguments,configuration);
   }
-  if (arguments.androidManifest != null) {
-    configuration.put(JVMConfigurationKeys.ANDROID_MANIFEST,arguments.androidManifest);
+ catch (  CliOptionProcessingException e) {
+    messageCollector.report(CompilerMessageSeverity.ERROR,e.getMessage(),CompilerMessageLocation.NO_LOCATION);
+    return INTERNAL_ERROR;
   }
   if (arguments.script) {
     if (arguments.freeArgs.isEmpty()) {
