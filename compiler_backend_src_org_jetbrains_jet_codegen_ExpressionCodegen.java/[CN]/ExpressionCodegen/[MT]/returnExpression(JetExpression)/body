@@ -1,7 +1,10 @@
 {
-  StackValue lastValue=gen(expr);
+  boolean isBlockedNamedFunction=expr instanceof JetBlockExpression && expr.getParent() instanceof JetNamedFunction;
+  gen(expr,isBlockedNamedFunction ? Type.VOID_TYPE : returnType);
   if (!endsWithReturn(expr)) {
-    lastValue.put(returnType,v);
+    if (isBlockedNamedFunction && !Type.VOID_TYPE.equals(expressionType(expr))) {
+      StackValue.none().put(returnType,v);
+    }
     v.areturn(returnType);
   }
 }
