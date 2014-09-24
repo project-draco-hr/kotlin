@@ -1,0 +1,25 @@
+{
+  Project project=getProject();
+  List<JetFile> files=new ArrayList<JetFile>(PluginJetFilesProvider.allFilesInProject(project));
+  final List<Breakpoint> breakpoints=Lists.newArrayList();
+  for (  JetFile file : files) {
+    breakpoints.addAll(extractBreakpointsInfo(file,file.getText()));
+  }
+  GenerationState state=GenerationUtils.compileManyFilesGetGenerationStateForTest(project,files);
+  Map<String,ReferenceType> referencesByName=getReferenceMap(state.getFactory());
+  DebugProcess debugProcess=createDebugProcess(referencesByName);
+  final PositionManager positionManager=createPositionManager(debugProcess,files,state);
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      try {
+        for (        Breakpoint breakpoint : breakpoints) {
+          assertBreakpointIsHandledCorrectly(breakpoint,positionManager);
+        }
+      }
+ catch (      NoDataException e) {
+        throw UtilsPackage.rethrow(e);
+      }
+    }
+  }
+);
+}
