@@ -1,0 +1,33 @@
+{
+  for (  ExceptionHandler handler : exceptionHandlers) {
+    LabelWrapper l=handler.start;
+    LabelWrapper e=handler.end;
+    while (l != e) {
+      l.addSuccessor(handler.handlerLabel,0,true);
+      l=l.nextLabel;
+    }
+  }
+  int max=0;
+  Stack<LabelWrapper> stack=new Stack<LabelWrapper>();
+  Set<LabelWrapper> pushed=new HashSet<LabelWrapper>();
+  stack.push(firstLabel);
+  pushed.add(firstLabel);
+  while (!stack.empty()) {
+    LabelWrapper current=stack.pop();
+    int start=current.inputStackSize;
+    int blockMax=start + current.outputStackMax;
+    if (blockMax > max) {
+      max=blockMax;
+    }
+    for (    ControlFlowEdge edge : current.successors) {
+      LabelWrapper successor=edge.successor;
+      if (!pushed.contains(successor)) {
+        successor.inputStackSize=edge.isExceptional ? 1 : start + edge.outputStackSize;
+        pushed.add(successor);
+        stack.push(successor);
+      }
+    }
+  }
+  this.maxStack=Math.max(this.maxStack,Math.max(maxStack,max));
+  super.visitMaxs(this.maxStack,maxLocals);
+}
