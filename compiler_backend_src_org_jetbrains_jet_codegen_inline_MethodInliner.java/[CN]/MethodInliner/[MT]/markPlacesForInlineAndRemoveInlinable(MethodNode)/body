@@ -23,7 +23,7 @@
   }
   AbstractInsnNode cur=node.instructions.getFirst();
   int index=0;
-  Set<LabelNode> deadLabels=new HashSet<LabelNode>();
+  Set<LabelNode> possibleDeadLabels=new HashSet<LabelNode>();
   while (cur != null) {
     Frame<SourceValue> frame=sources[index];
     if (frame != null) {
@@ -69,17 +69,20 @@
     index++;
     if (frame == null) {
       if (prevNode.getType() == AbstractInsnNode.LABEL) {
-        deadLabels.add((LabelNode)prevNode);
+        possibleDeadLabels.add((LabelNode)prevNode);
       }
  else {
         node.instructions.remove(prevNode);
       }
     }
+ else {
+      possibleDeadLabels.remove(prevNode.getPrevious());
+    }
   }
   List<TryCatchBlockNode> blocks=node.tryCatchBlocks;
   for (Iterator<TryCatchBlockNode> iterator=blocks.iterator(); iterator.hasNext(); ) {
     TryCatchBlockNode block=iterator.next();
-    if (deadLabels.contains(block.start) && deadLabels.contains(block.end)) {
+    if (possibleDeadLabels.contains(block.start) && possibleDeadLabels.contains(block.end)) {
       iterator.remove();
     }
   }
