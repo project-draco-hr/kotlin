@@ -1,13 +1,10 @@
 {
   boolean isSubtype=JetTypeChecker.DEFAULT.isSubtypeOf(specific,general) || numericTypeMoreSpecific(specific,general);
   if (!isSubtype)   return false;
-  boolean specificIsFlexible=specific.isFlexible();
-  boolean generalIsFlexible=general.isFlexible();
-  if (specificIsFlexible && !generalIsFlexible) {
+  Specificity.Relation sThanG=TypesPackage.getSpecificityRelationTo(specific,general);
+  Specificity.Relation gThanS=TypesPackage.getSpecificityRelationTo(general,specific);
+  if (sThanG == Specificity.Relation.LESS_SPECIFIC && gThanS != Specificity.Relation.LESS_SPECIFIC) {
     return false;
-  }
- else   if (!specificIsFlexible && generalIsFlexible) {
-    if (specific.isNullable())     return false;
   }
   return true;
 }
