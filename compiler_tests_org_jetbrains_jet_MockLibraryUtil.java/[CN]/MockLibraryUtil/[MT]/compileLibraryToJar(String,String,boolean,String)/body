@@ -1,21 +1,24 @@
 {
   try {
-    File contentDir=JetTestUtils.tmpDir("lib-content");
+    File contentDir=JetTestUtils.tmpDir("testLibrary-" + jarName);
     File classesDir=new File(contentDir,"classes");
-    compileKotlin(sourcesPath,classesDir);
+    compileKotlin(sourcesPath,classesDir,extraClasspath);
     List<File> javaFiles=FileUtil.findFilesByMask(Pattern.compile(".*\\.java"),new File(sourcesPath));
     if (!javaFiles.isEmpty()) {
-      List<String> classPath=ContainerUtil.list(ForTestCompileRuntime.runtimeJarForTests().getPath(),JetTestUtils.getAnnotationsJar().getPath());
+      List<String> classpath=new ArrayList<String>();
+      classpath.add(ForTestCompileRuntime.runtimeJarForTests().getPath());
+      classpath.add(JetTestUtils.getAnnotationsJar().getPath());
+      Collections.addAll(classpath,extraClasspath);
       if (classesDir.exists()) {
-        classPath.add(classesDir.getPath());
+        classpath.add(classesDir.getPath());
       }
  else {
         FileUtil.createDirectory(classesDir);
       }
-      List<String> options=Arrays.asList("-classpath",StringUtil.join(classPath,File.pathSeparator),"-d",classesDir.getPath());
+      List<String> options=Arrays.asList("-classpath",StringUtil.join(classpath,File.pathSeparator),"-d",classesDir.getPath());
       JetTestUtils.compileJavaFiles(javaFiles,options);
     }
-    File jarFile=new File(contentDir,"library.jar");
+    File jarFile=new File(contentDir,jarName + ".jar");
     ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(jarFile));
     ZipUtil.addDirToZipRecursively(zip,jarFile,classesDir,"",null,null);
     if (addSources) {
