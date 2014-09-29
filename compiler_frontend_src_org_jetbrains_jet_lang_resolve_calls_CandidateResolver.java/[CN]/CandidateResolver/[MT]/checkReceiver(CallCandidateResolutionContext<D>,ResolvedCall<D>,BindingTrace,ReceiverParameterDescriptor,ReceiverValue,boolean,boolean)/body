@@ -3,16 +3,16 @@
   D candidateDescriptor=candidateCall.getCandidateDescriptor();
   if (TypeUtils.dependsOnTypeParameters(receiverParameter.getType(),candidateDescriptor.getTypeParameters()))   return SUCCESS;
   boolean safeAccess=isExplicitReceiver && !implicitInvokeCheck && candidateCall.isSafeCall();
-  boolean isSubtypeByAutoCast=AutoCastUtils.isSubTypeByAutoCastIgnoringNullability(receiverArgument,receiverParameter.getType(),context);
-  if (!isSubtypeByAutoCast) {
+  boolean isSubtypeBySmartCast=SmartCastUtils.isSubTypeBySmartCastIgnoringNullability(receiverArgument,receiverParameter.getType(),context);
+  if (!isSubtypeBySmartCast) {
     context.tracing.wrongReceiverType(trace,receiverParameter,receiverArgument);
     return OTHER_ERROR;
   }
-  AutoCastUtils.recordAutoCastIfNecessary(receiverArgument,receiverParameter.getType(),context,safeAccess);
+  SmartCastUtils.recordSmartCastIfNecessary(receiverArgument,receiverParameter.getType(),context,safeAccess);
   JetType receiverArgumentType=receiverArgument.getType();
   BindingContext bindingContext=trace.getBindingContext();
   if (!safeAccess && !receiverParameter.getType().isNullable() && receiverArgumentType.isNullable()) {
-    if (!AutoCastUtils.isNotNull(receiverArgument,bindingContext,context.dataFlowInfo)) {
+    if (!SmartCastUtils.isNotNull(receiverArgument,bindingContext,context.dataFlowInfo)) {
       context.tracing.unsafeCall(trace,receiverArgumentType,implicitInvokeCheck);
       return UNSAFE_CALL_ERROR;
     }

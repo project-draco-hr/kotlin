@@ -1,0 +1,14 @@
+{
+  if (!(receiver instanceof ExpressionReceiver))   return false;
+  receiverParameterType=safeAccess ? TypeUtils.makeNullable(receiverParameterType) : receiverParameterType;
+  if (ArgumentTypeResolver.isSubtypeOfForArgumentType(receiver.getType(),receiverParameterType)) {
+    return false;
+  }
+  List<JetType> smartCastTypesExcludingReceiver=getSmartCastVariantsExcludingReceiver(context.trace.getBindingContext(),context.dataFlowInfo,receiver);
+  JetType smartCastSubType=getSmartCastSubType(receiverParameterType,smartCastTypesExcludingReceiver);
+  if (smartCastSubType == null)   return false;
+  JetExpression expression=((ExpressionReceiver)receiver).getExpression();
+  DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(receiver,context.trace.getBindingContext());
+  recordCastOrError(expression,smartCastSubType,context.trace,dataFlowValue.isStableIdentifier(),true);
+  return true;
+}
