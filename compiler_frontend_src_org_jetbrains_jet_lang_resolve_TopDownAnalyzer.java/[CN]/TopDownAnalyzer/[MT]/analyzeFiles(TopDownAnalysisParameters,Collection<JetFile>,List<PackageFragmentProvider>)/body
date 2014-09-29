@@ -1,17 +1,10 @@
 {
+  if (topDownAnalysisParameters.isLazy()) {
+    return lazyTopDownAnalyzer.analyzeFiles(project,topDownAnalysisParameters,files,additionalProviders,additionalCheckerProvider);
+  }
   TopDownAnalysisContext c=new TopDownAnalysisContext(topDownAnalysisParameters);
-  if (c.getTopDownAnalysisParameters().isLazy()) {
-    ResolveSession resolveSession=new InjectorForLazyResolve(project,new GlobalContextImpl((LockBasedStorageManager)c.getStorageManager(),c.getExceptionTracker()),(ModuleDescriptorImpl)moduleDescriptor,new FileBasedDeclarationProviderFactory(c.getStorageManager(),files),trace,additionalCheckerProvider).getResolveSession();
-    CompositePackageFragmentProvider provider=new CompositePackageFragmentProvider(KotlinPackage.plus(Arrays.asList(resolveSession.getPackageFragmentProvider()),additionalProviders));
-    ((ModuleDescriptorImpl)moduleDescriptor).initialize(provider);
-    lazyTopDownAnalyzer.setKotlinCodeAnalyzer(resolveSession);
-    lazyTopDownAnalyzer.analyzeDeclarations(c.getTopDownAnalysisParameters(),files);
-    return c;
-  }
- else {
-    CompositePackageFragmentProvider provider=new CompositePackageFragmentProvider(KotlinPackage.plus(Arrays.asList(packageFragmentProvider),additionalProviders));
-    ((ModuleDescriptorImpl)moduleDescriptor).initialize(provider);
-    doProcess(c,JetModuleUtil.getSubpackagesOfRootScope(moduleDescriptor),new PackageLikeBuilderDummy(),files);
-  }
+  CompositePackageFragmentProvider provider=new CompositePackageFragmentProvider(KotlinPackage.plus(Arrays.asList(packageFragmentProvider),additionalProviders));
+  ((ModuleDescriptorImpl)moduleDescriptor).initialize(provider);
+  doProcess(c,JetModuleUtil.getSubpackagesOfRootScope(moduleDescriptor),new PackageLikeBuilderDummy(),files);
   return c;
 }
