@@ -28,6 +28,12 @@
   generateBridge(cv,typeMapper.mapSignature(erasedInterfaceFunction).getAsmMethod(),jvmMethodSignature.getAsmMethod());
   FunctionCodegen fc=new FunctionCodegen(context,cv,state,getParentCodegen());
   fc.generateMethod(OtherOrigin(fun,funDescriptor),jvmMethodSignature,funDescriptor,strategy);
+  if (samType != null) {
+    SimpleFunctionDescriptorImpl descriptorForBridges=SimpleFunctionDescriptorImpl.create(funDescriptor.getContainingDeclaration(),funDescriptor.getAnnotations(),erasedInterfaceFunction.getName(),CallableMemberDescriptor.Kind.DECLARATION,funDescriptor.getSource());
+    descriptorForBridges.initialize(null,erasedInterfaceFunction.getDispatchReceiverParameter(),erasedInterfaceFunction.getTypeParameters(),erasedInterfaceFunction.getValueParameters(),erasedInterfaceFunction.getReturnType(),Modality.OPEN,erasedInterfaceFunction.getVisibility());
+    descriptorForBridges.addOverriddenDescriptor(erasedInterfaceFunction);
+    fc.generateBridges(descriptorForBridges);
+  }
   this.constructor=generateConstructor(cv,superClassAsmType);
   if (isConst(closure)) {
     generateConstInstance(cv);
