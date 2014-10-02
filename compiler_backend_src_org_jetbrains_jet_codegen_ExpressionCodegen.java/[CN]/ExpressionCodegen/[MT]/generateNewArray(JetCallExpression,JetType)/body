@@ -9,6 +9,11 @@
   }
   if (isArray) {
     gen(args.get(0),Type.INT_TYPE);
+    TypeParameterDescriptor parameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(arrayType.getArguments().get(0).getType());
+    if (parameterDescriptor != null && parameterDescriptor.isReified()) {
+      v.iconst(parameterDescriptor.getIndex());
+      v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,ReifiedTypeInliner.NEW_ARRAY_MARKER_METHOD_NAME,Type.getMethodDescriptor(Type.VOID_TYPE,Type.INT_TYPE),false);
+    }
     v.newarray(boxType(asmType(arrayType.getArguments().get(0).getType())));
   }
  else {

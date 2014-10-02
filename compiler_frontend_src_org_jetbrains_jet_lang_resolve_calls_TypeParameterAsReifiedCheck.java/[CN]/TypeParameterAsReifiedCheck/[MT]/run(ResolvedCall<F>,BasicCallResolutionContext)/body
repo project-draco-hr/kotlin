@@ -3,7 +3,8 @@
   for (  Map.Entry<TypeParameterDescriptor,JetType> entry : typeArguments.entrySet()) {
     TypeParameterDescriptor parameter=entry.getKey();
     JetType argument=entry.getValue();
-    if (parameter.isReified() && argument.getConstructor().getDeclarationDescriptor() instanceof TypeParameterDescriptor) {
+    ClassifierDescriptor argumentDeclarationDescription=argument.getConstructor().getDeclarationDescriptor();
+    if (parameter.isReified() && argumentDeclarationDescription instanceof TypeParameterDescriptor && !((TypeParameterDescriptor)argumentDeclarationDescription).isReified()) {
       JetExpression callee=context.call.getCalleeExpression();
       PsiElement element=callee != null ? callee : context.call.getCallElement();
       context.trace.report(Errors.TYPE_PARAMETER_AS_REIFIED.on(element,typeArguments.keySet().iterator().next()));

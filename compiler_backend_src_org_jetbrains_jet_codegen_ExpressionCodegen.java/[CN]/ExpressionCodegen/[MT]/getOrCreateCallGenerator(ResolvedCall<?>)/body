@@ -1,0 +1,16 @@
+{
+  Map<TypeParameterDescriptor,JetType> typeArguments=resolvedCall.getTypeArguments();
+  ReifiedTypeParameterMappings mappings=new ReifiedTypeParameterMappings(typeArguments.size());
+  for (  Map.Entry<TypeParameterDescriptor,JetType> entry : typeArguments.entrySet()) {
+    TypeParameterDescriptor key=entry.getKey();
+    if (!key.isReified())     continue;
+    TypeParameterDescriptor parameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(entry.getValue());
+    if (parameterDescriptor == null) {
+      mappings.addParameterMappingToType(key.getIndex(),key.getName().getIdentifier(),boxType(asmType(entry.getValue())));
+    }
+ else {
+      mappings.addParameterMappingToNewParameter(key.getIndex(),key.getName().getIdentifier(),parameterDescriptor.getIndex());
+    }
+  }
+  return getOrCreateCallGenerator(resolvedCall.getResultingDescriptor(),resolvedCall.getCall().getCallElement(),mappings);
+}
