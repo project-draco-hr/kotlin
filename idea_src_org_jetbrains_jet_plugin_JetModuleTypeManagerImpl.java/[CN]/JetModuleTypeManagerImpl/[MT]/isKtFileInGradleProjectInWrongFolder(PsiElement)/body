@@ -1,11 +1,16 @@
 {
-  PsiFile containingFile=element.getContainingFile();
-  if (containingFile == null) {
-    return false;
+  return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+    @Override public Boolean compute(){
+      PsiFile containingFile=element.getContainingFile();
+      if (containingFile == null) {
+        return false;
+      }
+      VirtualFile virtualFile=containingFile.getVirtualFile();
+      if (virtualFile == null) {
+        return false;
+      }
+      return isKtFileInGradleProjectInWrongFolder(virtualFile,element.getProject());
+    }
   }
-  VirtualFile virtualFile=containingFile.getVirtualFile();
-  if (virtualFile == null) {
-    return false;
-  }
-  return isKtFileInGradleProjectInWrongFolder(virtualFile,element.getProject());
+);
 }
