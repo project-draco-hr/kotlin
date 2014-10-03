@@ -1,2 +1,22 @@
 {
+  final String signatureString=DescriptorRenderer.SOURCE_CODE.render(patternDescriptor);
+  PsiDocumentManager.getInstance(project).commitAllDocuments();
+  final JetPsiFactory psiFactory=JetPsiFactory(project);
+  CommandProcessor.getInstance().executeCommand(project,new Runnable(){
+    @Override public void run(){
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          JetNamedFunction patternFunction=psiFactory.createFunction(signatureString);
+          JetTypeReference newTypeRef=function.setReturnTypeRef(patternFunction.getReturnTypeRef());
+          if (newTypeRef != null) {
+            ShortenReferences.INSTANCE$.process(newTypeRef);
+          }
+          function.getValueParameterList().replace(patternFunction.getValueParameterList());
+          ShortenReferences.INSTANCE$.process(function.getValueParameterList());
+        }
+      }
+);
+    }
+  }
+,JetBundle.message("change.function.signature.action"),null);
 }
