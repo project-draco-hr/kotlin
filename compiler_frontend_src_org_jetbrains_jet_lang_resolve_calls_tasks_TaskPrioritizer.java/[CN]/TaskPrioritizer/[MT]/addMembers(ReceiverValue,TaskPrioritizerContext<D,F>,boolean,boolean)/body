@@ -1,0 +1,11 @@
+{
+  List<JetType> variantsForExplicitReceiver=SmartCastUtils.getSmartCastVariants(explicitReceiver,c.context);
+  for (  CallableDescriptorCollector<D> callableDescriptorCollector : c.callableDescriptorCollectors) {
+    Collection<ResolutionCandidate<D>> members=Lists.newArrayList();
+    for (    JetType type : variantsForExplicitReceiver) {
+      Collection<D> membersForThisVariant=staticMembers ? callableDescriptorCollector.getStaticMembersByName(type,c.name,c.context.trace) : callableDescriptorCollector.getMembersByName(type,c.name,c.context.trace);
+      convertWithReceivers(membersForThisVariant,explicitReceiver,NO_RECEIVER,members,createKind(DISPATCH_RECEIVER,isExplicit),c.context.call);
+    }
+    c.result.addCandidates(members);
+  }
+}
