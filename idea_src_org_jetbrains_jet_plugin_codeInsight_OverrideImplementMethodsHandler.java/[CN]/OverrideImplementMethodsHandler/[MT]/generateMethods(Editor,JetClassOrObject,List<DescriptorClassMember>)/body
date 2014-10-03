@@ -1,20 +1,33 @@
 {
-  JetClassBody body=classOrObject.getBody();
-  if (body == null) {
-    JetPsiFactory psiFactory=JetPsiFactory(classOrObject);
-    classOrObject.add(psiFactory.createWhiteSpace());
-    body=(JetClassBody)classOrObject.add(psiFactory.createEmptyClassBody());
+  PsiElement firstGenerated=ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>(){
+    @Override public PsiElement compute(){
+      JetClassBody body=classOrObject.getBody();
+      if (body == null) {
+        JetPsiFactory psiFactory=JetPsiFactory(classOrObject);
+        classOrObject.add(psiFactory.createWhiteSpace());
+        body=(JetClassBody)classOrObject.add(psiFactory.createEmptyClassBody());
+      }
+      PsiElement afterAnchor=findInsertAfterAnchor(editor,body);
+      if (afterAnchor == null) {
+        return null;
+      }
+      PsiElement firstGenerated=null;
+      List<JetElement> elementsToCompact=new ArrayList<JetElement>();
+      JetFile file=classOrObject.getContainingJetFile();
+      for (      JetElement element : generateOverridingMembers(selectedElements,file)) {
+        PsiElement added=body.addAfter(element,afterAnchor);
+        if (firstGenerated == null) {
+          firstGenerated=added;
+        }
+        afterAnchor=added;
+        elementsToCompact.add((JetElement)added);
+      }
+      ShortenReferences.INSTANCE$.process(elementsToCompact);
+      return firstGenerated;
+    }
   }
-  PsiElement afterAnchor=findInsertAfterAnchor(editor,body);
-  if (afterAnchor == null) {
-    return;
+);
+  if (firstGenerated != null) {
+    QuickfixPackage.moveCaretIntoGeneratedElement(editor,firstGenerated);
   }
-  List<JetElement> elementsToCompact=new ArrayList<JetElement>();
-  JetFile file=classOrObject.getContainingJetFile();
-  for (  JetElement element : generateOverridingMembers(selectedElements,file)) {
-    PsiElement added=body.addAfter(element,afterAnchor);
-    afterAnchor=added;
-    elementsToCompact.add((JetElement)added);
-  }
-  ShortenReferences.INSTANCE$.process(elementsToCompact);
 }
