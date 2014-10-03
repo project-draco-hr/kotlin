@@ -30,13 +30,10 @@
   }
   if (parent == null)   return null;
   Pair<PsiElement,PsiElement> originalRange=getElementRange(parent,firstElement,lastElement);
-  Pair<PsiElement,PsiElement> combinedRange=adjustElementRange(originalRange,editor);
-  if (combinedRange == null || !checkSourceElement(originalRange.first) || !checkSourceElement(originalRange.second)) {
-    return null;
-  }
-  LineRange lineRange1=getElementSourceLineRange(combinedRange.first,editor,oldRange);
+  if (!checkSourceElement(originalRange.first) || !checkSourceElement(originalRange.second))   return null;
+  LineRange lineRange1=getElementSourceLineRange(originalRange.first,editor,oldRange);
   if (lineRange1 == null)   return null;
-  LineRange lineRange2=getElementSourceLineRange(combinedRange.second,editor,oldRange);
+  LineRange lineRange2=getElementSourceLineRange(originalRange.second,editor,oldRange);
   if (lineRange2 == null)   return null;
   LineRange parentLineRange=getElementSourceLineRange(parent,editor,oldRange);
   LineRange sourceRange=new LineRange(lineRange1.startLine - topExtension,lineRange2.endLine + bottomExtension);
@@ -44,8 +41,8 @@
     sourceRange.firstElement=sourceRange.lastElement=parent;
   }
  else {
-    sourceRange.firstElement=combinedRange.first;
-    sourceRange.lastElement=combinedRange.second;
+    sourceRange.firstElement=originalRange.first;
+    sourceRange.lastElement=originalRange.second;
   }
   return sourceRange;
 }
