@@ -5,12 +5,13 @@
     if (specifier instanceof JetDelegatorByExpressionSpecifier) {
       JetExpression expression=((JetDelegatorByExpressionSpecifier)specifier).getDelegateExpression();
       PropertyDescriptor propertyDescriptor=CodegenUtil.getDelegatePropertyIfAny(expression,descriptor,bindingContext);
-      ClassDescriptor superClassDescriptor=getSuperClass(specifier);
       if (CodegenUtil.isFinalPropertyWithBackingField(propertyDescriptor,bindingContext)) {
         result.addField((JetDelegatorByExpressionSpecifier)specifier,propertyDescriptor);
       }
  else {
-        result.addField((JetDelegatorByExpressionSpecifier)specifier,typeMapper.mapType(superClassDescriptor),"$delegate_" + n);
+        JetType expressionType=state.getBindingContext().get(BindingContext.EXPRESSION_TYPE,expression);
+        Type asmType=expressionType != null ? typeMapper.mapType(expressionType) : typeMapper.mapType(getSuperClass(specifier));
+        result.addField((JetDelegatorByExpressionSpecifier)specifier,asmType,"$delegate_" + n);
       }
       n++;
     }

@@ -1,0 +1,30 @@
+{
+  final JvmMethodSignature jvmDelegateMethodSignature=typeMapper.mapSignature(delegateFunction);
+  final JvmMethodSignature jvmDelegateToMethodSignature=typeMapper.mapSignature(delegatedTo);
+  generateMethod(OtherOrigin(delegateFunction),jvmDelegateMethodSignature,delegateFunction,new FunctionGenerationStrategy(){
+    @Override public void generateBody(    @NotNull MethodVisitor mv,    @NotNull FrameMap frameMap,    @NotNull JvmMethodSignature signature,    @NotNull MethodContext context,    @NotNull MemberCodegen<?> parentCodegen){
+      Method delegateToMethod=jvmDelegateToMethodSignature.getAsmMethod();
+      Method delegateMethod=jvmDelegateMethodSignature.getAsmMethod();
+      Type[] argTypes=delegateMethod.getArgumentTypes();
+      Type[] originalArgTypes=delegateToMethod.getArgumentTypes();
+      InstructionAdapter iv=new InstructionAdapter(mv);
+      iv.load(0,OBJECT_TYPE);
+      field.put(field.type,iv);
+      for (int i=0, reg=1; i < argTypes.length; i++) {
+        StackValue.local(reg,argTypes[i]).put(originalArgTypes[i],iv);
+        reg+=argTypes[i].getSize();
+      }
+      String internalName=typeMapper.mapType(toClass).getInternalName();
+      if (toClass.getKind() == ClassKind.TRAIT) {
+        iv.invokeinterface(internalName,delegateToMethod.getName(),delegateToMethod.getDescriptor());
+      }
+ else {
+        iv.invokevirtual(internalName,delegateToMethod.getName(),delegateToMethod.getDescriptor());
+      }
+      StackValue stackValue=AsmUtil.genNotNullAssertions(state,StackValue.onStack(delegateToMethod.getReturnType()),TypesPackage.getApproximationTo(delegatedTo.getReturnType(),delegateFunction.getReturnType(),new Approximation.DataFlowExtras.OnlyMessage(delegatedTo.getName() + "(...)")));
+      stackValue.put(delegateMethod.getReturnType(),iv);
+      iv.areturn(delegateMethod.getReturnType());
+    }
+  }
+);
+}
