@@ -1,0 +1,49 @@
+{
+  JetSimpleNameExpression referenceExpression=NavigationPackage.getReferenceExpression(sourceElement);
+  if (referenceExpression == null) {
+    return null;
+  }
+  PsiFile file=referenceExpression.getContainingFile();
+  if (file == null) {
+    return null;
+  }
+  AndroidFacet facet=AndroidFacet.getInstance(file);
+  if (facet == null) {
+    return null;
+  }
+  AndroidResourceUtil.MyReferredResourceFieldInfo info=NavigationPackage.getInfo(referenceExpression,facet);
+  if (info == null)   return null;
+  String nestedClassName=info.getClassName();
+  String fieldName=info.getFieldName();
+  List<PsiElement> resourceList=new ArrayList<PsiElement>();
+  if (info.isFromManifest()) {
+    collectManifestElements(nestedClassName,fieldName,facet,resourceList);
+  }
+ else {
+    ResourceManager manager=info.isSystem() ? facet.getSystemResourceManager(false) : facet.getLocalResourceManager();
+    if (manager == null) {
+      return null;
+    }
+    manager.collectLazyResourceElements(nestedClassName,fieldName,false,referenceExpression,resourceList);
+    if (manager instanceof LocalResourceManager) {
+      LocalResourceManager lrm=(LocalResourceManager)manager;
+      if (nestedClassName.equals(ResourceType.ATTR.getName())) {
+        for (        Attr attr : lrm.findAttrs(fieldName)) {
+          resourceList.add(attr.getName().getXmlAttributeValue());
+        }
+      }
+ else       if (nestedClassName.equals(ResourceType.STYLEABLE.getName())) {
+        for (        DeclareStyleable styleable : lrm.findStyleables(fieldName)) {
+          resourceList.add(styleable.getName().getXmlAttributeValue());
+        }
+        for (        Attr styleable : lrm.findStyleableAttributesByFieldName(fieldName)) {
+          resourceList.add(styleable.getName().getXmlAttributeValue());
+        }
+      }
+    }
+  }
+  if (resourceList.size() > 1) {
+    Collections.sort(resourceList,AndroidResourceUtil.RESOURCE_ELEMENT_COMPARATOR);
+  }
+  return resourceList.toArray(new PsiElement[resourceList.size()]);
+}
