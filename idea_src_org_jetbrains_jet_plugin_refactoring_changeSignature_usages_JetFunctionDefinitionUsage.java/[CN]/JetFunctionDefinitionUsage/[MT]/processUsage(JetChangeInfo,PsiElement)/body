@@ -18,15 +18,23 @@
       }
     }
   }
- else   parameterList=((JetClass)element).getPrimaryConstructorParameterList();
+ else {
+    parameterList=((JetClass)element).getPrimaryConstructorParameterList();
+  }
   if (changeInfo.isParameterSetOrOrderChanged()) {
     String parametersText=changeInfo.getNewParametersSignature(element,isInherited,0);
     JetParameterList newParameterList=psiFactory.createParameterList(parametersText);
-    if (parameterList != null)     parameterList=(JetParameterList)parameterList.replace(newParameterList);
+    if (parameterList != null) {
+      parameterList.replace(newParameterList);
+    }
  else     if (element instanceof JetClass) {
       PsiElement anchor=((JetClass)element).getTypeParameterList();
-      if (anchor == null)       anchor=((JetClass)element).getNameIdentifier();
-      if (anchor != null)       parameterList=(JetParameterList)element.addAfter(newParameterList,anchor);
+      if (anchor == null) {
+        anchor=((JetClass)element).getNameIdentifier();
+      }
+      if (anchor != null) {
+        element.addAfter(newParameterList,anchor);
+      }
     }
   }
  else   if (parameterList != null) {
@@ -36,6 +44,8 @@
       changeParameter(changeInfo,element,parameter,parameterInfo);
     }
   }
-  if (changeInfo.isVisibilityChanged())   changeVisibility(changeInfo,element,parameterList);
+  if (changeInfo.isVisibilityChanged() && !JetPsiUtil.isLocal((JetDeclaration)element)) {
+    changeVisibility(changeInfo,element);
+  }
   return true;
 }
