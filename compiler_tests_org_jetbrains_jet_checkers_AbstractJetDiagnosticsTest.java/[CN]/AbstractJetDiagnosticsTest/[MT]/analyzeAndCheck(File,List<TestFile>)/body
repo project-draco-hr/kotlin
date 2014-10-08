@@ -29,6 +29,14 @@
     TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(getProject(),jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module,null,null);
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
+  Throwable exceptionFromDescriptorValidation=null;
+  try {
+    File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
+    validateAndCompareDescriptorWithFile(expectedFile,testFiles,support,modules);
+  }
+ catch (  Throwable e) {
+    exceptionFromDescriptorValidation=e;
+  }
   boolean ok=true;
   StringBuilder actualText=new StringBuilder();
   for (  TestFile testFile : testFiles) {
@@ -37,6 +45,7 @@
   JetTestUtils.assertEqualsToFile(testDataFile,actualText.toString());
   assertTrue("Diagnostics mismatch. See the output above",ok);
   checkAllResolvedCallsAreCompleted(allJetFiles,supportTrace.getBindingContext());
-  File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
-  validateAndCompareDescriptorWithFile(expectedFile,testFiles,support,modules);
+  if (exceptionFromDescriptorValidation != null) {
+    throw UtilsPackage.rethrow(exceptionFromDescriptorValidation);
+  }
 }
