@@ -4,8 +4,7 @@
   if (element == null)   return;
   @SuppressWarnings("unchecked") JetDeclaration declaration=PsiTreeUtil.getParentOfType(element,JetNamedFunction.class,JetClass.class,JetProperty.class,JetObjectDeclaration.class);
   if (declaration == null)   return;
-  BindingContext bindingContext=AnalyzerFacadeWithCache.getContextForElement(declaration);
-  DeclarationDescriptor descriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
+  DeclarationDescriptor descriptor=ResolvePackage.getLazyResolveSession(declaration).resolveToDescriptor(declaration);
   Collection<? extends DeclarationDescriptor> superDescriptors;
   String message;
   if (descriptor instanceof ClassDescriptor) {
@@ -53,7 +52,7 @@
   }
  else {
     PsiElement[] superDeclarationsArray=PsiUtilCore.toPsiElementArray(superDeclarations);
-    JBPopup popup=descriptor instanceof ClassDescriptor ? NavigationUtil.getPsiElementPopup(superDeclarationsArray,message) : NavigationUtil.getPsiElementPopup(superDeclarationsArray,new JetFunctionPsiElementCellRenderer(bindingContext),message);
+    JBPopup popup=descriptor instanceof ClassDescriptor ? NavigationUtil.getPsiElementPopup(superDeclarationsArray,message) : NavigationUtil.getPsiElementPopup(superDeclarationsArray,new JetFunctionPsiElementCellRenderer(),message);
     popup.showInBestPositionFor(editor);
   }
 }
