@@ -6,6 +6,7 @@
   }
   PsiBuilder.Marker reference=mark();
   while (true) {
+    recoverOnParenthesizedWordForPlatformTypes(0,"Mutable",true);
     if (expect(IDENTIFIER,"Expecting type name",TokenSet.orSet(JetExpressionParsing.EXPRESSION_FIRST,JetExpressionParsing.EXPRESSION_FOLLOW))) {
       reference.done(REFERENCE_EXPRESSION);
     }
@@ -14,10 +15,11 @@
       break;
     }
     parseTypeArgumentList();
+    recoverOnPlatformTypeSuffix();
     if (!at(DOT)) {
       break;
     }
-    if (lookahead(1) == LPAR) {
+    if (lookahead(1) == LPAR && !atParenthesizedMutableForPlatformTypes(1)) {
       break;
     }
     PsiBuilder.Marker precede=userType.precede();
