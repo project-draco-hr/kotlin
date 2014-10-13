@@ -23,10 +23,15 @@
   }
   AbstractInsnNode cur=node.instructions.getFirst();
   int index=0;
+  boolean awaitClassReification=false;
+  Set<LabelNode> possibleDeadLabels=new HashSet<LabelNode>();
   while (cur != null) {
     Frame<SourceValue> frame=sources[index];
     if (frame != null) {
-      if (cur.getType() == AbstractInsnNode.METHOD_INSN) {
+      if (ReifiedTypeInliner.isNeedClassReificationMarker(cur)) {
+        awaitClassReification=true;
+      }
+ else       if (cur.getType() == AbstractInsnNode.METHOD_INSN) {
         MethodInsnNode methodInsnNode=(MethodInsnNode)cur;
         String owner=methodInsnNode.owner;
         String desc=methodInsnNode.desc;
@@ -59,7 +64,16 @@
               }
             }
           }
-          constructorInvocations.add(new ConstructorInvocation(owner,desc,lambdaMapping,isSameModule,inliningContext.classRegeneration));
+          anonymousObjectGenerations.add(buildConstructorInvocation(owner,desc,lambdaMapping,awaitClassReification));
+          awaitClassReification=false;
+        }
+      }
+ else       if (cur.getOpcode() == Opcodes.GETSTATIC) {
+        FieldInsnNode fieldInsnNode=(FieldInsnNode)cur;
+        String owner=fieldInsnNode.owner;
+        if (isAnonymousSingletonLoad(owner,fieldInsnNode.name)) {
+          anonymousObjectGenerations.add(new AnonymousObjectGeneration(owner,isSameModule,awaitClassReification,isAlreadyRegenerated(owner),true));
+          awaitClassReification=false;
         }
       }
     }

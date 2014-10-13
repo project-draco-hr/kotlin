@@ -1,0 +1,50 @@
+{
+  List<Type> descTypes=new ArrayList<Type>();
+  Parameters constructorParams=constructorInlineBuilder.buildParameters();
+  int[] capturedIndexes=new int[constructorParams.totalSize()];
+  int index=0;
+  int size=0;
+  for (  ParameterInfo info : constructorParams) {
+    if (!info.isSkipped()) {
+      if (info.isCaptured() || info instanceof CapturedParamInfo) {
+        capturedIndexes[index]=size;
+        index++;
+      }
+      if (size != 0) {
+        descTypes.add(info.getType());
+      }
+      size+=info.getType().getSize();
+    }
+  }
+  List<Pair<String,Type>> capturedFieldsToGenerate=new ArrayList<Pair<String,Type>>();
+  for (  CapturedParamInfo capturedParamInfo : allCapturedBuilder.listCaptured()) {
+    if (capturedParamInfo.getLambda() == null) {
+      capturedFieldsToGenerate.add(new Pair<String,Type>(capturedParamInfo.getNewFieldName(),capturedParamInfo.getType()));
+    }
+  }
+  String constructorDescriptor=Type.getMethodDescriptor(Type.VOID_TYPE,descTypes.toArray(new Type[descTypes.size()]));
+  MethodVisitor constructorVisitor=classBuilder.newMethod(NO_ORIGIN,AsmUtil.NO_FLAG_PACKAGE_PRIVATE,"<init>",constructorDescriptor,null,ArrayUtil.EMPTY_STRING_ARRAY);
+  List<FieldInfo> fields=AsmUtil.transformCapturedParams(capturedFieldsToGenerate,newLambdaType);
+  int paramIndex=0;
+  InstructionAdapter capturedFieldInitializer=new InstructionAdapter(constructorVisitor);
+  for (  FieldInfo fieldInfo : fields) {
+    AsmUtil.genAssignInstanceFieldFromParam(fieldInfo,capturedIndexes[paramIndex],capturedFieldInitializer);
+    paramIndex++;
+  }
+  for (  CapturedParamInfo info : constructorAdditionalFakeParams) {
+    CapturedParamInfo fake=constructorInlineBuilder.addCapturedParamCopy(info);
+    if (fake.getLambda() != null) {
+      StackValue composed=StackValue.composed(StackValue.local(0,oldObjectType),StackValue.field(fake.getType(),oldObjectType,fake.getNewFieldName(),false));
+      fake.setRemapValue(composed);
+    }
+  }
+  Parameters constructorParameters=constructorInlineBuilder.buildParameters();
+  RegeneratedLambdaFieldRemapper remapper=new RegeneratedLambdaFieldRemapper(oldObjectType.getInternalName(),newLambdaType.getInternalName(),constructorParameters,anonymousObjectGen.getCapturedLambdasToInline(),parentRemapper);
+  MethodInliner inliner=new MethodInliner(constructor,constructorParameters,inliningContext.subInline(inliningContext.nameGenerator.subGenerator("lambda")),remapper,isSameModule,"Transformer for constructor of " + anonymousObjectGen.getOwnerInternalName());
+  InlineResult result=inliner.doInline(capturedFieldInitializer,new LocalVarRemapper(constructorParameters,0),false,LabelOwner.NOT_APPLICABLE);
+  constructorVisitor.visitMaxs(-1,-1);
+  constructorVisitor.visitEnd();
+  AsmUtil.genClosureFields(capturedFieldsToGenerate,classBuilder);
+  anonymousObjectGen.setNewConstructorDescriptor(constructorDescriptor);
+  return result;
+}
