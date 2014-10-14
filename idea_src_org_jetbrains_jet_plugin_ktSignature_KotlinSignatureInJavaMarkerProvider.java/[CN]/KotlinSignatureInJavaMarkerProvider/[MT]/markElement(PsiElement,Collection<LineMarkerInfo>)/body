@@ -1,0 +1,17 @@
+{
+  Project project=element.getProject();
+  PsiModifierListOwner annotationOwner=KotlinSignatureUtil.getAnalyzableAnnotationOwner(element);
+  if (annotationOwner == null) {
+    return;
+  }
+  JavaResolveExtension resolveExtension=JavaResolveExtension.INSTANCE$;
+  BindingContext bindingContext=resolveExtension.getContext(project,annotationOwner);
+  JavaDescriptorResolver javaDescriptorResolver=resolveExtension.getResolver(project,annotationOwner);
+  DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,annotationOwner);
+  if (memberDescriptor == null)   return;
+  List<String> errors=bindingContext.get(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
+  boolean hasSignatureAnnotation=KotlinSignatureUtil.findKotlinSignatureAnnotation(annotationOwner) != null;
+  if (errors != null || hasSignatureAnnotation) {
+    result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
+  }
+}

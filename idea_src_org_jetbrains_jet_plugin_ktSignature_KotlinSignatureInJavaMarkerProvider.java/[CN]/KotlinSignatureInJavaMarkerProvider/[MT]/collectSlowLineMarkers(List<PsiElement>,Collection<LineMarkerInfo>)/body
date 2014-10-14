@@ -14,20 +14,5 @@
   if (module != null && !ProjectStructureUtil.isUsedInKotlinJavaModule(module)) {
     return;
   }
-  for (  PsiElement element : elements) {
-    PsiModifierListOwner annotationOwner=KotlinSignatureUtil.getAnalyzableAnnotationOwner(element);
-    if (annotationOwner == null) {
-      continue;
-    }
-    JavaResolveExtension resolveExtension=JavaResolveExtension.INSTANCE$;
-    BindingContext bindingContext=resolveExtension.getContext(project,annotationOwner);
-    JavaDescriptorResolver javaDescriptorResolver=resolveExtension.getResolver(project,annotationOwner);
-    DeclarationDescriptor memberDescriptor=getDescriptorForMember(javaDescriptorResolver,annotationOwner);
-    if (memberDescriptor == null)     continue;
-    List<String> errors=bindingContext.get(JavaBindingContext.LOAD_FROM_JAVA_SIGNATURE_ERRORS,memberDescriptor);
-    boolean hasSignatureAnnotation=KotlinSignatureUtil.findKotlinSignatureAnnotation(annotationOwner) != null;
-    if (errors != null || hasSignatureAnnotation) {
-      result.add(new MyLineMarkerInfo((PsiModifierListOwner)element,errors,hasSignatureAnnotation));
-    }
-  }
+  markElements(elements,result,firstElement.getContainingFile());
 }
