@@ -1,6 +1,7 @@
 {
-  ClassDescriptor classDescriptor=getSubjectClassDescriptorIfEnum(expression,trace.getBindingContext());
-  if (classDescriptor == null)   return false;
+  JetType type=whenSubjectType(expression,trace.getBindingContext());
+  ClassDescriptor classDescriptor=getClassDescriptorOfTypeIfEnum(type);
+  if (type == null || classDescriptor == null)   return false;
   boolean isExhaust=true;
   boolean notEmpty=false;
   for (  DeclarationDescriptor descriptor : classDescriptor.getUnsubstitutedInnerClassesScope().getAllDescriptors()) {
@@ -11,7 +12,7 @@
       }
     }
   }
-  boolean exhaustive=isExhaust && notEmpty;
+  boolean exhaustive=isExhaust && notEmpty && (!TypeUtils.isNullableType(type) || containsNullCase(expression,trace));
   if (exhaustive) {
     trace.record(BindingContext.EXHAUSTIVE_WHEN,expression);
   }
