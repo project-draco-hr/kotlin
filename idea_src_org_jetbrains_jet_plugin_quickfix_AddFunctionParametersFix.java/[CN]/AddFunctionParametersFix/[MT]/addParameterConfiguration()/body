@@ -11,11 +11,17 @@
           validator.validateName(parameters.get(i).getName().asString());
           JetType argumentType=expression != null ? bindingContext.get(BindingContext.EXPRESSION_TYPE,expression) : null;
           JetType parameterType=parameters.get(i).getType();
-          if (argumentType != null && !JetTypeChecker.DEFAULT.isSubtypeOf(argumentType,parameterType))           changeSignatureData.getParameters().get(i).setTypeText(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_IN_TYPES.renderType(argumentType));
+          if (argumentType != null && !JetTypeChecker.DEFAULT.isSubtypeOf(argumentType,parameterType)) {
+            changeSignatureData.getParameters().get(i).setTypeText(IdeDescriptorRenderers.SOURCE_CODE.renderType(argumentType));
+            typesToShorten.add(argumentType);
+          }
         }
  else {
           JetParameterInfo parameterInfo=getNewParameterInfo(bindingContext,argument,validator);
-          if (expression != null)           parameterInfo.setDefaultValueText(expression.getText());
+          typesToShorten.add(parameterInfo.getType());
+          if (expression != null) {
+            parameterInfo.setDefaultValueText(expression.getText());
+          }
           changeSignatureData.addParameter(parameterInfo);
         }
       }
