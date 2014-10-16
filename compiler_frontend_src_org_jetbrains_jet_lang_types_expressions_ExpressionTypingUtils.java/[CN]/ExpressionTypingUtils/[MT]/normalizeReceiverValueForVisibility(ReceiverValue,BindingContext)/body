@@ -1,0 +1,19 @@
+{
+  if (receiverValue instanceof ExpressionReceiver) {
+    JetExpression expression=((ExpressionReceiver)receiverValue).getExpression();
+    JetReferenceExpression referenceExpression=null;
+    if (expression instanceof JetThisExpression) {
+      referenceExpression=((JetThisExpression)expression).getInstanceReference();
+    }
+ else     if (expression instanceof JetThisReferenceExpression) {
+      referenceExpression=(JetReferenceExpression)expression;
+    }
+    if (referenceExpression != null) {
+      DeclarationDescriptor descriptor=trace.get(BindingContext.REFERENCE_TARGET,referenceExpression);
+      if (descriptor instanceof ClassDescriptor) {
+        return new ClassReceiver((ClassDescriptor)descriptor.getOriginal());
+      }
+    }
+  }
+  return receiverValue;
+}
