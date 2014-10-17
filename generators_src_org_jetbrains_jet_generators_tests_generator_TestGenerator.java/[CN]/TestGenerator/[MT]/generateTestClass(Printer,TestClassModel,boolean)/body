@@ -7,17 +7,22 @@
   p.println("public " + staticModifier + "class ",testClassModel.getName()," extends ",baseTestClassName," {");
   p.pushIndent();
   Collection<TestMethodModel> testMethods=testClassModel.getTestMethods();
-  for (  TestMethodModel testMethodModel : testMethods) {
-    generateTestMethod(p,testMethodModel);
-    p.println();
-  }
   Collection<TestClassModel> innerTestClasses=testClassModel.getInnerTestClasses();
-  for (  TestClassModel innerTestClass : innerTestClasses) {
-    if (innerTestClass.isEmpty()) {
-      continue;
+  for (Iterator<TestMethodModel> iterator=testMethods.iterator(); iterator.hasNext(); ) {
+    TestMethodModel testMethodModel=iterator.next();
+    generateTestMethod(p,testMethodModel);
+    if (iterator.hasNext() || !innerTestClasses.isEmpty()) {
+      p.println();
     }
-    generateTestClass(p,innerTestClass,true);
-    p.println();
+  }
+  for (Iterator<TestClassModel> iterator=innerTestClasses.iterator(); iterator.hasNext(); ) {
+    TestClassModel innerTestClass=iterator.next();
+    if (!innerTestClass.isEmpty()) {
+      generateTestClass(p,innerTestClass,true);
+      if (iterator.hasNext()) {
+        p.println();
+      }
+    }
   }
   p.popIndent();
   p.println("}");
