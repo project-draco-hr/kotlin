@@ -1,5 +1,13 @@
 {
   if (file.getFileType() != JavaClassFileType.INSTANCE)   return null;
   KotlinBinaryClassCache service=ServiceManager.getService(KotlinBinaryClassCache.class);
-  return service.cache.get().get(file).get();
+  RequestCache requestCache=service.cache.get();
+  if (file.getModificationStamp() == requestCache.modificationStamp && file.equals(requestCache.virtualFile)) {
+    return requestCache.virtualFileKotlinClass;
+  }
+ else {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    VirtualFileKotlinClass aClass=VirtualFileKotlinClass.OBJECT$.create(file);
+    return requestCache.cache(file,aClass);
+  }
 }
