@@ -1,0 +1,15 @@
+{
+  Set<String> existingMethodSignatures=new HashSet<String>();
+  for (  DeclarationDescriptor member : descriptor.getDefaultType().getMemberScope().getAllDescriptors()) {
+    if (!(member instanceof FunctionDescriptor))     continue;
+    FunctionDescriptor function=(FunctionDescriptor)member;
+    if (function.getModality() == Modality.ABSTRACT)     continue;
+    for (    FunctionDescriptor overridden : DescriptorUtils.getAllOverriddenDescriptors(function)) {
+      Method overriddenMethod=typeMapper.mapSignature(overridden.getOriginal()).getAsmMethod();
+      existingMethodSignatures.add(overriddenMethod.getName() + overriddenMethod.getDescriptor());
+    }
+    Method method=typeMapper.mapSignature(function.getOriginal()).getAsmMethod();
+    existingMethodSignatures.add(method.getName() + method.getDescriptor());
+  }
+  return existingMethodSignatures;
+}
