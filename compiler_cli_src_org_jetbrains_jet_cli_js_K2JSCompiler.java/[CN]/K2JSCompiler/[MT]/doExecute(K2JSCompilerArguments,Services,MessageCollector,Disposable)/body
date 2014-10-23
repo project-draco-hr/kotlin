@@ -7,7 +7,9 @@
   configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,messageCollector);
   CompileEnvironmentUtil.addSourceFilesCheckingForDuplicates(configuration,arguments.freeArgs);
   JetCoreEnvironment environmentForJS=JetCoreEnvironment.createForProduction(rootDisposable,configuration);
-  Extensions.getRootArea().getExtensionPoint(DiagnosticsWithSuppression.SuppressStringProvider.EP_NAME).registerExtension(new SuppressUnusedParameterForJsNative());
+  ExtensionsArea rootArea=Extensions.getRootArea();
+  rootArea.getExtensionPoint(DiagnosticsWithSuppression.SuppressStringProvider.EP_NAME).registerExtension(new SuppressUnusedParameterForJsNative());
+  rootArea.getExtensionPoint(DiagnosticsWithSuppression.DiagnosticSuppressor.EP_NAME).registerExtension(new SuppressWarningsFromExternalModules());
   Project project=environmentForJS.getProject();
   List<JetFile> sourcesFiles=environmentForJS.getSourceFiles();
   ClassPathLibrarySourcesLoader sourceLoader=new ClassPathLibrarySourcesLoader(project);
