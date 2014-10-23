@@ -1,4 +1,12 @@
 {
+  if (tryCatchBlock.getOnlyCopyNotProcess()) {
+    AbstractInsnNode start=new LabelNode();
+    AbstractInsnNode end=new LabelNode();
+    InsnList insnList=new InsnList();
+    insnList.add(start);
+    insnList.add(end);
+    return new FinallyBlockInfo(start,end);
+  }
   List<TryCatchBlockNodeInfo> sameDefaultHandler=new ArrayList<TryCatchBlockNodeInfo>();
   LabelNode defaultHandler=null;
   boolean afterStartBlock=false;
@@ -21,5 +29,12 @@
   TryCatchBlockNodeInfo nextIntervalWithSameDefaultHandler=sameDefaultHandler.get(1);
   AbstractInsnNode startFinallyChain=tryCatchBlock.getNode().end;
   AbstractInsnNode endFinallyChainExclusive=skipLastGotoIfNeeded(nextIntervalWithSameDefaultHandler.getNode().handler,nextIntervalWithSameDefaultHandler.getNode().start);
-  return new FinallyBlockInfo(startFinallyChain.getNext(),endFinallyChainExclusive);
+  FinallyBlockInfo finallyInfo=new FinallyBlockInfo(startFinallyChain.getNext(),endFinallyChainExclusive);
+  if (inlineFun.instructions.indexOf(finallyInfo.startIns) > inlineFun.instructions.indexOf(finallyInfo.endInsExclusive)) {
+    AbstractInsnNode startNode=finallyInfo.endInsExclusive;
+    AbstractInsnNode stopNode=finallyInfo.startIns;
+    writeNodes(startNode,stopNode);
+    throw new AssertionError();
+  }
+  return finallyInfo;
 }
