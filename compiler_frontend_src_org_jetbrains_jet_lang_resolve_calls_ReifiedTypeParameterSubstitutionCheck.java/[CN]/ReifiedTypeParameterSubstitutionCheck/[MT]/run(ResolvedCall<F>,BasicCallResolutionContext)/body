@@ -1,0 +1,16 @@
+{
+  Map<TypeParameterDescriptor,JetType> typeArguments=resolvedCall.getTypeArguments();
+  for (  Map.Entry<TypeParameterDescriptor,JetType> entry : typeArguments.entrySet()) {
+    TypeParameterDescriptor parameter=entry.getKey();
+    JetType argument=entry.getValue();
+    ClassifierDescriptor argumentDeclarationDescription=argument.getConstructor().getDeclarationDescriptor();
+    if (parameter.isReified()) {
+      if (argumentDeclarationDescription instanceof TypeParameterDescriptor && !((TypeParameterDescriptor)argumentDeclarationDescription).isReified()) {
+        context.trace.report(Errors.TYPE_PARAMETER_AS_REIFIED.on(getCallElement(context),typeArguments.keySet().iterator().next()));
+      }
+ else       if (KotlinBuiltIns.getInstance().isNothingOrNullableNothing(argument)) {
+        context.trace.report(Errors.REIFIED_TYPE_NOTHING_SUBSTITUTION.on(getCallElement(context),argument));
+      }
+    }
+  }
+}
