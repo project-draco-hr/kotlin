@@ -1,11 +1,14 @@
 {
   List<VersionedLibrary> outdatedLibraries=Lists.newArrayList();
   for (  Library library : KotlinRuntimeLibraryUtil.findKotlinLibraries(project)) {
-    LibraryVersionProperties javaRuntimeProperties=LibraryPresentationProviderUtil.getLibraryProperties(JavaRuntimePresentationProvider.getInstance(),library);
-    if (javaRuntimeProperties == null) {
+    LibraryVersionProperties libraryVersionProperties=LibraryPresentationProviderUtil.getLibraryProperties(JavaRuntimePresentationProvider.getInstance(),library);
+    if (libraryVersionProperties == null) {
+      libraryVersionProperties=LibraryPresentationProviderUtil.getLibraryProperties(JSLibraryStdPresentationProvider.getInstance(),library);
+    }
+    if (libraryVersionProperties == null) {
       continue;
     }
-    String libraryVersion=javaRuntimeProperties.getVersionString();
+    String libraryVersion=libraryVersionProperties.getVersionString();
     boolean isOutdated="snapshot".equals(libraryVersion) || libraryVersion == null || libraryVersion.startsWith("internal-") != pluginVersion.startsWith("internal-") || VersionComparatorUtil.compare(pluginVersion,libraryVersion) > 0;
     if (isOutdated) {
       outdatedLibraries.add(new VersionedLibrary(library,libraryVersion));
