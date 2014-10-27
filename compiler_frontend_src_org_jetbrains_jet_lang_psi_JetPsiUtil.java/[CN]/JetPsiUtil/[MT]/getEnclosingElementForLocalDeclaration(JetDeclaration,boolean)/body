@@ -1,0 +1,16 @@
+{
+  if (declaration instanceof JetTypeParameter && skipParameters) {
+    declaration=PsiTreeUtil.getParentOfType(declaration,JetNamedDeclaration.class);
+  }
+ else   if (declaration instanceof JetParameter) {
+    if (((JetParameter)declaration).getValOrVarNode() != null)     return null;
+    PsiElement parent=declaration.getParent();
+    if (skipParameters && parent != null && parent.getParent() instanceof JetNamedFunction) {
+      declaration=(JetNamedFunction)parent.getParent();
+    }
+  }
+  JetElement container=PsiTreeUtil.getParentOfType(declaration,JetBlockExpression.class,JetClassInitializer.class,JetProperty.class,JetFunction.class,JetParameter.class);
+  if (container == null)   return null;
+  if (container.getParent() instanceof JetScript)   return null;
+  return (container instanceof JetClassInitializer) ? ((JetClassInitializer)container).getBody() : container;
+}

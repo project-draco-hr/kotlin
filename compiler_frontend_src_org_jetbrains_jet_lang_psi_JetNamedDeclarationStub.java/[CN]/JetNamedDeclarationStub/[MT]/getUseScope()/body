@@ -1,7 +1,9 @@
 {
-  JetElement enclosingBlock=JetPsiUtil.getEnclosingElementForLocalDeclaration(this);
-  if (enclosingBlock != null) {
-    return new LocalSearchScope(enclosingBlock);
+  JetElement enclosingBlock=JetPsiUtil.getEnclosingElementForLocalDeclaration(this,false);
+  if (enclosingBlock != null)   return new LocalSearchScope(enclosingBlock);
+  if (hasModifier(JetTokens.PRIVATE_KEYWORD)) {
+    JetElement containingClass=PsiTreeUtil.getParentOfType(this,JetClassOrObject.class);
+    if (containingClass != null)     return new LocalSearchScope(containingClass);
   }
   return super.getUseScope();
 }
