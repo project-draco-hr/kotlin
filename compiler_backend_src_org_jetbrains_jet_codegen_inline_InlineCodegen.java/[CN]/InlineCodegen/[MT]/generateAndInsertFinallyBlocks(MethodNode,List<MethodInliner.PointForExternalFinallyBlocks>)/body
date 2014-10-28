@@ -1,0 +1,42 @@
+{
+  if (!codegen.hasFinallyBlocks())   return;
+  Map<AbstractInsnNode,MethodInliner.PointForExternalFinallyBlocks> extensionPoints=new HashMap<AbstractInsnNode,MethodInliner.PointForExternalFinallyBlocks>();
+  for (  MethodInliner.PointForExternalFinallyBlocks insertPoint : insertPoints) {
+    extensionPoints.put(insertPoint.beforeIns,insertPoint);
+  }
+  DefaultProcessor processor=new DefaultProcessor(intoNode);
+  AbstractInsnNode curInstr=intoNode.instructions.getFirst();
+  while (curInstr != null) {
+    processor.updateCoveringTryBlocks(curInstr,true);
+    MethodInliner.PointForExternalFinallyBlocks extension=extensionPoints.get(curInstr);
+    if (extension != null) {
+      Label start=new Label();
+      Label end=new Label();
+      MethodNode finallyNode=InlineCodegenUtil.createEmptyMethodNode();
+      finallyNode.visitLabel(start);
+      ExpressionCodegen finallyCodegen=new ExpressionCodegen(finallyNode,codegen.getFrameMap(),codegen.getReturnType(),codegen.getContext(),codegen.getState(),codegen.getParentCodegen());
+      finallyCodegen.addBlockStackElementsForNonLocalReturns(codegen.getBlockStackElements());
+      finallyCodegen.generateFinallyBlocksIfNeeded(extension.returnType);
+      finallyNode.visitLabel(end);
+      InlineCodegenUtil.insertNodeBefore(finallyNode,intoNode,curInstr);
+      List<TryCatchBlockNodeWrapper> blocks=processor.getCoveringFromInnermost();
+      ListIterator<TryCatchBlockNodeWrapper> iterator=blocks.listIterator(blocks.size());
+      while (iterator.hasPrevious()) {
+        TryCatchBlockNodeWrapper previous=iterator.previous();
+        LabelNode oldStart=previous.getStartLabel();
+        TryCatchBlockNode node=previous.getNode();
+        node.start=(LabelNode)end.info;
+        processor.remapStartLabel(oldStart,previous);
+        TryCatchBlockNode additionalNode=new TryCatchBlockNode(oldStart,(LabelNode)start.info,node.handler,node.type);
+        processor.addNode(additionalNode);
+      }
+    }
+    curInstr=curInstr.getNext();
+  }
+  processor.sortTryCatchBlocks();
+  Iterable<TryCatchBlockNodeWrapper> nodes=processor.getNonEmptyNodes();
+  intoNode.tryCatchBlocks.clear();
+  for (  TryCatchBlockNodeWrapper node : nodes) {
+    intoNode.tryCatchBlocks.add(node.getNode());
+  }
+}
