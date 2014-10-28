@@ -1,6 +1,6 @@
 {
-  PsiElement firstGenerated=ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>(){
-    @Override public PsiElement compute(){
+  ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    @Override public void run(){
       JetClassBody body=classOrObject.getBody();
       if (body == null) {
         JetPsiFactory psiFactory=JetPsiFactory(classOrObject);
@@ -8,9 +8,7 @@
         body=(JetClassBody)classOrObject.add(psiFactory.createEmptyClassBody());
       }
       PsiElement afterAnchor=findInsertAfterAnchor(editor,body);
-      if (afterAnchor == null) {
-        return null;
-      }
+      if (afterAnchor == null)       return;
       PsiElement firstGenerated=null;
       List<JetElement> elementsToCompact=new ArrayList<JetElement>();
       JetFile file=classOrObject.getContainingJetFile();
@@ -23,12 +21,15 @@
         elementsToCompact.add((JetElement)added);
       }
       ShortenReferences.INSTANCE$.process(elementsToCompact);
-      return firstGenerated;
+      if (firstGenerated == null)       return;
+      Project project=classOrObject.getProject();
+      SmartPsiElementPointer<PsiElement> pointer=SmartPointerManager.getInstance(project).createSmartPsiElementPointer(firstGenerated);
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+      PsiElement element=pointer.getElement();
+      if (element != null) {
+        QuickfixPackage.moveCaretIntoGeneratedElement(editor,element);
+      }
     }
   }
 );
-  if (firstGenerated != null) {
-    PostprocessReformattingAspect.getInstance(firstGenerated.getProject()).doPostponedFormatting();
-    QuickfixPackage.moveCaretIntoGeneratedElement(editor,firstGenerated);
-  }
 }
