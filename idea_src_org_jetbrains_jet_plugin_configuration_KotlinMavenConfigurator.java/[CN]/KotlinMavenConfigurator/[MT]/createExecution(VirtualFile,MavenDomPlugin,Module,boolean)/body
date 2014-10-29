@@ -1,14 +1,9 @@
 {
   MavenDomPluginExecution execution=kotlinPlugin.getExecutions().addExecution();
-  String tagValue=isTest ? "test-compile" : "compile";
+  String tagValue=getExecutionId(isTest);
   execution.getId().setStringValue(tagValue);
-  if (hasJavaFiles(module)) {
-    execution.getPhase().setStringValue(isTest ? "process-test-sources" : "process-sources");
-  }
- else {
-    execution.getPhase().setStringValue(tagValue);
-  }
-  createTagIfNeeded(execution.getGoals(),"goal",tagValue);
+  execution.getPhase().setStringValue(getPhase(module,isTest));
+  createTagIfNeeded(execution.getGoals(),"goal",getGoal(isTest));
   XmlTag sourcesTag=createTagIfNeeded(execution.getConfiguration(),"sourceDirs","");
   for (  ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
     SourceFolder[] folders=contentEntry.getSourceFolders();
