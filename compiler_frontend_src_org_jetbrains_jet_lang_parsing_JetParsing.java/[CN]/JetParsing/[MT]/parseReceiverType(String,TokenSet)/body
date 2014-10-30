@@ -1,0 +1,26 @@
+{
+  PsiBuilder.Marker annotations=mark();
+  boolean annotationsPresent=parseAnnotations(REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
+  int lastDot=lastDotAfterReceiver();
+  boolean receiverPresent=lastDot != -1;
+  if (annotationsPresent) {
+    if (receiverPresent) {
+      annotations.rollbackTo();
+    }
+ else {
+      annotations.error("Annotations are not allowed in this position");
+    }
+  }
+ else {
+    annotations.drop();
+  }
+  if (!receiverPresent)   return false;
+  createTruncatedBuilder(lastDot).parseTypeRef();
+  if (atSet(RECEIVER_TYPE_TERMINATORS)) {
+    advance();
+  }
+ else {
+    errorWithRecovery("Expecting '.' before a " + title + " name",nameFollow);
+  }
+  return true;
+}

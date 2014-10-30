@@ -8,21 +8,9 @@
   boolean typeParametersDeclared=at(LT) && parseTypeParameterList(TokenSet.create(IDENTIFIER,EQ,COLON,SEMICOLON));
   TokenSet propertyNameFollow=TokenSet.create(COLON,EQ,LBRACE,RBRACE,SEMICOLON,VAL_KEYWORD,VAR_KEYWORD,FUN_KEYWORD,CLASS_KEYWORD);
   myBuilder.disableJoiningComplexTokens();
-  int lastDot=matchTokenStreamPredicate(new LastBefore(new AtSet(DOT,SAFE_ACCESS),new AbstractTokenStreamPredicate(){
-    @Override public boolean matching(    boolean topLevel){
-      if (topLevel && (at(EQ) || at(COLON)))       return true;
-      if (topLevel && at(IDENTIFIER)) {
-        IElementType lookahead=lookahead(1);
-        return lookahead != LT && lookahead != DOT && lookahead != SAFE_ACCESS && lookahead != QUEST;
-      }
-      return false;
-    }
-  }
-));
   PsiBuilder.Marker receiver=mark();
-  parseReceiverType("property",propertyNameFollow,lastDot);
+  boolean receiverTypeDeclared=parseReceiverType("property",propertyNameFollow);
   boolean multiDeclaration=at(LPAR);
-  boolean receiverTypeDeclared=lastDot != -1;
   errorIf(receiver,multiDeclaration && receiverTypeDeclared,"Receiver type is not allowed on a multi-declaration");
   if (multiDeclaration) {
     PsiBuilder.Marker multiDecl=mark();
