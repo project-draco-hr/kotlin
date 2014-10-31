@@ -3,6 +3,15 @@
   MethodVisitor mv=v.newMethod(OtherOrigin(descriptor),flags,delegateTo.getName(),bridge.getDescriptor(),null,null);
   if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
   mv.visitCode();
+  PsiElement classElement=classDescriptorToDeclaration(owner.getThisDescriptor());
+  if (classElement != null) {
+    Integer lineNumber=CodegenUtil.getLineNumberForElement(classElement,false);
+    if (lineNumber != null) {
+      Label label=new Label();
+      mv.visitLabel(label);
+      mv.visitLineNumber(lineNumber,label);
+    }
+  }
   Type[] argTypes=bridge.getArgumentTypes();
   Type[] originalArgTypes=delegateTo.getArgumentTypes();
   InstructionAdapter iv=new InstructionAdapter(mv);
