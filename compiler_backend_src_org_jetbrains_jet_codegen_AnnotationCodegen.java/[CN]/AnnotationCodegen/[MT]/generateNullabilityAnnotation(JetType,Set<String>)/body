@@ -6,13 +6,14 @@
   if (TypesPackage.isFlexible(type)) {
     Flexibility flexibility=TypesPackage.flexibility(type);
     if (!TypeUtils.isNullableType(flexibility.getLowerBound()) && TypeUtils.isNullableType(flexibility.getUpperBound())) {
+      AnnotationDescriptor notNull=type.getAnnotations().findAnnotation(JvmAnnotationNames.JETBRAINS_NOT_NULL_ANNOTATION);
+      if (notNull != null) {
+        generateAnnotationIfNotPresent(annotationDescriptorsAlreadyPresent,NotNull.class);
+      }
       return;
     }
   }
   boolean isNullableType=TypeUtils.isNullableType(type);
   Class<?> annotationClass=isNullableType ? Nullable.class : NotNull.class;
-  String descriptor=Type.getType(annotationClass).getDescriptor();
-  if (!annotationDescriptorsAlreadyPresent.contains(descriptor)) {
-    visitAnnotation(descriptor,false).visitEnd();
-  }
+  generateAnnotationIfNotPresent(annotationDescriptorsAlreadyPresent,annotationClass);
 }
