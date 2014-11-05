@@ -1,7 +1,13 @@
 {
   PsiBuilder.Marker typeRefMarker=mark();
   parseAnnotations(REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
-  if (at(IDENTIFIER) || at(PACKAGE_KEYWORD) || atParenthesizedMutableForPlatformTypes(0)) {
+  IElementType lookahead=lookahead(1);
+  if (at(IDENTIFIER) && lookahead(1) != DOT && lookahead != LT && lookahead != LPAR && at(DYNAMIC_KEYWORD)) {
+    PsiBuilder.Marker dynamicType=mark();
+    advance();
+    dynamicType.done(DYNAMIC_TYPE);
+  }
+ else   if (at(IDENTIFIER) || at(PACKAGE_KEYWORD) || atParenthesizedMutableForPlatformTypes(0)) {
     parseUserType();
   }
  else   if (at(HASH)) {
