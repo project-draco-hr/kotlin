@@ -52,10 +52,10 @@
   return StackValue.operation(asmResultType,new Function1<InstructionAdapter,Unit>(){
     @Override public Unit invoke(    InstructionAdapter adapter){
       StackValue value=gen(expression.getBaseExpression());
-      value=StackValue.complexReceiver(value,StackValue.RECEIVER_WRITE,StackValue.RECEIVER_READ);
+      value=StackValue.complexWriteReadReceiver(value);
       Type type=expressionType(expression.getBaseExpression());
       value.put(type,v);
-      pushReceiverAndValueViaDup(value,type);
+      value.dup(v,true);
       Type storeType;
       if (isPrimitiveNumberClassDescriptor && AsmUtil.isPrimitive(asmBaseType)) {
         genIncrement(asmResultType,increment,v);
@@ -66,7 +66,7 @@
         result.put(result.type,v);
         storeType=result.type;
       }
-      value.store(storeType,v);
+      value.store(StackValue.onStack(storeType),v,true);
       return Unit.INSTANCE$;
     }
   }
