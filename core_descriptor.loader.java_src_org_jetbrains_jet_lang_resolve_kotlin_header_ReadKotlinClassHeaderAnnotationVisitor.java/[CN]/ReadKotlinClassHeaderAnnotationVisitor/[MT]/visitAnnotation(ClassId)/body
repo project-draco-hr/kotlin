@@ -1,16 +1,25 @@
 {
-  JvmClassName annotation=JvmClassName.byClassId(classId);
-  KotlinClassHeader.Kind newKind=HEADER_KINDS.get(annotation);
-  if (newKind == null)   return null;
   if (headerKind != null) {
     return null;
   }
-  headerKind=newKind;
-  if (newKind == CLASS || newKind == PACKAGE_FACADE) {
+  JvmClassName annotation=JvmClassName.byClassId(classId);
+  KotlinClassHeader.Kind newKind=HEADER_KINDS.get(annotation);
+  if (newKind != null) {
+    headerKind=newKind;
+switch (newKind) {
+case CLASS:
+      return kotlinClassOrPackageVisitor(annotation);
+case PACKAGE_FACADE:
     return kotlinClassOrPackageVisitor(annotation);
-  }
- else   if (newKind == SYNTHETIC_CLASS) {
-    return syntheticClassAnnotationVisitor();
-  }
-  return null;
+case SYNTHETIC_CLASS:
+  return syntheticClassAnnotationVisitor();
+default :
+throw new IllegalStateException("Unknown kind: " + newKind);
+}
+}
+KotlinClassHeader.Kind oldAnnotationKind=OLD_DEPRECATED_ANNOTATIONS_KINDS.get(annotation);
+if (oldAnnotationKind != null) {
+headerKind=oldAnnotationKind;
+}
+return null;
 }
