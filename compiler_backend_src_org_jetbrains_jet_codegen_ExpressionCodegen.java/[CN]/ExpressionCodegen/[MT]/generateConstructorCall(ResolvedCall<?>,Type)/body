@@ -1,13 +1,13 @@
 {
   return StackValue.functionCall(objectType,new Function1<InstructionAdapter,Unit>(){
-    @Override public Unit invoke(    InstructionAdapter adapter){
+    @Override public Unit invoke(    InstructionAdapter v){
       v.anew(objectType);
       v.dup();
       ConstructorDescriptor constructor=(ConstructorDescriptor)resolvedCall.getResultingDescriptor();
       ReceiverParameterDescriptor dispatchReceiver=constructor.getDispatchReceiverParameter();
       if (dispatchReceiver != null) {
         Type receiverType=typeMapper.mapType(dispatchReceiver.getType());
-        generateReceiverValue(resolvedCall.getDispatchReceiver(),receiverType);
+        generateReceiverValue(resolvedCall.getDispatchReceiver()).put(receiverType,v);
       }
       pushClosureOnStack(constructor.getContainingDeclaration(),dispatchReceiver == null,defaultCallGenerator);
       ConstructorDescriptor originalOfSamAdapter=(ConstructorDescriptor)SamCodegenUtil.getOriginalIfSamAdapter(constructor);

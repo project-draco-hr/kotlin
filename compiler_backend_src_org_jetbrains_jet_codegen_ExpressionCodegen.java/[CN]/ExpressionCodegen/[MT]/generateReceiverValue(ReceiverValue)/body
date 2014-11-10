@@ -4,26 +4,24 @@
     if (DescriptorUtils.isClassObject(receiverDescriptor)) {
       CallableMemberDescriptor contextDescriptor=context.getContextDescriptor();
       if (contextDescriptor instanceof FunctionDescriptor && receiverDescriptor == contextDescriptor.getContainingDeclaration()) {
-        v.load(0,OBJECT_TYPE);
+        return StackValue.local(0,OBJECT_TYPE);
       }
  else {
-        FieldInfo info=FieldInfo.createForSingleton(receiverDescriptor,typeMapper);
-        v.getstatic(info.getOwnerInternalName(),info.getFieldName(),info.getFieldType().getDescriptor());
+        return StackValue.singleton(receiverDescriptor,typeMapper);
       }
-      StackValue.onStack(asmType(receiverValue.getType())).put(type,v);
     }
  else {
-      StackValue.thisOrOuter(this,receiverDescriptor,false,false).put(type,v);
+      return StackValue.thisOrOuter(this,receiverDescriptor,false,false);
     }
   }
  else   if (receiverValue instanceof ScriptReceiver) {
-    generateScript((ScriptReceiver)receiverValue);
+    return generateScript((ScriptReceiver)receiverValue);
   }
  else   if (receiverValue instanceof ExtensionReceiver) {
-    generateReceiver(((ExtensionReceiver)receiverValue).getDeclarationDescriptor()).put(type,v);
+    return generateReceiver(((ExtensionReceiver)receiverValue).getDeclarationDescriptor());
   }
  else   if (receiverValue instanceof ExpressionReceiver) {
-    gen(((ExpressionReceiver)receiverValue).getExpression(),type);
+    return gen(((ExpressionReceiver)receiverValue).getExpression());
   }
  else {
     throw new UnsupportedOperationException("Unsupported receiver value: " + receiverValue);
