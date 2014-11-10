@@ -1,13 +1,14 @@
 {
   final JetExpression deparenthesized=JetPsiUtil.deparenthesize(rangeExpression);
   return StackValue.operation(Type.BOOLEAN_TYPE,new Function1<InstructionAdapter,Unit>(){
-    @Override public Unit invoke(    InstructionAdapter adapter){
+    @Override public Unit invoke(    InstructionAdapter v){
       if (isIntRangeExpr(deparenthesized)) {
         genInIntRange(leftValue,(JetBinaryExpression)deparenthesized);
       }
  else {
         ResolvedCall<? extends CallableDescriptor> resolvedCall=getResolvedCallWithAssert(operationReference,bindingContext);
-        invokeFunctionNotLazy(resolvedCall,StackValue.none());
+        StackValue result=invokeFunction(resolvedCall.getCall(),resolvedCall,StackValue.none());
+        result.put(result.type,v);
       }
       if (operationReference.getReferencedNameElementType() == JetTokens.NOT_IN) {
         genInvertBoolean(v);
