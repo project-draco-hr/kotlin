@@ -3,7 +3,6 @@
   Node fromTest=fromInit.getNext();
   Node fromIncr=fromTest.getNext();
   Node fromBody=fromIncr.getNext();
-  SourceInfo info=makeSourceInfo(forNode);
   if (fromBody == null) {
     Node fromIter=forNode.getFirstChild();
     Node fromObjExpr=fromIter.getNext();
@@ -13,46 +12,45 @@
       Node fromIterVarName=fromIter.getFirstChild();
       String fromName=fromIterVarName.getString();
       JsName toName=getScope().declareName(fromName);
-      toForIn=new JsForIn(info,toName);
+      toForIn=new JsForIn(toName);
       Node fromIterInit=fromIterVarName.getFirstChild();
       if (fromIterInit != null) {
-        toForIn.setIterExpr(mapOptionalExpression(fromIterInit));
+        toForIn.setIterExpression(mapOptionalExpression(fromIterInit));
       }
     }
  else {
-      toForIn=new JsForIn(info);
-      toForIn.setIterExpr(mapExpression(fromIter));
+      toForIn=new JsForIn();
+      toForIn.setIterExpression(mapExpression(fromIter));
     }
-    toForIn.setObjExpr(mapExpression(fromObjExpr));
+    toForIn.setObjectExpression(mapExpression(fromObjExpr));
     JsStatement bodyStmt=mapStatement(fromBody);
     if (bodyStmt != null) {
       toForIn.setBody(bodyStmt);
     }
  else {
-      toForIn.setBody(new JsEmpty(info));
+      toForIn.setBody(new JsEmpty());
     }
     return toForIn;
   }
  else {
-    JsFor toFor=new JsFor(info);
-    JsNode initThingy=map(fromInit);
-    if (initThingy != null) {
-      if (initThingy instanceof JsVars) {
-        toFor.setInitVars((JsVars)initThingy);
-      }
- else {
-        assert(initThingy instanceof JsExpression);
-        toFor.setInitExpr((JsExpression)initThingy);
-      }
+    JsFor toFor;
+    JsNode init=map(fromInit);
+    JsExpression condition=mapOptionalExpression(fromTest);
+    JsExpression increment=mapOptionalExpression(fromIncr);
+    assert(init != null);
+    if (init instanceof JsVars) {
+      toFor=new JsFor((JsVars)init,condition,increment);
     }
-    toFor.setCondition(mapOptionalExpression(fromTest));
-    toFor.setIncrExpr(mapOptionalExpression(fromIncr));
+ else {
+      assert(init instanceof JsExpression);
+      toFor=new JsFor((JsExpression)init,condition,increment);
+    }
     JsStatement bodyStmt=mapStatement(fromBody);
     if (bodyStmt != null) {
       toFor.setBody(bodyStmt);
     }
  else {
-      toFor.setBody(new JsEmpty(info));
+      toFor.setBody(new JsEmpty());
     }
     return toFor;
   }
