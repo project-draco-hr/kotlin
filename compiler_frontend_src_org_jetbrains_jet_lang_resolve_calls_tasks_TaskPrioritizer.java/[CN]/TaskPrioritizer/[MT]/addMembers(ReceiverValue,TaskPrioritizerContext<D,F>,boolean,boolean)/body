@@ -1,11 +1,16 @@
 {
-  List<JetType> variantsForExplicitReceiver=SmartCastUtils.getSmartCastVariants(explicitReceiver,c.context);
-  for (  CallableDescriptorCollector<D> callableDescriptorCollector : c.callableDescriptorCollectors) {
-    Collection<ResolutionCandidate<D>> members=Lists.newArrayList();
-    for (    JetType type : variantsForExplicitReceiver) {
-      Collection<D> membersForThisVariant=staticMembers ? callableDescriptorCollector.getStaticMembersByName(type,c.name,c.context.trace) : callableDescriptorCollector.getMembersByName(type,c.name,c.context.trace);
-      convertWithReceivers(membersForThisVariant,explicitReceiver,NO_RECEIVER,members,createKind(DISPATCH_RECEIVER,isExplicit),c.context.call);
+  for (  final CallableDescriptorCollector<D> callableDescriptorCollector : c.callableDescriptorCollectors) {
+    c.result.addCandidates(new Function0<Collection<? extends ResolutionCandidate<D>>>(){
+      @Override public Collection<? extends ResolutionCandidate<D>> invoke(){
+        List<JetType> variantsForExplicitReceiver=SmartCastUtils.getSmartCastVariants(explicitReceiver,c.context);
+        Collection<ResolutionCandidate<D>> members=Lists.newArrayList();
+        for (        JetType type : variantsForExplicitReceiver) {
+          Collection<D> membersForThisVariant=staticMembers ? callableDescriptorCollector.getStaticMembersByName(type,c.name,c.context.trace) : callableDescriptorCollector.getMembersByName(type,c.name,c.context.trace);
+          convertWithReceivers(membersForThisVariant,explicitReceiver,NO_RECEIVER,members,createKind(DISPATCH_RECEIVER,isExplicit),c.context.call);
+        }
+        return members;
+      }
     }
-    c.result.addCandidates(members);
+);
   }
 }
