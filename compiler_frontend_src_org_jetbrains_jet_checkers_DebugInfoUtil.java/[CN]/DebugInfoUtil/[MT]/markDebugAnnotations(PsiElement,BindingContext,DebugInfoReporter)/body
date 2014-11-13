@@ -42,6 +42,13 @@
       DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,expression);
       if (declarationDescriptor != null) {
         target=declarationDescriptor.toString();
+        if (declarationDescriptor instanceof CallableDescriptor) {
+          CallableDescriptor callableDescriptor=(CallableDescriptor)declarationDescriptor;
+          ReceiverParameterDescriptor dispatchReceiverParameter=callableDescriptor.getDispatchReceiverParameter();
+          if (dispatchReceiverParameter != null && TypesPackage.isDynamic(dispatchReceiverParameter.getReturnType())) {
+            debugInfoReporter.reportDynamicCall(expression);
+          }
+        }
       }
       if (target == null) {
         PsiElement labelTarget=bindingContext.get(LABEL_TARGET,expression);
