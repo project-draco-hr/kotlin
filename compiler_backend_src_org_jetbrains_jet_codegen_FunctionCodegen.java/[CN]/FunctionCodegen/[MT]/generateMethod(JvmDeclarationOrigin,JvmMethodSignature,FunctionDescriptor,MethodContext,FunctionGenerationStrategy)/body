@@ -1,7 +1,8 @@
 {
   OwnerKind methodContextKind=methodContext.getContextKind();
   Method asmMethod=jvmSignature.getAsmMethod();
-  MethodVisitor mv=v.newMethod(origin,getMethodAsmFlags(functionDescriptor,methodContextKind),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),getThrownExceptions(functionDescriptor,typeMapper));
+  int flags=getMethodAsmFlags(functionDescriptor,methodContextKind);
+  MethodVisitor mv=v.newMethod(origin,flags,asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),getThrownExceptions(functionDescriptor,typeMapper));
   if (owner instanceof PackageFacadeContext) {
     Type ownerType=((PackageFacadeContext)owner).getDelegateToClassType();
     v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,functionDescriptor,shortNameByAsmType(ownerType));
@@ -24,7 +25,9 @@
     mv.visitEnd();
     return;
   }
-  generateMethodBody(mv,functionDescriptor,methodContext,jvmSignature,strategy,getParentCodegen());
+  if ((flags & Opcodes.ACC_NATIVE) == 0) {
+    generateMethodBody(mv,functionDescriptor,methodContext,jvmSignature,strategy,getParentCodegen());
+  }
   endVisit(mv,null,origin.getElement());
   methodContext.recordSyntheticAccessorIfNeeded(functionDescriptor,bindingContext);
 }
