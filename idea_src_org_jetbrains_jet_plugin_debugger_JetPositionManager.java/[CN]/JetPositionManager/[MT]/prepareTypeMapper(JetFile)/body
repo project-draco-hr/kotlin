@@ -1,12 +1,12 @@
 {
-  final FqName fqName=file.getPackageFqName();
-  CachedValue<JetTypeMapper> value=myTypeMappers.get(fqName);
+  final Pair<FqName,IdeaModuleInfo> key=createKeyForTypeMapper(file);
+  CachedValue<JetTypeMapper> value=myTypeMappers.get(key);
   if (value == null) {
     value=CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<JetTypeMapper>(){
       @Override public Result<JetTypeMapper> compute(){
         Project project=file.getProject();
-        GlobalSearchScope packageFacadeScope=ResolvePackage.getModuleInfo(file).contentScope();
-        Collection<JetFile> packageFiles=findFilesWithExactPackage(fqName,packageFacadeScope,project);
+        GlobalSearchScope packageFacadeScope=key.second.contentScope();
+        Collection<JetFile> packageFiles=findFilesWithExactPackage(key.first,packageFacadeScope,project);
         AnalyzeExhaust analyzeExhaust=ResolvePackage.getAnalysisResultsForElements(packageFiles);
         analyzeExhaust.throwIfError();
         GenerationState state=new GenerationState(project,ClassBuilderFactories.THROW_EXCEPTION,analyzeExhaust.getModuleDescriptor(),analyzeExhaust.getBindingContext(),new ArrayList<JetFile>(packageFiles));
@@ -15,7 +15,7 @@
       }
     }
 ,false);
-    myTypeMappers.put(fqName,value);
+    myTypeMappers.put(key,value);
   }
   return value.getValue();
 }
