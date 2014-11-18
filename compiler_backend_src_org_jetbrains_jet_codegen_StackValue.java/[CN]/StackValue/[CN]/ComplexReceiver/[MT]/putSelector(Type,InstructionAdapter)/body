@@ -1,8 +1,8 @@
 {
   boolean wasPutted=false;
+  StackValue receiver=originalValueWithReceiver.receiver;
   for (  boolean operation : isReadOperations) {
-    if (originalValueWithReceiver.hasReceiver(operation)) {
-      StackValue receiver=originalValueWithReceiver.receiver;
+    if (originalValueWithReceiver.isNonStaticAccess(operation)) {
       if (!wasPutted) {
         receiver.put(receiver.type,v);
         wasPutted=true;
@@ -11,5 +11,8 @@
         receiver.dup(v,false);
       }
     }
+  }
+  if (!wasPutted && receiver.hasSideEffects()) {
+    receiver.put(Type.VOID_TYPE,v);
   }
 }
