@@ -26,14 +26,15 @@
       return;
     }
   }
-  ResolveSessionForBodies resolveSession=ResolvePackage.getLazyResolveSession(expression);
+  ResolutionFacade resolveSession=ResolvePackage.getLazyResolveSession(expression);
   final BindingContext bindingContext=resolveSession.resolveToElement(expression);
+  ModuleDescriptor moduleDescriptorForElement=resolveSession.getModuleDescriptorForElement(expression);
   final JetType expressionType=bindingContext.get(BindingContext.EXPRESSION_TYPE,expression);
   JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
   if (scope != null) {
     DataFlowInfo dataFlowInfo=BindingContextUtilPackage.getDataFlowInfo(bindingContext,expression);
     ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
-    JetType typeNoExpectedType=AnalyzerPackage.computeTypeInfoInContext(expression,scope,bindingTrace,dataFlowInfo,TypeUtils.NO_EXPECTED_TYPE,resolveSession.getModuleDescriptor()).getType();
+    JetType typeNoExpectedType=AnalyzerPackage.computeTypeInfoInContext(expression,scope,bindingTrace,dataFlowInfo,TypeUtils.NO_EXPECTED_TYPE,moduleDescriptorForElement).getType();
     if (expressionType != null && typeNoExpectedType != null && !JetTypeChecker.DEFAULT.equalTypes(expressionType,typeNoExpectedType)) {
       noTypeInference=true;
     }
