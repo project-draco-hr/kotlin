@@ -1,0 +1,17 @@
+{
+  Disposer.register(parentDisposable,new Disposable(){
+    @Override public void dispose(){
+synchronized (APPLICATION_LOCK) {
+        if (--ourProjectCount <= 0) {
+          disposeApplicationEnvironment();
+        }
+      }
+    }
+  }
+);
+  JetCoreEnvironment environment=new JetCoreEnvironment(parentDisposable,getOrCreateApplicationEnvironmentForProduction(configFilePaths),configuration);
+synchronized (APPLICATION_LOCK) {
+    ourProjectCount++;
+  }
+  return environment;
+}
