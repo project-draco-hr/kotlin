@@ -1,6 +1,9 @@
 {
   if (resolvedCall.getDispatchReceiver().exists() || resolvedCall.getExtensionReceiver().exists() || isLocalFunCall(callableMethod)) {
-    return new CallReceiver(resolvedCall,receiver,codegen,callableMethod,true);
+    boolean hasExtensionReceiver=resolvedCall.getExtensionReceiver().exists();
+    StackValue extensionReceiver=genReceiver(receiver,codegen,resolvedCall,callableMethod,true);
+    StackValue dispatchReceiver=genReceiver(hasExtensionReceiver ? none() : receiver,codegen,resolvedCall,callableMethod,false);
+    return new CallReceiver(dispatchReceiver,extensionReceiver,CallReceiver.calcType(resolvedCall,codegen.typeMapper,callableMethod));
   }
   return receiver;
 }
