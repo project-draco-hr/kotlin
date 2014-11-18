@@ -1,0 +1,20 @@
+{
+  if (javaChangeInfo == null) {
+    final PsiMethod currentPsiMethod=getCurrentPsiMethod();
+    if (originalPsiMethod == null || currentPsiMethod == null)     return null;
+    String javaVisibility=primaryMethodUpdated ? VisibilityUtil.getVisibilityModifier(currentPsiMethod.getModifierList()) : PsiModifier.PACKAGE_LOCAL;
+    JetParameterInfo[] newParameters=getNewParameters();
+    ParameterInfoImpl[] newJavaParameters=ContainerUtil.map2Array(KotlinPackage.withIndices(newParameters),new ParameterInfoImpl[newParameters.length],new Function<Pair<? extends Integer,? extends JetParameterInfo>,ParameterInfoImpl>(){
+      @Override public ParameterInfoImpl fun(      Pair<? extends Integer,? extends JetParameterInfo> pair){
+        JetParameterInfo info=pair.getSecond();
+        PsiType type=primaryMethodUpdated ? currentPsiMethod.getParameterList().getParameters()[pair.getFirst()].getType() : PsiType.VOID;
+        return new ParameterInfoImpl(info.getOldIndex(),info.getName(),type,info.getDefaultValueText());
+      }
+    }
+);
+    PsiType returnType=primaryMethodUpdated ? currentPsiMethod.getReturnType() : PsiType.VOID;
+    javaChangeInfo=new ChangeSignatureProcessor(getMethod().getProject(),originalPsiMethod,false,javaVisibility,getNewName(),returnType,newJavaParameters).getChangeInfo();
+    javaChangeInfo.updateMethod(currentPsiMethod);
+  }
+  return javaChangeInfo;
+}
