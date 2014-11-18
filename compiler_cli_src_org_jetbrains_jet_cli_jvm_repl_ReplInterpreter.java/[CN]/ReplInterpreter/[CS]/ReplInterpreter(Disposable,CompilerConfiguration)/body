@@ -4,11 +4,19 @@
   this.psiFileFactory=(PsiFileFactoryImpl)PsiFileFactory.getInstance(project);
   this.trace=new BindingTraceContext();
   this.module=TopDownAnalyzerFacadeForJVM.createJavaModule("<repl>");
-  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.createForLocalDeclarations(new LockBasedStorageManager(),new ExceptionTracker(),Predicates.<PsiFile>alwaysTrue());
-  InjectorForTopDownAnalyzerForJvm injector=null;
+  GlobalContextImpl context=ContextPackage.GlobalContext();
+  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.createForLazy(context.getStorageManager(),context.getExceptionTracker(),Predicates.<PsiFile>alwaysTrue(),false,true);
+  scriptDeclarationFactory=new ScriptMutableDeclarationProviderFactory();
+  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,context,trace,module,ProjectScope.getAllScope(project),scriptDeclarationFactory);
   this.topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
-  this.topDownAnalyzer=null;
-  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(topDownAnalyzer.getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
+  this.topDownAnalyzer=injector.getLazyTopDownAnalyzer();
+  this.topDownAnalyzer.getCodeAnalyzer().getScopeProvider().setAdditionalFileScopesProvider(new Function1<JetFile,JetScope>(){
+    @Override public JetScope invoke(    JetFile file){
+      return lastLineScope;
+    }
+  }
+);
+  module.initialize(new CompositePackageFragmentProvider(Arrays.asList(injector.getResolveSession().getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
   module.addDependencyOnModule(module);
   module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
   module.seal();

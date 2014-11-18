@@ -1,17 +1,14 @@
 {
-  WritableScope scope=new WritableScopeImpl(JetScope.Empty.INSTANCE$,module,new TraceBasedRedeclarationHandler(trace),"Root scope in analyzePackage");
-  scope.changeLockLevel(WritableScope.LockLevel.BOTH);
-  scope.importScope(module.getPackage(FqName.ROOT).getMemberScope());
-  if (lastLineScope != null) {
-    scope.importScope(lastLineScope);
+  scriptDeclarationFactory.setDelegateFactory(new FileBasedDeclarationProviderFactory(topDownAnalysisContext.getStorageManager(),Collections.singletonList(psiFile)));
+  TopDownAnalysisContext context=topDownAnalyzer.analyzeDeclarations(topDownAnalysisContext.getTopDownAnalysisParameters(),Collections.singletonList(psiFile));
+  if (trace.get(BindingContext.FILE_TO_PACKAGE_FRAGMENT,psiFile) == null) {
+    trace.record(BindingContext.FILE_TO_PACKAGE_FRAGMENT,psiFile,topDownAnalyzer.getCodeAnalyzer().getPackageFragment(FqName.ROOT));
   }
-  scope.changeLockLevel(WritableScope.LockLevel.READING);
-  topDownAnalyzer.doProcess(topDownAnalysisContext,scope,new PackageLikeBuilderDummy(),Collections.singletonList(psiFile));
   boolean hasErrors=AnalyzerWithCompilerReport.reportDiagnostics(trace.getBindingContext().getDiagnostics(),messageCollector);
   if (hasErrors) {
     return null;
   }
-  ScriptDescriptor scriptDescriptor=topDownAnalysisContext.getScripts().get(psiFile.getScript());
+  ScriptDescriptor scriptDescriptor=context.getScripts().get(psiFile.getScript());
   lastLineScope=trace.get(BindingContext.SCRIPT_SCOPE,scriptDescriptor);
   if (lastLineScope == null) {
     throw new IllegalStateException("last line scope is not initialized");
