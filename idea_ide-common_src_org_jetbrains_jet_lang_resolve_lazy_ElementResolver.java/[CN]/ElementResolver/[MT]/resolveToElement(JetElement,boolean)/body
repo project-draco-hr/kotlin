@@ -6,7 +6,19 @@
     }
     if (partialBodyResolve && elementOfAdditionalResolve instanceof JetDeclarationWithBody) {
       JetExpression body=((JetDeclarationWithBody)elementOfAdditionalResolve).getBodyExpression();
-      Function1<JetElement,Boolean> filter=body != null ? new PartialBodyResolveFilter(jetElement,body) : null;
+      boolean inBody=body != null && PsiTreeUtil.isAncestor(body,jetElement,false);
+      Function1<JetElement,Boolean> filter;
+      if (inBody) {
+        filter=new PartialBodyResolveFilter(jetElement,body);
+      }
+ else {
+        filter=new Function1<JetElement,Boolean>(){
+          @Override public Boolean invoke(          JetElement element){
+            return false;
+          }
+        }
+;
+      }
       return elementAdditionalResolve(elementOfAdditionalResolve,filter);
     }
     return getElementAdditionalResolve(elementOfAdditionalResolve);
