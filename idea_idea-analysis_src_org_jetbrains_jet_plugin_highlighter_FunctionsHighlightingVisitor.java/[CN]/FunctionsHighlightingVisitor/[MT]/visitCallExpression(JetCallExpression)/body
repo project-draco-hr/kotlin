@@ -2,8 +2,11 @@
   JetExpression callee=expression.getCalleeExpression();
   ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(expression,bindingContext);
   if (callee instanceof JetReferenceExpression && resolvedCall != null) {
-    DeclarationDescriptor calleeDescriptor=resolvedCall.getResultingDescriptor();
-    if (resolvedCall instanceof VariableAsFunctionResolvedCall) {
+    CallableDescriptor calleeDescriptor=resolvedCall.getResultingDescriptor();
+    if (TasksPackage.isDynamic(calleeDescriptor)) {
+      JetPsiChecker.highlightName(holder,callee,JetHighlightingColors.DYNAMIC_FUNCTION_CALL);
+    }
+ else     if (resolvedCall instanceof VariableAsFunctionResolvedCall) {
       JetPsiChecker.highlightName(holder,callee,containedInFunctionClassOrSubclass(calleeDescriptor) ? JetHighlightingColors.VARIABLE_AS_FUNCTION_CALL : JetHighlightingColors.VARIABLE_AS_FUNCTION_LIKE_CALL);
     }
  else {
