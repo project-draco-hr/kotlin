@@ -5,11 +5,11 @@
   JetCoreEnvironment environment=null;
   try {
     environment=JetCoreEnvironment.createForProduction(parentDisposable,compilerConfiguration);
-    AnalyzeExhaust exhaust=analyze(environment);
-    if (exhaust == null) {
+    AnalysisResult result=analyze(environment);
+    if (result == null) {
       return false;
     }
-    exhaust.throwIfError();
+    result.throwIfError();
     for (    Module module : chunk) {
       List<JetFile> jetFiles=CompileEnvironmentUtil.getJetFiles(environment.getProject(),getAbsolutePaths(directory,module),new Function1<String,Unit>(){
         @Override public Unit invoke(        String s){
@@ -17,7 +17,7 @@
         }
       }
 );
-      GenerationState generationState=generate(environment,exhaust,jetFiles,module.getModuleName(),new File(module.getOutputDirectory()));
+      GenerationState generationState=generate(environment,result,jetFiles,module.getModuleName(),new File(module.getOutputDirectory()));
       outputFiles.put(module,generationState.getFactory());
     }
   }

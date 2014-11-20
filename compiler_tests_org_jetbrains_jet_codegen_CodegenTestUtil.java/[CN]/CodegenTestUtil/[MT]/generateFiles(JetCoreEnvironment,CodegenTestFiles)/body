@@ -1,10 +1,10 @@
 {
-  AnalyzeExhaust analyzeExhaust=JvmResolveUtil.analyzeFilesWithJavaIntegrationAndCheckForErrors(environment.getProject(),files.getPsiFiles(),Predicates.<PsiFile>alwaysTrue());
-  analyzeExhaust.throwIfError();
-  AnalyzingUtils.throwExceptionOnErrors(analyzeExhaust.getBindingContext());
+  AnalysisResult analysisResult=JvmResolveUtil.analyzeFilesWithJavaIntegrationAndCheckForErrors(environment.getProject(),files.getPsiFiles(),Predicates.<PsiFile>alwaysTrue());
+  analysisResult.throwIfError();
+  AnalyzingUtils.throwExceptionOnErrors(analysisResult.getBindingContext());
   CompilerConfiguration configuration=environment.getConfiguration();
   BindingTraceContext forExtraDiagnostics=new BindingTraceContext();
-  GenerationState state=new GenerationState(environment.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,analyzeExhaust.getModuleDescriptor(),analyzeExhaust.getBindingContext(),files.getPsiFiles(),configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),null,null,forExtraDiagnostics,null);
+  GenerationState state=new GenerationState(environment.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,analysisResult.getModuleDescriptor(),analysisResult.getBindingContext(),files.getPsiFiles(),configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),null,null,forExtraDiagnostics,null);
   KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   AnalyzingUtils.throwExceptionOnErrors(forExtraDiagnostics.getBindingContext());
   return state.getFactory();
