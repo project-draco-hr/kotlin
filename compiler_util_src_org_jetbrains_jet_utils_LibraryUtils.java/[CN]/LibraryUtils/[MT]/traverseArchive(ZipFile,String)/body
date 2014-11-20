@@ -1,0 +1,15 @@
+{
+  Enumeration<? extends ZipEntry> zipEntries=zipFile.entries();
+  while (zipEntries.hasMoreElements()) {
+    ZipEntry entry=zipEntries.nextElement();
+    String entryName=entry.getName();
+    if (!entry.isDirectory() && entryName.endsWith(JS_EXT)) {
+      String relativePath=getSuggestedPath(entryName);
+      if (relativePath == null)       continue;
+      InputStream stream=zipFile.getInputStream(entry);
+      String content=FileUtil.loadTextAndClose(stream);
+      File outputFile=new File(outputLibraryJsPath,relativePath);
+      FileUtil.writeToFile(outputFile,content);
+    }
+  }
+}
