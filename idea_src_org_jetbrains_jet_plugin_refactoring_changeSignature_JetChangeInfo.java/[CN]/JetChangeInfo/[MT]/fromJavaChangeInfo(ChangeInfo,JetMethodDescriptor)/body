@@ -1,0 +1,15 @@
+{
+  PsiMethod method=(PsiMethod)javaChangeInfo.getMethod();
+  FunctionDescriptor functionDescriptor=ResolvePackage.getJavaMethodDescriptor(method);
+  final List<ValueParameterDescriptor> parameterDescriptors=functionDescriptor.getValueParameters();
+  List<JetParameterInfo> newParameters=KotlinPackage.map(KotlinPackage.withIndices(javaChangeInfo.getNewParameters()),new Function1<Pair<? extends Integer,? extends ParameterInfo>,JetParameterInfo>(){
+    @Override public JetParameterInfo invoke(    Pair<? extends Integer,? extends ParameterInfo> pair){
+      ParameterInfo info=pair.getSecond();
+      JetParameterInfo jetParameterInfo=new JetParameterInfo(info.getOldIndex(),info.getName(),parameterDescriptors.get(pair.getFirst()).getType(),null,null);
+      jetParameterInfo.setDefaultValueText(info.getDefaultValue());
+      return jetParameterInfo;
+    }
+  }
+);
+  return new JetChangeInfo(originalChangeSignatureDescriptor,javaChangeInfo.getNewName(),functionDescriptor.getReturnType(),"",functionDescriptor.getVisibility(),newParameters,method,new JetGeneratedInfo());
+}
