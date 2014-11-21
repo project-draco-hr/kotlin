@@ -2,14 +2,21 @@
   PsiMethod method=(PsiMethod)javaChangeInfo.getMethod();
   FunctionDescriptor functionDescriptor=ResolvePackage.getJavaMethodDescriptor(method);
   final List<ValueParameterDescriptor> parameterDescriptors=functionDescriptor.getValueParameters();
+  final List<ValueParameterDescriptor> originalParameterDescriptors=originalChangeSignatureDescriptor.getDescriptor().getValueParameters();
   List<JetParameterInfo> newParameters=KotlinPackage.map(KotlinPackage.withIndices(javaChangeInfo.getNewParameters()),new Function1<Pair<? extends Integer,? extends ParameterInfo>,JetParameterInfo>(){
     @Override public JetParameterInfo invoke(    Pair<? extends Integer,? extends ParameterInfo> pair){
       ParameterInfo info=pair.getSecond();
-      JetParameterInfo jetParameterInfo=new JetParameterInfo(info.getOldIndex(),info.getName(),parameterDescriptors.get(pair.getFirst()).getType(),null,null);
+      int oldIndex=info.getOldIndex();
+      JetType currentType=parameterDescriptors.get(pair.getFirst()).getType();
+      JetType originalType=oldIndex >= 0 ? originalParameterDescriptors.get(oldIndex).getType() : currentType;
+      JetParameterInfo jetParameterInfo=new JetParameterInfo(oldIndex,info.getName(),originalType,null,null);
       jetParameterInfo.setDefaultValueText(info.getDefaultValue());
+      jetParameterInfo.setTypeText(IdeDescriptorRenderers.SOURCE_CODE.renderType(currentType));
       return jetParameterInfo;
     }
   }
 );
-  return new JetChangeInfo(originalChangeSignatureDescriptor,javaChangeInfo.getNewName(),functionDescriptor.getReturnType(),"",functionDescriptor.getVisibility(),newParameters,method,new JetGeneratedInfo());
+  JetType returnType=functionDescriptor.getReturnType();
+  String returnTypeText=returnType != null ? IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType) : "";
+  return new JetChangeInfo(originalChangeSignatureDescriptor,javaChangeInfo.getNewName(),returnType,returnTypeText,functionDescriptor.getVisibility(),newParameters,method,new JetGeneratedInfo());
 }

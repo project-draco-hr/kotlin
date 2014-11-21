@@ -7,10 +7,10 @@
     PsiElement element=reference.getElement();
     if (element instanceof JetReferenceExpression) {
       PsiElement parent=element.getParent();
-      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionPsi,isInherited));
+      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionUsageInfo.getFunctionDescriptor(),isInherited));
  else       if (parent instanceof JetUserType && parent.getParent() instanceof JetTypeReference) {
         parent=parent.getParent().getParent();
-        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionPsi,isInherited));
+        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionUsageInfo.getFunctionDescriptor(),isInherited));
       }
     }
   }
@@ -24,7 +24,10 @@
       if (oldParamName != null && !oldParamName.equals(parameterInfo.getName())) {
         for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
           PsiElement element=reference.getElement();
-          if (element instanceof JetSimpleNameExpression && !(element.getParent() instanceof JetValueArgumentName))           result.add(new JetParameterUsage((JetSimpleNameExpression)element,parameterInfo,functionPsi,isInherited));
+          if (element instanceof JetSimpleNameExpression && !(element.getParent() instanceof JetValueArgumentName)) {
+            JetParameterUsage parameterUsage=new JetParameterUsage((JetSimpleNameExpression)element,parameterInfo,functionUsageInfo.getFunctionDescriptor(),isInherited);
+            result.add(parameterUsage);
+          }
         }
       }
     }
