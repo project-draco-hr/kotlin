@@ -32,7 +32,19 @@
     TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegrationWithCustomContext(getProject(),context,jetFiles,moduleTrace,Predicates.<PsiFile>alwaysTrue(),module,null,null);
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
-  Throwable exceptionFromLazyResolveLogValidation=checkLazyResolveLog(lazyOperationsLog,testDataFile);
+  Throwable exceptionFromLazyResolveLogValidation=null;
+  if (KotlinPackage.any(testFiles,new Function1<TestFile,Boolean>(){
+    @Override public Boolean invoke(    TestFile file){
+      return file.checkLazyLog;
+    }
+  }
+)) {
+    exceptionFromLazyResolveLogValidation=checkLazyResolveLog(lazyOperationsLog,testDataFile);
+  }
+ else {
+    File lazyLogFile=getLazyLogFile(testDataFile);
+    assertFalse("No lazy log expected, but found: " + lazyLogFile.getAbsolutePath(),lazyLogFile.exists());
+  }
   Throwable exceptionFromDescriptorValidation=null;
   try {
     File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
