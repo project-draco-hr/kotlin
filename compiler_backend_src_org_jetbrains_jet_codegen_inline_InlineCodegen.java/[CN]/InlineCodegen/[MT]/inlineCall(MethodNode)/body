@@ -1,5 +1,5 @@
 {
-  reifiedTypeInliner.reifyInstructions(node.instructions);
+  ReifiedTypeParametersUsages reificationResult=reifiedTypeInliner.reifyInstructions(node.instructions);
   generateClosuresBodies();
   putClosureParametersOnStack();
   addInlineMarker(codegen.v,true);
@@ -9,6 +9,7 @@
   LocalVarRemapper remapper=new LocalVarRemapper(parameters,initialFrameSize);
   MethodNode adapter=InlineCodegenUtil.createEmptyMethodNode();
   InlineResult result=inliner.doInline(adapter,remapper,true,LabelOwner.SKIP_ALL);
+  result.getReifiedTypeParametersUsages().mergeAll(reificationResult);
   LabelOwner labelOwner=new LabelOwner(){
     final CallableMemberDescriptor descriptor=codegen.getContext().getContextDescriptor();
     final boolean isLambda=CodegenBinding.isLocalFunOrLambda(descriptor) && descriptor.getName().isSpecial();

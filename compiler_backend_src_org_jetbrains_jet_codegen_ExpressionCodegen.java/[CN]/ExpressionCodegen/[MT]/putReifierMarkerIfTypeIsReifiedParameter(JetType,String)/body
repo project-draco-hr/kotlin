@@ -1,8 +1,10 @@
 {
   TypeParameterDescriptor typeParameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(type);
   if (typeParameterDescriptor != null && typeParameterDescriptor.isReified()) {
-    parentCodegen.setWereReifierMarkers(true);
-    v.iconst(typeParameterDescriptor.getIndex());
-    v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,markerMethodName,Type.getMethodDescriptor(Type.VOID_TYPE,Type.INT_TYPE),false);
+    if (typeParameterDescriptor.getContainingDeclaration() != context.getContextDescriptor()) {
+      parentCodegen.getReifiedTypeParametersUsages().addUsedReifiedParameter(typeParameterDescriptor.getName().asString());
+    }
+    v.visitLdcInsn(typeParameterDescriptor.getName().asString());
+    v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,markerMethodName,Type.getMethodDescriptor(Type.VOID_TYPE,Type.getType(String.class)),false);
   }
 }
