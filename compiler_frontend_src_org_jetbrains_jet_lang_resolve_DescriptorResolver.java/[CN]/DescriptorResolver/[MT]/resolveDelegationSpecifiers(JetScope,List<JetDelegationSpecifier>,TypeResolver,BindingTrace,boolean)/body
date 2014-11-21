@@ -6,9 +6,15 @@
   for (  JetDelegationSpecifier delegationSpecifier : delegationSpecifiers) {
     JetTypeReference typeReference=delegationSpecifier.getTypeReference();
     if (typeReference != null) {
-      result.add(resolver.resolveType(extensibleScope,typeReference,trace,checkBounds));
-      JetTypeElement bareSuperType=checkNullableSupertypeAndStripQuestionMarks(trace,typeReference.getTypeElement());
-      checkProjectionsInImmediateArguments(trace,bareSuperType);
+      JetType supertype=resolver.resolveType(extensibleScope,typeReference,trace,checkBounds);
+      if (TypesPackage.isDynamic(supertype)) {
+        trace.report(DYNAMIC_SUPERTYPE.on(typeReference));
+      }
+ else {
+        result.add(supertype);
+        JetTypeElement bareSuperType=checkNullableSupertypeAndStripQuestionMarks(trace,typeReference.getTypeElement());
+        checkProjectionsInImmediateArguments(trace,bareSuperType);
+      }
     }
  else {
       result.add(ErrorUtils.createErrorType("No type reference"));
