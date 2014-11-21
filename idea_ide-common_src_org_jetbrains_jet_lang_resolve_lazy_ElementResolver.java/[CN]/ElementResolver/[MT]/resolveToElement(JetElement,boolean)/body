@@ -4,21 +4,8 @@
     if (elementOfAdditionalResolve instanceof JetPackageDirective) {
       elementOfAdditionalResolve=jetElement;
     }
-    if (partialBodyResolve && elementOfAdditionalResolve instanceof JetDeclarationWithBody) {
-      JetExpression body=((JetDeclarationWithBody)elementOfAdditionalResolve).getBodyExpression();
-      boolean inBody=body != null && PsiTreeUtil.isAncestor(body,jetElement,false);
-      Function1<JetElement,Boolean> filter;
-      if (inBody) {
-        filter=new PartialBodyResolveFilter(jetElement,body,probablyNothingCallableNames());
-      }
- else {
-        filter=new Function1<JetElement,Boolean>(){
-          @Override public Boolean invoke(          JetElement element){
-            return false;
-          }
-        }
-;
-      }
+    if (partialBodyResolve && elementOfAdditionalResolve instanceof JetDeclaration) {
+      Function1<JetElement,Boolean> filter=new PartialBodyResolveFilter(jetElement,(JetDeclaration)elementOfAdditionalResolve,probablyNothingCallableNames());
       return elementAdditionalResolve(elementOfAdditionalResolve,filter);
     }
     return getElementAdditionalResolve(elementOfAdditionalResolve);
