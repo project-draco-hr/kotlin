@@ -1,9 +1,14 @@
 {
-  KotlinJvmBinaryClass kotlinClass=findClassWithAnnotationsAndInitializers(container,proto,nameResolver,kind);
+  final KotlinJvmBinaryClass kotlinClass=findClassWithAnnotationsAndInitializers(container,proto,nameResolver,kind);
   if (kotlinClass == null) {
     errorReporter.reportLoadingError("Kotlin class for loading member annotations is not found: " + container,null);
     return Annotations.EMPTY;
   }
-  List<AnnotationDescriptor> annotations=storage.getStorage().invoke(kotlinClass).getMemberAnnotations().get(signature);
-  return annotations == null ? Annotations.EMPTY : new AnnotationsImpl(annotations);
+  return new DeserializedAnnotations(storageManager,new Function0<List<AnnotationDescriptor>>(){
+    @Override public List<AnnotationDescriptor> invoke(){
+      List<AnnotationDescriptor> descriptors=storage.getStorage().invoke(kotlinClass).getMemberAnnotations().get(signature);
+      return descriptors == null ? Collections.<AnnotationDescriptor>emptyList() : descriptors;
+    }
+  }
+);
 }

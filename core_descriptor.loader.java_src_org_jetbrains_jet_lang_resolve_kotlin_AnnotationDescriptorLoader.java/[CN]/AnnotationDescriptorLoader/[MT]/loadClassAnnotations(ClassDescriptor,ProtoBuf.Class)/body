@@ -1,14 +1,22 @@
 {
-  KotlinJvmBinaryClass kotlinClass=findKotlinClassByDescriptor(descriptor);
+  final KotlinJvmBinaryClass kotlinClass=findKotlinClassByDescriptor(descriptor);
   if (kotlinClass == null) {
     errorReporter.reportLoadingError("Kotlin class for loading class annotations is not found: " + descriptor,null);
     return Annotations.EMPTY;
   }
-  try {
-    return loadClassAnnotationsFromClass(kotlinClass);
+  return new DeserializedAnnotations(storageManager,new Function0<List<AnnotationDescriptor>>(){
+    @Override public List<AnnotationDescriptor> invoke(){
+      final List<AnnotationDescriptor> result=new ArrayList<AnnotationDescriptor>(1);
+      kotlinClass.loadClassAnnotations(new KotlinJvmBinaryClass.AnnotationVisitor(){
+        @Nullable @Override public KotlinJvmBinaryClass.AnnotationArgumentVisitor visitAnnotation(        @NotNull ClassId classId){
+          return resolveAnnotation(classId,result,module);
+        }
+        @Override public void visitEnd(){
+        }
+      }
+);
+      return result;
+    }
   }
- catch (  IOException e) {
-    errorReporter.reportLoadingError("Error loading member annotations from Kotlin class: " + kotlinClass,e);
-    return Annotations.EMPTY;
-  }
+);
 }
