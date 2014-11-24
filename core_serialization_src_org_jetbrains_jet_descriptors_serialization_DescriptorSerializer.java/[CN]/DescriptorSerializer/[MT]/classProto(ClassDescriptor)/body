@@ -3,13 +3,12 @@
   int flags=Flags.getClassFlags(hasAnnotations(classDescriptor),classDescriptor.getVisibility(),classDescriptor.getModality(),classDescriptor.getKind(),classDescriptor.isInner());
   builder.setFlags(flags);
   builder.setFqName(getClassId(classDescriptor));
-  DescriptorSerializer local=createChildSerializer();
   for (  TypeParameterDescriptor typeParameterDescriptor : classDescriptor.getTypeConstructor().getParameters()) {
-    builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
+    builder.addTypeParameter(typeParameter(typeParameterDescriptor));
   }
   if (!KotlinBuiltIns.getInstance().isSpecialClassWithNoSupertypes(classDescriptor)) {
     for (    JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
-      builder.addSupertype(local.type(supertype));
+      builder.addSupertype(type(supertype));
     }
   }
   ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
@@ -19,7 +18,7 @@
     }
  else {
       ProtoBuf.Class.PrimaryConstructor.Builder constructorBuilder=ProtoBuf.Class.PrimaryConstructor.newBuilder();
-      constructorBuilder.setData(local.callableProto(primaryConstructor));
+      constructorBuilder.setData(callableProto(primaryConstructor));
       builder.setPrimaryConstructor(constructorBuilder);
     }
   }
@@ -27,7 +26,7 @@
     if (descriptor instanceof CallableMemberDescriptor) {
       CallableMemberDescriptor member=(CallableMemberDescriptor)descriptor;
       if (member.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE)       continue;
-      builder.addMember(local.callableProto(member));
+      builder.addMember(callableProto(member));
     }
   }
   Collection<DeclarationDescriptor> nestedClasses=classDescriptor.getUnsubstitutedInnerClassesScope().getAllDescriptors();
