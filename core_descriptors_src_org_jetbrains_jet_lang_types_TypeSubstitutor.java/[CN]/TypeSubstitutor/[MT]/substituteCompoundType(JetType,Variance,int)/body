@@ -1,0 +1,15 @@
+{
+  List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);
+  TypeSubstitution substitutionFilteringTypeParameters=new TypeSubstitution(){
+    private final Collection<TypeConstructor> containedOrCapturedTypeParameters=TypeUtilPackage.getContainedAndCapturedTypeParameterConstructors(type);
+    @Nullable @Override public TypeProjection get(    TypeConstructor key){
+      return containedOrCapturedTypeParameters.contains(key) ? substitution.get(key) : null;
+    }
+    @Override public boolean isEmpty(){
+      return substitution.isEmpty();
+    }
+  }
+;
+  JetType substitutedType=new JetTypeImpl(type.getAnnotations(),type.getConstructor(),type.isNullable(),substitutedArguments,new SubstitutingScope(type.getMemberScope(),create(substitutionFilteringTypeParameters)));
+  return new TypeProjectionImpl(projectionKind,substitutedType);
+}
