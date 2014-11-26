@@ -7,15 +7,15 @@
   GlobalContextImpl context=ContextPackage.GlobalContext();
   TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.create(context.getStorageManager(),context.getExceptionTracker(),Predicates.<PsiFile>alwaysTrue(),false,true);
   scriptDeclarationFactory=new ScriptMutableDeclarationProviderFactory();
-  InjectorForTopDownAnalyzerForJvm injector=new InjectorForTopDownAnalyzerForJvm(project,context,trace,module,scriptDeclarationFactory,ProjectScope.getAllScope(project));
-  this.topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
-  this.topDownAnalyzer=injector.getLazyTopDownAnalyzer();
-  this.topDownAnalyzer.getCodeAnalyzer().getScopeProvider().setAdditionalFileScopesProvider(new Function1<JetFile,JetScope>(){
-    @Override public JetScope invoke(    JetFile file){
-      return lastLineScope;
+  ScopeProvider.AdditionalFileScopeProvider scopeProvider=new ScopeProvider.AdditionalFileScopeProvider(){
+    @NotNull @Override public List<JetScope> scopes(    @NotNull JetFile file){
+      return lastLineScope != null ? new SmartList<JetScope>(lastLineScope) : Collections.<JetScope>emptyList();
     }
   }
-);
+;
+  InjectorForReplWithJava injector=new InjectorForReplWithJava(project,topDownAnalysisParameters,trace,module,scriptDeclarationFactory,ProjectScope.getAllScope(project),scopeProvider);
+  this.topDownAnalysisContext=new TopDownAnalysisContext(topDownAnalysisParameters);
+  this.topDownAnalyzer=injector.getLazyTopDownAnalyzer();
   module.initialize(new CompositePackageFragmentProvider(Arrays.asList(injector.getResolveSession().getPackageFragmentProvider(),injector.getJavaDescriptorResolver().getPackageFragmentProvider())));
   module.addDependencyOnModule(module);
   module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
