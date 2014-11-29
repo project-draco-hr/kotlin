@@ -5,7 +5,10 @@
   arguments.parse(array);
   for (  OutputFile file : outputFiles.asList()) {
     try {
-      CfTranslator.translate(file.getRelativePath(),file.asByteArray(),arguments.cfOptions,arguments.dexOptions);
+      byte[] bytes=file.asByteArray();
+      DirectClassFile cf=new DirectClassFile(bytes,file.getRelativePath(),true);
+      cf.setAttributeFactory(StdAttributeFactory.THE_ONE);
+      CfTranslator.translate(cf,bytes,arguments.cfOptions,arguments.dexOptions,new DexFile(arguments.dexOptions));
     }
  catch (    Throwable e) {
       Assert.fail(generateExceptionMessage(e));
