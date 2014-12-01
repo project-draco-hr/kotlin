@@ -9,19 +9,15 @@ case TokenStream.FUNCTION:
     return function(ts,true);
 case TokenStream.LB:
 {
-    sourceAdd((char)ts.LB);
     pn=nf.createLeaf(ts.ARRAYLIT);
     ts.flags|=ts.TSF_REGEXP;
     boolean matched=ts.matchToken(ts.RB);
     ts.flags&=~ts.TSF_REGEXP;
     if (!matched) {
-      boolean first=true;
       do {
         ts.flags|=ts.TSF_REGEXP;
         tt=ts.peekToken();
         ts.flags&=~ts.TSF_REGEXP;
-        if (!first)         sourceAdd((char)ts.COMMA);
- else         first=false;
         if (tt == ts.RB) {
           break;
         }
@@ -35,35 +31,26 @@ case TokenStream.LB:
  while (ts.matchToken(ts.COMMA));
       mustMatchToken(ts,ts.RB,"msg.no.bracket.arg");
     }
-    sourceAdd((char)ts.RB);
     return nf.createArrayLiteral(pn);
   }
 case TokenStream.LC:
 {
   pn=nf.createLeaf(ts.OBJLIT);
-  sourceAdd((char)ts.LC);
   if (!ts.matchToken(ts.RC)) {
-    boolean first=true;
     commaloop:     do {
       Object property;
-      if (!first)       sourceAdd((char)ts.COMMA);
- else       first=false;
       tt=ts.getToken();
 switch (tt) {
 case TokenStream.NAME:
 case TokenStream.STRING:
-        String s=ts.getString();
-      sourceAddString(ts.NAME,s);
-    property=nf.createString(ts.getString());
-  break;
+        property=nf.createString(ts.getString());
+      break;
 case TokenStream.NUMBER_INT:
-int n=(int)ts.getNumber();
-sourceAddNumber(n);
-property=nf.createNumber(n);
+    int n=(int)ts.getNumber();
+  property=nf.createNumber(n);
 break;
 case TokenStream.NUMBER:
 double d=ts.getNumber();
-sourceAddNumber(d);
 property=nf.createNumber(d);
 break;
 case TokenStream.RC:
@@ -74,49 +61,38 @@ reportError(ts,"msg.bad.prop");
 break commaloop;
 }
 mustMatchToken(ts,ts.COLON,"msg.no.colon.prop");
-sourceAdd((char)ts.OBJLIT);
 nf.addChildToBack(pn,property);
 nf.addChildToBack(pn,assignExpr(ts,false));
 }
  while (ts.matchToken(ts.COMMA));
 mustMatchToken(ts,ts.RC,"msg.no.brace.prop");
 }
-sourceAdd((char)ts.RC);
 return nf.createObjectLiteral(pn);
 }
 case TokenStream.LP:
-sourceAdd((char)ts.LP);
 pn=expr(ts,false);
-sourceAdd((char)ts.GWT);
 mustMatchToken(ts,ts.GWT,"msg.no.paren");
 return pn;
 case TokenStream.NAME:
 String name=ts.getString();
-sourceAddString(ts.NAME,name);
 return nf.createName(name);
 case TokenStream.NUMBER_INT:
 int n=(int)ts.getNumber();
-sourceAddNumber(n);
 return nf.createNumber(n);
 case TokenStream.NUMBER:
 double d=ts.getNumber();
-sourceAddNumber(d);
 return nf.createNumber(d);
 case TokenStream.STRING:
 String s=ts.getString();
-sourceAddString(ts.STRING,s);
 return nf.createString(s);
 case TokenStream.REGEXP:
 {
 String flags=ts.regExpFlags;
 ts.regExpFlags=null;
 String re=ts.getString();
-sourceAddString(ts.REGEXP,'/' + re + '/'+ flags);
 return nf.createRegExp(re,flags);
 }
 case TokenStream.PRIMARY:
-sourceAdd((char)ts.PRIMARY);
-sourceAdd((char)ts.getOp());
 return nf.createLeaf(ts.PRIMARY,ts.getOp());
 case TokenStream.RESERVED:
 reportError(ts,"msg.reserved.id");
