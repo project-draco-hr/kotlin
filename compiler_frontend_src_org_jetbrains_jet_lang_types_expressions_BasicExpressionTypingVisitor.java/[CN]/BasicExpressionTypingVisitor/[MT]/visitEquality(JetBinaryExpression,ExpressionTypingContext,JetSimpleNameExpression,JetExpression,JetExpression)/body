@@ -3,7 +3,7 @@
   if (right == null || left == null) {
     ExpressionTypingUtils.getTypeInfoOrNullType(right,context,facade);
     ExpressionTypingUtils.getTypeInfoOrNullType(left,context,facade);
-    return JetTypeInfo.create(KotlinBuiltIns.getInstance().getBooleanType(),dataFlowInfo);
+    return JetTypeInfo.create(components.builtIns.getBooleanType(),dataFlowInfo);
   }
   ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,context);
   JetTypeInfo leftTypeInfo=getTypeInfoOrNullType(left,context,facade);
@@ -12,7 +12,7 @@
   JetTypeInfo rightTypeInfo=facade.getTypeInfo(right,contextWithDataFlow);
   dataFlowInfo=rightTypeInfo.getDataFlowInfo();
   TemporaryBindingTrace traceInterpretingRightAsNullableAny=TemporaryBindingTrace.create(context.trace,"trace to resolve 'equals(Any?)' interpreting as of type Any? an expression:",right);
-  traceInterpretingRightAsNullableAny.record(EXPRESSION_TYPE,right,KotlinBuiltIns.getInstance().getNullableAnyType());
+  traceInterpretingRightAsNullableAny.record(EXPRESSION_TYPE,right,components.builtIns.getNullableAnyType());
   Call call=CallMaker.makeCallWithExpressions(expression,receiver,null,operationSign,Collections.singletonList(right));
   ExpressionTypingContext newContext=context.replaceBindingTrace(traceInterpretingRightAsNullableAny);
   OverloadResolutionResults<FunctionDescriptor> resolutionResults=components.callResolver.resolveCallWithGivenName(newContext,call,operationSign,OperatorConventions.EQUALS);
@@ -38,5 +38,5 @@
       context.trace.report(EQUALS_MISSING.on(operationSign));
     }
   }
-  return JetTypeInfo.create(KotlinBuiltIns.getInstance().getBooleanType(),dataFlowInfo);
+  return JetTypeInfo.create(components.builtIns.getBooleanType(),dataFlowInfo);
 }
