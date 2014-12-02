@@ -2,27 +2,28 @@
   DiType type=((InstantiateType)field.getInitialization()).getType();
   Class<?> clazz=type.getClazz();
   if (clazz.isInterface()) {
+    if (initializeAsSingleton(field,type))     return;
     throw new IllegalArgumentException("cannot instantiate interface: " + clazz.getName() + " needed for "+ neededFor);
   }
   if (Modifier.isAbstract(clazz.getModifiers())) {
+    if (initializeAsSingleton(field,type))     return;
     throw new IllegalArgumentException("cannot instantiate abstract class: " + clazz.getName() + " needed for "+ neededFor);
   }
-  if (isKotlinSingletonObject(clazz)) {
-    field.setInitialization(new ObjectInstanceFieldAccess(clazz));
-    return;
+  List<Constructor<?>> publicConstructors=findPublicConstructors(clazz.getConstructors());
+  if (publicConstructors.size() != 1) {
+    if (initializeAsSingleton(field,type))     return;
+    if (publicConstructors.size() == 0) {
+      throw new IllegalArgumentException("No public constructor: " + clazz.getName() + " needed for "+ neededFor);
+    }
+ else {
+      throw new IllegalArgumentException("Too many public constructors in " + clazz.getName() + " needed for "+ neededFor);
+    }
   }
-  Constructor<?>[] constructors=clazz.getConstructors();
-  if (constructors.length == 0 || !Modifier.isPublic(constructors[0].getModifiers())) {
-    throw new IllegalArgumentException("No constructor: " + clazz.getName() + " needed for "+ neededFor);
-  }
-  if (constructors.length > 1) {
-    throw new IllegalArgumentException("Too many constructors in " + clazz.getName() + " needed for "+ neededFor);
-  }
-  Constructor<?> constructor=constructors[0];
-  ConstructorCall dependency=new ConstructorCall(constructor);
-  Type[] parameterTypes=constructor.getGenericParameterTypes();
+  Constructor<?> publicConstructor=publicConstructors.get(0);
+  ConstructorCall dependency=new ConstructorCall(publicConstructor);
+  Type[] parameterTypes=publicConstructor.getGenericParameterTypes();
   for (  Type parameterType : parameterTypes) {
-    Field fieldForParameter=findDependencyOfType(DiType.fromReflectionType(parameterType),"constructor: " + constructor + ", parameter: "+ parameterType,neededFor.prepend(field));
+    Field fieldForParameter=findDependencyOfType(DiType.fromReflectionType(parameterType),"constructor: " + publicConstructor + ", parameter: "+ parameterType,neededFor.prepend(field));
     used.add(fieldForParameter);
     dependency.getConstructorArguments().add(fieldForParameter);
   }
