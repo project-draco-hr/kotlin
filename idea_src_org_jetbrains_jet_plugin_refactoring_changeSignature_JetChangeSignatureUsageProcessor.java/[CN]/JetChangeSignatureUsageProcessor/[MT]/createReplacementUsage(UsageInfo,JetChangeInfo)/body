@@ -1,8 +1,13 @@
 {
   if (originalUsageInfo instanceof KotlinSAMUsage) {
-    JetFunctionLiteral functionLiteral=((KotlinSAMUsage)originalUsageInfo).getFunctionLiteral();
-    FunctionDescriptor functionDescriptor=((KotlinSAMUsage)originalUsageInfo).getFunctionDescriptor();
-    return new JavaMethodKotlinDerivedDefinitionUsage(functionLiteral,functionDescriptor,javaMethodChangeInfo);
+    final KotlinSAMUsage samUsage=(KotlinSAMUsage)originalUsageInfo;
+    return new JavaMethodKotlinUsageWithDelegate<JetFunction>(samUsage.getFunctionLiteral(),javaMethodChangeInfo){
+      private final JetFunctionDefinitionUsage<JetFunction> delegateUsage=new JetFunctionDefinitionUsage<JetFunction>(samUsage.getFunctionLiteral(),samUsage.getFunctionDescriptor(),javaMethodChangeInfo.getFunctionDescriptor().getOriginalPrimaryFunction(),samUsage.getSamCallType());
+      @NotNull @Override protected JetUsageInfo<JetFunction> getDelegateUsage(){
+        return delegateUsage;
+      }
+    }
+;
   }
   JetCallElement callElement=PsiTreeUtil.getParentOfType(originalUsageInfo.getElement(),JetCallElement.class);
   return callElement != null ? new JavaMethodKotlinCallUsage(callElement,javaMethodChangeInfo) : null;

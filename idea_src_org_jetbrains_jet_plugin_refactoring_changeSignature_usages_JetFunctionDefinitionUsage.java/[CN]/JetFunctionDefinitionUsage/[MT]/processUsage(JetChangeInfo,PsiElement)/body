@@ -10,10 +10,10 @@
         identifier.replace(psiFactory.createIdentifier(changeInfo.getNewName()));
       }
     }
-    boolean returnTypeIsNeeded=changeInfo.isRefactoringTarget(functionDescriptor) || !(function instanceof JetFunctionLiteral) || function.getTypeReference() != null;
+    boolean returnTypeIsNeeded=changeInfo.isRefactoringTarget(originalFunctionDescriptor) || !(function instanceof JetFunctionLiteral) || function.getTypeReference() != null;
     if (changeInfo.isReturnTypeChanged() && returnTypeIsNeeded) {
       function.setTypeReference(null);
-      String returnTypeText=changeInfo.getNewReturnTypeText();
+      String returnTypeText=changeInfo.renderReturnType(this);
       if (!KotlinBuiltIns.getInstance().getUnitType().toString().equals(returnTypeText)) {
         ShortenPackage.addToShorteningWaitSet(function.setTypeReference(JetPsiFactory(function).createType(returnTypeText)));
       }
@@ -37,11 +37,11 @@
         }
       }
  else {
-        newParameterList=psiFactory.createFunctionLiteralParameterList(changeInfo.getNewParametersSignature(functionDescriptor,isInherited,hasExpectedType,0));
+        newParameterList=psiFactory.createFunctionLiteralParameterList(changeInfo.getNewParametersSignature(this,0));
       }
     }
  else {
-      newParameterList=psiFactory.createParameterList(changeInfo.getNewParametersSignature(functionDescriptor,isInherited,hasExpectedType,0));
+      newParameterList=psiFactory.createParameterList(changeInfo.getNewParametersSignature(this,0));
     }
     if (newParameterList != null) {
       if (parameterList != null) {
@@ -75,8 +75,9 @@
  else   if (parameterList != null) {
     int paramIndex=0;
     for (    JetParameter parameter : parameterList.getParameters()) {
-      JetParameterInfo parameterInfo=changeInfo.getNewParameters()[paramIndex++];
-      changeParameter(changeInfo,parameter,parameterInfo);
+      JetParameterInfo parameterInfo=changeInfo.getNewParameters()[paramIndex];
+      changeParameter(paramIndex,parameter,parameterInfo);
+      paramIndex++;
     }
     ShortenPackage.addToShorteningWaitSet(parameterList);
   }

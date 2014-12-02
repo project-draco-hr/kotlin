@@ -1,16 +1,18 @@
 {
-  result.add(functionUsageInfo);
+  boolean isInherited=functionUsageInfo.isInherited();
+  if (isInherited) {
+    result.add(functionUsageInfo);
+  }
   PsiElement functionPsi=functionUsageInfo.getElement();
   if (functionPsi == null)   return;
-  boolean isInherited=functionUsageInfo.isInherited();
   for (  PsiReference reference : ReferencesSearch.search(functionPsi,functionPsi.getUseScope())) {
     PsiElement element=reference.getElement();
     if (element instanceof JetReferenceExpression) {
       PsiElement parent=element.getParent();
-      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionUsageInfo.getFunctionDescriptor(),isInherited));
+      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionUsageInfo));
  else       if (parent instanceof JetUserType && parent.getParent() instanceof JetTypeReference) {
         parent=parent.getParent().getParent();
-        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionUsageInfo.getFunctionDescriptor(),isInherited));
+        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionUsageInfo));
       }
     }
   }
@@ -25,7 +27,7 @@
         for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
           PsiElement element=reference.getElement();
           if (element instanceof JetSimpleNameExpression && !(element.getParent() instanceof JetValueArgumentName)) {
-            JetParameterUsage parameterUsage=new JetParameterUsage((JetSimpleNameExpression)element,parameterInfo,functionUsageInfo.getFunctionDescriptor(),isInherited);
+            JetParameterUsage parameterUsage=new JetParameterUsage((JetSimpleNameExpression)element,parameterInfo,functionUsageInfo);
             result.add(parameterUsage);
           }
         }
