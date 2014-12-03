@@ -1,0 +1,17 @@
+{
+  List<PsiClass> result=new ArrayList<PsiClass>();
+  List<KotlinLightPackageClassInfo> packageClassesInfos=findPackageClassesInfos(packageFqName,scope);
+  for (  KotlinLightPackageClassInfo info : packageClassesInfos) {
+    Collection<JetFile> files=info.getFiles();
+    if (PackagePartClassUtils.getPackageFilesWithCallables(files).isEmpty())     continue;
+    KotlinLightClassForPackage lightClass=KotlinLightClassForPackage.create(psiManager,packageFqName,info.getScope(),files);
+    if (lightClass == null)     continue;
+    result.add(lightClass);
+    if (files.size() > 1) {
+      for (      JetFile file : files) {
+        result.add(new FakeLightClassForFileOfPackage(psiManager,lightClass,file));
+      }
+    }
+  }
+  return result;
+}
