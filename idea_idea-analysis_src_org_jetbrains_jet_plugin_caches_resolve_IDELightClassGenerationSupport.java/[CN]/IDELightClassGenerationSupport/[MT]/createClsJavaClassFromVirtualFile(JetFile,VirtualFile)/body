@@ -1,0 +1,19 @@
+{
+  final PsiJavaFileStubImpl javaFileStub=(PsiJavaFileStubImpl)createStub(virtualFile);
+  if (javaFileStub == null) {
+    return null;
+  }
+  PsiManager manager=PsiManager.getInstance(decompiledKotlinFile.getProject());
+  ClsFileImpl fakeFile=new ClsFileImpl((PsiManagerImpl)manager,new ClassFileViewProvider(manager,virtualFile)){
+    @NotNull @Override public PsiClassHolderFileStub getStub(){
+      return javaFileStub;
+    }
+    @Override public PsiElement getMirror(){
+      return decompiledKotlinFile;
+    }
+  }
+;
+  fakeFile.setPhysical(false);
+  javaFileStub.setPsi(fakeFile);
+  return (ClsClassImpl)single(fakeFile.getClasses());
+}
