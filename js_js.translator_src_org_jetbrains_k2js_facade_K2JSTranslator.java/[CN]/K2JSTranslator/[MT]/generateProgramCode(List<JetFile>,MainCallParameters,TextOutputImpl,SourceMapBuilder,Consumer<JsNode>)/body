@@ -1,7 +1,9 @@
 {
   JsProgram program=generateProgram(files,mainCallParameters);
-  JsSourceGenerationVisitor sourceGenerator=new JsSourceGenerationVisitor(output,sourceMapBuilder);
-  program.accept(sourceGenerator);
+  Diagnostics diagnostics=config.getTrace().getBindingContext().getDiagnostics();
+  if (hasError(diagnostics))   return Status.fail();
+  program=JsInliner.process(program);
+  program.accept(new JsSourceGenerationVisitor(output,sourceMapBuilder));
   astConsumer.consume(program);
-  return output.toString();
+  return Status.success(output.toString());
 }

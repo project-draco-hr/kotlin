@@ -2,7 +2,9 @@
   K2JSTranslator translator=new K2JSTranslator(config);
   TextOutputImpl output=new TextOutputImpl();
   SourceMapBuilder sourceMapBuilder=config.isSourcemap() ? new SourceMap3Builder(outputFile,output,new SourceMapBuilderConsumer()) : null;
-  String programCode=translator.generateProgramCode(files,mainCall,output,sourceMapBuilder,astConsumer);
+  Status<String> codeStatus=translator.generateProgramCode(files,mainCall,output,sourceMapBuilder,astConsumer);
+  if (codeStatus.isFail())   return Status.fail();
+  String programCode=codeStatus.getResult();
   String prefix=FileUtilsPackage.readTextOrEmpty(outputPrefixFile);
   String postfix=FileUtilsPackage.readTextOrEmpty(outputPostfixFile);
   StringBuilder outBuilder=new StringBuilder(programCode.length() + prefix.length() + postfix.length());
@@ -22,5 +24,6 @@
     SimpleOutputFile sourcemapFile=new SimpleOutputFile(sourceFiles,sourceMapBuilder.getOutFile().getName(),sourceMapBuilder.build());
     outputFiles.add(sourcemapFile);
   }
-  return new SimpleOutputFileCollection(outputFiles);
+  OutputFileCollection outputFileCollection=new SimpleOutputFileCollection(outputFiles);
+  return Status.success(outputFileCollection);
 }
