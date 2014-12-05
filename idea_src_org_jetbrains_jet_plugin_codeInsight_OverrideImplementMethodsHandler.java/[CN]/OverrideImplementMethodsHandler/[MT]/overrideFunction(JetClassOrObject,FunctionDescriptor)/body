@@ -7,8 +7,11 @@
     delegationBuilder.append("throw UnsupportedOperationException()");
   }
  else {
-    delegationBuilder.append("super<").append(descriptor.getContainingDeclaration().getName());
-    delegationBuilder.append(">.").append(descriptor.getName()).append("(");
+    delegationBuilder.append("super");
+    if (classOrObject.getDelegationSpecifiers().size() > 1) {
+      delegationBuilder.append("<").append(descriptor.getContainingDeclaration().getName()).append(">");
+    }
+    delegationBuilder.append(".").append(descriptor.getName()).append("(");
   }
   boolean first=true;
   if (!isAbstractFun) {
@@ -25,5 +28,5 @@
   KotlinBuiltIns builtIns=KotlinBuiltIns.getInstance();
   boolean returnsNotUnit=returnType != null && !builtIns.getUnitType().equals(returnType);
   String body="{" + (returnsNotUnit && !isAbstractFun ? "return " : "") + delegationBuilder.toString()+ "}";
-  return JetPsiFactory(project).createFunction(OVERRIDE_RENDERER.render(newDescriptor) + body);
+  return JetPsiFactory(classOrObject.getProject()).createFunction(OVERRIDE_RENDERER.render(newDescriptor) + body);
 }
