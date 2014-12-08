@@ -1,17 +1,17 @@
 {
-  final Type classAsmType=typeMapper.mapClass(containingClass);
-  final Method factoryMethod=descriptor.isVar() ? method("mutableMemberProperty",K_MUTABLE_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE) : method("memberProperty",K_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE);
+  final Method factoryMethod=descriptor.isVar() ? method("mutableMemberProperty",K_MUTABLE_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE,K_CLASS_TYPE) : method("memberProperty",K_MEMBER_PROPERTY_TYPE,JAVA_STRING_TYPE,K_CLASS_TYPE);
   return StackValue.operation(factoryMethod.getReturnType(),new Function1<InstructionAdapter,Unit>(){
     @Override public Unit invoke(    InstructionAdapter v){
+      v.visitLdcInsn(descriptor.getName().asString());
+      Type classAsmType=typeMapper.mapClass(containingClass);
       if (containingClass instanceof JavaClassDescriptor) {
         v.aconst(classAsmType);
-        v.invokestatic(REFLECTION_INTERNAL_PACKAGE,"foreignKotlinClass",Type.getMethodDescriptor(K_CLASS_IMPL_TYPE,getType(Class.class)),false);
+        v.invokestatic(REFLECTION,"foreignKotlinClass",Type.getMethodDescriptor(K_CLASS_TYPE,getType(Class.class)),false);
       }
  else {
-        v.getstatic(classAsmType.getInternalName(),JvmAbi.KOTLIN_CLASS_FIELD_NAME,K_CLASS_IMPL_TYPE.getDescriptor());
+        v.getstatic(classAsmType.getInternalName(),JvmAbi.KOTLIN_CLASS_FIELD_NAME,K_CLASS_TYPE.getDescriptor());
       }
-      v.visitLdcInsn(descriptor.getName().asString());
-      v.invokevirtual(K_CLASS_IMPL_TYPE.getInternalName(),factoryMethod.getName(),factoryMethod.getDescriptor(),false);
+      v.invokestatic(REFLECTION,factoryMethod.getName(),factoryMethod.getDescriptor(),false);
       return Unit.INSTANCE$;
     }
   }
