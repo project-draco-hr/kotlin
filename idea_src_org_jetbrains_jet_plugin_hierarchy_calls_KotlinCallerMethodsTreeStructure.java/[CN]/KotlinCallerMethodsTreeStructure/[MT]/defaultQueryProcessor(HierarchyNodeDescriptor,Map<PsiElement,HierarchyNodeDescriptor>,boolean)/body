@@ -20,11 +20,13 @@
           return true;
         }
       }
-      PsiElement element=HierarchyUtils.getCallHierarchyElement(ref.getElement());
+      PsiElement refElement=ref.getElement();
+      if (PsiTreeUtil.getParentOfType(refElement,JetImportDirective.class,true) != null)       return true;
+      PsiElement element=HierarchyUtils.getCallHierarchyElement(refElement);
       if (kotlinOnly && !(element instanceof JetNamedDeclaration))       return true;
       if (element instanceof JetProperty) {
         JetProperty property=(JetProperty)element;
-        if (PsiTreeUtil.isAncestor(property.getInitializer(),ref.getElement(),false)) {
+        if (PsiTreeUtil.isAncestor(property.getInitializer(),refElement,false)) {
           element=HierarchyUtils.getCallHierarchyElement(element.getParent());
         }
       }
