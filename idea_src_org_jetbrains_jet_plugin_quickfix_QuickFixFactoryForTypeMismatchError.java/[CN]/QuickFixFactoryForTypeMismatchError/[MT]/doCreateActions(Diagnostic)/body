@@ -1,10 +1,37 @@
 {
   List<IntentionAction> actions=new LinkedList<IntentionAction>();
-  DiagnosticWithParameters2<JetExpression,JetType,JetType> diagnosticWithParameters=Errors.TYPE_MISMATCH.cast(diagnostic);
-  JetExpression expression=diagnosticWithParameters.getPsiElement();
-  JetType expectedType=diagnosticWithParameters.getA();
-  JetType expressionType=diagnosticWithParameters.getB();
   BindingContext context=ResolvePackage.analyzeFully((JetFile)diagnostic.getPsiFile());
+  PsiElement diagnosticElement=diagnostic.getPsiElement();
+  if (!(diagnosticElement instanceof JetExpression)) {
+    LOG.error("Unexpected element: " + diagnosticElement.getText());
+    return Collections.emptyList();
+  }
+  JetExpression expression=(JetExpression)diagnosticElement;
+  JetType expectedType;
+  JetType expressionType;
+  if (diagnostic.getFactory() == Errors.TYPE_MISMATCH) {
+    DiagnosticWithParameters2<JetExpression,JetType,JetType> diagnosticWithParameters=Errors.TYPE_MISMATCH.cast(diagnostic);
+    expectedType=diagnosticWithParameters.getA();
+    expressionType=diagnosticWithParameters.getB();
+  }
+ else   if (diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE) {
+    DiagnosticWithParameters1<JetConstantExpression,JetType> diagnosticWithParameters=Errors.NULL_FOR_NONNULL_TYPE.cast(diagnostic);
+    expectedType=diagnosticWithParameters.getA();
+    expressionType=UtilPackage.makeNullable(expectedType);
+  }
+ else   if (diagnostic.getFactory() == Errors.CONSTANT_EXPECTED_TYPE_MISMATCH) {
+    DiagnosticWithParameters2<JetConstantExpression,String,JetType> diagnosticWithParameters=Errors.CONSTANT_EXPECTED_TYPE_MISMATCH.cast(diagnostic);
+    expectedType=diagnosticWithParameters.getB();
+    expressionType=context.get(BindingContext.EXPRESSION_TYPE,expression);
+    if (expressionType == null) {
+      LOG.error("No type inferred: " + expression.getText());
+      return Collections.emptyList();
+    }
+  }
+ else {
+    LOG.error("Unexpected diagnostic: " + DefaultErrorMessages.RENDERER.render(diagnostic));
+    return Collections.emptyList();
+  }
   if (!(expression instanceof JetBinaryExpressionWithTypeRHS) && !(expression.getParent() instanceof JetBinaryExpressionWithTypeRHS)) {
     actions.add(new CastExpressionFix(expression,expectedType));
   }
