@@ -1,24 +1,11 @@
 {
-  if (TypesPackage.isFlexible(subtype)) {
-    return isSubtypeOf(TypesPackage.flexibility(subtype).getLowerBound(),supertype);
+  if (TypesPackage.sameTypeConstructors(subtype,supertype)) {
+    return !subtype.isMarkedNullable() || supertype.isMarkedNullable();
   }
-  if (TypesPackage.isFlexible(supertype)) {
-    return isSubtypeOf(subtype,TypesPackage.flexibility(supertype).getUpperBound());
+  JetType subtypeRepresentative=TypesPackage.getSubtypeRepresentative(subtype);
+  JetType supertypeRepresentative=TypesPackage.getSupertypeRepresentative(supertype);
+  if (subtypeRepresentative != subtype || supertypeRepresentative != supertype) {
+    return isSubtypeOf(subtypeRepresentative,supertypeRepresentative);
   }
-  if (subtype.isError() || supertype.isError()) {
-    return true;
-  }
-  if (!supertype.isMarkedNullable() && subtype.isMarkedNullable()) {
-    return false;
-  }
-  subtype=TypeUtils.makeNotNullable(subtype);
-  supertype=TypeUtils.makeNotNullable(supertype);
-  if (KotlinBuiltIns.isNothingOrNullableNothing(subtype)) {
-    return true;
-  }
-  @Nullable JetType closestSupertype=findCorrespondingSupertype(subtype,supertype,constraints);
-  if (closestSupertype == null) {
-    return constraints.noCorrespondingSupertype(subtype,supertype);
-  }
-  return checkSubtypeForTheSameConstructor(closestSupertype,supertype);
+  return isSubtypeOfForRepresentatives(subtype,supertype);
 }
