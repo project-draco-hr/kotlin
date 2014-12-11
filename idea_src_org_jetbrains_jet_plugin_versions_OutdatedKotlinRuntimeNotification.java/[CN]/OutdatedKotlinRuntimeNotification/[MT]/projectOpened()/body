@@ -26,13 +26,14 @@
 ,", ");
         message=String.format("<p>Version of Kotlin runtime is outdated in several libraries (%s). Plugin version is %s.</p>" + "<p>Runtime libraries should be updated to avoid compatibility problems.</p>" + "<p><a href=\"update\">Update All</a> <a href=\"ignore\">Ignore</a></p>",libraryNames,pluginVersion);
       }
-      Notifications.Bus.notify(new Notification("Outdated Kotlin Runtime","Outdated Kotlin Runtime",message,NotificationType.WARNING,new NotificationListener(){
+      Notifications.Bus.notify(new Notification(OUTDATED_RUNTIME_GROUP_DISPLAY_ID,"Outdated Kotlin Runtime",message,NotificationType.WARNING,new NotificationListener(){
         @Override public void hyperlinkUpdate(        @NotNull Notification notification,        @NotNull HyperlinkEvent event){
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             if ("update".equals(event.getDescription())) {
               Collection<VersionedLibrary> versionedOutdatedLibraries=findOutdatedKotlinLibraries(myProject,pluginVersion);
               Collection<Library> outdatedLibraries=extractLibraries(versionedOutdatedLibraries);
               KotlinRuntimeLibraryUtil.updateLibraries(myProject,outdatedLibraries);
+              suggestDeleteKotlinJsIfNeeded(outdatedLibraries);
             }
  else             if ("ignore".equals(event.getDescription())) {
               PropertiesComponent.getInstance(myProject).setValue(SUPPRESSED_PROPERTY_NAME,pluginVersion);
