@@ -16,6 +16,14 @@
     LOG.error(renderDebugMessage("There is no captured type in bounds, but there is an error 'cannot capture type parameter'",inferenceErrorData));
     return result;
   }
-  result.text(newText().normal("'" + typeParameterWithCapturedConstraint.getName() + "'"+ " cannot capture "+ "'"+ capturedTypeConstructor.getTypeProjection()+ "'. "+ "Only top level type projections can be captured"));
+  String explanation;
+  JetType upperBound=typeParameterWithCapturedConstraint.getUpperBoundsAsType();
+  if (!KotlinBuiltIns.isNullableAny(upperBound) && capturedTypeConstructor.getTypeProjection().getProjectionKind() == Variance.IN_VARIANCE) {
+    explanation="Type parameter has an upper bound '" + result.getTypeRenderer().render(upperBound) + "'"+ " that cannot be satisfied capturing 'in' projection";
+  }
+ else {
+    explanation="Only top level type projections can be captured";
+  }
+  result.text(newText().normal("'" + typeParameterWithCapturedConstraint.getName() + "'"+ " cannot capture "+ "'"+ capturedTypeConstructor.getTypeProjection()+ "'. "+ explanation));
   return result;
 }
