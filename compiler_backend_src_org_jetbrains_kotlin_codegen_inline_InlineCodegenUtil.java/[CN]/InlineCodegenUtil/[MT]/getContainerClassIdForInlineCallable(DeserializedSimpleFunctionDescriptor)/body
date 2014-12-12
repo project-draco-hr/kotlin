@@ -1,20 +1,20 @@
 {
-  VirtualFile file;
   DeclarationDescriptor parentDeclaration=deserializedDescriptor.getContainingDeclaration();
+  ClassId containerClassId;
   if (parentDeclaration instanceof PackageFragmentDescriptor) {
     ProtoBuf.Callable proto=deserializedDescriptor.getProto();
     if (!proto.hasExtension(JvmProtoBuf.implClassName)) {
       throw new IllegalStateException("Function in namespace should have implClassName property in proto: " + deserializedDescriptor);
     }
     Name name=deserializedDescriptor.getNameResolver().getName(proto.getExtension(JvmProtoBuf.implClassName));
-    FqName packagePartFqName=PackageClassUtils.getPackageClassFqName(((PackageFragmentDescriptor)parentDeclaration).getFqName()).parent().child(name);
-    file=findVirtualFileWithHeader(state.getProject(),packagePartFqName);
+    ClassId packageClassId=PackageClassUtils.getPackageClassId(((PackageFragmentDescriptor)parentDeclaration).getFqName());
+    containerClassId=new ClassId(packageClassId.getPackageFqName(),name);
   }
  else {
-    file=findVirtualFileContainingDescriptor(state.getProject(),deserializedDescriptor);
+    containerClassId=getContainerClassId(deserializedDescriptor);
   }
-  if (file == null) {
-    throw new IllegalStateException("Couldn't find declaration file for " + deserializedDescriptor.getName());
+  if (containerClassId == null) {
+    throw new IllegalStateException("Couldn't find container FQName for " + deserializedDescriptor.getName());
   }
-  return file;
+  return containerClassId;
 }

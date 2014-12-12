@@ -1,0 +1,15 @@
+{
+  ClassOrPackageFragmentDescriptor containerDescriptor=DescriptorUtils.getParentOfType(referencedDescriptor,ClassOrPackageFragmentDescriptor.class,false);
+  if (containerDescriptor instanceof PackageFragmentDescriptor) {
+    return PackageClassUtils.getPackageClassId(getFqName(containerDescriptor).toSafe());
+  }
+  if (containerDescriptor instanceof ClassDescriptor) {
+    ClassId classId=DescriptorUtilPackage.getClassId((ClassDescriptor)containerDescriptor);
+    if (isTrait(containerDescriptor)) {
+      FqNameUnsafe shortName=classId.getRelativeClassName();
+      classId=new ClassId(classId.getPackageFqName(),Name.identifier(shortName.shortName().toString() + JvmAbi.TRAIT_IMPL_SUFFIX));
+    }
+    return classId;
+  }
+  return null;
+}
