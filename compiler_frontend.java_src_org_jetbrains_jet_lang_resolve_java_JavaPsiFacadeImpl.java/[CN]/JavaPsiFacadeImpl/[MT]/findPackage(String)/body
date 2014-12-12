@@ -1,0 +1,17 @@
+{
+  ConcurrentMap<String,PsiPackage> cache=SoftReference.dereference(myPackageCache);
+  if (cache == null) {
+    myPackageCache=new SoftReference<ConcurrentMap<String,PsiPackage>>(cache=new ConcurrentHashMap<String,PsiPackage>());
+  }
+  PsiPackage aPackage=cache.get(qualifiedName);
+  if (aPackage != null) {
+    return aPackage;
+  }
+  for (  PsiElementFinder finder : filteredFinders()) {
+    aPackage=finder.findPackage(qualifiedName);
+    if (aPackage != null) {
+      return ConcurrencyUtil.cacheOrGet(cache,qualifiedName,aPackage);
+    }
+  }
+  return null;
+}
