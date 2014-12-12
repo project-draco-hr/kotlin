@@ -5,13 +5,12 @@
   if (runClass == null)   throw new CantRunException(String.format("Run class should be defined for configuration '%s'",myConfiguration.getName()));
   PsiClass psiClass=JavaExecutionUtil.findMainClass(module,runClass);
   if (psiClass == null)   throw CantRunException.classNotFound(runClass,module);
-  FqName packageFqName=new FqName(runClass).parent();
-  JetNamedFunction mainFun=findMainFun(module,packageFqName);
-  if (mainFun == null)   throw new CantRunException(String.format("Top-level function 'main' not found in package '%s'",packageFqName));
+  JetNamedFunction mainFun=findMainFun(module,psiClass);
+  if (mainFun == null)   throw new CantRunException(noFunctionFoundMessage(psiClass));
   Module classModule=ModuleUtilCore.findModuleForPsiElement(mainFun);
   if (classModule == null)   classModule=module;
   VirtualFile virtualFileForMainFun=mainFun.getContainingFile().getVirtualFile();
-  if (virtualFileForMainFun == null)   throw new CantRunException(String.format("Top-level function 'main' not found in package '%s'",packageFqName));
+  if (virtualFileForMainFun == null)   throw new CantRunException(noFunctionFoundMessage(psiClass));
   ModuleFileIndex fileIndex=ModuleRootManager.getInstance(classModule).getFileIndex();
   if (fileIndex.isInSourceContent(virtualFileForMainFun)) {
     if (fileIndex.isInTestSourceContent(virtualFileForMainFun)) {
