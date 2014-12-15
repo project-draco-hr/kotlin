@@ -1,6 +1,6 @@
 {
-  Rule<JsNameRef> standardObjectsHaveKotlinQualifier=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> standardObjectsHaveKotlinQualifier=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (!standardClasses.isStandardObject(descriptor)) {
         return null;
       }
@@ -8,8 +8,8 @@
     }
   }
 ;
-  Rule<JsNameRef> packageLevelDeclarationsHaveEnclosingPackagesNamesAsQualifier=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> packageLevelDeclarationsHaveEnclosingPackagesNamesAsQualifier=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (isNativeObject(descriptor))       return null;
       DeclarationDescriptor containingDescriptor=getContainingDeclaration(descriptor);
       if (!(containingDescriptor instanceof PackageFragmentDescriptor)) {
@@ -23,8 +23,7 @@
       if (LibrarySourcesConfig.UNKNOWN_EXTERNAL_MODULE_NAME.equals(moduleName)) {
         return null;
       }
-      JsAstUtils.replaceRootReference(result,new JsArrayAccess(namer.kotlin("modules"),program.getStringLiteral(moduleName)));
-      return result;
+      return JsAstUtils.replaceRootReference(result,new JsArrayAccess(namer.kotlin("modules"),program.getStringLiteral(moduleName)));
     }
     private String getExternalModuleName(    DeclarationDescriptor descriptor){
       if (isBuiltin(descriptor))       return BUILTINS_JS_MODULE_NAME;
@@ -39,8 +38,8 @@
     }
   }
 ;
-  Rule<JsNameRef> constructorOrClassObjectHasTheSameQualifierAsTheClass=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> constructorOrClassObjectHasTheSameQualifierAsTheClass=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (descriptor instanceof ConstructorDescriptor || DescriptorUtils.isClassObject(descriptor)) {
         return getQualifierForDescriptor(descriptor.getContainingDeclaration());
       }
@@ -48,8 +47,8 @@
     }
   }
 ;
-  Rule<JsNameRef> libraryObjectsHaveKotlinQualifier=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> libraryObjectsHaveKotlinQualifier=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (isLibraryObject(descriptor)) {
         return namer.kotlinObject();
       }
@@ -57,8 +56,8 @@
     }
   }
 ;
-  Rule<JsNameRef> nativeObjectsHaveNativePartOfFullQualifier=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> nativeObjectsHaveNativePartOfFullQualifier=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (descriptor instanceof ConstructorDescriptor || !isNativeObject(descriptor))       return null;
       DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
       if (containingDeclaration != null && isNativeObject(containingDeclaration)) {
@@ -68,8 +67,8 @@
     }
   }
 ;
-  Rule<JsNameRef> staticMembersHaveContainerQualifier=new Rule<JsNameRef>(){
-    @Override public JsNameRef apply(    @NotNull DeclarationDescriptor descriptor){
+  Rule<JsExpression> staticMembersHaveContainerQualifier=new Rule<JsExpression>(){
+    @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
       if (descriptor instanceof CallableDescriptor && !isNativeObject(descriptor)) {
         CallableDescriptor callableDescriptor=(CallableDescriptor)descriptor;
         if (DescriptorUtils.isStaticDeclaration(callableDescriptor)) {
