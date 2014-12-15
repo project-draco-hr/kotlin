@@ -1,0 +1,11 @@
+{
+  JetFile foo=createPsiFile(getTestDataPath() + "/staticDelegate/foo.kt");
+  JetFile bar=createPsiFile(getTestDataPath() + "/staticDelegate/bar.kt");
+  GenerationState state=GenerationUtils.compileManyFilesGetGenerationStateForTest(foo.getProject(),Arrays.asList(foo,bar));
+  OutputFile file=state.getFactory().get(PackageClassUtils.getPackageClassName(FqName.ROOT) + ".class");
+  assertNotNull(file);
+  ClassReader reader=new ClassReader(file.asByteArray());
+  List<Integer> expectedLineNumbers=Arrays.asList(1,1);
+  List<Integer> actualLineNumbers=readAllLineNumbers(reader);
+  assertSameElements(actualLineNumbers,expectedLineNumbers);
+}
