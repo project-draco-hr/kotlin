@@ -8,13 +8,13 @@
   PsiElement function=info.getMethod();
   PsiElement element=function != null ? function : changeInfo.getContext();
   BindingContext bindingContext=ResolvePackage.analyze((JetElement)element);
-  FunctionDescriptor oldDescriptor=changeInfo.getOldDescriptor();
+  FunctionDescriptor oldDescriptor=ChangeSignaturePackage.getOriginalBaseFunctionDescriptor(changeInfo);
   JetScope parametersScope=null;
   DeclarationDescriptor containingDeclaration=oldDescriptor != null ? oldDescriptor.getContainingDeclaration() : null;
   if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution();
  else   if (function instanceof JetFunction)   parametersScope=getFunctionBodyScope((JetFunction)function,bindingContext);
   JetScope functionScope=getFunctionScope(bindingContext,containingDeclaration);
-  if (!changeInfo.isConstructor() && functionScope != null && !info.getNewName().isEmpty()) {
+  if (!ChangeSignaturePackage.getIsConstructor(changeInfo) && functionScope != null && !info.getNewName().isEmpty()) {
     for (    FunctionDescriptor conflict : functionScope.getFunctions(Name.identifier(info.getNewName()))) {
       if (conflict == oldDescriptor)       continue;
       PsiElement conflictElement=DescriptorToSourceUtils.descriptorToDeclaration(conflict);
@@ -32,7 +32,7 @@
       result.putValue(element,"Duplicating parameter '" + parameterName + "'");
     }
     if (parametersScope != null) {
-      if (changeInfo.isConstructor() && valOrVar != JetValVar.None) {
+      if (ChangeSignaturePackage.getIsConstructor(changeInfo) && valOrVar != JetValVar.None) {
         for (        VariableDescriptor property : parametersScope.getProperties(Name.identifier(parameterName))) {
           PsiElement propertyDeclaration=DescriptorToSourceUtils.descriptorToDeclaration(property);
           if (propertyDeclaration != null && !(propertyDeclaration.getParent() instanceof JetParameterList)) {
