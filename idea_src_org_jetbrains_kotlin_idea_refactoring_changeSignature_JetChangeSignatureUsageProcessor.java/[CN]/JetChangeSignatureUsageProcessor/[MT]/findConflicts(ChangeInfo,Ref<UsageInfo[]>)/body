@@ -9,8 +9,8 @@
   PsiElement element=function != null ? function : changeInfo.getContext();
   BindingContext bindingContext=ResolvePackage.analyze((JetElement)element);
   FunctionDescriptor oldDescriptor=ChangeSignaturePackage.getOriginalBaseFunctionDescriptor(changeInfo);
+  DeclarationDescriptor containingDeclaration=oldDescriptor.getContainingDeclaration();
   JetScope parametersScope=null;
-  DeclarationDescriptor containingDeclaration=oldDescriptor != null ? oldDescriptor.getContainingDeclaration() : null;
   if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution();
  else   if (function instanceof JetFunction)   parametersScope=RefactoringPackage.getBodyScope((JetFunction)function,bindingContext);
   JetScope functionScope=RefactoringPackage.getContainingScope(oldDescriptor,bindingContext);
@@ -49,6 +49,12 @@
         }
       }
     }
+  }
+  JetParameterInfo newReceiverInfo=changeInfo.getReceiverParameterInfo();
+  JetParameterInfo originalReceiverInfo=changeInfo.getMethodDescriptor().getReceiver();
+  if (function instanceof JetNamedFunction && newReceiverInfo != originalReceiverInfo) {
+    findReceiverIntroducingConflicts(result,function,newReceiverInfo);
+    findInternalExplicitReceiverConflicts(refUsages.get(),result,originalReceiverInfo);
   }
   return result;
 }

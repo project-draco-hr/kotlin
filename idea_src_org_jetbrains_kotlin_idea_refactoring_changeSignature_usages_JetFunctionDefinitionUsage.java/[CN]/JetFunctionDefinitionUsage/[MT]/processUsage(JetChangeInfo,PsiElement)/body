@@ -34,6 +34,14 @@
     }
     ShortenPackage.addToShorteningWaitSet(parameterList,Options.DEFAULT);
   }
+  if (element instanceof JetFunction && changeInfo.isReceiverTypeChanged()) {
+    String receiverTypeText=changeInfo.renderReceiverType((JetFunctionDefinitionUsage<PsiElement>)this);
+    JetTypeReference receiverTypeRef=receiverTypeText != null ? psiFactory.createType(receiverTypeText) : null;
+    JetTypeReference newReceiverTypeRef=TypeRefHelpersPackage.setReceiverTypeReference((JetFunction)element,receiverTypeRef);
+    if (newReceiverTypeRef != null) {
+      ShortenPackage.addToShorteningWaitSet(newReceiverTypeRef,ShortenReferences.Options.DEFAULT);
+    }
+  }
   if (changeInfo.isVisibilityChanged() && !JetPsiUtil.isLocal((JetDeclaration)element)) {
     changeVisibility(changeInfo,element);
   }

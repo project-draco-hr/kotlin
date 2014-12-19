@@ -1,13 +1,17 @@
 {
-  JetValueArgumentList arguments=element.getValueArgumentList();
   if (changeInfo.isNameChanged()) {
     JetExpression callee=element.getCalleeExpression();
-    if (callee instanceof JetSimpleNameExpression)     callee.replace(JetPsiFactory(getProject()).createSimpleName(changeInfo.getNewName()));
+    if (callee instanceof JetSimpleNameExpression) {
+      callee.replace(JetPsiFactory(getProject()).createSimpleName(changeInfo.getNewName()));
+    }
   }
-  if (arguments != null) {
-    List<JetValueArgument> oldArguments=arguments.getArguments();
-    if (changeInfo.isParameterSetOrOrderChanged())     arguments.replace(generateNewArgumentList(changeInfo,oldArguments));
- else     changeArgumentNames(changeInfo,oldArguments);
+  if (element.getValueArgumentList() != null) {
+    if (changeInfo.isParameterSetOrOrderChanged()) {
+      updateArgumentsAndReceiver(changeInfo,element);
+    }
+ else {
+      changeArgumentNames(changeInfo,element);
+    }
   }
   return true;
 }
