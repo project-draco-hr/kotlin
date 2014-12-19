@@ -9,6 +9,13 @@
     scopeForContextElement=descriptor.getScopeForMemberDeclarationResolution();
     dataFlowInfoForContextElement=DataFlowInfo.EMPTY;
   }
+ else   if (contextElement instanceof JetBlockExpression) {
+    JetElement newContextElement=KotlinPackage.lastOrNull(((JetBlockExpression)contextElement).getStatements());
+    if (!(newContextElement instanceof JetExpression))     return;
+    BindingContext contextForElement=resolveToElement((JetElement)contextElement,BodyResolveMode.FULL);
+    scopeForContextElement=contextForElement.get(BindingContext.RESOLUTION_SCOPE,((JetExpression)newContextElement));
+    dataFlowInfoForContextElement=getDataFlowInfo(contextForElement,(JetExpression)newContextElement);
+  }
  else {
     if (!(contextElement instanceof JetExpression))     return;
     JetExpression contextExpression=(JetExpression)contextElement;
