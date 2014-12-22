@@ -5,42 +5,11 @@
   if (!(annotated instanceof DeclarationDescriptor)) {
     return;
   }
-  PsiElement psiElement;
-  if (annotated instanceof CallableMemberDescriptor && ((CallableMemberDescriptor)annotated).getKind() == DELEGATION) {
-    psiElement=null;
-  }
- else {
-    psiElement=descriptorToDeclaration((DeclarationDescriptor)annotated);
-  }
-  JetModifierList modifierList=null;
-  if (annotated instanceof ConstructorDescriptor && psiElement instanceof JetClass) {
-    modifierList=((JetClass)psiElement).getPrimaryConstructorModifierList();
-  }
- else   if (psiElement instanceof JetModifierListOwner) {
-    modifierList=((JetModifierListOwner)psiElement).getModifierList();
-  }
   Set<String> annotationDescriptorsAlreadyPresent=new HashSet<String>();
-  if (modifierList == null) {
-    if (annotated instanceof CallableMemberDescriptor && JvmCodegenUtil.getDirectMember((CallableMemberDescriptor)annotated) instanceof DeserializedCallableMemberDescriptor) {
-      for (      AnnotationDescriptor annotation : annotated.getAnnotations()) {
-        String descriptor=genAnnotation(annotation);
-        if (descriptor != null) {
-          annotationDescriptorsAlreadyPresent.add(descriptor);
-        }
-      }
-    }
-  }
- else {
-    List<JetAnnotationEntry> annotationEntries=modifierList.getAnnotationEntries();
-    for (    JetAnnotationEntry annotationEntry : annotationEntries) {
-      ResolvedCall<?> resolvedCall=getResolvedCall(annotationEntry,bindingContext);
-      if (resolvedCall == null)       continue;
-      AnnotationDescriptor annotationDescriptor=bindingContext.get(BindingContext.ANNOTATION,annotationEntry);
-      if (annotationDescriptor == null)       continue;
-      String descriptor=genAnnotation(annotationDescriptor);
-      if (descriptor != null) {
-        annotationDescriptorsAlreadyPresent.add(descriptor);
-      }
+  for (  AnnotationDescriptor annotation : annotated.getAnnotations()) {
+    String descriptor=genAnnotation(annotation);
+    if (descriptor != null) {
+      annotationDescriptorsAlreadyPresent.add(descriptor);
     }
   }
   generateAdditionalAnnotations(annotated,returnType,annotationDescriptorsAlreadyPresent);
