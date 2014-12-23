@@ -6,8 +6,12 @@
     return requestCache.virtualFileKotlinClass;
   }
  else {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    VirtualFileKotlinClass aClass=VirtualFileKotlinClass.OBJECT$.create(file);
+    VirtualFileKotlinClass aClass=ApplicationManager.getApplication().runReadAction(new Computable<VirtualFileKotlinClass>(){
+      @Override public VirtualFileKotlinClass compute(){
+        return VirtualFileKotlinClass.OBJECT$.create(file);
+      }
+    }
+);
     return requestCache.cache(file,aClass);
   }
 }
