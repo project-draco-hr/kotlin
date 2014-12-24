@@ -1,10 +1,12 @@
 {
-  final List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments,defaultArguments);
+  List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments,defaultArguments);
   argumentsList.addAll(StringUtil.split(additionalArguments," "));
-  CompilerRunnerUtil.outputCompilerMessagesAndHandleExitCode(messageCollector,collector,new Function<PrintStream,Integer>(){
-    @Override public Integer fun(    PrintStream stream){
-      return execCompiler(compilerClassName,ArrayUtil.toStringArray(argumentsList),environment,stream,messageCollector);
-    }
+  ByteArrayOutputStream stream=new ByteArrayOutputStream();
+  PrintStream out=new PrintStream(stream);
+  int exitCode=execCompiler(compilerClassName,ArrayUtil.toStringArray(argumentsList),environment,out,messageCollector);
+  BufferedReader reader=new BufferedReader(new StringReader(stream.toString()));
+  CompilerOutputParser.parseCompilerMessagesFromReader(messageCollector,reader,collector);
+  if (exitCode != 0 && exitCode != 1) {
+    messageCollector.report(ERROR,"Compiler terminated with internal error",NO_LOCATION);
   }
-);
 }
