@@ -40,11 +40,16 @@
                   }
                 }
               }
-              SpecifyTypeExplicitlyAction.addTypeAnnotation(myProject,myEditor,myProperty,myExprType);
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+              String renderedType=IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_IN_TYPES.renderType(myExprType);
+              myProperty.setTypeReference(new JetPsiFactory(myProject).createType(renderedType));
             }
  else {
               myProperty.setTypeReference(null);
+            }
+            TemplateState templateState=TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+            if (templateState != null) {
+              myEditor.putUserData(INTRODUCE_RESTART,true);
+              templateState.cancelTemplate();
             }
           }
         }
@@ -68,6 +73,10 @@
           }
         }
 );
+        if (myEditor.getUserData(INTRODUCE_RESTART) == Boolean.TRUE) {
+          myInitialName=myProperty.getName();
+          performInplaceRefactoring(getSuggestionsForNextRun());
+        }
       }
     }
 );
