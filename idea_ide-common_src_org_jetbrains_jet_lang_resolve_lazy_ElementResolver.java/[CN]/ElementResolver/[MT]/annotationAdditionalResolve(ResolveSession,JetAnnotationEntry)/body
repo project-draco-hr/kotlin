@@ -1,18 +1,16 @@
 {
-  Annotations annotations=null;
   JetModifierList modifierList=PsiTreeUtil.getParentOfType(jetAnnotationEntry,JetModifierList.class);
   JetDeclaration declaration=PsiTreeUtil.getParentOfType(modifierList,JetDeclaration.class);
   if (declaration != null) {
-    annotations=getAnnotationsByDeclaration(resolveSession,modifierList,declaration);
+    doResolveAnnotations(resolveSession,getAnnotationsByDeclaration(resolveSession,modifierList,declaration));
   }
  else {
     JetFileAnnotationList fileAnnotationList=PsiTreeUtil.getParentOfType(jetAnnotationEntry,JetFileAnnotationList.class);
     if (fileAnnotationList != null) {
-      annotations=resolveSession.getFileAnnotations(fileAnnotationList.getContainingJetFile());
+      doResolveAnnotations(resolveSession,resolveSession.getFileAnnotations(fileAnnotationList.getContainingJetFile()));
     }
-  }
-  if (annotations != null) {
-    AnnotationResolver.resolveAnnotationsArguments(annotations,resolveSession.getTrace());
-    ForceResolveUtil.forceResolveAllContents(annotations);
+    if (modifierList != null && modifierList.getParent() instanceof JetFile) {
+      doResolveAnnotations(resolveSession,resolveSession.getDanglingAnnotations(modifierList.getContainingJetFile()));
+    }
   }
 }
