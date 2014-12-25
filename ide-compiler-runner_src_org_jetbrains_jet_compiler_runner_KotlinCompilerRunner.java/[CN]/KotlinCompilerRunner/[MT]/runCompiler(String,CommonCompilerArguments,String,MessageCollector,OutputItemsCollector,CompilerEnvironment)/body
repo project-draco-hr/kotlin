@@ -1,12 +1,10 @@
 {
-  List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments,defaultArguments);
-  argumentsList.addAll(StringUtil.split(additionalArguments," "));
   ByteArrayOutputStream stream=new ByteArrayOutputStream();
   PrintStream out=new PrintStream(stream);
-  int exitCode=execCompiler(compilerClassName,ArrayUtil.toStringArray(argumentsList),environment,out,messageCollector);
+  String exitCode=execCompiler(compilerClassName,arguments,additionalArguments,environment,out,messageCollector);
   BufferedReader reader=new BufferedReader(new StringReader(stream.toString()));
   CompilerOutputParser.parseCompilerMessagesFromReader(messageCollector,reader,collector);
-  if (exitCode != 0 && exitCode != 1) {
+  if (INTERNAL_ERROR.equals(exitCode)) {
     messageCollector.report(ERROR,"Compiler terminated with internal error",NO_LOCATION);
   }
 }
