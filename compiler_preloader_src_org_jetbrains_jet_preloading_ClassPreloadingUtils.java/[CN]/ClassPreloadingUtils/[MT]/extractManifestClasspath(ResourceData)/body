@@ -1,0 +1,14 @@
+{
+  Manifest manifest=new Manifest(new ByteArrayInputStream(manifestData.bytes));
+  String classpathSpaceSeparated=(String)manifest.getMainAttributes().get(Attributes.Name.CLASS_PATH);
+  if (classpathSpaceSeparated == null)   return Collections.emptyList();
+  Collection<File> classpath=new ArrayList<File>(1);
+  for (  String jar : classpathSpaceSeparated.split(" ")) {
+    if (".".equals(jar))     continue;
+    if (!jar.endsWith(".jar")) {
+      throw new UnsupportedOperationException("Class-Path attribute should only contain paths to JAR files: " + jar);
+    }
+    classpath.add(new File(manifestData.jarFile.getParent(),jar));
+  }
+  return classpath;
+}
