@@ -1,2 +1,22 @@
 {
+  ProgressIndicatorProvider.checkCanceled();
+  JetExpression calleeExpression=context.call.getCalleeExpression();
+  if (calleeExpression instanceof JetSimpleNameExpression) {
+    JetSimpleNameExpression expression=(JetSimpleNameExpression)calleeExpression;
+    return computeTasksAndResolveCall(context,expression.getReferencedNameAsName(),expression,CallableDescriptorCollectors.FUNCTIONS_AND_VARIABLES,CallTransformer.FUNCTION_CALL_TRANSFORMER);
+  }
+  if (calleeExpression instanceof JetConstructorCalleeExpression) {
+    return resolveCallForConstructor(context,(JetConstructorCalleeExpression)calleeExpression);
+  }
+ else   if (calleeExpression instanceof JetThisReferenceExpression) {
+    return resolveCallForThisExpression(context,(JetThisReferenceExpression)calleeExpression);
+  }
+ else   if (calleeExpression == null) {
+    return checkArgumentTypesAndFail(context);
+  }
+  JetType calleeType=expressionTypingServices.safeGetType(context.scope,calleeExpression,NO_EXPECTED_TYPE,context.dataFlowInfo,context.trace);
+  ExpressionReceiver expressionReceiver=new ExpressionReceiver(calleeExpression,calleeType);
+  Call call=new CallTransformer.CallForImplicitInvoke(context.call.getExplicitReceiver(),expressionReceiver,context.call);
+  TracingStrategyForInvoke tracingForInvoke=new TracingStrategyForInvoke(calleeExpression,call,calleeType);
+  return resolveCallForInvoke(context.replaceCall(call),tracingForInvoke);
 }
