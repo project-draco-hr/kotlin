@@ -1,0 +1,34 @@
+{
+  System.out.println("Start downloading: " + urlString + " to "+ output);
+  OutputStream outStream=null;
+  URLConnection urlConnection;
+  InputStream is;
+  try {
+    URL Url;
+    byte[] buf;
+    int read;
+    Url=new URL(urlString);
+    File outputFile=new File(output);
+    outputFile.getParentFile().mkdirs();
+    if (outputFile.exists()) {
+      System.out.println("File was already downloaded: " + output);
+      return;
+    }
+    outputFile.createNewFile();
+    FileOutputStream outputStream=new FileOutputStream(outputFile);
+    outStream=new BufferedOutputStream(outputStream);
+    urlConnection=Url.openConnection();
+    is=urlConnection.getInputStream();
+    buf=new byte[1024];
+    while ((read=is.read(buf)) != -1) {
+      outStream.write(buf,0,read);
+    }
+  }
+ catch (  Exception e) {
+    throw new RuntimeException(e);
+  }
+ finally {
+    RunUtils.close(outStream);
+  }
+  System.out.println("Finish downloading: " + urlString + " to "+ output);
+}
