@@ -1,0 +1,28 @@
+{
+  File parentFile=file.getParentFile();
+  if (!parentFile.exists()) {
+    if (parentFile.mkdirs()) {
+      System.out.println("Directory created: " + parentFile.getAbsolutePath());
+    }
+ else {
+      throw new IllegalStateException("Cannot create directory: " + parentFile);
+    }
+  }
+  if (checkFileIgnoringLineSeparators(file,newText)) {
+    if (logNotChanged) {
+      System.out.println("Not changed: " + file.getAbsolutePath());
+    }
+    return;
+  }
+  boolean useTempFile=!SystemInfo.isWindows;
+  File tempFile=useTempFile ? new File(file.getName() + ".tmp") : file;
+  FileUtil.writeToFile(tempFile,newText);
+  System.out.println("File written: " + tempFile.getAbsolutePath());
+  if (useTempFile) {
+    if (!tempFile.renameTo(file)) {
+      throw new RuntimeException("failed to rename " + tempFile + " to "+ file);
+    }
+    System.out.println("Renamed " + tempFile + " to "+ file);
+  }
+  System.out.println();
+}
