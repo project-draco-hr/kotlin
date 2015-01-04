@@ -7,8 +7,6 @@
   String programCode=codeStatus.getResult();
   String prefix=FileUtilsPackage.readTextOrEmpty(outputPrefixFile);
   String postfix=FileUtilsPackage.readTextOrEmpty(outputPostfixFile);
-  StringBuilder outBuilder=new StringBuilder(programCode.length() + prefix.length() + postfix.length());
-  outBuilder.append(prefix).append(programCode).append(postfix);
   List<File> sourceFiles=ContainerUtil.map(files,new Function<JetFile,File>(){
     @Override public File fun(    JetFile file){
       VirtualFile virtualFile=file.getOriginalFile().getVirtualFile();
@@ -17,12 +15,12 @@
     }
   }
 );
-  SimpleOutputFile jsFile=new SimpleOutputFile(sourceFiles,outputFile.getName(),outBuilder.toString());
+  SimpleOutputFile jsFile=new SimpleOutputFile(sourceFiles,outputFile.getName(),prefix + programCode + postfix);
   List<SimpleOutputFile> outputFiles=new SmartList<SimpleOutputFile>(jsFile);
   if (sourceMapBuilder != null) {
     sourceMapBuilder.skipLinesAtBeginning(StringUtil.getLineBreakCount(prefix));
-    SimpleOutputFile sourcemapFile=new SimpleOutputFile(sourceFiles,sourceMapBuilder.getOutFile().getName(),sourceMapBuilder.build());
-    outputFiles.add(sourcemapFile);
+    SimpleOutputFile sourceMapFile=new SimpleOutputFile(sourceFiles,sourceMapBuilder.getOutFile().getName(),sourceMapBuilder.build());
+    outputFiles.add(sourceMapFile);
   }
   OutputFileCollection outputFileCollection=new SimpleOutputFileCollection(outputFiles);
   return Status.success(outputFileCollection);
