@@ -1,0 +1,25 @@
+{
+  loadFileByFullPath(path);
+  String fileText=FileUtil.loadFile(new File(path),true);
+  String className=loadInstructionValue(fileText,"CLASS");
+  boolean hasDefaultConstructor=loadInstructionValue(fileText,"HAS_DEFAULT_CONSTRUCTOR").equals("true");
+  Class<?> aClass=generateClass(className);
+  assertNotNull("Cannot find class with name " + className,aClass);
+  try {
+    Constructor constructor=aClass.getDeclaredConstructor();
+    if (!hasDefaultConstructor) {
+      System.out.println(generateToText());
+      throw new AssertionError("Default constructor was found but it wasn't expected: " + constructor);
+    }
+  }
+ catch (  NoSuchMethodException e) {
+    if (hasDefaultConstructor) {
+      System.out.println(generateToText());
+      throw new AssertionError("Cannot find default constructor");
+    }
+  }
+catch (  Throwable e) {
+    System.out.println(generateToText());
+    throw new RuntimeException(e);
+  }
+}
