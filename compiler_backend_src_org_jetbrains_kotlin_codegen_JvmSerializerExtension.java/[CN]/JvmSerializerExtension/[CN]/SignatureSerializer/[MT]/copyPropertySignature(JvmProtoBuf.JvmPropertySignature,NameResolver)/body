@@ -1,0 +1,21 @@
+{
+  Type fieldType;
+  String fieldName;
+  boolean isStaticInOuter;
+  SignatureDeserializer signatureDeserializer=new SignatureDeserializer(nameResolver);
+  if (signature.hasField()) {
+    JvmProtoBuf.JvmFieldSignature field=signature.getField();
+    fieldType=Type.getType(signatureDeserializer.typeDescriptor(field.getType()));
+    fieldName=nameResolver.getName(field.getName()).asString();
+    isStaticInOuter=field.getIsStaticInOuter();
+  }
+ else {
+    fieldType=null;
+    fieldName=null;
+    isStaticInOuter=false;
+  }
+  Method syntheticMethod=signature.hasSyntheticMethod() ? getAsmMethod(signatureDeserializer.methodSignatureString(signature.getSyntheticMethod())) : null;
+  Method getter=signature.hasGetter() ? getAsmMethod(signatureDeserializer.methodSignatureString(signature.getGetter())) : null;
+  Method setter=signature.hasSetter() ? getAsmMethod(signatureDeserializer.methodSignatureString(signature.getSetter())) : null;
+  return propertySignature(fieldType,fieldName,isStaticInOuter,syntheticMethod,getter,setter);
+}
