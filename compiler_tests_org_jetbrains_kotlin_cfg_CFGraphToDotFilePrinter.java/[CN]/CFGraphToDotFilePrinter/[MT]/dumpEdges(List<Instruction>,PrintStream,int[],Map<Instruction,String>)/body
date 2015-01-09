@@ -1,0 +1,47 @@
+{
+  for (  Instruction fromInst : instructions) {
+    fromInst.accept(new InstructionVisitor(){
+      @Override public void visitLocalFunctionDeclarationInstruction(      @NotNull LocalFunctionDeclarationInstruction instruction){
+        int index=count[0];
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getBody().getInstructionsIncludingDeadCode().get(0)),null);
+        visitInstructionWithNext(instruction);
+      }
+      @Override public void visitUnconditionalJump(      @NotNull UnconditionalJumpInstruction instruction){
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getResolvedTarget()),null);
+      }
+      @Override public void visitJump(      @NotNull AbstractJumpInstruction instruction){
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getResolvedTarget()),null);
+      }
+      @Override public void visitNondeterministicJump(      @NotNull NondeterministicJumpInstruction instruction){
+        for (        Instruction nextInstruction : instruction.getNextInstructions()) {
+          printEdge(out,nodeToName.get(instruction),nodeToName.get(nextInstruction),null);
+        }
+      }
+      @Override public void visitReturnValue(      @NotNull ReturnValueInstruction instruction){
+        super.visitReturnValue(instruction);
+      }
+      @Override public void visitReturnNoValue(      @NotNull ReturnNoValueInstruction instruction){
+        super.visitReturnNoValue(instruction);
+      }
+      @Override public void visitConditionalJump(      @NotNull ConditionalJumpInstruction instruction){
+        String from=nodeToName.get(instruction);
+        printEdge(out,from,nodeToName.get(instruction.getNextOnFalse()),"no");
+        printEdge(out,from,nodeToName.get(instruction.getNextOnTrue()),"yes");
+      }
+      @Override public void visitInstructionWithNext(      @NotNull InstructionWithNext instruction){
+        printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getNext()),null);
+      }
+      @Override public void visitSubroutineExit(      @NotNull SubroutineExitInstruction instruction){
+        if (!instruction.getNextInstructions().isEmpty()) {
+          printEdge(out,nodeToName.get(instruction),nodeToName.get(instruction.getNextInstructions().iterator().next()),null);
+        }
+      }
+      @Override public void visitSubroutineSink(      @NotNull SubroutineSinkInstruction instruction){
+      }
+      @Override public void visitInstruction(      @NotNull Instruction instruction){
+        throw new UnsupportedOperationException(instruction.toString());
+      }
+    }
+);
+  }
+}
