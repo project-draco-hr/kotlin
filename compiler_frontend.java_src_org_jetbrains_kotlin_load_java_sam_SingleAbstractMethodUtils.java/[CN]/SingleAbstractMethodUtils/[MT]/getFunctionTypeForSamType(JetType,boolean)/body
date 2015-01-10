@@ -1,0 +1,17 @@
+{
+  ClassifierDescriptor classifier=samType.getConstructor().getDeclarationDescriptor();
+  if (classifier instanceof JavaClassDescriptor) {
+    JetType functionTypeDefault=((JavaClassDescriptor)classifier).getFunctionTypeForSamInterface();
+    if (functionTypeDefault != null) {
+      JetType substitute=TypeSubstitutor.create(samType).substitute(functionTypeDefault,Variance.INVARIANT);
+      if (substitute == null)       return null;
+      JetType fixedProjections=fixProjections(substitute);
+      if (fixedProjections == null)       return null;
+      if (JvmPackage.getPLATFORM_TYPES() && !isSamConstructor) {
+        return LazyJavaTypeResolver.FlexibleJavaClassifierTypeCapabilities.create(fixedProjections,TypeUtils.makeNullable(fixedProjections));
+      }
+      return TypeUtils.makeNullableAsSpecified(fixedProjections,!isSamConstructor && samType.isMarkedNullable());
+    }
+  }
+  return null;
+}
