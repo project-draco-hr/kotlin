@@ -11,18 +11,7 @@
         continue;
       }
     }
-    if (statement instanceof JetMultiDeclaration) {
-      JetMultiDeclaration multiDeclaration=(JetMultiDeclaration)statement;
-      for (      JetMultiDeclarationEntry entry : multiDeclaration.getEntries()) {
-        generateLocalVariableDeclaration(entry,blockEnd,leaveTasks);
-      }
-    }
-    if (statement instanceof JetVariableDeclaration) {
-      generateLocalVariableDeclaration((JetVariableDeclaration)statement,blockEnd,leaveTasks);
-    }
-    if (statement instanceof JetNamedFunction) {
-      generateLocalFunctionDeclaration((JetNamedFunction)statement,leaveTasks);
-    }
+    putDescriptorIntoFrameMap(statement);
     boolean isExpression=!iterator.hasNext() && !isStatement;
     if (isExpression && labelBeforeLastExpression != null) {
       v.mark(labelBeforeLastExpression);
@@ -34,6 +23,7 @@
  else {
       result.put(Type.VOID_TYPE,v);
     }
+    removeDescriptorFromFrameMap(statement,blockEnd,leaveTasks);
   }
   return new StackValueWithLeaveTask(answer,new ExtensionFunction0<StackValueWithLeaveTask,Unit>(){
     @Override public Unit invoke(    StackValueWithLeaveTask wrapper){
