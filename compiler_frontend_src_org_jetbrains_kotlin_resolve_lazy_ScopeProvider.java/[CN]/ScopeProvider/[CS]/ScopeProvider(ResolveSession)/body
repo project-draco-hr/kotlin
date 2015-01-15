@@ -1,14 +1,20 @@
 {
   this.resolveSession=resolveSession;
-  this.explicitImportScopes=resolveSession.getStorageManager().createMemoizedFunction(new Function1<JetFile,LazyImportScope>(){
-    @Override public LazyImportScope invoke(    @NotNull JetFile file){
-      return createExplicitImportScope(file);
+  this.defaultImports=resolveSession.getStorageManager().createLazyValue(new Function0<Collection<JetImportDirective>>(){
+    @Override public Collection<JetImportDirective> invoke(){
+      PackageViewDescriptor rootPackage=resolveSession.getModuleDescriptor().getPackage(FqName.ROOT);
+      if (rootPackage == null) {
+        throw new IllegalStateException("Root package not found");
+      }
+      JetImportsFactory importsFactory=resolveSession.getJetImportsFactory();
+      List<ImportPath> defaultImports=resolveSession.getModuleDescriptor().getDefaultImports();
+      return importsFactory.createImportDirectives(defaultImports);
     }
   }
 );
-  this.defaultImportsScope=resolveSession.getStorageManager().createLazyValue(new Function0<JetScope>(){
-    @Override public JetScope invoke(){
-      return createScopeWithDefaultImports();
+  this.importScopes=resolveSession.getStorageManager().createMemoizedFunction(new Function1<JetFile,LazyFileScope>(){
+    @Override public LazyFileScope invoke(    @NotNull JetFile file){
+      return createImportScope(file,defaultImports.invoke());
     }
   }
 );
