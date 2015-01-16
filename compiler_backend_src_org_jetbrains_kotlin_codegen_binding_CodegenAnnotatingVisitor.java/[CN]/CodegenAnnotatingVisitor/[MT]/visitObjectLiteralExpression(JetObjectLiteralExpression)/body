@@ -1,14 +1,22 @@
 {
-  ClassDescriptor classDescriptor=bindingContext.get(CLASS,expression.getObjectDeclaration());
+  JetObjectDeclaration object=expression.getObjectDeclaration();
+  ClassDescriptor classDescriptor=bindingContext.get(CLASS,object);
   if (classDescriptor == null) {
     super.visitObjectLiteralExpression(expression);
     return;
   }
-  String name=inventAnonymousClassName(expression.getObjectDeclaration());
+  String name=inventAnonymousClassName(object);
   recordClosure(classDescriptor,name);
-  pushClassDescriptor(classDescriptor);
+  JetDelegationSpecifierList delegationSpecifierList=object.getDelegationSpecifierList();
+  if (delegationSpecifierList != null) {
+    delegationSpecifierList.accept(this);
+  }
+  classStack.push(classDescriptor);
   nameStack.push(CodegenBinding.getAsmType(bindingContext,classDescriptor).getInternalName());
-  super.visitObjectLiteralExpression(expression);
+  JetClassBody body=object.getBody();
+  if (body != null) {
+    super.visitClassBody(body);
+  }
   nameStack.pop();
-  popClassDescriptor();
+  classStack.pop();
 }
