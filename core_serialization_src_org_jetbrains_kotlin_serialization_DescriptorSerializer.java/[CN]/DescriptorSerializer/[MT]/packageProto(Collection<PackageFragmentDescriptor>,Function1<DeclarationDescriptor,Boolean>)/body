@@ -1,0 +1,15 @@
+{
+  ProtoBuf.Package.Builder builder=ProtoBuf.Package.newBuilder();
+  Collection<DeclarationDescriptor> members=new ArrayList<DeclarationDescriptor>();
+  for (  PackageFragmentDescriptor fragment : fragments) {
+    members.addAll(fragment.getMemberScope().getAllDescriptors());
+  }
+  for (  DeclarationDescriptor declaration : sort(members)) {
+    if (skip != null && skip.invoke(declaration))     continue;
+    if (declaration instanceof PropertyDescriptor || declaration instanceof FunctionDescriptor) {
+      builder.addMember(callableProto((CallableMemberDescriptor)declaration));
+    }
+  }
+  extension.serializePackage(fragments,builder,stringTable);
+  return builder;
+}
