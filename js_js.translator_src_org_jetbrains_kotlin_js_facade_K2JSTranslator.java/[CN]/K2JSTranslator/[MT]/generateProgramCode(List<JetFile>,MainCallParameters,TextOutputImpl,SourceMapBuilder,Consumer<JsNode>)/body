@@ -1,6 +1,10 @@
 {
-  JsProgram program=generateProgram(files,mainCallParameters);
-  Diagnostics diagnostics=config.getTrace().getBindingContext().getDiagnostics();
+  JsAnalysisResult analysisResult=TopDownAnalyzerFacadeForJS.analyzeFiles(files,Predicates.<PsiFile>alwaysTrue(),config);
+  BindingTrace bindingTrace=analysisResult.getBindingTrace();
+  TopDownAnalyzerFacadeForJS.checkForErrors(Config.withJsLibAdded(files,config),bindingTrace.getBindingContext());
+  ModuleDescriptor moduleDescriptor=analysisResult.getModuleDescriptor();
+  JsProgram program=Translation.generateAst(bindingTrace,files,mainCallParameters,moduleDescriptor,config);
+  Diagnostics diagnostics=bindingTrace.getBindingContext().getDiagnostics();
   if (hasError(diagnostics))   return Status.fail();
   program=JsInliner.process(program);
   program.accept(new JsSourceGenerationVisitor(output,sourceMapBuilder));
