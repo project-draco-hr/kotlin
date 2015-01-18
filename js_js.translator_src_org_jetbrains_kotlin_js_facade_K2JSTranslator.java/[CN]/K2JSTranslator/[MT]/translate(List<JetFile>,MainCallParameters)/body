@@ -5,9 +5,7 @@
   ModuleDescriptor moduleDescriptor=analysisResult.getModuleDescriptor();
   JsProgram program=Translation.generateAst(bindingTrace,files,mainCallParameters,moduleDescriptor,config);
   Diagnostics diagnostics=bindingTrace.getBindingContext().getDiagnostics();
-  if (hasError(diagnostics))   return Status.fail();
+  if (hasError(diagnostics))   return new TranslationResult.Fail(diagnostics);
   program=JsInliner.process(program);
-  program.accept(new JsSourceGenerationVisitor(output,sourceMapBuilder));
-  astConsumer.consume(program);
-  return Status.success(output.toString());
+  return new TranslationResult.Success(config,files,program,diagnostics);
 }
