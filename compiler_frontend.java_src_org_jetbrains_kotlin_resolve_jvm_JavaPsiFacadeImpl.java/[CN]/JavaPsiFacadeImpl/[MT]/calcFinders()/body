@@ -1,0 +1,17 @@
+{
+  List<KotlinPsiElementFinderWrapper> elementFinders=new ArrayList<KotlinPsiElementFinderWrapper>();
+  elementFinders.add(new KotlinPsiElementFinderImpl(getProject()));
+  List<PsiElementFinder> nonKotlinFinders=KotlinPackage.filter(getProject().getExtensions(PsiElementFinder.EP_NAME),new Function1<PsiElementFinder,Boolean>(){
+    @Override public Boolean invoke(    PsiElementFinder finder){
+      return !(finder instanceof KotlinFinderMarker);
+    }
+  }
+);
+  elementFinders.addAll(KotlinPackage.map(nonKotlinFinders,new Function1<PsiElementFinder,KotlinPsiElementFinderWrapper>(){
+    @Override public KotlinPsiElementFinderWrapper invoke(    PsiElementFinder finder){
+      return wrap(finder);
+    }
+  }
+));
+  return elementFinders.toArray(new KotlinPsiElementFinderWrapper[elementFinders.size()]);
+}
