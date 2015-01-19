@@ -1,2 +1,18 @@
 {
+  ConcurrentMap<Pair<String,GlobalSearchScope>,PsiPackage> cache=SoftReference.dereference(packageCache);
+  if (cache == null) {
+    packageCache=new SoftReference<ConcurrentMap<Pair<String,GlobalSearchScope>,PsiPackage>>(cache=new ConcurrentHashMap<Pair<String,GlobalSearchScope>,PsiPackage>());
+  }
+  Pair<String,GlobalSearchScope> key=new Pair<String,GlobalSearchScope>(qualifiedName,searchScope);
+  PsiPackage aPackage=cache.get(key);
+  if (aPackage != null) {
+    return aPackage;
+  }
+  for (  KotlinPsiElementFinderWrapper finder : filteredFinders()) {
+    aPackage=finder.findPackage(qualifiedName,searchScope);
+    if (aPackage != null) {
+      return ConcurrencyUtil.cacheOrGet(cache,key,aPackage);
+    }
+  }
+  return null;
 }

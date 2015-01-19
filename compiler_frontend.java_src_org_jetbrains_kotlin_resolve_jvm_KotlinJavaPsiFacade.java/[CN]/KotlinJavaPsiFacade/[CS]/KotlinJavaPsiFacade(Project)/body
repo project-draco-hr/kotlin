@@ -1,0 +1,16 @@
+{
+  this.project=project;
+  final PsiModificationTracker modificationTracker=PsiManager.getInstance(project).getModificationTracker();
+  MessageBus bus=project.getMessageBus();
+  bus.connect().subscribe(PsiModificationTracker.TOPIC,new PsiModificationTracker.Listener(){
+    private long lastTimeSeen=-1L;
+    @Override public void modificationCountChanged(){
+      long now=modificationTracker.getJavaStructureModificationCount();
+      if (lastTimeSeen != now) {
+        lastTimeSeen=now;
+        packageCache=null;
+      }
+    }
+  }
+);
+}
