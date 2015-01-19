@@ -1,16 +1,11 @@
 {
-  List<PsiElementFinder> filteredBaseFinders=KotlinPackage.filter(super.calcFinders(),new Function1<PsiElementFinder,Boolean>(){
-    @Override public Boolean invoke(    PsiElementFinder finder){
-      if (finder instanceof KotlinFinderMarker)       return false;
-      if (finder.getClass().getName().equals("org.jetbrains.kotlin.resolve.jvm.JavaPsiFacadeImpl$PsiElementFinderImpl")) {
-        return false;
-      }
-      return true;
-    }
-  }
-);
   List<PsiElementFinder> elementFinders=new ArrayList<PsiElementFinder>();
   elementFinders.add(new KotlinPsiElementFinderImpl(getProject(),searchScope));
-  elementFinders.addAll(filteredBaseFinders);
+  ContainerUtil.addAll(elementFinders,KotlinPackage.filter(getProject().getExtensions(PsiElementFinder.EP_NAME),new Function1<PsiElementFinder,Boolean>(){
+    @Override public Boolean invoke(    PsiElementFinder finder){
+      return !(finder instanceof KotlinFinderMarker);
+    }
+  }
+));
   return elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 }
