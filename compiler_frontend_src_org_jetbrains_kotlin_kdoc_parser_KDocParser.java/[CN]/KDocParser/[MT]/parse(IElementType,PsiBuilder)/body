@@ -1,7 +1,17 @@
 {
   PsiBuilder.Marker rootMarker=builder.mark();
   while (!builder.eof()) {
-    builder.advanceLexer();
+    if (builder.getTokenType() == KDocTokens.TAG_NAME) {
+      parseTag(builder);
+    }
+ else     if (builder.getTokenType() == KDocTokens.MARKDOWN_LINK) {
+      PsiBuilder.Marker linkStart=builder.mark();
+      builder.advanceLexer();
+      linkStart.done(KDocElementTypes.KDOC_LINK);
+    }
+ else {
+      builder.advanceLexer();
+    }
   }
   rootMarker.done(root);
   return builder.getTreeBuilt();

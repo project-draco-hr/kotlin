@@ -1,0 +1,22 @@
+{
+  PsiBuilder.Marker tagStart=builder.mark();
+  String tagName=builder.getTokenText();
+  KDocKnownTag knownTag=KDocKnownTag.findByTagName(tagName);
+  builder.advanceLexer();
+  if (knownTag != null && knownTag.isReferenceRequired() && builder.getTokenType() == KDocTokens.TEXT_OR_LINK) {
+    PsiBuilder.Marker referenceMarker=builder.mark();
+    builder.advanceLexer();
+    referenceMarker.done(KDocElementTypes.KDOC_LINK);
+  }
+  while (!builder.eof() && !isAtEndOfTag(builder)) {
+    if (builder.getTokenType() == KDocTokens.MARKDOWN_LINK) {
+      PsiBuilder.Marker linkStart=builder.mark();
+      builder.advanceLexer();
+      linkStart.done(KDocElementTypes.KDOC_LINK);
+    }
+ else {
+      builder.advanceLexer();
+    }
+  }
+  tagStart.done(KDocElementTypes.KDOC_TAG);
+}
