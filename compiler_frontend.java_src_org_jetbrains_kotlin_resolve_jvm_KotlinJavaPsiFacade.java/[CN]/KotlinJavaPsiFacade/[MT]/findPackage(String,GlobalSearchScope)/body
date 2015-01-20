@@ -1,18 +1,44 @@
 {
-  ConcurrentMap<Pair<String,GlobalSearchScope>,PsiPackage> cache=SoftReference.dereference(packageCache);
+  PackageCache cache=SoftReference.dereference(packageCache);
   if (cache == null) {
-    packageCache=new SoftReference<ConcurrentMap<Pair<String,GlobalSearchScope>,PsiPackage>>(cache=new ConcurrentHashMap<Pair<String,GlobalSearchScope>,PsiPackage>());
+    packageCache=new SoftReference<PackageCache>(cache=new PackageCache());
   }
   Pair<String,GlobalSearchScope> key=new Pair<String,GlobalSearchScope>(qualifiedName,searchScope);
-  PsiPackage aPackage=cache.get(key);
+  PsiPackage aPackage=cache.packageInScopeCache.get(key);
   if (aPackage != null) {
     return aPackage;
   }
-  for (  KotlinPsiElementFinderWrapper finder : filteredFinders()) {
-    aPackage=finder.findPackage(qualifiedName,searchScope);
-    if (aPackage != null) {
-      return ConcurrencyUtil.cacheOrGet(cache,key,aPackage);
+  KotlinPsiElementFinderWrapper[] finders=filteredFinders();
+  Boolean packageFoundInAllScope=cache.hasPackageInAllScopeCache.get(qualifiedName);
+  if (packageFoundInAllScope != null) {
+    if (!packageFoundInAllScope.booleanValue())     return null;
+    for (    KotlinPsiElementFinderWrapper finder : finders) {
+      if (!finder.isSameResultForAnyScope()) {
+        aPackage=finder.findPackage(qualifiedName,searchScope);
+        if (aPackage != null) {
+          return ConcurrencyUtil.cacheOrGet(cache.packageInScopeCache,key,aPackage);
+        }
+      }
     }
+  }
+ else {
+    for (    KotlinPsiElementFinderWrapper finder : finders) {
+      aPackage=finder.findPackage(qualifiedName,searchScope);
+      if (aPackage != null) {
+        return ConcurrencyUtil.cacheOrGet(cache.packageInScopeCache,key,aPackage);
+      }
+    }
+    boolean found=false;
+    for (    KotlinPsiElementFinderWrapper finder : finders) {
+      if (!finder.isSameResultForAnyScope()) {
+        aPackage=finder.findPackage(qualifiedName,GlobalSearchScope.allScope(project));
+        if (aPackage != null) {
+          found=true;
+          break;
+        }
+      }
+    }
+    cache.hasPackageInAllScopeCache.put(qualifiedName,found);
   }
   return null;
 }
