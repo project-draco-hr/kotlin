@@ -1,17 +1,31 @@
 {
   PsiBuilder.Marker rootMarker=builder.mark();
+  if (builder.getTokenType() == KDocTokens.START) {
+    builder.advanceLexer();
+  }
+  PsiBuilder.Marker currentSectionMarker=builder.mark();
   while (!builder.eof()) {
     if (builder.getTokenType() == KDocTokens.TAG_NAME) {
-      parseTag(builder);
+      currentSectionMarker=parseTag(builder,currentSectionMarker);
     }
  else     if (builder.getTokenType() == KDocTokens.MARKDOWN_LINK) {
       PsiBuilder.Marker linkStart=builder.mark();
       builder.advanceLexer();
       linkStart.done(KDocElementTypes.KDOC_LINK);
     }
+ else     if (builder.getTokenType() == KDocTokens.END) {
+      if (currentSectionMarker != null) {
+        currentSectionMarker.done(KDocElementTypes.KDOC_SECTION);
+        currentSectionMarker=null;
+      }
+      builder.advanceLexer();
+    }
  else {
       builder.advanceLexer();
     }
+  }
+  if (currentSectionMarker != null) {
+    currentSectionMarker.done(KDocElementTypes.KDOC_SECTION);
   }
   rootMarker.done(root);
   return builder.getTreeBuilt();
