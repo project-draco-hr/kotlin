@@ -1,0 +1,18 @@
+{
+  JetExpression importedReference=importDirective.getImportedReference();
+  if (importedReference == null || resolvedTo == null)   return;
+  Name aliasName=JetPsiUtil.getAliasName(importDirective);
+  if (aliasName == null)   return;
+  if (resolvedTo.size() != 1)   return;
+  DeclarationDescriptor target=resolvedTo.iterator().next();
+  if (target instanceof ClassDescriptor) {
+    if (fileScope.getClassifier(aliasName) == null) {
+      trace.report(CONFLICTING_IMPORT.on(importedReference,aliasName.asString()));
+    }
+  }
+ else   if (target instanceof PackageViewDescriptor) {
+    if (fileScope.getPackage(aliasName) == null) {
+      trace.report(CONFLICTING_IMPORT.on(importedReference,aliasName.asString()));
+    }
+  }
+}
