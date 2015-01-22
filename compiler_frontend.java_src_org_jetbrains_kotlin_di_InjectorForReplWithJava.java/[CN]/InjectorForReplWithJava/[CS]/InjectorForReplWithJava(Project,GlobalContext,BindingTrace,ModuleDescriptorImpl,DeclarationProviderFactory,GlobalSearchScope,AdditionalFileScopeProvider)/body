@@ -8,6 +8,7 @@
   this.platformToKotlinClassMap=module.getPlatformToKotlinClassMap();
   this.declarationProviderFactory=declarationProviderFactory;
   this.resolveSession=new ResolveSession(project,globalContext,module,declarationProviderFactory,bindingTrace);
+  this.scopeProvider=new ScopeProvider(getResolveSession());
   this.moduleContentScope=moduleContentScope;
   this.lazyTopDownAnalyzer=new LazyTopDownAnalyzer();
   this.javaClassFinder=new JavaClassFinderImpl();
@@ -54,8 +55,8 @@
   this.callCompleter=new CallCompleter(argumentTypeResolver,candidateResolver);
   this.taskPrioritizer=new TaskPrioritizer(storageManager);
   this.jetImportsFactory=new JetImportsFactory();
-  this.scopeProvider=new ScopeProvider(getResolveSession());
-  this.declarationScopeProvider=new DeclarationScopeProviderImpl(getResolveSession());
+  this.lazyDeclarationResolver=new LazyDeclarationResolver(globalContext,bindingTrace);
+  this.declarationScopeProvider=new DeclarationScopeProviderImpl(lazyDeclarationResolver);
   this.scriptBodyResolver=new ScriptBodyResolver();
   this.bodyResolver=new BodyResolver();
   this.controlFlowAnalyzer=new ControlFlowAnalyzer();
@@ -70,10 +71,13 @@
   this.resolveSession.setAnnotationResolve(annotationResolver);
   this.resolveSession.setDescriptorResolver(descriptorResolver);
   this.resolveSession.setJetImportFactory(jetImportsFactory);
+  this.resolveSession.setLazyDeclarationResolver(lazyDeclarationResolver);
   this.resolveSession.setQualifiedExpressionResolver(qualifiedExpressionResolver);
   this.resolveSession.setScopeProvider(scopeProvider);
   this.resolveSession.setScriptBodyResolver(scriptBodyResolver);
   this.resolveSession.setTypeResolver(typeResolver);
+  scopeProvider.setAdditionalFileScopesProvider(additionalFileScopeProvider);
+  scopeProvider.setDeclarationScopeProvider(declarationScopeProvider);
   this.lazyTopDownAnalyzer.setBodyResolver(bodyResolver);
   this.lazyTopDownAnalyzer.setDeclarationResolver(declarationResolver);
   this.lazyTopDownAnalyzer.setKotlinCodeAnalyzer(resolveSession);
@@ -144,8 +148,8 @@
   delegatedPropertyResolver.setExpressionTypingServices(expressionTypingServices);
   candidateResolver.setArgumentTypeResolver(argumentTypeResolver);
   jetImportsFactory.setProject(project);
-  scopeProvider.setAdditionalFileScopesProvider(additionalFileScopeProvider);
-  scopeProvider.setDeclarationScopeProvider(declarationScopeProvider);
+  lazyDeclarationResolver.setDeclarationScopeProvider(declarationScopeProvider);
+  lazyDeclarationResolver.setTopLevelDescriptorProvider(resolveSession);
   declarationScopeProvider.setFileScopeProvider(scopeProvider);
   scriptBodyResolver.setExpressionTypingServices(expressionTypingServices);
   bodyResolver.setAnnotationResolver(annotationResolver);
