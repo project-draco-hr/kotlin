@@ -1,7 +1,13 @@
 {
   return new JBTableRowEditor(){
     private final List<JComponent> components=new ArrayList<JComponent>();
-    private final boolean defaultValueColumnEnabled=item.parameter.getIsNewParameter();
+    private final EditorTextField nameEditor=new EditorTextField(item.parameter.getName(),getProject(),getFileType());
+    private void updateNameEditor(){
+      nameEditor.setEnabled(item.parameter != myParametersTableModel.getReceiver());
+    }
+    private boolean isDefaultColumnEnabled(){
+      return item.parameter.getIsNewParameter() && item.parameter != myMethod.getReceiver();
+    }
     @Override public void prepareEditor(    JTable table,    final int row){
       setLayout(new BoxLayout(this,BoxLayout.X_AXIS));
       int column=0;
@@ -10,12 +16,15 @@
         EditorTextField editor=null;
         JComponent component;
         final int columnFinal=column;
-        if (JetFunctionParameterTableModel.isTypeColumn(columnInfo)) {
+        if (JetCallableParameterTableModel.isTypeColumn(columnInfo)) {
           Document document=PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
           component=editor=new EditorTextField(document,getProject(),getFileType());
         }
- else         if (JetFunctionParameterTableModel.isNameColumn(columnInfo))         component=editor=new EditorTextField((String)columnInfo.valueOf(item),getProject(),getFileType());
- else         if (JetFunctionParameterTableModel.isDefaultValueColumn(columnInfo) && defaultValueColumnEnabled) {
+ else         if (JetCallableParameterTableModel.isNameColumn(columnInfo)) {
+          component=editor=nameEditor;
+          updateNameEditor();
+        }
+ else         if (JetCallableParameterTableModel.isDefaultValueColumn(columnInfo) && isDefaultColumnEnabled()) {
           Document document=PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
           component=editor=new EditorTextField(document,getProject(),getFileType());
         }
@@ -30,6 +39,19 @@
           }
 );
           component=comboBox;
+        }
+ else         if (JetFunctionParameterTableModel.isReceiverColumn(columnInfo)) {
+          JCheckBox checkBox=new JCheckBox();
+          checkBox.setSelected(myParametersTableModel.getReceiver() == item.parameter);
+          checkBox.addItemListener(new ItemListener(){
+            @Override public void itemStateChanged(            @NotNull ItemEvent e){
+              ((JetFunctionParameterTableModel)myParametersTableModel).setReceiver(item.parameter);
+              updateSignature();
+              updateNameEditor();
+            }
+          }
+);
+          component=checkBox;
         }
  else         continue;
         JBLabel label=new JBLabel(columnInfo.getName(),UIUtil.ComponentStyle.SMALL);
@@ -55,9 +77,9 @@
         @Override public Object getValueAt(        int column){
           ColumnInfo columnInfo=myParametersTableModel.getColumnInfos()[column];
           if (JetConstructorParameterTableModel.isValVarColumn(columnInfo))           return ((JComboBox)components.get(column)).getSelectedItem();
- else           if (JetFunctionParameterTableModel.isTypeColumn(columnInfo))           return item.typeCodeFragment;
- else           if (JetFunctionParameterTableModel.isNameColumn(columnInfo))           return ((EditorTextField)components.get(column)).getText();
- else           if (JetFunctionParameterTableModel.isDefaultValueColumn(columnInfo))           return item.defaultValueCodeFragment;
+ else           if (JetCallableParameterTableModel.isTypeColumn(columnInfo))           return item.typeCodeFragment;
+ else           if (JetCallableParameterTableModel.isNameColumn(columnInfo))           return ((EditorTextField)components.get(column)).getText();
+ else           if (JetCallableParameterTableModel.isDefaultValueColumn(columnInfo))           return item.defaultValueCodeFragment;
  else           return null;
         }
       }
@@ -69,7 +91,7 @@
       return letters * Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
     }
     private int getEditorIndex(    int x){
-      int[] columnLetters=defaultValueColumnEnabled ? new int[]{4,getParamNamesMaxLength(),getTypesMaxLength(),getDefaultValuesMaxLength()} : new int[]{4,getParamNamesMaxLength(),getTypesMaxLength()};
+      int[] columnLetters=isDefaultColumnEnabled() ? new int[]{4,getParamNamesMaxLength(),getTypesMaxLength(),getDefaultValuesMaxLength()} : new int[]{4,getParamNamesMaxLength(),getTypesMaxLength()};
       int columnIndex=0;
       for (int i=ChangeSignaturePackage.getIsConstructor(myMethod) ? 0 : 1; i < columnLetters.length; i++) {
         int width=getColumnWidth(columnLetters[i]);
