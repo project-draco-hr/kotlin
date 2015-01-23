@@ -1,6 +1,5 @@
 {
-  MutableClassDescriptor classDescriptor=new MutableClassDescriptor(root,scope,kind,false,aClass.getNameAsSafeName(),SourceElement.NO_SOURCE);
-  TopDownAnalysisParameters parameters=TopDownAnalysisParameters.create(LockBasedStorageManager.NO_LOCKS,new ExceptionTracker(),Predicates.<PsiFile>alwaysTrue(),false,false);
-  descriptorResolver.resolveMutableClassDescriptor(aClass,classDescriptor,JetTestUtils.DUMMY_TRACE);
-  return classDescriptor;
+  GlobalContextImpl globalContext=ContextPackage.GlobalContext();
+  ResolveSession resolveSession=new InjectorForLazyResolve(getProject(),globalContext,root,new FileBasedDeclarationProviderFactory(globalContext.getStorageManager(),Collections.singleton(aClass.getContainingJetFile())),new BindingTraceContext(),AdditionalCheckerProvider.DefaultProvider.INSTANCE$,new DynamicTypesSettings()).getResolveSession();
+  return (ClassDescriptorWithResolutionScopes)resolveSession.getClassDescriptor(aClass);
 }
