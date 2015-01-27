@@ -1,24 +1,22 @@
 {
-  File runtimeJarPath=getRuntimeJarPath();
-  if (runtimeJarPath != null) {
-    JarInputStream jis=new JarInputStream(new FileInputStream(runtimeJarPath));
-    try {
-      while (true) {
-        JarEntry e=jis.getNextJarEntry();
-        if (e == null) {
-          break;
-        }
-        if (FileUtilRt.extensionEquals(e.getName(),"class")) {
-          stream.putNextEntry(e);
-          FileUtil.copy(jis,stream);
-        }
+  File runtimePath=PathUtil.getKotlinPathsForCompiler().getRuntimePath();
+  if (!runtimePath.exists()) {
+    throw new CompileEnvironmentException("Couldn't find runtime library");
+  }
+  JarInputStream jis=new JarInputStream(new FileInputStream(runtimePath));
+  try {
+    while (true) {
+      JarEntry e=jis.getNextJarEntry();
+      if (e == null) {
+        break;
+      }
+      if (FileUtilRt.extensionEquals(e.getName(),"class")) {
+        stream.putNextEntry(e);
+        FileUtil.copy(jis,stream);
       }
     }
-  finally {
-      jis.close();
-    }
   }
- else {
-    throw new CompileEnvironmentException("Couldn't find runtime library");
+  finally {
+    jis.close();
   }
 }
