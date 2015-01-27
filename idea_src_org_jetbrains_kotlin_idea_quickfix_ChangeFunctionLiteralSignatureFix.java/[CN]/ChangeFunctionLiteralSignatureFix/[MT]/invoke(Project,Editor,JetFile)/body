@@ -1,15 +1,21 @@
 {
   BindingContext bindingContext=ResolvePackage.analyzeFully(file);
   runChangeSignature(project,functionDescriptor,new JetChangeSignatureConfiguration(){
-    @Override public void configure(    @NotNull JetChangeSignatureData changeSignatureData,    @NotNull BindingContext bindingContext){
-      JetNameValidator validator=new SimpleCollectingValidator();
-      changeSignatureData.clearParameters();
-      for (      JetType type : parameterTypes) {
-        String name=JetNameSuggester.suggestNames(type,validator,"param")[0];
-        changeSignatureData.addParameter(new JetParameterInfo(-1,name,type,null,"",null,null));
+    @NotNull @Override public JetMethodDescriptor configure(    @NotNull JetMethodDescriptor originalDescriptor,    @NotNull BindingContext bindingContext){
+      return ChangeSignaturePackage.modify(originalDescriptor,new ExtensionFunction0<JetMutableMethodDescriptor,Unit>(){
+        @Override public Unit invoke(        JetMutableMethodDescriptor descriptor){
+          JetNameValidator validator=new SimpleCollectingValidator();
+          descriptor.clearParameters();
+          for (          JetType type : parameterTypes) {
+            String name=JetNameSuggester.suggestNames(type,validator,"param")[0];
+            descriptor.addParameter(new JetParameterInfo(-1,name,type,null,"",null,null));
+          }
+          return null;
+        }
       }
+);
     }
-    @Override public boolean performSilently(    Collection<? extends PsiElement> elements){
+    @Override public boolean performSilently(    @NotNull Collection<? extends PsiElement> elements){
       return false;
     }
   }

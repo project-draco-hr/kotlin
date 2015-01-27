@@ -1,9 +1,15 @@
 {
   BindingContext bindingContext=ResolvePackage.analyzeFully(file);
   runChangeSignature(project,functionDescriptor,new JetChangeSignatureConfiguration(){
-    @Override public void configure(    @NotNull JetChangeSignatureData changeSignatureData,    @NotNull BindingContext bindingContext){
-      List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
-      changeSignatureData.removeParameter(parameters.indexOf(parameterToRemove));
+    @NotNull @Override public JetMethodDescriptor configure(    @NotNull JetMethodDescriptor originalDescriptor,    @NotNull BindingContext bindingContext){
+      return ChangeSignaturePackage.modify(originalDescriptor,new ExtensionFunction0<JetMutableMethodDescriptor,Unit>(){
+        @Override public Unit invoke(        JetMutableMethodDescriptor descriptor){
+          List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+          descriptor.removeParameter(parameters.indexOf(parameterToRemove));
+          return null;
+        }
+      }
+);
     }
     @Override public boolean performSilently(    @NotNull Collection<? extends PsiElement> elements){
       return false;

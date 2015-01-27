@@ -1,30 +1,36 @@
 {
   return new JetChangeSignatureConfiguration(){
-    @Override public void configure(    @NotNull JetChangeSignatureData changeSignatureData,    @NotNull BindingContext bindingContext){
-      List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
-      List<? extends ValueArgument> arguments=callElement.getValueArguments();
-      JetNameValidator validator=new SimpleCollectingValidator();
-      for (int i=0; i < arguments.size(); i++) {
-        ValueArgument argument=arguments.get(i);
-        JetExpression expression=argument.getArgumentExpression();
-        if (i < parameters.size()) {
-          validator.validateName(parameters.get(i).getName().asString());
-          JetType argumentType=expression != null ? bindingContext.get(BindingContext.EXPRESSION_TYPE,expression) : null;
-          JetType parameterType=parameters.get(i).getType();
-          if (argumentType != null && !JetTypeChecker.DEFAULT.isSubtypeOf(argumentType,parameterType)) {
-            changeSignatureData.getParameters().get(i).setCurrentTypeText(IdeDescriptorRenderers.SOURCE_CODE.renderType(argumentType));
-            typesToShorten.add(argumentType);
-          }
-        }
+    @NotNull @Override public JetMethodDescriptor configure(    @NotNull JetMethodDescriptor originalDescriptor,    @NotNull final BindingContext bindingContext){
+      return ChangeSignaturePackage.modify(originalDescriptor,new ExtensionFunction0<JetMutableMethodDescriptor,Unit>(){
+        @Override public Unit invoke(        JetMutableMethodDescriptor descriptor){
+          List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+          List<? extends ValueArgument> arguments=callElement.getValueArguments();
+          JetNameValidator validator=new SimpleCollectingValidator();
+          for (int i=0; i < arguments.size(); i++) {
+            ValueArgument argument=arguments.get(i);
+            JetExpression expression=argument.getArgumentExpression();
+            if (i < parameters.size()) {
+              validator.validateName(parameters.get(i).getName().asString());
+              JetType argumentType=expression != null ? bindingContext.get(BindingContext.EXPRESSION_TYPE,expression) : null;
+              JetType parameterType=parameters.get(i).getType();
+              if (argumentType != null && !JetTypeChecker.DEFAULT.isSubtypeOf(argumentType,parameterType)) {
+                descriptor.getParameters().get(i).setCurrentTypeText(IdeDescriptorRenderers.SOURCE_CODE.renderType(argumentType));
+                typesToShorten.add(argumentType);
+              }
+            }
  else {
-          JetParameterInfo parameterInfo=getNewParameterInfo(bindingContext,argument,validator);
-          typesToShorten.add(parameterInfo.getOriginalType());
-          if (expression != null) {
-            parameterInfo.setDefaultValueForCall(expression.getText());
+              JetParameterInfo parameterInfo=getNewParameterInfo(bindingContext,argument,validator);
+              typesToShorten.add(parameterInfo.getOriginalType());
+              if (expression != null) {
+                parameterInfo.setDefaultValueForCall(expression.getText());
+              }
+              descriptor.addParameter(parameterInfo);
+            }
           }
-          changeSignatureData.addParameter(parameterInfo);
+          return null;
         }
       }
+);
     }
     @Override public boolean performSilently(    @NotNull Collection<? extends PsiElement> affectedFunctions){
       if (affectedFunctions.size() != 1) {
