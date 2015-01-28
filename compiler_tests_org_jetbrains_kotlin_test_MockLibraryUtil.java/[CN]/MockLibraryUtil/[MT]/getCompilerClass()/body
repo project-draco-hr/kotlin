@@ -1,9 +1,10 @@
 {
+  Class<?> compilerClass=compilerClassRef.get();
   if (compilerClass == null) {
     File kotlinCompilerJar=new File(PathUtil.getKotlinPathsForDistDirectory().getLibPath(),"kotlin-compiler.jar");
-    File kotlinRuntimeJar=new File(PathUtil.getKotlinPathsForDistDirectory().getLibPath(),"kotlin-runtime.jar");
-    URLClassLoader classLoader=new URLClassLoader(new URL[]{kotlinCompilerJar.toURI().toURL(),kotlinRuntimeJar.toURI().toURL()},Object.class.getClassLoader());
+    ClassLoader classLoader=ClassPreloadingUtils.preloadClasses(Collections.singletonList(kotlinCompilerJar),4096,null,null,null);
     compilerClass=classLoader.loadClass(K2JVMCompiler.class.getName());
+    compilerClassRef=new SoftReference<Class<?>>(compilerClass);
   }
   return compilerClass;
 }
