@@ -1,12 +1,11 @@
 {
   Project project=config.getProject();
-  Predicate<PsiFile> completely=Predicates.and(notLibFiles(config.getLibFiles()),filesToAnalyzeCompletely);
   GlobalContextImpl globalContext=ContextPackage.GlobalContext();
-  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.create(globalContext.getStorageManager(),globalContext.getExceptionTracker(),completely,false,false);
+  TopDownAnalysisParameters topDownAnalysisParameters=TopDownAnalysisParameters.create(globalContext.getStorageManager(),globalContext.getExceptionTracker(),false,false);
   Collection<JetFile> allFiles=config.getLibraryModule() != null ? files : Config.withJsLibAdded(files,config);
   InjectorForTopDownAnalyzerForJs injector=new InjectorForTopDownAnalyzerForJs(project,topDownAnalysisParameters,trace,module,new FileBasedDeclarationProviderFactory(topDownAnalysisParameters.getStorageManager(),allFiles));
   try {
-    injector.getLazyTopDownAnalyzerForTopLevel().analyzeFiles(topDownAnalysisParameters,allFiles,Collections.<PackageFragmentProvider>emptyList());
+    injector.getLazyTopDownAnalyzerForTopLevel().analyzeFiles(topDownAnalysisParameters,files,Collections.<PackageFragmentProvider>emptyList());
     return JsAnalysisResult.success(trace,module);
   }
   finally {
