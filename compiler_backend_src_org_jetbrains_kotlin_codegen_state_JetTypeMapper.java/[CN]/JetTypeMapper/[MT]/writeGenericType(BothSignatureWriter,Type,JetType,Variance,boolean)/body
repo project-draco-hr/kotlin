@@ -4,10 +4,15 @@
     List<TypeProjection> arguments=jetType.getArguments();
     for (    TypeParameterDescriptor parameter : jetType.getConstructor().getParameters()) {
       TypeProjection argument=arguments.get(parameter.getIndex());
-      Variance projectionKind=projectionsAllowed ? getEffectiveVariance(parameter.getVariance(),argument.getProjectionKind(),howThisTypeIsUsed) : Variance.INVARIANT;
-      signatureVisitor.writeTypeArgument(projectionKind);
-      mapType(argument.getType(),signatureVisitor,JetTypeMapperMode.TYPE_PARAMETER);
-      signatureVisitor.writeTypeArgumentEnd();
+      if (projectionsAllowed && argument.isStarProjection()) {
+        signatureVisitor.writeUnboundedWildcard();
+      }
+ else {
+        Variance projectionKind=projectionsAllowed ? getEffectiveVariance(parameter.getVariance(),argument.getProjectionKind(),howThisTypeIsUsed) : Variance.INVARIANT;
+        signatureVisitor.writeTypeArgument(projectionKind);
+        mapType(argument.getType(),signatureVisitor,JetTypeMapperMode.TYPE_PARAMETER);
+        signatureVisitor.writeTypeArgumentEnd();
+      }
     }
     signatureVisitor.writeClassEnd();
   }
