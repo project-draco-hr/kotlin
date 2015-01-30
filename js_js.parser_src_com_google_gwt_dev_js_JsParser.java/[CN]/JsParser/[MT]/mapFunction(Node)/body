@@ -2,21 +2,19 @@
   Node fromFnNameNode=fnNode.getFirstChild();
   Node fromParamNode=fnNode.getFirstChild().getNext().getFirstChild();
   Node fromBodyNode=fnNode.getFirstChild().getNext().getNext();
-  String fromFnName=fromFnNameNode.getString();
-  JsName toFnName=null;
-  if (fromFnName != null && fromFnName.length() > 0) {
-    toFnName=getScope().declareName(fromFnName);
+  JsFunction toFn=scopeContext.enterFunction();
+  String fnNameIdent=fromFnNameNode.getString();
+  if (fnNameIdent != null && fnNameIdent.length() > 0) {
+    scopeContext.globalNameFor(fnNameIdent);
   }
-  JsFunction toFn=new JsFunction(getScope(),"jsCode");
-  pushScope(toFn.getScope());
   while (fromParamNode != null) {
     String fromParamName=fromParamNode.getString();
-    JsName paramName=toFn.getScope().declareName(fromParamName);
-    toFn.getParameters().add(new JsParameter(paramName));
+    JsName name=scopeContext.localNameFor(fromParamName);
+    toFn.getParameters().add(new JsParameter(name));
     fromParamNode=fromParamNode.getNext();
   }
   JsBlock toBody=mapBlock(fromBodyNode);
   toFn.setBody(toBody);
-  popScope();
+  scopeContext.exitFunction();
   return toFn;
 }

@@ -7,7 +7,7 @@
   while (fromCatchNode != null) {
     assert(fromCatchNode.getType() == TokenStream.CATCH);
     Node fromCatchVarName=fromCatchNode.getFirstChild();
-    JsCatch catchBlock=new JsCatch(getScope(),fromCatchVarName.getString());
+    JsCatch catchBlock=scopeContext.enterCatch(fromCatchVarName.getString());
     fromCatchNode=fromCatchNode.getNext();
     Node fromCondition=fromCatchVarName.getNext();
     JsExpression toCondition=mapExpression(fromCondition);
@@ -22,6 +22,7 @@
     Node fromCatchBody=fromCondition.getNext();
     catchBlock.setBody(mapBlock(fromCatchBody));
     toTry.getCatches().add(catchBlock);
+    scopeContext.exitCatch();
   }
   Node fromFinallyNode=fromCatchNodes.getNext();
   if (fromFinallyNode != null) {
