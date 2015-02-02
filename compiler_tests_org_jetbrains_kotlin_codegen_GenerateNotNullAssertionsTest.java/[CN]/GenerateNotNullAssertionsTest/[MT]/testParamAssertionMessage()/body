@@ -1,0 +1,15 @@
+{
+  setUpEnvironment(false,false);
+  loadText("class A { fun foo(s: String) {} }");
+  Class<?> a=generateClass("A");
+  try {
+    a.getDeclaredMethod("foo",String.class).invoke(a.newInstance(),new Object[]{null});
+  }
+ catch (  InvocationTargetException ite) {
+    Throwable e=ite.getTargetException();
+    assertInstanceOf(e,IllegalArgumentException.class);
+    assertEquals("Parameter specified as non-null is null: method A.foo, parameter s",e.getMessage());
+    return;
+  }
+  fail("Assertion should have been fired");
+}
