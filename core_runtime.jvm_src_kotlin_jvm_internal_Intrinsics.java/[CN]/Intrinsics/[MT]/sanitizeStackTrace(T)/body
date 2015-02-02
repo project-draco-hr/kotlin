@@ -1,17 +1,13 @@
 {
   StackTraceElement[] stackTrace=throwable.getStackTrace();
-  ArrayList<StackTraceElement> list=new ArrayList<StackTraceElement>(stackTrace.length);
-  boolean skip=true;
-  for (  StackTraceElement element : stackTrace) {
-    if (!skip) {
-      list.add(element);
-    }
- else     if ("kotlin.jvm.internal.Intrinsics".equals(element.getClassName())) {
-      if (METHOD_NAMES_TO_SKIP.contains(element.getMethodName())) {
-        skip=false;
-      }
+  int size=stackTrace.length;
+  int lastIntrinsic=-1;
+  for (int i=0; i < size; i++) {
+    if (Intrinsics.class.getName().equals(stackTrace[i].getClassName())) {
+      lastIntrinsic=i;
     }
   }
+  List<StackTraceElement> list=Arrays.asList(stackTrace).subList(lastIntrinsic + 1,size);
   throwable.setStackTrace(list.toArray(new StackTraceElement[list.size()]));
   return throwable;
 }
