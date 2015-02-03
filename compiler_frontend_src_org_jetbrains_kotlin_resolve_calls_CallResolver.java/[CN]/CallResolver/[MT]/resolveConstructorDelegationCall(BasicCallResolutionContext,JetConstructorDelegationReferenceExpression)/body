@@ -1,0 +1,15 @@
+{
+  ClassDescriptor currentClassDescriptor=getClassDescriptorByConstructorContext(context);
+  ClassDescriptor delegateClassDescriptor=calleeExpression.isThis() ? currentClassDescriptor : DescriptorUtilPackage.getSuperClassOrAny(currentClassDescriptor);
+  Collection<ConstructorDescriptor> constructors=delegateClassDescriptor.getConstructors();
+  if (constructors.isEmpty()) {
+    context.trace.report(NO_CONSTRUCTOR.on(CallUtilPackage.getValueArgumentListOrElement(context.call)));
+    return checkArgumentTypesAndFail(context);
+  }
+  List<ResolutionCandidate<CallableDescriptor>> candidates=Lists.newArrayList();
+  ReceiverValue constructorDispatchReceiver=!delegateClassDescriptor.isInner() ? ReceiverValue.NO_RECEIVER : ((ClassDescriptor)delegateClassDescriptor.getContainingDeclaration()).getThisAsReceiverParameter().getValue();
+  for (  CallableDescriptor descriptor : constructors) {
+    candidates.add(ResolutionCandidate.create(context.call,descriptor,constructorDispatchReceiver,ReceiverValue.NO_RECEIVER,ExplicitReceiverKind.NO_EXPLICIT_RECEIVER));
+  }
+  return computeTasksFromCandidatesAndResolvedCall(context,calleeExpression,candidates,CallTransformer.FUNCTION_CALL_TRANSFORMER);
+}
