@@ -1,0 +1,25 @@
+{
+  if (deep >= 10 || result.isError()) {
+    return result;
+  }
+  Set<JetElement> collectedElements=new HashSet<JetElement>();
+  collectedElements.addAll(originalElements);
+  Map<Call,ResolvedCall<?>> contents=result.getBindingContext().getSliceContents(BindingContext.RESOLVED_CALL);
+  Collection<ResolvedCall<?>> values=contents.values();
+  for (  ResolvedCall call : values) {
+    CallableDescriptor descriptor=call.getResultingDescriptor();
+    if (!(descriptor instanceof DeserializedSimpleFunctionDescriptor)) {
+      if (descriptor instanceof SimpleFunctionDescriptor && ((SimpleFunctionDescriptor)descriptor).getInlineStrategy().isInline()) {
+        PsiElement declaration=DescriptorToDeclarationUtil.INSTANCE$.getDeclaration(project,descriptor);
+        if (declaration != null && declaration instanceof JetElement) {
+          collectedElements.add((JetElement)declaration);
+        }
+      }
+    }
+  }
+  if (collectedElements.size() != originalElements.size()) {
+    AnalysisResult newResult=KotlinCacheService.getInstance(project).getAnalysisResults(collectedElements);
+    return processInlinedDeclarations(project,newResult,collectedElements,deep + 1);
+  }
+  return result;
+}
