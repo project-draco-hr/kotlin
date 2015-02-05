@@ -1,2 +1,21 @@
 {
+  if (ignoreIfTraitOrAnnotation())   return;
+  ConstructorDescriptor constructorDescriptor=descriptor.getUnsubstitutedPrimaryConstructor();
+  if (constructorDescriptor == null)   return;
+  ConstructorContext constructorContext=context.intoConstructor(constructorDescriptor);
+  if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
+    lookupConstructorExpressionsInClosureIfPresent(constructorContext);
+  }
+  functionCodegen.generateMethod(OtherOrigin(myClass,constructorDescriptor),constructorDescriptor,constructorContext,new FunctionGenerationStrategy.CodegenBased<ConstructorDescriptor>(state,constructorDescriptor){
+    @Override public void doGenerateBody(    @NotNull ExpressionCodegen codegen,    @NotNull JvmMethodSignature signature){
+      generatePrimaryConstructorImpl(callableDescriptor,codegen,delegationFieldsInfo);
+    }
+  }
+);
+  functionCodegen.generateDefaultIfNeeded(constructorContext,constructorDescriptor,OwnerKind.IMPLEMENTATION,DefaultParameterValueLoader.DEFAULT,null);
+  CallableMethod callableMethod=typeMapper.mapToCallableMethod(constructorDescriptor);
+  FunctionCodegen.generateConstructorWithoutParametersIfNeeded(state,callableMethod,constructorDescriptor,v,myClass);
+  if (isDefaultObject(descriptor)) {
+    context.recordSyntheticAccessorIfNeeded(constructorDescriptor,bindingContext);
+  }
 }
