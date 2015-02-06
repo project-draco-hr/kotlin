@@ -1,10 +1,9 @@
 {
   PsiManager manager=PsiManager.getInstance(project);
-  final PsiJavaFileStubImpl javaFileStub=new PsiJavaFileStubImpl(packageFqName.asString(),true);
-  javaFileStub.setPsiFactory(new ClsWrapperStubPsiFactory());
+  VirtualFile virtualFile=getRepresentativeVirtualFile(files);
   ClsFileImpl fakeFile=new ClsFileImpl(new ClassFileViewProvider(manager,virtualFile)){
     @NotNull @Override public PsiClassHolderFileStub getStub(){
-      return javaFileStub;
+      return fileStubProvider.invoke();
     }
     @NotNull @Override public String getPackageName(){
       return packageFqName.asString();
@@ -12,6 +11,5 @@
   }
 ;
   fakeFile.setPhysical(false);
-  javaFileStub.setPsi(fakeFile);
-  return javaFileStub;
+  return fakeFile;
 }
