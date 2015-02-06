@@ -13,7 +13,20 @@
       return PropertyCodegen.setterName(property.getName());
     }
   }
- else   if (isLocalNamedFun(descriptor) || descriptor instanceof AnonymousFunctionDescriptor) {
+ else   if (isLocalNamedFun(descriptor)) {
+    return "invoke";
+  }
+ else   if (descriptor instanceof AnonymousFunctionDescriptor) {
+    PsiElement element=DescriptorToSourceUtils.callableDescriptorToDeclaration(descriptor);
+    if (element instanceof JetFunctionLiteral) {
+      PsiElement expression=element.getParent();
+      if (expression instanceof JetFunctionLiteralExpression) {
+        SamType samType=bindingContext.get(SAM_VALUE,(JetExpression)expression);
+        if (samType != null) {
+          return samType.getAbstractMethod().getName().asString();
+        }
+      }
+    }
     return "invoke";
   }
  else {
