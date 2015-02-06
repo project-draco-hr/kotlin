@@ -1,0 +1,13 @@
+{
+  VirtualMachineProxyImpl proxy=(VirtualMachineProxyImpl)process.getVirtualMachineProxy();
+  Method defineMethod=((ClassType)classLoader.referenceType()).concreteMethodByName("defineClass","(Ljava/lang/String;[BII)Ljava/lang/Class;");
+  byte[] bytes=changeSuperToMagicAccessor(bytecodes);
+  ArrayList<Value> args=new ArrayList<Value>();
+  StringReference name=proxy.mirrorOf(className);
+  keep(name,context);
+  args.add(name);
+  args.add(mirrorOf(bytes,context,process));
+  args.add(proxy.mirrorOf(0));
+  args.add(proxy.mirrorOf(bytes.length));
+  process.invokeMethod(context,classLoader,defineMethod,args);
+}
