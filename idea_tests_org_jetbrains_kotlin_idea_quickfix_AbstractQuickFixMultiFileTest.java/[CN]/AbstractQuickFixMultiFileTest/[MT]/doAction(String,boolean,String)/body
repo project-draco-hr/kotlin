@@ -24,5 +24,21 @@
       }
     }
     checkResultByFile(testFullPath.replace(".before.Main.",".after."));
+    PsiFile mainFile=myFile;
+    String extraFileNamePrefix=mainFile.getName().replace(".Main.kt",".data.Sample.");
+    for (    PsiFile file : mainFile.getContainingDirectory().getFiles()) {
+      if (!file.getName().startsWith(extraFileNamePrefix))       continue;
+      myFile=file;
+      String extraFileFullPath=testFullPath.replace(mainFile.getName(),file.getName());
+      try {
+        checkResultByFile(extraFileFullPath.replace(".before.",".after."));
+      }
+ catch (      AssertionError e) {
+        if (e.getMessage().startsWith("Cannot find file")) {
+          checkResultByFile(extraFileFullPath);
+        }
+ else         throw e;
+      }
+    }
   }
 }
