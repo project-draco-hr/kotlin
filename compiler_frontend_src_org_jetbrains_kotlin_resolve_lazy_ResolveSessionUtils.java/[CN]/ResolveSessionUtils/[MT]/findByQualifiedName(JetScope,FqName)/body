@@ -1,3 +1,10 @@
 {
-  return findByQualifiedName(packageScope,path,Predicates.<ClassDescriptor>alwaysTrue());
+  if (path.isRoot())   return null;
+  JetScope scope=outerScope;
+  for (  Name name : path.pathSegments()) {
+    ClassifierDescriptor classifier=scope.getClassifier(name);
+    if (!(classifier instanceof ClassDescriptor))     return null;
+    scope=((ClassDescriptor)classifier).getUnsubstitutedInnerClassesScope();
+  }
+  return (ClassDescriptor)scope.getContainingDeclaration();
 }
