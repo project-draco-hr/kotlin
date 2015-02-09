@@ -1,18 +1,10 @@
 {
-  ClassDescriptor classDescriptor=getBindingContext().get(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,fqName.toUnsafe());
-  if (classDescriptor != null) {
-    PsiElement element=DescriptorToSourceUtils.classDescriptorToDeclaration(classDescriptor);
-    if (element != null && PsiSearchScopeUtil.isInScope(searchScope,element)) {
-      return Collections.singletonList((JetClassOrObject)element);
-    }
-  }
   if (JvmAbi.isClassObjectFqName(fqName)) {
     Collection<JetClassOrObject> parentClasses=findClassOrObjectDeclarations(fqName.parent(),searchScope);
     return ContainerUtil.mapNotNull(parentClasses,new Function<JetClassOrObject,JetClassOrObject>(){
       @Override public JetClassOrObject fun(      JetClassOrObject classOrObject){
         if (classOrObject instanceof JetClass) {
-          JetClass jetClass=(JetClass)classOrObject;
-          JetClassObject classObject=jetClass.getClassObject();
+          JetClassObject classObject=((JetClass)classOrObject).getClassObject();
           if (classObject != null) {
             return classObject.getObjectDeclaration();
           }
@@ -22,5 +14,15 @@
     }
 );
   }
-  return Collections.emptyList();
+  Collection<ClassDescriptor> classDescriptors=ResolveSessionUtils.getClassOrObjectDescriptorsByFqName(getModule(),fqName,Predicates.<ClassDescriptor>alwaysTrue());
+  return ContainerUtil.mapNotNull(classDescriptors,new Function<ClassDescriptor,JetClassOrObject>(){
+    @Override public JetClassOrObject fun(    ClassDescriptor descriptor){
+      PsiElement element=DescriptorToSourceUtils.classDescriptorToDeclaration(descriptor);
+      if (element instanceof JetClassOrObject && PsiSearchScopeUtil.isInScope(searchScope,element)) {
+        return (JetClassOrObject)element;
+      }
+      return null;
+    }
+  }
+);
 }
