@@ -6,11 +6,9 @@
   if (!isDefaultNeeded(functionDescriptor)) {
     return;
   }
-  Method jvmSignature=signature.getAsmMethod();
-  int flags=getVisibilityAccessFlag(functionDescriptor) | getDeprecatedAccessFlag(functionDescriptor);
-  boolean isConstructor="<init>".equals(jvmSignature.getName());
+  int flags=getVisibilityAccessFlag(functionDescriptor) | getDeprecatedAccessFlag(functionDescriptor) | (functionDescriptor instanceof ConstructorDescriptor ? 0 : ACC_STATIC);
   Method defaultMethod=typeMapper.mapDefaultMethod(functionDescriptor,kind,owner);
-  MethodVisitor mv=v.newMethod(Synthetic(function,functionDescriptor),flags | (isConstructor ? 0 : ACC_STATIC),defaultMethod.getName(),defaultMethod.getDescriptor(),null,getThrownExceptions(functionDescriptor,typeMapper));
+  MethodVisitor mv=v.newMethod(Synthetic(function,functionDescriptor),flags,defaultMethod.getName(),defaultMethod.getDescriptor(),null,getThrownExceptions(functionDescriptor,typeMapper));
   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
     if (this.owner instanceof PackageFacadeContext) {
       mv.visitCode();
@@ -18,7 +16,9 @@
       endVisit(mv,"default method delegation",callableDescriptorToDeclaration(functionDescriptor));
     }
  else {
-      generateDefaultImpl(owner,signature,functionDescriptor,isStaticMethod(kind,functionDescriptor),mv,loadStrategy,function);
+      mv.visitCode();
+      generateDefaultImplBody(owner,functionDescriptor,mv,loadStrategy,function,memberCodegen);
+      endVisit(mv,"default method",callableDescriptorToDeclaration(functionDescriptor));
     }
   }
 }
