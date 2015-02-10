@@ -1,7 +1,8 @@
 {
-  OwnerKind methodContextKind=methodContext.getContextKind();
+  OwnerKind contextKind=methodContext.getContextKind();
+  JvmMethodSignature jvmSignature=typeMapper.mapSignature(functionDescriptor,contextKind);
   Method asmMethod=jvmSignature.getAsmMethod();
-  int flags=getMethodAsmFlags(functionDescriptor,methodContextKind);
+  int flags=getMethodAsmFlags(functionDescriptor,contextKind);
   boolean isNative=NativeDeclarationsPackage.hasNativeAnnotation(functionDescriptor);
   if (isNative && owner instanceof PackageContext && !(owner instanceof PackageFacadeContext)) {
     return;
@@ -25,8 +26,8 @@
     ImplementationBodyCodegen parentBodyCodegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
     parentBodyCodegen.addAdditionalTask(new PlatformStaticGenerator(functionDescriptor,origin,state));
   }
-  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,methodContextKind)) {
-    generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),methodContextKind);
+  if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,contextKind)) {
+    generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),contextKind);
     mv.visitEnd();
     return;
   }
