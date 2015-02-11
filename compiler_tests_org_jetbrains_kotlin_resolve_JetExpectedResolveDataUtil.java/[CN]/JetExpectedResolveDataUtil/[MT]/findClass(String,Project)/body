@@ -1,8 +1,8 @@
 {
-  BindingTraceContext trace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
-  InjectorForLazyResolveWithJava injector=InjectorForLazyResolveWithJavaUtil.create(project,trace,false);
-  JavaClass javaClass=injector.getJavaClassFinder().findClass(ClassId.topLevel(new FqName(qualifiedName)));
-  Assert.assertNotNull("Class wasn't found: " + qualifiedName,javaClass);
-  assertInstanceOf(javaClass,JavaClassImpl.class);
-  return ((JavaClassImpl)javaClass).getPsi();
+  ModuleDescriptor module=LazyResolveTestUtil.resolveProject(project);
+  ClassDescriptor classDescriptor=DescriptorUtilPackage.resolveTopLevelClass(module,new FqName(qualifiedName));
+  assertNotNull("Class descriptor wasn't resolved: " + qualifiedName,classDescriptor);
+  PsiClass psiClass=(PsiClass)DescriptorToSourceUtils.classDescriptorToDeclaration(classDescriptor);
+  assertNotNull("Class declaration wasn't found: " + classDescriptor,psiClass);
+  return psiClass;
 }
