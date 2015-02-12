@@ -1,0 +1,19 @@
+{
+  if (visitedConstructors.contains(constructorDescriptor))   return;
+  Set<ConstructorDescriptor> visitedInCurrentChain=Sets.newHashSet();
+  ConstructorDescriptor currentConstructorDescriptor=constructorDescriptor;
+  while (true) {
+    visitedInCurrentChain.add(currentConstructorDescriptor);
+    ConstructorDescriptor delegatedConstructorDescriptor=getDelegatedConstructor(currentConstructorDescriptor);
+    if (delegatedConstructorDescriptor == null)     break;
+    if (!constructorDescriptor.getContainingDeclaration().equals(delegatedConstructorDescriptor.getContainingDeclaration()) || delegatedConstructorDescriptor.isPrimary() || visitedConstructors.contains(delegatedConstructorDescriptor)) {
+      break;
+    }
+    if (visitedInCurrentChain.contains(delegatedConstructorDescriptor)) {
+      reportEachConstructorOnCycle(delegatedConstructorDescriptor);
+      break;
+    }
+    currentConstructorDescriptor=delegatedConstructorDescriptor;
+  }
+  visitedConstructors.addAll(visitedInCurrentChain);
+}
