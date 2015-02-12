@@ -2,5 +2,8 @@
   JetConstructorDelegationCall call=constructor.getDelegationCall();
   if (call == null || call.getCalleeExpression() == null)   return;
   JetType superClassType=DescriptorUtils.getSuperClassType(descriptor.getContainingDeclaration());
-  callResolver.resolveFunctionCall(trace,scope,CallMaker.makeCall(ReceiverValue.NO_RECEIVER,null,call),superClassType != null ? superClassType : NO_EXPECTED_TYPE,c.getOuterDataFlowInfo(),false);
+  OverloadResolutionResults<?> results=callResolver.resolveFunctionCall(trace,scope,CallMaker.makeCall(ReceiverValue.NO_RECEIVER,null,call),superClassType != null ? superClassType : NO_EXPECTED_TYPE,c.getOuterDataFlowInfo(),false);
+  if (results.isSuccess()) {
+    recordConstructorDelegationCall(trace,descriptor,results.getResultingCall());
+  }
 }
