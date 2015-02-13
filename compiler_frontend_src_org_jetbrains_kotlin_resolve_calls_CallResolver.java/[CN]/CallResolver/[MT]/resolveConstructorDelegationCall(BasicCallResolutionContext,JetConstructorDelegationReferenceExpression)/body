@@ -2,6 +2,9 @@
   ClassDescriptor currentClassDescriptor=getClassDescriptorByConstructorContext(context);
   ClassDescriptor delegateClassDescriptor=calleeExpression.isThis() ? currentClassDescriptor : DescriptorUtilPackage.getSuperClassOrAny(currentClassDescriptor);
   Collection<ConstructorDescriptor> constructors=delegateClassDescriptor.getConstructors();
+  if (!calleeExpression.isThis() && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
+    context.trace.report(PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.on((JetConstructorDelegationCall)calleeExpression.getParent()));
+  }
   if (constructors.isEmpty()) {
     context.trace.report(NO_CONSTRUCTOR.on(CallUtilPackage.getValueArgumentListOrElement(context.call)));
     return checkArgumentTypesAndFail(context);
