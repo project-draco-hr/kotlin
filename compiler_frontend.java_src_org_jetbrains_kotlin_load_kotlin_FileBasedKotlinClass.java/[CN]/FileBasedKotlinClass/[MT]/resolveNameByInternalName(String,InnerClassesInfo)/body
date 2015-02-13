@@ -6,9 +6,14 @@
     return JvmAnnotationNames.KotlinSyntheticClass.KIND_CLASS_ID;
   }
   List<String> classes=new ArrayList<String>(1);
+  boolean local=false;
   while (true) {
     OuterAndInnerName outer=innerClasses.get(name);
     if (outer == null)     break;
+    if (outer.outerInternalName == null) {
+      local=true;
+      break;
+    }
     classes.add(outer.innerSimpleName);
     name=outer.outerInternalName;
   }
@@ -17,5 +22,5 @@
   Collections.reverse(classes);
   FqName packageFqName=outermostClassFqName.parent();
   FqNameUnsafe relativeClassName=FqNameUnsafe.fromSegments(classes);
-  return new ClassId(packageFqName,relativeClassName);
+  return new ClassId(packageFqName,relativeClassName,local);
 }
