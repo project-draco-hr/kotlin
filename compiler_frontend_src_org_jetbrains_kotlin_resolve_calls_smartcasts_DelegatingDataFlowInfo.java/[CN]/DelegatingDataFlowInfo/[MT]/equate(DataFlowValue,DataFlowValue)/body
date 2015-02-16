@@ -5,5 +5,9 @@
   boolean changed=false;
   changed|=putNullability(builder,a,nullabilityOfA.refine(nullabilityOfB));
   changed|=putNullability(builder,b,nullabilityOfB.refine(nullabilityOfA));
-  return changed ? new DelegatingDataFlowInfo(this,ImmutableMap.copyOf(builder),EMPTY_TYPE_INFO) : this;
+  SetMultimap<DataFlowValue,JetType> newTypeInfo=newTypeInfo();
+  newTypeInfo.putAll(a,collectTypesFromMeAndParents(b));
+  newTypeInfo.putAll(b,collectTypesFromMeAndParents(a));
+  changed|=!newTypeInfo.isEmpty();
+  return !changed ? this : new DelegatingDataFlowInfo(this,ImmutableMap.copyOf(builder),newTypeInfo.isEmpty() ? EMPTY_TYPE_INFO : newTypeInfo);
 }

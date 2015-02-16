@@ -16,6 +16,12 @@
   if (right != null) {
     JetTypeInfo rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
     dataFlowInfo=rightInfo.getDataFlowInfo();
+    JetType rightType=rightInfo.getType();
+    if (left != null && leftType != null && rightType != null) {
+      DataFlowValue leftValue=DataFlowValueFactory.createDataFlowValue(left,leftType,context.trace.getBindingContext());
+      DataFlowValue rightValue=DataFlowValueFactory.createDataFlowValue(right,rightType,context.trace.getBindingContext());
+      dataFlowInfo=dataFlowInfo.equate(leftValue,rightValue);
+    }
   }
   if (leftType != null && leftOperand != null) {
     BasicExpressionTypingVisitor.checkLValue(context.trace,leftOperand);
