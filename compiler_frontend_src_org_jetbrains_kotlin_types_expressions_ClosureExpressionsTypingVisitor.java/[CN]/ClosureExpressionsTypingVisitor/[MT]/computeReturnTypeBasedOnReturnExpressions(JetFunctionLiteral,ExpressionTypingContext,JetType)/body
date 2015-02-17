@@ -1,0 +1,29 @@
+{
+  List<JetType> returnedExpressionTypes=Lists.newArrayList();
+  boolean hasEmptyReturn=false;
+  Collection<JetReturnExpression> returnExpressions=collectReturns(functionLiteral,context.trace);
+  for (  JetReturnExpression returnExpression : returnExpressions) {
+    JetExpression returnedExpression=returnExpression.getReturnedExpression();
+    if (returnedExpression == null) {
+      hasEmptyReturn=true;
+    }
+ else {
+      ContainerUtil.addIfNotNull(returnedExpressionTypes,context.trace.get(EXPRESSION_TYPE,returnedExpression));
+    }
+  }
+  if (hasEmptyReturn) {
+    for (    JetReturnExpression returnExpression : returnExpressions) {
+      JetExpression returnedExpression=returnExpression.getReturnedExpression();
+      if (returnedExpression != null) {
+        JetType type=context.trace.get(EXPRESSION_TYPE,returnedExpression);
+        if (type == null || !KotlinBuiltIns.isUnit(type)) {
+          context.trace.report(RETURN_TYPE_MISMATCH.on(returnedExpression,components.builtIns.getUnitType()));
+        }
+      }
+    }
+    return components.builtIns.getUnitType();
+  }
+  ContainerUtil.addIfNotNull(returnedExpressionTypes,typeOfBodyExpression);
+  if (returnedExpressionTypes.isEmpty())   return null;
+  return CommonSupertypes.commonSupertype(returnedExpressionTypes);
+}
