@@ -1,12 +1,10 @@
 {
-  BindingContext libraryContext=config.getLibraryContext();
-  BindingTrace trace=libraryContext == null ? new BindingTraceContext() : new DelegatingBindingTrace(libraryContext,"trace with preanalyzed library");
+  BindingTrace trace=new BindingTraceContext();
   ModuleDescriptorImpl module=createJsModule("<" + config.getModuleId() + ">");
   module.addDependencyOnModule(module);
   module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
-  ModuleDescriptor libraryModule=config.getLibraryModule();
-  if (libraryModule != null) {
-    module.addDependencyOnModule((ModuleDescriptorImpl)libraryModule);
+  for (  ModuleDescriptorImpl moduleDescriptor : config.getModuleDescriptors()) {
+    module.addDependencyOnModule(moduleDescriptor);
   }
   module.seal();
   return analyzeFilesWithGivenTrace(files,trace,module,config);

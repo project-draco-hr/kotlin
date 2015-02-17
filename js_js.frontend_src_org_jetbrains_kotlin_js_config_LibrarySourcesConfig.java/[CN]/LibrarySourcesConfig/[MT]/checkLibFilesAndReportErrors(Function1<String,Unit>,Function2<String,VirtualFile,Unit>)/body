@@ -7,7 +7,6 @@
   String moduleName=null;
   for (  String path : files) {
     VirtualFile file;
-    String actualModuleName=moduleName;
     if (path.charAt(0) == '@') {
       moduleName=path.substring(1);
       continue;
@@ -28,18 +27,18 @@
       return true;
     }
  else {
-      if (isKotlinJavascriptStdLibrary(filePath)) {
-        actualModuleName=STDLIB_JS_MODULE_NAME;
+      String actualModuleName;
+      if (moduleName != null) {
+        actualModuleName=moduleName;
       }
- else       if (isKotlinJavascriptLibrary(filePath)) {
+ else       if (isOldKotlinJavascriptLibrary(filePath)) {
         actualModuleName=LibraryUtils.getKotlinJsModuleName(filePath);
       }
- else       if (actualModuleName == null) {
-        report.invoke("'" + path + "' is not a valid Kotlin Javascript library");
-        return true;
+ else       if (isKotlinJavascriptLibraryWithMetadata(filePath)) {
+        actualModuleName=null;
       }
-      if (actualModuleName == null) {
-        report.invoke("Could not find " + LibraryUtils.KOTLIN_JS_MODULE_NAME + " for '"+ path+ "'");
+ else {
+        report.invoke("'" + path + "' is not a valid Kotlin Javascript library");
         return true;
       }
       if (action != null) {
