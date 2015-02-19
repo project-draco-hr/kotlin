@@ -1,15 +1,24 @@
 {
   if (modifierListOwner.hasModifier(INNER_KEYWORD)) {
-    if (isIllegalInner(descriptor)) {
-      checkIllegalInThisContextModifiers(modifierListOwner,Collections.singletonList(INNER_KEYWORD));
-    }
-    return;
-  }
-  if (modifierListOwner instanceof JetClass && !(modifierListOwner instanceof JetEnumEntry)) {
-    JetClass aClass=(JetClass)modifierListOwner;
-    boolean localEnumError=aClass.isLocal() && aClass.isEnum();
-    if (!localEnumError && isIllegalNestedClass(descriptor)) {
-      trace.report(NESTED_CLASS_NOT_ALLOWED.on(aClass));
-    }
-  }
+switch (checkIllegalInner(descriptor)) {
+case ALLOWED:
+      break;
+case ILLEGAL_POSITION:
+    checkIllegalInThisContextModifiers(modifierListOwner,Collections.singletonList(INNER_KEYWORD));
+  break;
+case IN_TRAIT:
+if (modifierListOwner instanceof JetClass) {
+  trace.report(INNER_CLASS_IN_TRAIT.on((JetClass)modifierListOwner));
+}
+break;
+}
+return;
+}
+if (modifierListOwner instanceof JetClass && !(modifierListOwner instanceof JetEnumEntry)) {
+JetClass aClass=(JetClass)modifierListOwner;
+boolean localEnumError=aClass.isLocal() && aClass.isEnum();
+if (!localEnumError && isIllegalNestedClass(descriptor)) {
+trace.report(NESTED_CLASS_NOT_ALLOWED.on(aClass));
+}
+}
 }
