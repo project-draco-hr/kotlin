@@ -6,6 +6,10 @@
   try {
     lookupConstructorExpressionsInClosureIfPresent();
     generatePrimaryConstructor(delegationFieldsInfo);
+    for (    ConstructorDescriptor secondaryConstructor : descriptor.getConstructors()) {
+      if (secondaryConstructor.isPrimary())       continue;
+      generateSecondaryConstructor(secondaryConstructor);
+    }
   }
  catch (  CompilationException e) {
     throw e;
@@ -14,7 +18,7 @@ catch (  ProcessCanceledException e) {
     throw e;
   }
 catch (  RuntimeException e) {
-    throw new RuntimeException("Error generating primary constructor of class " + myClass.getName() + " with kind "+ kind,e);
+    throw new RuntimeException("Error generating constructors of class " + myClass.getName() + " with kind "+ kind,e);
   }
   generateTraitMethods();
   generateDelegates(delegationFieldsInfo);

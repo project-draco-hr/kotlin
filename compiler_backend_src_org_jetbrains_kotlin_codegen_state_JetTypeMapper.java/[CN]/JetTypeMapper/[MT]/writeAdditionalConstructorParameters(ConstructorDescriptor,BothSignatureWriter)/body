@@ -1,5 +1,5 @@
 {
-  CalculatedClosure closure=bindingContext.get(CodegenBinding.CLOSURE,descriptor.getContainingDeclaration());
+  MutableClosure closure=bindingContext.get(CodegenBinding.CLOSURE,descriptor.getContainingDeclaration());
   ClassDescriptor captureThis=getDispatchReceiverParameterForConstructorCall(descriptor,closure);
   if (captureThis != null) {
     writeParameter(sw,JvmMethodParameterKind.OUTER,captureThis.getDefaultType());
@@ -30,11 +30,13 @@
       type=null;
     }
     if (type != null) {
+      closure.setCapturedParameterOffsetInConstructor(variableDescriptor,sw.getCurrentSignatureSize() + 1);
       writeParameter(sw,JvmMethodParameterKind.CAPTURED_LOCAL_VARIABLE,type);
     }
   }
-  ResolvedCall<ConstructorDescriptor> superCall=getDelegationConstructorCall(bindingContext,descriptor);
-  if (superCall != null && classBuilderMode == ClassBuilderMode.FULL) {
+  if (classBuilderMode == ClassBuilderMode.FULL) {
+    ResolvedCall<ConstructorDescriptor> superCall=findFirstDelegatingSuperCall(descriptor);
+    if (superCall == null)     return;
     writeSuperConstructorCallParameters(sw,descriptor,superCall,captureThis != null);
   }
 }

@@ -1,0 +1,20 @@
+{
+  if (delegationConstructorCall == null) {
+    genSimpleSuperCall(iv);
+    return;
+  }
+  iv.load(0,OBJECT_TYPE);
+  ConstructorDescriptor delegateConstructor=delegationConstructorCall.getResultingDescriptor();
+  CallableMethod delegateConstructorCallable=typeMapper.mapToCallableMethod(delegateConstructor);
+  CallableMethod callable=typeMapper.mapToCallableMethod(constructorDescriptor);
+  List<JvmMethodParameterSignature> delegatingParameters=delegateConstructorCallable.getValueParameters();
+  List<JvmMethodParameterSignature> parameters=callable.getValueParameters();
+  ArgumentGenerator argumentGenerator;
+  if (isSameClassConstructor(delegateConstructor)) {
+    argumentGenerator=generateThisCallImplicitArguments(iv,codegen,delegateConstructor,delegateConstructorCallable,delegatingParameters,parameters);
+  }
+ else {
+    argumentGenerator=generateSuperCallImplicitArguments(iv,codegen,constructorDescriptor,delegateConstructor,delegateConstructorCallable,delegatingParameters,parameters);
+  }
+  codegen.invokeMethodWithArguments(delegateConstructorCallable,delegationConstructorCall,StackValue.none(),codegen.defaultCallGenerator,argumentGenerator);
+}
