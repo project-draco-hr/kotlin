@@ -1,8 +1,11 @@
 {
+  if (initializedClassLoader != null) {
+    fail("Double initialization of class loader in same test");
+  }
   ClassFileFactory factory=generateClassesInFile();
-  GeneratedClassLoader loader=createClassLoader(factory);
-  if (!verifyAllFilesWithAsm(factory,loader)) {
+  initializedClassLoader=new GeneratedClassLoader(factory,ForTestCompileRuntime.runtimeJarClassLoader(),getClassPathURLs());
+  if (!verifyAllFilesWithAsm(factory,initializedClassLoader)) {
     fail("Verification failed: see exceptions above");
   }
-  return loader;
+  return initializedClassLoader;
 }
