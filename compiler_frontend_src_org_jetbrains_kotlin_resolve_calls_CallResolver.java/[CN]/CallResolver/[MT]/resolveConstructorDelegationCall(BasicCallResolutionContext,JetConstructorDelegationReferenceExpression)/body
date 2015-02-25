@@ -1,5 +1,9 @@
 {
   ClassDescriptor currentClassDescriptor=getClassDescriptorByConstructorContext(context);
+  if (currentClassDescriptor.getKind() == ClassKind.ENUM_CLASS && !calleeExpression.isThis()) {
+    context.trace.report(DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR.on((JetConstructorDelegationCall)calleeExpression.getParent()));
+    return checkArgumentTypesAndFail(context);
+  }
   ClassDescriptor delegateClassDescriptor=calleeExpression.isThis() ? currentClassDescriptor : DescriptorUtilPackage.getSuperClassOrAny(currentClassDescriptor);
   Collection<ConstructorDescriptor> constructors=delegateClassDescriptor.getConstructors();
   if (!calleeExpression.isThis() && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
