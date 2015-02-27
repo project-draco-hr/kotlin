@@ -6,12 +6,10 @@
     if (isAnnotationClass(property.getContainingDeclaration())) {
       return property.getName().asString();
     }
-    if (descriptor instanceof PropertyGetterDescriptor) {
-      return PropertyCodegen.getterName(property.getName());
-    }
- else {
-      return PropertyCodegen.setterName(property.getName());
-    }
+    boolean isAccessor=property instanceof AccessorForPropertyDescriptor;
+    Name propertyName=isAccessor ? Name.identifier(((AccessorForPropertyDescriptor)property).getIndexedAccessorSuffix()) : property.getName();
+    String accessorName=descriptor instanceof PropertyGetterDescriptor ? PropertyCodegen.getterName(propertyName) : PropertyCodegen.setterName(propertyName);
+    return isAccessor ? "access$" + accessorName : accessorName;
   }
  else   if (isLocalNamedFun(descriptor)) {
     return "invoke";
