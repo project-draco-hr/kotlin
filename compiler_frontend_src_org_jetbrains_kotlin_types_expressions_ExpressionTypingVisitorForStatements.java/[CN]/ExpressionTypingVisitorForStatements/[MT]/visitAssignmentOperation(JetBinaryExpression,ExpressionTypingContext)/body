@@ -24,10 +24,19 @@
   TemporaryTraceAndCache temporaryForAssignmentOperation=TemporaryTraceAndCache.create(context,"trace to check assignment operation like '+=' for",expression);
   OverloadResolutionResults<FunctionDescriptor> assignmentOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForAssignmentOperation).replaceScope(scope),receiver,expression,name);
   JetType assignmentOperationType=OverloadResolutionResultsUtil.getResultingType(assignmentOperationDescriptors,context.contextDependency);
-  Name counterpartName=OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
+  OverloadResolutionResults<FunctionDescriptor> binaryOperationDescriptors;
+  JetType binaryOperationType;
   TemporaryTraceAndCache temporaryForBinaryOperation=TemporaryTraceAndCache.create(context,"trace to check binary operation like '+' for",expression);
-  OverloadResolutionResults<FunctionDescriptor> binaryOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForBinaryOperation).replaceScope(scope),receiver,expression,counterpartName);
-  JetType binaryOperationType=OverloadResolutionResultsUtil.getResultingType(binaryOperationDescriptors,context.contextDependency);
+  boolean lhsAssignable=BasicExpressionTypingVisitor.checkLValue(TemporaryBindingTrace.create(context.trace,"Trace for checking assignability"),left);
+  if (assignmentOperationType == null || lhsAssignable) {
+    Name counterpartName=OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
+    binaryOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForBinaryOperation).replaceScope(scope),receiver,expression,counterpartName);
+    binaryOperationType=OverloadResolutionResultsUtil.getResultingType(binaryOperationDescriptors,context.contextDependency);
+  }
+ else {
+    binaryOperationDescriptors=OverloadResolutionResultsImpl.nameNotFound();
+    binaryOperationType=null;
+  }
   JetType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
   if (assignmentOperationDescriptors.isSuccess() && binaryOperationDescriptors.isSuccess()) {
     OverloadResolutionResults<FunctionDescriptor> ambiguityResolutionResults=OverloadResolutionResultsUtil.ambiguity(assignmentOperationDescriptors,binaryOperationDescriptors);
