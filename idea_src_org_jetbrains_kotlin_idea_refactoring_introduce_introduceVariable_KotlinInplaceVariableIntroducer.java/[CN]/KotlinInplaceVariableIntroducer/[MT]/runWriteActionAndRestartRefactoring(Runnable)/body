@@ -1,0 +1,49 @@
+{
+  final Ref<Boolean> greedyToRight=new Ref<Boolean>();
+  new WriteCommandAction(myProject,getCommandName(),getCommandName()){
+    @Override protected void run(    @NotNull Result result) throws Throwable {
+      PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+      ASTNode identifier=myProperty.getNode().findChildByType(JetTokens.IDENTIFIER);
+      if (identifier != null) {
+        TextRange range=identifier.getTextRange();
+        RangeHighlighter[] highlighters=myEditor.getMarkupModel().getAllHighlighters();
+        for (        RangeHighlighter highlighter : highlighters) {
+          if (highlighter.getStartOffset() == range.getStartOffset()) {
+            if (highlighter.getEndOffset() == range.getEndOffset()) {
+              greedyToRight.set(highlighter.isGreedyToRight());
+              highlighter.setGreedyToRight(false);
+            }
+          }
+        }
+      }
+      runnable.run();
+      TemplateState templateState=TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+      if (templateState != null) {
+        myEditor.putUserData(INTRODUCE_RESTART,true);
+        templateState.cancelTemplate();
+      }
+    }
+  }
+.execute();
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      ASTNode identifier=myProperty.getNode().findChildByType(JetTokens.IDENTIFIER);
+      if (identifier != null) {
+        TextRange range=identifier.getTextRange();
+        RangeHighlighter[] highlighters=myEditor.getMarkupModel().getAllHighlighters();
+        for (        RangeHighlighter highlighter : highlighters) {
+          if (highlighter.getStartOffset() == range.getStartOffset()) {
+            if (highlighter.getEndOffset() == range.getEndOffset()) {
+              highlighter.setGreedyToRight(greedyToRight.get());
+            }
+          }
+        }
+      }
+    }
+  }
+);
+  if (myEditor.getUserData(INTRODUCE_RESTART) == Boolean.TRUE) {
+    myInitialName=myProperty.getName();
+    performInplaceRefactoring(getSuggestionsForNextRun());
+  }
+}

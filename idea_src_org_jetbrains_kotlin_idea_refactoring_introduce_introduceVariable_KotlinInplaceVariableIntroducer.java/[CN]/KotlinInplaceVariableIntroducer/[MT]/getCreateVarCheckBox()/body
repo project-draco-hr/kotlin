@@ -1,0 +1,26 @@
+{
+  if (myDoNotChangeVar)   return null;
+  return new Function0<JComponent>(){
+    @Override public JComponent invoke(){
+      final JCheckBox varCheckbox=new NonFocusableCheckBox("Declare with var");
+      varCheckbox.setSelected(isVar);
+      varCheckbox.setMnemonic('v');
+      varCheckbox.addActionListener(new ActionListener(){
+        @Override public void actionPerformed(        @NotNull ActionEvent e){
+          new WriteCommandAction(myProject,getCommandName(),getCommandName()){
+            @Override protected void run(            @NotNull Result result) throws Throwable {
+              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+              JetPsiFactory psiFactory=new JetPsiFactory(myProject);
+              ASTNode node=varCheckbox.isSelected() ? psiFactory.createVarNode() : psiFactory.createValNode();
+              myProperty.getValOrVarNode().getPsi().replace(node.getPsi());
+            }
+          }
+.execute();
+        }
+      }
+);
+      return varCheckbox;
+    }
+  }
+;
+}
