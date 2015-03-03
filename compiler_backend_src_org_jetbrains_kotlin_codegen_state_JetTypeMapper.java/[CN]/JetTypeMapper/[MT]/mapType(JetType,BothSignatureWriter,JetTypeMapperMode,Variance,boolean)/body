@@ -53,6 +53,16 @@
     return Type.getType("[" + boxType(mapType(memberType,kind)).getDescriptor());
   }
   if (descriptor instanceof ClassDescriptor) {
+    FqName defaultObjectMappedFqName=IntrinsicObjects.INSTANCE$.mapType((ClassDescriptor)descriptor);
+    if (defaultObjectMappedFqName != null) {
+      Type asmType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(defaultObjectMappedFqName);
+      if (signatureVisitor != null) {
+        signatureVisitor.writeAsmType(asmType);
+      }
+      return asmType;
+    }
+  }
+  if (descriptor instanceof ClassDescriptor) {
     Type asmType=computeAsmType((ClassDescriptor)descriptor.getOriginal());
     writeGenericType(signatureVisitor,asmType,jetType,howThisTypeIsUsed,projectionsAllowed);
     return asmType;
