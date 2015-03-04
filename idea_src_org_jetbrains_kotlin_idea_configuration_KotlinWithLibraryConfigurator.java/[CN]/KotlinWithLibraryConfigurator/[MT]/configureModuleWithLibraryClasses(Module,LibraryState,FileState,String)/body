@@ -2,6 +2,7 @@
   Project project=module.getProject();
   RuntimeLibraryFiles files=getExistingJarFiles();
   File runtimeJar=files.getRuntimeJar();
+  File reflectJar=files.getReflectJar();
 switch (libraryState) {
 case LIBRARY:
 switch (jarState) {
@@ -12,6 +13,9 @@ case EXISTS:
 case COPY:
 {
       copyFileToDir(runtimeJar,dirToCopyJarTo);
+      if (reflectJar != null) {
+        copyFileToDir(reflectJar,dirToCopyJarTo);
+      }
       break;
     }
 case DO_NOT_COPY:
@@ -24,18 +28,17 @@ case NON_CONFIGURED_LIBRARY:
 switch (jarState) {
 case EXISTS:
 {
-addJarToExistingLibrary(project,files.getRuntimeDestination(dirToCopyJarTo));
+addJarsToExistingLibrary(project,files.getRuntimeDestination(dirToCopyJarTo),files.getReflectDestination(dirToCopyJarTo));
 break;
 }
 case COPY:
 {
-File file=copyFileToDir(runtimeJar,dirToCopyJarTo);
-addJarToExistingLibrary(project,file);
+addJarsToExistingLibrary(project,copyFileToDir(runtimeJar,dirToCopyJarTo),copyFileToDir(reflectJar,dirToCopyJarTo));
 break;
 }
 case DO_NOT_COPY:
 {
-addJarToExistingLibrary(project,runtimeJar);
+addJarsToExistingLibrary(project,runtimeJar,reflectJar);
 break;
 }
 }
@@ -44,18 +47,17 @@ case NEW_LIBRARY:
 switch (jarState) {
 case EXISTS:
 {
-addJarToNewLibrary(project,files.getRuntimeDestination(dirToCopyJarTo));
+addJarsToNewLibrary(project,files.getRuntimeDestination(dirToCopyJarTo),files.getReflectDestination(dirToCopyJarTo));
 break;
 }
 case COPY:
 {
-File file=copyFileToDir(runtimeJar,dirToCopyJarTo);
-addJarToNewLibrary(project,file);
+addJarsToNewLibrary(project,copyFileToDir(runtimeJar,dirToCopyJarTo),copyFileToDir(reflectJar,dirToCopyJarTo));
 break;
 }
 case DO_NOT_COPY:
 {
-addJarToNewLibrary(project,runtimeJar);
+addJarsToNewLibrary(project,runtimeJar,reflectJar);
 break;
 }
 }
