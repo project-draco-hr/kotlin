@@ -1,5 +1,4 @@
 {
-  sourceMapper.visitSource(nodeAndSmap.getSource(),nodeAndSmap.getSourcePath());
   MethodNode node=nodeAndSmap.getNode();
   ReifiedTypeParametersUsages reificationResult=reifiedTypeInliner.reifyInstructions(node.instructions);
   generateClosuresBodies();
@@ -7,7 +6,7 @@
   addInlineMarker(codegen.v,true);
   Parameters parameters=invocationParamBuilder.buildParameters();
   InliningContext info=new RootInliningContext(expressionMap,state,codegen.getInlineNameGenerator().subGenerator(functionDescriptor.getName().asString()),codegen.getContext(),callElement,codegen.getParentCodegen().getClassName(),reifiedTypeInliner);
-  MethodInliner inliner=new MethodInliner(node,parameters,info,new FieldRemapper(null,null,parameters),isSameModule,"Method inlining " + callElement.getText(),sourceMapper);
+  MethodInliner inliner=new MethodInliner(node,parameters,info,new FieldRemapper(null,null,parameters),isSameModule,"Method inlining " + callElement.getText(),createNestedSourceMapper(nodeAndSmap));
   LocalVarRemapper remapper=new LocalVarRemapper(parameters,initialFrameSize);
   MethodNode adapter=InlineCodegenUtil.createEmptyMethodNode();
   InlineResult result=inliner.doInline(adapter,remapper,true,LabelOwner.SKIP_ALL);
