@@ -6,13 +6,20 @@
   }
   Project project=decompiledDeclaration.getProject();
   ProjectFileIndex projectFileIndex=ProjectFileIndex.SERVICE.getInstance(project);
-  if (!projectFileIndex.isInLibraryClasses(libraryFile)) {
+  boolean isJsProject=JsProjectDetector.isJsProject(project);
+  if (!isJsProject && !projectFileIndex.isInLibraryClasses(libraryFile)) {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
   Set<VirtualFile> sourceRootSet=Sets.newLinkedHashSet();
   for (  OrderEntry entry : projectFileIndex.getOrderEntriesForFile(libraryFile)) {
     if (entry instanceof LibraryOrSdkOrderEntry) {
       KotlinPackage.addAll(sourceRootSet,entry.getFiles(OrderRootType.SOURCES));
+    }
+  }
+  if (isJsProject) {
+    Library library=NavigationPackage.getKotlinJavascriptLibrary(libraryFile,project);
+    if (library != null) {
+      KotlinPackage.addAll(sourceRootSet,library.getFiles(OrderRootType.SOURCES));
     }
   }
   return new LibrarySourcesScope(project,sourceRootSet);
