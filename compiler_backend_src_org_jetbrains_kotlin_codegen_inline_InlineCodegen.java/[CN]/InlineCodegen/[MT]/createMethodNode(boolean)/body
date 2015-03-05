@@ -7,30 +7,36 @@
  else {
     asmMethod=jvmSignature.getAsmMethod();
   }
-  MethodNode node;
+  SMAPAndMethodNode nodeAndSMAP;
   if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
     VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor,state);
-    node=InlineCodegenUtil.getMethodNode(file.contentsToByteArray(),asmMethod.getName(),asmMethod.getDescriptor());
-    if (node == null) {
+    nodeAndSMAP=InlineCodegenUtil.getMethodNode(file.contentsToByteArray(),asmMethod.getName(),asmMethod.getDescriptor());
+    if (nodeAndSMAP == null) {
       throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
     }
   }
  else {
     PsiElement element=DescriptorToSourceUtils.descriptorToDeclaration(functionDescriptor);
+    Type ownerType=typeMapper.mapOwner(functionDescriptor,false);
     if (element == null) {
       throw new RuntimeException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
     }
-    node=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(functionDescriptor,context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
+    MethodNode node=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(functionDescriptor,context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);
     MethodVisitor maxCalcAdapter=InlineCodegenUtil.wrapWithMaxLocalCalc(node);
     MethodContext methodContext=context.getParentContext().intoFunction(functionDescriptor);
+    SMAP smap;
     if (callDefault) {
-      FunctionCodegen.generateDefaultImplBody(methodContext,functionDescriptor,maxCalcAdapter,DefaultParameterValueLoader.DEFAULT,(JetNamedFunction)element,codegen.getParentCodegen());
+      FakeMemberCodegen parentCodegen=new FakeMemberCodegen(codegen.getParentCodegen());
+      FunctionCodegen.generateDefaultImplBody(methodContext,functionDescriptor,maxCalcAdapter,DefaultParameterValueLoader.DEFAULT,(JetNamedFunction)element,parentCodegen);
+      smap=new SMAP(parentCodegen.mappings);
     }
  else {
-      generateMethodBody(maxCalcAdapter,functionDescriptor,methodContext,(JetDeclarationWithBody)element,jvmSignature);
+      smap=generateMethodBody(maxCalcAdapter,functionDescriptor,methodContext,(JetDeclarationWithBody)element,jvmSignature);
     }
+    PsiFile file=element.getContainingFile();
+    nodeAndSMAP=new SMAPAndMethodNode(node,file.getName(),ownerType.getInternalName(),smap);
     maxCalcAdapter.visitMaxs(-1,-1);
     maxCalcAdapter.visitEnd();
   }
-  return node;
+  return nodeAndSMAP;
 }
