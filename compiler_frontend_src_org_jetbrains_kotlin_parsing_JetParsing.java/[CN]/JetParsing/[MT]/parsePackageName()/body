@@ -6,8 +6,15 @@
       errorWithRecovery("Package name must be a '.'-separated identifier list placed on a single line",PACKAGE_NAME_RECOVERY_SET);
       break;
     }
+    if (at(DOT)) {
+      advance();
+      qualifiedExpression.error("Package name must be a '.'-separated identifier list");
+      qualifiedExpression=mark();
+      continue;
+    }
     PsiBuilder.Marker nsName=mark();
-    if (expect(IDENTIFIER,"Package name must be a '.'-separated identifier list",PACKAGE_NAME_RECOVERY_SET)) {
+    boolean simpleNameFound=expect(IDENTIFIER,"Package name must be a '.'-separated identifier list",PACKAGE_NAME_RECOVERY_SET);
+    if (simpleNameFound) {
       nsName.done(REFERENCE_EXPRESSION);
     }
  else {
@@ -19,8 +26,14 @@
       qualifiedExpression=precedingMarker;
     }
     if (at(DOT)) {
-      simpleName=false;
       advance();
+      if (simpleName && !simpleNameFound) {
+        qualifiedExpression.drop();
+        qualifiedExpression=mark();
+      }
+ else {
+        simpleName=false;
+      }
     }
  else {
       break;
