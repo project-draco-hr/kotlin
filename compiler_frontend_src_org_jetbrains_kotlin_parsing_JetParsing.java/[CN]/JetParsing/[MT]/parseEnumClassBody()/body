@@ -7,15 +7,15 @@
     PsiBuilder.Marker entryOrMember=mark();
     TokenSet constructorNameFollow=TokenSet.create(SEMICOLON,COLON,LPAR,LT,LBRACE);
     int lastId=findLastBefore(ENUM_MEMBER_FIRST,constructorNameFollow,false);
-    TokenDetector enumDetector=new TokenDetector(ENUM_KEYWORD);
-    createTruncatedBuilder(lastId).parseModifierList(MODIFIER_LIST,enumDetector,REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
+    ModifierDetector detector=new ModifierDetector();
+    createTruncatedBuilder(lastId).parseModifierList(MODIFIER_LIST,detector,REGULAR_ANNOTATIONS_ONLY_WITH_BRACKETS);
     IElementType type;
     if (at(IDENTIFIER)) {
       parseEnumEntry();
       type=ENUM_ENTRY;
     }
  else {
-      type=parseMemberDeclarationRest(enumDetector.isDetected());
+      type=parseMemberDeclarationRest(detector.isEnumDetected(),detector.isDefaultDetected());
     }
     if (type == null) {
       errorAndAdvance("Expecting an enum entry or member declaration");
