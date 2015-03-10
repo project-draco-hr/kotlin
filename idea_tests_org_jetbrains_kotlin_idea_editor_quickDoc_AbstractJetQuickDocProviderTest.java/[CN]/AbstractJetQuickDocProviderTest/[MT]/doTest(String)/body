@@ -5,25 +5,31 @@
   DocumentationManager documentationManager=DocumentationManager.getInstance(myFixture.getProject());
   PsiElement targetElement=documentationManager.findTargetElement(myFixture.getEditor(),myFixture.getFile());
   String info=CtrlMouseHandler.getInfo(targetElement,element);
+  if (info != null) {
+    info=StringUtil.convertLineSeparators(info);
+  }
+  if (info != null && !info.endsWith("\n")) {
+    info+="\n";
+  }
   File testDataFile=new File(path);
   String textData=FileUtil.loadFile(testDataFile,true);
   List<String> directives=InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData,"INFO:");
   if (directives.isEmpty()) {
     throw new FileComparisonFailure("'// INFO:' directive was expected",textData,textData + "\n\n//INFO: " + info,testDataFile.getAbsolutePath());
   }
- else   if (directives.size() == 1) {
-    assertNotNull(info);
-    String expectedInfo=directives.get(0);
-    if (expectedInfo.endsWith("...")) {
-      if (!info.startsWith(StringUtil.trimEnd(expectedInfo,"..."))) {
+ else {
+    StringBuilder expectedInfoBuilder=new StringBuilder();
+    for (    String directive : directives) {
+      expectedInfoBuilder.append(directive).append("\n");
+    }
+    String expectedInfo=expectedInfoBuilder.toString();
+    if (expectedInfo.endsWith("...\n")) {
+      if (!info.startsWith(StringUtil.trimEnd(expectedInfo,"...\n"))) {
         wrapToFileComparisonFailure(info,path,textData);
       }
     }
  else     if (!expectedInfo.equals(info)) {
       wrapToFileComparisonFailure(info,path,textData);
     }
-  }
- else {
-    Assert.fail("Too many '// INFO:' directives in file " + path);
   }
 }
