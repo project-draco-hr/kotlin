@@ -1,9 +1,14 @@
 {
-  if (call == null) {
-    return false;
-  }
   if (shouldInline(call) && canInline(call)) {
+    JsFunction containingFunction=getCurrentNamedFunction();
+    if (containingFunction != null) {
+      inlineCallInfos.add(new JsCallInfo(call,containingFunction));
+    }
     JsFunction definition=getFunctionContext().getFunctionDefinition(call);
+    if (inProcessFunctions.contains(definition)) {
+      reportInlineCycle(call,definition);
+      return false;
+    }
     if (!processedFunctions.contains(definition)) {
       accept(definition);
     }
