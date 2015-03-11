@@ -9,7 +9,11 @@
   }
   GeneratedClassLoader classLoader;
   try {
-    classLoader=new GeneratedClassLoader(state.getFactory(),new URLClassLoader(new URL[]{paths.getRuntimePath().toURI().toURL()},AllModules.class.getClassLoader()));
+    List<URL> classPaths=Lists.newArrayList(paths.getRuntimePath().toURI().toURL());
+    for (    File file : configuration.get(JVMConfigurationKeys.CLASSPATH_KEY,Collections.<File>emptyList())) {
+      classPaths.add(file.toURI().toURL());
+    }
+    classLoader=new GeneratedClassLoader(state.getFactory(),new URLClassLoader(classPaths.toArray(new URL[classPaths.size()]),AllModules.class.getClassLoader()));
     FqName nameForScript=ScriptNameUtil.classNameForScript(environment.getSourceFiles().get(0).getScript());
     return classLoader.loadClass(nameForScript.asString());
   }
