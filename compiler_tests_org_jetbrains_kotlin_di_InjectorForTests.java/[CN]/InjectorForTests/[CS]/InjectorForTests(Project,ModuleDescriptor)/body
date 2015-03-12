@@ -4,10 +4,6 @@
   this.kotlinBuiltIns=moduleDescriptor.getBuiltIns();
   this.platformToKotlinClassMap=moduleDescriptor.getPlatformToKotlinClassMap();
   this.descriptorResolver=new DescriptorResolver();
-  this.expressionTypingComponents=new ExpressionTypingComponents();
-  this.expressionTypingServices=new ExpressionTypingServices(expressionTypingComponents);
-  this.callResolver=new CallResolver();
-  this.expressionTypingUtils=new ExpressionTypingUtils(getExpressionTypingServices(),callResolver,kotlinBuiltIns);
   this.annotationResolver=new AnnotationResolver();
   this.qualifiedExpressionResolver=new QualifiedExpressionResolver();
   this.flexibleTypeCapabilitiesProvider=new FlexibleTypeCapabilitiesProvider();
@@ -16,6 +12,11 @@
   this.typeLazinessToken=new TypeLazinessToken();
   this.dynamicTypesSettings=new DynamicTypesSettings();
   this.typeResolver=new TypeResolver(annotationResolver,qualifiedExpressionResolver,moduleDescriptor,flexibleTypeCapabilitiesProvider,storageManager,typeLazinessToken,dynamicTypesSettings);
+  this.expressionTypingComponents=new ExpressionTypingComponents();
+  this.expressionTypingServices=new ExpressionTypingServices(expressionTypingComponents);
+  this.functionDescriptorResolver=new FunctionDescriptorResolver(getTypeResolver(),getDescriptorResolver(),annotationResolver,storageManager,getExpressionTypingServices(),kotlinBuiltIns);
+  this.callResolver=new CallResolver();
+  this.expressionTypingUtils=new ExpressionTypingUtils(getExpressionTypingServices(),callResolver,kotlinBuiltIns);
   this.kotlinJvmCheckerProvider=KotlinJvmCheckerProvider.INSTANCE$;
   this.argumentTypeResolver=new ArgumentTypeResolver();
   this.candidateResolver=new CandidateResolver();
@@ -24,7 +25,7 @@
   this.delegatedPropertyResolver=new DelegatedPropertyResolver();
   this.controlStructureTypingUtils=new ControlStructureTypingUtils(getExpressionTypingServices());
   this.forLoopConventionsChecker=new ForLoopConventionsChecker();
-  this.localClassifierAnalyzer=new LocalClassifierAnalyzer(getDescriptorResolver(),getTypeResolver(),annotationResolver);
+  this.localClassifierAnalyzer=new LocalClassifierAnalyzer(getDescriptorResolver(),getFunctionDescriptorResolver(),getTypeResolver(),annotationResolver);
   this.reflectionTypes=new ReflectionTypes(moduleDescriptor);
   this.callExpressionResolver=new CallExpressionResolver();
   this.statementFilter=new StatementFilter();
@@ -39,6 +40,7 @@
   this.expressionTypingServices.setCallExpressionResolver(callExpressionResolver);
   this.expressionTypingServices.setCallResolver(callResolver);
   this.expressionTypingServices.setDescriptorResolver(descriptorResolver);
+  this.expressionTypingServices.setFunctionDescriptorResolver(functionDescriptorResolver);
   this.expressionTypingServices.setProject(project);
   this.expressionTypingServices.setStatementFilter(statementFilter);
   this.expressionTypingServices.setTypeResolver(typeResolver);
