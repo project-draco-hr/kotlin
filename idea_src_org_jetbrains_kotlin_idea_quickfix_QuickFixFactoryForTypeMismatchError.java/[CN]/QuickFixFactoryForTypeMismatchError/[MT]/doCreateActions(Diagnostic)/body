@@ -42,9 +42,10 @@
       actions.add(new ChangeVariableTypeFix(property,expressionType));
     }
   }
-  JetFunction function=PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
-  if (function != null && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
-    actions.add(new ChangeFunctionReturnTypeFix(function,expressionType));
+  PsiElement expressionParent=expression.getParent();
+  JetCallableDeclaration function=expressionParent instanceof JetReturnExpression ? BindingContextUtilPackage.getTargetFunction((JetReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
+  if (function instanceof JetFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
+    actions.add(new ChangeFunctionReturnTypeFix((JetFunction)function,expressionType));
   }
   if (expression instanceof JetOperationExpression) {
     ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(expression,context);
