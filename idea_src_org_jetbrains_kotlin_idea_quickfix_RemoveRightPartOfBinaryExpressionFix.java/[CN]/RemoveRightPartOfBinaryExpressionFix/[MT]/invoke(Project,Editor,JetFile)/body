@@ -1,10 +1,13 @@
 {
+  PsiElement newElement=null;
   if (element instanceof JetBinaryExpression) {
-    JetBinaryExpression newElement=(JetBinaryExpression)element.copy();
-    element.replace(newElement.getLeft());
+    newElement=element.replace(((JetBinaryExpression)element.copy()).getLeft());
   }
  else   if (element instanceof JetBinaryExpressionWithTypeRHS) {
-    JetBinaryExpressionWithTypeRHS newElement=(JetBinaryExpressionWithTypeRHS)element.copy();
-    element.replace(newElement.getLeft());
+    newElement=element.replace(((JetBinaryExpressionWithTypeRHS)element.copy()).getLeft());
+  }
+  PsiElement parent=newElement != null ? newElement.getParent() : null;
+  if (parent instanceof JetParenthesizedExpression && JetPsiUtil.areParenthesesUseless((JetParenthesizedExpression)parent)) {
+    parent.replace(newElement);
   }
 }
