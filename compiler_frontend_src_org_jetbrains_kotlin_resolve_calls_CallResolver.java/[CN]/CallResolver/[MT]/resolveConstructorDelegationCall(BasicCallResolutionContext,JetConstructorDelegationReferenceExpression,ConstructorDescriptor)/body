@@ -16,8 +16,10 @@
   }
   List<ResolutionCandidate<CallableDescriptor>> candidates=Lists.newArrayList();
   ReceiverValue constructorDispatchReceiver=!delegateClassDescriptor.isInner() ? ReceiverValue.NO_RECEIVER : ((ClassDescriptor)delegateClassDescriptor.getContainingDeclaration()).getThisAsReceiverParameter().getValue();
+  JetType expectedType=isThisCall ? calleeConstructor.getContainingDeclaration().getDefaultType() : DescriptorUtils.getSuperClassType(currentClassDescriptor);
+  TypeSubstitutor knownTypeParametersSubstitutor=TypeSubstitutor.create(expectedType);
   for (  CallableDescriptor descriptor : constructors) {
-    candidates.add(ResolutionCandidate.create(context.call,descriptor,constructorDispatchReceiver,ReceiverValue.NO_RECEIVER,ExplicitReceiverKind.NO_EXPLICIT_RECEIVER));
+    candidates.add(ResolutionCandidate.create(context.call,descriptor,constructorDispatchReceiver,ReceiverValue.NO_RECEIVER,ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,knownTypeParametersSubstitutor));
   }
   return computeTasksFromCandidatesAndResolvedCall(context,calleeExpression,candidates,CallTransformer.FUNCTION_CALL_TRANSFORMER);
 }
