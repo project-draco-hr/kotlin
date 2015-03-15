@@ -1,12 +1,13 @@
 {
-  ClassDescriptor currentClassDescriptor=getClassDescriptorByConstructorContext(context);
-  if (currentClassDescriptor.getKind() == ClassKind.ENUM_CLASS && !calleeExpression.isThis()) {
+  ClassDescriptor currentClassDescriptor=calleeConstructor.getContainingDeclaration();
+  boolean isThisCall=calleeExpression.isThis();
+  if (currentClassDescriptor.getKind() == ClassKind.ENUM_CLASS && !isThisCall) {
     context.trace.report(DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR.on((JetConstructorDelegationCall)calleeExpression.getParent()));
     return checkArgumentTypesAndFail(context);
   }
-  ClassDescriptor delegateClassDescriptor=calleeExpression.isThis() ? currentClassDescriptor : DescriptorUtilPackage.getSuperClassOrAny(currentClassDescriptor);
+  ClassDescriptor delegateClassDescriptor=isThisCall ? currentClassDescriptor : DescriptorUtilPackage.getSuperClassOrAny(currentClassDescriptor);
   Collection<ConstructorDescriptor> constructors=delegateClassDescriptor.getConstructors();
-  if (!calleeExpression.isThis() && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
+  if (!isThisCall && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
     context.trace.report(PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.on((JetConstructorDelegationCall)calleeExpression.getParent()));
   }
   if (constructors.isEmpty()) {
