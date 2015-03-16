@@ -7,7 +7,7 @@
   CodegenContext descriptorContext=null;
   if (!fromOutsideContext || getClassOrPackageParentContext().getContextDescriptor() != descriptor.getContainingDeclaration()) {
     DeclarationDescriptor enclosed=descriptor.getContainingDeclaration();
-    boolean isDefaultObjectMember=DescriptorUtils.isDefaultObject(enclosed);
+    boolean isCompanionObjectMember=DescriptorUtils.isCompanionObject(enclosed);
     if (hasThisDescriptor() && (enclosed != getThisDescriptor() || !fromOutsideContext)) {
       CodegenContext currentContext=this;
       while (currentContext != null) {
@@ -15,11 +15,11 @@
           descriptorContext=currentContext;
           break;
         }
-        if (isDefaultObjectMember && currentContext instanceof ClassContext) {
+        if (isCompanionObjectMember && currentContext instanceof ClassContext) {
           ClassContext classContext=(ClassContext)currentContext;
-          CodegenContext defaultObjectContext=classContext.getDefaultObjectContext();
-          if (defaultObjectContext != null && defaultObjectContext.getContextDescriptor() == enclosed) {
-            descriptorContext=defaultObjectContext;
+          CodegenContext companionObjectContext=classContext.getCompanionObjectContext();
+          if (companionObjectContext != null && companionObjectContext.getContextDescriptor() == enclosed) {
+            descriptorContext=companionObjectContext;
             break;
           }
         }

@@ -14,7 +14,7 @@
     }
   }
   for (  JetTypeConstraint constraint : declaration.getTypeConstraints()) {
-    reportUnsupportedDefaultObjectConstraint(trace,constraint);
+    reportUnsupportedCompanionObjectConstraint(trace,constraint);
     JetSimpleNameExpression subjectTypeParameterName=constraint.getSubjectTypeParameterName();
     if (subjectTypeParameterName == null) {
       continue;
@@ -25,12 +25,12 @@
     JetType bound=null;
     if (boundTypeReference != null) {
       bound=typeResolver.resolveType(scope,boundTypeReference,trace,false);
-      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(boundTypeReference,bound,constraint.isDefaultObjectConstraint()));
+      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(boundTypeReference,bound,constraint.isCompanionObjectConstraint()));
     }
     if (typeParameterDescriptor != null) {
       trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
       if (bound != null) {
-        if (constraint.isDefaultObjectConstraint()) {
+        if (constraint.isCompanionObjectConstraint()) {
         }
  else {
           typeParameterDescriptor.addUpperBound(bound);
@@ -45,7 +45,7 @@
   }
   if (!(declaration instanceof JetClass)) {
     for (    UpperBoundCheckerTask checkerTask : deferredUpperBoundCheckerTasks) {
-      checkUpperBoundType(checkerTask.upperBound,checkerTask.upperBoundType,checkerTask.isDefaultObjectConstraint,trace);
+      checkUpperBoundType(checkerTask.upperBound,checkerTask.upperBoundType,checkerTask.isCompanionObjectConstraint,trace);
     }
     checkNamesInConstraints(declaration,descriptor,scope,trace);
   }

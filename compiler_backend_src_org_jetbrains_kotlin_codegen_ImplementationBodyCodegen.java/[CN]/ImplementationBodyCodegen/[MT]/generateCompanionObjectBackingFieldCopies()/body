@@ -1,0 +1,15 @@
+{
+  if (companionObjectPropertiesToCopy == null)   return;
+  for (  PropertyAndDefaultValue info : companionObjectPropertiesToCopy) {
+    PropertyDescriptor property=info.descriptor;
+    Type type=typeMapper.mapType(property);
+    FieldVisitor fv=v.newField(Synthetic(DescriptorToSourceUtils.descriptorToDeclaration(property),property),ACC_STATIC | ACC_FINAL | ACC_PUBLIC,context.getFieldName(property,false),type.getDescriptor(),typeMapper.mapFieldSignature(property.getType()),info.defaultValue);
+    AnnotationCodegen.forField(fv,typeMapper).genAnnotations(property,type);
+    if (state.getClassBuilderMode() == ClassBuilderMode.FULL && info.defaultValue == null) {
+      ExpressionCodegen codegen=createOrGetClInitCodegen();
+      int companionObjectIndex=putCompanionObjectInLocalVar(codegen);
+      StackValue.local(companionObjectIndex,OBJECT_TYPE).put(OBJECT_TYPE,codegen.v);
+      copyFieldFromCompanionObject(property);
+    }
+  }
+}
