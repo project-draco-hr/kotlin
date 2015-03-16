@@ -1,6 +1,7 @@
 {
   List<IntentionAction> actions=new LinkedList<IntentionAction>();
-  BindingContext context=ResolvePackage.analyzeFully((JetFile)diagnostic.getPsiFile());
+  AnalysisResult analysisResult=ResolvePackage.analyzeFullyAndGetResult((JetFile)diagnostic.getPsiFile());
+  BindingContext context=analysisResult.getBindingContext();
   PsiElement diagnosticElement=diagnostic.getPsiElement();
   if (!(diagnosticElement instanceof JetExpression)) {
     LOG.error("Unexpected element: " + diagnosticElement.getText());
@@ -38,14 +39,19 @@
   JetProperty property=PsiTreeUtil.getParentOfType(expression,JetProperty.class);
   if (property != null) {
     JetPropertyAccessor getter=property.getGetter();
-    if (QuickFixUtil.canEvaluateTo(property.getInitializer(),expression) || (getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(property.getGetter(),expression))) {
-      actions.add(new ChangeVariableTypeFix(property,expressionType));
+    JetExpression initializer=property.getInitializer();
+    if (QuickFixUtil.canEvaluateTo(initializer,expression) || (getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(property.getGetter(),expression))) {
+      JetScope scope=JetScopeUtils.getResolutionScope(property,analysisResult);
+      JetType typeToInsert=approximateWithResolvableType(expressionType,scope);
+      actions.add(new ChangeVariableTypeFix(property,typeToInsert));
     }
   }
   PsiElement expressionParent=expression.getParent();
   JetCallableDeclaration function=expressionParent instanceof JetReturnExpression ? BindingContextUtilPackage.getTargetFunction((JetReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
   if (function instanceof JetFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
-    actions.add(new ChangeFunctionReturnTypeFix((JetFunction)function,expressionType));
+    JetScope scope=JetScopeUtils.getResolutionScope(function,analysisResult);
+    JetType typeToInsert=approximateWithResolvableType(expressionType,scope);
+    actions.add(new ChangeFunctionReturnTypeFix((JetFunction)function,typeToInsert));
   }
   if (expression instanceof JetOperationExpression) {
     ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(expression,context);
@@ -53,19 +59,6 @@
       JetFunction declaration=getFunctionDeclaration(resolvedCall);
       if (declaration != null) {
         actions.add(new ChangeFunctionReturnTypeFix(declaration,expectedType));
-      }
-    }
-  }
-  if (expression.getParent() instanceof JetBinaryExpression) {
-    JetBinaryExpression parentBinary=(JetBinaryExpression)expression.getParent();
-    if (parentBinary.getRight() == expression) {
-      ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(parentBinary,context);
-      if (resolvedCall != null) {
-        JetFunction declaration=getFunctionDeclaration(resolvedCall);
-        if (declaration != null) {
-          JetParameter binaryOperatorParameter=declaration.getValueParameters().get(0);
-          actions.add(new ChangeParameterTypeFix(binaryOperatorParameter,expressionType));
-        }
       }
     }
   }
@@ -87,7 +80,9 @@
       JetParameter correspondingParameter=QuickFixUtil.getParameterDeclarationForValueArgument(resolvedCall,valueArgument);
       JetType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.get(BindingContext.EXPRESSION_TYPE,valueArgument.getArgumentExpression());
       if (correspondingParameter != null && valueArgumentType != null) {
-        actions.add(new ChangeParameterTypeFix(correspondingParameter,valueArgumentType));
+        JetScope scope=JetScopeUtils.getResolutionScope(valueArgument.getArgumentExpression(),analysisResult);
+        JetType typeToInsert=approximateWithResolvableType(valueArgumentType,scope);
+        actions.add(new ChangeParameterTypeFix(correspondingParameter,typeToInsert));
       }
     }
   }
