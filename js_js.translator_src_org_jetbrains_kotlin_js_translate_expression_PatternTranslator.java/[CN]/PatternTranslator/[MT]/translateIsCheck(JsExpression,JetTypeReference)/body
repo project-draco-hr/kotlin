@@ -1,7 +1,9 @@
 {
-  JsExpression result=translateAsIntrinsicTypeCheck(subject,typeReference);
-  if (result != null) {
-    return result;
+  JetType type=BindingUtils.getTypeByReference(bindingContext(),typeReference);
+  JsExpression checkFunReference=getIsTypeCheckCallable(type);
+  JsInvocation isCheck=new JsInvocation(checkFunReference,subject);
+  if (isNullable(typeReference)) {
+    return addNullCheck(subject,isCheck);
   }
-  return translateAsIsCheck(subject,typeReference);
+  return isCheck;
 }
