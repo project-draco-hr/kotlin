@@ -6,6 +6,15 @@
       for (      PsiReference ref : UsagesSearch.INSTANCE$.search(request)) {
         processUsage(processor,ref);
       }
+      if (element instanceof JetSecondaryConstructor || element instanceof PsiMethod) {
+        UsagesSearchPackage.processDelegationCallConstructorUsages(element,options.searchScope,new Function1<PsiElement,Unit>(){
+          @Override public Unit invoke(          PsiElement element){
+            processUsage(processor,element);
+            return null;
+          }
+        }
+);
+      }
       if (kotlinOptions.getSearchOverrides()) {
         DeclarationsSearchPackage.searchOverriders(new HierarchySearchRequest<PsiElement>(element,options.searchScope,true)).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
           @Override public boolean execute(          @NotNull PsiMethod method){
