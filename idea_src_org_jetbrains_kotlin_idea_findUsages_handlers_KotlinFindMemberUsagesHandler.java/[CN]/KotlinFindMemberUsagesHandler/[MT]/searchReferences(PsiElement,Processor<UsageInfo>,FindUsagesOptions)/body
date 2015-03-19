@@ -3,22 +3,20 @@
     @Override public Boolean compute(){
       KotlinCallableFindUsagesOptions kotlinOptions=(KotlinCallableFindUsagesOptions)options;
       @SuppressWarnings("unchecked") UsagesSearchRequest request=getSearchHelper(kotlinOptions).newRequest(FindUsagesPackage.<T>toSearchTarget(options,(T)element,true));
+      final CommonProcessors.UniqueProcessor<UsageInfo> uniqueProcessor=new CommonProcessors.UniqueProcessor<UsageInfo>(processor);
       for (      PsiReference ref : UsagesSearch.INSTANCE$.search(request)) {
-        processUsage(processor,ref);
+        processUsage(uniqueProcessor,ref);
       }
-      if (element instanceof JetSecondaryConstructor || element instanceof PsiMethod) {
-        UsagesSearchPackage.processDelegationCallConstructorUsages(element,options.searchScope,new Function1<PsiElement,Unit>(){
-          @Override public Unit invoke(          PsiElement element){
-            processUsage(processor,element);
-            return null;
-          }
+      PsiMethod psiMethod=element instanceof PsiMethod ? (PsiMethod)element : element instanceof JetSecondaryConstructor ? LightClassUtil.getLightClassMethod((JetFunction)element) : null;
+      if (psiMethod != null) {
+        for (        PsiReference ref : MethodReferencesSearch.search(psiMethod,options.searchScope,true)) {
+          processUsage(uniqueProcessor,ref.getElement());
         }
-);
       }
       if (kotlinOptions.getSearchOverrides()) {
         DeclarationsSearchPackage.searchOverriders(new HierarchySearchRequest<PsiElement>(element,options.searchScope,true)).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>(){
           @Override public boolean execute(          @NotNull PsiMethod method){
-            return processUsage(processor,method.getNavigationElement());
+            return processUsage(uniqueProcessor,method.getNavigationElement());
           }
         }
 ));
