@@ -28,7 +28,7 @@
           Document document=PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
           component=editor=new EditorTextField(document,getProject(),getFileType());
         }
- else         if (JetConstructorParameterTableModel.isValVarColumn(columnInfo)) {
+ else         if (JetPrimaryConstructorParameterTableModel.isValVarColumn(columnInfo)) {
           JComboBox comboBox=new JComboBox(JetValVar.values());
           comboBox.setSelectedItem(item.parameter.getValOrVar());
           comboBox.addItemListener(new ItemListener(){
@@ -76,7 +76,7 @@
       return new JBTableRow(){
         @Override public Object getValueAt(        int column){
           ColumnInfo columnInfo=myParametersTableModel.getColumnInfos()[column];
-          if (JetConstructorParameterTableModel.isValVarColumn(columnInfo))           return ((JComboBox)components.get(column)).getSelectedItem();
+          if (JetPrimaryConstructorParameterTableModel.isValVarColumn(columnInfo))           return ((JComboBox)components.get(column)).getSelectedItem();
  else           if (JetCallableParameterTableModel.isTypeColumn(columnInfo))           return item.typeCodeFragment;
  else           if (JetCallableParameterTableModel.isNameColumn(columnInfo))           return ((EditorTextField)components.get(column)).getText();
  else           if (JetCallableParameterTableModel.isDefaultValueColumn(columnInfo))           return item.defaultValueCodeFragment;
@@ -93,7 +93,7 @@
     private int getEditorIndex(    int x){
       int[] columnLetters=isDefaultColumnEnabled() ? new int[]{4,getParamNamesMaxLength(),getTypesMaxLength(),getDefaultValuesMaxLength()} : new int[]{4,getParamNamesMaxLength(),getTypesMaxLength()};
       int columnIndex=0;
-      for (int i=ChangeSignaturePackage.getIsConstructor(myMethod) ? 0 : 1; i < columnLetters.length; i++) {
+      for (int i=myMethod.getKind() == Kind.PRIMARY_CONSTRUCTOR ? 0 : 1; i < columnLetters.length; i++) {
         int width=getColumnWidth(columnLetters[i]);
         if (x <= width)         return columnIndex;
         columnIndex++;
@@ -103,7 +103,7 @@
     }
     @Override public JComponent getPreferredFocusedComponent(){
       MouseEvent me=getMouseEvent();
-      int index=me != null ? getEditorIndex((int)me.getPoint().getX()) : ChangeSignaturePackage.getIsConstructor(myMethod) ? 1 : 0;
+      int index=me != null ? getEditorIndex((int)me.getPoint().getX()) : myMethod.getKind() == Kind.PRIMARY_CONSTRUCTOR ? 1 : 0;
       JComponent component=components.get(index);
       return component instanceof EditorTextField ? ((EditorTextField)component).getFocusTarget() : component;
     }
