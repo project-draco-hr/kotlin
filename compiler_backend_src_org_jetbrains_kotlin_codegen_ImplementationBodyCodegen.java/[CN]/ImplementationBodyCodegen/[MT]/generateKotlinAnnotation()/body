@@ -12,7 +12,9 @@
   }
   DescriptorSerializer serializer=DescriptorSerializer.create(descriptor,new JvmSerializerExtension(v.getSerializationBindings(),typeMapper));
   ProtoBuf.Class classProto=serializer.classProto(descriptor).build();
-  ClassData data=new ClassData(createNameResolver(serializer.getStringTable()),classProto);
+  StringTable strings=serializer.getStringTable();
+  NameResolver nameResolver=new NameResolver(strings.serializeSimpleNames(),strings.serializeQualifiedNames());
+  ClassData data=new ClassData(nameResolver,classProto);
   AnnotationVisitor av=v.getVisitor().visitAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_CLASS),true);
   av.visit(JvmAnnotationNames.ABI_VERSION_FIELD_NAME,JvmAbi.VERSION);
   av.visitEnum(JvmAnnotationNames.KIND_FIELD_NAME,Type.getObjectType(KotlinClass.KIND_INTERNAL_NAME).getDescriptor(),kind.toString());

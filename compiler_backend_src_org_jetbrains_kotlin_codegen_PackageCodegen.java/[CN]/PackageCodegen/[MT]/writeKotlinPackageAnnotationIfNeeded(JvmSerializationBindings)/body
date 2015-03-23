@@ -11,7 +11,9 @@
   ContainerUtil.addIfNotNull(packageFragments,compiledPackageFragment);
   ProtoBuf.Package packageProto=serializer.packageProto(packageFragments).build();
   if (packageProto.getMemberCount() == 0)   return;
-  PackageData data=new PackageData(createNameResolver(serializer.getStringTable()),packageProto);
+  StringTable strings=serializer.getStringTable();
+  NameResolver nameResolver=new NameResolver(strings.serializeSimpleNames(),strings.serializeQualifiedNames());
+  PackageData data=new PackageData(nameResolver,packageProto);
   AnnotationVisitor av=v.newAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_PACKAGE),true);
   av.visit(JvmAnnotationNames.ABI_VERSION_FIELD_NAME,JvmAbi.VERSION);
   AnnotationVisitor array=av.visitArray(JvmAnnotationNames.DATA_FIELD_NAME);
