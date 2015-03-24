@@ -1,6 +1,9 @@
 {
   if (!isStatement)   return DataFlowUtils.illegalStatementType(expression,contextWithExpectedType,facade);
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  PreliminaryLoopVisitor loopVisitor=new PreliminaryLoopVisitor(expression);
+  loopVisitor.launch();
+  context=context.replaceDataFlowInfo(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(context.dataFlowInfo));
   JetExpression condition=expression.getCondition();
   DataFlowInfo dataFlowInfo=checkCondition(context.scope,condition,context);
   JetExpression body=expression.getBody();
@@ -14,7 +17,7 @@
     dataFlowInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,context).and(dataFlowInfo);
   }
   if (bodyTypeInfo != null && isTrueConstant(condition)) {
-    dataFlowInfo=dataFlowInfo.and(bodyTypeInfo.getJumpFlowInfo());
+    dataFlowInfo=dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
   }
   return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
 }

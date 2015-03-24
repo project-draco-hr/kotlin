@@ -1,9 +1,15 @@
 {
   SetMultimap<DataFlowValue,JetType> result=newTypeInfo();
+  Set<DataFlowValue> resultCompleted=new HashSet<DataFlowValue>();
   DelegatingDataFlowInfo info=this;
   while (info != null) {
     for (    DataFlowValue key : info.typeInfo.keySet()) {
-      result.putAll(key,info.typeInfo.get(key));
+      if (!resultCompleted.contains(key)) {
+        result.putAll(key,info.typeInfo.get(key));
+      }
+    }
+    if (valueWithGivenTypeInfo != null) {
+      resultCompleted.add(valueWithGivenTypeInfo);
     }
     info=(DelegatingDataFlowInfo)info.parent;
   }

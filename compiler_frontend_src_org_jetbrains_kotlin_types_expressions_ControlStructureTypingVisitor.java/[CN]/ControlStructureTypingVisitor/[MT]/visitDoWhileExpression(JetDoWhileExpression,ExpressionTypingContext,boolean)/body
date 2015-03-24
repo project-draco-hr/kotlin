@@ -3,6 +3,9 @@
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
   JetExpression body=expression.getBody();
   JetScope conditionScope=context.scope;
+  PreliminaryLoopVisitor loopVisitor=new PreliminaryLoopVisitor(expression);
+  loopVisitor.launch();
+  context=context.replaceDataFlowInfo(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(context.dataFlowInfo));
   LoopTypeInfo bodyTypeInfo=null;
   if (body instanceof JetFunctionLiteralExpression) {
     JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
@@ -39,7 +42,7 @@
     dataFlowInfo=context.dataFlowInfo;
   }
   if (bodyTypeInfo != null) {
-    dataFlowInfo=dataFlowInfo.and(bodyTypeInfo.getJumpFlowInfo());
+    dataFlowInfo=dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
   }
   return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
 }
