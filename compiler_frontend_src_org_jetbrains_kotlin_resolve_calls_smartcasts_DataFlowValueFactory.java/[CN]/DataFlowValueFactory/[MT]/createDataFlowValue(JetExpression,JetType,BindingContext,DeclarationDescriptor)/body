@@ -1,0 +1,12 @@
+{
+  if (expression instanceof JetConstantExpression) {
+    JetConstantExpression constantExpression=(JetConstantExpression)expression;
+    if (constantExpression.getNode().getElementType() == JetNodeTypes.NULL)     return DataFlowValue.NULL;
+  }
+  if (type.isError())   return DataFlowValue.ERROR;
+  if (KotlinBuiltIns.getInstance().getNullableNothingType().equals(type)) {
+    return DataFlowValue.NULL;
+  }
+  IdentifierInfo result=getIdForStableIdentifier(expression,bindingContext,containingDeclaration);
+  return new DataFlowValue(result == NO_IDENTIFIER_INFO ? expression : result.id,type,result.isStable,getImmanentNullability(type));
+}

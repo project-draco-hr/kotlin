@@ -12,12 +12,12 @@
   JetType receiverArgumentType=receiverArgument.getType();
   BindingContext bindingContext=trace.getBindingContext();
   if (!safeAccess && !receiverParameter.getType().isMarkedNullable() && receiverArgumentType.isMarkedNullable()) {
-    if (!SmartCastUtils.canBeSmartCast(receiverParameter,receiverArgument,bindingContext,context.dataFlowInfo)) {
+    if (!SmartCastUtils.canBeSmartCast(receiverParameter,receiverArgument,context)) {
       context.tracing.unsafeCall(trace,receiverArgumentType,implicitInvokeCheck);
       return UNSAFE_CALL_ERROR;
     }
   }
-  DataFlowValue receiverValue=DataFlowValueFactory.createDataFlowValue(receiverArgument,bindingContext);
+  DataFlowValue receiverValue=DataFlowValueFactory.createDataFlowValue(receiverArgument,bindingContext,context.scope.getContainingDeclaration());
   if (safeAccess && !context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
     context.tracing.unnecessarySafeCall(trace,receiverArgumentType);
   }

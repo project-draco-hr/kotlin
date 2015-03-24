@@ -1,0 +1,14 @@
+{
+  DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,simpleNameExpression);
+  if (declarationDescriptor instanceof VariableDescriptor) {
+    ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(simpleNameExpression,bindingContext);
+    ModuleDescriptor usageModuleDescriptor=DescriptorUtils.getContainingModuleOrNull(containingDeclaration);
+    IdentifierInfo receiverInfo=resolvedCall != null ? getIdForImplicitReceiver(resolvedCall.getDispatchReceiver(),simpleNameExpression) : null;
+    VariableDescriptor variableDescriptor=(VariableDescriptor)declarationDescriptor;
+    return combineInfo(receiverInfo,createInfo(variableDescriptor,isStableVariable(variableDescriptor,usageModuleDescriptor)));
+  }
+  if (declarationDescriptor instanceof PackageViewDescriptor) {
+    return createPackageInfo(declarationDescriptor);
+  }
+  return NO_IDENTIFIER_INFO;
+}
