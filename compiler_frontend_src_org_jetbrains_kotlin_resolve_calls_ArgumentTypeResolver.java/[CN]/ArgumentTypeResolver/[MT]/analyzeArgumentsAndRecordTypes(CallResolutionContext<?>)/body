@@ -1,7 +1,16 @@
 {
   MutableDataFlowInfoForArguments infoForArguments=context.dataFlowInfoForArguments;
-  infoForArguments.setInitialDataFlowInfo(context.dataFlowInfo);
-  for (  ValueArgument argument : context.call.getValueArguments()) {
+  Call call=context.call;
+  ReceiverValue receiver=call.getExplicitReceiver();
+  DataFlowInfo initialDataFlowInfo=context.dataFlowInfo;
+  if (receiver.exists() && !(receiver instanceof QualifierReceiver)) {
+    DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue(receiver,context);
+    if (PsiUtilPackage.isSafeCall(call)) {
+      initialDataFlowInfo=initialDataFlowInfo.disequate(receiverDataFlowValue,DataFlowValue.NULL);
+    }
+  }
+  infoForArguments.setInitialDataFlowInfo(initialDataFlowInfo);
+  for (  ValueArgument argument : call.getValueArguments()) {
     JetExpression expression=argument.getArgumentExpression();
     if (expression == null)     continue;
     CallResolutionContext<?> newContext=context.replaceDataFlowInfo(infoForArguments.getInfo(argument));

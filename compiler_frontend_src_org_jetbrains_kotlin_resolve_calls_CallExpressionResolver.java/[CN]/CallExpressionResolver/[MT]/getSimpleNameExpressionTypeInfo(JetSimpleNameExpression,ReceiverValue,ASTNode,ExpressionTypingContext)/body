@@ -2,9 +2,10 @@
   boolean[] result=new boolean[1];
   TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as variable",nameExpression);
   JetType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceTraceAndCache(temporaryForVariable),result);
+  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
   if (result[0]) {
     temporaryForVariable.commit();
-    return JetTypeInfo.create(type,context.dataFlowInfo);
+    return JetTypeInfo.create(type,dataFlowInfo);
   }
   Call call=CallMaker.makeCall(nameExpression,receiver,callOperationNode,nameExpression,Collections.<ValueArgument>emptyList());
   TemporaryTraceAndCache temporaryForFunction=TemporaryTraceAndCache.create(context,"trace to resolve as function",nameExpression);
@@ -16,8 +17,8 @@
     boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
     context.trace.report(FUNCTION_CALL_EXPECTED.on(nameExpression,nameExpression,hasValueParameters));
     type=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
-    return JetTypeInfo.create(type,context.dataFlowInfo);
+    return JetTypeInfo.create(type,dataFlowInfo);
   }
   temporaryForVariable.commit();
-  return JetTypeInfo.create(null,context.dataFlowInfo);
+  return JetTypeInfo.create(null,dataFlowInfo);
 }
