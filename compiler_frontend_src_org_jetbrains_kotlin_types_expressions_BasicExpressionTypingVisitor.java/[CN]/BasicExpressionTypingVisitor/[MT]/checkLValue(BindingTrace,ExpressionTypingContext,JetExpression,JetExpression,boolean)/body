@@ -13,11 +13,18 @@
   VariableDescriptor variable=BindingContextUtils.extractVariableDescriptorIfAny(trace.getBindingContext(),expression,true);
   boolean result=true;
   JetExpression reportOn=expression != null ? expression : expressionWithParenthesis;
+  if (reportOn instanceof JetQualifiedExpression)   reportOn=((JetQualifiedExpression)reportOn).getSelectorExpression();
   if (variable instanceof PropertyDescriptor) {
     PropertyDescriptor propertyDescriptor=(PropertyDescriptor)variable;
+    PropertySetterDescriptor setter=propertyDescriptor.getSetter();
     if (propertyDescriptor.isSetterProjectedOut()) {
       trace.report(SETTER_PROJECTED_OUT.on(reportOn,propertyDescriptor));
       result=false;
+    }
+ else {
+      if (setter != null) {
+        context.symbolUsageValidator.validateCall(setter,trace,reportOn);
+      }
     }
   }
   if (variable == null) {
