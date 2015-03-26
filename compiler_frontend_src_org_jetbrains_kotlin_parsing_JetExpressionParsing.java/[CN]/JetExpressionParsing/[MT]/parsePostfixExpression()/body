@@ -1,8 +1,12 @@
 {
   PsiBuilder.Marker expression=mark();
+  boolean firstExpressionParsed;
   boolean doubleColonExpression=parseDoubleColonExpression();
   if (!doubleColonExpression) {
-    parseAtomicExpression();
+    firstExpressionParsed=parseAtomicExpression();
+  }
+ else {
+    firstExpressionParsed=true;
   }
   while (true) {
     if (interruptedWithNewLine()) {
@@ -15,15 +19,21 @@
  else     if (!doubleColonExpression && parseCallSuffix()) {
       expression.done(CALL_EXPRESSION);
     }
- else     if (at(DOT)) {
+ else     if (at(DOT) || at(SAFE_ACCESS)) {
+      IElementType expressionType=at(DOT) ? DOT_QUALIFIED_EXPRESSION : SAFE_ACCESS_EXPRESSION;
       advance();
+      if (!firstExpressionParsed) {
+        expression.drop();
+        expression=mark();
+      }
       parseCallExpression();
-      expression.done(DOT_QUALIFIED_EXPRESSION);
-    }
- else     if (at(SAFE_ACCESS)) {
-      advance();
-      parseCallExpression();
-      expression.done(SAFE_ACCESS_EXPRESSION);
+      if (firstExpressionParsed) {
+        expression.done(expressionType);
+      }
+ else {
+        firstExpressionParsed=true;
+        continue;
+      }
     }
  else     if (atSet(Precedence.POSTFIX.getOperations())) {
       parseOperationReference();
