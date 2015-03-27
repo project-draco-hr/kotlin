@@ -1,7 +1,6 @@
 {
   List<IntentionAction> actions=new LinkedList<IntentionAction>();
-  AnalysisResult analysisResult=ResolvePackage.analyzeFullyAndGetResult((JetFile)diagnostic.getPsiFile());
-  BindingContext context=analysisResult.getBindingContext();
+  BindingContext context=ResolvePackage.analyzeFully((JetFile)diagnostic.getPsiFile());
   PsiElement diagnosticElement=diagnostic.getPsiElement();
   if (!(diagnosticElement instanceof JetExpression)) {
     LOG.error("Unexpected element: " + diagnosticElement.getText());
@@ -41,16 +40,16 @@
     JetPropertyAccessor getter=property.getGetter();
     JetExpression initializer=property.getInitializer();
     if (QuickFixUtil.canEvaluateTo(initializer,expression) || (getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(property.getGetter(),expression))) {
-      JetScope scope=JetScopeUtils.getResolutionScope(property,analysisResult);
-      JetType typeToInsert=approximateWithResolvableType(expressionType,scope);
+      JetScope scope=JetScopeUtils.getResolutionScope(property,context);
+      JetType typeToInsert=UtilPackage.approximateWithResolvableType(expressionType,scope,false);
       actions.add(new ChangeVariableTypeFix(property,typeToInsert));
     }
   }
   PsiElement expressionParent=expression.getParent();
   JetCallableDeclaration function=expressionParent instanceof JetReturnExpression ? BindingContextUtilPackage.getTargetFunction((JetReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
   if (function instanceof JetFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
-    JetScope scope=JetScopeUtils.getResolutionScope(function,analysisResult);
-    JetType typeToInsert=approximateWithResolvableType(expressionType,scope);
+    JetScope scope=JetScopeUtils.getResolutionScope(function,context);
+    JetType typeToInsert=UtilPackage.approximateWithResolvableType(expressionType,scope,false);
     actions.add(new ChangeFunctionReturnTypeFix((JetFunction)function,typeToInsert));
   }
   if (expression instanceof JetOperationExpression) {
@@ -80,8 +79,8 @@
       JetParameter correspondingParameter=QuickFixUtil.getParameterDeclarationForValueArgument(resolvedCall,valueArgument);
       JetType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.get(BindingContext.EXPRESSION_TYPE,valueArgument.getArgumentExpression());
       if (correspondingParameter != null && valueArgumentType != null) {
-        JetScope scope=JetScopeUtils.getResolutionScope(valueArgument.getArgumentExpression(),analysisResult);
-        JetType typeToInsert=approximateWithResolvableType(valueArgumentType,scope);
+        JetScope scope=JetScopeUtils.getResolutionScope(valueArgument.getArgumentExpression(),context);
+        JetType typeToInsert=UtilPackage.approximateWithResolvableType(valueArgumentType,scope,true);
         actions.add(new ChangeParameterTypeFix(correspondingParameter,typeToInsert));
       }
     }
