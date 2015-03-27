@@ -1,32 +1,6 @@
 {
-  BothSignatureWriter sw=new BothSignatureWriter(BothSignatureWriter.Mode.METHOD);
   if (f instanceof ConstructorDescriptor) {
-    sw.writeParametersStart();
-    writeAdditionalConstructorParameters((ConstructorDescriptor)f,sw);
-    for (    ValueParameterDescriptor parameter : f.getOriginal().getValueParameters()) {
-      writeParameter(sw,parameter.getType());
-    }
-    writeVoidReturn(sw);
+    return mapSignature(f,kind,f.getOriginal().getValueParameters());
   }
- else {
-    writeFormalTypeParameters(getDirectMember(f).getTypeParameters(),sw);
-    sw.writeParametersStart();
-    writeThisIfNeeded(f,kind,sw);
-    ReceiverParameterDescriptor receiverParameter=f.getExtensionReceiverParameter();
-    if (receiverParameter != null) {
-      writeParameter(sw,JvmMethodParameterKind.RECEIVER,receiverParameter.getType());
-    }
-    for (    ValueParameterDescriptor parameter : f.getValueParameters()) {
-      writeParameter(sw,parameter.getType());
-    }
-    sw.writeReturnType();
-    if (forceBoxedReturnType(f)) {
-      mapType(f.getReturnType(),sw,JetTypeMapperMode.TYPE_PARAMETER);
-    }
- else {
-      mapReturnType(f,sw);
-    }
-    sw.writeReturnTypeEnd();
-  }
-  return sw.makeJvmMethodSignature(mapFunctionName(f));
+  return mapSignature(f,kind,f.getValueParameters());
 }
