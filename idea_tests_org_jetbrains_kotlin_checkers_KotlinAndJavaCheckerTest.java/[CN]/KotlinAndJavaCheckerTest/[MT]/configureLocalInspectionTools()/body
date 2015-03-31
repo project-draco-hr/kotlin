@@ -1,3 +1,18 @@
 {
-  return new LocalInspectionTool[]{new StaticCallOnSubclassInspection(),new StaticFieldReferenceOnSubclassInspection(),new NullableStuffInspection()};
+  File configureFile=new File(getTestDataPath(),getTestName(false) + ".txt");
+  if (!configureFile.exists())   return DEFAULT_TOOLS;
+  try {
+    String configureText=FileUtil.loadFile(configureFile,true);
+    InTextDirectivesUtils.assertHasUnknownPrefixes(configureText,KotlinPackage.listOf("TOOL:"));
+    List<String> toolsStrings=InTextDirectivesUtils.findListWithPrefixes(configureText,"TOOL:");
+    return ArrayUtil.toObjectArray(KotlinPackage.map(toolsStrings,new Function1<String,LocalInspectionTool>(){
+      @Override public LocalInspectionTool invoke(      String toolString){
+        return mapStringToTool(toolString);
+      }
+    }
+),LocalInspectionTool.class);
+  }
+ catch (  IOException e) {
+    throw UtilsPackage.rethrow(e);
+  }
 }
