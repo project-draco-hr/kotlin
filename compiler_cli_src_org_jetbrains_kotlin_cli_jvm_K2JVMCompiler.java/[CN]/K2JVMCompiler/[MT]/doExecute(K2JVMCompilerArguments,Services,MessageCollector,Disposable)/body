@@ -13,7 +13,7 @@
   }
   try {
     if (!arguments.noJdk) {
-      configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,PathUtil.getJdkClassesRoots());
+      addJvmClasspathRoots(configuration,PathUtil.getJdkClassesRoots());
     }
   }
  catch (  Throwable t) {
@@ -41,18 +41,18 @@ catch (  Throwable t) {
       messageCollector.report(CompilerMessageSeverity.ERROR,"Specify script source path to evaluate",CompilerMessageLocation.NO_LOCATION);
       return COMPILATION_ERROR;
     }
-    configuration.add(CommonConfigurationKeys.SOURCE_ROOTS_KEY,arguments.freeArgs.get(0));
+    addKotlinSourceRoot(configuration,arguments.freeArgs.get(0));
   }
  else   if (arguments.module == null) {
-    configuration.addAll(CommonConfigurationKeys.SOURCE_ROOTS_KEY,arguments.freeArgs);
-    for (    String source : arguments.freeArgs) {
-      File file=new File(source);
+    for (    String arg : arguments.freeArgs) {
+      addKotlinSourceRoot(configuration,arg);
+      File file=new File(arg);
       if (file.isDirectory()) {
-        configuration.add(JVMConfigurationKeys.CLASSPATH_KEY,file);
+        addJavaSourceRoot(configuration,file);
       }
     }
   }
-  configuration.addAll(JVMConfigurationKeys.CLASSPATH_KEY,getClasspath(paths,arguments));
+  addJvmClasspathRoots(configuration,getClasspath(paths,arguments));
   configuration.addAll(JVMConfigurationKeys.ANNOTATIONS_PATH_KEY,getAnnotationsPath(paths,arguments));
   if (arguments.module == null && arguments.freeArgs.isEmpty() && !arguments.version) {
     ReplFromTerminal.run(rootDisposable,configuration);
