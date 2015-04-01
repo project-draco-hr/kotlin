@@ -1,9 +1,13 @@
 {
   JetExpression expression=JetPsiUtil.deparenthesize(expressionWithParenthesis);
   if (expression instanceof JetArrayAccessExpression) {
-    JetExpression arrayExpression=((JetArrayAccessExpression)expression).getArrayExpression();
+    JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)expression;
+    JetExpression arrayExpression=arrayAccessExpression.getArrayExpression();
     if (arrayExpression == null)     return false;
-    return checkLValue(trace,arrayExpression,true);
+    TemporaryBindingTrace ignoreReportsTrace=TemporaryBindingTrace.create(trace,"Trace for checking set function");
+    ExpressionTypingContext findSetterContext=context.replaceBindingTrace(ignoreReportsTrace);
+    JetTypeInfo info=resolveArrayAccessSetMethod(arrayAccessExpression,rightHandSide,findSetterContext,ignoreReportsTrace);
+    return info.getType() != null;
   }
   if (canBeThis && expression instanceof JetThisExpression)   return true;
   VariableDescriptor variable=BindingContextUtils.extractVariableDescriptorIfAny(trace.getBindingContext(),expression,true);
