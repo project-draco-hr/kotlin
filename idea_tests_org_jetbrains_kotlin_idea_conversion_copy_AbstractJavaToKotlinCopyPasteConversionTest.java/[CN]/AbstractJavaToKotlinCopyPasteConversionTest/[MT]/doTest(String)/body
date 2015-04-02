@@ -3,7 +3,22 @@
   String testName=getTestName(false);
   myFixture.configureByFile(testName + ".java");
   myFixture.performEditorAction(IdeActions.ACTION_COPY);
+  ConvertJavaCopyPastePostProcessor.conversionPerformed=false;
   myFixture.configureByFile(testName + ".to.kt");
   myFixture.performEditorAction(IdeActions.ACTION_PASTE);
+  if (!ConvertJavaCopyPastePostProcessor.conversionPerformed) {
+    CommandProcessor.getInstance().executeCommand(getProject(),new Runnable(){
+      @Override public void run(){
+        ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override public void run(){
+            Document document=myFixture.getEditor().getDocument();
+            document.replaceString(0,document.getTextLength(),"No conversion performed");
+          }
+        }
+);
+      }
+    }
+,"",null);
+  }
   myFixture.checkResultByFile(testName + ".expected.kt");
 }
