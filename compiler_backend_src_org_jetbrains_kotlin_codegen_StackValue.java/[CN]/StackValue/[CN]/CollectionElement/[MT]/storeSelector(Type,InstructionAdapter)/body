@@ -2,18 +2,11 @@
   if (setter == null) {
     throw new UnsupportedOperationException("no setter specified");
   }
-  if (setter instanceof ExtendedCallable) {
-    ExtendedCallable method=(ExtendedCallable)setter;
-    Type[] argumentTypes=method.getArgumentTypes();
-    coerce(topOfStackType,argumentTypes[argumentTypes.length - 1],v);
-    method.invokeWithNotNullAssertion(v,state,resolvedSetCall);
-    Type returnType=method.getReturnType();
-    if (returnType != Type.VOID_TYPE) {
-      pop(v,returnType);
-    }
-  }
- else {
-    StackValue result=((IntrinsicMethod)setter).generate(codegen,null,null,Collections.<JetExpression>emptyList(),StackValue.none());
-    result.put(result.type,v);
+  Type[] argumentTypes=setter.getArgumentTypes();
+  coerce(topOfStackType,argumentTypes[argumentTypes.length - 1],v);
+  setter.invokeWithNotNullAssertion(v,state,resolvedSetCall);
+  Type returnType=setter.getReturnType();
+  if (returnType != Type.VOID_TYPE) {
+    pop(v,returnType);
   }
 }
