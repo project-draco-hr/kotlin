@@ -4,24 +4,7 @@
   Callable callable=resolveToCallable(descriptor,false,resolvedCall);
   JetExpression lhs=expression.getLeft();
   Type lhsType=expressionType(lhs);
-  boolean keepReturnValue;
-  if (Boolean.TRUE.equals(bindingContext.get(VARIABLE_REASSIGNMENT,expression))) {
-    if (callable instanceof IntrinsicMethod) {
-      StackValue value=gen(lhs);
-      value=StackValue.complexWriteReadReceiver(value);
-      value.put(lhsType,v);
-      Type returnType=typeMapper.mapType(descriptor);
-      StackValue rightSide=((IntrinsicMethod)callable).generate(this,returnType,expression,Collections.singletonList(expression.getRight()),StackValue.onStack(lhsType));
-      value.store(rightSide,v,true);
-      return StackValue.none();
-    }
- else {
-      keepReturnValue=true;
-    }
-  }
- else {
-    keepReturnValue=!KotlinBuiltIns.getInstance().getUnitType().equals(descriptor.getReturnType());
-  }
+  boolean keepReturnValue=Boolean.TRUE.equals(bindingContext.get(VARIABLE_REASSIGNMENT,expression)) || !KotlinBuiltIns.getInstance().getUnitType().equals(descriptor.getReturnType());
   callAugAssignMethod(expression,resolvedCall,(ExtendedCallable)callable,lhsType,keepReturnValue);
   return StackValue.none();
 }
