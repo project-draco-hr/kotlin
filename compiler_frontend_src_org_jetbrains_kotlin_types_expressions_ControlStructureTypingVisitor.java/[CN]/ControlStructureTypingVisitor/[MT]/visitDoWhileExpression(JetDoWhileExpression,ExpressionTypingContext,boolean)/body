@@ -3,13 +3,14 @@
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
   JetExpression body=expression.getBody();
   JetScope conditionScope=context.scope;
+  LoopTypeInfo bodyTypeInfo=null;
   if (body instanceof JetFunctionLiteralExpression) {
     JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
     JetFunctionLiteral functionLiteral=function.getFunctionLiteral();
     if (!functionLiteral.hasParameterSpecification()) {
       WritableScope writableScope=newWritableScopeImpl(context,"do..while body scope");
       conditionScope=writableScope;
-      components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,functionLiteral.getBodyExpression().getStatements(),CoercionStrategy.NO_COERCION,context);
+      bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,functionLiteral.getBodyExpression().getStatements(),CoercionStrategy.NO_COERCION,context);
       context.trace.record(BindingContext.BLOCK,function);
     }
  else {
@@ -26,7 +27,7 @@
  else {
       block=Collections.<JetElement>singletonList(body);
     }
-    components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,block,CoercionStrategy.NO_COERCION,context);
+    bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,block,CoercionStrategy.NO_COERCION,context);
   }
   JetExpression condition=expression.getCondition();
   DataFlowInfo conditionDataFlowInfo=checkCondition(conditionScope,condition,context);
@@ -36,6 +37,9 @@
   }
  else {
     dataFlowInfo=context.dataFlowInfo;
+  }
+  if (bodyTypeInfo != null) {
+    dataFlowInfo=dataFlowInfo.and(bodyTypeInfo.getJumpFlowInfo());
   }
   return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
 }

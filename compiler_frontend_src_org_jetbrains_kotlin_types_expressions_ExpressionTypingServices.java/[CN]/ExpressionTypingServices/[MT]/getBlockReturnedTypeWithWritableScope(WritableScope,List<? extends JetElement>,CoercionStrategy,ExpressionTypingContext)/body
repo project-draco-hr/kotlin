@@ -1,10 +1,12 @@
 {
   if (block.isEmpty()) {
-    return JetTypeInfo.create(builtIns.getUnitType(),context.dataFlowInfo);
+    return new LoopTypeInfo(builtIns.getUnitType(),context.dataFlowInfo);
   }
   ExpressionTypingInternals blockLevelVisitor=ExpressionTypingVisitorDispatcher.createForBlock(expressionTypingComponents,scope);
   ExpressionTypingContext newContext=context.replaceScope(scope).replaceExpectedType(NO_EXPECTED_TYPE);
   JetTypeInfo result=JetTypeInfo.create(null,context.dataFlowInfo);
+  DataFlowInfo beforeJumpInfo=newContext.dataFlowInfo;
+  boolean jumpOutPossible=false;
   for (Iterator<? extends JetElement> iterator=block.iterator(); iterator.hasNext(); ) {
     JetElement statement=iterator.next();
     if (!(statement instanceof JetExpression)) {
@@ -18,10 +20,20 @@
       result=blockLevelVisitor.getTypeInfo(statementExpression,newContext.replaceContextDependency(ContextDependency.INDEPENDENT),true);
     }
     DataFlowInfo newDataFlowInfo=result.getDataFlowInfo();
+    if (!jumpOutPossible) {
+      if (result instanceof LoopTypeInfo) {
+        LoopTypeInfo loopTypeInfo=(LoopTypeInfo)result;
+        beforeJumpInfo=loopTypeInfo.getJumpFlowInfo();
+        jumpOutPossible=loopTypeInfo.isJumpOutPossible();
+      }
+ else {
+        beforeJumpInfo=newDataFlowInfo;
+      }
+    }
     if (newDataFlowInfo != context.dataFlowInfo) {
       newContext=newContext.replaceDataFlowInfo(newDataFlowInfo);
     }
     blockLevelVisitor=ExpressionTypingVisitorDispatcher.createForBlock(expressionTypingComponents,scope);
   }
-  return result;
+  return new LoopTypeInfo(result.getType(),result.getDataFlowInfo(),jumpOutPossible,beforeJumpInfo);
 }
