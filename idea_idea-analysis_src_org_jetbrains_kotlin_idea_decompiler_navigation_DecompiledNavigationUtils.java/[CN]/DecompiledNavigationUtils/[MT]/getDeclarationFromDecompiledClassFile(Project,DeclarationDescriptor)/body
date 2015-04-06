@@ -1,15 +1,7 @@
 {
   if (DescriptorUtils.isLocal(referencedDescriptor))   return null;
-  VirtualFile virtualFile;
-  if (JsProjectDetector.isJsProject(project) && NavigationPackage.getKotlinJavascriptLibraryWithMetadata(referencedDescriptor,project) != null) {
-    JsMetaFileVirtualFileHolder system=JsMetaFileVirtualFileHolder.getInstance(project);
-    virtualFile=system.getFile(referencedDescriptor);
-    if (virtualFile == null)     return null;
-  }
- else {
-    virtualFile=findVirtualFileContainingDescriptor(project,referencedDescriptor);
-    if (virtualFile == null || !DecompilerPackage.isKotlinCompiledFile(virtualFile))     return null;
-  }
+  VirtualFile virtualFile=findVirtualFileContainingDescriptor(project,referencedDescriptor);
+  if (virtualFile == null || !DecompilerPackage.isKotlinJvmCompiledFile(virtualFile) && !DecompilerPackage.isKotlinJsMetaFile(virtualFile))   return null;
   PsiFile psiFile=PsiManager.getInstance(project).findFile(virtualFile);
   if (!(psiFile instanceof KotlinClsFileBase)) {
     return null;
