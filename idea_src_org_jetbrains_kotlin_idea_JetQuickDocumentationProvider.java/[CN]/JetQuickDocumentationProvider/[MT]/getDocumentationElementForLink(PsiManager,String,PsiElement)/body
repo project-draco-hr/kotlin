@@ -5,14 +5,13 @@
   JetElement jetElement=(JetElement)context;
   Project project=psiManager.getProject();
   KotlinCacheService cacheService=KotlinCacheService.getInstance(project);
-  ResolveSessionForBodies session=cacheService.getLazyResolveSession(jetElement);
   ResolutionFacade facade=cacheService.getResolutionFacade(Collections.singletonList(jetElement));
   BindingContext bindingContext=facade.analyze(jetElement,BodyResolveMode.PARTIAL);
   DeclarationDescriptor contextDescriptor=bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,context);
   if (contextDescriptor == null) {
     return null;
   }
-  Collection<DeclarationDescriptor> descriptors=KdocPackage.resolveKDocLink(session,contextDescriptor,null,StringUtil.split(link,","));
+  Collection<DeclarationDescriptor> descriptors=KdocPackage.resolveKDocLink(facade,contextDescriptor,null,StringUtil.split(link,","));
   if (!descriptors.isEmpty()) {
     DeclarationDescriptor target=descriptors.iterator().next();
     if (target instanceof DeclarationDescriptorWithSource) {
