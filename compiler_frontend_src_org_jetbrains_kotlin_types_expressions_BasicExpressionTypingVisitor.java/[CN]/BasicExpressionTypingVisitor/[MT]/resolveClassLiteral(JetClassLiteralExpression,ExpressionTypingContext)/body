@@ -6,23 +6,28 @@
   }
   TypeResolutionContext context=new TypeResolutionContext(c.scope,c.trace,false,true);
   PossiblyBareType possiblyBareType=components.expressionTypingServices.getTypeResolver().resolvePossiblyBareType(context,typeReference);
-  TypeConstructor typeConstructor=null;
+  JetType type=null;
   if (possiblyBareType.isBare()) {
     if (!possiblyBareType.isNullable()) {
-      typeConstructor=possiblyBareType.getBareTypeConstructor();
+      ClassifierDescriptor descriptor=possiblyBareType.getBareTypeConstructor().getDeclarationDescriptor();
+      if (descriptor instanceof ClassDescriptor) {
+        ClassDescriptor classDescriptor=(ClassDescriptor)descriptor;
+        if (KotlinBuiltIns.isNonPrimitiveArray(classDescriptor)) {
+          context.trace.report(ARRAY_CLASS_LITERAL_REQUIRES_ARGUMENT.on(expression));
+          return null;
+        }
+        type=substituteWithStarProjections(classDescriptor);
+      }
     }
   }
  else {
-    JetType type=possiblyBareType.getActualType();
-    if (!type.isMarkedNullable() && type.getArguments().isEmpty()) {
-      typeConstructor=type.getConstructor();
+    JetType actualType=possiblyBareType.getActualType();
+    if (isAllowedInClassLiteral(actualType)) {
+      type=actualType;
     }
   }
-  if (typeConstructor != null) {
-    ClassifierDescriptor classifier=typeConstructor.getDeclarationDescriptor();
-    if (classifier instanceof ClassDescriptor) {
-      return (ClassDescriptor)classifier;
-    }
+  if (type != null) {
+    return type;
   }
   context.trace.report(CLASS_LITERAL_LHS_NOT_A_CLASS.on(expression));
   return null;
