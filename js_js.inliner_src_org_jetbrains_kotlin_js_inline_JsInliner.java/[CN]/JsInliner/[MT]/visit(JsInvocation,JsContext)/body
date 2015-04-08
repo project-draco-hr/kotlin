@@ -1,18 +1,15 @@
 {
-  if (shouldInline(call) && canInline(call)) {
-    JsFunction containingFunction=getCurrentNamedFunction();
-    if (containingFunction != null) {
-      inlineCallInfos.add(new JsCallInfo(call,containingFunction));
-    }
-    JsFunction definition=getFunctionContext().getFunctionDefinition(call);
-    if (inProcessFunctions.contains(definition)) {
-      reportInlineCycle(call,definition);
-      return false;
-    }
-    if (!processedFunctions.contains(definition)) {
-      accept(definition);
-    }
-    inline(call,context);
+  if (!hasToBeInlined(call))   return true;
+  JsFunction containingFunction=getCurrentNamedFunction();
+  if (containingFunction != null) {
+    inlineCallInfos.add(new JsCallInfo(call,containingFunction));
+  }
+  JsFunction definition=getFunctionContext().getFunctionDefinition(call);
+  if (inProcessFunctions.contains(definition)) {
+    reportInlineCycle(call,definition);
+  }
+ else   if (!processedFunctions.contains(definition)) {
+    accept(definition);
   }
   return true;
 }
