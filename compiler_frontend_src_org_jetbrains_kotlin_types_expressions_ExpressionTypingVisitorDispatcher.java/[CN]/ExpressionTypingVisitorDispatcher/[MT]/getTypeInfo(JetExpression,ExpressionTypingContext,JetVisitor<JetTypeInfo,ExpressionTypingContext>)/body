@@ -32,6 +32,8 @@ catch (  KotlinFrontEndException e) {
     throw e;
   }
 catch (  Throwable e) {
-    throw new KotlinFrontEndException("Exception while analyzing expression at " + DiagnosticUtils.atLocation(expression) + ":\n"+ expression.getText()+ "\n",e);
+    context.trace.report(Errors.EXCEPTION_FROM_ANALYZER.on(expression,e));
+    LOG.error("Exception while analyzing expression at " + DiagnosticUtils.atLocation(expression) + ":\n"+ expression.getText()+ "\n",e);
+    return JetTypeInfo.create(ErrorUtils.createErrorType(e.getClass().getSimpleName() + " from analyzer"),context.dataFlowInfo);
   }
 }
