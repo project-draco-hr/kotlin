@@ -5,6 +5,20 @@
     }
  else {
       result.add(functionUsageInfo);
+      PsiElement callee=functionUsageInfo.getElement();
+      if (callee == null)       continue;
+      SearchScope scope=callee.getUseScope();
+      if (scope instanceof GlobalSearchScope) {
+        scope=GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope,JetFileType.INSTANCE);
+      }
+      for (      PsiReference reference : ReferencesSearch.search(callee,scope)) {
+        PsiElement element=reference.getElement();
+        JetCallElement callElement=PsiTreeUtil.getParentOfType(element,JetCallElement.class);
+        JetExpression calleeExpression=callElement != null ? callElement.getCalleeExpression() : null;
+        if (calleeExpression != null && PsiTreeUtil.isAncestor(calleeExpression,element,false)) {
+          result.add(new JetFunctionCallUsage(callElement,changeInfo.getMethodDescriptor().getOriginalPrimaryFunction()));
+        }
+      }
     }
   }
 }
