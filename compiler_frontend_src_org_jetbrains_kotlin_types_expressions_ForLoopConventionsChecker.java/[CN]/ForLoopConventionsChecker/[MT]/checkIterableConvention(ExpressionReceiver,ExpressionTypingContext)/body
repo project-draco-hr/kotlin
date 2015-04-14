@@ -1,13 +1,13 @@
 {
   JetExpression loopRangeExpression=loopRange.getExpression();
   Name iterator=Name.identifier("iterator");
-  Pair<Call,OverloadResolutionResults<FunctionDescriptor>> calls=expressionTypingUtils.makeAndResolveFakeCall(loopRange,context,Collections.<JetExpression>emptyList(),iterator,loopRange.getExpression());
+  Pair<Call,OverloadResolutionResults<FunctionDescriptor>> calls=fakeCallResolver.makeAndResolveFakeCall(loopRange,context,Collections.<JetExpression>emptyList(),iterator,loopRange.getExpression());
   OverloadResolutionResults<FunctionDescriptor> iteratorResolutionResults=calls.getSecond();
   if (iteratorResolutionResults.isSuccess()) {
     ResolvedCall<FunctionDescriptor> iteratorResolvedCall=iteratorResolutionResults.getResultingCall();
     context.trace.record(LOOP_RANGE_ITERATOR_RESOLVED_CALL,loopRangeExpression,iteratorResolvedCall);
     FunctionDescriptor iteratorFunction=iteratorResolvedCall.getResultingDescriptor();
-    expressionTypingServices.getSymbolUsageValidator().validateCall(iteratorFunction,context.trace,loopRangeExpression);
+    symbolUsageValidator.validateCall(iteratorFunction,context.trace,loopRangeExpression);
     JetType iteratorType=iteratorFunction.getReturnType();
     JetType hasNextType=checkConventionForIterator(context,loopRangeExpression,iteratorType,"hasNext",HAS_NEXT_FUNCTION_AMBIGUITY,HAS_NEXT_MISSING,HAS_NEXT_FUNCTION_NONE_APPLICABLE,LOOP_RANGE_HAS_NEXT_RESOLVED_CALL);
     if (hasNextType != null && !builtIns.isBooleanOrSubtype(hasNextType)) {
