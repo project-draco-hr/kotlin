@@ -5,17 +5,16 @@
   }
   CallableDescriptor argumentCallee=getCalleeDescriptor(context,argumentExpression,false);
   if (argumentCallee != null && inlinableParameters.contains(argumentCallee)) {
-    boolean isTargetInlineFunction=targetDescriptor instanceof SimpleFunctionDescriptor && ((SimpleFunctionDescriptor)targetDescriptor).getInlineStrategy().isInline();
-    if (!isTargetInlineFunction || !isInlinableParameter(targetParameterDescriptor)) {
-      context.trace.report(Errors.USAGE_IS_NOT_INLINABLE.on(argumentExpression,argumentExpression,descriptor));
-    }
- else {
+    if (InlineUtil.isInline(targetDescriptor) && isInlinableParameter(targetParameterDescriptor)) {
       if (allowsNonLocalReturns(argumentCallee) && !allowsNonLocalReturns(targetParameterDescriptor)) {
-        context.trace.report(Errors.NON_LOCAL_RETURN_NOT_ALLOWED.on(argumentExpression,argumentExpression,argumentCallee,descriptor));
+        context.trace.report(NON_LOCAL_RETURN_NOT_ALLOWED.on(argumentExpression,argumentExpression,argumentCallee,descriptor));
       }
  else {
         checkNonLocalReturn(context,argumentCallee,argumentExpression);
       }
+    }
+ else {
+      context.trace.report(USAGE_IS_NOT_INLINABLE.on(argumentExpression,argumentExpression,descriptor));
     }
   }
 }
