@@ -14,9 +14,10 @@
       curIns=curIns.getPrevious();
       continue;
     }
-    AbstractInsnNode instrInsertFinallyBefore=curIns.getPrevious();
+    AbstractInsnNode markedReturn=curIns;
+    final AbstractInsnNode instrInsertFinallyBefore=markedReturn.getPrevious();
     AbstractInsnNode nextPrev=instrInsertFinallyBefore.getPrevious();
-    Type nonLocalReturnType=InlineCodegenUtil.getReturnType(curIns.getOpcode());
+    Type nonLocalReturnType=InlineCodegenUtil.getReturnType(markedReturn.getOpcode());
     List<TryBlockCluster<TryCatchBlockNodeInfo>> clustersFromInnermost=InlinePackage.doClustering(getCoveringFromInnermost());
     Iterator<TryBlockCluster<TryCatchBlockNodeInfo>> tryCatchBlockIterator=clustersFromInnermost.iterator();
     checkClusterInvariant(clustersFromInnermost);
@@ -46,7 +47,7 @@
       AbstractInsnNode currentIns=finallyInfo.startIns;
       while (currentIns != finallyInfo.endInsExclusive) {
         boolean isInsOrJumpInsideFinally=!(currentIns instanceof JumpInsnNode) || labelsInsideFinally.contains(((JumpInsnNode)currentIns).label);
-        copyInstruction(nextTempNonLocalVarIndex,curIns,instrInsertFinallyBefore,nonLocalReturnType,finallyBlockCopy,currentIns,isInsOrJumpInsideFinally);
+        copyInstruction(nextTempNonLocalVarIndex,markedReturn,instrInsertFinallyBefore,nonLocalReturnType,finallyBlockCopy,currentIns,isInsOrJumpInsideFinally);
         currentIns=currentIns.getNext();
       }
       finallyBlockCopy.visitLabel(newFinallyEnd);
@@ -58,11 +59,19 @@
       InlineCodegenUtil.insertNodeBefore(finallyBlockCopy,inlineFun,instrInsertFinallyBefore);
       updateExceptionTable(clusterBlocks,newFinallyStart,newFinallyEnd,tryCatchBlockInlinedInFinally,labelsInsideFinally,(LabelNode)insertedBlockEnd.info,additionalNodesToSplit);
     }
-    curIns=curIns.getPrevious();
+    curIns=markedReturn.getPrevious();
     while (curIns != null && curIns != nextPrev) {
       processInstruction(curIns,false);
       curIns=curIns.getPrevious();
     }
+    if (instrInsertFinallyBefore.getPrevious() != nextPrev && curIns != null) {
+      LabelNode startNode=new LabelNode();
+      LabelNode endNode=new LabelNode();
+      instructions.insert(curIns,startNode);
+      instructions.insert(markedReturn,endNode);
+      getLocalVarsMetaInfo().splitCurrentIntervals(new SimpleInterval(startNode,endNode),true);
+    }
   }
   substituteTryBlockNodes(inlineFun);
+  substituteLocalVarTable(inlineFun);
 }
