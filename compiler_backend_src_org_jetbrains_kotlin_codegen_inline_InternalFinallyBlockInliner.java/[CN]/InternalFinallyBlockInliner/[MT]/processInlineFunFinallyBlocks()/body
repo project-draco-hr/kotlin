@@ -3,21 +3,21 @@
   InsnList instructions=inlineFun.instructions;
   AbstractInsnNode curIns=instructions.getLast();
   while (curIns != null) {
-    updateCoveringTryBlocks(curIns);
+    processInstruction(curIns,false);
     if (!InlineCodegenUtil.isReturnOpcode(curIns.getOpcode()) || !InlineCodegenUtil.isMarkedReturn(curIns)) {
       curIns=curIns.getPrevious();
       continue;
     }
-    List<TryCatchBlockNodeInfo> currentCoveringNodes=getCoveringFromInnermost();
-    checkCoveringBlocksInvariant(currentCoveringNodes);
-    if (currentCoveringNodes.isEmpty() || currentCoveringNodes.get(currentCoveringNodes.size() - 1).getOnlyCopyNotProcess()) {
+    List<TryCatchBlockNodeInfo> currentCoveringNodesFromOuterMost=getTryBlocksMetaInfo().getCurrentIntervals();
+    checkCoveringBlocksInvariant(currentCoveringNodesFromOuterMost);
+    if (currentCoveringNodesFromOuterMost.isEmpty() || currentCoveringNodesFromOuterMost.get(0).getOnlyCopyNotProcess()) {
       curIns=curIns.getPrevious();
       continue;
     }
     AbstractInsnNode instrInsertFinallyBefore=curIns.getPrevious();
     AbstractInsnNode nextPrev=instrInsertFinallyBefore.getPrevious();
     Type nonLocalReturnType=InlineCodegenUtil.getReturnType(curIns.getOpcode());
-    List<TryBlockCluster<TryCatchBlockNodeInfo>> clustersFromInnermost=InlinePackage.doClustering(currentCoveringNodes);
+    List<TryBlockCluster<TryCatchBlockNodeInfo>> clustersFromInnermost=InlinePackage.doClustering(getCoveringFromInnermost());
     Iterator<TryBlockCluster<TryCatchBlockNodeInfo>> tryCatchBlockIterator=clustersFromInnermost.iterator();
     checkClusterInvariant(clustersFromInnermost);
     List<TryCatchBlockNodeInfo> additionalNodesToSplit=new ArrayList<TryCatchBlockNodeInfo>();
@@ -60,9 +60,9 @@
     }
     curIns=curIns.getPrevious();
     while (curIns != null && curIns != nextPrev) {
-      updateCoveringTryBlocks(curIns);
+      processInstruction(curIns,false);
       curIns=curIns.getPrevious();
     }
   }
-  substituteTryBlockNodes();
+  substituteTryBlockNodes(inlineFun);
 }

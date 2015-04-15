@@ -7,8 +7,7 @@
   DefaultProcessor processor=new DefaultProcessor(intoNode);
   AbstractInsnNode curInstr=intoNode.instructions.getFirst();
   while (curInstr != null) {
-    processor.updateCoveringTryBlocks(curInstr,true);
-    processor.updateCoveringLocalVars(curInstr,true);
+    processor.processInstruction(curInstr,true);
     MethodInliner.PointForExternalFinallyBlocks extension=extensionPoints.get(curInstr);
     if (extension != null) {
       Label start=new Label();
@@ -20,21 +19,12 @@
       finallyCodegen.generateFinallyBlocksIfNeeded(extension.returnType);
       finallyNode.visitLabel(end);
       InlineCodegenUtil.insertNodeBefore(finallyNode,intoNode,curInstr);
-      List<TryCatchBlockNodeInfo> blocks=new ArrayList<TryCatchBlockNodeInfo>(processor.getTryBlocksMetaInfo().getCurrentIntervals());
-      for (      TryCatchBlockNodeInfo block : blocks) {
-        processor.getTryBlocksMetaInfo().split(block,new SimpleInterval((LabelNode)start.info,(LabelNode)end.info),false);
-      }
+      SimpleInterval splitBy=new SimpleInterval((LabelNode)start.info,(LabelNode)end.info);
+      processor.getTryBlocksMetaInfo().splitCurrentIntervals(splitBy,false);
+      processor.getLocalVarsMetaInfo().splitCurrentIntervals(splitBy,false);
     }
     curInstr=curInstr.getNext();
   }
   processor.sortTryCatchBlocks();
-  Iterable<TryCatchBlockNodeInfo> nodes=processor.getNonEmptyNodes();
-  intoNode.tryCatchBlocks.clear();
-  for (  TryCatchBlockNodeInfo node : nodes) {
-    intoNode.tryCatchBlocks.add(node.getNode());
-  }
-  intoNode.localVariables.clear();
-  for (  LocalVarNodeWrapper interval : processor.getLocalVarsMetaInfo().getAllIntervals()) {
-    intoNode.localVariables.add(interval.getNode());
-  }
+  processor.substituteTryBlockNodes(intoNode);
 }
