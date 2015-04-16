@@ -1,14 +1,12 @@
 {
-  Map<DataFlowValue,Nullability> builder=Maps.newHashMap();
+  Map<DataFlowValue,Nullability> nullability=Maps.newHashMap();
   Nullability nullabilityOfB=getNullability(b);
-  boolean changed=putNullability(builder,a,nullabilityOfB);
+  putNullability(nullability,a,nullabilityOfB);
   SetMultimap<DataFlowValue,JetType> newTypeInfo=newTypeInfo();
-  Set<JetType> typesForA=collectTypesFromMeAndParents(a);
   Set<JetType> typesForB=collectTypesFromMeAndParents(b);
   if (nullabilityOfB.canBeNonNull() && !a.getType().equals(b.getType())) {
     typesForB.add(b.getType());
   }
   newTypeInfo.putAll(a,typesForB);
-  changed|=!typesForA.equals(typesForB);
-  return !changed ? this : new DelegatingDataFlowInfo(this,ImmutableMap.copyOf(builder),newTypeInfo.isEmpty() ? EMPTY_TYPE_INFO : newTypeInfo,a);
+  return new DelegatingDataFlowInfo(this,ImmutableMap.copyOf(nullability),newTypeInfo.isEmpty() ? EMPTY_TYPE_INFO : newTypeInfo,a);
 }
