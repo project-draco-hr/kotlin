@@ -1,7 +1,15 @@
 {
   if (targetBackend == TargetBackend.ANY)   return false;
   try {
-    String fileText=FileUtil.loadFile(file);
+    String fileText;
+    if (file.isDirectory()) {
+      File directivesFile=new File(file,DIRECTIVES_FILE_NAME);
+      if (!directivesFile.exists())       return false;
+      fileText=FileUtil.loadFile(directivesFile);
+    }
+ else {
+      fileText=FileUtil.loadFile(file);
+    }
     List<String> backends=InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText,"// TARGET_BACKEND: ");
     return backends.size() > 0 && !targetBackend.name().equals(backends.get(0));
   }
