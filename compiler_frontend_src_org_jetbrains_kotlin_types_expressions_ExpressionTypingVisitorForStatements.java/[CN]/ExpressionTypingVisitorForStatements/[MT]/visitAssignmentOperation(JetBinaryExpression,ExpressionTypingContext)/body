@@ -6,18 +6,17 @@
   JetExpression leftOperand=expression.getLeft();
   JetTypeInfo leftInfo=ExpressionTypingUtils.getTypeInfoOrNullType(leftOperand,context,facade);
   JetType leftType=leftInfo.getType();
-  DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
   JetExpression right=expression.getRight();
   JetExpression left=leftOperand == null ? null : JetPsiUtil.deparenthesize(leftOperand);
   if (right == null || left == null) {
     temporary.commit();
-    return JetTypeInfo.create(null,dataFlowInfo);
+    return leftInfo.clearType();
   }
   if (leftType == null) {
-    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
+    JetTypeInfo rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
     context.trace.report(UNRESOLVED_REFERENCE.on(operationSign,operationSign));
     temporary.commit();
-    return JetTypeInfo.create(null,dataFlowInfo);
+    return rightInfo.clearType();
   }
   ExpressionReceiver receiver=new ExpressionReceiver(left,leftType);
   Name name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
@@ -39,6 +38,7 @@
     binaryOperationType=null;
   }
   JetType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
+  JetTypeInfo rightInfo=leftInfo;
   if (assignmentOperationDescriptors.isSuccess() && binaryOperationDescriptors.isSuccess()) {
     OverloadResolutionResults<FunctionDescriptor> ambiguityResolutionResults=OverloadResolutionResultsUtil.ambiguity(assignmentOperationDescriptors,binaryOperationDescriptors);
     context.trace.report(ASSIGN_OPERATOR_AMBIGUITY.on(operationSign,ambiguityResolutionResults.getResultingCalls()));
@@ -46,7 +46,7 @@
     for (    ResolvedCall<?> resolvedCall : ambiguityResolutionResults.getResultingCalls()) {
       descriptors.add(resolvedCall.getResultingDescriptor());
     }
-    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
+    rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
     context.trace.record(AMBIGUOUS_REFERENCE_TARGET,operationSign,descriptors);
   }
  else   if (assignmentOperationType != null && (assignmentOperationDescriptors.isSuccess() || !binaryOperationDescriptors.isSuccess())) {
@@ -62,10 +62,10 @@
       ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(context.trace,"trace to resolve array set method for assignment",expression));
       basic.resolveArrayAccessSetMethod((JetArrayAccessExpression)left,right,contextForResolve,context.trace);
     }
-    dataFlowInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo)).getDataFlowInfo();
-    DataFlowUtils.checkType(binaryOperationType,expression,context.replaceExpectedType(leftType).replaceDataFlowInfo(dataFlowInfo));
+    rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
+    DataFlowUtils.checkType(binaryOperationType,expression,context.replaceExpectedType(leftType).replaceDataFlowInfo(rightInfo.getDataFlowInfo()));
     basic.checkLValue(context.trace,context,leftOperand,right);
   }
   temporary.commit();
-  return JetTypeInfo.create(checkAssignmentType(type,expression,contextWithExpectedType),dataFlowInfo);
+  return rightInfo.replaceType(checkAssignmentType(type,expression,contextWithExpectedType));
 }

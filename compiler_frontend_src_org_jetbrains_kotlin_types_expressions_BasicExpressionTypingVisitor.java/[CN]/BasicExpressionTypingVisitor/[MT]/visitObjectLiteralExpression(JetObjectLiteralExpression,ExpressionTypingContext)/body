@@ -2,8 +2,8 @@
   DelegatingBindingTrace delegatingBindingTrace=context.trace.get(TRACE_DELTAS_CACHE,expression.getObjectDeclaration());
   if (delegatingBindingTrace != null) {
     delegatingBindingTrace.addAllMyDataTo(context.trace);
-    JetType type=context.trace.get(EXPRESSION_TYPE,expression);
-    return DataFlowUtils.checkType(type,expression,context,context.dataFlowInfo);
+    JetType type=context.trace.getType(expression);
+    return TypeInfoFactoryPackage.createCheckedTypeInfo(type,context,expression);
   }
   final JetType[] result=new JetType[1];
   final TemporaryBindingTrace temporaryTrace=TemporaryBindingTrace.create(context.trace,"trace to resolve object literal expression",expression);
@@ -17,8 +17,8 @@
         }
 );
         result[0]=defaultType;
-        if (!context.trace.get(PROCESSED,expression)) {
-          temporaryTrace.record(EXPRESSION_TYPE,expression,defaultType);
+        if (Boolean.FALSE.equals(context.trace.get(PROCESSED,expression))) {
+          temporaryTrace.recordType(expression,defaultType);
           temporaryTrace.record(PROCESSED,expression);
         }
       }
@@ -32,5 +32,5 @@
   temporaryTrace.addAllMyDataTo(cloneDelta);
   context.trace.record(TRACE_DELTAS_CACHE,expression.getObjectDeclaration(),cloneDelta);
   temporaryTrace.commit();
-  return DataFlowUtils.checkType(result[0],expression,context,context.dataFlowInfo);
+  return TypeInfoFactoryPackage.createCheckedTypeInfo(result[0],context,expression);
 }

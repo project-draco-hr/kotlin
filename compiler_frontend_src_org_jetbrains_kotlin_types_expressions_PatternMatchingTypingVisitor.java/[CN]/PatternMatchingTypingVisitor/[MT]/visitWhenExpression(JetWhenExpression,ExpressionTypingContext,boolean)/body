@@ -3,11 +3,13 @@
   ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
   JetExpression subjectExpression=expression.getSubjectExpression();
   JetType subjectType;
+  boolean loopBreakContinuePossible=false;
   if (subjectExpression == null) {
     subjectType=ErrorUtils.createErrorType("Unknown type");
   }
  else {
     JetTypeInfo typeInfo=facade.safeGetTypeInfo(subjectExpression,context);
+    loopBreakContinuePossible=typeInfo.getJumpOutPossible();
     subjectType=typeInfo.getType();
     context=context.replaceDataFlowInfo(typeInfo.getDataFlowInfo());
   }
@@ -24,6 +26,7 @@
       ExpressionTypingContext newContext=contextWithExpectedType.replaceScope(scopeToExtend).replaceDataFlowInfo(infosForCondition.thenInfo).replaceContextDependency(INDEPENDENT);
       CoercionStrategy coercionStrategy=isStatement ? CoercionStrategy.COERCION_TO_UNIT : CoercionStrategy.NO_COERCION;
       JetTypeInfo typeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(bodyExpression),coercionStrategy,newContext);
+      loopBreakContinuePossible|=typeInfo.getJumpOutPossible();
       JetType type=typeInfo.getType();
       if (type != null) {
         expressionTypes.add(type);
@@ -39,8 +42,5 @@
   if (commonDataFlowInfo == null) {
     commonDataFlowInfo=context.dataFlowInfo;
   }
-  if (!expressionTypes.isEmpty()) {
-    return DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement,commonDataFlowInfo);
-  }
-  return JetTypeInfo.create(null,commonDataFlowInfo);
+  return TypeInfoFactoryPackage.createTypeInfo(expressionTypes.isEmpty() ? null : DataFlowUtils.checkImplicitCast(CommonSupertypes.commonSupertype(expressionTypes),expression,contextWithExpectedType,isStatement),commonDataFlowInfo,loopBreakContinuePossible,contextWithExpectedType.dataFlowInfo);
 }

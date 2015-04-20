@@ -23,18 +23,18 @@
       }
     }
   }
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  JetTypeInfo result=TypeInfoFactoryPackage.createTypeInfo(context);
   if (finallyBlock != null) {
-    dataFlowInfo=facade.getTypeInfo(finallyBlock.getFinalExpression(),context.replaceExpectedType(NO_EXPECTED_TYPE)).getDataFlowInfo();
+    result=facade.getTypeInfo(finallyBlock.getFinalExpression(),context.replaceExpectedType(NO_EXPECTED_TYPE));
   }
   JetType type=facade.getTypeInfo(tryBlock,context).getType();
   if (type != null) {
     types.add(type);
   }
   if (types.isEmpty()) {
-    return JetTypeInfo.create(null,dataFlowInfo);
+    return result.clearType();
   }
  else {
-    return JetTypeInfo.create(CommonSupertypes.commonSupertype(types),dataFlowInfo);
+    return result.replaceType(CommonSupertypes.commonSupertype(types));
   }
 }

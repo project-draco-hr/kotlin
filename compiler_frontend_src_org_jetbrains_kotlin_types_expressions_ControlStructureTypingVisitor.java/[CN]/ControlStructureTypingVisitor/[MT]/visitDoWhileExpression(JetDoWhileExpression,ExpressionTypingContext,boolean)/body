@@ -5,7 +5,7 @@
   JetScope conditionScope=context.scope;
   PreliminaryLoopVisitor loopVisitor=PreliminaryLoopVisitor.visitLoop(expression);
   context=context.replaceDataFlowInfo(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(context.dataFlowInfo));
-  TypeInfoWithJumpInfo bodyTypeInfo=null;
+  JetTypeInfo bodyTypeInfo;
   if (body instanceof JetFunctionLiteralExpression) {
     JetFunctionLiteralExpression function=(JetFunctionLiteralExpression)body;
     JetFunctionLiteral functionLiteral=function.getFunctionLiteral();
@@ -16,7 +16,7 @@
       context.trace.record(BindingContext.BLOCK,function);
     }
  else {
-      facade.getTypeInfo(body,context.replaceScope(context.scope));
+      bodyTypeInfo=facade.getTypeInfo(body,context.replaceScope(context.scope));
     }
   }
  else   if (body != null) {
@@ -31,6 +31,9 @@
     }
     bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,block,CoercionStrategy.NO_COERCION,context);
   }
+ else {
+    bodyTypeInfo=TypeInfoFactoryPackage.createTypeInfo(context);
+  }
   JetExpression condition=expression.getCondition();
   DataFlowInfo conditionDataFlowInfo=checkCondition(conditionScope,condition,context);
   DataFlowInfo dataFlowInfo;
@@ -40,8 +43,8 @@
  else {
     dataFlowInfo=context.dataFlowInfo;
   }
-  if (bodyTypeInfo != null) {
+  if (body != null) {
     dataFlowInfo=dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
   }
-  return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
+  return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression,contextWithExpectedType).replaceDataFlowInfo(dataFlowInfo);
 }

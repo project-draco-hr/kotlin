@@ -31,7 +31,7 @@
  else   if (OperatorConventions.IDENTITY_EQUALS_OPERATIONS.contains(operationType)) {
     context.trace.record(REFERENCE_TARGET,operationSign,components.builtIns.getIdentityEquals());
     ensureNonemptyIntersectionOfOperandTypes(expression,context);
-    result=JetTypeInfo.create(components.builtIns.getBooleanType(),context.dataFlowInfo);
+    result=TypeInfoFactoryPackage.createTypeInfo(components.builtIns.getBooleanType(),context);
   }
  else   if (OperatorConventions.IN_OPERATIONS.contains(operationType)) {
     ValueArgument leftArgument=CallMaker.makeValueArgument(left,left != null ? left : operationSign);
@@ -42,11 +42,11 @@
   }
  else {
     context.trace.report(UNSUPPORTED.on(operationSign,"Unknown operation"));
-    result=JetTypeInfo.create(null,context.dataFlowInfo);
+    result=TypeInfoFactoryPackage.createTypeInfo(context);
   }
   CompileTimeConstant<?> value=ConstantExpressionEvaluator.evaluate(expression,contextWithExpectedType.trace,contextWithExpectedType.expectedType);
   if (value != null) {
     return createCompileTimeConstantTypeInfo(value,expression,contextWithExpectedType);
   }
-  return DataFlowUtils.checkType(result,expression,contextWithExpectedType);
+  return result.checkType(expression,contextWithExpectedType);
 }

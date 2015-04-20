@@ -22,7 +22,7 @@
  else   if (diagnostic.getFactory() == Errors.CONSTANT_EXPECTED_TYPE_MISMATCH) {
     DiagnosticWithParameters2<JetConstantExpression,String,JetType> diagnosticWithParameters=Errors.CONSTANT_EXPECTED_TYPE_MISMATCH.cast(diagnostic);
     expectedType=diagnosticWithParameters.getB();
-    expressionType=context.get(BindingContext.EXPRESSION_TYPE,expression);
+    expressionType=context.getType(expression);
     if (expressionType == null) {
       LOG.error("No type inferred: " + expression.getText());
       return Collections.emptyList();
@@ -77,7 +77,7 @@
     ValueArgument valueArgument=CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(),argumentExpression);
     if (valueArgument != null) {
       JetParameter correspondingParameter=QuickFixUtil.getParameterDeclarationForValueArgument(resolvedCall,valueArgument);
-      JetType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.get(BindingContext.EXPRESSION_TYPE,valueArgument.getArgumentExpression());
+      JetType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.getType(valueArgument.getArgumentExpression());
       if (correspondingParameter != null && valueArgumentType != null) {
         JetCallableDeclaration callable=PsiTreeUtil.getParentOfType(correspondingParameter,JetCallableDeclaration.class,true);
         JetScope scope=callable != null ? JetScopeUtils.getResolutionScope(callable,context) : null;

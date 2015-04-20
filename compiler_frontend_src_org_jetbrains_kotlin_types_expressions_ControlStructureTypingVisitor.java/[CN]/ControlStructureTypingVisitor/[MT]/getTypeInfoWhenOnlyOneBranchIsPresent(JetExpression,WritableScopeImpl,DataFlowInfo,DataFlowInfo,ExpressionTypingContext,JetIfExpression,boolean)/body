@@ -1,6 +1,6 @@
 {
   ExpressionTypingContext newContext=context.replaceDataFlowInfo(presentInfo).replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
-  TypeInfoWithJumpInfo typeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(presentScope,Collections.singletonList(presentBranch),CoercionStrategy.NO_COERCION,newContext);
+  JetTypeInfo typeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(presentScope,Collections.singletonList(presentBranch),CoercionStrategy.NO_COERCION,newContext);
   JetType type=typeInfo.getType();
   DataFlowInfo dataFlowInfo;
   if (type != null && KotlinBuiltIns.isNothing(type)) {
@@ -9,7 +9,5 @@
  else {
     dataFlowInfo=typeInfo.getDataFlowInfo().or(otherInfo);
   }
-  JetType typeForIfExpression=DataFlowUtils.checkType(components.builtIns.getUnitType(),ifExpression,context);
-  JetTypeInfo result=DataFlowUtils.checkImplicitCast(typeForIfExpression,ifExpression,context,isStatement,dataFlowInfo);
-  return new TypeInfoWithJumpInfo(result.getType(),result.getDataFlowInfo(),typeInfo.getJumpOutPossible(),typeInfo.getJumpFlowInfo());
+  return typeInfo.replaceType(components.builtIns.getUnitType()).checkType(ifExpression,context).checkImplicitCast(ifExpression,context,isStatement).replaceDataFlowInfo(dataFlowInfo);
 }

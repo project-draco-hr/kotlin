@@ -22,17 +22,20 @@
   }
   VariableDescriptor propertyDescriptor=components.expressionTypingServices.getDescriptorResolver().resolveLocalVariableDescriptor(scope,property,context.dataFlowInfo,context.trace);
   JetExpression initializer=property.getInitializer();
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  JetTypeInfo typeInfo;
   if (initializer != null) {
     JetType outType=propertyDescriptor.getType();
-    JetTypeInfo typeInfo=facade.getTypeInfo(initializer,context.replaceExpectedType(outType));
-    dataFlowInfo=typeInfo.getDataFlowInfo();
+    typeInfo=facade.getTypeInfo(initializer,context.replaceExpectedType(outType));
+    DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
     JetType type=typeInfo.getType();
     if (property.getTypeReference() == null && type != null) {
       DataFlowValue variableDataFlowValue=DataFlowValueFactory.createDataFlowValue(propertyDescriptor,context.trace.getBindingContext(),DescriptorUtils.getContainingModuleOrNull(scope.getContainingDeclaration()));
       DataFlowValue initializerDataFlowValue=DataFlowValueFactory.createDataFlowValue(initializer,type,context);
-      dataFlowInfo=dataFlowInfo.assign(variableDataFlowValue,initializerDataFlowValue);
+      typeInfo=typeInfo.replaceDataFlowInfo(dataFlowInfo.assign(variableDataFlowValue,initializerDataFlowValue));
     }
+  }
+ else {
+    typeInfo=TypeInfoFactoryPackage.createTypeInfo(context);
   }
 {
     VariableDescriptor olderVariable=scope.getLocalVariable(propertyDescriptor.getName());
@@ -40,5 +43,5 @@
   }
   scope.addVariableDescriptor(propertyDescriptor);
   ModifiersChecker.create(context.trace,components.additionalCheckerProvider).checkModifiersForLocalDeclaration(property,propertyDescriptor);
-  return DataFlowUtils.checkStatementType(property,context,dataFlowInfo);
+  return typeInfo.replaceType(DataFlowUtils.checkStatementType(property,context));
 }

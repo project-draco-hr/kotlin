@@ -1,20 +1,18 @@
 {
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
   if (right == null || left == null) {
     ExpressionTypingUtils.getTypeInfoOrNullType(right,context,facade);
     ExpressionTypingUtils.getTypeInfoOrNullType(left,context,facade);
-    return JetTypeInfo.create(components.builtIns.getBooleanType(),dataFlowInfo);
+    return TypeInfoFactoryPackage.createTypeInfo(components.builtIns.getBooleanType(),context);
   }
   JetTypeInfo leftTypeInfo=getTypeInfoOrNullType(left,context,facade);
-  dataFlowInfo=leftTypeInfo.getDataFlowInfo();
+  DataFlowInfo dataFlowInfo=leftTypeInfo.getDataFlowInfo();
   ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
   JetTypeInfo rightTypeInfo=facade.getTypeInfo(right,contextWithDataFlow);
-  dataFlowInfo=rightTypeInfo.getDataFlowInfo();
   TemporaryBindingTrace traceInterpretingRightAsNullableAny=TemporaryBindingTrace.create(context.trace,"trace to resolve 'equals(Any?)' interpreting as of type Any? an expression:",right);
-  traceInterpretingRightAsNullableAny.record(EXPRESSION_TYPE,right,components.builtIns.getNullableAnyType());
+  traceInterpretingRightAsNullableAny.recordType(right,components.builtIns.getNullableAnyType());
   JetType leftType=leftTypeInfo.getType();
   if (leftType != null && KotlinBuiltIns.isNothingOrNullableNothing(leftType)) {
-    traceInterpretingRightAsNullableAny.record(EXPRESSION_TYPE,left,components.builtIns.getNullableAnyType());
+    traceInterpretingRightAsNullableAny.recordType(left,components.builtIns.getNullableAnyType());
   }
   ExpressionTypingContext newContext=context.replaceBindingTrace(traceInterpretingRightAsNullableAny);
   ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,newContext);
@@ -22,7 +20,7 @@
   OverloadResolutionResults<FunctionDescriptor> resolutionResults=components.callResolver.resolveCallWithGivenName(newContext,call,operationSign,OperatorConventions.EQUALS);
   traceInterpretingRightAsNullableAny.commit(new TraceEntryFilter(){
     @Override public boolean accept(    @Nullable WritableSlice<?,?> slice,    Object key){
-      if ((key == right || key == left) && slice == EXPRESSION_TYPE)       return false;
+      if ((key == right || key == left) && slice == EXPRESSION_TYPE_INFO)       return false;
       if (key == left && slice == SMARTCAST)       return false;
       return true;
     }
@@ -42,5 +40,5 @@
       context.trace.report(EQUALS_MISSING.on(operationSign));
     }
   }
-  return JetTypeInfo.create(components.builtIns.getBooleanType(),dataFlowInfo);
+  return rightTypeInfo.replaceType(components.builtIns.getBooleanType());
 }

@@ -3,9 +3,10 @@
   ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE);
   if (right == null) {
     if (left != null)     facade.getTypeInfo(left,contextWithNoExpectedType);
-    return JetTypeInfo.create(null,context.dataFlowInfo);
+    return TypeInfoFactoryPackage.createTypeInfo(context);
   }
-  DataFlowInfo dataFlowInfo=facade.getTypeInfo(right,contextWithNoExpectedType).getDataFlowInfo();
+  JetTypeInfo rightTypeInfo=facade.getTypeInfo(right,contextWithNoExpectedType);
+  DataFlowInfo dataFlowInfo=rightTypeInfo.getDataFlowInfo();
   ExpressionReceiver receiver=safeGetExpressionReceiver(facade,right,contextWithNoExpectedType);
   ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
   OverloadResolutionResults<FunctionDescriptor> resolutionResult=components.callResolver.resolveCallWithGivenName(contextWithDataFlow,CallMaker.makeCall(callElement,receiver,null,operationSign,Collections.singletonList(leftArgument)),operationSign,OperatorConventions.CONTAINS);
@@ -13,6 +14,12 @@
   components.expressionTypingUtils.ensureBooleanResult(operationSign,OperatorConventions.CONTAINS,containsType,context);
   if (left != null) {
     dataFlowInfo=facade.getTypeInfo(left,contextWithDataFlow).getDataFlowInfo().and(dataFlowInfo);
+    rightTypeInfo=rightTypeInfo.replaceDataFlowInfo(dataFlowInfo);
   }
-  return JetTypeInfo.create(resolutionResult.isSuccess() ? components.builtIns.getBooleanType() : null,dataFlowInfo);
+  if (resolutionResult.isSuccess()) {
+    return rightTypeInfo.replaceType(components.builtIns.getBooleanType());
+  }
+ else {
+    return rightTypeInfo.clearType();
+  }
 }

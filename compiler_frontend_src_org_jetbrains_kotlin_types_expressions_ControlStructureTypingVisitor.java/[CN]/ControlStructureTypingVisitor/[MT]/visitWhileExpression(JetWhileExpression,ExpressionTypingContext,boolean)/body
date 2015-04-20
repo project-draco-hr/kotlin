@@ -6,17 +6,20 @@
   JetExpression condition=expression.getCondition();
   DataFlowInfo dataFlowInfo=checkCondition(context.scope,condition,context);
   JetExpression body=expression.getBody();
-  TypeInfoWithJumpInfo bodyTypeInfo=null;
+  JetTypeInfo bodyTypeInfo;
+  DataFlowInfo conditionInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,context).and(dataFlowInfo);
   if (body != null) {
     WritableScopeImpl scopeToExtend=newWritableScopeImpl(context,"Scope extended in while's condition");
-    DataFlowInfo conditionInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,true,context).and(dataFlowInfo);
     bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(scopeToExtend,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(conditionInfo));
+  }
+ else {
+    bodyTypeInfo=TypeInfoFactoryPackage.createTypeInfo(conditionInfo);
   }
   if (!containsJumpOutOfLoop(expression,context)) {
     dataFlowInfo=DataFlowUtils.extractDataFlowInfoFromCondition(condition,false,context).and(dataFlowInfo);
   }
-  if (bodyTypeInfo != null && JetPsiUtil.isTrueConstant(condition)) {
+  if (body != null && JetPsiUtil.isTrueConstant(condition)) {
     dataFlowInfo=dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
   }
-  return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
+  return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression,contextWithExpectedType).replaceDataFlowInfo(dataFlowInfo);
 }

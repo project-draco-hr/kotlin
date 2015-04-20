@@ -3,13 +3,13 @@
   JetExpression initializer=multiDeclaration.getInitializer();
   if (initializer == null) {
     context.trace.report(INITIALIZER_REQUIRED_FOR_MULTIDECLARATION.on(multiDeclaration));
-    return JetTypeInfo.create(null,context.dataFlowInfo);
+    return TypeInfoFactoryPackage.createTypeInfo(context);
   }
   ExpressionReceiver expressionReceiver=ExpressionTypingUtils.getExpressionReceiver(facade,initializer,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT));
-  DataFlowInfo dataFlowInfo=facade.getTypeInfo(initializer,context).getDataFlowInfo();
+  JetTypeInfo typeInfo=facade.getTypeInfo(initializer,context);
   if (expressionReceiver == null) {
-    return JetTypeInfo.create(null,dataFlowInfo);
+    return TypeInfoFactoryPackage.createTypeInfo(context);
   }
   components.expressionTypingUtils.defineLocalVariablesFromMultiDeclaration(scope,multiDeclaration,expressionReceiver,initializer,context);
-  return DataFlowUtils.checkStatementType(multiDeclaration,context,dataFlowInfo);
+  return typeInfo.replaceType(DataFlowUtils.checkStatementType(multiDeclaration,context));
 }

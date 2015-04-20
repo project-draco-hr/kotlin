@@ -1,10 +1,13 @@
 {
   JetExpression left=binaryExpression.getLeft();
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  JetTypeInfo typeInfo;
   if (left != null) {
-    dataFlowInfo=facade.getTypeInfo(left,context.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE)).getDataFlowInfo();
+    typeInfo=facade.getTypeInfo(left,context.replaceContextDependency(INDEPENDENT).replaceExpectedType(NO_EXPECTED_TYPE));
   }
-  ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
+ else {
+    typeInfo=TypeInfoFactoryPackage.createTypeInfo(context);
+  }
+  ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(typeInfo.getDataFlowInfo());
   OverloadResolutionResults<FunctionDescriptor> resolutionResults;
   if (left != null) {
     ExpressionReceiver receiver=safeGetExpressionReceiver(facade,left,context);
@@ -14,7 +17,7 @@
     resolutionResults=OverloadResolutionResultsImpl.nameNotFound();
   }
   if (resolutionResults.isSingleResult()) {
-    dataFlowInfo=resolutionResults.getResultingCall().getDataFlowInfoForArguments().getResultInfo();
+    typeInfo=typeInfo.replaceDataFlowInfo(resolutionResults.getResultingCall().getDataFlowInfoForArguments().getResultInfo());
   }
-  return JetTypeInfo.create(OverloadResolutionResultsUtil.getResultingType(resolutionResults,context.contextDependency),dataFlowInfo);
+  return typeInfo.replaceType(OverloadResolutionResultsUtil.getResultingType(resolutionResults,context.contextDependency));
 }

@@ -1,25 +1,9 @@
 {
-  final ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
-  final DataFlowInfo[] dataFlowInfo=new DataFlowInfo[]{context.dataFlowInfo};
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  StringTemplateVisitor visitor=new StringTemplateVisitor(context);
   for (  JetStringTemplateEntry entry : expression.getEntries()) {
-    entry.accept(new JetVisitorVoid(){
-      @Override public void visitStringTemplateEntryWithExpression(      @NotNull JetStringTemplateEntryWithExpression entry){
-        JetExpression entryExpression=entry.getExpression();
-        if (entryExpression != null) {
-          JetTypeInfo typeInfo=facade.getTypeInfo(entryExpression,context.replaceDataFlowInfo(dataFlowInfo[0]));
-          dataFlowInfo[0]=typeInfo.getDataFlowInfo();
-        }
-      }
-      @Override public void visitEscapeStringTemplateEntry(      @NotNull JetEscapeStringTemplateEntry entry){
-        CompileTimeConstantChecker.CharacterWithDiagnostic value=CompileTimeConstantChecker.escapedStringToCharacter(entry.getText(),entry);
-        Diagnostic diagnostic=value.getDiagnostic();
-        if (diagnostic != null) {
-          context.trace.report(diagnostic);
-        }
-      }
-    }
-);
+    entry.accept(visitor);
   }
   ConstantExpressionEvaluator.evaluate(expression,context.trace,contextWithExpectedType.expectedType);
-  return DataFlowUtils.checkType(components.builtIns.getStringType(),expression,contextWithExpectedType,dataFlowInfo[0]);
+  return visitor.typeInfo.replaceType(components.builtIns.getStringType()).checkType(expression,contextWithExpectedType);
 }

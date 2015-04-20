@@ -5,13 +5,16 @@
   context=context.replaceDataFlowInfo(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(context.dataFlowInfo));
   JetExpression loopRange=expression.getLoopRange();
   JetType expectedParameterType=null;
-  DataFlowInfo dataFlowInfo=context.dataFlowInfo;
+  JetTypeInfo loopRangeInfo;
   if (loopRange != null) {
     ExpressionReceiver loopRangeReceiver=getExpressionReceiver(facade,loopRange,context.replaceScope(context.scope));
-    dataFlowInfo=facade.getTypeInfo(loopRange,context).getDataFlowInfo();
+    loopRangeInfo=facade.getTypeInfo(loopRange,context);
     if (loopRangeReceiver != null) {
       expectedParameterType=components.forLoopConventionsChecker.checkIterableConvention(loopRangeReceiver,context);
     }
+  }
+ else {
+    loopRangeInfo=TypeInfoFactoryPackage.createTypeInfo(context);
   }
   WritableScope loopScope=newWritableScopeImpl(context,"Scope with for-loop index");
   JetParameter loopParameter=expression.getLoopParameter();
@@ -28,8 +31,12 @@
     }
   }
   JetExpression body=expression.getBody();
+  JetTypeInfo bodyTypeInfo;
   if (body != null) {
-    components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(loopScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(dataFlowInfo));
+    bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(loopScope,Collections.singletonList(body),CoercionStrategy.NO_COERCION,context.replaceDataFlowInfo(loopRangeInfo.getDataFlowInfo()));
   }
-  return DataFlowUtils.checkType(components.builtIns.getUnitType(),expression,contextWithExpectedType,dataFlowInfo);
+ else {
+    bodyTypeInfo=loopRangeInfo;
+  }
+  return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression,contextWithExpectedType).replaceDataFlowInfo(loopRangeInfo.getDataFlowInfo());
 }

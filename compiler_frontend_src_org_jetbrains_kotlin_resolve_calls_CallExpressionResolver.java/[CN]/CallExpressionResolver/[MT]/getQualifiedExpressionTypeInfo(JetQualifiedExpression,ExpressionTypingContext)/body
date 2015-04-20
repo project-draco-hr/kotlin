@@ -18,11 +18,12 @@
     if (selectorReturnType != null && !KotlinBuiltIns.isUnit(selectorReturnType)) {
       if (TypeUtils.isNullableType(receiverType)) {
         selectorReturnType=TypeUtils.makeNullable(selectorReturnType);
+        selectorReturnTypeInfo=selectorReturnTypeInfo.replaceType(selectorReturnType);
       }
     }
   }
-  if (selectorReturnType != null) {
-    context.trace.record(BindingContext.EXPRESSION_TYPE,selectorExpression,selectorReturnType);
+  if (selectorExpression != null && selectorReturnType != null) {
+    context.trace.recordType(selectorExpression,selectorReturnType);
   }
   CompileTimeConstant<?> value=ConstantExpressionEvaluator.evaluate(expression,context.trace,context.expectedType);
   if (value instanceof IntegerValueConstant && ((IntegerValueConstant)value).isPure()) {
@@ -39,22 +40,22 @@
   if (safeCall) {
     if (safeCallChainInfo == null)     safeCallChainInfo=receiverDataFlowInfo;
     if (context.insideCallChain) {
-      typeInfo=new JetTypeInfoInsideSafeCall(selectorReturnType,selectorReturnTypeInfo.getDataFlowInfo(),safeCallChainInfo);
+      typeInfo=new JetTypeInfoInsideSafeCall(selectorReturnTypeInfo,safeCallChainInfo);
     }
  else {
-      typeInfo=JetTypeInfo.create(selectorReturnType,safeCallChainInfo);
+      typeInfo=selectorReturnTypeInfo.replaceDataFlowInfo(safeCallChainInfo);
     }
   }
  else {
     if (context.insideCallChain || safeCallChainInfo == null) {
-      typeInfo=new JetTypeInfoInsideSafeCall(selectorReturnType,selectorReturnTypeInfo.getDataFlowInfo(),selectorReturnTypeInfo.getDataFlowInfo());
+      typeInfo=new JetTypeInfoInsideSafeCall(selectorReturnTypeInfo,selectorReturnTypeInfo.getDataFlowInfo());
     }
  else {
-      typeInfo=JetTypeInfo.create(selectorReturnType,safeCallChainInfo);
+      typeInfo=selectorReturnTypeInfo.replaceDataFlowInfo(safeCallChainInfo);
     }
   }
   if (context.contextDependency == INDEPENDENT) {
-    DataFlowUtils.checkType(typeInfo,expression,context);
+    DataFlowUtils.checkType(typeInfo.getType(),expression,context);
   }
   return typeInfo;
 }
