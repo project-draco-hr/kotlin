@@ -8,7 +8,7 @@
     VirtualFile file;
     File filePath=new File(path);
     if (!filePath.exists()) {
-      report.invoke("Path '" + path + "'does not exist");
+      report.invoke("Path '" + path + "' does not exist");
       return true;
     }
     if (path.endsWith(".jar") || path.endsWith(".zip")) {
@@ -18,24 +18,22 @@
       file=fileSystem.findFileByPath(path);
     }
     if (file == null) {
-      report.invoke("File '" + path + "'does not exist or could not be read");
+      report.invoke("File '" + path + "' does not exist or could not be read");
       return true;
     }
+    String moduleName;
+    if (isOldKotlinJavascriptLibrary(filePath)) {
+      moduleName=LibraryUtils.getKotlinJsModuleName(filePath);
+    }
+ else     if (isKotlinJavascriptLibraryWithMetadata(filePath)) {
+      moduleName=null;
+    }
  else {
-      String moduleName;
-      if (isOldKotlinJavascriptLibrary(filePath)) {
-        moduleName=LibraryUtils.getKotlinJsModuleName(filePath);
-      }
- else       if (isKotlinJavascriptLibraryWithMetadata(filePath)) {
-        moduleName=null;
-      }
- else {
-        report.invoke("'" + path + "' is not a valid Kotlin Javascript library");
-        return true;
-      }
-      if (action != null) {
-        action.invoke(moduleName,file);
-      }
+      report.invoke("'" + path + "' is not a valid Kotlin Javascript library");
+      return true;
+    }
+    if (action != null) {
+      action.invoke(moduleName,file);
     }
   }
   return false;
