@@ -1,3 +1,15 @@
 {
-  return getPossibleTypes(key,false);
+  JetType originalType=key.getType();
+  Set<JetType> types=collectTypesFromMeAndParents(key);
+  if (getNullability(key).canBeNull()) {
+    return types;
+  }
+  Set<JetType> enrichedTypes=Sets.newHashSetWithExpectedSize(types.size() + 1);
+  if (originalType.isMarkedNullable()) {
+    enrichedTypes.add(TypeUtils.makeNotNullable(originalType));
+  }
+  for (  JetType type : types) {
+    enrichedTypes.add(TypeUtils.makeNotNullable(type));
+  }
+  return enrichedTypes;
 }
