@@ -2,17 +2,10 @@
   GenerationState state;
   try {
     ResolutionFacade resolutionFacade=ResolvePackage.getResolutionFacade(jetFile);
-    Ref<Set<JetElement>> ref=Ref.<Set<JetElement>>create(new HashSet<JetElement>());
     BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(jetFile)).getBindingContext();
-    BindingContext bindingContext=analyzeElementWithInline(resolutionFacade,bindingContextForFile,jetFile,1,ref,enableInline);
-    Set<JetFile> toProcess=new LinkedHashSet<JetFile>();
-    toProcess.add(jetFile);
-    if (ref.get() != null) {
-      for (      JetElement element : ref.get()) {
-        JetFile file=element.getContainingJetFile();
-        toProcess.add(file);
-      }
-    }
+    kotlin.Pair<BindingContext,List<JetFile>> result=analyzeInlinedFunctions(resolutionFacade,bindingContextForFile,jetFile,!enableInline);
+    BindingContext bindingContext=result.getFirst();
+    List<JetFile> toProcess=result.getSecond();
     GenerationState.GenerateClassFilter generateClassFilter=new GenerationState.GenerateClassFilter(){
       @Override public boolean shouldGeneratePackagePart(      JetFile file){
         return file == jetFile;
@@ -29,7 +22,7 @@
     }
 ;
     ModuleDescriptor moduleDescriptor=resolutionFacade.findModuleDescriptor(jetFile);
-    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,moduleDescriptor,bindingContext,new ArrayList<JetFile>(toProcess),!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,null,null,DiagnosticSink.DO_NOTHING,null);
+    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,moduleDescriptor,bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,null,null,DiagnosticSink.DO_NOTHING,null);
     KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   }
  catch (  ProcessCanceledException e) {
