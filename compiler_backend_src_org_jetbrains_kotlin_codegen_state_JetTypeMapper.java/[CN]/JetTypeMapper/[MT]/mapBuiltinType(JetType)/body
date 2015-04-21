@@ -7,5 +7,13 @@
     Type asmType=Type.getType(JvmPrimitiveType.get(primitiveType).getDesc());
     return TypeUtils.isNullableType(type) ? boxType(asmType) : asmType;
   }
-  return fqName.isSafe() ? KotlinToJavaTypesMap.getInstance().getJavaAnalog(fqName.toSafe()) : null;
+  PrimitiveType arrayElementType=KotlinBuiltIns.getPrimitiveTypeByArrayClassFqName(fqName);
+  if (arrayElementType != null) {
+    return Type.getType("[" + JvmPrimitiveType.get(arrayElementType).getDesc());
+  }
+  ClassId classId=KotlinToJavaTypesMap.getInstance().mapKotlinFqNameToJava(fqName);
+  if (classId != null) {
+    return Type.getObjectType(JvmClassName.byClassId(classId).getInternalName());
+  }
+  return null;
 }
