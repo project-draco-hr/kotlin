@@ -2,8 +2,9 @@
   GenerationState state;
   try {
     ResolutionFacade resolutionFacade=ResolvePackage.getResolutionFacade(jetFile);
-    Ref<Set<JetElement>> ref=Ref.create();
-    BindingContext bindingContext=processInlinedDeclarations(jetFile.getProject(),resolutionFacade,Collections.<JetElement>singleton(jetFile),1,ref,!enableInline);
+    Ref<Set<JetElement>> ref=Ref.<Set<JetElement>>create(new HashSet<JetElement>());
+    BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(jetFile)).getBindingContext();
+    BindingContext bindingContext=analyzeElementWithInline(resolutionFacade,bindingContextForFile,jetFile,1,ref,enableInline);
     Set<JetFile> toProcess=new LinkedHashSet<JetFile>();
     toProcess.add(jetFile);
     if (ref.get() != null) {
