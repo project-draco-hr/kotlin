@@ -1,35 +1,3 @@
 {
-  ExtractableCodeDescriptor descriptor=originalDescriptor.getDescriptor();
-  List<KotlinParameterTablePanel.ParameterInfo> parameterInfos=parameterTablePanel.getParameterInfos();
-  Map<Parameter,Parameter> oldToNewParameters=ContainerUtil.newLinkedHashMap();
-  for (  KotlinParameterTablePanel.ParameterInfo parameterInfo : parameterInfos) {
-    oldToNewParameters.put(parameterInfo.getOriginalParameter(),parameterInfo.toParameter());
-  }
-  ControlFlow controlFlow=descriptor.getControlFlow();
-  List<OutputValue> outputValues=new ArrayList<OutputValue>(controlFlow.getOutputValues());
-  for (int i=0; i < outputValues.size(); i++) {
-    OutputValue outputValue=outputValues.get(i);
-    if (outputValue instanceof OutputValue.ParameterUpdate) {
-      OutputValue.ParameterUpdate parameterUpdate=(OutputValue.ParameterUpdate)outputValue;
-      outputValues.set(i,new OutputValue.ParameterUpdate(oldToNewParameters.get(parameterUpdate.getParameter()),parameterUpdate.getOriginalExpressions()));
-    }
-  }
-  controlFlow=new ControlFlow(outputValues,controlFlow.getBoxerFactory(),controlFlow.getDeclarationsToCopy());
-  Map<Integer,Replacement> replacementMap=ContainerUtil.newHashMap();
-  for (  Map.Entry<Integer,Replacement> e : descriptor.getReplacementMap().entrySet()) {
-    Integer offset=e.getKey();
-    Replacement replacement=e.getValue();
-    if (replacement instanceof ParameterReplacement) {
-      ParameterReplacement parameterReplacement=(ParameterReplacement)replacement;
-      Parameter parameter=parameterReplacement.getParameter();
-      Parameter newParameter=oldToNewParameters.get(parameter);
-      if (newParameter != null) {
-        replacementMap.put(offset,parameterReplacement.copy(newParameter));
-      }
-    }
- else {
-      replacementMap.put(offset,replacement);
-    }
-  }
-  return new ExtractableCodeDescriptor(descriptor.getExtractionData(),descriptor.getOriginalContext(),Collections.singletonList(getFunctionName()),getVisibility(),ContainerUtil.newArrayList(oldToNewParameters.values()),descriptor.getReceiverParameter(),descriptor.getTypeParameters(),replacementMap,controlFlow);
+  return createNewDescriptor(originalDescriptor.getDescriptor(),getFunctionName(),getVisibility(),parameterTablePanel.getParameterInfos());
 }
