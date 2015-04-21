@@ -1,12 +1,5 @@
 {
-  Type known=null;
-  DeclarationDescriptor descriptor=jetType.getConstructor().getDeclarationDescriptor();
-  if (descriptor instanceof ClassDescriptor) {
-    FqNameUnsafe className=DescriptorUtils.getFqName(descriptor);
-    if (className.isSafe()) {
-      known=KotlinToJavaTypesMap.getInstance().getJavaAnalog(className.toSafe(),TypeUtils.isNullableType(jetType));
-    }
-  }
+  Type known=mapBuiltinType(jetType);
   boolean projectionsAllowed=kind != JetTypeMapperMode.SUPER_TYPE;
   if (known != null) {
     if (kind == JetTypeMapperMode.VALUE || kind == JetTypeMapperMode.VALUE_FOR_ANNOTATION) {
@@ -23,6 +16,7 @@
     }
   }
   TypeConstructor constructor=jetType.getConstructor();
+  DeclarationDescriptor descriptor=constructor.getDeclarationDescriptor();
   if (constructor instanceof IntersectionTypeConstructor) {
     jetType=CommonSupertypes.commonSupertype(new ArrayList<JetType>(constructor.getSupertypes()));
   }
@@ -68,7 +62,7 @@
   if (descriptor instanceof ClassDescriptor) {
     FqName companionObjectMappedFqName=IntrinsicObjects.mapType((ClassDescriptor)descriptor);
     if (companionObjectMappedFqName != null) {
-      Type asmType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(companionObjectMappedFqName);
+      Type asmType=asmTypeByFqNameWithoutInnerClasses(companionObjectMappedFqName);
       if (signatureVisitor != null) {
         signatureVisitor.writeAsmType(asmType);
       }
