@@ -19,7 +19,19 @@
       }
     }
     JetType type=functionDescriptor.getReturnType();
-    return TypeInfoFactoryPackage.createTypeInfo(type,resolvedCall.getDataFlowInfoForArguments().getResultInfo());
+    List<? extends ValueArgument> arguments=callExpression.getValueArguments();
+    DataFlowInfo resultFlowInfo=resolvedCall.getDataFlowInfoForArguments().getResultInfo();
+    DataFlowInfo jumpFlowInfo=resultFlowInfo;
+    boolean jumpOutPossible=false;
+    for (    ValueArgument argument : arguments) {
+      JetTypeInfo argTypeInfo=context.trace.get(BindingContext.EXPRESSION_TYPE_INFO,argument.getArgumentExpression());
+      if (argTypeInfo != null && argTypeInfo.getJumpOutPossible()) {
+        jumpOutPossible=true;
+        jumpFlowInfo=argTypeInfo.getJumpFlowInfo();
+        break;
+      }
+    }
+    return TypeInfoFactoryPackage.createTypeInfo(type,resultFlowInfo,jumpOutPossible,jumpFlowInfo);
   }
   JetExpression calleeExpression=callExpression.getCalleeExpression();
   if (calleeExpression instanceof JetSimpleNameExpression && callExpression.getTypeArgumentList() == null) {
