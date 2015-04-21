@@ -5,7 +5,7 @@
   JetExpression right=expression.getRight();
   if (left instanceof JetArrayAccessExpression) {
     JetArrayAccessExpression arrayAccessExpression=(JetArrayAccessExpression)left;
-    if (right == null)     return TypeInfoFactoryPackage.createTypeInfo(context);
+    if (right == null)     return TypeInfoFactoryPackage.noTypeInfo(context);
     JetTypeInfo typeInfo=basic.resolveArrayAccessSetMethod(arrayAccessExpression,right,context,context.trace);
     basic.checkLValue(context.trace,context,arrayAccessExpression,right);
     return typeInfo.replaceType(checkAssignmentType(typeInfo.getType(),expression,contextWithExpectedType));
@@ -13,22 +13,22 @@
   JetTypeInfo leftInfo=ExpressionTypingUtils.getTypeInfoOrNullType(left,context,facade);
   JetType leftType=leftInfo.getType();
   DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
-  JetTypeInfo rightInfo;
+  JetTypeInfo resultInfo;
   if (right != null) {
-    rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
-    dataFlowInfo=rightInfo.getDataFlowInfo();
-    JetType rightType=rightInfo.getType();
+    resultInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
+    dataFlowInfo=resultInfo.getDataFlowInfo();
+    JetType rightType=resultInfo.getType();
     if (left != null && leftType != null && rightType != null) {
       DataFlowValue leftValue=DataFlowValueFactory.createDataFlowValue(left,leftType,context);
       DataFlowValue rightValue=DataFlowValueFactory.createDataFlowValue(right,rightType,context);
-      rightInfo=rightInfo.replaceDataFlowInfo(dataFlowInfo.assign(leftValue,rightValue));
+      resultInfo=resultInfo.replaceDataFlowInfo(dataFlowInfo.assign(leftValue,rightValue));
     }
   }
  else {
-    rightInfo=leftInfo;
+    resultInfo=leftInfo;
   }
   if (leftType != null && leftOperand != null) {
     basic.checkLValue(context.trace,context,leftOperand,right);
   }
-  return rightInfo.replaceType(DataFlowUtils.checkStatementType(expression,contextWithExpectedType));
+  return resultInfo.replaceType(DataFlowUtils.checkStatementType(expression,contextWithExpectedType));
 }
