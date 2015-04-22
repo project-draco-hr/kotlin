@@ -8,15 +8,13 @@
   if (stackValue instanceof StackValue.Local) {
     return false;
   }
-  StackValue receiver=null;
-  if (stackValue instanceof StackValue.Field) {
-    receiver=((StackValue.Field)stackValue).receiver;
+  StackValue field=stackValue;
+  if (stackValue instanceof StackValue.FieldForSharedVar) {
+    field=((StackValue.FieldForSharedVar)stackValue).receiver;
   }
- else   if (stackValue instanceof StackValue.FieldForSharedVar) {
-    receiver=((StackValue.Field)((StackValue.FieldForSharedVar)stackValue).receiver).receiver;
+  if (field instanceof StackValue.Field) {
+    DeclarationDescriptor varDescriptor=((StackValue.Field)field).descriptor;
+    return !(varDescriptor instanceof CallableDescriptor && InlineUtil.isInlineLambdaParameter((CallableDescriptor)varDescriptor) && InlineUtil.isInline(varDescriptor.getContainingDeclaration()));
   }
-  if (!(receiver instanceof StackValue.Local)) {
-    return true;
-  }
-  return !(codegen.getContext().isInliningLambda() && descriptor != null && !KotlinBuiltIns.isNoinline(descriptor));
+  return true;
 }
