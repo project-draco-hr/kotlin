@@ -6,7 +6,11 @@
   if (!isDefaultNeeded(functionDescriptor)) {
     return;
   }
-  int flags=getVisibilityAccessFlag(functionDescriptor) | getDeprecatedAccessFlag(functionDescriptor) | ACC_SYNTHETIC| (functionDescriptor instanceof ConstructorDescriptor ? 0 : ACC_STATIC);
+  int flags=getVisibilityAccessFlag(functionDescriptor) | getDeprecatedAccessFlag(functionDescriptor) | ACC_SYNTHETIC;
+  if (!(functionDescriptor instanceof ConstructorDescriptor)) {
+    flags|=ACC_STATIC;
+  }
+  flags&=~ACC_PRIVATE;
   Method defaultMethod=typeMapper.mapDefaultMethod(functionDescriptor,kind,owner);
   MethodVisitor mv=v.newMethod(Synthetic(function,functionDescriptor),flags,defaultMethod.getName(),defaultMethod.getDescriptor(),null,getThrownExceptions(functionDescriptor,typeMapper));
   if (state.getClassBuilderMode() == ClassBuilderMode.FULL) {
