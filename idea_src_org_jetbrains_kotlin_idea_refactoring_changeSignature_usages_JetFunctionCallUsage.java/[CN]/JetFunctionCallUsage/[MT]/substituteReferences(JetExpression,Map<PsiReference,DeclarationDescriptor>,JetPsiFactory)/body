@@ -1,0 +1,50 @@
+{
+  if (referenceMap.isEmpty() || resolvedCall == null)   return expression;
+  JetExpression newExpression=(JetExpression)expression.copy();
+  Map<JetSimpleNameExpression,JetSimpleNameExpression> nameCounterpartMap=ExtractionEnginePackage.createNameCounterpartMap(expression,newExpression);
+  Map<ValueParameterDescriptor,ResolvedValueArgument> valueArguments=resolvedCall.getValueArguments();
+  List<Map.Entry<PsiReference,DeclarationDescriptor>> sortedEntries=ContainerUtil.sorted(referenceMap.entrySet(),REVERSE_TEXT_OFFSET_COMPARATOR);
+  for (  Map.Entry<PsiReference,DeclarationDescriptor> e : sortedEntries) {
+    DeclarationDescriptor descriptor=e.getValue();
+    JetExpression argumentExpression;
+    boolean addReceiver=false;
+    if (descriptor instanceof ValueParameterDescriptor) {
+      ValueParameterDescriptor parameterDescriptor=resolvedCall.getResultingDescriptor().getValueParameters().get(((ValueParameterDescriptor)descriptor).getIndex());
+      ResolvedValueArgument resolvedValueArgument=valueArguments.get(parameterDescriptor);
+      if (!(resolvedValueArgument instanceof ExpressionValueArgument))       continue;
+      ValueArgument argument=((ExpressionValueArgument)resolvedValueArgument).getValueArgument();
+      if (argument == null)       continue;
+      argumentExpression=argument.getArgumentExpression();
+    }
+ else {
+      addReceiver=!(descriptor instanceof ReceiverParameterDescriptor);
+      argumentExpression=getReceiverExpressionIfMatched(resolvedCall.getExtensionReceiver(),descriptor,psiFactory);
+      if (argumentExpression == null) {
+        argumentExpression=getReceiverExpressionIfMatched(resolvedCall.getDispatchReceiver(),descriptor,psiFactory);
+      }
+    }
+    if (argumentExpression == null)     continue;
+    JetExpression expressionToReplace=nameCounterpartMap.get(e.getKey().getElement());
+    if (expressionToReplace == null)     continue;
+    PsiElement parent=expressionToReplace.getParent();
+    if (parent instanceof JetThisExpression) {
+      expressionToReplace=(JetThisExpression)parent;
+    }
+    if (addReceiver) {
+      JetCallExpression callExpression=PsiTreeUtil.getParentOfType(expressionToReplace,JetCallExpression.class,true);
+      if (callExpression != null && PsiTreeUtil.isAncestor(callExpression.getCalleeExpression(),expressionToReplace,false)) {
+        expressionToReplace=callExpression;
+      }
+ else {
+        if (parent instanceof JetOperationExpression && ((JetOperationExpression)parent).getOperationReference() == expressionToReplace) {
+          continue;
+        }
+      }
+      expressionToReplace.replace(psiFactory.createExpression(argumentExpression.getText() + "." + expressionToReplace.getText()));
+    }
+ else {
+      expressionToReplace.replace(argumentExpression);
+    }
+  }
+  return newExpression;
+}
