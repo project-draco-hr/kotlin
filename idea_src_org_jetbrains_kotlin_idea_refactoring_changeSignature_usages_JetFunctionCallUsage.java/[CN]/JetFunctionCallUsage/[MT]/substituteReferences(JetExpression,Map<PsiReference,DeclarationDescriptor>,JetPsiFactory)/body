@@ -3,8 +3,8 @@
   JetExpression newExpression=(JetExpression)expression.copy();
   Map<JetSimpleNameExpression,JetSimpleNameExpression> nameCounterpartMap=ExtractionEnginePackage.createNameCounterpartMap(expression,newExpression);
   Map<ValueParameterDescriptor,ResolvedValueArgument> valueArguments=resolvedCall.getValueArguments();
-  List<Map.Entry<PsiReference,DeclarationDescriptor>> sortedEntries=ContainerUtil.sorted(referenceMap.entrySet(),REVERSE_TEXT_OFFSET_COMPARATOR);
-  for (  Map.Entry<PsiReference,DeclarationDescriptor> e : sortedEntries) {
+  List<Pair<JetElement,JetElement>> replacements=new ArrayList<Pair<JetElement,JetElement>>();
+  for (  Map.Entry<PsiReference,DeclarationDescriptor> e : referenceMap.entrySet()) {
     DeclarationDescriptor descriptor=e.getValue();
     JetExpression argumentExpression;
     boolean addReceiver=false;
@@ -24,6 +24,17 @@
       }
     }
     if (argumentExpression == null)     continue;
+    if (needSeparateVariable(argumentExpression) && PsiTreeUtil.getNonStrictParentOfType(getElement(),JetConstructorDelegationCall.class,JetDelegationSpecifier.class,JetParameter.class) == null) {
+      final Ref<JetExpression> newExpressionRef=new Ref<JetExpression>();
+      KotlinIntroduceVariableHandler.doRefactoring(getProject(),null,argumentExpression,Collections.singletonList(argumentExpression),new Function1<JetProperty,Unit>(){
+        @Override public Unit invoke(        JetProperty property){
+          newExpressionRef.set(psiFactory.createExpression(property.getName()));
+          return null;
+        }
+      }
+);
+      argumentExpression=newExpressionRef.get();
+    }
     JetExpression expressionToReplace=nameCounterpartMap.get(e.getKey().getElement());
     if (expressionToReplace == null)     continue;
     PsiElement parent=expressionToReplace.getParent();
@@ -40,11 +51,15 @@
           continue;
         }
       }
-      expressionToReplace.replace(psiFactory.createExpression(argumentExpression.getText() + "." + expressionToReplace.getText()));
+      replacements.add(new Pair<JetElement,JetElement>(expressionToReplace,psiFactory.createExpression(argumentExpression.getText() + "." + expressionToReplace.getText())));
     }
  else {
-      expressionToReplace.replace(argumentExpression);
+      replacements.add(new Pair<JetElement,JetElement>(expressionToReplace,argumentExpression));
     }
+  }
+  ContainerUtil.sort(replacements,REVERSED_TEXT_OFFSET_COMPARATOR);
+  for (  Pair<JetElement,JetElement> replacement : replacements) {
+    replacement.getFirst().replace(replacement.getSecond());
   }
   return newExpression;
 }
