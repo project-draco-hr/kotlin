@@ -12,23 +12,11 @@
   adapter.visitInsn(Opcodes.NOP);
   InlineResult result=inliner.doInline(adapter,remapper,true,LabelOwner.SKIP_ALL);
   result.getReifiedTypeParametersUsages().mergeAll(reificationResult);
+  CallableMemberDescriptor descriptor=codegen.getContext().getContextDescriptor();
+  final Set<String> labels=getDeclarationLabels(DescriptorToSourceUtils.descriptorToDeclaration(descriptor),descriptor);
   LabelOwner labelOwner=new LabelOwner(){
-    final CallableMemberDescriptor descriptor=codegen.getContext().getContextDescriptor();
     @Override public boolean isMyLabel(    @NotNull String name){
-      if (InlineCodegenUtil.ROOT_LABEL.equals(name)) {
-        return !isFunctionLiteral(descriptor);
-      }
-      if (descriptor.getName().asString().equals(name)) {
-        return true;
-      }
-      if (isFunctionExpression(descriptor)) {
-        PsiElement element=DescriptorToSourceUtils.descriptorToDeclaration(descriptor);
-        if (element != null && element.getParent() instanceof JetLabeledExpression) {
-          String labelName=((JetLabeledExpression)element.getParent()).getLabelName();
-          return name.equals(labelName);
-        }
-      }
-      return false;
+      return labels.contains(name);
     }
   }
 ;
