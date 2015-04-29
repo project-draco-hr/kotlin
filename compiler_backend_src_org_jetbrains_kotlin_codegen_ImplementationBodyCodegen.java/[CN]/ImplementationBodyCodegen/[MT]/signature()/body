@@ -1,2 +1,23 @@
 {
+  BothSignatureWriter sw=new BothSignatureWriter(BothSignatureWriter.Mode.CLASS);
+  typeMapper.writeFormalTypeParameters(descriptor.getTypeConstructor().getParameters(),sw);
+  sw.writeSuperclass();
+  if (superClassType == null) {
+    sw.writeClassBegin(superClassAsmType);
+    sw.writeClassEnd();
+  }
+ else {
+    typeMapper.mapSupertype(superClassType,sw);
+  }
+  sw.writeSuperclassEnd();
+  LinkedHashSet<String> superInterfaces=new LinkedHashSet<String>();
+  for (  JetType supertype : descriptor.getTypeConstructor().getSupertypes()) {
+    if (isInterface(supertype.getConstructor().getDeclarationDescriptor())) {
+      sw.writeInterface();
+      Type jvmName=typeMapper.mapSupertype(supertype,sw);
+      sw.writeInterfaceEnd();
+      superInterfaces.add(jvmName.getInternalName());
+    }
+  }
+  return new JvmClassSignature(classAsmType.getInternalName(),superClassAsmType.getInternalName(),new ArrayList<String>(superInterfaces),sw.makeJavaGenericSignature());
 }
