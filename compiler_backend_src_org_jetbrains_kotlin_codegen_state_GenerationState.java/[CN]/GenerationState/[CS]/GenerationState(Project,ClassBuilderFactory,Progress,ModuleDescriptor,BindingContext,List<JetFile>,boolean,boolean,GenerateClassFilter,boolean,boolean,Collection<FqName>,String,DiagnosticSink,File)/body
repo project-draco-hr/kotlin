@@ -15,8 +15,14 @@
   if (!disableOptimization) {
     builderFactory=new OptimizationClassBuilderFactory(builderFactory);
   }
+  ClassBuilderFactory interceptedBuilderFactory=new BuilderFactoryForDuplicateSignatureDiagnostics(builderFactory,this.bindingContext,diagnostics);
+  Collection<ClassBuilderInterceptorExtension> interceptExtensions=ClassBuilderInterceptorExtension.Companion.getInstances(project);
+  for (  ClassBuilderInterceptorExtension extension : interceptExtensions) {
+    interceptedBuilderFactory=extension.interceptClassBuilderFactory(interceptedBuilderFactory,bindingContext,diagnostics);
+  }
+  this.interceptedBuilderFactory=interceptedBuilderFactory;
   this.diagnostics=diagnostics;
-  this.classFileFactory=new ClassFileFactory(this,new BuilderFactoryForDuplicateSignatureDiagnostics(builderFactory,this.bindingContext,diagnostics));
+  this.classFileFactory=new ClassFileFactory(this,interceptedBuilderFactory);
   this.disableCallAssertions=disableCallAssertions;
   this.disableParamAssertions=disableParamAssertions;
   this.generateClassFilter=generateClassFilter;
