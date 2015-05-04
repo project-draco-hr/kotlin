@@ -5,9 +5,21 @@
     if (annotationParsingMode.atMemberStart && atSet(SOFT_KEYWORDS_AT_MEMBER_START)) {
       break;
     }
-    if (atSet(MODIFIER_KEYWORDS)) {
-      if (tokenConsumer != null)       tokenConsumer.consume(tt());
-      advance();
+    if (at(AT)) {
+      IElementType strictlyNextToken=myBuilder.rawLookup(1);
+      if (strictlyNextToken == IDENTIFIER || MODIFIER_KEYWORDS.contains(strictlyNextToken)) {
+        if (!annotationParsingMode.allowAtAnnotations) {
+          errorAndAdvance("Only annotations in '[]' can be declared here");
+        }
+        if (!tryParseModifier(tokenConsumer)) {
+          parseAnnotationEntry();
+        }
+      }
+ else {
+        errorAndAdvance("Expected modifier or annotation after '@'");
+      }
+    }
+ else     if (tryParseModifier(tokenConsumer)) {
     }
  else     if (at(LBRACKET) || (annotationParsingMode.allowShortAnnotations && at(IDENTIFIER))) {
       parseAnnotation(annotationParsingMode);
