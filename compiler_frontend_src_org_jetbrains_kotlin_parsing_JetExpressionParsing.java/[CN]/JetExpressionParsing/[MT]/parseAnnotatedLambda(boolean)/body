@@ -1,0 +1,17 @@
+{
+  PsiBuilder.Marker annotated=mark();
+  boolean wereAnnotations=myJetParsing.parseAnnotations(ONLY_ESCAPED_REGULAR_ANNOTATIONS);
+  PsiBuilder.Marker labeled=mark();
+  boolean wasLabel=isAtLabelDefinitionOrMissingIdentifier();
+  if (wasLabel) {
+    parseLabelDefinition();
+  }
+  if (!at(LBRACE)) {
+    annotated.rollbackTo();
+    return false;
+  }
+  parseFunctionLiteral(preferBlock);
+  doneOrDrop(labeled,LABELED_EXPRESSION,wasLabel);
+  doneOrDrop(annotated,ANNOTATED_EXPRESSION,wereAnnotations);
+  return true;
+}
