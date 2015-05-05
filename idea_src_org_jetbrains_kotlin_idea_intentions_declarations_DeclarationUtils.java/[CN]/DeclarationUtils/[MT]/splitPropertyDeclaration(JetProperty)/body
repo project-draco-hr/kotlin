@@ -7,6 +7,10 @@
   JetExpression newInitializer=createExpressionByPattern(psiFactory,"$0 = $1",property.getName(),initializer);
   newInitializer=(JetBinaryExpression)parent.addAfter(newInitializer,property);
   parent.addAfter(psiFactory.createNewLine(),property);
+  Project project=newInitializer.getProject();
+  PsiFile file=parent.getContainingFile();
+  PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(PsiDocumentManager.getInstance(project).getDocument(file));
+  CodeStyleManager.getInstance(project).adjustLineIndent(file,newInitializer.getTextRange());
   JetType inferredType=getPropertyTypeIfNeeded(property);
   String typeStr=inferredType != null ? IdeDescriptorRenderers.SOURCE_CODE.renderType(inferredType) : JetPsiUtil.getNullableText(property.getTypeReference());
   property=(JetProperty)property.replace(psiFactory.createProperty(property.getNameIdentifier().getText(),typeStr,property.isVar()));
