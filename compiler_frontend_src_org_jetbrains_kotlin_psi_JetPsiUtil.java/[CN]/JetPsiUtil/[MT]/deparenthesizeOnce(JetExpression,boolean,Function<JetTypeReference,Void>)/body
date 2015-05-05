@@ -3,25 +3,22 @@
     JetBinaryExpressionWithTypeRHS binaryExpression=(JetBinaryExpressionWithTypeRHS)expression;
     JetSimpleNameExpression operationSign=binaryExpression.getOperationReference();
     if (JetTokens.COLON.equals(operationSign.getReferencedNameElementType())) {
-      expression=binaryExpression.getLeft();
       JetTypeReference typeReference=binaryExpression.getRight();
       if (typeResolutionStrategy != null && typeReference != null) {
         typeResolutionStrategy.apply(typeReference);
       }
+      return binaryExpression.getLeft();
     }
+    return expression;
   }
  else   if (expression instanceof JetLabeledExpression) {
-    JetExpression baseExpression=((JetLabeledExpression)expression).getBaseExpression();
-    if (baseExpression != null) {
-      expression=baseExpression;
-    }
+    return ((JetLabeledExpression)expression).getBaseExpression();
   }
  else   if (expression instanceof JetExpressionWrapper) {
-    expression=((JetExpressionWrapper)expression).getBaseExpression();
+    return ((JetExpressionWrapper)expression).getBaseExpression();
   }
-  if (expression instanceof JetParenthesizedExpression) {
-    JetExpression innerExpression=((JetParenthesizedExpression)expression).getExpression();
-    return innerExpression != null && deparenthesizeRecursively ? deparenthesizeWithResolutionStrategy(innerExpression,deparenthesizeBinaryExpressionWithTypeRHS,true,typeResolutionStrategy) : innerExpression;
+ else   if (expression instanceof JetParenthesizedExpression) {
+    return ((JetParenthesizedExpression)expression).getExpression();
   }
   return expression;
 }
