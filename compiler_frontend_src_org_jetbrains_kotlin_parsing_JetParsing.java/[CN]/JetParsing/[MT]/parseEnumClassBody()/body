@@ -1,29 +1,11 @@
 {
   if (!at(LBRACE))   return;
-  PsiBuilder.Marker classBody=mark();
+  PsiBuilder.Marker body=mark();
   myBuilder.enableNewlines();
   advance();
-  while (!eof() && !at(RBRACE)) {
-    PsiBuilder.Marker entryOrMember=mark();
-    ModifierDetector detector=new ModifierDetector();
-    parseModifierList(detector,ONLY_ESCAPED_REGULAR_ANNOTATIONS);
-    IElementType type;
-    if (!atSet(SOFT_KEYWORDS_AT_MEMBER_START) && at(IDENTIFIER)) {
-      parseEnumEntry();
-      type=ENUM_ENTRY;
-    }
- else {
-      type=parseMemberDeclarationRest(detector.isEnumDetected(),detector.isDefaultDetected());
-    }
-    if (type == null) {
-      errorAndAdvance("Expecting an enum entry or member declaration");
-      entryOrMember.drop();
-    }
- else {
-      closeDeclarationWithCommentBinders(entryOrMember,type,true);
-    }
-  }
+  parseEnumEntries();
+  parseMembers();
   expect(RBRACE,"Expecting '}' to close enum class body");
   myBuilder.restoreNewlinesState();
-  classBody.done(CLASS_BODY);
+  body.done(CLASS_BODY);
 }
