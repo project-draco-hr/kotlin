@@ -1,2 +1,20 @@
 {
+  File ktFile=new File("compiler/testData/recursiveProcessor/declarations.kt");
+  File txtFile=new File("compiler/testData/recursiveProcessor/declarations.txt");
+  String text=FileUtil.loadFile(ktFile,true);
+  JetFile jetFile=JetTestUtils.createFile("declarations.kt",text,getEnvironment().getProject());
+  AnalysisResult result=JetTestUtils.analyzeFile(jetFile);
+  PackageViewDescriptor testPackage=result.getModuleDescriptor().getPackage(FqName.topLevel(Name.identifier("test")));
+  List<String> descriptors=recursivelyCollectDescriptors(testPackage);
+  StringBuilder builder=new StringBuilder();
+  Printer p=new Printer(builder);
+  for (  String descriptor : descriptors) {
+    p.println(descriptor);
+  }
+  String actualText=builder.toString();
+  if (!txtFile.exists()) {
+    FileUtil.writeToFile(txtFile,actualText);
+    fail("Test data file did not exist and was created from the results of the test: " + txtFile);
+  }
+  assertSameLinesWithFile(txtFile.getAbsolutePath(),actualText);
 }

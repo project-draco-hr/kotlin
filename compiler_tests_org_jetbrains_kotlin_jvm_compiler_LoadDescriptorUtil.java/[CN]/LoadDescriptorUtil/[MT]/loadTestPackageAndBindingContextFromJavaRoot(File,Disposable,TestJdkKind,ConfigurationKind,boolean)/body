@@ -1,2 +1,18 @@
 {
+  List<File> javaBinaryRoots=new ArrayList<File>();
+  javaBinaryRoots.add(JetTestUtils.getAnnotationsJar());
+  List<File> javaSourceRoots=new ArrayList<File>();
+  javaSourceRoots.add(new File("compiler/testData/loadJava/include"));
+  if (isBinaryRoot) {
+    javaBinaryRoots.add(javaRoot);
+  }
+ else {
+    javaSourceRoots.add(javaRoot);
+  }
+  CompilerConfiguration configuration=JetTestUtils.compilerConfigurationForTests(configurationKind,testJdkKind,javaBinaryRoots,javaSourceRoots);
+  KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForTests(disposable,configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
+  BindingTrace trace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
+  ModuleDescriptor module=LazyResolveTestUtil.resolve(environment.getProject(),trace,Collections.<JetFile>emptyList());
+  PackageViewDescriptor packageView=module.getPackage(TEST_PACKAGE_FQNAME);
+  return Pair.create(packageView,trace.getBindingContext());
 }
