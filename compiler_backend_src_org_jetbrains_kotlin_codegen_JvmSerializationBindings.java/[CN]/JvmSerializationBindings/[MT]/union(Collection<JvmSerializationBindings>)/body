@@ -1,10 +1,13 @@
 {
-  MutableSlicedMap result=SlicedMapImpl.create();
+  final MutableSlicedMap result=SlicedMapImpl.create();
   for (  JvmSerializationBindings binding : bindings) {
-    for (    Map.Entry<SlicedMapKey<?,?>,?> entry : binding.map) {
-      SlicedMapKey<?,?> key=entry.getKey();
-      result.put((WritableSlice)key.getSlice(),key.getKey(),entry.getValue());
+    binding.map.forEach(new Function3<WritableSlice,Object,Object,Void>(){
+      @Override public Void invoke(      WritableSlice slice,      Object key,      Object value){
+        result.put(slice,key,value);
+        return null;
+      }
     }
+);
   }
   return new JvmSerializationBindings(result);
 }

@@ -2,11 +2,17 @@
   if (!slice.check(key,value)) {
     return;
   }
-  SlicedMapKey<K,V> slicedMapKey=slice.makeKey(key);
+  UserDataHolderImpl holder=map.get(key);
+  if (holder == null) {
+    holder=new UserDataHolderImpl();
+    map.put(key,holder);
+  }
+  Key<V> sliceKey=slice.getKey();
   RewritePolicy rewritePolicy=slice.getRewritePolicy();
   if (rewritePolicy.rewriteProcessingNeeded(key)) {
-    if (map.containsKey(slicedMapKey)) {
-      if (!rewritePolicy.processRewrite(slice,key,(V)map.get(slicedMapKey),value)) {
+    V oldValue=holder.getUserData(sliceKey);
+    if (oldValue != null) {
+      if (!rewritePolicy.processRewrite(slice,key,oldValue,value)) {
         return;
       }
     }
@@ -14,6 +20,10 @@
   if (slice.isCollective()) {
     collectiveSliceKeys.put(slice,key);
   }
-  map.put(slicedMapKey,value);
+  int sliceKeyId=sliceKey.hashCode();
+  if (!keyIdToSlice.contains(sliceKeyId)) {
+    keyIdToSlice.put(sliceKeyId,slice);
+  }
+  holder.putUserData(sliceKey,value);
   slice.afterPut(this,key,value);
 }
