@@ -1,0 +1,36 @@
+{
+  Set<ClassDescriptor> checkedDescriptors=new HashSet<ClassDescriptor>();
+  for (  JetWhenEntry whenEntry : whenExpression.getEntries()) {
+    for (    JetWhenCondition condition : whenEntry.getConditions()) {
+      boolean negated=false;
+      JetType checkedType=null;
+      if (condition instanceof JetWhenConditionIsPattern) {
+        JetWhenConditionIsPattern conditionIsPattern=(JetWhenConditionIsPattern)condition;
+        checkedType=trace.get(BindingContext.TYPE,conditionIsPattern.getTypeReference());
+        negated=conditionIsPattern.isNegated();
+      }
+ else       if (condition instanceof JetWhenConditionWithExpression) {
+        JetWhenConditionWithExpression conditionWithExpression=(JetWhenConditionWithExpression)condition;
+        if (conditionWithExpression.getExpression() != null) {
+          checkedType=trace.getBindingContext().getType(conditionWithExpression.getExpression());
+        }
+      }
+      if (checkedType == null) {
+        continue;
+      }
+      ClassDescriptor checkedDescriptor=TypeUtils.getClassDescriptor(checkedType);
+      if (checkedDescriptor == null || !memberDescriptors.contains(checkedDescriptor) || (condition instanceof JetWhenConditionWithExpression && !DescriptorUtils.isObject(checkedDescriptor))) {
+        continue;
+      }
+      if (negated) {
+        if (checkedDescriptors.contains(checkedDescriptor))         return true;
+        checkedDescriptors.addAll(memberDescriptors);
+        checkedDescriptors.remove(checkedDescriptor);
+      }
+ else {
+        checkedDescriptors.add(checkedDescriptor);
+      }
+    }
+  }
+  return checkedDescriptors.containsAll(memberDescriptors);
+}
