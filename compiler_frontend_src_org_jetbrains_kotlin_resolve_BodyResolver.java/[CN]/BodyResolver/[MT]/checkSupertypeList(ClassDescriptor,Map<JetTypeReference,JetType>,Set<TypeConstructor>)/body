@@ -36,7 +36,21 @@
       trace.report(SINGLETON_IN_SUPERTYPE.on(typeReference));
     }
  else     if (constructor.isFinal() && !allowedFinalSupertypes.contains(constructor)) {
-      trace.report(FINAL_SUPERTYPE.on(typeReference));
+      if (classDescriptor.getModality() == Modality.SEALED) {
+        DeclarationDescriptor containingDescriptor=supertypeOwner.getContainingDeclaration();
+        while (containingDescriptor != null && containingDescriptor != classDescriptor) {
+          containingDescriptor=containingDescriptor.getContainingDeclaration();
+        }
+        if (containingDescriptor == null) {
+          trace.report(SEALED_SUPERTYPE.on(typeReference));
+        }
+ else {
+          trace.report(SEALED_SUPERTYPE_IN_LOCAL_CLASS.on(typeReference));
+        }
+      }
+ else {
+        trace.report(FINAL_SUPERTYPE.on(typeReference));
+      }
     }
   }
 }

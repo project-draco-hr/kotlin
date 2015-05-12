@@ -93,9 +93,25 @@
   if (DescriptorUtils.isAnnotationClass(descriptor) && jetClass.getDelegationSpecifierList() != null) {
     trace.report(SUPERTYPES_FOR_ANNOTATION_CLASS.on(jetClass.getDelegationSpecifierList()));
   }
-  Set<TypeConstructor> parentEnum=jetClass instanceof JetEnumEntry ? Collections.singleton(((ClassDescriptor)descriptor.getContainingDeclaration()).getTypeConstructor()) : Collections.<TypeConstructor>emptySet();
+  Set<TypeConstructor> parentEnumOrSealed;
+  if (jetClass instanceof JetEnumEntry) {
+    parentEnumOrSealed=Collections.singleton(((ClassDescriptor)descriptor.getContainingDeclaration()).getTypeConstructor());
+  }
+ else {
+    parentEnumOrSealed=Collections.emptySet();
+    ClassDescriptor currentDescriptor=descriptor;
+    while (currentDescriptor.getContainingDeclaration() instanceof ClassDescriptor) {
+      currentDescriptor=(ClassDescriptor)currentDescriptor.getContainingDeclaration();
+      if (currentDescriptor.getModality() == Modality.SEALED) {
+        if (parentEnumOrSealed.isEmpty()) {
+          parentEnumOrSealed=new HashSet<TypeConstructor>();
+        }
+        parentEnumOrSealed.add(currentDescriptor.getTypeConstructor());
+      }
+    }
+  }
   if (primaryConstructorDelegationCall[0] != null && primaryConstructor != null) {
     recordConstructorDelegationCall(trace,primaryConstructor,primaryConstructorDelegationCall[0]);
   }
-  checkSupertypeList(descriptor,supertypes,parentEnum);
+  checkSupertypeList(descriptor,supertypes,parentEnumOrSealed);
 }
