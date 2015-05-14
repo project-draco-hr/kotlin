@@ -1,5 +1,5 @@
 {
-  List<KotlinMemberInfo> memberInfos=KotlinPackage.map(KotlinPackage.filterIsInstance(sourceFile.getDeclarations(),JetNamedDeclaration.class),new Function1<JetNamedDeclaration,KotlinMemberInfo>(){
+  final List<KotlinMemberInfo> memberInfos=KotlinPackage.map(KotlinPackage.filterIsInstance(sourceFile.getDeclarations(),JetNamedDeclaration.class),new Function1<JetNamedDeclaration,KotlinMemberInfo>(){
     @Override public KotlinMemberInfo invoke(    JetNamedDeclaration declaration){
       KotlinMemberInfo memberInfo=new KotlinMemberInfo(declaration);
       memberInfo.setChecked(elementsToMove.contains(declaration));
@@ -13,5 +13,24 @@
   memberInfoModel.memberInfoChanged(new MemberInfoChange<JetNamedDeclaration,KotlinMemberInfo>(memberInfos));
   selectionPanel.getTable().setMemberInfoModel(memberInfoModel);
   selectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
+  selectionPanel.getTable().addMemberInfoChangeListener(new MemberInfoChangeListener<JetNamedDeclaration,KotlinMemberInfo>(){
+    private boolean shouldUpdateFileNameField(    final Collection<KotlinMemberInfo> changedMembers){
+      if (!tfFileNameInPackage.isEnabled())       return true;
+      Collection<JetNamedDeclaration> previousDeclarations=KotlinPackage.filterNotNull(KotlinPackage.map(memberInfos,new Function1<KotlinMemberInfo,JetNamedDeclaration>(){
+        @Override public JetNamedDeclaration invoke(        KotlinMemberInfo info){
+          return changedMembers.contains(info) != info.isChecked() ? info.getMember() : null;
+        }
+      }
+));
+      String suggestedText=previousDeclarations.isEmpty() ? "" : MovePackage.guessNewFileName(previousDeclarations);
+      return tfFileNameInPackage.getText().equals(suggestedText);
+    }
+    @Override public void memberInfoChanged(    MemberInfoChange<JetNamedDeclaration,KotlinMemberInfo> event){
+      if (shouldUpdateFileNameField(event.getChangedMembers())) {
+        updateSuggestedFileName();
+      }
+    }
+  }
+);
   memberInfoPanel.add(selectionPanel,BorderLayout.CENTER);
 }
