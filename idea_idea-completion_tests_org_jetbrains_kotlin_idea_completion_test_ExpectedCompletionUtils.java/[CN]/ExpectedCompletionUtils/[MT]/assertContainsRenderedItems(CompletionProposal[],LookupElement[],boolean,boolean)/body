@@ -1,6 +1,7 @@
 {
   List<CompletionProposal> itemsInformation=getItemsInformation(items);
   String allItemsString=listToString(itemsInformation);
+  Set<CompletionProposal> leftItems=nothingElse ? new LinkedHashSet<CompletionProposal>(itemsInformation) : null;
   int indexOfPrevious=Integer.MIN_VALUE;
   for (  CompletionProposal expectedProposal : expected) {
     boolean isFound=false;
@@ -10,6 +11,9 @@
         isFound=true;
         Assert.assertTrue("Invalid order of existent elements in " + allItemsString,!checkOrder || index > indexOfPrevious);
         indexOfPrevious=index;
+        if (leftItems != null) {
+          leftItems.remove(proposal);
+        }
         break;
       }
     }
@@ -21,5 +25,8 @@
         Assert.fail("Expected " + expectedProposal + " not found in:\n"+ allItemsString);
       }
     }
+  }
+  if (leftItems != null && !leftItems.isEmpty()) {
+    Assert.fail("No items not mentioned in EXIST directives expected but some found:\n" + listToString(leftItems));
   }
 }
