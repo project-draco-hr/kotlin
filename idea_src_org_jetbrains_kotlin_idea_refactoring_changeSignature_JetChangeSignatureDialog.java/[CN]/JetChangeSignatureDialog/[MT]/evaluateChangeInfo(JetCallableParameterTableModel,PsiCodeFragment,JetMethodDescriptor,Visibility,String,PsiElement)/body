@@ -1,17 +1,16 @@
 {
-  List<JetParameterInfo> parameters=new ArrayList<JetParameterInfo>(myParametersTableModel.getRowCount());
-  for (int i=0; i < myParametersTableModel.getItems().size(); i++) {
-    JetParameterInfo parameter=myParametersTableModel.getItems().get(i).parameter;
-    parameter.setCurrentTypeText(myParametersTableModel.getItems().get(i).typeCodeFragment.getText().trim());
-    parameters.add(parameter);
-    JetExpressionCodeFragment codeFragment=(JetExpressionCodeFragment)myParametersTableModel.getItems().get(i).defaultValueCodeFragment;
-    JetExpression oldDefaultValue=parameter.getDefaultValueForCall();
+  List<JetParameterInfo> parameters=new ArrayList<JetParameterInfo>(parametersModel.getRowCount());
+  for (  ParameterTableModelItemBase<JetParameterInfo> parameter : parametersModel.getItems()) {
+    parameter.parameter.setCurrentTypeText(parameter.typeCodeFragment.getText().trim());
+    parameters.add(parameter.parameter);
+    JetExpressionCodeFragment codeFragment=(JetExpressionCodeFragment)parameter.defaultValueCodeFragment;
+    JetExpression oldDefaultValue=parameter.parameter.getDefaultValueForCall();
     if (!codeFragment.getText().equals(oldDefaultValue != null ? oldDefaultValue.getText() : "")) {
-      parameter.setDefaultValueForCall(codeFragment.getContentElement());
+      parameter.parameter.setDefaultValueForCall(codeFragment.getContentElement());
     }
   }
-  String returnTypeText=myReturnTypeCodeFragment != null ? myReturnTypeCodeFragment.getText().trim() : "";
-  JetMethodDescriptor descriptor=myMethod instanceof JetMutableMethodDescriptor ? ((JetMutableMethodDescriptor)myMethod).getOriginal() : myMethod;
-  JetType returnType=getType((JetTypeCodeFragment)myReturnTypeCodeFragment);
-  return new JetChangeInfo(descriptor,methodName,returnType,returnTypeText,visibility,parameters,myParametersTableModel.getReceiver(),myDefaultValueContext);
+  String returnTypeText=returnTypeCodeFragment != null ? returnTypeCodeFragment.getText().trim() : "";
+  JetMethodDescriptor descriptor=methodDescriptor instanceof JetMutableMethodDescriptor ? ((JetMutableMethodDescriptor)methodDescriptor).getOriginal() : methodDescriptor;
+  JetType returnType=getType((JetTypeCodeFragment)returnTypeCodeFragment);
+  return new JetChangeInfo(descriptor,methodName,returnType,returnTypeText,visibility,parameters,parametersModel.getReceiver(),defaultValueContext);
 }
