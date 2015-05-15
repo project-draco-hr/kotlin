@@ -1,8 +1,9 @@
 {
-  List<JetParameterInfo> parameters=getParameters();
-  for (int i=0; i < parameters.size(); i++) {
-    JetParameterInfo parameter=parameters.get(i);
+  List<JetParameterInfo> parameters=new ArrayList<JetParameterInfo>(myParametersTableModel.getRowCount());
+  for (int i=0; i < myParametersTableModel.getItems().size(); i++) {
+    JetParameterInfo parameter=myParametersTableModel.getItems().get(i).parameter;
     parameter.setCurrentTypeText(myParametersTableModel.getItems().get(i).typeCodeFragment.getText().trim());
+    parameters.add(parameter);
     JetExpressionCodeFragment codeFragment=(JetExpressionCodeFragment)myParametersTableModel.getItems().get(i).defaultValueCodeFragment;
     JetExpression oldDefaultValue=parameter.getDefaultValueForCall();
     if (!codeFragment.getText().equals(oldDefaultValue != null ? oldDefaultValue.getText() : "")) {
@@ -11,5 +12,6 @@
   }
   String returnTypeText=myReturnTypeCodeFragment != null ? myReturnTypeCodeFragment.getText().trim() : "";
   JetMethodDescriptor descriptor=myMethod instanceof JetMutableMethodDescriptor ? ((JetMutableMethodDescriptor)myMethod).getOriginal() : myMethod;
-  return new JetChangeInfo(descriptor,getMethodName(),getReturnType(),returnTypeText,getVisibility(),parameters,myParametersTableModel.getReceiver(),myDefaultValueContext);
+  JetType returnType=getType((JetTypeCodeFragment)myReturnTypeCodeFragment);
+  return new JetChangeInfo(descriptor,methodName,returnType,returnTypeText,visibility,parameters,myParametersTableModel.getReceiver(),myDefaultValueContext);
 }
