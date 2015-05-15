@@ -1,17 +1,40 @@
 {
   if (at(LBRACKET)) {
-    return parseAnnotationList(mode);
+    return parseAnnotationList(mode,false);
   }
  else   if (mode.allowShortAnnotations && at(IDENTIFIER)) {
-    parseAnnotationEntry();
-    return true;
+    return parseAnnotationEntry(mode);
   }
  else   if (at(AT)) {
-    if (myBuilder.rawLookup(1) == IDENTIFIER) {
-      parseAnnotationEntry();
+    IElementType nextRawToken=myBuilder.rawLookup(1);
+    IElementType tokenToMatch=nextRawToken;
+    boolean isTargetedAnnotation=false;
+    if ((nextRawToken == IDENTIFIER || nextRawToken == FILE_KEYWORD) && lookahead(2) == COLON) {
+      tokenToMatch=lookahead(3);
+      isTargetedAnnotation=true;
+    }
+ else     if (lookahead(1) == COLON) {
+      isTargetedAnnotation=true;
+      tokenToMatch=lookahead(2);
+    }
+    if (tokenToMatch == IDENTIFIER) {
+      return parseAnnotationEntry(mode);
+    }
+ else     if (tokenToMatch == LBRACKET) {
+      return parseAnnotationList(mode,true);
     }
  else {
-      errorAndAdvance("Expected annotation identifier after '@'",1);
+      if (isTargetedAnnotation) {
+        if (lookahead(1) == COLON) {
+          errorAndAdvance("Expected annotation identifier after ':'",2);
+        }
+ else {
+          errorAndAdvance("Expected annotation identifier after '@file:'",3);
+        }
+      }
+ else {
+        errorAndAdvance("Expected annotation identifier after '@'",1);
+      }
     }
     return true;
   }

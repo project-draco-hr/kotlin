@@ -1,11 +1,20 @@
 {
   if (mode.isFileAnnotationParsingMode) {
+    if (at(COLON)) {
+      errorAndAdvance("Expected 'file' keyword before ':'");
+      return true;
+    }
+    if (lookahead(1) == COLON && !at(FILE_KEYWORD) && at(IDENTIFIER)) {
+      errorAndAdvance("Expected 'file' keyword as target");
+      advance();
+      return true;
+    }
     if (mode == FILE_ANNOTATIONS_WHEN_PACKAGE_OMITTED && !(at(FILE_KEYWORD) && lookahead(1) == COLON)) {
       return false;
     }
     String message="Expecting \"" + FILE_KEYWORD.getValue() + COLON.getValue()+ "\" prefix for file annotations";
     expect(FILE_KEYWORD,message);
-    expect(COLON,message,TokenSet.create(IDENTIFIER,RBRACKET));
+    expect(COLON,message,TokenSet.create(IDENTIFIER,RBRACKET,LBRACKET));
   }
  else   if (at(FILE_KEYWORD) && lookahead(1) == COLON) {
     errorAndAdvance("File annotations are only allowed before package declaration",2);
