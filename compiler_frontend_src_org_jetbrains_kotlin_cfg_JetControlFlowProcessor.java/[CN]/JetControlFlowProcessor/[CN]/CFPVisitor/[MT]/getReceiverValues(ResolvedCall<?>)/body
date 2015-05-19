@@ -1,7 +1,25 @@
 {
-  SmartFMap<PseudoValue,ReceiverValue> receiverValues=SmartFMap.emptyMap();
-  JetElement callElement=resolvedCall.getCall().getCallElement();
-  receiverValues=getReceiverValues(callElement,resolvedCall.getDispatchReceiver(),receiverValues);
-  receiverValues=getReceiverValues(callElement,resolvedCall.getExtensionReceiver(),receiverValues);
-  return receiverValues;
+  PseudoValue varCallResult=null;
+  ReceiverValue explicitReceiver=ReceiverValue.NO_RECEIVER;
+  if (resolvedCall instanceof VariableAsFunctionResolvedCall) {
+    varCallResult=generateCall(((VariableAsFunctionResolvedCall)resolvedCall).getVariableCall()).getOutputValue();
+    ExplicitReceiverKind kind=resolvedCall.getExplicitReceiverKind();
+switch (kind) {
+case DISPATCH_RECEIVER:
+      explicitReceiver=resolvedCall.getDispatchReceiver();
+    break;
+case EXTENSION_RECEIVER:
+case BOTH_RECEIVERS:
+  explicitReceiver=resolvedCall.getExtensionReceiver();
+break;
+}
+}
+SmartFMap<PseudoValue,ReceiverValue> receiverValues=SmartFMap.emptyMap();
+if (explicitReceiver.exists() && varCallResult != null) {
+receiverValues=receiverValues.plus(varCallResult,explicitReceiver);
+}
+JetElement callElement=resolvedCall.getCall().getCallElement();
+receiverValues=getReceiverValues(callElement,resolvedCall.getDispatchReceiver(),receiverValues);
+receiverValues=getReceiverValues(callElement,resolvedCall.getExtensionReceiver(),receiverValues);
+return receiverValues;
 }
