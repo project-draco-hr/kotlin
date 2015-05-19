@@ -5,9 +5,11 @@
     }
   }
 );
-  Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule);
-  Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
   LazyOperationsLog lazyOperationsLog=new LazyOperationsLog(HASH_SANITIZER);
+  ExceptionTracker tracker=new ExceptionTracker();
+  GlobalContext context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
+  Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule,context.getStorageManager());
+  Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
   for (  Map.Entry<TestModule,List<TestFile>> entry : groupedByModule.entrySet()) {
     TestModule testModule=entry.getKey();
     List<? extends TestFile> testFilesInModule=entry.getValue();
@@ -15,9 +17,8 @@
     ModuleDescriptorImpl module=modules.get(testModule);
     BindingTrace moduleTrace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
     moduleBindings.put(testModule,moduleTrace.getBindingContext());
-    ExceptionTracker tracker=new ExceptionTracker();
-    GlobalContext context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
-    analyzeModuleContents(context,jetFiles,module,moduleTrace);
+    ModuleContext moduleContext=withModule(withProject(context,getProject()),module);
+    analyzeModuleContents(moduleContext,jetFiles,moduleTrace);
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
   Throwable exceptionFromLazyResolveLogValidation=null;

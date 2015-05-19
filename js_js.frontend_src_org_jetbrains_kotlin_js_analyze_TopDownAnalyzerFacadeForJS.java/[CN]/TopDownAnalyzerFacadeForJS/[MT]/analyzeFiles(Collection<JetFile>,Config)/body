@@ -1,11 +1,6 @@
 {
   BindingTrace trace=new BindingTraceContext();
-  ModuleDescriptorImpl module=createJsModule("<" + config.getModuleId() + ">");
-  module.addDependencyOnModule(module);
-  module.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
-  for (  ModuleDescriptorImpl moduleDescriptor : config.getModuleDescriptors()) {
-    module.addDependencyOnModule(moduleDescriptor);
-  }
-  module.seal();
-  return analyzeFilesWithGivenTrace(files,trace,module,config);
+  MutableModuleContext newModuleContext=ContextPackage.ContextForNewModule(config.getProject(),Name.special("<" + config.getModuleId() + ">"),JS_MODULE_PARAMETERS);
+  newModuleContext.setDependencies(computeDependencies(newModuleContext.getModule(),config));
+  return analyzeFilesWithGivenTrace(files,trace,newModuleContext,config);
 }

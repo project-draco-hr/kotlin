@@ -1,11 +1,8 @@
 {
-  ModuleDescriptorImpl moduleDescriptor=new ModuleDescriptorImpl(Name.special("<library module>"),TopDownAnalyzerFacadeForJVM.DEFAULT_IMPORTS,PlatformToKotlinClassMap.EMPTY);
-  ModuleContext moduleContext=ContextPackage.ModuleContext(moduleDescriptor,project);
-  FileBasedDeclarationProviderFactory providerFactory=new FileBasedDeclarationProviderFactory(moduleContext.getStorageManager(),getContainingFiles(candidates));
-  moduleDescriptor.addDependencyOnModule(moduleDescriptor);
-  moduleDescriptor.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
-  moduleDescriptor.seal();
-  ResolveSession resolveSession=new InjectorForLazyResolve(moduleContext,providerFactory,new BindingTraceContext(),AdditionalCheckerProvider.DefaultProvider.INSTANCE$,new DynamicTypesSettings()).getResolveSession();
-  moduleDescriptor.initialize(resolveSession.getPackageFragmentProvider());
+  MutableModuleContext newModuleContext=ContextPackage.ContextForNewModule(project,Name.special("<library module>"),ModuleParameters(TopDownAnalyzerFacadeForJVM.DEFAULT_IMPORTS,PlatformToKotlinClassMap.EMPTY));
+  newModuleContext.setDependencies(newModuleContext.getModule(),KotlinBuiltIns.getInstance().getBuiltInsModule());
+  FileBasedDeclarationProviderFactory providerFactory=new FileBasedDeclarationProviderFactory(newModuleContext.getStorageManager(),getContainingFiles(candidates));
+  ResolveSession resolveSession=new InjectorForLazyResolve(newModuleContext,providerFactory,new BindingTraceContext(),AdditionalCheckerProvider.DefaultProvider.INSTANCE$,new DynamicTypesSettings()).getResolveSession();
+  newModuleContext.initializeModuleContents(resolveSession.getPackageFragmentProvider());
   return resolveSession;
 }
