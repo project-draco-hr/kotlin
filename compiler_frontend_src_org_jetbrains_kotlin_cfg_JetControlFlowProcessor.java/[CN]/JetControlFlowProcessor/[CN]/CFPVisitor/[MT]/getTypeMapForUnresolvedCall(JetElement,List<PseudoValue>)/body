@@ -1,0 +1,39 @@
+{
+  Call call=CallUtilPackage.getCall(to,trace.getBindingContext());
+  if (call == null)   return null;
+  JetExpression callee=call.getCalleeExpression();
+  if (callee == null)   return null;
+  Collection<FunctionDescriptor> candidates=KotlinPackage.sortBy(KotlinPackage.filterIsInstance(BindingContextUtilPackage.getReferenceTargets(callee,trace.getBindingContext()),FunctionDescriptor.class),new Function1<FunctionDescriptor,Comparable>(){
+    @Override public Comparable invoke(    FunctionDescriptor descriptor){
+      return DescriptorRenderer.DEBUG_TEXT.render(descriptor);
+    }
+  }
+);
+  if (candidates.isEmpty())   return null;
+  ReceiverValue explicitReceiver=call.getExplicitReceiver();
+  int argValueOffset=explicitReceiver.exists() ? 1 : 0;
+  MultiMap<PseudoValue,TypePredicate> valuesToPredicates=new MultiMap<PseudoValue,TypePredicate>(arguments.size(),1);
+  candidateLoop:   for (  FunctionDescriptor candidate : candidates) {
+    ResolvedCallImpl<FunctionDescriptor> candidateCall=ResolvedCallImpl.create(ResolutionCandidate.create(call,candidate,call.getDispatchReceiver(),explicitReceiver,ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,null),new DelegatingBindingTrace(trace.getBindingContext(),"Compute type predicates for unresolved call arguments"),TracingStrategy.EMPTY,new DataFlowInfoForArgumentsImpl(call));
+    ValueArgumentsToParametersMapper.Status status=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(call,TracingStrategy.EMPTY,candidateCall,Sets.<ValueArgument>newLinkedHashSet());
+    if (!status.isSuccess())     continue;
+    Map<ValueParameterDescriptor,ResolvedValueArgument> candidateArgumentMap=candidateCall.getValueArguments();
+    List<? extends ValueArgument> callArguments=call.getValueArguments();
+    for (int i=0; i < callArguments.size(); i++) {
+      int valueIndex=i + argValueOffset;
+      if (valueIndex >= arguments.size())       continue candidateLoop;
+      PseudoValue argumentValue=arguments.get(valueIndex);
+      ArgumentMapping mapping=candidateCall.getArgumentMapping(callArguments.get(i));
+      if (!(mapping instanceof ArgumentMatch))       continue candidateLoop;
+      ValueParameterDescriptor candidateParameter=((ArgumentMatch)mapping).getValueParameter();
+      ResolvedValueArgument resolvedArgument=candidateArgumentMap.get(candidateParameter);
+      JetType expectedType=resolvedArgument instanceof VarargValueArgument ? candidateParameter.getVarargElementType() : candidateParameter.getType();
+      valuesToPredicates.putValue(argumentValue,expectedType != null ? new AllSubtypes(expectedType) : AllTypes.INSTANCE$);
+    }
+  }
+  SmartFMap<PseudoValue,TypePredicate> result=SmartFMap.emptyMap();
+  for (  Map.Entry<PseudoValue,Collection<TypePredicate>> entry : valuesToPredicates.entrySet()) {
+    result=result.plus(entry.getKey(),PseudocodePackage.or(entry.getValue()));
+  }
+  return result;
+}
