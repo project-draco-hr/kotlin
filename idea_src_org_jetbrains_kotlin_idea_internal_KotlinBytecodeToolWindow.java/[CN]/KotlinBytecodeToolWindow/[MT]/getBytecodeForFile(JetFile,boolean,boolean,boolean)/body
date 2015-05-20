@@ -1,5 +1,6 @@
 {
   GenerationState state;
+  DiagnosticSink.CollectAll sink=new DiagnosticSink.CollectAll();
   try {
     ResolutionFacade resolutionFacade=ResolvePackage.getResolutionFacade(jetFile);
     BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(jetFile)).getBindingContext();
@@ -22,7 +23,7 @@
     }
 ;
     ModuleDescriptor moduleDescriptor=resolutionFacade.findModuleDescriptor(jetFile);
-    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,moduleDescriptor,bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,null,null,DiagnosticSink.DO_NOTHING,null);
+    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,Progress.DEAF,moduleDescriptor,bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,null,null,sink,null);
     KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   }
  catch (  ProcessCanceledException e) {
@@ -32,6 +33,15 @@ catch (  Exception e) {
     return printStackTraceToString(e);
   }
   StringBuilder answer=new StringBuilder();
+  List<Diagnostic> diagnostics=sink.getDiagnostics();
+  if (!diagnostics.isEmpty()) {
+    answer.append("// Backend Errors: \n");
+    answer.append("// ================\n");
+    for (    Diagnostic diagnostic : diagnostics) {
+      answer.append("// Error at ").append(diagnostic.getPsiFile().getName()).append(UtilsPackage.join(diagnostic.getTextRanges(),",")).append(": ").append(DefaultErrorMessages.render(diagnostic)).append("\n");
+    }
+    answer.append("// ================\n\n");
+  }
   OutputFileCollection outputFiles=state.getFactory();
   for (  OutputFile outputFile : outputFiles.asList()) {
     answer.append("// ================");
