@@ -1,16 +1,6 @@
 {
   ReceiverParameterDescriptor receiverParameter=descriptor.getExtensionReceiverParameter();
-  List<TypeProjection> typeArguments=new ArrayList<TypeProjection>(2);
-  ClassDescriptor classDescriptor;
-  if (receiverParameter != null) {
-    classDescriptor=extensionFunctionImpl;
-    typeArguments.add(new TypeProjectionImpl(receiverParameter.getType()));
-  }
- else {
-    classDescriptor=functionImpl;
-  }
-  typeArguments.add(new TypeProjectionImpl(descriptor.getReturnType()));
-  JetType functionImplType=new JetTypeImpl(classDescriptor.getDefaultType().getAnnotations(),classDescriptor.getTypeConstructor(),false,typeArguments,classDescriptor.getMemberScope(typeArguments));
+  ClassDescriptor functionImplClass=receiverParameter != null ? extensionFunctionImpl : functionImpl;
   JetType functionType=getBuiltIns(descriptor).getFunctionType(Annotations.EMPTY,receiverParameter == null ? null : receiverParameter.getType(),ExpressionTypingUtils.getValueParametersTypes(descriptor.getValueParameters()),descriptor.getReturnType());
-  return Arrays.asList(functionImplType,functionType);
+  return Arrays.asList(functionImplClass.getDefaultType(),functionType);
 }
