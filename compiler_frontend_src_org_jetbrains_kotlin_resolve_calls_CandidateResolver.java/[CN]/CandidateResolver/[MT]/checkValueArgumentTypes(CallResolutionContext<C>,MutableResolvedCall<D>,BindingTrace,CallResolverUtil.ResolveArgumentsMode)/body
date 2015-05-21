@@ -15,18 +15,18 @@
       infoForArguments.updateInfo(argument,typeInfoForCall.getDataFlowInfo());
       ArgumentMatchStatus matchStatus=ArgumentMatchStatus.SUCCESS;
       JetType resultingType=type;
-      if (type == null || (type.isError() && type != PLACEHOLDER_FUNCTION_TYPE)) {
+      if (type == null || (type.isError() && !ErrorUtils.isFunctionPlaceholder(type))) {
         matchStatus=ArgumentMatchStatus.ARGUMENT_HAS_NO_TYPE;
       }
  else       if (!noExpectedType(expectedType)) {
         if (!ArgumentTypeResolver.isSubtypeOfForArgumentType(type,expectedType)) {
-          JetType morePreciseType=makeMorePreciseType(type,expression,newContext);
-          if (morePreciseType == null) {
+          JetType smartCast=smartCastValueArgumentTypeIfPossible(expression,newContext.expectedType,type,newContext);
+          if (smartCast == null) {
             resultStatus=OTHER_ERROR;
             matchStatus=ArgumentMatchStatus.TYPE_MISMATCH;
           }
  else {
-            resultingType=morePreciseType;
+            resultingType=smartCast;
           }
         }
  else         if (ErrorUtils.containsUninferredParameter(expectedType)) {
