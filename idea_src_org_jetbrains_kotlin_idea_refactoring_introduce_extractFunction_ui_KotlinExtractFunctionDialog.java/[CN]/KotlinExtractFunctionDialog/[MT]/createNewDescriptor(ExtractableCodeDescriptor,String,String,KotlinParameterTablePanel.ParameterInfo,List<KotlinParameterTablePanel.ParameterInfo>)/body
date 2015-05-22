@@ -3,6 +3,12 @@
   for (  KotlinParameterTablePanel.ParameterInfo parameterInfo : newParameterInfos) {
     oldToNewParameters.put(parameterInfo.getOriginalParameter(),parameterInfo.toParameter());
   }
+  ArrayList<Parameter> newParameters=ContainerUtil.newArrayList(oldToNewParameters.values());
+  Parameter originalReceiver=originalDescriptor.getReceiverParameter();
+  Parameter newReceiver=newReceiverInfo != null ? newReceiverInfo.toParameter() : null;
+  if (originalReceiver != null && newReceiver != null) {
+    oldToNewParameters.put(originalReceiver,newReceiver);
+  }
   ControlFlow controlFlow=originalDescriptor.getControlFlow();
   List<OutputValue> outputValues=new ArrayList<OutputValue>(controlFlow.getOutputValues());
   for (int i=0; i < outputValues.size(); i++) {
@@ -29,5 +35,5 @@
       replacementMap.put(offset,replacement);
     }
   }
-  return new ExtractableCodeDescriptor(originalDescriptor.getExtractionData(),originalDescriptor.getOriginalContext(),Collections.singletonList(newName),newVisibility,ContainerUtil.newArrayList(oldToNewParameters.values()),originalDescriptor.getReceiverParameter(),originalDescriptor.getTypeParameters(),replacementMap,controlFlow);
+  return new ExtractableCodeDescriptor(originalDescriptor.getExtractionData(),originalDescriptor.getOriginalContext(),Collections.singletonList(newName),newVisibility,newParameters,newReceiver,originalDescriptor.getTypeParameters(),replacementMap,controlFlow);
 }
