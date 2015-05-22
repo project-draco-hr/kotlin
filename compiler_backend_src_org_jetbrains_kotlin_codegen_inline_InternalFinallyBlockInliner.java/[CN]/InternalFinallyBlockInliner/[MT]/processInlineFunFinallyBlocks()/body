@@ -8,9 +8,9 @@
       curIns=curIns.getPrevious();
       continue;
     }
-    List<TryCatchBlockNodeInfo> currentCoveringNodesFromOuterMost=getTryBlocksMetaInfo().getCurrentIntervals();
-    checkCoveringBlocksInvariant(currentCoveringNodesFromOuterMost);
-    if (currentCoveringNodesFromOuterMost.isEmpty() || currentCoveringNodesFromOuterMost.get(0).getOnlyCopyNotProcess()) {
+    List<TryCatchBlockNodeInfo> currentCoveringNodesFromInnermost=sortTryCatchBlocks(new ArrayList<TryCatchBlockNodeInfo>(getTryBlocksMetaInfo().getCurrentIntervals()));
+    checkCoveringBlocksInvariant(Lists.reverse(currentCoveringNodesFromInnermost));
+    if (currentCoveringNodesFromInnermost.isEmpty() || currentCoveringNodesFromInnermost.get(currentCoveringNodesFromInnermost.size() - 1).getOnlyCopyNotProcess()) {
       curIns=curIns.getPrevious();
       continue;
     }
@@ -18,12 +18,12 @@
     final AbstractInsnNode instrInsertFinallyBefore=markedReturn.getPrevious();
     AbstractInsnNode nextPrev=instrInsertFinallyBefore.getPrevious();
     Type nonLocalReturnType=InlineCodegenUtil.getReturnType(markedReturn.getOpcode());
-    List<TryBlockCluster<TryCatchBlockNodeInfo>> clustersFromInnermost=InlinePackage.doClustering(getCoveringFromInnermost());
+    List<TryBlockCluster<TryCatchBlockNodeInfo>> clustersFromInnermost=InlinePackage.doClustering(currentCoveringNodesFromInnermost);
     Iterator<TryBlockCluster<TryCatchBlockNodeInfo>> tryCatchBlockIterator=clustersFromInnermost.iterator();
     checkClusterInvariant(clustersFromInnermost);
     List<TryCatchBlockNodeInfo> additionalNodesToSplit=new ArrayList<TryCatchBlockNodeInfo>();
     while (tryCatchBlockIterator.hasNext()) {
-      TryBlockCluster clusterToFindFinally=tryCatchBlockIterator.next();
+      TryBlockCluster<TryCatchBlockNodeInfo> clusterToFindFinally=tryCatchBlockIterator.next();
       List<TryCatchBlockNodeInfo> clusterBlocks=clusterToFindFinally.getBlocks();
       TryCatchBlockNodeInfo nodeWithDefaultHandlerIfExists=clusterBlocks.get(clusterBlocks.size() - 1);
       FinallyBlockInfo finallyInfo=findFinallyBlockBody(nodeWithDefaultHandlerIfExists,getTryBlocksMetaInfo().getAllIntervals());
