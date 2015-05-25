@@ -10,6 +10,28 @@
 );
   functionNamePanel.add(functionNameField,BorderLayout.CENTER);
   functionNameLabel.setLabelFor(functionNameField);
+  List<JetType> possibleReturnTypes=ExtractionEnginePackage.getPossibleReturnTypes(extractableCodeDescriptor.getControlFlow());
+  if (possibleReturnTypes.size() > 1) {
+    DefaultComboBoxModel returnTypeBoxModel=new DefaultComboBoxModel(possibleReturnTypes.toArray());
+    returnTypeBox.setModel(returnTypeBoxModel);
+    returnTypeBox.setRenderer(new DefaultListCellRenderer(){
+      @NotNull @Override public Component getListCellRendererComponent(      JList list,      Object value,      int index,      boolean isSelected,      boolean cellHasFocus){
+        super.getListCellRendererComponent(list,value,index,isSelected,cellHasFocus);
+        setText(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_IN_TYPES.renderType((JetType)value));
+        return this;
+      }
+    }
+);
+    returnTypeBox.addItemListener(new ItemListener(){
+      @Override public void itemStateChanged(      @NotNull ItemEvent e){
+        update();
+      }
+    }
+);
+  }
+ else {
+    returnTypePanel.getParent().remove(returnTypePanel);
+  }
   boolean enableVisibility=isVisibilitySectionAvailable();
   visibilityBox.setEnabled(enableVisibility);
   if (enableVisibility) {
