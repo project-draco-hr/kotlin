@@ -1,9 +1,9 @@
 {
   JetType type=whenSubjectType(expression,trace.getBindingContext());
   if (type == null)   return false;
-  ClassDescriptor classDescriptor=getClassDescriptorOfTypeIfEnum(type);
+  ClassDescriptor enumClassDescriptor=getClassDescriptorOfTypeIfEnum(type);
   boolean exhaustive;
-  if (classDescriptor == null) {
+  if (enumClassDescriptor == null) {
     if (KotlinBuiltIns.isBoolean(TypeUtils.makeNotNullable(type))) {
       exhaustive=isWhenOnBooleanExhaustive(expression,trace);
     }
@@ -12,11 +12,13 @@
     }
   }
  else {
-    exhaustive=isWhenOnEnumExhaustive(expression,trace,classDescriptor);
+    exhaustive=isWhenOnEnumExhaustive(expression,trace,enumClassDescriptor);
   }
-  if (exhaustive && (!TypeUtils.isNullableType(type) || containsNullCase(expression,trace) || isPlatformEnum(type,classDescriptor))) {
-    trace.record(BindingContext.EXHAUSTIVE_WHEN,expression);
-    return true;
+  if (exhaustive) {
+    if (!TypeUtils.isNullableType(type) || containsNullCase(expression,trace) || (enumClassDescriptor != null && isFlexible(type))) {
+      trace.record(BindingContext.EXHAUSTIVE_WHEN,expression);
+      return true;
+    }
   }
   return false;
 }
