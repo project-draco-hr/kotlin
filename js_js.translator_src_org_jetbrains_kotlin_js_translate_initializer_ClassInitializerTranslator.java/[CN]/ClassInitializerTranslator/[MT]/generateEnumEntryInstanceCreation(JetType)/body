@@ -1,12 +1,9 @@
 {
-  JetDelegatorToSuperCall superCall=getSuperCall();
-  List<JsExpression> arguments;
-  if (superCall != null) {
-    arguments=translateArguments(superCall);
+  ResolvedCall<FunctionDescriptor> superCall=getSuperCall();
+  if (superCall == null) {
+    ClassDescriptor classDescriptor=getClassDescriptorForType(enumClassType);
+    JsNameRef reference=context().getQualifiedReference(classDescriptor);
+    return new JsNew(reference);
   }
- else {
-    arguments=Collections.emptyList();
-  }
-  JsNameRef reference=context().getQualifiedReference(getClassDescriptorForType(enumClassType));
-  return new JsNew(reference,arguments);
+  return CallTranslator.translate(context(),superCall);
 }

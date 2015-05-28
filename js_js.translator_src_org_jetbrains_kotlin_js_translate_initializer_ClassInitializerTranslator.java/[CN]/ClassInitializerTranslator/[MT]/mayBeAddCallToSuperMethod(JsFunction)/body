@@ -4,10 +4,16 @@
     return;
   }
   if (hasAncestorClass(bindingContext(),classDeclaration)) {
-    JetDelegatorToSuperCall superCall=getSuperCall();
-    if (superCall == null) {
-      return;
+    ResolvedCall<FunctionDescriptor> superCall=getSuperCall();
+    if (superCall == null)     return;
+    if (classDeclaration instanceof JetEnumEntry) {
+      JsExpression expression=CallTranslator.translate(context(),superCall,null);
+      JsExpression fixedInvocation=toInvocationWith(expression,JsLiteral.THIS);
+      initializerStatements.add(0,fixedInvocation.makeStmt());
     }
-    addCallToSuperMethod(translateArguments(superCall),initializer);
+ else {
+      List<JsExpression> arguments=CallArgumentTranslator.translate(superCall,null,context()).getTranslateArguments();
+      addCallToSuperMethod(arguments,initializer);
+    }
   }
 }
