@@ -1,2 +1,16 @@
 {
+  for (  JetWhenEntry entry : expression.getEntries()) {
+    for (    JetWhenCondition condition : entry.getConditions()) {
+      if (!(condition instanceof JetWhenConditionWithExpression)) {
+        return false;
+      }
+      JetExpression patternExpression=((JetWhenConditionWithExpression)condition).getExpression();
+      if (patternExpression == null)       return false;
+      CompileTimeConstant constant=ExpressionCodegen.getCompileTimeConstant(patternExpression,bindingContext);
+      if (constant == null || !predicate.invoke(constant)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
