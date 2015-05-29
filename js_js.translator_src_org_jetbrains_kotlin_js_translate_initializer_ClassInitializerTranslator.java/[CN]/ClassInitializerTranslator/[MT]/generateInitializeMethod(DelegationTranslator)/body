@@ -1,19 +1,14 @@
 {
   ClassDescriptor classDescriptor=getClassDescriptor(bindingContext(),classDeclaration);
   ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
-  JsFunction result;
   if (primaryConstructor != null) {
-    result=context().getFunctionObject(primaryConstructor);
-    result.getBody().getStatements().addAll(setDefaultValueForArguments(primaryConstructor,context()));
-    result.getParameters().addAll(translatePrimaryConstructorParameters());
-    mayBeAddCallToSuperMethod(result);
-  }
- else {
-    result=new JsFunction(context().scope(),new JsBlock(),"fake constructor for " + classDescriptor.getName().asString());
+    initFunction.getBody().getStatements().addAll(setDefaultValueForArguments(primaryConstructor,context()));
+    initFunction.getParameters().addAll(translatePrimaryConstructorParameters());
+    mayBeAddCallToSuperMethod(initFunction);
   }
   delegationTranslator.addInitCode(initializerStatements);
   new InitializerVisitor(initializerStatements).traverseContainer(classDeclaration,context());
-  List<JsStatement> statements=result.getBody().getStatements();
+  List<JsStatement> statements=initFunction.getBody().getStatements();
   for (  JsStatement statement : initializerStatements) {
     if (statement instanceof JsBlock) {
       statements.addAll(((JsBlock)statement).getStatements());
@@ -22,5 +17,5 @@
       statements.add(statement);
     }
   }
-  return result;
+  return initFunction;
 }
