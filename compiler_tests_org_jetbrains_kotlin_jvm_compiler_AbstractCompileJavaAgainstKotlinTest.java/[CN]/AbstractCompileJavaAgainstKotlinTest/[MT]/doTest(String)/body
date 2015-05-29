@@ -1,6 +1,13 @@
 {
   Assert.assertTrue(ktFilePath.endsWith(".kt"));
   File ktFile=new File(ktFilePath);
-  File javaFile=new File(ktFilePath.replaceFirst("\\.kt",".java"));
-  compileKotlinWithJava(Collections.singletonList(javaFile),Collections.singletonList(ktFile),tmpdir,getTestRootDisposable());
+  File javaFile=new File(ktFilePath.replaceFirst("\\.kt$",".java"));
+  File expectedFile=new File(ktFilePath.replaceFirst("\\.kt$",".txt"));
+  File out=new File(tmpdir,"out");
+  compileKotlinWithJava(Collections.singletonList(javaFile),Collections.singletonList(ktFile),out,getTestRootDisposable());
+  KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForTests(getTestRootDisposable(),compilerConfigurationForTests(ConfigurationKind.ALL,TestJdkKind.MOCK_JDK,getAnnotationsJar(),out),EnvironmentConfigFiles.JVM_CONFIG_FILES);
+  AnalysisResult exhaust=JvmResolveUtil.analyzeFilesWithJavaIntegration(environment.getProject(),Collections.<JetFile>emptySet());
+  PackageViewDescriptor packageView=exhaust.getModuleDescriptor().getPackage(LoadDescriptorUtil.TEST_PACKAGE_FQNAME);
+  assertNotNull(packageView);
+  validateAndCompareDescriptorWithFile(packageView,CONFIGURATION,expectedFile);
 }
