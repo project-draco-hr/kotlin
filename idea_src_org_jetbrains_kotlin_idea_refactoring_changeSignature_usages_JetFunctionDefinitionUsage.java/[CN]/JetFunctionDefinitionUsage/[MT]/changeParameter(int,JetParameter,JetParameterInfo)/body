@@ -1,19 +1,19 @@
 {
-  ASTNode valOrVarAstNode=parameter.getValOrVarNode();
-  PsiElement valOrVarNode=valOrVarAstNode != null ? valOrVarAstNode.getPsi() : null;
+  PsiElement valOrVarKeyword=parameter.getValOrVarKeyword();
   JetValVar valOrVar=parameterInfo.getValOrVar();
   JetPsiFactory psiFactory=JetPsiFactory(getProject());
-  if (valOrVarNode != null) {
-    if (valOrVar == JetValVar.None) {
-      valOrVarNode.delete();
+  if (valOrVarKeyword != null) {
+    PsiElement newKeyword=valOrVar.createKeyword(psiFactory);
+    if (newKeyword != null) {
+      valOrVarKeyword.replace(newKeyword);
     }
  else {
-      valOrVarNode.replace(psiFactory.createValOrVarNode(valOrVar.toString()).getPsi());
+      valOrVarKeyword.delete();
     }
   }
  else   if (valOrVar != JetValVar.None) {
     PsiElement firstChild=parameter.getFirstChild();
-    parameter.addBefore(psiFactory.createValOrVarNode(valOrVar.toString()).getPsi(),firstChild);
+    parameter.addBefore(valOrVar.createKeyword(psiFactory),firstChild);
     parameter.addBefore(psiFactory.createWhiteSpace(),firstChild);
   }
   if (parameterInfo.getIsTypeChanged() && parameter.getTypeReference() != null) {
