@@ -15,7 +15,6 @@
   if (functionDescriptor.getKind() == SYNTHESIZED) {
     return null;
   }
-  BindingContext bindingContext=ResolvePackage.analyzeFully((JetFile)context.getContainingFile());
   if (descriptor instanceof ValueParameterDescriptor) {
     return new RemoveFunctionParametersFix(context,functionDescriptor,(ValueParameterDescriptor)descriptor);
   }
@@ -23,6 +22,7 @@
     List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
     List<? extends ValueArgument> arguments=callElement.getValueArguments();
     if (arguments.size() > parameters.size()) {
+      BindingContext bindingContext=ResolvePackage.analyze(callElement);
       boolean hasTypeMismatches=hasTypeMismatches(parameters,arguments,bindingContext);
       return new AddFunctionParametersFix(callElement,functionDescriptor,hasTypeMismatches);
     }

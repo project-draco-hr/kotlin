@@ -4,13 +4,11 @@
       List<IntentionAction> actions=new LinkedList<IntentionAction>();
       JetFunction function=QuickFixUtil.getParentElementOfType(diagnostic,JetFunction.class);
       if (function != null) {
-        BindingContext context=ResolvePackage.analyzeFully(function);
-        JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(context,function);
+        FunctionDescriptor descriptor=(FunctionDescriptor)ResolvePackage.resolveToDescriptor(function);
+        JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor);
         if (matchingReturnType != null) {
           actions.add(new ChangeFunctionReturnTypeFix(function,matchingReturnType));
         }
-        SimpleFunctionDescriptor descriptor=context.get(BindingContext.FUNCTION,function);
-        if (descriptor == null)         return actions;
         JetType functionType=descriptor.getReturnType();
         if (functionType == null)         return actions;
         List<FunctionDescriptor> overriddenMismatchingFunctions=new LinkedList<FunctionDescriptor>();
