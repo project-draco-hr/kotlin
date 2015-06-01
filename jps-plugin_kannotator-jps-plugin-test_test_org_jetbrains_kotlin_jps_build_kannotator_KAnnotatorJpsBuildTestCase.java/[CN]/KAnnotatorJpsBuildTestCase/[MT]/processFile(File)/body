@@ -3,18 +3,19 @@
     File[] files=root.listFiles();
     if (files == null)     return;
     for (    File file : files) {
-      processFile(file,rebuildBeforeMake);
+      processFile(file);
     }
   }
  else   if (root.getName().endsWith(".kt")) {
     System.out.println("Test started. File: " + root.getName());
     String path=root.getAbsolutePath();
-    if (rebuildBeforeMake) {
-      rebuildAll();
-    }
     System.out.println("Change file: " + path);
     change(path);
     makeAll().assertSuccessful();
+    System.out.println("Make successful");
+    System.out.println("Checking output directories after make and rebuild");
+    ClassFilesComparisonPackage.assertEqualDirectories(new File(getOutDirAfterRebuild(),"production"),new File(getOutDir(),"production"),false);
+    ClassFilesComparisonPackage.assertEqualDirectories(new File(getOutDirAfterRebuild(),"test"),new File(getOutDir(),"test"),false);
     System.out.println("Test successfully finished. File: " + root.getName());
     System.out.println("-----");
   }
