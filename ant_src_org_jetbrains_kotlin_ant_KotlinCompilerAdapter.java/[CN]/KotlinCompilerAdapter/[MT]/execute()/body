@@ -1,6 +1,7 @@
 {
   Javac javac=getJavac();
   Kotlin2JvmTask kotlinc=new Kotlin2JvmTask();
+  kotlinc.setFailOnError(javac.getFailonerror());
   kotlinc.setOutput(javac.getDestdir());
   Path classpath=javac.getClasspath();
   if (classpath != null) {
@@ -9,6 +10,9 @@
   kotlinc.setSrc(javac.getSrcdir());
   kotlinc.setExternalAnnotations(externalAnnotations);
   kotlinc.execute();
+  if (!Integer.valueOf(0).equals(kotlinc.getExitCode())) {
+    return false;
+  }
   javac.log("Running javac...");
   compileList=filterOutKotlinSources(compileList);
   return compileList.length == 0 || super.execute();
