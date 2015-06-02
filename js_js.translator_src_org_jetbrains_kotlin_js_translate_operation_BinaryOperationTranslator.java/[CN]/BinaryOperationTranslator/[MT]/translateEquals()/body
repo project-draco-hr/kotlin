@@ -1,0 +1,14 @@
+{
+  JsExpression left=Translation.translateAsExpression(leftJetExpression,context());
+  JsExpression right=Translation.translateAsExpression(rightJetExpression,context());
+  if (left == JsLiteral.NULL || right == JsLiteral.NULL) {
+    JsBinaryOperator operator=operationToken == JetTokens.EXCLEQ ? JsBinaryOperator.NEQ : JsBinaryOperator.EQ;
+    return new JsBinaryOperation(operator,left,right);
+  }
+  JetType leftType=context().bindingContext().getType(leftJetExpression);
+  JetType rightType=context().bindingContext().getType(rightJetExpression);
+  if (leftType != null && TypeUtils.isNullableType(leftType) || rightType != null && TypeUtils.isNullableType(rightType)) {
+    return mayBeWrapWithNegation(TopLevelFIF.KOTLIN_EQUALS.apply(left,Collections.singletonList(right),context()));
+  }
+  return translateAsOverloadedBinaryOperation();
+}
