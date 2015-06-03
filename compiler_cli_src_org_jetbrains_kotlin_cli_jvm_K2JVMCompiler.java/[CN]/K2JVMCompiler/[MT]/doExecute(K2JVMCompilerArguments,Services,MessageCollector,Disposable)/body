@@ -1,7 +1,7 @@
 {
   KotlinPaths paths=arguments.kotlinHome != null ? new KotlinPathsFromHomeDir(new File(arguments.kotlinHome)) : PathUtil.getKotlinPathsForCompiler();
   messageCollector.report(CompilerMessageSeverity.LOGGING,"Using Kotlin home directory " + paths.getHomePath(),CompilerMessageLocation.NO_LOCATION);
-  CompilerConfiguration configuration=new CompilerConfiguration();
+  final CompilerConfiguration configuration=new CompilerConfiguration();
   configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,messageCollector);
   IncrementalCacheProvider incrementalCacheProvider=services.get(IncrementalCacheProvider.class);
   if (incrementalCacheProvider != null) {
@@ -75,6 +75,7 @@ catch (  Throwable t) {
       jar=null;
       outputDir=null;
     }
+    final KotlinCoreEnvironment environment;
     if (arguments.module != null) {
       MessageCollector sanitizedCollector=new FilteringMessageCollector(messageCollector,in(CompilerMessageSeverity.VERBOSE));
       ModuleScriptData moduleScript=CompileEnvironmentUtil.loadModuleDescriptions(arguments.module,sanitizedCollector);
@@ -82,16 +83,27 @@ catch (  Throwable t) {
         messageCollector.report(CompilerMessageSeverity.WARNING,"The '-d' option with a directory destination is ignored because '-module' is specified",CompilerMessageLocation.NO_LOCATION);
       }
       File directory=new File(arguments.module).getAbsoluteFile().getParentFile();
-      KotlinToJVMBytecodeCompiler.compileModules(configuration,moduleScript.getModules(),directory,jar,arguments.includeRuntime);
+      CompilerConfiguration compilerConfiguration=KotlinToJVMBytecodeCompiler.createCompilerConfiguration(configuration,moduleScript.getModules(),directory);
+      environment=createCoreEnvironment(rootDisposable,compilerConfiguration);
+      KotlinToJVMBytecodeCompiler.compileModules(environment,configuration,moduleScript.getModules(),directory,jar,arguments.includeRuntime);
     }
  else     if (arguments.script) {
       List<String> scriptArgs=arguments.freeArgs.subList(1,arguments.freeArgs.size());
-      KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForProduction(rootDisposable,configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
+      environment=createCoreEnvironment(rootDisposable,configuration);
       KotlinToJVMBytecodeCompiler.compileAndExecuteScript(configuration,paths,environment,scriptArgs);
     }
  else {
-      KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForProduction(rootDisposable,configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
+      environment=createCoreEnvironment(rootDisposable,configuration);
       KotlinToJVMBytecodeCompiler.compileBunchOfSources(environment,jar,outputDir,arguments.includeRuntime);
+    }
+    if (arguments.reportPerf) {
+      PerformanceCounter.Companion.report(new Function1<String,Unit>(){
+        @Override public Unit invoke(        String s){
+          reportPerf(environment.getConfiguration(),s);
+          return Unit.INSTANCE$;
+        }
+      }
+);
     }
     return OK;
   }

@@ -14,7 +14,11 @@
   }
   BindingTraceContext diagnosticHolder=new BindingTraceContext();
   GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,Progress.DEAF,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),packagesWithObsoleteParts,moduleId,diagnosticHolder,outputDirectory);
+  long generationStart=PerformanceCounter.Companion.currentThreadCpuTime();
   KotlinCodegenFacade.compileCorrectFiles(generationState,CompilationErrorHandler.THROW_EXCEPTION);
+  long generationNanos=PerformanceCounter.Companion.currentThreadCpuTime() - generationStart;
+  String message="Generated " + sourceFiles.size() + " files ("+ environment.countLinesOfCode(sourceFiles)+ " lines) in "+ TimeUnit.NANOSECONDS.toMillis(generationNanos)+ " ms";
+  K2JVMCompiler.reportPerf(environment.getConfiguration(),message);
   AnalyzerWithCompilerReport.reportDiagnostics(new FilteredJvmDiagnostics(diagnosticHolder.getBindingContext().getDiagnostics(),result.getBindingContext().getDiagnostics()),environment.getConfiguration().get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY));
   return generationState;
 }
