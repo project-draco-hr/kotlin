@@ -1,0 +1,28 @@
+{
+  JavaBreakpointProperties properties=breakpoint.getProperties();
+  if (properties == null) {
+    return;
+  }
+  boolean changed=false;
+  try {
+    String text=myPassCountField.getText().trim();
+    int filter=!text.isEmpty() ? Integer.parseInt(text) : 0;
+    if (filter < 0)     filter=0;
+    changed=properties.setCOUNT_FILTER(filter);
+  }
+ catch (  Exception ignored) {
+  }
+  changed=properties.setCOUNT_FILTER_ENABLED(properties.getCOUNT_FILTER() > 0 && myPassCountCheckbox.isSelected()) || changed;
+  reloadInstanceFilters();
+  reloadClassFilters();
+  updateInstanceFilterEditor(true);
+  updateClassFilterEditor(true);
+  changed=properties.setINSTANCE_FILTERS_ENABLED(myInstanceFiltersField.getText().length() > 0 && myInstanceFiltersCheckBox.isSelected()) || changed;
+  changed=properties.setCLASS_FILTERS_ENABLED(myClassFiltersField.getText().length() > 0 && myClassFiltersCheckBox.isSelected()) || changed;
+  changed=properties.setClassFilters(myClassFilters) || changed;
+  changed=properties.setClassExclusionFilters(myClassExclusionFilters) || changed;
+  changed=properties.setInstanceFilters(myInstanceFilters) || changed;
+  if (changed) {
+    ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+  }
+}
