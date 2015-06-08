@@ -47,7 +47,17 @@
   }
  else {
     if (supertypes.size() > 1) {
-      context.trace.report(AMBIGUOUS_SUPER.on(expression));
+      Collection<JetType> supertypesResolvedFromContext=UnqualifiedSuperPackage.resolveUnqualifiedSuperFromExpressionContext(expression,supertypes);
+      if (supertypesResolvedFromContext.size() == 1) {
+        JetType singleResolvedType=supertypesResolvedFromContext.iterator().next();
+        result=substitutor.substitute(singleResolvedType,Variance.INVARIANT);
+      }
+ else       if (supertypesResolvedFromContext.isEmpty()) {
+        result=components.builtIns.getAnyType();
+      }
+ else {
+        context.trace.report(AMBIGUOUS_SUPER.on(expression));
+      }
     }
  else {
       JetType type=supertypes.isEmpty() ? components.builtIns.getAnyType() : supertypes.iterator().next();
