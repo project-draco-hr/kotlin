@@ -1,7 +1,13 @@
 {
   ParametersBuilder builder=ParametersBuilder.newBuilder();
   builder.addThis(AsmTypes.OBJECT_TYPE,true).setLambda(this);
-  List<ValueParameterDescriptor> valueParameters=getFunctionDescriptor().getValueParameters();
+  FunctionDescriptor lambdaDescriptor=getFunctionDescriptor();
+  ReceiverParameterDescriptor extensionParameter=lambdaDescriptor.getExtensionReceiverParameter();
+  if (extensionParameter != null) {
+    Type type=typeMapper.mapType(extensionParameter.getType());
+    builder.addNextParameter(type,false,null);
+  }
+  List<ValueParameterDescriptor> valueParameters=lambdaDescriptor.getValueParameters();
   for (  ValueParameterDescriptor parameter : valueParameters) {
     Type type=typeMapper.mapType(parameter.getType());
     builder.addNextParameter(type,false,null);
