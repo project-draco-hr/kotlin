@@ -1,18 +1,22 @@
 {
   DeclarationDescriptor containingDeclaration=scope.getContainingDeclaration();
+  VariableDescriptor result;
+  JetType type;
   if (JetPsiUtil.isScriptDeclaration(variable)) {
     PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(containingDeclaration,annotationResolver.resolveAnnotationsWithArguments(scope,variable.getModifierList(),trace),Modality.FINAL,Visibilities.INTERNAL,variable.isVar(),JetPsiUtil.safeName(variable.getName()),CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(variable));
-    JetType type=getVariableType(propertyDescriptor,scope,variable,dataFlowInfo,false,trace);
+    type=getVariableType(propertyDescriptor,scope,variable,dataFlowInfo,false,trace);
     ReceiverParameterDescriptor receiverParameter=((ScriptDescriptor)containingDeclaration).getThisAsReceiverParameter();
     propertyDescriptor.setType(type,Collections.<TypeParameterDescriptor>emptyList(),receiverParameter,(JetType)null);
     initializeWithDefaultGetterSetter(propertyDescriptor);
     trace.record(BindingContext.VARIABLE,variable,propertyDescriptor);
-    return propertyDescriptor;
+    result=propertyDescriptor;
   }
  else {
     VariableDescriptorImpl variableDescriptor=resolveLocalVariableDescriptorWithType(scope,variable,null,trace);
-    JetType type=getVariableType(variableDescriptor,scope,variable,dataFlowInfo,false,trace);
+    type=getVariableType(variableDescriptor,scope,variable,dataFlowInfo,false,trace);
     variableDescriptor.setOutType(type);
-    return variableDescriptor;
+    result=variableDescriptor;
   }
+  AnnotationResolver.resolveAnnotationsArguments(type.getAnnotations());
+  return result;
 }
