@@ -12,10 +12,12 @@
   if (returnedExpression != null) {
     gen(returnedExpression,returnType);
   }
-  generateFinallyBlocksIfNeeded(returnType);
+  Label afterReturnLabel=new Label();
+  generateFinallyBlocksIfNeeded(returnType,afterReturnLabel);
   if (isNonLocalReturn) {
     InlineCodegenUtil.generateGlobalReturnFlag(v,nonLocalReturn.labelName);
   }
   v.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
+  v.mark(afterReturnLabel);
   return StackValue.none();
 }
