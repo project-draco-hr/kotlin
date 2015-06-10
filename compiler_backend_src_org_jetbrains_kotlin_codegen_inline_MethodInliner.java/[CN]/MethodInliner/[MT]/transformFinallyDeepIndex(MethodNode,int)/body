@@ -1,0 +1,15 @@
+{
+  if (finallyDeepShift == 0) {
+    return;
+  }
+  AbstractInsnNode cur=node.instructions.getFirst();
+  while (cur != null) {
+    if (cur instanceof MethodInsnNode && InlineCodegenUtil.isFinallyMarker(cur)) {
+      AbstractInsnNode constant=cur.getPrevious();
+      int curDeep=InlineCodegenUtil.getConstant(constant);
+      node.instructions.insert(constant,new LdcInsnNode(curDeep + finallyDeepShift));
+      node.instructions.remove(constant);
+    }
+    cur=cur.getNext();
+  }
+}

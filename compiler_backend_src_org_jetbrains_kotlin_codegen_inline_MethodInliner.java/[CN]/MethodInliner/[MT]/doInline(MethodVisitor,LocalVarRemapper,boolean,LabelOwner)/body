@@ -1,24 +1,3 @@
 {
-  MethodNode transformedNode=markPlacesForInlineAndRemoveInlinable(node);
-  Label end=new Label();
-  transformedNode=doInline(transformedNode);
-  removeClosureAssertions(transformedNode);
-  InsnList instructions=transformedNode.instructions;
-  instructions.resetLabels();
-  MethodNode resultNode=new MethodNode(InlineCodegenUtil.API,transformedNode.access,transformedNode.name,transformedNode.desc,transformedNode.signature,ArrayUtil.toStringArray(transformedNode.exceptions));
-  RemapVisitor visitor=new RemapVisitor(resultNode,remapper,nodeRemapper);
-  try {
-    transformedNode.accept(visitor);
-  }
- catch (  Exception e) {
-    throw wrapException(e,transformedNode,"couldn't inline method call");
-  }
-  resultNode.visitLabel(end);
-  if (inliningContext.isRoot()) {
-    InternalFinallyBlockInliner.processInlineFunFinallyBlocks(resultNode,lambdasFinallyBlocks,((StackValue.Local)remapper.remap(parameters.totalSize() + 1).value).index);
-  }
-  processReturns(resultNode,labelOwner,remapReturn,end);
-  resultNode.accept(new InliningInstructionAdapter(adapter));
-  sourceMapper.endMapping();
-  return result;
+  return doInline(adapter,remapper,remapReturn,labelOwner,0);
 }

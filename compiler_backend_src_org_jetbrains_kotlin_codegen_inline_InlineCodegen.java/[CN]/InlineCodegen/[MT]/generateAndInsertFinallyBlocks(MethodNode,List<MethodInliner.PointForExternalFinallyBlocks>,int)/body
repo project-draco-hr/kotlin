@@ -5,16 +5,20 @@
     extensionPoints.put(insertPoint.beforeIns,insertPoint);
   }
   DefaultProcessor processor=new DefaultProcessor(intoNode,offsetForFinallyLocalVar);
+  int curFinallyDeep=0;
   AbstractInsnNode curInstr=intoNode.instructions.getFirst();
   while (curInstr != null) {
     processor.processInstruction(curInstr,true);
+    if (InlineCodegenUtil.isFinallyStart(curInstr)) {
+      curFinallyDeep=InlineCodegenUtil.getConstant(curInstr.getPrevious());
+    }
     MethodInliner.PointForExternalFinallyBlocks extension=extensionPoints.get(curInstr);
     if (extension != null) {
       Label start=new Label();
       MethodNode finallyNode=InlineCodegenUtil.createEmptyMethodNode();
       finallyNode.visitLabel(start);
       ExpressionCodegen finallyCodegen=new ExpressionCodegen(finallyNode,codegen.getFrameMap(),codegen.getReturnType(),codegen.getContext(),codegen.getState(),codegen.getParentCodegen());
-      finallyCodegen.addBlockStackElementsForNonLocalReturns(codegen.getBlockStackElements());
+      finallyCodegen.addBlockStackElementsForNonLocalReturns(codegen.getBlockStackElements(),curFinallyDeep);
       FrameMap frameMap=finallyCodegen.getFrameMap();
       FrameMap.Mark mark=frameMap.mark();
       while (frameMap.getCurrentSize() < processor.getNextFreeLocalIndex()) {
@@ -23,8 +27,8 @@
       finallyCodegen.generateFinallyBlocksIfNeeded(extension.returnType,extension.labelNode.getLabel());
       InlineCodegenUtil.insertNodeBefore(finallyNode,intoNode,curInstr);
       SimpleInterval splitBy=new SimpleInterval((LabelNode)start.info,extension.labelNode);
-      processor.getTryBlocksMetaInfo().splitCurrentIntervals(splitBy,false);
-      processor.getLocalVarsMetaInfo().splitCurrentIntervals(splitBy,false);
+      processor.getTryBlocksMetaInfo().splitCurrentIntervals(splitBy,true);
+      processor.getLocalVarsMetaInfo().splitCurrentIntervals(splitBy,true);
       mark.dropTo();
     }
     curInstr=curInstr.getNext();
