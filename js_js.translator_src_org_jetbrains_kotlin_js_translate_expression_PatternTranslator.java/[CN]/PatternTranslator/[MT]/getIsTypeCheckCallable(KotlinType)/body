@@ -1,13 +1,5 @@
 {
-  JsExpression builtinCheck=getIsTypeCheckCallableForBuiltin(type);
-  if (builtinCheck != null)   return builtinCheck;
-  ClassifierDescriptor typeDescriptor=type.getConstructor().getDeclarationDescriptor();
-  if (typeDescriptor instanceof TypeParameterDescriptor) {
-    TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)typeDescriptor;
-    if (typeParameterDescriptor.isReified()) {
-      return getIsTypeCheckCallableForReifiedType(typeParameterDescriptor);
-    }
-  }
-  JsNameRef typeName=getClassNameReference(type);
-  return namer().isInstanceOf(typeName);
+  JsExpression callable=doGetIsTypeCheckCallable(type);
+  if (type.isMarkedNullable())   return namer().orNull(callable);
+  return callable;
 }
