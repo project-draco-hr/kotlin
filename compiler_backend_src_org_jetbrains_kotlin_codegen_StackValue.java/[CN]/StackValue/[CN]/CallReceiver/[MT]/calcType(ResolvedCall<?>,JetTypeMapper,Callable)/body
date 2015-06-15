@@ -1,17 +1,15 @@
 {
   CallableDescriptor descriptor=resolvedCall.getResultingDescriptor();
-  ReceiverParameterDescriptor dispatchReceiver=descriptor.getDispatchReceiverParameter();
+  Type dispatchReceiverType=smartDispatchReceiverType(descriptor,typeMapper);
   ReceiverParameterDescriptor extensionReceiver=descriptor.getExtensionReceiverParameter();
   if (extensionReceiver != null) {
     return callableMethod != null ? callableMethod.getExtensionReceiverType() : typeMapper.mapType(extensionReceiver.getType());
   }
- else   if (dispatchReceiver != null) {
+ else   if (dispatchReceiverType != null) {
     if (AnnotationsPackage.isPlatformStaticInObjectOrClass(descriptor)) {
       return Type.VOID_TYPE;
     }
- else {
-      return callableMethod != null ? callableMethod.getDispatchReceiverType() : typeMapper.mapType(dispatchReceiver.getType());
-    }
+    return callableMethod != null ? callableMethod.getDispatchReceiverType() : dispatchReceiverType;
   }
  else   if (isLocalFunCall(callableMethod)) {
     return callableMethod.getGenerateCalleeType();
