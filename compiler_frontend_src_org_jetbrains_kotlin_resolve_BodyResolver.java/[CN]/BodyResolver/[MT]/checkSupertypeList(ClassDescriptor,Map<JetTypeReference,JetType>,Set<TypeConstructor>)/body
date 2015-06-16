@@ -4,15 +4,18 @@
   for (  Map.Entry<JetTypeReference,JetType> entry : supertypes.entrySet()) {
     JetTypeReference typeReference=entry.getKey();
     JetType supertype=entry.getValue();
+    boolean addSupertype=true;
     ClassDescriptor classDescriptor=TypeUtils.getClassDescriptor(supertype);
     if (classDescriptor != null) {
       if (ErrorUtils.isError(classDescriptor))       continue;
       if (classDescriptor.getKind() != ClassKind.INTERFACE) {
         if (supertypeOwner.getKind() == ClassKind.ENUM_CLASS) {
           trace.report(CLASS_IN_SUPERTYPE_FOR_ENUM.on(typeReference));
+          addSupertype=false;
         }
  else         if (supertypeOwner.getKind() == ClassKind.INTERFACE && !classAppeared && !TypesPackage.isDynamic(supertype)) {
           trace.report(TRAIT_WITH_SUPERCLASS.on(typeReference));
+          addSupertype=false;
         }
         if (classAppeared) {
           trace.report(MANY_CLASSES_IN_SUPERTYPE_LIST.on(typeReference));
@@ -26,7 +29,7 @@
       trace.report(SUPERTYPE_NOT_A_CLASS_OR_TRAIT.on(typeReference));
     }
     TypeConstructor constructor=supertype.getConstructor();
-    if (!typeConstructors.add(constructor)) {
+    if (addSupertype && !typeConstructors.add(constructor)) {
       trace.report(SUPERTYPE_APPEARS_TWICE.on(typeReference));
     }
     if (DescriptorUtils.isSingleton(classDescriptor)) {
