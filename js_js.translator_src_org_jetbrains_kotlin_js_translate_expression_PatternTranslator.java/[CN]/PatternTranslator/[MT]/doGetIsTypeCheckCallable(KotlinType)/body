@@ -2,12 +2,12 @@
   if (KotlinBuiltIns.isAnyOrNullableAny(type))   return namer().isAny();
   JsExpression builtinCheck=getIsTypeCheckCallableForBuiltin(type);
   if (builtinCheck != null)   return builtinCheck;
-  ClassifierDescriptor typeDescriptor=type.getConstructor().getDeclarationDescriptor();
-  if (typeDescriptor instanceof TypeParameterDescriptor) {
-    TypeParameterDescriptor typeParameterDescriptor=(TypeParameterDescriptor)typeDescriptor;
+  TypeParameterDescriptor typeParameterDescriptor=getTypeParameterDescriptorOrNull(type);
+  if (typeParameterDescriptor != null) {
     if (typeParameterDescriptor.isReified()) {
       return getIsTypeCheckCallableForReifiedType(typeParameterDescriptor);
     }
+    return namer().isAny();
   }
   JsNameRef typeName=getClassNameReference(type);
   return namer().isInstanceOf(typeName);
