@@ -1,0 +1,20 @@
+{
+  JavaCompiler javaCompiler=ToolProvider.getSystemJavaCompiler();
+  DiagnosticCollector<JavaFileObject> diagnosticCollector=new DiagnosticCollector<JavaFileObject>();
+  StandardJavaFileManager fileManager=javaCompiler.getStandardFileManager(diagnosticCollector,Locale.ENGLISH,Charset.forName("utf-8"));
+  try {
+    Iterable<? extends JavaFileObject> javaFileObjectsFromFiles=fileManager.getJavaFileObjectsFromFiles(files);
+    JavaCompiler.CompilationTask task=javaCompiler.getTask(new StringWriter(),fileManager,diagnosticCollector,options,null,javaFileObjectsFromFiles);
+    Boolean success=task.call();
+    String diagnosticString=errorsToString(diagnosticCollector);
+    if (javaErrorFile == null || !javaErrorFile.exists()) {
+      Assert.assertTrue(diagnosticString,success);
+    }
+ else {
+      assertEqualsToFile(javaErrorFile,diagnosticString);
+    }
+  }
+  finally {
+    fileManager.close();
+  }
+}
