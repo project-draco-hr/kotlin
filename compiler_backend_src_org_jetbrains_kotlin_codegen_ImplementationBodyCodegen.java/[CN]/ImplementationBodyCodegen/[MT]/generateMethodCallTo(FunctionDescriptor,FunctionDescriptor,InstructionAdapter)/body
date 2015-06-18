@@ -1,9 +1,10 @@
 {
   boolean isConstructor=functionDescriptor instanceof ConstructorDescriptor;
-  boolean callFromAccessor=!JetTypeMapper.isAccessor(functionDescriptor);
+  boolean bridgeIsAccessorConstructor=bridgeDescriptor instanceof AccessorForConstructorDescriptor;
+  boolean callFromAccessor=bridgeIsAccessorConstructor || (bridgeDescriptor != null && JetTypeMapper.isAccessor(bridgeDescriptor));
   CallableMethod callableMethod=isConstructor ? typeMapper.mapToCallableMethod((ConstructorDescriptor)functionDescriptor) : typeMapper.mapToCallableMethod(functionDescriptor,callFromAccessor,context);
   int reg=1;
-  if (isConstructor) {
+  if (isConstructor && !bridgeIsAccessorConstructor) {
     iv.anew(callableMethod.getOwner());
     iv.dup();
     reg=0;
@@ -14,8 +15,13 @@
     }
   }
   for (  Type argType : callableMethod.getParameterTypes()) {
-    iv.load(reg,argType);
-    reg+=argType.getSize();
+    if (AsmTypes.DEFAULT_CONSTRUCTOR_MARKER.equals(argType)) {
+      iv.aconst(null);
+    }
+ else {
+      iv.load(reg,argType);
+      reg+=argType.getSize();
+    }
   }
   callableMethod.genInvokeInstruction(iv);
 }
