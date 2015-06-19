@@ -10,20 +10,18 @@
       }
     }
     @Override public void visitExpression(    @NotNull JetExpression expression){
-      JetScope resolutionScope=JetScopeUtils.getResolutionScope(expression,context);
-      if (resolutionScope != null) {
-        if (!visitedScopes.add(resolutionScope))         return;
-        boolean noConflict;
-        if (myTarget == Target.PROPERTIES) {
-          noConflict=resolutionScope.getProperties(identifier).isEmpty() && resolutionScope.getLocalVariable(identifier) == null;
-        }
+      JetScope resolutionScope=CorePackage.getResolutionScope(expression,context,ResolvePackage.getResolutionFacade(expression));
+      if (!visitedScopes.add(resolutionScope))       return;
+      boolean noConflict;
+      if (myTarget == Target.PROPERTIES) {
+        noConflict=resolutionScope.getProperties(identifier).isEmpty() && resolutionScope.getLocalVariable(identifier) == null;
+      }
  else {
-          noConflict=resolutionScope.getFunctions(identifier).isEmpty() && resolutionScope.getClassifier(identifier) == null;
-        }
-        if (!noConflict) {
-          result.set(false);
-          return;
-        }
+        noConflict=resolutionScope.getFunctions(identifier).isEmpty() && resolutionScope.getClassifier(identifier) == null;
+      }
+      if (!noConflict) {
+        result.set(false);
+        return;
       }
       super.visitExpression(expression);
     }
