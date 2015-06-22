@@ -18,17 +18,12 @@
     context.tracing.invisibleMember(context.trace,invisibleMember);
   }
   if (task.checkArguments == CheckValueArgumentsMode.ENABLED) {
-    Set<ValueArgument> unmappedArguments=Sets.newLinkedHashSet();
-    ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,unmappedArguments);
+    ValueArgumentsToParametersMapper.Status argumentMappingStatus=ValueArgumentsToParametersMapper.mapValueArgumentsToParameters(context.call,context.tracing,candidateCall,Sets.<ValueArgument>newLinkedHashSet());
     if (!argumentMappingStatus.isSuccess()) {
-      if (argumentMappingStatus == ValueArgumentsToParametersMapper.Status.STRONG_ERROR) {
-        candidateCall.addStatus(RECEIVER_PRESENCE_ERROR);
-      }
- else {
-        candidateCall.addStatus(OTHER_ERROR);
-      }
+      candidateCall.addStatus(OTHER_ERROR);
     }
   }
+  checkExtensionReceiver(context);
   if (!checkDispatchReceiver(context)) {
     candidateCall.addStatus(OTHER_ERROR);
   }

@@ -1,0 +1,18 @@
+{
+  MutableResolvedCall<D> candidateCall=context.candidateCall;
+  ReceiverParameterDescriptor receiverParameter=candidateCall.getCandidateDescriptor().getExtensionReceiverParameter();
+  ReceiverValue receiverArgument=candidateCall.getExtensionReceiver();
+  if (receiverParameter != null && !receiverArgument.exists()) {
+    context.tracing.missingReceiver(candidateCall.getTrace(),receiverParameter);
+    candidateCall.addStatus(OTHER_ERROR);
+  }
+  if (receiverParameter == null && receiverArgument.exists()) {
+    context.tracing.noReceiverAllowed(candidateCall.getTrace());
+    if (context.call.getCalleeExpression() instanceof JetSimpleNameExpression) {
+      candidateCall.addStatus(RECEIVER_PRESENCE_ERROR);
+    }
+ else {
+      candidateCall.addStatus(OTHER_ERROR);
+    }
+  }
+}
