@@ -11,9 +11,6 @@
   if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
     ClassId containerClassId=InlineCodegenUtil.getContainerClassIdForInlineCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor);
     VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable(containerClassId,state);
-    if (functionDescriptor.getContainingDeclaration() instanceof PackageFragmentDescriptor) {
-      containerClassId=PackageClassUtils.getPackageClassId(containerClassId.getPackageFqName());
-    }
     nodeAndSMAP=InlineCodegenUtil.getMethodNode(file.contentsToByteArray(),asmMethod.getName(),asmMethod.getDescriptor(),containerClassId);
     if (nodeAndSMAP == null) {
       throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
@@ -30,7 +27,7 @@
     MethodContext methodContext=context.getParentContext().intoFunction(functionDescriptor);
     SMAP smap;
     if (callDefault) {
-      Type ownerType=typeMapper.mapOwner(functionDescriptor,false);
+      Type ownerType=typeMapper.mapOwner(functionDescriptor,true);
       FakeMemberCodegen parentCodegen=new FakeMemberCodegen(codegen.getParentCodegen(),inliningFunction,(FieldOwnerContext)methodContext.getParentContext(),ownerType.getInternalName());
       FunctionCodegen.generateDefaultImplBody(methodContext,functionDescriptor,maxCalcAdapter,DefaultParameterValueLoader.DEFAULT,inliningFunction,parentCodegen);
       smap=createSMAPWithDefaultMapping(inliningFunction,parentCodegen.getOrCreateSourceMapper().getResultMappings());
