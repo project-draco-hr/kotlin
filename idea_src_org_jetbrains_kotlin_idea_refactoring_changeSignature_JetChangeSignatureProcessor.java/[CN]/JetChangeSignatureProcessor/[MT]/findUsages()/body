@@ -1,9 +1,12 @@
 {
   List<UsageInfo> allUsages=new ArrayList<UsageInfo>();
-  JavaChangeInfo javaChangeInfo=getChangeInfo().getOrCreateJavaChangeInfo();
-  if (javaChangeInfo != null) {
-    UsageInfo[] javaUsages=new JavaChangeSignatureUsageProcessor().findUsages(javaChangeInfo);
-    allUsages.add(new KotlinWrapperForJavaUsageInfos(javaUsages,getChangeInfo().getMethod()));
+  List<JavaChangeInfo> javaChangeInfos=getChangeInfo().getOrCreateJavaChangeInfos();
+  if (javaChangeInfos != null) {
+    JavaChangeSignatureUsageProcessor javaProcessor=new JavaChangeSignatureUsageProcessor();
+    for (    JavaChangeInfo javaChangeInfo : javaChangeInfos) {
+      UsageInfo[] javaUsages=javaProcessor.findUsages(javaChangeInfo);
+      allUsages.add(new KotlinWrapperForJavaUsageInfos(javaChangeInfo,javaUsages,getChangeInfo().getMethod()));
+    }
   }
   KotlinPackage.filterIsInstanceTo(super.findUsages(),allUsages,JetUsageInfo.class);
   return allUsages.toArray(new UsageInfo[allUsages.size()]);

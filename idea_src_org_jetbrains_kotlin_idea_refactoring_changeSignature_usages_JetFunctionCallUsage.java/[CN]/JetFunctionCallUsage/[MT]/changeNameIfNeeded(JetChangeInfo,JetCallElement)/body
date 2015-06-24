@@ -1,0 +1,12 @@
+{
+  if (!changeInfo.isNameChanged())   return;
+  JetExpression callee=element.getCalleeExpression();
+  if (!(callee instanceof JetSimpleNameExpression))   return;
+  String newName=changeInfo.getNewName();
+  if (isPropertyJavaUsage()) {
+    String currentName=((JetSimpleNameExpression)callee).getReferencedName();
+    if (currentName.startsWith(JvmAbi.GETTER_PREFIX))     newName=PropertyCodegen.getterName(Name.identifier(newName));
+ else     if (currentName.startsWith(JvmAbi.SETTER_PREFIX))     newName=PropertyCodegen.setterName(Name.identifier(newName));
+  }
+  callee.replace(JetPsiFactory(getProject()).createSimpleName(newName));
+}

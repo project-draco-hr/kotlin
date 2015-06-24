@@ -1,33 +1,31 @@
 {
   if (PsiTreeUtil.getParentOfType(element,JetParameterList.class) != null) {
-    return PsiTreeUtil.getParentOfType(element,JetFunction.class,JetClass.class);
+    return PsiTreeUtil.getParentOfType(element,JetFunction.class,JetProperty.class,JetClass.class);
   }
   JetTypeParameterList typeParameterList=PsiTreeUtil.getParentOfType(element,JetTypeParameterList.class);
   if (typeParameterList != null) {
-    return PsiTreeUtil.getParentOfType(typeParameterList,JetFunction.class,JetClass.class);
+    return PsiTreeUtil.getParentOfType(typeParameterList,JetFunction.class,JetProperty.class,JetClass.class);
   }
   PsiElement elementParent=element.getParent();
-  if (elementParent instanceof JetNamedFunction && ((JetNamedFunction)elementParent).getNameIdentifier() == element) {
-    return elementParent;
-  }
-  if (elementParent instanceof JetClass && ((JetClass)elementParent).getNameIdentifier() == element) {
-    return elementParent;
-  }
-  if (elementParent instanceof JetSecondaryConstructor && ((JetSecondaryConstructor)elementParent).getConstructorKeyword() == element) {
-    return elementParent;
-  }
+  if ((elementParent instanceof JetNamedFunction || elementParent instanceof JetClass || elementParent instanceof JetProperty) && ((JetNamedDeclaration)elementParent).getNameIdentifier() == element)   return elementParent;
+  if (elementParent instanceof JetSecondaryConstructor && ((JetSecondaryConstructor)elementParent).getConstructorKeyword() == element)   return elementParent;
+  JetExpression calleeExpr;
   JetCallElement call=PsiTreeUtil.getParentOfType(element,JetCallExpression.class,JetDelegatorToSuperCall.class,JetConstructorDelegationCall.class);
-  if (call == null)   return null;
-  JetExpression receiverExpr=call.getCalleeExpression();
-  if (receiverExpr instanceof JetConstructorCalleeExpression) {
-    receiverExpr=((JetConstructorCalleeExpression)receiverExpr).getConstructorReferenceExpression();
+  if (call != null) {
+    calleeExpr=call.getCalleeExpression();
   }
-  if (receiverExpr instanceof JetSimpleNameExpression || receiverExpr instanceof JetConstructorDelegationReferenceExpression) {
+ else {
+    calleeExpr=PsiTreeUtil.getParentOfType(element,JetSimpleNameExpression.class);
+  }
+  if (calleeExpr instanceof JetConstructorCalleeExpression) {
+    calleeExpr=((JetConstructorCalleeExpression)calleeExpr).getConstructorReferenceExpression();
+  }
+  if (calleeExpr instanceof JetSimpleNameExpression || calleeExpr instanceof JetConstructorDelegationReferenceExpression) {
     JetElement jetElement=PsiTreeUtil.getParentOfType(element,JetElement.class);
     if (jetElement == null)     return null;
     BindingContext bindingContext=ResolvePackage.analyze(jetElement,BodyResolveMode.FULL);
-    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetReferenceExpression)receiverExpr);
-    if (descriptor instanceof ClassDescriptor || descriptor instanceof FunctionDescriptor)     return receiverExpr;
+    DeclarationDescriptor descriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,(JetReferenceExpression)calleeExpr);
+    if (descriptor instanceof ClassDescriptor || descriptor instanceof CallableDescriptor)     return calleeExpr;
   }
   return null;
 }

@@ -1,0 +1,59 @@
+{
+  boolean isInherited=functionUsageInfo.isInherited();
+  if (isInherited) {
+    result.add(functionUsageInfo);
+  }
+  PsiElement functionPsi=functionUsageInfo.getElement();
+  if (functionPsi == null)   return;
+  for (  PsiReference reference : ReferencesSearch.search(functionPsi,functionPsi.getUseScope())) {
+    PsiElement element=reference.getElement();
+    if (functionPsi instanceof JetClass && reference.resolve() != functionPsi)     continue;
+    if (element instanceof JetReferenceExpression) {
+      PsiElement parent=element.getParent();
+      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionUsageInfo));
+ else       if (parent instanceof JetUserType && parent.getParent() instanceof JetTypeReference) {
+        parent=parent.getParent().getParent();
+        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionUsageInfo));
+      }
+ else       if (element instanceof JetSimpleNameExpression && functionPsi instanceof JetProperty) {
+        result.add(new JetPropertyCallUsage((JetSimpleNameExpression)element));
+      }
+    }
+  }
+  String oldName=ChangeSignaturePackage.getOldName(changeInfo);
+  if (oldName != null)   TextOccurrencesUtil.findNonCodeUsages(functionPsi,oldName,true,true,changeInfo.getNewName(),result);
+  List<JetParameter> oldParameters=PsiUtilPackage.getValueParameters((JetNamedDeclaration)functionPsi);
+  JetParameterInfo newReceiverInfo=changeInfo.getReceiverParameterInfo();
+  for (  JetParameterInfo parameterInfo : changeInfo.getNewParameters()) {
+    if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < oldParameters.size()) {
+      JetParameter oldParam=oldParameters.get(parameterInfo.getOldIndex());
+      String oldParamName=oldParam.getName();
+      if (parameterInfo == newReceiverInfo || (oldParamName != null && !oldParamName.equals(parameterInfo.getName()))) {
+        for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
+          PsiElement element=reference.getElement();
+          if ((element instanceof JetSimpleNameExpression || element instanceof KDocName) && !(element.getParent() instanceof JetValueArgumentName)) {
+            JetParameterUsage parameterUsage=new JetParameterUsage((JetElement)element,parameterInfo,functionUsageInfo);
+            result.add(parameterUsage);
+          }
+        }
+      }
+    }
+  }
+  if (functionPsi instanceof JetFunction && newReceiverInfo != changeInfo.getMethodDescriptor().getReceiver()) {
+    findOriginalReceiversUsages(functionUsageInfo,result,changeInfo);
+  }
+  if (functionPsi instanceof JetClass && ((JetClass)functionPsi).isEnum()) {
+    for (    JetDeclaration declaration : ((JetClass)functionPsi).getDeclarations()) {
+      if (declaration instanceof JetEnumEntry && ((JetEnumEntry)declaration).getDelegationSpecifiers().isEmpty()) {
+        result.add(new JetEnumEntryWithoutSuperCallUsage((JetEnumEntry)declaration));
+      }
+    }
+  }
+  UsagesSearchPackage.processDelegationCallConstructorUsages(functionPsi,functionPsi.getUseScope(),new Function1<JetConstructorDelegationCall,Unit>(){
+    @Override public Unit invoke(    JetConstructorDelegationCall element){
+      result.add(new JetConstructorDelegationCallUsage(element,changeInfo));
+      return null;
+    }
+  }
+);
+}
