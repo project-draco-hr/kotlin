@@ -13,15 +13,25 @@
   }
   Type type=typeMapper.mapType(jetType);
   ClassBuilder builder=v;
+  boolean hasPublicFieldAnnotation=AnnotationsPackage.findPublicFieldAnnotation(propertyDescriptor) != null;
   FieldOwnerContext backingFieldContext=context;
   if (AsmUtil.isInstancePropertyWithStaticBackingField(propertyDescriptor)) {
-    modifiers|=ACC_STATIC | getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
+    modifiers|=ACC_STATIC;
+    if (hasPublicFieldAnnotation && !isDelegate) {
+      modifiers|=ACC_PUBLIC;
+    }
+ else {
+      modifiers|=getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
+    }
     if (AsmUtil.isPropertyWithBackingFieldInOuterClass(propertyDescriptor)) {
       ImplementationBodyCodegen codegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
       builder=codegen.v;
       backingFieldContext=codegen.context;
       v.getSerializationBindings().put(STATIC_FIELD_IN_OUTER_CLASS,propertyDescriptor);
     }
+  }
+ else   if (!isDelegate && hasPublicFieldAnnotation) {
+    modifiers|=ACC_PUBLIC;
   }
  else   if (kind != OwnerKind.PACKAGE || isDelegate) {
     modifiers|=ACC_PRIVATE;
