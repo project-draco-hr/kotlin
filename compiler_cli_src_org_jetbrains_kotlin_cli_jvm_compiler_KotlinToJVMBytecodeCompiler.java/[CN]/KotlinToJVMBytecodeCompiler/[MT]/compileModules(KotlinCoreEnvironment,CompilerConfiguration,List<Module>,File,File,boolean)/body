@@ -1,5 +1,6 @@
 {
   Map<Module,ClassFileFactory> outputFiles=Maps.newHashMap();
+  ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   String targetDescription="in modules [" + Joiner.on(", ").join(Collections2.transform(chunk,new Function<Module,String>(){
     @Override public String apply(    @Nullable Module input){
       return input != null ? input.getModuleName() : "<null>";
@@ -10,8 +11,10 @@
   if (result == null) {
     return false;
   }
+  ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   result.throwIfError();
   for (  Module module : chunk) {
+    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
     List<JetFile> jetFiles=CompileEnvironmentUtil.getJetFiles(environment.getProject(),getAbsolutePaths(directory,module),new Function1<String,Unit>(){
       @Override public Unit invoke(      String s){
         throw new IllegalStateException("Should have been checked before: " + s);
@@ -22,6 +25,7 @@
     outputFiles.put(module,generationState.getFactory());
   }
   for (  Module module : chunk) {
+    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
     writeOutput(configuration,outputFiles.get(module),new File(module.getOutputDirectory()),jarPath,jarRuntime,null);
   }
   return true;
