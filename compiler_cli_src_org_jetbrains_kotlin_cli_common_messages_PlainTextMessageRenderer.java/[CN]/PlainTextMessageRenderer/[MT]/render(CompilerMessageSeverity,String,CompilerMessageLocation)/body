@@ -1,0 +1,42 @@
+{
+  StringBuilder result=new StringBuilder();
+  int line=location.getLine();
+  int column=location.getColumn();
+  String lineContent=location.getLineContent();
+  String path=getPath(location);
+  if (path != null) {
+    result.append(path);
+    result.append(":");
+    if (line > 0) {
+      result.append(line).append(":");
+      if (column > 0) {
+        result.append(column).append(":");
+      }
+    }
+    result.append(" ");
+  }
+  if (COLOR_ENABLED) {
+    Ansi ansi=Ansi.ansi().bold().fg(severityColor(severity)).a(severity.name().toLowerCase()).a(": ").reset().bold();
+    String decapitalized=decapitalizeIfNeeded(message);
+    int firstNewline=decapitalized.indexOf(LINE_SEPARATOR);
+    if (firstNewline < 0) {
+      result.append(ansi.a(decapitalized).reset());
+    }
+ else {
+      result.append(ansi.a(decapitalized.substring(0,firstNewline)).reset().a(decapitalized.substring(firstNewline)));
+    }
+  }
+ else {
+    result.append(severity.name().toLowerCase());
+    result.append(": ");
+    result.append(decapitalizeIfNeeded(message));
+  }
+  if (lineContent != null && 1 <= column && column <= lineContent.length() + 1) {
+    result.append(LINE_SEPARATOR);
+    result.append(lineContent);
+    result.append(LINE_SEPARATOR);
+    result.append(KotlinPackage.repeat(" ",column - 1));
+    result.append("^");
+  }
+  return result.toString();
+}
