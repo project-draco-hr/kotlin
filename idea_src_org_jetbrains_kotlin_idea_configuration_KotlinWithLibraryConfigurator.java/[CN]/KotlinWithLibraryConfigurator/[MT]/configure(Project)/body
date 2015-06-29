@@ -1,5 +1,5 @@
 {
-  String defaultPathToJar=getDefaultPathToJarFile(project);
+  final String defaultPathToJar=getDefaultPathToJarFile(project);
   boolean showPathToJarPanel=needToChooseJarPath(project);
   List<Module> nonConfiguredModules=!ApplicationManager.getApplication().isUnitTestMode() ? ConfigureKotlinInProjectUtils.getNonConfiguredModules(project,this) : Arrays.asList(ModuleManager.getInstance(project).getModules());
   List<Module> modulesToConfigure=nonConfiguredModules;
@@ -13,7 +13,14 @@
     modulesToConfigure=dialog.getModulesToConfigure();
     copyLibraryIntoPath=dialog.getCopyIntoPath();
   }
-  for (  Module module : modulesToConfigure) {
-    configureModuleWithLibrary(module,defaultPathToJar,copyLibraryIntoPath);
+  final List<Module> finalModulesToConfigure=modulesToConfigure;
+  final String finalCopyLibraryIntoPath=copyLibraryIntoPath;
+  DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable(){
+    @Override public void run(){
+      for (      Module module : finalModulesToConfigure) {
+        configureModuleWithLibrary(module,defaultPathToJar,finalCopyLibraryIntoPath);
+      }
+    }
   }
+);
 }
