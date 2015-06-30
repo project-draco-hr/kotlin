@@ -1,11 +1,24 @@
 {
-  FunctionDescriptor functionDescriptor=bindingContext.get(FUNCTION,expression);
-  if (functionDescriptor == null)   return;
   ResolvedCall<?> referencedFunction=CallUtilPackage.getResolvedCall(expression.getCallableReference(),bindingContext);
   if (referencedFunction == null)   return;
-  Collection<JetType> supertypes=runtimeTypes.getSupertypesForFunctionReference((FunctionDescriptor)referencedFunction.getResultingDescriptor());
+  CallableDescriptor target=referencedFunction.getResultingDescriptor();
+  CallableDescriptor callableDescriptor;
+  Collection<JetType> supertypes;
+  if (target instanceof FunctionDescriptor) {
+    callableDescriptor=bindingContext.get(FUNCTION,expression);
+    if (callableDescriptor == null)     return;
+    supertypes=runtimeTypes.getSupertypesForFunctionReference((FunctionDescriptor)target);
+  }
+ else   if (target instanceof PropertyDescriptor) {
+    callableDescriptor=bindingContext.get(VARIABLE,expression);
+    if (callableDescriptor == null)     return;
+    supertypes=Collections.singleton(runtimeTypes.getSupertypeForPropertyReference((PropertyDescriptor)target));
+  }
+ else {
+    return;
+  }
   String name=inventAnonymousClassName(expression);
-  ClassDescriptor classDescriptor=recordClassForFunction(expression,functionDescriptor,supertypes,name);
+  ClassDescriptor classDescriptor=recordClassForCallable(expression,callableDescriptor,supertypes,name);
   recordClosure(classDescriptor,name);
   classStack.push(classDescriptor);
   nameStack.push(name);
