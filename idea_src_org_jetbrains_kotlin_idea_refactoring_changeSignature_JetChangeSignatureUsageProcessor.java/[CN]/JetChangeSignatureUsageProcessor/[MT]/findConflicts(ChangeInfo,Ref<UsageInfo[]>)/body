@@ -1,8 +1,16 @@
 {
   MultiMap<PsiElement,String> result=new MultiMap<PsiElement,String>();
-  if (!(info instanceof JetChangeInfo)) {
-    return result;
+  UsageInfo[] usageInfos=refUsages.get();
+  List<UsageInfo> adjustedUsages=KotlinPackage.filterNot(usageInfos,new Function1<UsageInfo,Boolean>(){
+    @Override public Boolean invoke(    UsageInfo info){
+      return info instanceof OverriderUsageInfo && ((OverriderUsageInfo)info).getOverridingMethod() instanceof KotlinLightMethod;
+    }
   }
+);
+  if (adjustedUsages.size() < usageInfos.length) {
+    refUsages.set(adjustedUsages.toArray(new UsageInfo[adjustedUsages.size()]));
+  }
+  if (!(info instanceof JetChangeInfo))   return result;
   Set<String> parameterNames=new HashSet<String>();
   JetChangeInfo changeInfo=(JetChangeInfo)info;
   PsiElement function=info.getMethod();
