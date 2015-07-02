@@ -1,10 +1,4 @@
 {
-  if (pattern("Int|Short|Byte|Double|Float.compareTo(Char)").apply(descriptor)) {
-    return new WithCharAsSecondOperandFunctionIntrinsic(PRIMITIVE_NUMBER_COMPARE_TO_INTRINSIC);
-  }
-  if (pattern("Char.compareTo(Int|Short|Byte|Double|Float)").apply(descriptor)) {
-    return new WithCharAsFirstOperandFunctionIntrinsic(PRIMITIVE_NUMBER_COMPARE_TO_INTRINSIC);
-  }
   if (pattern("Char.rangeTo(Char)").apply(descriptor)) {
     return CHAR_RANGE_TO_INTRINSIC;
   }
@@ -20,12 +14,6 @@
   if (pattern("Int|Short|Byte.div(Int|Short|Byte)").apply(descriptor)) {
     return INTEGER_DIVISION_INTRINSIC;
   }
-  if (pattern("Char.div(Int|Short|Byte)").apply(descriptor)) {
-    return new WithCharAsFirstOperandFunctionIntrinsic(INTEGER_DIVISION_INTRINSIC);
-  }
-  if (pattern("Int|Short|Byte.div(Char)").apply(descriptor)) {
-    return new WithCharAsSecondOperandFunctionIntrinsic(INTEGER_DIVISION_INTRINSIC);
-  }
   if (descriptor.getName().equals(Name.identifier("rangeTo"))) {
     return RANGE_TO_INTRINSIC;
   }
@@ -37,11 +25,11 @@
   }
   JsBinaryOperator operator=getOperator(descriptor);
   BinaryOperationInstrinsicBase result=new PrimitiveBinaryOperationFunctionIntrinsic(operator);
-  if (pattern("Char.plus|minus|times|div|mod(Int|Short|Byte|Double|Float)").apply(descriptor)) {
-    return new WithCharAsFirstOperandFunctionIntrinsic(result);
+  if (pattern("Char.plus|minus(Int)").apply(descriptor)) {
+    return new CharAndIntBinaryOperationFunctionIntrinsic(result);
   }
-  if (pattern("Int|Short|Byte|Double|Float.plus|minus|times|div|mod(Char)").apply(descriptor)) {
-    return new WithCharAsSecondOperandFunctionIntrinsic(result);
+  if (pattern("Char.minus(Char)").apply(descriptor)) {
+    return new CharAndCharBinaryOperationFunctionIntrinsic(result);
   }
   return result;
 }
