@@ -2,4 +2,21 @@
   JavaParametersUtil.checkAlternativeJRE(this);
   ProgramParametersUtil.checkWorkingDirectoryExist(this,getProject(),getConfigurationModule().getModule());
   JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
+  Module module=getConfigurationModule().getModule();
+  if (module == null) {
+    throw new RuntimeConfigurationError("Module not specified");
+  }
+  if (StringUtil.isEmpty(MAIN_CLASS_NAME)) {
+    throw new RuntimeConfigurationError("No main class specified");
+  }
+  PsiClass psiClass=JavaExecutionUtil.findMainClass(module,MAIN_CLASS_NAME);
+  if (psiClass == null) {
+    throw new RuntimeConfigurationWarning("Class '" + MAIN_CLASS_NAME + "' not found in module "+ getConfigurationModule().getModuleName());
+  }
+  try {
+    findMainFun(module,psiClass);
+  }
+ catch (  CantRunException e) {
+    throw new RuntimeConfigurationWarning(e.getMessage());
+  }
 }
