@@ -1,0 +1,17 @@
+{
+  List<JetParameter> valueParameters=PsiUtilPackage.getValueParameters(caller);
+  Map<String,JetParameter> existingParameters=KotlinPackage.toMap(valueParameters,new Function1<JetParameter,String>(){
+    @Override public String invoke(    JetParameter parameter){
+      return parameter.getName();
+    }
+  }
+);
+  for (  JetParameterInfo parameterInfo : changeInfo.getNonReceiverParameters()) {
+    if (!(parameterInfo.getIsNewParameter()))     continue;
+    String name=parameterInfo.getName();
+    JetParameter parameter=existingParameters.get(name);
+    if (parameter != null) {
+      result.putValue(parameter,"There is already a parameter '" + name + "' in "+ IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_IN_TYPES.render(callerDescriptor)+ ". It will conflict with the new parameter.");
+    }
+  }
+}

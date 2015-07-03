@@ -3,7 +3,7 @@
   UsageInfo[] usageInfos=refUsages.get();
   List<UsageInfo> adjustedUsages=KotlinPackage.filterNot(usageInfos,new Function1<UsageInfo,Boolean>(){
     @Override public Boolean invoke(    UsageInfo info){
-      return info instanceof OverriderUsageInfo && ((OverriderUsageInfo)info).getOverridingMethod() instanceof KotlinLightMethod;
+      return getOverriderOrCaller(info) instanceof KotlinLightMethod;
     }
   }
 );
@@ -67,6 +67,12 @@
     findReceiverIntroducingConflicts(result,function,newReceiverInfo);
     findInternalExplicitReceiverConflicts(refUsages.get(),result,originalReceiverInfo);
     findThisLabelConflicts((JetChangeInfo)info,refUsages,result,changeInfo,function);
+  }
+  for (  UsageInfo usageInfo : usageInfos) {
+    if (!(usageInfo instanceof KotlinCallerUsage))     continue;
+    JetNamedDeclaration caller=(JetNamedDeclaration)usageInfo.getElement();
+    DeclarationDescriptor callerDescriptor=ResolvePackage.resolveToDescriptor(caller);
+    findParameterDuplicationInCaller(result,changeInfo,caller,callerDescriptor);
   }
   return result;
 }
