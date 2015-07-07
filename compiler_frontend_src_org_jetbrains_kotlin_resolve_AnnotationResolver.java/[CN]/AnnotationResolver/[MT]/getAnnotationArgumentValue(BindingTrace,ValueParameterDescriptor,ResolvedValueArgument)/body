@@ -1,18 +1,19 @@
 {
   JetType varargElementType=parameterDescriptor.getVarargElementType();
   boolean argumentsAsVararg=varargElementType != null && !hasSpread(resolvedArgument);
-  List<CompileTimeConstant<?>> constants=resolveValueArguments(resolvedArgument,argumentsAsVararg ? varargElementType : parameterDescriptor.getType(),trace);
-  if (argumentsAsVararg) {
-    boolean usesVariableAsConstant=KotlinPackage.any(constants,new Function1<CompileTimeConstant<?>,Boolean>(){
-      @Override public Boolean invoke(      CompileTimeConstant<?> constant){
-        return constant.usesVariableAsConstant();
-      }
+  final JetType constantType=argumentsAsVararg ? varargElementType : parameterDescriptor.getType();
+  List<CompileTimeConstant<?>> compileTimeConstants=resolveValueArguments(resolvedArgument,constantType,trace);
+  List<ConstantValue<?>> constants=KotlinPackage.map(compileTimeConstants,new Function1<CompileTimeConstant<?>,ConstantValue<?>>(){
+    @Override public ConstantValue<?> invoke(    CompileTimeConstant<?> constant){
+      return constant.toConstantValue(constantType);
     }
+  }
 );
-    if (parameterDescriptor.declaresDefaultValue() && constants.isEmpty())     return null;
-    return new ArrayValue(constants,parameterDescriptor.getType(),usesVariableAsConstant);
+  if (argumentsAsVararg) {
+    if (parameterDescriptor.declaresDefaultValue() && compileTimeConstants.isEmpty())     return null;
+    return new ArrayValue(constants,parameterDescriptor.getType());
   }
  else {
-    return !constants.isEmpty() ? KotlinPackage.last(constants) : null;
+    return KotlinPackage.lastOrNull(constants);
   }
 }
