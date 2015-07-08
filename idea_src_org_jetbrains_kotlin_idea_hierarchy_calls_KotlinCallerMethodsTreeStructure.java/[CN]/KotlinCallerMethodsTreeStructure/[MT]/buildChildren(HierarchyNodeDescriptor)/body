@@ -35,7 +35,14 @@
     processPsiMethodCallers(propertyMethods,descriptor,methodToDescriptorMap,searchScope,false);
   }
   if (element instanceof JetClassOrObject) {
-    processJetClassOrObjectCallers((JetClassOrObject)element,descriptor,methodToDescriptorMap,searchScope);
+    JetPrimaryConstructor constructor=((JetClassOrObject)element).getPrimaryConstructor();
+    if (constructor != null) {
+      PsiMethod lightMethod=LightClassUtil.getLightClassMethod(constructor);
+      processPsiMethodCallers(Collections.singleton(lightMethod),descriptor,methodToDescriptorMap,searchScope,false);
+    }
+ else {
+      processJetClassOrObjectCallers((JetClassOrObject)element,descriptor,methodToDescriptorMap,searchScope);
+    }
   }
   Object[] callers=methodToDescriptorMap.values().toArray(new Object[methodToDescriptorMap.size()]);
   return (javaCallers != null) ? ArrayUtil.mergeArrays(javaCallers,callers) : callers;
