@@ -7,7 +7,7 @@
   if (argumentList == null) {
     return null;
   }
-  JetSimpleNameExpression callNameExpression=getCallSimpleNameExpression(argumentList);
+  final JetSimpleNameExpression callNameExpression=getCallSimpleNameExpression(argumentList);
   if (callNameExpression == null) {
     return null;
   }
@@ -16,7 +16,7 @@
     return null;
   }
   ResolutionFacade resolutionFacade=ResolvePackage.getResolutionFacade(callNameExpression.getContainingJetFile());
-  BindingContext bindingContext=resolutionFacade.analyze(callNameExpression,BodyResolveMode.FULL);
+  final BindingContext bindingContext=resolutionFacade.analyze(callNameExpression,BodyResolveMode.FULL);
   ModuleDescriptor moduleDescriptor=resolutionFacade.findModuleDescriptor(callNameExpression);
   JetScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,callNameExpression);
   final DeclarationDescriptor placeDescriptor;
@@ -28,7 +28,9 @@
   }
   Function1<DeclarationDescriptor,Boolean> visibilityFilter=new Function1<DeclarationDescriptor,Boolean>(){
     @Override public Boolean invoke(    DeclarationDescriptor descriptor){
-      return placeDescriptor == null || JetVisibilityChecker.isVisible(placeDescriptor,descriptor);
+      if (placeDescriptor == null)       return true;
+      if (!(descriptor instanceof DeclarationDescriptorWithVisibility))       return true;
+      return CorePackage.isVisible((DeclarationDescriptorWithVisibility)descriptor,placeDescriptor,bindingContext,callNameExpression);
     }
   }
 ;
