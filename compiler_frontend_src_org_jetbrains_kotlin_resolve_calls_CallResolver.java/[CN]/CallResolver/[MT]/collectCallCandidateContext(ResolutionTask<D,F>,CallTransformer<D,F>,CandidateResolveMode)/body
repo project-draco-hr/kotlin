@@ -1,0 +1,18 @@
+{
+  final List<CallCandidateResolutionContext<D>> candidateResolutionContexts=ContainerUtil.newArrayList();
+  for (  final ResolutionCandidate<D> resolutionCandidate : task.getCandidates()) {
+    candidatePerfCounter.time(new Function0<Unit>(){
+      @Override public Unit invoke(){
+        TemporaryBindingTrace candidateTrace=TemporaryBindingTrace.create(task.trace,"trace to resolve candidate");
+        Collection<CallCandidateResolutionContext<D>> contexts=callTransformer.createCallContexts(resolutionCandidate,task,candidateTrace,candidateResolveMode);
+        for (        CallCandidateResolutionContext<D> context : contexts) {
+          candidateResolver.performResolutionForCandidateCall(context,task);
+          candidateResolutionContexts.add(context);
+        }
+        return Unit.INSTANCE$;
+      }
+    }
+);
+  }
+  return candidateResolutionContexts;
+}
