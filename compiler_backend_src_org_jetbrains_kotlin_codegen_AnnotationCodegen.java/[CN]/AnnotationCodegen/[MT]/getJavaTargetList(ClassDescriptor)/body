@@ -1,0 +1,26 @@
+{
+  AnnotationDescriptor targetAnnotation=descriptor.getAnnotations().findAnnotation(new FqName(Target.class.getName()));
+  if (targetAnnotation != null) {
+    Collection<ConstantValue<?>> valueArguments=targetAnnotation.getAllValueArguments().values();
+    if (!valueArguments.isEmpty()) {
+      ConstantValue<?> compileTimeConstant=valueArguments.iterator().next();
+      if (compileTimeConstant instanceof ArrayValue) {
+        List<? extends ConstantValue<?>> values=((ArrayValue)compileTimeConstant).getValue();
+        Set<ElementType> result=EnumSet.noneOf(ElementType.class);
+        for (        ConstantValue<?> value : values) {
+          if (value instanceof EnumValue) {
+            ClassDescriptor enumEntry=((EnumValue)value).getValue();
+            JetType classObjectType=getClassObjectType(enumEntry);
+            if (classObjectType != null) {
+              if ("java/lang/annotation/ElementType".equals(typeMapper.mapType(classObjectType).getInternalName())) {
+                result.add(ElementType.valueOf(enumEntry.getName().asString()));
+              }
+            }
+          }
+        }
+        return result;
+      }
+    }
+  }
+  return null;
+}

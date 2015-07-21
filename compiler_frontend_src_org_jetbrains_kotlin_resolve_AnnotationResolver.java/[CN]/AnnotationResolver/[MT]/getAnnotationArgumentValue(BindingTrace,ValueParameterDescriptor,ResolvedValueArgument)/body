@@ -1,18 +1,3 @@
 {
-  JetType varargElementType=parameterDescriptor.getVarargElementType();
-  boolean argumentsAsVararg=varargElementType != null && !hasSpread(resolvedArgument);
-  List<CompileTimeConstant<?>> constants=resolveValueArguments(resolvedArgument,argumentsAsVararg ? varargElementType : parameterDescriptor.getType(),trace);
-  if (argumentsAsVararg) {
-    boolean usesVariableAsConstant=KotlinPackage.any(constants,new Function1<CompileTimeConstant<?>,Boolean>(){
-      @Override public Boolean invoke(      CompileTimeConstant<?> constant){
-        return constant.usesVariableAsConstant();
-      }
-    }
-);
-    if (parameterDescriptor.declaresDefaultValue() && constants.isEmpty())     return null;
-    return new ArrayValue(constants,parameterDescriptor.getType(),true,usesVariableAsConstant);
-  }
- else {
-    return !constants.isEmpty() ? KotlinPackage.last(constants) : null;
-  }
+  return constantExpressionEvaluator.getAnnotationArgumentValue(trace,valueParameter,resolvedArgument);
 }

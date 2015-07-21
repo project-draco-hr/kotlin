@@ -1,9 +1,26 @@
 {
+  AnnotationDescriptor kotlinAnnotation=descriptor.getAnnotations().findAnnotation(KotlinBuiltIns.FQ_NAMES.annotation);
+  if (kotlinAnnotation != null) {
+    for (    Map.Entry<ValueParameterDescriptor,ConstantValue<?>> argument : kotlinAnnotation.getAllValueArguments().entrySet()) {
+      if ("retention".equals(argument.getKey().getName().asString()) && argument.getValue() instanceof EnumValue) {
+        ClassDescriptor enumEntry=((EnumValue)argument.getValue()).getValue();
+        JetType classObjectType=getClassObjectType(enumEntry);
+        if (classObjectType != null) {
+          if ("kotlin/annotation/AnnotationRetention".equals(typeMapper.mapType(classObjectType).getInternalName())) {
+            String entryName=enumEntry.getName().asString();
+            for (            KotlinRetention retention : KotlinRetention.values()) {
+              if (retention.name().equals(entryName))               return retention.mapped;
+            }
+          }
+        }
+      }
+    }
+  }
   AnnotationDescriptor retentionAnnotation=descriptor.getAnnotations().findAnnotation(new FqName(Retention.class.getName()));
   if (retentionAnnotation != null) {
-    Collection<CompileTimeConstant<?>> valueArguments=retentionAnnotation.getAllValueArguments().values();
+    Collection<ConstantValue<?>> valueArguments=retentionAnnotation.getAllValueArguments().values();
     if (!valueArguments.isEmpty()) {
-      CompileTimeConstant<?> compileTimeConstant=valueArguments.iterator().next();
+      ConstantValue<?> compileTimeConstant=valueArguments.iterator().next();
       if (compileTimeConstant instanceof EnumValue) {
         ClassDescriptor enumEntry=((EnumValue)compileTimeConstant).getValue();
         JetType classObjectType=getClassObjectType(enumEntry);
@@ -15,5 +32,5 @@
       }
     }
   }
-  return RetentionPolicy.CLASS;
+  return RetentionPolicy.RUNTIME;
 }

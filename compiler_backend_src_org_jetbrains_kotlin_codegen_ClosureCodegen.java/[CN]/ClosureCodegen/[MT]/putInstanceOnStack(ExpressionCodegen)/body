@@ -1,0 +1,20 @@
+{
+  return StackValue.operation(functionReferenceTarget != null ? K_FUNCTION : asmType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter v){
+      if (isConst(closure)) {
+        v.getstatic(asmType.getInternalName(),JvmAbi.INSTANCE_FIELD,asmType.getDescriptor());
+      }
+ else {
+        v.anew(asmType);
+        v.dup();
+        codegen.pushClosureOnStack(classDescriptor,true,codegen.defaultCallGenerator);
+        v.invokespecial(asmType.getInternalName(),"<init>",constructor.getDescriptor(),false);
+      }
+      if (functionReferenceTarget != null) {
+        v.invokestatic(REFLECTION,"function",Type.getMethodDescriptor(K_FUNCTION,FUNCTION_REFERENCE),false);
+      }
+      return Unit.INSTANCE$;
+    }
+  }
+);
+}

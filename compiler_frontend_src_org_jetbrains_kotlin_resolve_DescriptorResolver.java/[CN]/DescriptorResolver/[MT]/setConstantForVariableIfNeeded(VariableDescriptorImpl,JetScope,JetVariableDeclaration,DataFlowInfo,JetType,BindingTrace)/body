@@ -1,15 +1,11 @@
 {
   if (!shouldRecordInitializerForProperty(variableDescriptor,variableType))   return;
   if (!variable.hasInitializer())   return;
-  variableDescriptor.setCompileTimeInitializer(storageManager.createRecursionTolerantNullableLazyValue(new Function0<CompileTimeConstant<?>>(){
-    @Nullable @Override public CompileTimeConstant<?> invoke(){
+  variableDescriptor.setCompileTimeInitializer(storageManager.createRecursionTolerantNullableLazyValue(new Function0<ConstantValue<?>>(){
+    @Nullable @Override public ConstantValue<?> invoke(){
       JetExpression initializer=variable.getInitializer();
       JetType initializerType=expressionTypingServices.safeGetType(scope,initializer,variableType,dataFlowInfo,trace);
-      CompileTimeConstant<?> constant=ConstantExpressionEvaluator.evaluate(initializer,trace,initializerType);
-      if (constant instanceof IntegerValueTypeConstant) {
-        return EvaluatePackage.createCompileTimeConstantWithType((IntegerValueTypeConstant)constant,initializerType);
-      }
-      return constant;
+      return ConstantExpressionEvaluator.evaluateToConstantValue(initializer,trace,initializerType);
     }
   }
 ,null));

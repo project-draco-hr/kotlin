@@ -1,10 +1,14 @@
 {
-  for (  UsageInfo functionUsageInfo : ChangeSignaturePackage.getAffectedFunctions(changeInfo)) {
-    if (functionUsageInfo instanceof JetFunctionDefinitionUsage) {
-      findOneMethodUsages((JetFunctionDefinitionUsage)functionUsageInfo,changeInfo,result);
+  for (  UsageInfo functionUsageInfo : ChangeSignaturePackage.getAffectedCallables(changeInfo)) {
+    if (functionUsageInfo instanceof JetCallableDefinitionUsage) {
+      findOneMethodUsages((JetCallableDefinitionUsage)functionUsageInfo,changeInfo,result);
+    }
+ else     if (functionUsageInfo instanceof KotlinCallerUsage) {
+      findCallerUsages((KotlinCallerUsage)functionUsageInfo,changeInfo,result);
     }
  else {
       result.add(functionUsageInfo);
+      boolean propagationTarget=functionUsageInfo instanceof CallerUsageInfo || (functionUsageInfo instanceof OverriderUsageInfo && !((OverriderUsageInfo)functionUsageInfo).isOriginalOverrider());
       PsiElement callee=functionUsageInfo.getElement();
       if (callee == null)       continue;
       SearchScope scope=callee.getUseScope();
@@ -16,7 +20,7 @@
         JetCallElement callElement=PsiTreeUtil.getParentOfType(element,JetCallElement.class);
         JetExpression calleeExpression=callElement != null ? callElement.getCalleeExpression() : null;
         if (calleeExpression != null && PsiTreeUtil.isAncestor(calleeExpression,element,false)) {
-          result.add(new JetFunctionCallUsage(callElement,changeInfo.getMethodDescriptor().getOriginalPrimaryFunction()));
+          result.add(propagationTarget ? new KotlinCallerCallUsage(callElement) : new JetFunctionCallUsage(callElement,changeInfo.getMethodDescriptor().getOriginalPrimaryCallable()));
         }
       }
     }

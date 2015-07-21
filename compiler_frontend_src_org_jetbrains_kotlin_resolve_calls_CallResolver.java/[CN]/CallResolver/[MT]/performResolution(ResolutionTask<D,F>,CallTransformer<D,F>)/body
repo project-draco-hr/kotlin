@@ -1,24 +1,16 @@
 {
-  for (  final ResolutionCandidate<D> resolutionCandidate : task.getCandidates()) {
-    candidatePerfCounter.time(new Function0<Unit>(){
-      @Override public Unit invoke(){
-        TemporaryBindingTrace candidateTrace=TemporaryBindingTrace.create(task.trace,"trace to resolve candidate");
-        Collection<CallCandidateResolutionContext<D>> contexts=callTransformer.createCallContexts(resolutionCandidate,task,candidateTrace);
-        for (        CallCandidateResolutionContext<D> context : contexts) {
-          candidateResolver.performResolutionForCandidateCall(context,task);
-          task.tracing.bindReference(context.candidateCall.getTrace(),context.candidateCall);
-          Collection<MutableResolvedCall<F>> resolvedCalls=callTransformer.transformCall(context,CallResolver.this,task);
-          for (          MutableResolvedCall<F> resolvedCall : resolvedCalls) {
-            BindingTrace trace=resolvedCall.getTrace();
-            task.tracing.bindReference(trace,resolvedCall);
-            task.tracing.bindResolvedCall(trace,resolvedCall);
-            task.addResolvedCall(resolvedCall);
-          }
-        }
-        return Unit.INSTANCE$;
-      }
+  List<CallCandidateResolutionContext<D>> contexts=collectCallCandidateContext(task,callTransformer,EXIT_ON_FIRST_ERROR);
+  boolean isSuccess=ContainerUtil.exists(contexts,new Condition<CallCandidateResolutionContext<D>>(){
+    @Override public boolean value(    CallCandidateResolutionContext<D> context){
+      return context.candidateCall.getStatus().possibleTransformToSuccess();
     }
+  }
 );
+  if (!isSuccess) {
+    contexts=collectCallCandidateContext(task,callTransformer,FULLY);
+  }
+  for (  CallCandidateResolutionContext<D> context : contexts) {
+    addResolvedCall(task,callTransformer,context);
   }
   OverloadResolutionResultsImpl<F> results=ResolutionResultsHandler.INSTANCE.computeResultAndReportErrors(task,task.getResolvedCalls());
   if (!results.isSingleResult() && !results.isIncomplete()) {

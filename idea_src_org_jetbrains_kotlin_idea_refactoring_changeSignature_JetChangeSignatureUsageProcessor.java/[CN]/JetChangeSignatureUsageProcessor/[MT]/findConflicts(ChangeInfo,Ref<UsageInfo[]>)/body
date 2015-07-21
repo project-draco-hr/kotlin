@@ -1,26 +1,36 @@
 {
   MultiMap<PsiElement,String> result=new MultiMap<PsiElement,String>();
-  if (!(info instanceof JetChangeInfo)) {
-    return result;
+  UsageInfo[] usageInfos=refUsages.get();
+  List<UsageInfo> adjustedUsages=KotlinPackage.filterNot(usageInfos,new Function1<UsageInfo,Boolean>(){
+    @Override public Boolean invoke(    UsageInfo info){
+      return getOverriderOrCaller(info) instanceof KotlinLightMethod;
+    }
   }
+);
+  if (adjustedUsages.size() < usageInfos.length) {
+    refUsages.set(adjustedUsages.toArray(new UsageInfo[adjustedUsages.size()]));
+  }
+  if (!(info instanceof JetChangeInfo))   return result;
   Set<String> parameterNames=new HashSet<String>();
   JetChangeInfo changeInfo=(JetChangeInfo)info;
   PsiElement function=info.getMethod();
   PsiElement element=function != null ? function : changeInfo.getContext();
   BindingContext bindingContext=ResolvePackage.analyze((JetElement)element,BodyResolveMode.FULL);
-  FunctionDescriptor oldDescriptor=ChangeSignaturePackage.getOriginalBaseFunctionDescriptor(changeInfo);
+  CallableDescriptor oldDescriptor=ChangeSignaturePackage.getOriginalBaseFunctionDescriptor(changeInfo);
   DeclarationDescriptor containingDeclaration=oldDescriptor.getContainingDeclaration();
   JetScope parametersScope=null;
   if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution();
  else   if (function instanceof JetFunction)   parametersScope=org.jetbrains.kotlin.idea.refactoring.RefactoringPackage.getBodyScope((JetFunction)function,bindingContext);
-  JetScope functionScope=org.jetbrains.kotlin.idea.refactoring.RefactoringPackage.getContainingScope(oldDescriptor,bindingContext);
+  JetScope callableScope=org.jetbrains.kotlin.idea.refactoring.RefactoringPackage.getContainingScope(oldDescriptor,bindingContext);
   JetMethodDescriptor.Kind kind=ChangeSignaturePackage.getKind(changeInfo);
-  if (!kind.getIsConstructor() && functionScope != null && !info.getNewName().isEmpty()) {
-    for (    FunctionDescriptor conflict : functionScope.getFunctions(Name.identifier(info.getNewName()))) {
+  if (!kind.getIsConstructor() && callableScope != null && !info.getNewName().isEmpty()) {
+    Name newName=Name.identifier(info.getNewName());
+    Collection<? extends CallableDescriptor> conflicts=oldDescriptor instanceof FunctionDescriptor ? callableScope.getFunctions(newName) : callableScope.getProperties(newName);
+    for (    CallableDescriptor conflict : conflicts) {
       if (conflict == oldDescriptor)       continue;
       PsiElement conflictElement=DescriptorToSourceUtils.descriptorToDeclaration(conflict);
       if (conflictElement == changeInfo.getMethod())       continue;
-      if (getFunctionParameterTypes(conflict).equals(getFunctionParameterTypes(oldDescriptor))) {
+      if (getCallableParameterTypes(conflict).equals(getCallableParameterTypes(oldDescriptor))) {
         result.putValue(conflictElement,"Function already exists: '" + DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(conflict) + "'");
         break;
       }
@@ -53,10 +63,16 @@
   }
   JetParameterInfo newReceiverInfo=changeInfo.getReceiverParameterInfo();
   JetParameterInfo originalReceiverInfo=changeInfo.getMethodDescriptor().getReceiver();
-  if (function instanceof JetNamedFunction && newReceiverInfo != originalReceiverInfo) {
+  if (function instanceof JetCallableDeclaration && newReceiverInfo != originalReceiverInfo) {
     findReceiverIntroducingConflicts(result,function,newReceiverInfo);
     findInternalExplicitReceiverConflicts(refUsages.get(),result,originalReceiverInfo);
     findThisLabelConflicts((JetChangeInfo)info,refUsages,result,changeInfo,function);
+  }
+  for (  UsageInfo usageInfo : usageInfos) {
+    if (!(usageInfo instanceof KotlinCallerUsage))     continue;
+    JetNamedDeclaration caller=(JetNamedDeclaration)usageInfo.getElement();
+    DeclarationDescriptor callerDescriptor=ResolvePackage.resolveToDescriptor(caller);
+    findParameterDuplicationInCaller(result,changeInfo,caller,callerDescriptor);
   }
   return result;
 }

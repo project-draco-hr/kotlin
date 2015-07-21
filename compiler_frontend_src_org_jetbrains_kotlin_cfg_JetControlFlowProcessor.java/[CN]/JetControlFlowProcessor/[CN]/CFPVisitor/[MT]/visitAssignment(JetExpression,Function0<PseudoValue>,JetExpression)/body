@@ -2,7 +2,7 @@
   JetExpression left=JetPsiUtil.deparenthesize(lhs);
   if (left == null) {
     List<PseudoValue> arguments=Collections.singletonList(rhsDeferredValue.invoke());
-    builder.magic(parentExpression,parentExpression,arguments,defaultTypeMap(arguments),MagicKind.UNSUPPORTED_ELEMENT);
+    builder.magic(parentExpression,parentExpression,arguments,MagicKind.UNSUPPORTED_ELEMENT);
     return;
   }
   if (left instanceof JetArrayAccessExpression) {
@@ -20,5 +20,11 @@
  else   if (left instanceof JetProperty) {
     accessTarget=getDeclarationAccessTarget(left);
   }
-  recordWrite(left,accessTarget,rhsDeferredValue.invoke(),receiverValues,parentExpression);
+  if (accessTarget == AccessTarget.BlackBox.INSTANCE$ && !(left instanceof JetProperty)) {
+    generateInstructions(left);
+    createSyntheticValue(left,MagicKind.VALUE_CONSUMER,left);
+  }
+  PseudoValue rightValue=rhsDeferredValue.invoke();
+  PseudoValue rValue=rightValue != null ? rightValue : createSyntheticValue(parentExpression,MagicKind.UNRECOGNIZED_WRITE_RHS);
+  builder.write(parentExpression,left,rValue,accessTarget,receiverValues);
 }

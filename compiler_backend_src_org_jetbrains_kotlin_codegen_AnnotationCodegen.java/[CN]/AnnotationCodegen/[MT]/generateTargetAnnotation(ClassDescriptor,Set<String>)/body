@@ -1,0 +1,24 @@
+{
+  String descriptor=Type.getType(Target.class).getDescriptor();
+  if (!annotationDescriptorsAlreadyPresent.add(descriptor))   return;
+  Set<AnnotationTarget> targets=AnnotationTargetChecker.INSTANCE$.possibleTargetSet(classDescriptor);
+  Set<ElementType> javaTargets;
+  if (targets == null) {
+    javaTargets=getJavaTargetList(classDescriptor);
+    if (javaTargets == null)     return;
+  }
+ else {
+    javaTargets=EnumSet.noneOf(ElementType.class);
+    for (    AnnotationTarget target : targets) {
+      if (annotationTargetMap.get(target) == null)       continue;
+      javaTargets.add(annotationTargetMap.get(target));
+    }
+  }
+  AnnotationVisitor visitor=visitAnnotation(descriptor,true);
+  AnnotationVisitor arrayVisitor=visitor.visitArray("value");
+  for (  ElementType javaTarget : javaTargets) {
+    arrayVisitor.visitEnum(null,Type.getType(ElementType.class).getDescriptor(),javaTarget.name());
+  }
+  arrayVisitor.visitEnd();
+  visitor.visitEnd();
+}

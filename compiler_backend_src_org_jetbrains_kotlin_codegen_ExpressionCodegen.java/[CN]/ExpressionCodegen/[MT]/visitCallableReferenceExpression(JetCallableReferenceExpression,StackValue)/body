@@ -6,22 +6,8 @@
     return genClosure(expression,functionDescriptor,strategy,null,KotlinSyntheticClass.Kind.CALLABLE_REFERENCE_WRAPPER,(FunctionDescriptor)resolvedCall.getResultingDescriptor());
   }
   VariableDescriptor variableDescriptor=bindingContext.get(VARIABLE,expression);
-  if (variableDescriptor == null) {
-    throw new UnsupportedOperationException("Unsupported callable reference expression: " + expression.getText());
+  if (variableDescriptor != null) {
+    return generatePropertyReference(expression,variableDescriptor,resolvedCall);
   }
-  checkReflectionIsAvailable(expression);
-  VariableDescriptor descriptor=(VariableDescriptor)resolvedCall.getResultingDescriptor();
-  DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
-  if (containingDeclaration instanceof PackageFragmentDescriptor) {
-    return generateTopLevelPropertyReference(descriptor);
-  }
- else   if (containingDeclaration instanceof ClassDescriptor) {
-    return generateMemberPropertyReference(descriptor,(ClassDescriptor)containingDeclaration);
-  }
- else   if (containingDeclaration instanceof ScriptDescriptor) {
-    return generateMemberPropertyReference(descriptor,((ScriptDescriptor)containingDeclaration).getClassDescriptor());
-  }
- else {
-    throw new UnsupportedOperationException("Unsupported callable reference container: " + containingDeclaration);
-  }
+  throw new UnsupportedOperationException("Unsupported callable reference expression: " + expression.getText());
 }

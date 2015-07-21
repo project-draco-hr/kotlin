@@ -6,16 +6,13 @@
   InstructionAdapter iv=new InstructionAdapter(mv);
   ImplementationBodyCodegen.markLineNumberForSyntheticFunction(DescriptorUtils.getParentOfType(funDescriptor,ClassDescriptor.class),iv);
   iv.load(0,asmType);
-  ReceiverParameterDescriptor receiver=funDescriptor.getExtensionReceiverParameter();
-  int count=1;
-  if (receiver != null) {
-    StackValue.local(count,bridge.getArgumentTypes()[count - 1]).put(typeMapper.mapType(receiver.getType()),iv);
-    count++;
-  }
-  List<ValueParameterDescriptor> params=funDescriptor.getValueParameters();
-  for (  ValueParameterDescriptor param : params) {
-    StackValue.local(count,bridge.getArgumentTypes()[count - 1]).put(typeMapper.mapType(param.getType()),iv);
-    count++;
+  Type[] myParameterTypes=bridge.getArgumentTypes();
+  List<ParameterDescriptor> calleeParameters=KotlinPackage.plus(UtilsPackage.<ParameterDescriptor>singletonOrEmptyList(funDescriptor.getExtensionReceiverParameter()),funDescriptor.getValueParameters());
+  int slot=1;
+  for (int i=0; i < calleeParameters.size(); i++) {
+    Type type=myParameterTypes[i];
+    StackValue.local(slot,type).put(typeMapper.mapType(calleeParameters.get(i)),iv);
+    slot+=type.getSize();
   }
   iv.invokevirtual(asmType.getInternalName(),delegate.getName(),delegate.getDescriptor(),false);
   StackValue.onStack(delegate.getReturnType()).put(bridge.getReturnType(),iv);

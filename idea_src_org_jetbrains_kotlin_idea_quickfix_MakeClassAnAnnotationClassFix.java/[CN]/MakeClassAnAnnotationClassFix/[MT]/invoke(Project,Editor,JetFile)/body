@@ -1,3 +1,15 @@
 {
-  annotationClass.addModifier(ANNOTATION_KEYWORD);
+  JetPsiFactory factory=new JetPsiFactory(annotationClass.getProject());
+  JetModifierList list=annotationClass.getModifierList();
+  String annotation=KotlinBuiltIns.FQ_NAMES.annotation.shortName().asString();
+  PsiElement added;
+  if (list == null) {
+    JetModifierList newModifierList=factory.createModifierList(annotation);
+    added=annotationClass.addBefore(newModifierList,annotationClass.getClassOrInterfaceKeyword());
+  }
+ else {
+    JetAnnotationEntry entry=factory.createAnnotationEntry(annotation);
+    added=list.addBefore(entry,list.getFirstChild());
+  }
+  annotationClass.addAfter(factory.createWhiteSpace(),added);
 }
