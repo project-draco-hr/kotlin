@@ -1,2 +1,34 @@
 {
+  Object value=cache.get(input);
+  if (value != null && value != NotValue.COMPUTING)   return WrappedValues.unescapeExceptionOrNull(value);
+  lock.lock();
+  try {
+    value=cache.get(input);
+    if (value == NotValue.COMPUTING) {
+      throw recursionDetected(input);
+    }
+    if (value != null)     return WrappedValues.unescapeExceptionOrNull(value);
+    AssertionError error=null;
+    try {
+      cache.put(input,NotValue.COMPUTING);
+      V typedValue=compute.invoke(input);
+      Object oldValue=cache.put(input,WrappedValues.escapeNull(typedValue));
+      if (oldValue != NotValue.COMPUTING) {
+        error=raceCondition(input,oldValue);
+        throw error;
+      }
+      return typedValue;
+    }
+ catch (    Throwable throwable) {
+      if (throwable == error)       throw exceptionHandlingStrategy.handleException(throwable);
+      Object oldValue=cache.put(input,WrappedValues.escapeThrowable(throwable));
+      if (oldValue != NotValue.COMPUTING) {
+        throw raceCondition(input,oldValue);
+      }
+      throw exceptionHandlingStrategy.handleException(throwable);
+    }
+  }
+  finally {
+    lock.unlock();
+  }
 }
