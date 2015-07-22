@@ -7,6 +7,9 @@
   trace.record(RESOLVED_CALL,call,resolvedCall);
   trace.record(CALL,expression,call);
   BasicCallResolutionContext resolutionContext=BasicCallResolutionContext.create(context,call,CheckArgumentTypesMode.CHECK_CALLABLE_TYPE);
-  context.callChecker.check(resolvedCall,resolutionContext);
+  resolutionContext.performContextDependentCallChecks(resolvedCall);
+  for (  CallChecker checker : components.callCheckers) {
+    checker.check(resolvedCall,resolutionContext);
+  }
   components.symbolUsageValidator.validateCall(descriptor,trace,expression);
 }
