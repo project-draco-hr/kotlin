@@ -1,6 +1,11 @@
 {
-  if (!"main".equals(function.getName()))   return false;
+  if (!"main".equals(function.getName()) && function.getAnnotationEntries().isEmpty()) {
+    return false;
+  }
   FunctionDescriptor functionDescriptor=getFunctionDescriptor.fun(function);
+  if (!getJVMFunctionName(functionDescriptor).equals("main")) {
+    return false;
+  }
   List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
   if (parameters.size() != 1)   return false;
   ValueParameterDescriptor parameter=parameters.get(0);
@@ -9,7 +14,12 @@
   List<TypeProjection> typeArguments=parameterType.getArguments();
   if (typeArguments.size() != 1)   return false;
   JetType typeArgument=typeArguments.get(0).getType();
-  if (!JetTypeChecker.DEFAULT.equalTypes(typeArgument,getBuiltIns(functionDescriptor).getStringType()))   return false;
+  if (!KotlinBuiltIns.isString(typeArgument)) {
+    return false;
+  }
+  if (typeArguments.get(0).getProjectionKind() != Variance.INVARIANT) {
+    return false;
+  }
   if (DescriptorUtils.isTopLevelDeclaration(functionDescriptor))   return true;
   DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
   return containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind().isSingleton() && AnnotationsPackage.hasPlatformStaticAnnotation(functionDescriptor);
