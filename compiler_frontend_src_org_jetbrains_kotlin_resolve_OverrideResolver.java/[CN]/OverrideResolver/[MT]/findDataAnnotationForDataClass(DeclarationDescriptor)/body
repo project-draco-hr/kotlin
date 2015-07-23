@@ -1,8 +1,10 @@
 {
-  ClassDescriptor stdDataClassAnnotation=getBuiltIns(dataClass).getDataClassAnnotation();
-  AnnotationDescriptor annotation=dataClass.getAnnotations().findAnnotation(DescriptorUtils.getFqNameSafe(stdDataClassAnnotation));
-  if (annotation == null) {
-    throw new IllegalStateException("No data annotation is found for data class " + dataClass);
+  AnnotationDescriptor annotation=dataClass.getAnnotations().findAnnotation(KotlinBuiltIns.FQ_NAMES.data);
+  if (annotation != null) {
+    JetAnnotationEntry entry=DescriptorToSourceUtils.getSourceFromAnnotation(annotation);
+    if (entry != null) {
+      return entry;
+    }
   }
-  return BindingContextUtils.getNotNull(trace.getBindingContext(),BindingContext.ANNOTATION_DESCRIPTOR_TO_PSI_ELEMENT,annotation);
+  throw new IllegalStateException("No data annotation is found for data class " + dataClass);
 }
