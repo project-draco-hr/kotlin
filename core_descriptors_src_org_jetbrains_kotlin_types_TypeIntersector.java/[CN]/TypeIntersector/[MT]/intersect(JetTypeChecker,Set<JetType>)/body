@@ -12,7 +12,7 @@
     if (type.isError())     continue;
     nothingTypePresent|=KotlinBuiltIns.isNothingOrNullableNothing(type);
     allNullable&=type.isMarkedNullable();
-    nullabilityStripped.add(makeNotNullable(type));
+    nullabilityStripped.add(TypeUtils.makeNotNullable(type));
   }
   if (nothingTypePresent) {
     return allNullable ? KotlinBuiltIns.getInstance().getNullableNothingType() : KotlinBuiltIns.getInstance().getNothingType();
@@ -22,13 +22,13 @@
   }
   List<JetType> resultingTypes=new ArrayList<JetType>();
   outer:   for (  JetType type : nullabilityStripped) {
-    if (!canHaveSubtypes(typeChecker,type)) {
+    if (!TypeUtils.canHaveSubtypes(typeChecker,type)) {
       for (      JetType other : nullabilityStripped) {
         if (!TypeUnifier.mayBeEqual(type,other) && !typeChecker.isSubtypeOf(type,other) && !typeChecker.isSubtypeOf(other,type)) {
           return null;
         }
       }
-      return makeNullableAsSpecified(type,allNullable);
+      return TypeUtils.makeNullableAsSpecified(type,allNullable);
     }
  else {
       for (      JetType other : nullabilityStripped) {
@@ -49,10 +49,10 @@
     if (bestRepresentative == null) {
       throw new AssertionError("Empty intersection for types " + types);
     }
-    return makeNullableAsSpecified(bestRepresentative,allNullable);
+    return TypeUtils.makeNullableAsSpecified(bestRepresentative,allNullable);
   }
   if (resultingTypes.size() == 1) {
-    return makeNullableAsSpecified(resultingTypes.get(0),allNullable);
+    return TypeUtils.makeNullableAsSpecified(resultingTypes.get(0),allNullable);
   }
   TypeConstructor constructor=new IntersectionTypeConstructor(Annotations.EMPTY,resultingTypes);
   JetScope[] scopes=new JetScope[resultingTypes.size()];
