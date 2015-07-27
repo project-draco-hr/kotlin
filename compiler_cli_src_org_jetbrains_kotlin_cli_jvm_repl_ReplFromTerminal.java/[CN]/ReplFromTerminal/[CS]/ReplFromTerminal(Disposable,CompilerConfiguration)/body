@@ -13,8 +13,17 @@ synchronized (waitRepl) {
     }
   }
 .start();
+  String replIdeMode=System.getProperty("repl.ideMode");
+  ideMode=replIdeMode != null && replIdeMode.equals("true");
   try {
-    consoleReader=new ConsoleReader("kotlin",System.in,System.out,null);
+    OutputStream outStream=System.out;
+    if (ideMode) {
+      VirtualFile consoleOutputRedirect=new LightVirtualFile("kotlinConsoleReplRedirect");
+      outStream=consoleOutputRedirect.getOutputStream(null);
+      replWriter=new ReplSystemOutWrapper(System.out);
+      System.setOut(replWriter);
+    }
+    consoleReader=new ConsoleReader("kotlin",System.in,outStream,null);
     consoleReader.setHistoryEnabled(true);
     consoleReader.setExpandEvents(false);
     consoleReader.setHistory(new FileHistory(new File(new File(System.getProperty("user.home")),".kotlin_history")));
@@ -22,4 +31,5 @@ synchronized (waitRepl) {
  catch (  Exception e) {
     throw UtilsPackage.rethrow(e);
   }
+  getReplInterpreter().setIdeMode(ideMode);
 }

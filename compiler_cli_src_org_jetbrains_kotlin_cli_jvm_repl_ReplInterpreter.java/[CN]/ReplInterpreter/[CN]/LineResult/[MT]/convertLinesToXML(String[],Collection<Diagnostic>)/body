@@ -1,0 +1,26 @@
+{
+  try {
+    DocumentBuilderFactory docFactory=DocumentBuilderFactory.newInstance();
+    DocumentBuilder docBuilder=docFactory.newDocumentBuilder();
+    Document errorReport=docBuilder.newDocument();
+    Element rootElement=errorReport.createElement("report");
+    errorReport.appendChild(rootElement);
+    Iterator<Diagnostic> di=diagnostics.iterator();
+    for (    String s : lines) {
+      if (s.startsWith("Error:") || s.startsWith("Warning:")) {
+        TextRange errorRange=di.hasNext() ? di.next().getTextRanges().get(0) : TextRange.EMPTY_RANGE;
+        Element reportEntry=errorReport.createElement("reportEntry");
+        reportEntry.setAttribute("rangeStart",String.valueOf(errorRange.getStartOffset()));
+        reportEntry.setAttribute("rangeEnd",String.valueOf(errorRange.getEndOffset()));
+        reportEntry.appendChild(errorReport.createTextNode(StringUtil.escapeXml(s)));
+        rootElement.appendChild(reportEntry);
+      }
+    }
+    DOMImplementationLS domImplementation=(DOMImplementationLS)errorReport.getImplementation();
+    LSSerializer lsSerializer=domImplementation.createLSSerializer();
+    return lsSerializer.writeToString(errorReport);
+  }
+ catch (  ParserConfigurationException e) {
+    throw UtilsPackage.rethrow(e);
+  }
+}
