@@ -1,15 +1,16 @@
 {
-  ResolveSessionForBodies session=KotlinCacheService.getInstance(classOrObject.getProject()).getLazyResolveSession(classOrObject);
+  ResolutionFacade resolutionFacade=ResolvePackage.getResolutionFacade(classOrObject);
+  ModuleDescriptor moduleDescriptor=resolutionFacade.findModuleDescriptor(classOrObject);
+  BindingContext bindingContext=resolutionFacade.analyze(classOrObject,BodyResolveMode.FULL);
   if (classOrObject.isLocal()) {
-    BindingContext bindingContext=session.resolveToElement(classOrObject,BodyResolveMode.FULL);
     ClassDescriptor descriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
     if (descriptor == null) {
       LOG.warn("No class descriptor in context for class: " + PsiUtilPackage.getElementTextWithContext(classOrObject));
-      return new LightClassConstructionContext(bindingContext,session.getModuleDescriptor());
+      return new LightClassConstructionContext(bindingContext,moduleDescriptor);
     }
     ForceResolveUtil.forceResolveAllContents(descriptor);
-    return new LightClassConstructionContext(bindingContext,session.getModuleDescriptor());
+    return new LightClassConstructionContext(bindingContext,moduleDescriptor);
   }
-  ForceResolveUtil.forceResolveAllContents(session.getClassDescriptor(classOrObject));
-  return new LightClassConstructionContext(session.getBindingContext(),session.getModuleDescriptor());
+  ForceResolveUtil.forceResolveAllContents(resolutionFacade.resolveToDescriptor(classOrObject));
+  return new LightClassConstructionContext(bindingContext,moduleDescriptor);
 }
