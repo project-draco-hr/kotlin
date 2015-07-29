@@ -4,11 +4,12 @@
   for (  Map.Entry<TypeParameterDescriptor,JetType> entry : typeArguments.entrySet()) {
     TypeParameterDescriptor key=entry.getKey();
     if (!key.isReified())     continue;
-    TypeParameterDescriptor parameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(entry.getValue());
+    JetType type=entry.getValue();
+    TypeParameterDescriptor parameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(type);
     if (parameterDescriptor == null) {
       BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.TYPE);
-      Type type=typeMapper.mapTypeParameter(entry.getValue(),signatureWriter);
-      mappings.addParameterMappingToType(key.getName().getIdentifier(),type,signatureWriter.toString());
+      Type asmType=typeMapper.mapTypeParameter(type,signatureWriter);
+      mappings.addParameterMappingToType(key.getName().getIdentifier(),type,asmType,signatureWriter.toString());
     }
  else {
       mappings.addParameterMappingToNewParameter(key.getName().getIdentifier(),parameterDescriptor.getName().getIdentifier());
