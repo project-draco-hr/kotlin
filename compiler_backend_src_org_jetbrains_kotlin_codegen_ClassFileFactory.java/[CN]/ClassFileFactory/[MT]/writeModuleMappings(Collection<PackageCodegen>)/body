@@ -1,0 +1,22 @@
+{
+  String outputFilePath="META-INF/module.mapping";
+  final StringWriter moduleMapping=new StringWriter(1024);
+  for (  PackageCodegen codegen : values) {
+    codegen.getFacades().serialize(moduleMapping);
+  }
+  state.getProgress().reportOutput(Collections.<File>emptyList(),new File(outputFilePath));
+  generators.put(outputFilePath,new OutAndSourceFileList(Collections.<File>emptyList()){
+    @Override public byte[] asBytes(    ClassBuilderFactory factory){
+      try {
+        return moduleMapping.toString().getBytes("UTF-8");
+      }
+ catch (      UnsupportedEncodingException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    @Override public String asText(    ClassBuilderFactory factory){
+      return moduleMapping.toString();
+    }
+  }
+);
+}
