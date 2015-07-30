@@ -1,18 +1,7 @@
 {
-  AnnotationDescriptor kotlinAnnotation=descriptor.getAnnotations().findAnnotation(KotlinBuiltIns.FQ_NAMES.annotation);
-  if (kotlinAnnotation != null) {
-    for (    Map.Entry<ValueParameterDescriptor,ConstantValue<?>> argument : kotlinAnnotation.getAllValueArguments().entrySet()) {
-      if ("retention".equals(argument.getKey().getName().asString()) && argument.getValue() instanceof EnumValue) {
-        ClassDescriptor enumEntry=((EnumValue)argument.getValue()).getValue();
-        JetType classObjectType=getClassObjectType(enumEntry);
-        if (classObjectType != null) {
-          if ("kotlin/annotation/AnnotationRetention".equals(typeMapper.mapType(classObjectType).getInternalName())) {
-            KotlinRetention retention=KotlinRetention.valueOf(enumEntry.getName().asString());
-            return annotationRetentionMap.get(retention);
-          }
-        }
-      }
-    }
+  KotlinRetention retention=DescriptorUtilPackage.getAnnotationRetention(descriptor);
+  if (retention != null) {
+    return annotationRetentionMap.get(retention);
   }
   AnnotationDescriptor retentionAnnotation=descriptor.getAnnotations().findAnnotation(new FqName(Retention.class.getName()));
   if (retentionAnnotation != null) {
