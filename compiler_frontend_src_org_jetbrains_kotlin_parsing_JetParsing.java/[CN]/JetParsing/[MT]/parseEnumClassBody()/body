@@ -3,9 +3,10 @@
   PsiBuilder.Marker body=mark();
   myBuilder.enableNewlines();
   advance();
-  parseEnumEntries();
-  consumeIf(SEMICOLON);
-  parseMembers(true);
+  if (!parseEnumEntries() && !at(RBRACE)) {
+    error("Expecting ';' after the last enum entry or '}' to close enum class body");
+  }
+  parseMembers();
   expect(RBRACE,"Expecting '}' to close enum class body");
   myBuilder.restoreNewlinesState();
   body.done(CLASS_BODY);

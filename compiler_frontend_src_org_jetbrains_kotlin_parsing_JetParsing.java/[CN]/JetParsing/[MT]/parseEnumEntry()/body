@@ -21,18 +21,22 @@
       delegatorSuperCall.done(DELEGATOR_SUPER_CALL);
       initializerList.done(INITIALIZER_LIST);
     }
- else     if (at(COLON)) {
-      advance();
-      parseInitializerList();
-    }
     if (at(LBRACE)) {
       parseClassBody();
     }
+    boolean commaFound=at(COMMA);
+    if (commaFound) {
+      advance();
+    }
+    boolean semicolonFound=at(SEMICOLON);
+    if (semicolonFound) {
+      advance();
+    }
     closeDeclarationWithCommentBinders(entry,ENUM_ENTRY,true);
-    return true;
+    return semicolonFound ? ParseEnumEntryResult.SEMICOLON_DELIMITER : (commaFound ? ParseEnumEntryResult.COMMA_DELIMITER : ParseEnumEntryResult.NO_DELIMITER);
   }
  else {
     entry.rollbackTo();
-    return false;
+    return ParseEnumEntryResult.FAILED;
   }
 }
