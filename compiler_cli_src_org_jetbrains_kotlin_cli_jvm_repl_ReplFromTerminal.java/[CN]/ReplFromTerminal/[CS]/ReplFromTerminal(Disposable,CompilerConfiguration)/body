@@ -1,8 +1,10 @@
 {
+  String replIdeMode=System.getProperty("repl.ideMode");
+  ideMode=replIdeMode != null && replIdeMode.equals("true");
   new Thread("initialize-repl"){
     @Override public void run(){
       try {
-        replInterpreter=new ReplInterpreter(disposable,compilerConfiguration);
+        replInterpreter=new ReplInterpreter(disposable,compilerConfiguration,ideMode);
       }
  catch (      Throwable e) {
         replInitializationFailed=e;
@@ -13,15 +15,13 @@ synchronized (waitRepl) {
     }
   }
 .start();
-  String replIdeMode=System.getProperty("repl.ideMode");
-  ideMode=replIdeMode != null && replIdeMode.equals("true");
+  replWriter=new ReplSystemOutWrapper(System.out,ideMode);
+  System.setOut(replWriter);
   try {
     OutputStream outStream=System.out;
     if (ideMode) {
       VirtualFile consoleOutputRedirect=new LightVirtualFile("kotlinConsoleReplRedirect");
       outStream=consoleOutputRedirect.getOutputStream(null);
-      replWriter=new ReplSystemOutWrapper(System.out);
-      System.setOut(replWriter);
     }
     consoleReader=new ConsoleReader("kotlin",System.in,outStream,null);
     consoleReader.setHistoryEnabled(true);
@@ -31,5 +31,4 @@ synchronized (waitRepl) {
  catch (  Exception e) {
     throw UtilsPackage.rethrow(e);
   }
-  getReplInterpreter().setIdeMode(ideMode);
 }
