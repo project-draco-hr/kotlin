@@ -1,14 +1,18 @@
 {
-  if (annotated instanceof CallableDescriptor) {
-    CallableDescriptor descriptor=(CallableDescriptor)annotated;
+  Annotated unwrapped=annotated;
+  if (annotated instanceof WrappedAnnotated) {
+    unwrapped=((WrappedAnnotated)annotated).getOriginalAnnotated();
+  }
+  if (unwrapped instanceof CallableDescriptor) {
+    CallableDescriptor descriptor=(CallableDescriptor)unwrapped;
     if (isInvisibleFromTheOutside(descriptor))     return;
     if (descriptor instanceof ValueParameterDescriptor && isInvisibleFromTheOutside(descriptor.getContainingDeclaration()))     return;
     if (returnType != null && !AsmUtil.isPrimitive(returnType)) {
       generateNullabilityAnnotation(descriptor.getReturnType(),annotationDescriptorsAlreadyPresent);
     }
   }
-  if (annotated instanceof ClassDescriptor) {
-    ClassDescriptor classDescriptor=(ClassDescriptor)annotated;
+  if (unwrapped instanceof ClassDescriptor) {
+    ClassDescriptor classDescriptor=(ClassDescriptor)unwrapped;
     if (classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
       generateDocumentedAnnotation(classDescriptor,annotationDescriptorsAlreadyPresent);
       generateRetentionAnnotation(classDescriptor,annotationDescriptorsAlreadyPresent);

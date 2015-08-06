@@ -1,12 +1,12 @@
 {
-  if (descriptor.getAnnotations().isEmpty() && !hasPropertyTargetedAnnotations)   return;
+  if (annotations.getAllAnnotations().isEmpty())   return;
   ReceiverParameterDescriptor receiver=descriptor.getExtensionReceiverParameter();
   String name=JvmAbi.getSyntheticMethodNameForAnnotatedProperty(descriptor.getName());
   String desc=receiver == null ? "()V" : "(" + typeMapper.mapType(receiver.getType()) + ")V";
   if (!isTrait(context.getContextDescriptor()) || kind == OwnerKind.TRAIT_IMPL) {
     int flags=ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC;
     MethodVisitor mv=v.newMethod(OtherOrigin(descriptor),flags,name,desc,null,null);
-    AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(descriptor,Type.VOID_TYPE,AnnotationUseSiteTarget.PROPERTY);
+    AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(new AnnotatedImpl(annotations),Type.VOID_TYPE,AnnotationUseSiteTarget.PROPERTY);
     mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     mv.visitEnd();
