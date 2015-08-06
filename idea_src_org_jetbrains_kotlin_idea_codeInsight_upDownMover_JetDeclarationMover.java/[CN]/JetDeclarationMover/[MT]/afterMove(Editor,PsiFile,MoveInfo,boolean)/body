@@ -1,0 +1,24 @@
+{
+  super.afterMove(editor,file,info,down);
+  if (moveEnumConstant) {
+    Document document=editor.getDocument();
+    CharSequence cs=document.getCharsSequence();
+    int end1=findNearestNonWhitespace(cs,info.range1.getEndOffset());
+    char c1=cs.charAt(end1);
+    int end2=findNearestNonWhitespace(cs,info.range2.getEndOffset());
+    char c2=cs.charAt(end2);
+    if (c1 == c2 || (c1 != ',' && c2 != ','))     return;
+    if (c1 == ';' || c2 == ';') {
+      document.replaceString(end1,end1 + 1,String.valueOf(c2));
+      document.replaceString(end2,end2 + 1,String.valueOf(c1));
+    }
+ else     if (c1 == ',') {
+      document.deleteString(end1,end1 + 1);
+      document.insertString(end2 + 1,",");
+    }
+ else {
+      document.deleteString(end2,end2 + 1);
+      document.insertString(end1 + 1,",");
+    }
+  }
+}
