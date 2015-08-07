@@ -1,24 +1,2 @@
 {
-  KotlinModuleXmlBuilder builder=new KotlinModuleXmlBuilder();
-  boolean noSources=true;
-  Set<File> outputDirs=new HashSet<File>();
-  for (  ModuleBuildTarget target : chunk.getTargets()) {
-    outputDirs.add(getOutputDirSafe(target));
-  }
-  ProjectBuilderLogger logger=context.getLoggingManager().getProjectBuilderLogger();
-  for (  ModuleBuildTarget target : chunk.getTargets()) {
-    File outputDir=getOutputDirSafe(target);
-    List<File> moduleSources=new ArrayList<File>(IncrementalCompilation.ENABLED ? sourceFiles.get(target) : KotlinSourceFileCollector.getAllKotlinSourceFiles(target));
-    if (moduleSources.size() > 0 || hasRemovedFiles) {
-      noSources=false;
-      if (logger.isEnabled()) {
-        logger.logCompiledFiles(moduleSources,KotlinBuilder.KOTLIN_BUILDER_NAME,"Compiling files:");
-      }
-    }
-    builder.addModule(target.getId(),outputDir.getAbsolutePath(),moduleSources,findSourceRoots(context,target),findClassPathRoots(target),findAnnotationRoots(target),target.isTests(),outputDirs);
-  }
-  if (noSources)   return null;
-  File scriptFile=File.createTempFile("kjps",StringUtil.sanitizeJavaIdentifier(chunk.getName()) + ".script.xml");
-  FileUtil.writeToFile(scriptFile,builder.asText().toString());
-  return scriptFile;
 }
