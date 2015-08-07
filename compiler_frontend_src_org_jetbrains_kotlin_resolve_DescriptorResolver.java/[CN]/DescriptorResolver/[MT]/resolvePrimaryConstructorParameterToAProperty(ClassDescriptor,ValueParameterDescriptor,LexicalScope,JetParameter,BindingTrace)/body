@@ -8,10 +8,15 @@
       trace.report(ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.on(parameter));
     }
   }
-  PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(classDescriptor,valueParameter.getAnnotations(),resolveModalityFromModifiers(parameter,Modality.FINAL),resolveVisibilityFromModifiers(parameter,getDefaultVisibility(parameter,classDescriptor)),isMutable,name,CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(parameter));
+  Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,parameter.getModifierList(),trace);
+  AnnotationSplitter annotationSplitter=AnnotationSplitter.create(allAnnotations,true,true,isMutable);
+  Annotations propertyAnnotations=new CompositeAnnotations(annotationSplitter.getAnnotationsForTargets(PROPERTY,FIELD),annotationSplitter.getOtherAnnotations());
+  PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(classDescriptor,propertyAnnotations,resolveModalityFromModifiers(parameter,Modality.FINAL),resolveVisibilityFromModifiers(parameter,getDefaultVisibility(parameter,classDescriptor)),isMutable,name,CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(parameter));
   propertyDescriptor.setType(type,Collections.<TypeParameterDescriptor>emptyList(),getDispatchReceiverParameterIfNeeded(classDescriptor),(ReceiverParameterDescriptor)null);
-  PropertyGetterDescriptorImpl getter=DescriptorFactory.createDefaultGetter(propertyDescriptor);
-  PropertySetterDescriptor setter=propertyDescriptor.isVar() ? DescriptorFactory.createDefaultSetter(propertyDescriptor) : null;
+  Annotations setterAnnotations=annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER);
+  Annotations getterAnnotations=new CompositeAnnotations(KotlinPackage.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER)));
+  PropertyGetterDescriptorImpl getter=DescriptorFactory.createDefaultGetter(propertyDescriptor,getterAnnotations);
+  PropertySetterDescriptor setter=propertyDescriptor.isVar() ? DescriptorFactory.createDefaultSetter(propertyDescriptor,setterAnnotations) : null;
   propertyDescriptor.initialize(getter,setter);
   getter.initialize(propertyDescriptor.getType());
   trace.record(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER,parameter,propertyDescriptor);

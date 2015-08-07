@@ -2,7 +2,7 @@
   JetPropertyAccessor setter=property.getSetter();
   PropertySetterDescriptorImpl setterDescriptor=null;
   if (setter != null) {
-    Annotations annotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,setter.getModifierList(),trace);
+    Annotations annotations=new CompositeAnnotations(KotlinPackage.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER),annotationResolver.resolveAnnotationsWithoutArguments(scope,setter.getModifierList(),trace)));
     JetParameter parameter=setter.getParameter();
     setterDescriptor=new PropertySetterDescriptorImpl(propertyDescriptor,annotations,resolveModalityFromModifiers(setter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(setter,propertyDescriptor.getVisibility()),setter.hasBody(),false,CallableMemberDescriptor.Kind.DECLARATION,null,toSourceElement(setter));
     if (parameter != null) {
@@ -34,7 +34,8 @@
     trace.record(BindingContext.PROPERTY_ACCESSOR,setter,setterDescriptor);
   }
  else   if (property.isVar()) {
-    setterDescriptor=DescriptorFactory.createSetter(propertyDescriptor,!property.hasDelegate());
+    Annotations setterAnnotations=annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER);
+    setterDescriptor=DescriptorFactory.createSetter(propertyDescriptor,setterAnnotations,!property.hasDelegate());
   }
   if (!property.isVar()) {
     if (setter != null) {

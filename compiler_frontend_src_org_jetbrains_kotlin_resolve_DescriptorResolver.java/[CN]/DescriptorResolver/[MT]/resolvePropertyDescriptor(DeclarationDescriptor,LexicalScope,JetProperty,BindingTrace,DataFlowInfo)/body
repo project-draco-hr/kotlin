@@ -4,7 +4,12 @@
   boolean hasBody=hasBody(property);
   Visibility visibility=resolveVisibilityFromModifiers(property,getDefaultVisibility(property,containingDeclaration));
   Modality modality=containingDeclaration instanceof ClassDescriptor ? resolveModalityFromModifiers(property,getDefaultModality(containingDeclaration,visibility,hasBody)) : Modality.FINAL;
-  PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(containingDeclaration,annotationResolver.resolveAnnotationsWithoutArguments(scope,modifierList,trace),modality,visibility,isVar,JetPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(property));
+  JetPropertyAccessor propertyGetter=property.getGetter();
+  boolean hasBackingField=modality != Modality.ABSTRACT && property.hasDelegateExpressionOrInitializer() && (propertyGetter == null || !propertyGetter.hasBody());
+  Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,modifierList,trace);
+  AnnotationSplitter annotationSplitter=AnnotationSplitter.create(allAnnotations,false,hasBackingField,isVar);
+  Annotations propertyAnnotations=new CompositeAnnotations(KotlinPackage.listOf(annotationSplitter.getAnnotationsForTargets(PROPERTY,FIELD),annotationSplitter.getOtherAnnotations()));
+  PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(containingDeclaration,propertyAnnotations,modality,visibility,isVar,JetPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(property));
   List<TypeParameterDescriptorImpl> typeParameterDescriptors;
   LexicalScope scopeWithTypeParameters;
   JetType receiverType=null;
@@ -31,8 +36,8 @@
   LexicalScope propertyScope=JetScopeUtils.getPropertyDeclarationInnerScope(propertyDescriptor,scope,typeParameterDescriptors,implicitInitializerReceiver,trace);
   JetType type=getVariableType(propertyDescriptor,propertyScope,property,dataFlowInfo,true,trace);
   propertyDescriptor.setType(type,typeParameterDescriptors,getDispatchReceiverParameterIfNeeded(containingDeclaration),receiverDescriptor);
-  PropertyGetterDescriptorImpl getter=resolvePropertyGetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor,trace);
-  PropertySetterDescriptor setter=resolvePropertySetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor,trace);
+  PropertyGetterDescriptorImpl getter=resolvePropertyGetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor,annotationSplitter,trace);
+  PropertySetterDescriptor setter=resolvePropertySetterDescriptor(scopeWithTypeParameters,property,propertyDescriptor,annotationSplitter,trace);
   propertyDescriptor.initialize(getter,setter);
   trace.record(BindingContext.VARIABLE,property,propertyDescriptor);
   return propertyDescriptor;

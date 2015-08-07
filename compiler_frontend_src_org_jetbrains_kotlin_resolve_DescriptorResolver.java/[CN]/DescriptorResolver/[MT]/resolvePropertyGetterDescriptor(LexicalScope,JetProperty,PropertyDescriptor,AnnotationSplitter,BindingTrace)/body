@@ -2,7 +2,7 @@
   PropertyGetterDescriptorImpl getterDescriptor;
   JetPropertyAccessor getter=property.getGetter();
   if (getter != null) {
-    Annotations annotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,getter.getModifierList(),trace);
+    Annotations getterAnnotations=new CompositeAnnotations(KotlinPackage.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER),annotationSplitter.getOtherAnnotations(),annotationResolver.resolveAnnotationsWithoutArguments(scope,getter.getModifierList(),trace)));
     JetType outType=propertyDescriptor.getType();
     JetType returnType=outType;
     JetTypeReference returnTypeReference=getter.getReturnTypeReference();
@@ -12,12 +12,13 @@
         trace.report(WRONG_GETTER_RETURN_TYPE.on(returnTypeReference,propertyDescriptor.getReturnType(),outType));
       }
     }
-    getterDescriptor=new PropertyGetterDescriptorImpl(propertyDescriptor,annotations,resolveModalityFromModifiers(getter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(getter,propertyDescriptor.getVisibility()),getter.hasBody(),false,CallableMemberDescriptor.Kind.DECLARATION,null,toSourceElement(getter));
+    getterDescriptor=new PropertyGetterDescriptorImpl(propertyDescriptor,getterAnnotations,resolveModalityFromModifiers(getter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(getter,propertyDescriptor.getVisibility()),getter.hasBody(),false,CallableMemberDescriptor.Kind.DECLARATION,null,toSourceElement(getter));
     getterDescriptor.initialize(returnType);
     trace.record(BindingContext.PROPERTY_ACCESSOR,getter,getterDescriptor);
   }
  else {
-    getterDescriptor=DescriptorFactory.createGetter(propertyDescriptor,!property.hasDelegate());
+    Annotations getterAnnotations=annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER);
+    getterDescriptor=DescriptorFactory.createGetter(propertyDescriptor,getterAnnotations,!property.hasDelegate());
     getterDescriptor.initialize(propertyDescriptor.getType());
   }
   return getterDescriptor;

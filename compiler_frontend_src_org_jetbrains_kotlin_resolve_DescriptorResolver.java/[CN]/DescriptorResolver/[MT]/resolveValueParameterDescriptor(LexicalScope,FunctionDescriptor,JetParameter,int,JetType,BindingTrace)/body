@@ -5,7 +5,19 @@
     varargElementType=type;
     variableType=getVarargParameterType(type);
   }
-  ValueParameterDescriptorImpl valueParameterDescriptor=new ValueParameterDescriptorImpl(owner,null,index,annotationResolver.resolveAnnotationsWithoutArguments(scope,valueParameter.getModifierList(),trace),JetPsiUtil.safeName(valueParameter.getName()),variableType,valueParameter.hasDefaultValue(),varargElementType,toSourceElement(valueParameter));
+  JetModifierList modifierList=valueParameter.getModifierList();
+  Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,valueParameter.getModifierList(),trace);
+  Annotations valueParameterAnnotations=Annotations.EMPTY;
+  if (modifierList != null) {
+    if (valueParameter.hasValOrVar()) {
+      AnnotationSplitter annotationSplitter=new AnnotationSplitter(allAnnotations,KotlinPackage.setOf(CONSTRUCTOR_PARAMETER));
+      valueParameterAnnotations=annotationSplitter.getAnnotationsForTarget(CONSTRUCTOR_PARAMETER);
+    }
+ else {
+      valueParameterAnnotations=allAnnotations;
+    }
+  }
+  ValueParameterDescriptorImpl valueParameterDescriptor=new ValueParameterDescriptorImpl(owner,null,index,valueParameterAnnotations,JetPsiUtil.safeName(valueParameter.getName()),variableType,valueParameter.hasDefaultValue(),varargElementType,toSourceElement(valueParameter));
   trace.record(BindingContext.VALUE_PARAMETER,valueParameter,valueParameterDescriptor);
   return valueParameterDescriptor;
 }
