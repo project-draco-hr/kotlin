@@ -9,16 +9,14 @@
     classNumber=Integer.parseInt(args[2]);
   }
  catch (  NumberFormatException e) {
-    System.out.println(e.getMessage());
+    System.err.println("error: number expected: " + e.getMessage());
     printUsageAndExit();
     return;
   }
-  String modeStr=args[3];
-  final Mode mode=parseMode(modeStr);
-  URL[] instrumentersClasspath=parseInstrumentersClasspath(mode,modeStr);
+  final Mode mode=parseMode(args[3]);
   final long startTime=System.nanoTime();
   ClassLoader parent=Preloader.class.getClassLoader();
-  ClassLoader withInstrumenter=instrumentersClasspath.length > 0 ? new URLClassLoader(instrumentersClasspath,parent) : parent;
+  ClassLoader withInstrumenter=mode instanceof Mode.Instrument ? new URLClassLoader(((Mode.Instrument)mode).classpath,parent) : parent;
   final Handler handler=getHandler(mode,withInstrumenter);
   ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(files,classNumber,withInstrumenter,null,handler);
   Class<?> mainClass=preloaded.loadClass(mainClassCanonicalName);
