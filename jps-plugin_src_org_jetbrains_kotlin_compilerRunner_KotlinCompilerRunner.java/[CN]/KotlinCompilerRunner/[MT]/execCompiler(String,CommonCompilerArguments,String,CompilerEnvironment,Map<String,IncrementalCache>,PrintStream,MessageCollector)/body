@@ -1,0 +1,21 @@
+{
+  try {
+    messageCollector.report(INFO,"Using kotlin-home = " + environment.getKotlinPaths().getHomePath(),NO_LOCATION);
+    List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments);
+    argumentsList.addAll(StringUtil.split(additionalArguments," "));
+    String[] argsArray=ArrayUtil.toStringArray(argumentsList);
+    if (incrementalCaches != null) {
+      CompilerFacade daemon=KotlinCompilerClient.Companion.connectToCompilerServer();
+      if (daemon != null) {
+        Integer res=KotlinCompilerClient.Companion.incrementalCompile(daemon,argsArray,incrementalCaches,out);
+        return res.toString();
+      }
+    }
+    Object rc=CompilerRunnerUtil.invokeExecMethod(compilerClassName,argsArray,environment,messageCollector,out);
+    return getReturnCodeFromObject(rc);
+  }
+ catch (  Throwable e) {
+    MessageCollectorUtil.reportException(messageCollector,e);
+    return INTERNAL_ERROR;
+  }
+}
