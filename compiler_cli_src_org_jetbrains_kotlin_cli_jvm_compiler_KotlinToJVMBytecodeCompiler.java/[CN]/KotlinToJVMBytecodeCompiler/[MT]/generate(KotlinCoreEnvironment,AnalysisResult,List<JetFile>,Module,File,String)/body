@@ -2,23 +2,23 @@
   CompilerConfiguration configuration=environment.getConfiguration();
   IncrementalCompilationComponents incrementalCompilationComponents=configuration.get(JVMConfigurationKeys.INCREMENTAL_COMPILATION_COMPONENTS);
   Collection<FqName> packagesWithObsoleteParts;
-  if (moduleId == null || incrementalCompilationComponents == null) {
+  if (target == null || incrementalCompilationComponents == null) {
     packagesWithObsoleteParts=Collections.emptySet();
   }
  else {
-    IncrementalCache incrementalCache=incrementalCompilationComponents.getIncrementalCache(moduleId);
+    IncrementalCache incrementalCache=incrementalCompilationComponents.getIncrementalCache(target);
     packagesWithObsoleteParts=new HashSet<FqName>();
     for (    String internalName : incrementalCache.getObsoletePackageParts()) {
       packagesWithObsoleteParts.add(JvmClassName.byInternalName(internalName).getPackageFqName());
     }
   }
   BindingTraceContext diagnosticHolder=new BindingTraceContext();
-  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),diagnosticHolder,packagesWithObsoleteParts,moduleId,moduleName,outputDirectory,incrementalCompilationComponents);
+  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),diagnosticHolder,packagesWithObsoleteParts,target,moduleName,outputDirectory,incrementalCompilationComponents);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   long generationStart=PerformanceCounter.Companion.currentTime();
   KotlinCodegenFacade.compileCorrectFiles(generationState,CompilationErrorHandler.THROW_EXCEPTION);
   long generationNanos=PerformanceCounter.Companion.currentTime() - generationStart;
-  String desc=moduleId != null ? "module " + moduleId + " " : "";
+  String desc=target != null ? "target " + target.getModuleName() + "-"+ target.getModuleType()+ " " : "";
   String message="GENERATE: " + sourceFiles.size() + " files ("+ environment.countLinesOfCode(sourceFiles)+ " lines) "+ desc+ "in "+ TimeUnit.NANOSECONDS.toMillis(generationNanos)+ " ms";
   K2JVMCompiler.Companion.reportPerf(environment.getConfiguration(),message);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
