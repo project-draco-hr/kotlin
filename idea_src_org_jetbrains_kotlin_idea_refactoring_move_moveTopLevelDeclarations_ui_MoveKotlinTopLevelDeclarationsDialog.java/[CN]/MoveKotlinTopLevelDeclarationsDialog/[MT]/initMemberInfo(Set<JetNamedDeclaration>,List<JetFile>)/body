@@ -1,5 +1,5 @@
 {
-  final List<KotlinMemberInfo> memberInfos=KotlinPackage.map(KotlinPackage.filterIsInstance(sourceFile.getDeclarations(),JetNamedDeclaration.class),new Function1<JetNamedDeclaration,KotlinMemberInfo>(){
+  final List<KotlinMemberInfo> memberInfos=KotlinPackage.map(getAllDeclarations(sourceFiles),new Function1<JetNamedDeclaration,KotlinMemberInfo>(){
     @Override public KotlinMemberInfo invoke(    JetNamedDeclaration declaration){
       KotlinMemberInfo memberInfo=new KotlinMemberInfo(declaration,false);
       memberInfo.setChecked(elementsToMove.contains(declaration));
@@ -22,11 +22,12 @@
         }
       }
 ));
-      String suggestedText=previousDeclarations.isEmpty() ? "" : MovePackage.guessNewFileName(sourceFile,previousDeclarations);
+      String suggestedText=previousDeclarations.isEmpty() ? "" : MovePackage.guessNewFileName(previousDeclarations);
       return tfFileNameInPackage.getText().equals(suggestedText);
     }
     @Override public void memberInfoChanged(    MemberInfoChange<JetNamedDeclaration,KotlinMemberInfo> event){
       updatePackageDirectiveCheckBox();
+      updateFileNameInPackageField();
       if (shouldUpdateFileNameField(event.getChangedMembers())) {
         updateSuggestedFileName();
       }
