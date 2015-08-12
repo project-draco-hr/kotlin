@@ -1,0 +1,41 @@
+{
+  if (args.length >= 3 && "4096".equals(args[2])) {
+    return oldOptions(args);
+  }
+  List<File> classpath=Collections.emptyList();
+  boolean measure=false;
+  List<File> instrumenters=Collections.emptyList();
+  int estimate=DEFAULT_CLASS_NUMBER_ESTIMATE;
+  String mainClass=null;
+  List<String> arguments=new ArrayList<String>();
+  for (int i=0; i < args.length; i++) {
+    String arg=args[i];
+    boolean end=i == args.length - 1;
+    if ("-help".equals(arg) || "-h".equals(arg)) {
+      printUsage(System.out);
+      System.exit(0);
+    }
+ else     if ("-cp".equals(arg) || "-classpath".equals(arg)) {
+      if (end)       throw new RuntimeException("no argument provided to " + arg);
+      classpath=parseClassPath(args[++i]);
+    }
+ else     if ("-estimate".equals(arg)) {
+      if (end)       throw new RuntimeException("no argument provided to " + arg);
+      estimate=Integer.parseInt(args[++i]);
+    }
+ else     if ("-instrument".equals(arg)) {
+      if (end)       throw new RuntimeException("no argument provided to " + arg);
+      instrumenters=parseClassPath(args[++i]);
+    }
+ else     if ("-measure".equals(arg)) {
+      measure=true;
+    }
+ else {
+      mainClass=arg;
+      arguments.addAll(Arrays.asList(args).subList(i + 1,args.length));
+      break;
+    }
+  }
+  if (mainClass == null)   throw new RuntimeException("no main class name provided");
+  return new Options(classpath,measure,instrumenters,estimate,mainClass,arguments);
+}

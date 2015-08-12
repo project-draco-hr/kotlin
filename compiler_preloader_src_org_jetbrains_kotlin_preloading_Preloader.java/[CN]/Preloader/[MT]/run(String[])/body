@@ -1,0 +1,21 @@
+{
+  final long startTime=System.nanoTime();
+  final Options options=parseOptions(args);
+  ClassLoader classLoader=createClassLoader(options);
+  final Handler handler=getHandler(options,classLoader);
+  ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(options.classpath,options.estimate,classLoader,null,handler);
+  Class<?> mainClass=preloaded.loadClass(options.mainClass);
+  Method mainMethod=mainClass.getMethod("main",String[].class);
+  Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
+    @Override public void run(){
+      if (options.measure) {
+        System.out.println();
+        System.out.println("=== Preloader's measurements: ");
+        System.out.format("Total time: %.3fs\n",(System.nanoTime() - startTime) / 1e9);
+      }
+      handler.done();
+    }
+  }
+));
+  mainMethod.invoke(0,(Object)options.arguments.toArray(new String[options.arguments.size()]));
+}

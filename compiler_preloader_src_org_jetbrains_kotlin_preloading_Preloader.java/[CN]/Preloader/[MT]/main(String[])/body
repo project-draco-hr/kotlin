@@ -1,37 +1,12 @@
 {
-  if (args.length < PRELOADER_ARG_COUNT) {
-    printUsageAndExit();
-  }
-  List<File> files=parseClassPath(args[0]);
-  String mainClassCanonicalName=args[1];
-  int classNumber;
   try {
-    classNumber=Integer.parseInt(args[2]);
+    run(args);
   }
- catch (  NumberFormatException e) {
-    System.err.println("error: number expected: " + e.getMessage());
-    printUsageAndExit();
-    return;
+ catch (  Throwable e) {
+    System.err.println("error: " + e.toString());
+    e.printStackTrace();
+    System.err.println();
+    printUsage(System.err);
+    System.exit(1);
   }
-  final Mode mode=parseMode(args[3]);
-  final long startTime=System.nanoTime();
-  ClassLoader parent=Preloader.class.getClassLoader();
-  ClassLoader withInstrumenter=mode instanceof Mode.Instrument ? new URLClassLoader(((Mode.Instrument)mode).classpath,parent) : parent;
-  final Handler handler=getHandler(mode,withInstrumenter);
-  ClassLoader preloaded=ClassPreloadingUtils.preloadClasses(files,classNumber,withInstrumenter,null,handler);
-  Class<?> mainClass=preloaded.loadClass(mainClassCanonicalName);
-  Method mainMethod=mainClass.getMethod("main",String[].class);
-  Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
-    @Override public void run(){
-      if (mode != Mode.NO_TIME) {
-        System.out.println();
-        System.out.println("=== Preloader's measurements: ");
-        long dt=System.nanoTime() - startTime;
-        System.out.format("Total time: %.3fs\n",dt / 1e9);
-      }
-      handler.done();
-    }
-  }
-));
-  mainMethod.invoke(0,new Object[]{Arrays.copyOfRange(args,PRELOADER_ARG_COUNT,args.length)});
 }
