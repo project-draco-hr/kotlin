@@ -4,8 +4,12 @@
     List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments);
     argumentsList.addAll(StringUtil.split(additionalArguments," "));
     String[] argsArray=ArrayUtil.toStringArray(argumentsList);
-    if (incrementalCaches != null) {
-      CompilerFacade daemon=KotlinCompilerClient.Companion.connectToCompilerServer();
+    if (incrementalCaches != null && KotlinCompilerClient.Companion.isDaemonEnabled()) {
+      File libPath=CompilerRunnerUtil.getLibPath(environment.getKotlinPaths(),messageCollector);
+      CompilerId compilerId=CompilerId.makeCompilerId(libPath);
+      DaemonOptions daemonOptions=new DaemonOptions();
+      Logger log=Logger.getAnonymousLogger();
+      CompileService daemon=KotlinCompilerClient.Companion.connectToCompileService(compilerId,daemonOptions,log);
       if (daemon != null) {
         Integer res=KotlinCompilerClient.Companion.incrementalCompile(daemon,argsArray,incrementalCaches,out);
         return res.toString();
