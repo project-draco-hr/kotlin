@@ -16,5 +16,12 @@
       }
     }
   }
-  return (JetExpression)element;
+  JetExpression expression=(JetExpression)element;
+  BindingContext context=ResolvePackage.analyze(expression);
+  Qualifier qualifier=context.get(BindingContext.QUALIFIER,expression);
+  if (qualifier != null) {
+    ClassifierDescriptor classifier=qualifier.getClassifier();
+    if (!(classifier instanceof ClassDescriptor) || ((ClassDescriptor)classifier).getKind() != ClassKind.OBJECT)     return null;
+  }
+  return expression;
 }
