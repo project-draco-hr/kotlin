@@ -9,7 +9,7 @@
     @NotNull @Override public OutermostKotlinClassLightClassData createLightClassData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext,    Diagnostics extraDiagnostics){
       ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
       if (classDescriptor == null) {
-        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,FqName.ROOT,classOrObject,null,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
+        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,FqName.ROOT,classOrObject,Collections.<JetClassOrObject,InnerKotlinClassLightClassData>emptyMap());
       }
       FqName fqName=predictClassFqName(bindingContext,classDescriptor);
       Collection<ClassDescriptor> allInnerClasses=CodegenBinding.getAllInnerClasses(bindingContext,classDescriptor);
@@ -18,10 +18,10 @@
         PsiElement declaration=descriptorToDeclaration(innerClassDescriptor);
         if (!(declaration instanceof JetClassOrObject))         continue;
         JetClassOrObject innerClass=(JetClassOrObject)declaration;
-        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(predictClassFqName(bindingContext,innerClassDescriptor),innerClass,innerClassDescriptor);
+        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(predictClassFqName(bindingContext,innerClassDescriptor),innerClass);
         innerClassesMap.put(innerClass,innerLightClassData);
       }
-      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,fqName,classOrObject,classDescriptor,innerClassesMap);
+      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,fqName,classOrObject,innerClassesMap);
     }
     @NotNull private FqName predictClassFqName(    BindingContext bindingContext,    ClassDescriptor classDescriptor){
       Type asmType=CodegenBinding.getAsmType(bindingContext,classDescriptor);
