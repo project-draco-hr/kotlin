@@ -4,12 +4,11 @@
     List<String> argumentsList=ArgumentUtils.convertArgumentsToStringList(arguments);
     argumentsList.addAll(StringUtil.split(additionalArguments," "));
     String[] argsArray=ArrayUtil.toStringArray(argumentsList);
-    if (incrementalCaches != null && KotlinCompilerClient.Companion.isDaemonEnabled()) {
+    if (incrementalCaches != null && RmiPackage.isDaemonEnabled()) {
       File libPath=CompilerRunnerUtil.getLibPath(environment.getKotlinPaths(),messageCollector);
       CompilerId compilerId=CompilerId.makeCompilerId(new File(libPath,"kotlin-compiler.jar"));
-      DaemonOptions daemonOptions=new DaemonOptions();
-      DaemonLaunchingOptions daemonLaunchingOptions=new DaemonLaunchingOptions();
-      KotlinCompilerClient.Companion.configureDaemonLaunchingOptions(daemonLaunchingOptions);
+      DaemonOptions daemonOptions=RmiPackage.configureDaemonOptions();
+      DaemonLaunchingOptions daemonLaunchingOptions=RmiPackage.configureDaemonLaunchingOptions(true);
       CompileService daemon=KotlinCompilerClient.Companion.connectToCompileService(compilerId,daemonLaunchingOptions,daemonOptions,System.out,true,true);
       if (daemon != null) {
         Integer res=KotlinCompilerClient.Companion.incrementalCompile(daemon,argsArray,incrementalCaches,out);
