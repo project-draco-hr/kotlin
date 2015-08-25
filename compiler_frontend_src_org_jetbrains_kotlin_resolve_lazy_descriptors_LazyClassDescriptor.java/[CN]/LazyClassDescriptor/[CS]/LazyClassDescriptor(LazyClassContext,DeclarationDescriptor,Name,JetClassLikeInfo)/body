@@ -6,7 +6,6 @@
     this.c.getTrace().record(BindingContext.CLASS,classOrObject,this);
   }
   this.c.getTrace().record(BindingContext.FQNAME_TO_CLASS_DESCRIPTOR,DescriptorUtils.getFqName(this),this);
-  this.originalClassInfo=classLikeInfo;
   this.declarationProvider=c.getDeclarationProviderFactory().getClassMemberDeclarationProvider(classLikeInfo);
   this.unsubstitutedMemberScope=createMemberScope(c,this.declarationProvider);
   this.staticScope=new StaticScopeForKotlinClass(this);
@@ -47,7 +46,7 @@
   if (modifierList != null) {
     this.annotations=new LazyAnnotations(new LazyAnnotationsContext(c.getAnnotationResolver(),storageManager,c.getTrace()){
       @NotNull @Override public JetScope getScope(){
-        return getOuterScope();
+        return UtilsPackage.asJetScope(getOuterScope());
       }
     }
 ,modifierList.getAnnotationEntries());
@@ -62,7 +61,7 @@
  else {
     this.danglingAnnotations=new LazyAnnotations(new LazyAnnotationsContext(c.getAnnotationResolver(),storageManager,c.getTrace()){
       @NotNull @Override public JetScope getScope(){
-        return getScopeForMemberDeclarationResolution();
+        return UtilsPackage.asJetScope(getScopeForMemberDeclarationResolution());
       }
     }
 ,jetDanglingAnnotations);
@@ -79,12 +78,6 @@
     }
   }
 );
-  this.scopeForPropertyInitializerResolution=storageManager.createLazyValue(new Function0<JetScope>(){
-    @Override public JetScope invoke(){
-      return computeScopeForPropertyInitializerResolution();
-    }
-  }
-);
   this.forceResolveAllContents=storageManager.createRecursionTolerantNullableLazyValue(new Function0<Void>(){
     @Override public Void invoke(){
       doForceResolveAllContents();
@@ -92,10 +85,10 @@
     }
   }
 ,null);
-  this.resolutionScopesSupport=new ClassResolutionScopesSupport(this,storageManager,new Function0<JetScope>(){
-    @Override public JetScope invoke(){
+  this.resolutionScopesSupport=new ClassResolutionScopesSupport(this,storageManager,new Function0<LexicalScope>(){
+    @Override public LexicalScope invoke(){
       return getOuterScope();
     }
   }
-);
+,classLikeInfo.getPrimaryConstructorParameters());
 }
