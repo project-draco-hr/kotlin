@@ -5,14 +5,15 @@
   if (!supertype.isMarkedNullable() && subtype.isMarkedNullable()) {
     return false;
   }
-  subtype=TypeUtils.makeNotNullable(subtype);
-  supertype=TypeUtils.makeNotNullable(supertype);
   if (KotlinBuiltIns.isNothingOrNullableNothing(subtype)) {
     return true;
   }
   @Nullable JetType closestSupertype=findCorrespondingSupertype(subtype,supertype,constraints);
   if (closestSupertype == null) {
     return constraints.noCorrespondingSupertype(subtype,supertype);
+  }
+  if (!supertype.isMarkedNullable() && closestSupertype.isMarkedNullable()) {
+    return false;
   }
   return checkSubtypeForTheSameConstructor(closestSupertype,supertype);
 }
