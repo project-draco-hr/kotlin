@@ -1,0 +1,13 @@
+{
+  if (!TypeUtils.isNullableType(receiver.getType()))   return true;
+  DataFlowValue dataFlowValue=getDataFlowValueExcludingReceiver(context.trace.getBindingContext(),context.scope.getContainingDeclaration(),receiver);
+  if (dataFlowValue == null)   return false;
+  if (!context.dataFlowInfo.getNullability(dataFlowValue).canBeNull()) {
+    JetExpression receiverExpression=getReceiverExpression(receiver);
+    if (receiverExpression != null && dataFlowValue.isPredictable() && context.trace.getBindingContext().get(SMARTCAST,receiverExpression) == null) {
+      recordCastOrError(receiverExpression,receiver.getType(),context.trace,true,false);
+    }
+    return true;
+  }
+  return !context.dataFlowInfo.getNullability(dataFlowValue).canBeNull();
+}
