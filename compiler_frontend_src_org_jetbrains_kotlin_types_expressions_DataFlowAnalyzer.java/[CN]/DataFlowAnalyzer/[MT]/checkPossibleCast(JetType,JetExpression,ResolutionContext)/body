@@ -1,14 +1,5 @@
 {
   DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(expression,expressionType,c);
-  for (  JetType possibleType : c.dataFlowInfo.getPossibleTypes(dataFlowValue)) {
-    if (JetTypeChecker.DEFAULT.isSubtypeOf(possibleType,c.expectedType)) {
-      smartCastManager.recordCastOrError(expression,possibleType,c.trace,dataFlowValue.isPredictable(),false);
-      return possibleType;
-    }
-  }
-  if (!c.dataFlowInfo.getNullability(dataFlowValue).canBeNull() && JetTypeChecker.DEFAULT.isSubtypeOf(expressionType,TypeUtils.makeNullable(c.expectedType))) {
-    smartCastManager.recordCastOrError(expression,expressionType,c.trace,dataFlowValue.isPredictable(),false);
-    return expressionType;
-  }
-  return null;
+  SmartCastResult result=smartCastManager.checkAndRecordPossibleCast(dataFlowValue,c.expectedType,expression,c,false);
+  return result != null ? result.getResultType() : null;
 }
