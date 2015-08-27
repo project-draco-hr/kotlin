@@ -8,10 +8,17 @@
       trace.report(ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS.on(parameter));
     }
   }
+  final AnnotationSplitter.PropertyWrapper propertyWrapper=new AnnotationSplitter.PropertyWrapper();
   Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,parameter.getModifierList(),trace);
-  AnnotationSplitter annotationSplitter=AnnotationSplitter.create(allAnnotations,true,true,isMutable);
+  AnnotationSplitter annotationSplitter=new AnnotationSplitter(storageManager,allAnnotations,new Function0<Set<AnnotationUseSiteTarget>>(){
+    @Override public Set<AnnotationUseSiteTarget> invoke(){
+      return AnnotationSplitter.getTargetSet(true,trace.getBindingContext(),propertyWrapper);
+    }
+  }
+);
   Annotations propertyAnnotations=new CompositeAnnotations(annotationSplitter.getAnnotationsForTargets(PROPERTY,FIELD),annotationSplitter.getOtherAnnotations());
   PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(classDescriptor,propertyAnnotations,resolveModalityFromModifiers(parameter,Modality.FINAL),resolveVisibilityFromModifiers(parameter,getDefaultVisibility(parameter,classDescriptor)),isMutable,name,CallableMemberDescriptor.Kind.DECLARATION,toSourceElement(parameter));
+  propertyWrapper.setProperty(propertyDescriptor);
   propertyDescriptor.setType(type,Collections.<TypeParameterDescriptor>emptyList(),getDispatchReceiverParameterIfNeeded(classDescriptor),(ReceiverParameterDescriptor)null);
   Annotations setterAnnotations=annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER);
   Annotations getterAnnotations=new CompositeAnnotations(KotlinPackage.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER)));
