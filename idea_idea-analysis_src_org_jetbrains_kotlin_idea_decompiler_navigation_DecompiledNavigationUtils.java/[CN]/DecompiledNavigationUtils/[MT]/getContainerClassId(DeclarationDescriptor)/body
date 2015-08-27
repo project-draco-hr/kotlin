@@ -1,7 +1,21 @@
 {
+  DeserializedCallableMemberDescriptor deserializedCallableContainer=DescriptorUtils.getParentOfType(referencedDescriptor,DeserializedCallableMemberDescriptor.class,true);
+  if (deserializedCallableContainer != null) {
+    return getContainerClassId(deserializedCallableContainer);
+  }
   ClassOrPackageFragmentDescriptor containerDescriptor=DescriptorUtils.getParentOfType(referencedDescriptor,ClassOrPackageFragmentDescriptor.class,false);
   if (containerDescriptor instanceof PackageFragmentDescriptor) {
-    return getPackageClassId(((PackageFragmentDescriptor)containerDescriptor).getFqName());
+    FqName packageFQN=((PackageFragmentDescriptor)containerDescriptor).getFqName();
+    if (referencedDescriptor instanceof DeserializedCallableMemberDescriptor) {
+      DeserializedCallableMemberDescriptor deserializedDescriptor=(DeserializedCallableMemberDescriptor)referencedDescriptor;
+      ProtoBuf.Callable proto=deserializedDescriptor.getProto();
+      NameResolver nameResolver=deserializedDescriptor.getNameResolver();
+      if (proto.hasExtension(JvmProtoBuf.implClassName)) {
+        Name implClassName=nameResolver.getName(proto.getExtension(JvmProtoBuf.implClassName));
+        return new ClassId(packageFQN,implClassName);
+      }
+    }
+    return getPackageClassId(packageFQN);
   }
   if (containerDescriptor instanceof ClassDescriptor) {
     if (containerDescriptor.getContainingDeclaration() instanceof ClassDescriptor || ExpressionTypingUtils.isLocal(containerDescriptor.getContainingDeclaration(),containerDescriptor)) {
