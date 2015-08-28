@@ -1,10 +1,12 @@
 {
-  if (!isEnumEntry(descriptor) && (descriptor instanceof ClassOrPackageFragmentDescriptor || descriptor instanceof PackageViewDescriptor) && !topLevel) {
+  boolean isEnumEntry=isEnumEntry(descriptor);
+  boolean isClassOrPackage=(descriptor instanceof ClassOrPackageFragmentDescriptor || descriptor instanceof PackageViewDescriptor) && !isEnumEntry;
+  if (isClassOrPackage && !topLevel) {
     printer.println();
   }
   boolean isPrimaryConstructor=descriptor instanceof ConstructorDescriptor && ((ConstructorDescriptor)descriptor).isPrimary();
   printer.print(isPrimaryConstructor && conf.checkPrimaryConstructors ? "/*primary*/ " : "",conf.renderer.render(descriptor));
-  if (descriptor instanceof ClassOrPackageFragmentDescriptor || descriptor instanceof PackageViewDescriptor) {
+  if (isClassOrPackage) {
     if (!topLevel) {
       printer.printlnWithNoIndent(" {").pushIndent();
     }
@@ -49,7 +51,7 @@
  else {
     printer.printlnWithNoIndent();
   }
-  if (isEnumEntry(descriptor)) {
+  if (isEnumEntry) {
     printer.println();
   }
 }
