@@ -1,26 +1,18 @@
 {
-  if (hasError != null)   hasError.set(false);
+  if (hasError == null) {
+    hasError=Ref.create(false);
+  }
+ else {
+    hasError.set(false);
+  }
   JetExpression expression=JetPsiUtil.safeDeparenthesize(expressionToCheck,false);
   recordExpectedType(c.trace,expression,c.expectedType);
   if (expressionType == null)   return null;
-  for (  AdditionalTypeChecker checker : additionalTypeCheckers) {
-    checker.checkType(expression,expressionType,c);
+  JetType result=checkTypeInternal(expressionType,expression,c,hasError);
+  if (Boolean.FALSE.equals(hasError.get())) {
+    for (    AdditionalTypeChecker checker : additionalTypeCheckers) {
+      checker.checkType(expression,expressionType,result,c);
+    }
   }
-  if (noExpectedType(c.expectedType) || !c.expectedType.getConstructor().isDenotable() || JetTypeChecker.DEFAULT.isSubtypeOf(expressionType,c.expectedType)) {
-    return expressionType;
-  }
-  if (expression instanceof JetConstantExpression) {
-    ConstantValue<?> constantValue=constantExpressionEvaluator.evaluateToConstantValue(expression,c.trace,c.expectedType);
-    boolean error=new CompileTimeConstantChecker(c.trace,true).checkConstantExpressionType(constantValue,(JetConstantExpression)expression,c.expectedType);
-    if (hasError != null)     hasError.set(error);
-    return expressionType;
-  }
-  if (expression instanceof JetWhenExpression) {
-    return expressionType;
-  }
-  JetType possibleType=checkPossibleCast(expressionType,expression,c);
-  if (possibleType != null)   return possibleType;
-  c.trace.report(TYPE_MISMATCH.on(expression,c.expectedType,expressionType));
-  if (hasError != null)   hasError.set(true);
-  return expressionType;
+  return result;
 }
