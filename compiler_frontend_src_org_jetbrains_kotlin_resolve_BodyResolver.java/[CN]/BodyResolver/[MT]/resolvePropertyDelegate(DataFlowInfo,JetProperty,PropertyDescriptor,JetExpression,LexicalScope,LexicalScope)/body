@@ -1,0 +1,18 @@
+{
+  JetPropertyAccessor getter=jetProperty.getGetter();
+  if (getter != null && getter.hasBody()) {
+    trace.report(ACCESSOR_FOR_DELEGATED_PROPERTY.on(getter));
+  }
+  JetPropertyAccessor setter=jetProperty.getSetter();
+  if (setter != null && setter.hasBody()) {
+    trace.report(ACCESSOR_FOR_DELEGATED_PROPERTY.on(setter));
+  }
+  LexicalScope propertyDeclarationInnerScope=JetScopeUtils.getPropertyDeclarationInnerScopeForInitializer(propertyDescriptor,propertyScope,propertyDescriptor.getTypeParameters(),null,trace);
+  LexicalScope accessorScope=JetScopeUtils.makeScopeForPropertyAccessor(propertyDescriptor,parentScopeForAccessor,trace);
+  JetType delegateType=delegatedPropertyResolver.resolveDelegateExpression(delegateExpression,jetProperty,propertyDescriptor,propertyDeclarationInnerScope,accessorScope,trace,outerDataFlowInfo);
+  delegatedPropertyResolver.resolveDelegatedPropertyGetMethod(propertyDescriptor,delegateExpression,delegateType,trace,accessorScope);
+  if (jetProperty.isVar()) {
+    delegatedPropertyResolver.resolveDelegatedPropertySetMethod(propertyDescriptor,delegateExpression,delegateType,trace,accessorScope);
+  }
+  delegatedPropertyResolver.resolveDelegatedPropertyPDMethod(propertyDescriptor,delegateExpression,delegateType,trace,accessorScope);
+}

@@ -1,12 +1,12 @@
 {
   List<JetExpression> block=ResolvePackage.filterStatements(statementFilter,expression);
-  DeclarationDescriptor containingDescriptor=context.scope.getContainingDeclaration();
+  DeclarationDescriptor containingDescriptor=context.scope.getOwnerDescriptor();
   if (containingDescriptor instanceof ScriptDescriptor) {
     if (!(expression.getParent() instanceof JetScript)) {
       containingDescriptor=((ScriptDescriptor)containingDescriptor).getScriptCodeDescriptor();
     }
   }
-  WritableScope scope=new WritableScopeImpl(context.scope,containingDescriptor,new TraceBasedRedeclarationHandler(context.trace),"getBlockReturnedType");
+  LexicalWritableScope scope=new LexicalWritableScope(context.scope,containingDescriptor,false,null,new TraceBasedRedeclarationHandler(context.trace),"getBlockReturnedType");
   scope.changeLockLevel(WritableScope.LockLevel.BOTH);
   JetTypeInfo r;
   if (block.isEmpty()) {
@@ -17,7 +17,7 @@
   }
   scope.changeLockLevel(WritableScope.LockLevel.READING);
   if (containingDescriptor instanceof ScriptDescriptor) {
-    context.trace.record(BindingContext.SCRIPT_SCOPE,(ScriptDescriptor)containingDescriptor,scope);
+    context.trace.record(BindingContext.SCRIPT_SCOPE,(ScriptDescriptor)containingDescriptor,UtilsPackage.asJetScope(scope));
   }
   return r;
 }
