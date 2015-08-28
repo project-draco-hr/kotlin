@@ -2,6 +2,9 @@
   return KotlinPackage.map(getDelegate().getMethods(),new Function1<PsiMethod,PsiMethod>(){
     @Override public PsiMethod invoke(    PsiMethod method){
       JetDeclaration declaration=ClsWrapperStubPsiFactory.getOriginalDeclaration(method);
+      if (declaration instanceof JetPropertyAccessor) {
+        declaration=PsiTreeUtil.getParentOfType(declaration,JetProperty.class);
+      }
       if (declaration != null) {
         return !isTraitFakeOverride(declaration) ? new KotlinLightMethodForDeclaration(myManager,method,declaration,KotlinWrappingLightClass.this) : new KotlinLightMethodForTraitFakeOverride(myManager,method,declaration,KotlinWrappingLightClass.this);
       }

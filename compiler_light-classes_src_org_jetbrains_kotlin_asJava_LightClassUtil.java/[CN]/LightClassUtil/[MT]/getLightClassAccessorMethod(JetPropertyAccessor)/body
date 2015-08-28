@@ -1,3 +1,13 @@
 {
-  return getPsiMethodWrapper(accessor);
+  JetProperty property=PsiTreeUtil.getParentOfType(accessor,JetProperty.class);
+  if (property == null) {
+    return null;
+  }
+  List<PsiMethod> wrappers=getPsiMethodWrappers(property,true);
+  for (  PsiMethod wrapper : wrappers) {
+    if ((accessor.isGetter() && !wrapper.getName().startsWith(JvmAbi.SETTER_PREFIX)) || (accessor.isSetter() && wrapper.getName().startsWith(JvmAbi.SETTER_PREFIX))) {
+      return wrapper;
+    }
+  }
+  return null;
 }
