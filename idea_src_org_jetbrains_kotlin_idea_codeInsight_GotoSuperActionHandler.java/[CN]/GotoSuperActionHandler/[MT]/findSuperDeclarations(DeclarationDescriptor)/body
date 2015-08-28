@@ -1,0 +1,31 @@
+{
+  Collection<? extends DeclarationDescriptor> superDescriptors;
+  if (descriptor instanceof ClassDescriptor) {
+    Collection<JetType> supertypes=((ClassDescriptor)descriptor).getTypeConstructor().getSupertypes();
+    List<ClassDescriptor> superclasses=ContainerUtil.mapNotNull(supertypes,new Function<JetType,ClassDescriptor>(){
+      @Override public ClassDescriptor fun(      JetType type){
+        ClassifierDescriptor descriptor=type.getConstructor().getDeclarationDescriptor();
+        if (descriptor instanceof ClassDescriptor) {
+          return (ClassDescriptor)descriptor;
+        }
+        return null;
+      }
+    }
+);
+    ContainerUtil.removeDuplicates(superclasses);
+    superDescriptors=superclasses;
+  }
+ else   if (descriptor instanceof CallableMemberDescriptor) {
+    superDescriptors=OverrideResolver.getDirectlyOverriddenDeclarations((CallableMemberDescriptor)descriptor);
+  }
+ else   return null;
+  return ContainerUtil.mapNotNull(superDescriptors,new Function<DeclarationDescriptor,PsiElement>(){
+    @Override public PsiElement fun(    DeclarationDescriptor descriptor){
+      if (descriptor instanceof ClassDescriptor && isAny((ClassDescriptor)descriptor)) {
+        return null;
+      }
+      return DescriptorToSourceUtils.descriptorToDeclaration(descriptor);
+    }
+  }
+);
+}
