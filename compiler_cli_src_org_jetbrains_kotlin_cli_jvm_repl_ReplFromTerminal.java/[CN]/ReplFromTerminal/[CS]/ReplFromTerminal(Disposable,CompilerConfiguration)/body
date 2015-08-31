@@ -1,10 +1,14 @@
 {
   String replIdeMode=System.getProperty("repl.ideMode");
   ideMode=replIdeMode != null && replIdeMode.equals("true");
+  if (ideMode) {
+    replReader=new ReplSystemInWrapper(System.in);
+    System.setIn(replReader);
+  }
   new Thread("initialize-repl"){
     @Override public void run(){
       try {
-        replInterpreter=new ReplInterpreter(disposable,compilerConfiguration,ideMode);
+        replInterpreter=new ReplInterpreter(disposable,compilerConfiguration,ideMode,replReader);
       }
  catch (      Throwable e) {
         replInitializationFailed=e;
@@ -15,7 +19,7 @@ synchronized (waitRepl) {
     }
   }
 .start();
-  replWriter=new ReplSystemOutWrapper(System.out,ideMode);
+  replWriter=new ReplSystemOutWrapper(ideMode,System.out);
   System.setOut(replWriter);
   try {
     OutputStream outStream=System.out;
