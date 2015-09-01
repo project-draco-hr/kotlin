@@ -5,9 +5,22 @@
     }
   }
 );
-  LazyOperationsLog lazyOperationsLog=new LazyOperationsLog(HASH_SANITIZER);
+  boolean checkLazyResolveLog=KotlinPackage.any(testFiles,new Function1<TestFile,Boolean>(){
+    @Override public Boolean invoke(    TestFile file){
+      return file.checkLazyLog;
+    }
+  }
+);
+  LazyOperationsLog lazyOperationsLog=null;
+  GlobalContext context;
   ExceptionTracker tracker=new ExceptionTracker();
-  GlobalContext context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
+  if (checkLazyResolveLog) {
+    lazyOperationsLog=new LazyOperationsLog(HASH_SANITIZER);
+    context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
+  }
+ else {
+    context=new SimpleGlobalContext(LockBasedStorageManager.createWithExceptionHandling(tracker),tracker);
+  }
   Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule,context.getStorageManager());
   Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
   for (  Map.Entry<TestModule,List<TestFile>> entry : groupedByModule.entrySet()) {
@@ -22,12 +35,7 @@
     checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
   }
   Throwable exceptionFromLazyResolveLogValidation=null;
-  if (KotlinPackage.any(testFiles,new Function1<TestFile,Boolean>(){
-    @Override public Boolean invoke(    TestFile file){
-      return file.checkLazyLog;
-    }
-  }
-)) {
+  if (checkLazyResolveLog) {
     exceptionFromLazyResolveLogValidation=checkLazyResolveLog(lazyOperationsLog,testDataFile);
   }
  else {
