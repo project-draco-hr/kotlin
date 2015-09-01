@@ -6,19 +6,10 @@
     if (files.isEmpty())     continue;
     IdeaModuleInfo moduleInfo=info.getModuleInfo();
     if (moduleInfo instanceof ModuleSourceInfo) {
-      KotlinLightClassForFacade lightClass=KotlinLightClassForFacade.Factory.createForPackageFacade(psiManager,packageFqName,moduleInfo.contentScope(),files);
-      if (lightClass == null)       continue;
-      result.add(lightClass);
-      if (files.size() > 1) {
-        for (        JetFile file : files) {
-          result.add(new FakeLightClassForFileOfPackage(psiManager,lightClass,file));
-        }
-      }
+      result.addAll(getLightClassesForPackageFacadeWithSources(packageFqName,files,moduleInfo));
     }
  else {
-      FqName packageFacadeFqName=PackageClassUtils.getPackageClassFqName(packageFqName);
-      List<PsiClass> clsClasses=getLightClassesForDecompiledFacadeFiles(packageFacadeFqName,files);
-      result.addAll(clsClasses);
+      result.addAll(getLightClassesForDecompiledFacadeFiles(files));
     }
   }
   return result;
