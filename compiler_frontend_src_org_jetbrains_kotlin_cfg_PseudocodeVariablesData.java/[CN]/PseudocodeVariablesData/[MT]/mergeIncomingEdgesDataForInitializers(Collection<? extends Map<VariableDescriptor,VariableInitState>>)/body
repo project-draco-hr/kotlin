@@ -5,20 +5,21 @@
   }
   Map<VariableDescriptor,VariableInitState> enterInstructionData=Maps.newHashMap();
   for (  VariableDescriptor variable : variablesInScope) {
-    boolean isInitialized=true;
+    TriInitState initState=null;
     boolean isDeclared=true;
     for (    Map<VariableDescriptor,VariableInitState> edgeData : incomingEdgesData) {
-      VariableInitState initState=edgeData.get(variable);
-      if (initState != null) {
-        if (!initState.isInitialized) {
-          isInitialized=false;
-        }
-        if (!initState.isDeclared) {
+      VariableInitState varControlFlowState=edgeData.get(variable);
+      if (varControlFlowState != null) {
+        initState=initState != null ? initState.merge(varControlFlowState.initState) : varControlFlowState.initState;
+        if (!varControlFlowState.isDeclared) {
           isDeclared=false;
         }
       }
     }
-    enterInstructionData.put(variable,VariableInitState.create(isInitialized,isDeclared));
+    if (initState == null) {
+      throw new AssertionError("An empty set of incoming edges data");
+    }
+    enterInstructionData.put(variable,VariableInitState.create(initState,isDeclared));
   }
   return enterInstructionData;
 }
