@@ -1,0 +1,34 @@
+{
+  JetModifierList modifierList=property.getModifierList();
+  if (modifierList == null)   return;
+  PsiElement modifier=modifierList.getModifier(JetTokens.LATE_INIT_KEYWORD);
+  if (modifier == null)   return;
+  boolean hasBackingField=Boolean.TRUE.equals(trace.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor));
+  boolean hasDelegateOrInitializer=false;
+  boolean hasCorrespondingValueParameter=false;
+  if (property instanceof JetProperty) {
+    hasDelegateOrInitializer=((JetProperty)property).hasDelegateExpressionOrInitializer();
+  }
+ else   if (property instanceof JetParameter) {
+    hasCorrespondingValueParameter=true;
+  }
+  PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
+  PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+  boolean customGetterOrSetter=false;
+  if (getter != null) {
+    customGetterOrSetter=getter.hasBody();
+  }
+  if (setter != null) {
+    customGetterOrSetter|=setter.hasBody();
+  }
+  boolean returnTypeIsNullable=true;
+  boolean returnTypeIsPrimitive=true;
+  JetType returnType=propertyDescriptor.getReturnType();
+  if (returnType != null) {
+    returnTypeIsNullable=TypeUtils.isNullableType(returnType);
+    returnTypeIsPrimitive=KotlinBuiltIns.isPrimitiveType(returnType);
+  }
+  if (!hasBackingField || hasCorrespondingValueParameter || hasDelegateOrInitializer|| customGetterOrSetter|| returnTypeIsNullable|| returnTypeIsPrimitive|| propertyDescriptor.getExtensionReceiverParameter() != null) {
+    trace.report(INAPPLICABLE_LATEINIT_MODIFIER.on(modifier));
+  }
+}
