@@ -4,8 +4,10 @@
   boolean hasGetter=false;
   boolean hasSetter=false;
   boolean hasConstant=false;
+  boolean lateInit=false;
   if (descriptor instanceof PropertyDescriptor) {
     PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+    lateInit=propertyDescriptor.isLateInit();
     int propertyFlags=Flags.getAccessorFlags(hasAnnotations(propertyDescriptor),propertyDescriptor.getVisibility(),propertyDescriptor.getModality(),false);
     PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
     if (getter != null) {
@@ -32,7 +34,7 @@
     hasConstant=!(compileTimeConstant == null || compileTimeConstant instanceof NullValue);
   }
   boolean hasAnnotations=(descriptor instanceof PropertyDescriptor) ? !descriptor.getAnnotations().getAllAnnotations().isEmpty() : hasAnnotations(descriptor);
-  builder.setFlags(Flags.getCallableFlags(hasAnnotations,descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),hasGetter,hasSetter,hasConstant));
+  builder.setFlags(Flags.getCallableFlags(hasAnnotations,descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),callableKind(descriptor),hasGetter,hasSetter,hasConstant,lateInit));
   for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
     builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
   }
