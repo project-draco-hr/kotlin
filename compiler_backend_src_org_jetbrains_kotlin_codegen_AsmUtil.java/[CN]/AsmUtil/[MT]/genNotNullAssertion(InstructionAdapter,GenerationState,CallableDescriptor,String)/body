@@ -1,14 +1,16 @@
 {
-  if (JvmPackage.getPLATFORM_TYPES())   return;
-  if (!state.isCallAssertionsEnabled())   return;
-  if (!isDeclaredInJava(descriptor))   return;
+  if (JvmPackage.getPLATFORM_TYPES())   return false;
+  if (!state.isCallAssertionsEnabled())   return false;
+  if (!isDeclaredInJava(descriptor))   return false;
   JetType type=descriptor.getReturnType();
-  if (type == null || isNullableType(TypesPackage.lowerIfFlexible(type)))   return;
+  if (type == null || isNullableType(TypesPackage.lowerIfFlexible(type)))   return false;
   Type asmType=state.getTypeMapper().mapReturnType(descriptor);
   if (asmType.getSort() == Type.OBJECT || asmType.getSort() == Type.ARRAY) {
     v.dup();
     v.visitLdcInsn(descriptor.getContainingDeclaration().getName().asString());
     v.visitLdcInsn(descriptor.getName().asString());
     v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,assertMethodToCall,"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;)V",false);
+    return true;
   }
+  return false;
 }
