@@ -1,12 +1,18 @@
 {
   final JvmPackageTable.PackageTable.Builder builder=JvmPackageTable.PackageTable.newBuilder();
   String outputFilePath=getMappingFileName(state.getModuleName());
+  List<PackageParts> parts=ContainerUtil.newArrayList();
+  Set<File> sourceFiles=new HashSet<File>();
   for (  PackageCodegen codegen : values) {
-    PackageParts.Companion.serialize(codegen.getPackageParts(),builder);
+    parts.add(codegen.getPackageParts());
+    sourceFiles.addAll(toIoFilesIgnoringNonPhysical(PackagePartClassUtils.getFilesWithCallables(codegen.getFiles())));
+  }
+  for (  PackageParts part : CodegenPackage.addCompiledPartsAndSort(parts,state)) {
+    PackageParts.Companion.serialize(part,builder);
   }
   if (builder.getPackagePartsCount() != 0) {
-    state.getProgress().reportOutput(Collections.<File>emptyList(),new File(outputFilePath));
-    generators.put(outputFilePath,new OutAndSourceFileList(Collections.<File>emptyList()){
+    state.getProgress().reportOutput(sourceFiles,new File(outputFilePath));
+    generators.put(outputFilePath,new OutAndSourceFileList(KotlinPackage.toList(sourceFiles)){
       @Override public byte[] asBytes(      ClassBuilderFactory factory){
         try {
           ByteArrayOutputStream moduleMapping=new ByteArrayOutputStream(1024);
