@@ -1,8 +1,10 @@
 {
   String replIdeMode=System.getProperty("repl.ideMode");
   ideMode=replIdeMode != null && replIdeMode.equals("true");
+  replWriter=new ReplSystemOutWrapper(ideMode,System.out);
+  System.setOut(replWriter);
   if (ideMode) {
-    replReader=new ReplSystemInWrapper(System.in);
+    replReader=new ReplSystemInWrapper(System.in,replWriter);
     System.setIn(replReader);
   }
   new Thread("initialize-repl"){
@@ -19,8 +21,6 @@ synchronized (waitRepl) {
     }
   }
 .start();
-  replWriter=new ReplSystemOutWrapper(ideMode,System.out);
-  System.setOut(replWriter);
   try {
     OutputStream outStream=System.out;
     if (ideMode) {
