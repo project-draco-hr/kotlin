@@ -6,5 +6,16 @@
   for (int i=1; i < filesCount; i++) {
     afterFiles[i - 1]=dirName + File.separator + i+ ".kt";
   }
-  CodeInsightTestUtil.doWordSelectionTest(myFixture,dirName + File.separator + "0.kt",afterFiles);
+  try {
+    CodeInsightTestUtil.doWordSelectionTest(myFixture,dirName + File.separator + "0.kt",afterFiles);
+  }
+ catch (  FileComparisonFailure error) {
+    wrapToFileComparisonFailure(error.getFilePath());
+  }
+catch (  AssertionError error) {
+    String message=error.getMessage();
+    String path=message.substring(0,message.indexOf(":"));
+    String fullPath=new File(new File(PluginTestCaseBase.getTestDataPathBase(),TEST_RELATIVE_DIR),path).getPath();
+    wrapToFileComparisonFailure(fullPath);
+  }
 }
