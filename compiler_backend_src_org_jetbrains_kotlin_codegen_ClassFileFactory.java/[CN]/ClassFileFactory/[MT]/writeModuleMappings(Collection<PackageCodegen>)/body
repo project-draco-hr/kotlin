@@ -15,8 +15,12 @@
     generators.put(outputFilePath,new OutAndSourceFileList(KotlinPackage.toList(sourceFiles)){
       @Override public byte[] asBytes(      ClassBuilderFactory factory){
         try {
-          ByteArrayOutputStream moduleMapping=new ByteArrayOutputStream(1024);
-          builder.build().writeTo(moduleMapping);
+          ByteArrayOutputStream moduleMapping=new ByteArrayOutputStream(4 * 1024);
+          DataOutputStream dataOutStream=new DataOutputStream(moduleMapping);
+          dataOutStream.writeInt(1);
+          dataOutStream.writeInt(JvmAbi.VERSION);
+          builder.build().writeTo(dataOutStream);
+          dataOutStream.flush();
           return moduleMapping.toByteArray();
         }
  catch (        UnsupportedEncodingException e) {
