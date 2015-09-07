@@ -20,8 +20,12 @@
     OutputFile outputFile=outputFiles.get(className);
     assertNotNull(outputFile);
     ClassReader cr=new ClassReader(outputFile.asByteArray());
-    TestClassVisitor classVisitor=getClassVisitor(testedObject.kind,testedObject.name);
+    TestClassVisitor classVisitor=getClassVisitor(testedObject.kind,testedObject.name,false);
     cr.accept(classVisitor,ClassReader.SKIP_CODE);
+    if (!classVisitor.isExists()) {
+      classVisitor=getClassVisitor(testedObject.kind,testedObject.name,true);
+      cr.accept(classVisitor,ClassReader.SKIP_CODE);
+    }
     boolean isObjectExists=!Boolean.valueOf(findStringWithPrefixes(testedObject.textData,"// ABSENT: "));
     assertEquals("Wrong object existence state: " + testedObject,isObjectExists,classVisitor.isExists());
     if (isObjectExists) {
