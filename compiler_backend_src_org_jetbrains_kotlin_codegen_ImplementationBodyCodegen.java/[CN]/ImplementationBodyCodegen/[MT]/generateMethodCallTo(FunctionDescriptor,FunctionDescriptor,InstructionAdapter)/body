@@ -1,15 +1,15 @@
 {
   boolean isConstructor=functionDescriptor instanceof ConstructorDescriptor;
-  boolean bridgeIsAccessorConstructor=bridgeDescriptor instanceof AccessorForConstructorDescriptor;
-  boolean callFromAccessor=bridgeIsAccessorConstructor || (bridgeDescriptor != null && JetTypeMapper.isAccessor(bridgeDescriptor));
-  CallableMethod callableMethod=isConstructor ? typeMapper.mapToCallableMethod((ConstructorDescriptor)functionDescriptor) : typeMapper.mapToCallableMethod(functionDescriptor,callFromAccessor,context);
+  boolean accessorIsConstructor=accessorDescriptor instanceof AccessorForConstructorDescriptor;
+  boolean superCall=accessorDescriptor instanceof AccessorForCallableDescriptor && ((AccessorForCallableDescriptor)accessorDescriptor).getSuperCallExpression() != null;
+  CallableMethod callableMethod=isConstructor ? typeMapper.mapToCallableMethod((ConstructorDescriptor)functionDescriptor) : typeMapper.mapToCallableMethod(functionDescriptor,superCall,context);
   int reg=1;
-  if (isConstructor && !bridgeIsAccessorConstructor) {
+  if (isConstructor && !accessorIsConstructor) {
     iv.anew(callableMethod.getOwner());
     iv.dup();
     reg=0;
   }
- else   if (callFromAccessor) {
+ else   if (accessorIsConstructor || (accessorDescriptor != null && JetTypeMapper.isAccessor(accessorDescriptor))) {
     if (!AnnotationsPackage.isPlatformStaticInObjectOrClass(functionDescriptor)) {
       iv.load(0,OBJECT_TYPE);
     }
