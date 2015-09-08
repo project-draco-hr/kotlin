@@ -5,7 +5,7 @@
     DaemonOptions daemonOptions=RmiPackage.configureDaemonOptions();
     DaemonJVMOptions daemonJVMOptions=RmiPackage.configureDaemonJVMOptions(true);
     ArrayList<DaemonReportMessage> daemonReportMessages=new ArrayList<DaemonReportMessage>();
-    CompileService daemon=KotlinCompilerClient.Companion.connectToCompileService(compilerId,daemonJVMOptions,daemonOptions,new DaemonReportingTargets(null,daemonReportMessages),true,true);
+    CompileService daemon=KotlinCompilerClient.connectToCompileService(compilerId,daemonJVMOptions,daemonOptions,new DaemonReportingTargets(null,daemonReportMessages),true,true);
     for (    DaemonReportMessage msg : daemonReportMessages) {
       if (msg.getCategory() == DaemonReportCategory.EXCEPTION && daemon == null) {
         messageCollector.report(CompilerMessageSeverity.INFO,"Falling  back to compilation without daemon due to error: " + msg.getMessage(),CompilerMessageLocation.NO_LOCATION);
@@ -17,7 +17,7 @@
     if (daemon != null) {
       ByteArrayOutputStream compilerOut=new ByteArrayOutputStream();
       ByteArrayOutputStream daemonOut=new ByteArrayOutputStream();
-      Integer res=KotlinCompilerClient.Companion.incrementalCompile(daemon,argsArray,incrementalCaches,compilerOut,daemonOut);
+      Integer res=KotlinCompilerClient.incrementalCompile(daemon,argsArray,incrementalCaches,compilerOut,daemonOut);
       ProcessCompilerOutput(messageCollector,collector,compilerOut,res.toString());
       BufferedReader reader=new BufferedReader(new StringReader(daemonOut.toString()));
       String line=null;
