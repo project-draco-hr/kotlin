@@ -8,15 +8,11 @@
     return;
   }
   MethodVisitor mv=v.newMethod(origin,flags,asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),getThrownExceptions(functionDescriptor,typeMapper));
-  if (owner instanceof PackageFacadeContext) {
-    Type ownerType=((PackageFacadeContext)owner).getDelegateToClassType();
-    v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,functionDescriptor,shortNameByAsmType(ownerType));
+  String implClassName=CodegenContextUtil.getImplClassNameByOwnerIfRequired(owner);
+  if (implClassName != null) {
+    v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,functionDescriptor,implClassName);
   }
- else {
-    if (owner instanceof PackageContext) {
-      Type ownerType=((PackageContext)owner).getPackagePartType();
-      v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,functionDescriptor,shortNameByAsmType(ownerType));
-    }
+  if (CodegenContextUtil.isImplClassOwner(owner)) {
     v.getSerializationBindings().put(METHOD_FOR_FUNCTION,functionDescriptor,asmMethod);
   }
   generateMethodAnnotations(functionDescriptor,asmMethod,mv);
