@@ -1,0 +1,17 @@
+{
+  createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.ALL);
+  Collections.sort(filenames);
+  String[] sortedFilenames=ArrayUtil.toStringArray(filenames);
+  loadFiles(sortedFilenames);
+  Map<String,List<OccurrenceInfo>> expectedOccurrencesByOutputFile=new LinkedHashMap<String,List<OccurrenceInfo>>();
+  for (  String filename : filenames) {
+    readExpectedOccurrencesForMultiFileTest(filename,expectedOccurrencesByOutputFile);
+  }
+  Map<String,String> generated=generateEachFileToText();
+  for (  String expectedOutputFile : expectedOccurrencesByOutputFile.keySet()) {
+    assertTextWasGenerated(expectedOutputFile,generated);
+    String generatedText=generated.get(expectedOutputFile);
+    List<OccurrenceInfo> expectedOccurrences=expectedOccurrencesByOutputFile.get(expectedOutputFile);
+    checkGeneratedTextAgainstExpectedOccurrences(generatedText,expectedOccurrences);
+  }
+}

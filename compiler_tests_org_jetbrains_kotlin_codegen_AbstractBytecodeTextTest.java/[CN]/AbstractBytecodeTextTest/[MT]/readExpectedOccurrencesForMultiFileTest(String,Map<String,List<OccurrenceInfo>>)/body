@@ -1,0 +1,23 @@
+{
+  String[] lines=FileUtil.loadFile(new File(codegenTestBasePath() + filename),true).split("\n");
+  List<OccurrenceInfo> currentOccurrenceInfos=null;
+  for (  String line : lines) {
+    Matcher atOutputFileMatcher=AT_OUTPUT_FILE_PATTERN.matcher(line);
+    if (atOutputFileMatcher.matches()) {
+      String outputFileName=atOutputFileMatcher.group(1);
+      if (occurrenceMap.containsKey(outputFileName)) {
+        throw new AssertionError(filename + ": Expected occurrences for output file " + outputFileName+ " were already provided");
+      }
+      currentOccurrenceInfos=new ArrayList<OccurrenceInfo>();
+      occurrenceMap.put(outputFileName,currentOccurrenceInfos);
+    }
+    Matcher expectedOccurrencesMatcher=EXPECTED_OCCURRENCES_PATTERN.matcher(line);
+    if (expectedOccurrencesMatcher.matches()) {
+      if (currentOccurrenceInfos == null) {
+        throw new AssertionError(filename + ": Should specify output file with '// @<OUTPUT_FILE_NAME>:' before expectations");
+      }
+      OccurrenceInfo occurrenceInfo=parseOccurrenceInfo(expectedOccurrencesMatcher);
+      currentOccurrenceInfos.add(occurrenceInfo);
+    }
+  }
+}
