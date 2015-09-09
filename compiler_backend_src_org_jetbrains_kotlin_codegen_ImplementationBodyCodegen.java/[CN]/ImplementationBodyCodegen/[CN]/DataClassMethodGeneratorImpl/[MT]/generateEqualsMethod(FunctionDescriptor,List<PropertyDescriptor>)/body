@@ -1,0 +1,54 @@
+{
+  MethodContext context=ImplementationBodyCodegen.this.context.intoFunction(function);
+  MethodVisitor mv=v.newMethod(OtherOrigin(function),ACC_PUBLIC,"equals","(Ljava/lang/Object;)Z",null,null);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  mv.visitCode();
+  Label eq=new Label();
+  Label ne=new Label();
+  iv.load(0,OBJECT_TYPE);
+  iv.load(1,OBJECT_TYPE);
+  iv.ifacmpeq(eq);
+  iv.load(1,OBJECT_TYPE);
+  iv.instanceOf(classAsmType);
+  iv.ifeq(ne);
+  iv.load(1,OBJECT_TYPE);
+  iv.checkcast(classAsmType);
+  iv.store(2,OBJECT_TYPE);
+  for (  PropertyDescriptor propertyDescriptor : properties) {
+    Type asmType=typeMapper.mapType(propertyDescriptor);
+    Type thisPropertyType=genPropertyOnStack(iv,context,propertyDescriptor,0);
+    StackValue.coerce(thisPropertyType,asmType,iv);
+    Type otherPropertyType=genPropertyOnStack(iv,context,propertyDescriptor,2);
+    StackValue.coerce(otherPropertyType,asmType,iv);
+    if (asmType.getSort() == Type.ARRAY) {
+      Type elementType=correctElementType(asmType);
+      if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
+        iv.invokestatic("java/util/Arrays","equals","([Ljava/lang/Object;[Ljava/lang/Object;)Z",false);
+      }
+ else {
+        iv.invokestatic("java/util/Arrays","equals","(" + asmType.getDescriptor() + asmType.getDescriptor()+ ")Z",false);
+      }
+      iv.ifeq(ne);
+    }
+ else     if (asmType.getSort() == Type.FLOAT) {
+      iv.invokestatic("java/lang/Float","compare","(FF)I",false);
+      iv.ifne(ne);
+    }
+ else     if (asmType.getSort() == Type.DOUBLE) {
+      iv.invokestatic("java/lang/Double","compare","(DD)I",false);
+      iv.ifne(ne);
+    }
+ else {
+      StackValue value=genEqualsForExpressionsOnStack(JetTokens.EQEQ,StackValue.onStack(asmType),StackValue.onStack(asmType));
+      value.put(Type.BOOLEAN_TYPE,iv);
+      iv.ifeq(ne);
+    }
+  }
+  iv.mark(eq);
+  iv.iconst(1);
+  iv.areturn(Type.INT_TYPE);
+  iv.mark(ne);
+  iv.iconst(0);
+  iv.areturn(Type.INT_TYPE);
+  FunctionCodegen.endVisit(mv,"equals",myClass);
+}

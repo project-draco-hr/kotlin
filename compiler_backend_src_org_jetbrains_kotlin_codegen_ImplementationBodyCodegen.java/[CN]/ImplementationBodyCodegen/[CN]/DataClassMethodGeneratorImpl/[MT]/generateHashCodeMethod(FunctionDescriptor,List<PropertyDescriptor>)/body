@@ -1,0 +1,39 @@
+{
+  MethodContext context=ImplementationBodyCodegen.this.context.intoFunction(function);
+  MethodVisitor mv=v.newMethod(OtherOrigin(function),ACC_PUBLIC,"hashCode","()I",null,null);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  mv.visitCode();
+  boolean first=true;
+  for (  PropertyDescriptor propertyDescriptor : properties) {
+    if (!first) {
+      iv.iconst(31);
+      iv.mul(Type.INT_TYPE);
+    }
+    Type propertyType=genPropertyOnStack(iv,context,propertyDescriptor,0);
+    Type asmType=typeMapper.mapType(propertyDescriptor);
+    StackValue.coerce(propertyType,asmType,iv);
+    Label ifNull=null;
+    if (!isPrimitive(asmType)) {
+      ifNull=new Label();
+      iv.dup();
+      iv.ifnull(ifNull);
+    }
+    genHashCode(mv,iv,asmType);
+    if (ifNull != null) {
+      Label end=new Label();
+      iv.goTo(end);
+      iv.mark(ifNull);
+      iv.pop();
+      iv.iconst(0);
+      iv.mark(end);
+    }
+    if (first) {
+      first=false;
+    }
+ else {
+      iv.add(Type.INT_TYPE);
+    }
+  }
+  mv.visitInsn(IRETURN);
+  FunctionCodegen.endVisit(mv,"hashCode",myClass);
+}

@@ -1,0 +1,38 @@
+{
+  MethodContext context=ImplementationBodyCodegen.this.context.intoFunction(function);
+  MethodVisitor mv=v.newMethod(OtherOrigin(function),ACC_PUBLIC,"toString","()Ljava/lang/String;",null,null);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  mv.visitCode();
+  genStringBuilderConstructor(iv);
+  boolean first=true;
+  for (  PropertyDescriptor propertyDescriptor : properties) {
+    if (first) {
+      iv.aconst(descriptor.getName() + "(" + propertyDescriptor.getName().asString()+ "=");
+      first=false;
+    }
+ else {
+      iv.aconst(", " + propertyDescriptor.getName().asString() + "=");
+    }
+    genInvokeAppendMethod(iv,JAVA_STRING_TYPE);
+    Type type=genPropertyOnStack(iv,context,propertyDescriptor,0);
+    if (type.getSort() == Type.ARRAY) {
+      Type elementType=correctElementType(type);
+      if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
+        iv.invokestatic("java/util/Arrays","toString","([Ljava/lang/Object;)Ljava/lang/String;",false);
+        type=JAVA_STRING_TYPE;
+      }
+ else {
+        if (elementType.getSort() != Type.CHAR) {
+          iv.invokestatic("java/util/Arrays","toString","(" + type.getDescriptor() + ")Ljava/lang/String;",false);
+          type=JAVA_STRING_TYPE;
+        }
+      }
+    }
+    genInvokeAppendMethod(iv,type);
+  }
+  iv.aconst(")");
+  genInvokeAppendMethod(iv,JAVA_STRING_TYPE);
+  iv.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;",false);
+  iv.areturn(JAVA_STRING_TYPE);
+  FunctionCodegen.endVisit(mv,"toString",myClass);
+}
