@@ -1,2 +1,30 @@
 {
+  if (currentDescriptor instanceof PackageFragmentDescriptor) {
+    PsiFile file=getContainingFile(codegenContext);
+    Type implementationOwnerType;
+    if (file == null) {
+      implementationOwnerType=CodegenContextUtil.getImplementationOwnerClassType(codegenContext);
+    }
+ else {
+      implementationOwnerType=fileClassesManager.getFileClassType((JetFile)file);
+    }
+    if (implementationOwnerType == null) {
+      DeclarationDescriptor contextDescriptor=codegenContext.getContextDescriptor();
+      throw new RuntimeException("Couldn't find declaration for " + contextDescriptor.getContainingDeclaration().getName() + "."+ contextDescriptor.getName()+ "; context: "+ codegenContext);
+    }
+    return implementationOwnerType.getInternalName();
+  }
+ else   if (currentDescriptor instanceof ClassifierDescriptor) {
+    Type type=typeMapper.mapType((ClassifierDescriptor)currentDescriptor);
+    return type.getInternalName();
+  }
+ else   if (currentDescriptor instanceof FunctionDescriptor) {
+    ClassDescriptor descriptor=typeMapper.getBindingContext().get(CodegenBinding.CLASS_FOR_CALLABLE,(FunctionDescriptor)currentDescriptor);
+    if (descriptor != null) {
+      Type type=typeMapper.mapType(descriptor);
+      return type.getInternalName();
+    }
+  }
+  String suffix=currentDescriptor.getName().isSpecial() ? "" : currentDescriptor.getName().asString();
+  return getInlineName(codegenContext,currentDescriptor.getContainingDeclaration(),typeMapper,fileClassesManager) + "$" + suffix;
 }
