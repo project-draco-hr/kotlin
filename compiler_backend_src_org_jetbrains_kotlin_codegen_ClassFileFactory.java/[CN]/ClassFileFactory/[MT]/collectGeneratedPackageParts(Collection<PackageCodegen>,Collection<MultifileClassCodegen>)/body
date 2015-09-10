@@ -1,0 +1,21 @@
+{
+  Map<String,PackageParts> mergedPartsByPackageName=new LinkedHashMap<String,PackageParts>();
+  for (  PackageCodegen packageCodegen : packageCodegens) {
+    PackageParts generatedParts=packageCodegen.getPackageParts();
+    PackageParts premergedParts=new PackageParts(generatedParts.getPackageFqName());
+    mergedPartsByPackageName.put(generatedParts.getPackageFqName(),premergedParts);
+    premergedParts.getParts().addAll(generatedParts.getParts());
+  }
+  for (  MultifileClassCodegen multifileClassCodegen : multifileClassCodegens) {
+    PackageParts multifileClassParts=multifileClassCodegen.getPackageParts();
+    PackageParts premergedParts=mergedPartsByPackageName.get(multifileClassParts.getPackageFqName());
+    if (premergedParts == null) {
+      premergedParts=new PackageParts(multifileClassParts.getPackageFqName());
+      mergedPartsByPackageName.put(multifileClassParts.getPackageFqName(),premergedParts);
+    }
+    premergedParts.getParts().addAll(multifileClassParts.getParts());
+  }
+  List<PackageParts> result=new ArrayList<PackageParts>();
+  result.addAll(mergedPartsByPackageName.values());
+  return result;
+}

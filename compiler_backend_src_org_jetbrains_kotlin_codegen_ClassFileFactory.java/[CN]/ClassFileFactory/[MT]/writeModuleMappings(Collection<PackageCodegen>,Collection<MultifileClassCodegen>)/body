@@ -1,10 +1,12 @@
 {
   final JvmPackageTable.PackageTable.Builder builder=JvmPackageTable.PackageTable.newBuilder();
   String outputFilePath=getMappingFileName(state.getModuleName());
-  List<PackageParts> parts=ContainerUtil.newArrayList();
+  List<PackageParts> parts=collectGeneratedPackageParts(packageCodegens,multifileClassCodegens);
   Set<File> sourceFiles=new HashSet<File>();
-  for (  PackageCodegen codegen : values) {
-    parts.add(codegen.getPackageParts());
+  for (  PackageCodegen codegen : packageCodegens) {
+    sourceFiles.addAll(toIoFilesIgnoringNonPhysical(PackagePartClassUtils.getFilesWithCallables(codegen.getFiles())));
+  }
+  for (  MultifileClassCodegen codegen : multifileClassCodegens) {
     sourceFiles.addAll(toIoFilesIgnoringNonPhysical(PackagePartClassUtils.getFilesWithCallables(codegen.getFiles())));
   }
   for (  PackageParts part : CodegenPackage.addCompiledPartsAndSort(parts,state)) {
