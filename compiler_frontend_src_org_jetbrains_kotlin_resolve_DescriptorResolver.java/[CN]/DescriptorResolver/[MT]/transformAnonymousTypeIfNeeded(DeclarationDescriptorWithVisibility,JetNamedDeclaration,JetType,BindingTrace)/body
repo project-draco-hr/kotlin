@@ -1,2 +1,16 @@
 {
+  ClassifierDescriptor classifier=type.getConstructor().getDeclarationDescriptor();
+  if (classifier == null || !DescriptorUtils.isAnonymousObject(classifier) || DescriptorUtils.isLocal(descriptor)) {
+    return type;
+  }
+  boolean definedInClass=DescriptorUtils.getParentOfType(descriptor,ClassDescriptor.class) != null;
+  if (!definedInClass || !Visibilities.isPrivate(descriptor.getVisibility())) {
+    if (type.getConstructor().getSupertypes().size() == 1) {
+      return type.getConstructor().getSupertypes().iterator().next();
+    }
+ else {
+      trace.report(AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.on(declaration,type.getConstructor().getSupertypes()));
+    }
+  }
+  return type;
 }
