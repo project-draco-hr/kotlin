@@ -11,7 +11,16 @@
  else   if (calleeExpression == null) {
     return checkArgumentTypesAndFail(context);
   }
-  JetType calleeType=expressionTypingServices.safeGetType(context.scope,calleeExpression,NO_EXPECTED_TYPE,context.dataFlowInfo,context.trace);
+  JetType expectedType=NO_EXPECTED_TYPE;
+  if (calleeExpression instanceof JetFunctionLiteralExpression) {
+    int parameterNumber=((JetFunctionLiteralExpression)calleeExpression).getValueParameters().size();
+    List<JetType> parameterTypes=new ArrayList<JetType>(parameterNumber);
+    for (int i=0; i < parameterNumber; i++) {
+      parameterTypes.add(NO_EXPECTED_TYPE);
+    }
+    expectedType=builtIns.getFunctionType(Annotations.EMPTY,null,parameterTypes,context.expectedType);
+  }
+  JetType calleeType=expressionTypingServices.safeGetType(context.scope,calleeExpression,expectedType,context.dataFlowInfo,context.trace);
   ExpressionReceiver expressionReceiver=new ExpressionReceiver(calleeExpression,calleeType);
   Call call=new CallTransformer.CallForImplicitInvoke(context.call.getExplicitReceiver(),expressionReceiver,context.call);
   TracingStrategyForInvoke tracingForInvoke=new TracingStrategyForInvoke(calleeExpression,call,calleeType);
