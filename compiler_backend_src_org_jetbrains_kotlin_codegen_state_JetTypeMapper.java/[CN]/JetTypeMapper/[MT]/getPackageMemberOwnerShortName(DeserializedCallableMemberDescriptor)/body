@@ -1,0 +1,25 @@
+{
+  DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+  if (containingDeclaration instanceof PackageFragmentDescriptor) {
+    PackageFragmentDescriptor packageFragmentDescriptor=(PackageFragmentDescriptor)containingDeclaration;
+    JetScope scope=packageFragmentDescriptor.getMemberScope();
+    if (scope instanceof AbstractScopeAdapter) {
+      scope=((AbstractScopeAdapter)scope).getActualScope();
+    }
+    if (scope instanceof LazyJavaPackageScope) {
+      Name implClassName=JvmFileClassUtil.getImplClassName(descriptor);
+      return ((LazyJavaPackageScope)scope).getFacadeSimpleNameForPartSimpleName(implClassName.asString());
+    }
+ else     if (packageFragmentDescriptor instanceof BuiltinsPackageFragment) {
+      return PackageClassUtils.getPackageClassFqName(packageFragmentDescriptor.getFqName()).shortName().asString();
+    }
+ else     if (scope instanceof DeserializedPackageMemberScope) {
+      Name implClassName=JvmFileClassUtil.getImplClassName(descriptor);
+      return implClassName.asString();
+    }
+ else {
+      throw new AssertionError("Unexpected member scope for deserialized callable: " + scope + "; descriptor: "+ descriptor);
+    }
+  }
+  return null;
+}
