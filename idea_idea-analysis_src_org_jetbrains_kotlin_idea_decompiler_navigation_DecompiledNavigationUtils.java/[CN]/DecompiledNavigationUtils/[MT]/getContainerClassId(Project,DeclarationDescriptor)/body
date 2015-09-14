@@ -1,7 +1,7 @@
 {
   DeserializedCallableMemberDescriptor deserializedCallableContainer=DescriptorUtils.getParentOfType(referencedDescriptor,DeserializedCallableMemberDescriptor.class,true);
   if (deserializedCallableContainer != null) {
-    return getContainerClassId(deserializedCallableContainer);
+    return getContainerClassId(project,deserializedCallableContainer);
   }
   ClassOrPackageFragmentDescriptor containerDescriptor=DescriptorUtils.getParentOfType(referencedDescriptor,ClassOrPackageFragmentDescriptor.class,false);
   if (containerDescriptor instanceof PackageFragmentDescriptor) {
@@ -11,15 +11,24 @@
       ProtoBuf.Callable proto=deserializedDescriptor.getProto();
       NameResolver nameResolver=deserializedDescriptor.getNameResolver();
       if (proto.hasExtension(JvmProtoBuf.implClassName)) {
-        Name implClassName=nameResolver.getName(proto.getExtension(JvmProtoBuf.implClassName));
-        return new ClassId(packageFQN,implClassName);
+        Name partClassName=nameResolver.getName(proto.getExtension(JvmProtoBuf.implClassName));
+        FqName partFQN=packageFQN.child(partClassName);
+        Collection<JetFile> multifileFacadeJetFiles=StaticFacadeIndexUtil.getMultifileClassForPart(partFQN,GlobalSearchScope.allScope(project),project);
+        if (multifileFacadeJetFiles.isEmpty()) {
+          return new ClassId(packageFQN,partClassName);
+        }
+ else {
+          JetFile multifileFacade=multifileFacadeJetFiles.iterator().next();
+          String multifileFacadeName=multifileFacade.getVirtualFile().getNameWithoutExtension();
+          return new ClassId(packageFQN,Name.identifier(multifileFacadeName));
+        }
       }
     }
     return getPackageClassId(packageFQN);
   }
   if (containerDescriptor instanceof ClassDescriptor) {
     if (containerDescriptor.getContainingDeclaration() instanceof ClassDescriptor || ExpressionTypingUtils.isLocal(containerDescriptor.getContainingDeclaration(),containerDescriptor)) {
-      return getContainerClassId(containerDescriptor.getContainingDeclaration());
+      return getContainerClassId(project,containerDescriptor.getContainingDeclaration());
     }
     return getClassId((ClassDescriptor)containerDescriptor);
   }
