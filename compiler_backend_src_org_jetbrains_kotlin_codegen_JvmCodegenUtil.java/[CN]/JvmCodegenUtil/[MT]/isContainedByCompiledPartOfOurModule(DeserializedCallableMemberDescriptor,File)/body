@@ -9,12 +9,15 @@
   if (!(packageFragment instanceof LazyJavaPackageFragment)) {
     return false;
   }
-  KotlinJvmBinaryClass binaryClass=((LazyJavaPackageFragment)packageFragment).getScope().getKotlinBinaryClass();
-  if (binaryClass instanceof VirtualFileKotlinClass) {
-    VirtualFile file=((VirtualFileKotlinClass)binaryClass).getFile();
-    if (file.getFileSystem().getProtocol() == StandardFileSystems.FILE_PROTOCOL) {
-      File ioFile=VfsUtilCore.virtualToIoFile(file);
-      return ioFile.getAbsolutePath().startsWith(outDirectory.getAbsolutePath() + File.separator);
+  SourceElement source=((LazyJavaPackageFragment)packageFragment).getSource();
+  if (source instanceof KotlinJvmBinarySourceElement) {
+    KotlinJvmBinaryClass binaryClass=((KotlinJvmBinarySourceElement)source).getBinaryClass();
+    if (binaryClass instanceof VirtualFileKotlinClass) {
+      VirtualFile file=((VirtualFileKotlinClass)binaryClass).getFile();
+      if (file.getFileSystem().getProtocol() == StandardFileSystems.FILE_PROTOCOL) {
+        File ioFile=VfsUtilCore.virtualToIoFile(file);
+        return ioFile.getAbsolutePath().startsWith(outDirectory.getAbsolutePath() + File.separator);
+      }
     }
   }
   return false;
