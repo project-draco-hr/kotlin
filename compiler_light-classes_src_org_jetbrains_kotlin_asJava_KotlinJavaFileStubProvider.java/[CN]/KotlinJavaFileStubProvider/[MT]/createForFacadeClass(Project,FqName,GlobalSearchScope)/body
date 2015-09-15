@@ -30,6 +30,16 @@
 ;
     }
     @Override public void generate(    @NotNull GenerationState state,    @NotNull Collection<JetFile> files){
+      if (!files.isEmpty()) {
+        JetFile representativeFile=files.iterator().next();
+        JvmFileClassInfo fileClassInfo=NoResolveFileClassesProvider.INSTANCE$.getFileClassInfo(representativeFile);
+        if (!fileClassInfo.getIsMultifileClass()) {
+          PackageCodegen codegen=state.getFactory().forPackage(representativeFile.getPackageFqName(),files);
+          codegen.generate(CompilationErrorHandler.THROW_EXCEPTION);
+          state.getFactory().asList();
+          return;
+        }
+      }
       MultifileClassCodegen codegen=state.getFactory().forMultifileClass(facadeFqName,files);
       codegen.generate(CompilationErrorHandler.THROW_EXCEPTION);
       state.getFactory().asList();
