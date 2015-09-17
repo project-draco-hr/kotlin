@@ -1,0 +1,27 @@
+{
+  if (ErrorUtils.isError(descriptor)) {
+    throw new IllegalStateException("Cannot get FQ name of error class: " + descriptor);
+  }
+  QualifiedName.Builder builder=QualifiedName.newBuilder();
+  builder.setKind(QualifiedName.Kind.CLASS);
+  DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
+  String shortName;
+  if (containingDeclaration instanceof PackageFragmentDescriptor) {
+    shortName=descriptor.getName().asString();
+    FqName packageFqName=((PackageFragmentDescriptor)containingDeclaration).getFqName();
+    if (!packageFqName.isRoot()) {
+      builder.setParentQualifiedName(getFqNameIndex(packageFqName));
+    }
+  }
+ else   if (containingDeclaration instanceof ClassDescriptor) {
+    shortName=descriptor.getName().asString();
+    ClassDescriptor outerClass=(ClassDescriptor)containingDeclaration;
+    builder.setParentQualifiedName(getFqNameIndex(outerClass));
+  }
+ else {
+    builder.setKind(QualifiedName.Kind.LOCAL);
+    shortName=extension.getLocalClassName(descriptor);
+  }
+  builder.setShortName(getStringIndex(shortName));
+  return qualifiedNames.intern(new FqNameProto(builder));
+}
