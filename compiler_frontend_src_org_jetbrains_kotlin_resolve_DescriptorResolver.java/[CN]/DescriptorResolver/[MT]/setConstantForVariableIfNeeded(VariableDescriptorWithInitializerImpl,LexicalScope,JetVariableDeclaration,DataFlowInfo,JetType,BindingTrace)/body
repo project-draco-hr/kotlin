@@ -5,7 +5,12 @@
     @Nullable @Override public ConstantValue<?> invoke(){
       JetExpression initializer=variable.getInitializer();
       JetType initializerType=expressionTypingServices.safeGetType(scope,initializer,variableType,dataFlowInfo,trace);
-      return constantExpressionEvaluator.evaluateToConstantValue(initializer,trace,initializerType);
+      CompileTimeConstant<?> constant=constantExpressionEvaluator.evaluateExpression(initializer,trace,initializerType);
+      if (constant == null)       return null;
+      if (constant.getUsesNonConstValAsConstant() && variableDescriptor.isConst()) {
+        trace.report(Errors.NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION.on(initializer));
+      }
+      return constant.toConstantValue(initializerType);
     }
   }
 ,null));
