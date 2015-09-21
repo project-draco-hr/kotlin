@@ -3,11 +3,6 @@
   DescriptorSerializer serializer=DescriptorSerializer.createTopLevel(new JvmSerializerExtension(v.getSerializationBindings(),typeMapper));
   ProtoBuf.Callable callableProto=serializer.callableProto(funDescriptor).build();
   AnnotationVisitor av=v.getVisitor().visitAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_CALLABLE),true);
-  JvmCodegenUtil.writeAbiVersion(av);
-  AnnotationVisitor array=av.visitArray(JvmAnnotationNames.DATA_FIELD_NAME);
-  for (  String string : BitEncoding.encodeBytes(serializer.serialize(callableProto))) {
-    array.visit(null,string);
-  }
-  array.visitEnd();
+  writeAnnotationData(av,serializer.serialize(callableProto));
   av.visitEnd();
 }

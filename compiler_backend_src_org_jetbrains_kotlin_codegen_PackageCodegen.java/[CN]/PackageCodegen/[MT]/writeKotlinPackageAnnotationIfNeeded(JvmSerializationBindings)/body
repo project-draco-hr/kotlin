@@ -11,11 +11,6 @@
   ContainerUtil.addIfNotNull(packageFragments,compiledPackageFragment);
   ProtoBuf.Package packageProto=serializer.packageProtoWithoutDescriptors().build();
   AnnotationVisitor av=v.newAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_PACKAGE),true);
-  JvmCodegenUtil.writeAbiVersion(av);
-  AnnotationVisitor array=av.visitArray(JvmAnnotationNames.DATA_FIELD_NAME);
-  for (  String string : BitEncoding.encodeBytes(serializer.serialize(packageProto))) {
-    array.visit(null,string);
-  }
-  array.visitEnd();
+  AsmUtil.writeAnnotationData(av,serializer.serialize(packageProto));
   av.visitEnd();
 }
