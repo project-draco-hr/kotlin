@@ -1,0 +1,35 @@
+{
+  JvmFileClassInfo fileClassInfo=state.getFileClassesProvider().getFileClassInfo(file);
+  if (fileClassInfo.getIsMultifileClass()) {
+    Type fileFacadeType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFacadeClassFqName());
+    addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,fileFacadeType);
+    return null;
+  }
+  Type fileClassType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFileClassFqName());
+  PackageContext packagePartContext=state.getRootContext().intoPackagePart(packageFragment,fileClassType);
+  boolean generatePackagePart=false;
+  for (  JetDeclaration declaration : file.getDeclarations()) {
+    if (declaration instanceof JetProperty || declaration instanceof JetNamedFunction) {
+      generatePackagePart=true;
+    }
+ else     if (declaration instanceof JetClassOrObject) {
+      JetClassOrObject classOrObject=(JetClassOrObject)declaration;
+      if (state.getGenerateDeclaredClassFilter().shouldGenerateClass(classOrObject)) {
+        generateClassOrObject(classOrObject);
+      }
+    }
+ else     if (declaration instanceof JetScript) {
+      JetScript script=(JetScript)declaration;
+      if (state.getGenerateDeclaredClassFilter().shouldGenerateScript(script)) {
+        ScriptCodegen.createScriptCodegen(script,state,packagePartContext).generate();
+      }
+    }
+  }
+  if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file))   return null;
+  String name=fileClassType.getInternalName();
+  packageParts.getParts().add(name.substring(name.lastIndexOf('/') + 1));
+  ClassBuilder builder=state.getFactory().newVisitor(PackagePart(file,packageFragment),fileClassType,file);
+  new PackagePartCodegen(builder,file,fileClassType,packagePartContext,state).generate();
+  addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,fileClassType);
+  return builder;
+}
