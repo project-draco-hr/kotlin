@@ -2,9 +2,11 @@
   CompilerConfiguration configuration=environment.getConfiguration();
   IncrementalCompilationComponents incrementalCompilationComponents=configuration.get(JVMConfigurationKeys.INCREMENTAL_COMPILATION_COMPONENTS);
   Collection<FqName> packagesWithObsoleteParts;
+  List<FqName> obsoleteMultifileClasses;
   TargetId targetId=null;
   if (module == null || incrementalCompilationComponents == null) {
     packagesWithObsoleteParts=Collections.emptySet();
+    obsoleteMultifileClasses=Collections.emptyList();
   }
  else {
     targetId=ModulesPackage.TargetId(module);
@@ -13,9 +15,13 @@
     for (    String internalName : incrementalCache.getObsoletePackageParts()) {
       packagesWithObsoleteParts.add(JvmClassName.byInternalName(internalName).getPackageFqName());
     }
+    obsoleteMultifileClasses=new ArrayList<FqName>();
+    for (    String obsoleteFacadeInternalName : incrementalCache.getObsoleteMultifileClasses()) {
+      obsoleteMultifileClasses.add(JvmClassName.byInternalName(obsoleteFacadeInternalName).getFqNameForClassNameWithoutDollars());
+    }
   }
   BindingTraceContext diagnosticHolder=new BindingTraceContext();
-  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),configuration.get(JVMConfigurationKeys.PACKAGE_FACADES_AS_MULTIFILE_CLASSES,false),diagnosticHolder,packagesWithObsoleteParts,targetId,moduleName,outputDirectory,incrementalCompilationComponents);
+  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),configuration.get(JVMConfigurationKeys.PACKAGE_FACADES_AS_MULTIFILE_CLASSES,false),diagnosticHolder,packagesWithObsoleteParts,obsoleteMultifileClasses,targetId,moduleName,outputDirectory,incrementalCompilationComponents);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   long generationStart=PerformanceCounter.Companion.currentTime();
   KotlinCodegenFacade.compileCorrectFiles(generationState,CompilationErrorHandler.THROW_EXCEPTION);

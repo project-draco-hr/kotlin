@@ -1,20 +1,33 @@
 {
   DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
   if (containingDeclaration instanceof PackageFragmentDescriptor) {
+    Name implClassName=JvmFileClassUtil.getImplClassName(descriptor);
+    if (isImplementation) {
+      return implClassName.asString();
+    }
     PackageFragmentDescriptor packageFragmentDescriptor=(PackageFragmentDescriptor)containingDeclaration;
     JetScope scope=packageFragmentDescriptor.getMemberScope();
     if (scope instanceof AbstractScopeAdapter) {
       scope=((AbstractScopeAdapter)scope).getActualScope();
     }
     if (scope instanceof LazyJavaPackageScope) {
-      Name implClassName=JvmFileClassUtil.getImplClassName(descriptor);
       return ((LazyJavaPackageScope)scope).getFacadeSimpleNameForPartSimpleName(implClassName.asString());
     }
  else     if (packageFragmentDescriptor instanceof BuiltinsPackageFragment) {
       return PackageClassUtils.getPackageClassFqName(packageFragmentDescriptor.getFqName()).shortName().asString();
     }
+ else     if (packageFragmentDescriptor instanceof IncrementalPackageFragmentProvider.IncrementalPackageFragment) {
+      IncrementalPackageFragmentProvider.IncrementalPackageFragment incrementalPackageFragment=(IncrementalPackageFragmentProvider.IncrementalPackageFragment)packageFragmentDescriptor;
+      String implClassInternalName=internalNameByFqNameWithoutInnerClasses(packageFragmentDescriptor.getFqName().child(implClassName));
+      String facadeClassInternalName=incrementalPackageFragment.getMultifileFacade(implClassInternalName);
+      if (facadeClassInternalName == null) {
+        return implClassName.asString();
+      }
  else {
-      Name implClassName=JvmFileClassUtil.getImplClassName(descriptor);
+        return getSimpleInternalName(facadeClassInternalName);
+      }
+    }
+ else {
       return implClassName.asString();
     }
   }

@@ -19,14 +19,15 @@
       filesInPackageClasses.putValue(file.getPackageFqName(),file);
     }
   }
+  Set<FqName> obsoleteMultifileClasses=new HashSet<FqName>(state.getObsoleteMultifileClasses());
+  for (  FqName multifileClassFqName : Sets.union(filesInMultifileClasses.keySet(),obsoleteMultifileClasses)) {
+    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
+    generateMultifileClass(state,multifileClassFqName,filesInMultifileClasses.get(multifileClassFqName),errorHandler);
+  }
   Set<FqName> packagesWithObsoleteParts=new HashSet<FqName>(state.getPackagesWithObsoleteParts());
   for (  FqName packageFqName : Sets.union(packagesWithObsoleteParts,filesInPackageClasses.keySet())) {
     ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
     generatePackage(state,packageFqName,filesInPackageClasses.get(packageFqName),errorHandler);
-  }
-  for (  FqName multifileClassFqName : filesInMultifileClasses.keySet()) {
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-    generateMultifileClass(state,multifileClassFqName,filesInMultifileClasses.get(multifileClassFqName),errorHandler);
   }
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   state.getFactory().done();

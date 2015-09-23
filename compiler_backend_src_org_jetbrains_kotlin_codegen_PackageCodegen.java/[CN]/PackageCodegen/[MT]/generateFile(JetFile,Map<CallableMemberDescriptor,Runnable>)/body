@@ -1,8 +1,10 @@
 {
   JvmFileClassInfo fileClassInfo=state.getFileClassesProvider().getFileClassInfo(file);
-  if (fileClassInfo.getTEMP_isMultifileClass()) {
-    Type fileFacadeType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFacadeClassFqName());
-    addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,fileFacadeType);
+  if (fileClassInfo.getIsMultifileClass()) {
+    FqName partClassFqName=fileClassInfo.getFileClassFqName();
+    Type delegateToType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(partClassFqName);
+    Type publicFacadeType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFacadeClassFqName());
+    addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,delegateToType,publicFacadeType);
     return null;
   }
   Type fileClassType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFileClassFqName());
@@ -30,6 +32,6 @@
   packageParts.getParts().add(name.substring(name.lastIndexOf('/') + 1));
   ClassBuilder builder=state.getFactory().newVisitor(PackagePart(file,packageFragment),fileClassType,file);
   new PackagePartCodegen(builder,file,fileClassType,packagePartContext,state).generate();
-  addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,fileClassType);
+  addDelegateToFileClassMemberTasks(file,generateCallableMemberTasks,fileClassType,fileClassType);
   return builder;
 }
