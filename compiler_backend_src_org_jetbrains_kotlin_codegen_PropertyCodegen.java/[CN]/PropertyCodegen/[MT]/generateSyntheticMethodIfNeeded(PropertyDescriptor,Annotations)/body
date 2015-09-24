@@ -3,7 +3,7 @@
   ReceiverParameterDescriptor receiver=descriptor.getExtensionReceiverParameter();
   String name=JvmAbi.getSyntheticMethodNameForAnnotatedProperty(descriptor.getName());
   String desc=receiver == null ? "()V" : "(" + typeMapper.mapType(receiver.getType()) + ")V";
-  if (!isTrait(context.getContextDescriptor()) || kind == OwnerKind.TRAIT_IMPL) {
+  if (!isTrait(context.getContextDescriptor()) || kind == OwnerKind.DEFAULT_IMPLS) {
     int flags=ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC;
     MethodVisitor mv=v.newMethod(OtherOrigin(descriptor),flags,name,desc,null,null);
     AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(new AnnotatedSimple(annotations),Type.VOID_TYPE,AnnotationUseSiteTarget.PROPERTY);
@@ -15,7 +15,7 @@
     Type tImplType=typeMapper.mapTraitImpl((ClassDescriptor)context.getContextDescriptor());
     v.getSerializationBindings().put(IMPL_CLASS_NAME_FOR_CALLABLE,descriptor,shortNameByAsmType(tImplType));
   }
-  if (kind != OwnerKind.TRAIT_IMPL) {
+  if (kind != OwnerKind.DEFAULT_IMPLS) {
     v.getSerializationBindings().put(SYNTHETIC_METHOD_FOR_PROPERTY,descriptor,new Method(name,desc));
   }
 }
