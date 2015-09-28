@@ -7,13 +7,21 @@
   final Set<PsiElement> assignments=Sets.newHashSet();
   for (  JetExpression expression : referenceExpressions) {
     PsiElement parent=expression.getParent();
-    if (parent instanceof JetBinaryExpression && ((JetBinaryExpression)parent).getOperationToken() == JetTokens.EQ && ((JetBinaryExpression)parent).getLeft() == expression) {
+    JetBinaryExpression assignment=JetPsiUtilKt.getAssignmentByLHS(expression);
+    if (assignment != null) {
+      assignments.add(parent);
+    }
+    if (parent instanceof JetUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(((JetUnaryExpression)parent).getOperationToken())) {
       assignments.add(parent);
     }
   }
   final JetExpression initializer;
   if (initializerInDeclaration != null) {
     initializer=initializerInDeclaration;
+    if (!assignments.isEmpty()) {
+      reportAmbiguousAssignment(project,editor,name,assignments);
+      return;
+    }
   }
  else {
     if (assignments.size() == 1) {
@@ -23,9 +31,7 @@
       initializer=null;
     }
     if (initializer == null) {
-      String key=assignments.isEmpty() ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
-      String message=RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key,name));
-      CommonRefactoringUtil.showErrorHint(project,editor,message,RefactoringBundle.message("inline.variable.title"),HelpID.INLINE_VARIABLE);
+      reportAmbiguousAssignment(project,editor,name,assignments);
       return;
     }
   }
