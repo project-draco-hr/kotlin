@@ -1,4 +1,9 @@
 {
   PsiElement identifier=getNameIdentifier();
-  return identifier != null ? identifier.replace(JetPsiFactory(this).createNameIdentifier(name)) : null;
+  if (identifier == null)   return null;
+  JetModifierList modifierList=getModifierList();
+  if (modifierList != null && modifierList.hasModifier(JetTokens.OPERATOR_KEYWORD) && !OperatorConventions.isConventionName(Name.identifierNoValidate(name))) {
+    removeModifier(JetTokens.OPERATOR_KEYWORD);
+  }
+  return identifier.replace(JetPsiFactory(this).createNameIdentifier(name));
 }
