@@ -1,13 +1,15 @@
 {
   for (  final DeserializedCallableMemberDescriptor member : previouslyCompiledCallables) {
-    final FqName delegateToFqName=JvmFileClassUtil.getPartFqNameForDeserializedCallable(member);
     generateCallableMemberTasks.put(member,new Runnable(){
       @Override public void run(){
-        FieldOwnerContext context=getPackageFacadeContextForPreviouslyCompiled(delegateToFqName);
+        JetTypeMapper.ContainingClassesInfo containingClasses=state.getTypeMapper().getContainingClassesForDeserializedCallable(member);
+        Type facadeType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(containingClasses.getFacadeClassId().asSingleFqName());
+        Type partType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(containingClasses.getImplClassId().asSingleFqName());
+        FieldOwnerContext context=state.getRootContext().intoPackageFacade(partType,compiledPackageFragment,facadeType);
         MemberCodegen<?> memberCodegen=createCodegenForPartOfPackageFacade(context);
         if (member instanceof DeserializedSimpleFunctionDescriptor) {
           DeserializedSimpleFunctionDescriptor function=(DeserializedSimpleFunctionDescriptor)member;
-          memberCodegen.functionCodegen.generateMethod(OtherOrigin(function),function,new FunctionGenerationStrategy(){
+          memberCodegen.functionCodegen.generateMethod(JvmDeclarationOriginKt.OtherOrigin(function),function,new FunctionGenerationStrategy(){
             @Override public void generateBody(            @NotNull MethodVisitor mv,            @NotNull FrameMap frameMap,            @NotNull JvmMethodSignature signature,            @NotNull MethodContext context,            @NotNull MemberCodegen<?> parentCodegen){
               throw new IllegalStateException("shouldn't be called");
             }
