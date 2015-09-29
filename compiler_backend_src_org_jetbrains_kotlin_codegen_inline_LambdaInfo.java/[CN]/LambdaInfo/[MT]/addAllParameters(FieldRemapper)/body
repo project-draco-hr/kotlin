@@ -1,17 +1,6 @@
 {
-  ParametersBuilder builder=ParametersBuilder.newBuilder();
-  builder.addThis(AsmTypes.OBJECT_TYPE,true).setLambda(this);
-  FunctionDescriptor lambdaDescriptor=getFunctionDescriptor();
-  ReceiverParameterDescriptor extensionParameter=lambdaDescriptor.getExtensionReceiverParameter();
-  if (extensionParameter != null) {
-    Type type=typeMapper.mapType(extensionParameter.getType());
-    builder.addNextParameter(type,false,null);
-  }
-  List<ValueParameterDescriptor> valueParameters=lambdaDescriptor.getValueParameters();
-  for (  ValueParameterDescriptor parameter : valueParameters) {
-    Type type=typeMapper.mapType(parameter.getType());
-    builder.addNextParameter(type,false,null);
-  }
+  JvmMethodSignature signature=typeMapper.mapSignature(getFunctionDescriptor());
+  ParametersBuilder builder=ParametersBuilder.initializeBuilderFrom(AsmTypes.OBJECT_TYPE,signature.getAsmMethod().getDescriptor(),this);
   for (  CapturedParamDesc info : getCapturedVars()) {
     CapturedParamInfo field=remapper.findField(new FieldInsnNode(0,info.getContainingLambdaName(),info.getFieldName(),""));
     builder.addCapturedParam(field,info.getFieldName());
