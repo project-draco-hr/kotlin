@@ -1,15 +1,13 @@
 {
   this.additionalShift=additionalShift;
-  this.allParamsSize=params.totalSize();
+  this.allParamsSize=params.getArgsSizeOnStack();
   this.params=params;
-  remapValues=new StackValue[params.totalSize()];
-  Integer[] declIndexesToActual=new Integer[params.totalSize()];
-  Integer[] actualDeclShifts=new Integer[params.totalSize()];
+  remapValues=new StackValue[params.getArgsSizeOnStack()];
+  Integer[] declIndexesToActual=new Integer[params.getArgsSizeOnStack()];
+  Integer[] actualDeclShifts=new Integer[params.getArgsSizeOnStack()];
   int index=0;
   for (  ParameterInfo param : params) {
-    if (param != ParameterInfo.STUB && param != CapturedParamInfo.STUB) {
-      declIndexesToActual[param.declarationIndex]=index;
-    }
+    declIndexesToActual[param.declarationIndex]=index;
     index++;
   }
   int realSize=0;
@@ -22,14 +20,12 @@
   }
   realSize=0;
   for (  ParameterInfo info : params) {
-    if (info != ParameterInfo.STUB && info != CapturedParamInfo.STUB) {
-      if (!info.isSkippedOrRemapped()) {
-        remapValues[actualDeclShifts[info.declarationIndex]]=StackValue.local(realSize,AsmTypes.OBJECT_TYPE);
-        realSize+=info.getType().getSize();
-      }
+    if (!info.isSkippedOrRemapped()) {
+      remapValues[actualDeclShifts[info.declarationIndex]]=StackValue.local(realSize,AsmTypes.OBJECT_TYPE);
+      realSize+=info.getType().getSize();
+    }
  else {
-        remapValues[actualDeclShifts[info.declarationIndex]]=info.isRemapped() ? info.getRemapValue() : null;
-      }
+      remapValues[actualDeclShifts[info.declarationIndex]]=info.isRemapped() ? info.getRemapValue() : null;
     }
   }
   actualParamsSize=realSize;
