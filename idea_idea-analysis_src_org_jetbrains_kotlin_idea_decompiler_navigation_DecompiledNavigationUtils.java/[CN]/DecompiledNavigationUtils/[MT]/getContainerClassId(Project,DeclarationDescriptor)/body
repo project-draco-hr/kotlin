@@ -7,11 +7,8 @@
   if (containerDescriptor instanceof PackageFragmentDescriptor) {
     FqName packageFQN=((PackageFragmentDescriptor)containerDescriptor).getFqName();
     if (referencedDescriptor instanceof DeserializedCallableMemberDescriptor) {
-      DeserializedCallableMemberDescriptor deserializedDescriptor=(DeserializedCallableMemberDescriptor)referencedDescriptor;
-      ProtoBuf.Callable proto=deserializedDescriptor.getProto();
-      NameResolver nameResolver=deserializedDescriptor.getNameResolver();
-      if (proto.hasExtension(JvmProtoBuf.implClassName)) {
-        Name partClassName=nameResolver.getName(proto.getExtension(JvmProtoBuf.implClassName));
+      Name partClassName=JvmFileClassUtil.getImplClassName((DeserializedCallableMemberDescriptor)referencedDescriptor);
+      if (partClassName != null) {
         FqName partFQN=packageFQN.child(partClassName);
         Collection<JetFile> multifileFacadeJetFiles=StaticFacadeIndexUtil.getMultifileClassForPart(partFQN,GlobalSearchScope.allScope(project),project);
         if (multifileFacadeJetFiles.isEmpty()) {
