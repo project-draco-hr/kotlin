@@ -22,6 +22,9 @@
       builder.setPrimaryConstructor(constructorBuilder);
     }
   }
+  for (  ConstructorDescriptor descriptor : classDescriptor.getConstructors()) {
+    builder.addConstructor(constructorProto(descriptor));
+  }
   for (  ConstructorDescriptor constructorDescriptor : getSecondaryConstructors(classDescriptor)) {
     builder.addSecondaryConstructor(callableProto(constructorDescriptor));
   }
@@ -30,6 +33,12 @@
       CallableMemberDescriptor member=(CallableMemberDescriptor)descriptor;
       if (member.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE)       continue;
       builder.addMember(callableProto(member));
+      if (descriptor instanceof PropertyDescriptor) {
+        builder.addProperty(propertyProto((PropertyDescriptor)descriptor));
+      }
+ else       if (descriptor instanceof FunctionDescriptor) {
+        builder.addFunction(functionProto((FunctionDescriptor)descriptor));
+      }
     }
   }
   for (  DeclarationDescriptor descriptor : sort(classDescriptor.getUnsubstitutedInnerClassesScope().getAllDescriptors())) {

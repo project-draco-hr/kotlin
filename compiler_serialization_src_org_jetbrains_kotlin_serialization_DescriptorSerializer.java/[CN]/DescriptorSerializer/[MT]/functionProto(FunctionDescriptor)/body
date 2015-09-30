@@ -1,0 +1,19 @@
+{
+  ProtoBuf.Function.Builder builder=ProtoBuf.Function.newBuilder();
+  DescriptorSerializer local=createChildSerializer();
+  builder.setFlags(Flags.getFunctionFlags(hasAnnotations(descriptor),descriptor.getVisibility(),descriptor.getModality(),descriptor.getKind(),descriptor.isOperator(),descriptor.isInfix()));
+  builder.setName(getSimpleNameIndex(descriptor.getName()));
+  builder.setReturnType(local.type(descriptor.getReturnType()));
+  for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
+    builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
+  }
+  ReceiverParameterDescriptor receiverParameter=descriptor.getExtensionReceiverParameter();
+  if (receiverParameter != null) {
+    builder.setReceiverType(local.type(receiverParameter.getType()));
+  }
+  for (  ValueParameterDescriptor valueParameterDescriptor : descriptor.getValueParameters()) {
+    builder.addValueParameter(local.valueParameter(valueParameterDescriptor));
+  }
+  extension.serializeFunction(descriptor,builder);
+  return builder;
+}
