@@ -1,0 +1,32 @@
+{
+  SignatureSerializer signatureSerializer=new SignatureSerializer();
+  PropertyGetterDescriptor getter=descriptor.getGetter();
+  PropertySetterDescriptor setter=descriptor.getSetter();
+  Method getterMethod=getter == null ? null : bindings.get(METHOD_FOR_FUNCTION,getter);
+  Method setterMethod=setter == null ? null : bindings.get(METHOD_FOR_FUNCTION,setter);
+  Pair<Type,String> field=bindings.get(FIELD_FOR_PROPERTY,descriptor);
+  String fieldName;
+  String fieldDesc;
+  boolean isStaticInOuter;
+  if (field != null) {
+    fieldName=field.second;
+    fieldDesc=field.first.getDescriptor();
+    isStaticInOuter=bindings.get(STATIC_FIELD_IN_OUTER_CLASS,descriptor);
+  }
+ else {
+    fieldName=null;
+    fieldDesc=null;
+    isStaticInOuter=false;
+  }
+  Method syntheticMethod=bindings.get(SYNTHETIC_METHOD_FOR_PROPERTY,descriptor);
+  JvmProtoBuf.JvmPropertySignature signature;
+  if (descriptor instanceof DeserializedPropertyDescriptor) {
+    DeserializedPropertyDescriptor deserializedCallable=(DeserializedPropertyDescriptor)descriptor;
+    signature=signatureSerializer.copyPropertySignature(deserializedCallable.getProto().getExtension(JvmProtoBuf.oldPropertySignature),deserializedCallable.getNameResolver());
+  }
+ else {
+    signature=signatureSerializer.propertySignature(fieldName,fieldDesc,isStaticInOuter,syntheticMethod != null ? signatureSerializer.methodSignature(syntheticMethod) : null,getterMethod != null ? signatureSerializer.methodSignature(getterMethod) : null,setterMethod != null ? signatureSerializer.methodSignature(setterMethod) : null);
+  }
+  proto.setExtension(JvmProtoBuf.propertySignature,signature);
+  saveImplClassName(descriptor,proto);
+}
