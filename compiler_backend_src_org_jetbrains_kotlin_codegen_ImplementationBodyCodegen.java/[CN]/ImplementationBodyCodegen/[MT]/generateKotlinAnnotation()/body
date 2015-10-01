@@ -1,21 +1,13 @@
 {
   if (state.getClassBuilderMode() != ClassBuilderMode.FULL)   return;
-  KotlinClass.Kind kind;
-  if (isAnonymousObject(descriptor)) {
-    kind=KotlinClass.Kind.ANONYMOUS_OBJECT;
-  }
- else   if (isTopLevelOrInnerClass(descriptor)) {
-    kind=null;
-  }
- else {
-    kind=KotlinClass.Kind.LOCAL_CLASS;
+  if (!isTopLevelOrInnerClass(descriptor)) {
+    AnnotationVisitor av=v.getVisitor().visitAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_LOCAL_CLASS),true);
+    av.visit(JvmAnnotationNames.VERSION_FIELD_NAME,JvmAbi.VERSION.toArray());
+    av.visitEnd();
   }
   DescriptorSerializer serializer=DescriptorSerializer.create(descriptor,new JvmSerializerExtension(v.getSerializationBindings(),typeMapper));
   ProtoBuf.Class classProto=serializer.classProto(descriptor).build();
   AnnotationVisitor av=v.getVisitor().visitAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_CLASS),true);
   writeAnnotationData(av,serializer,classProto);
-  if (kind != null) {
-    av.visitEnum(JvmAnnotationNames.KIND_FIELD_NAME,Type.getObjectType(KotlinClass.KIND_INTERNAL_NAME).getDescriptor(),kind.toString());
-  }
   av.visitEnd();
 }
