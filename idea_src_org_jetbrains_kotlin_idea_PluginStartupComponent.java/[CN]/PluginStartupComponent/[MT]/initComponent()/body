@@ -4,4 +4,14 @@
   JarUserDataManager.INSTANCE$.register(HasCompiledKotlinInJar.INSTANCE$);
   BuiltInsReferenceResolver.Companion.refreshBuiltIns();
   DebuggerFiltersUtilKt.addKotlinStdlibDebugFilterIfNeeded();
+  UpdateChecker.getDisabledToUpdatePlugins().add("org.jetbrains.kotlin");
+  EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter(){
+    @Override public void documentChanged(    DocumentEvent e){
+      VirtualFile virtualFile=FileDocumentManager.getInstance().getFile(e.getDocument());
+      if (virtualFile != null && virtualFile.getFileType() == JetFileType.INSTANCE) {
+        KotlinPluginUpdater.Companion.getInstance().kotlinFileEdited();
+      }
+    }
+  }
+);
 }
