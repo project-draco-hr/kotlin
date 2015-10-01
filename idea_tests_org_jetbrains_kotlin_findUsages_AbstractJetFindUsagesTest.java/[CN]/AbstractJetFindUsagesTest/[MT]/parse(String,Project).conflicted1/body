@@ -1,3 +1,18 @@
 {
-  return new JavaVariableFindUsagesOptions(project);
+  KotlinPropertyFindUsagesOptions options=new KotlinPropertyFindUsagesOptions(project);
+  options.isUsages=false;
+  for (  String s : InTextDirectivesUtils.findListWithPrefixes(text,"// OPTIONS: ")) {
+    if (parseCommonOptions(options,s))     continue;
+    if (s.equals("overrides")) {
+      options.setSearchOverrides(true);
+    }
+ else     if (s.equals("skipRead")) {
+      options.isReadAccess=false;
+    }
+ else     if (s.equals("skipWrite")) {
+      options.isWriteAccess=false;
+    }
+ else     fail("Invalid option: " + s);
+  }
+  return options;
 }
