@@ -1,0 +1,22 @@
+{
+  EffectiveVisibility functionVisibility=EffectiveVisibility.Companion.forMember(functionDescriptor);
+  if (!(function instanceof JetConstructor)) {
+    EffectiveVisibility returnTypeVisibility=EffectiveVisibility.Companion.forType(functionDescriptor.getReturnType());
+    if (!returnTypeVisibility.sameOrMorePermissive(functionVisibility)) {
+      PsiElement reportOn=function.getNameIdentifier();
+      if (reportOn == null) {
+        reportOn=function;
+      }
+      trace.report(EXPOSED_FUNCTION_RETURN_TYPE.on(reportOn,functionVisibility,returnTypeVisibility));
+    }
+  }
+  int i=0;
+  for (  ValueParameterDescriptor parameterDescriptor : functionDescriptor.getValueParameters()) {
+    EffectiveVisibility typeVisibility=EffectiveVisibility.Companion.forType(parameterDescriptor.getType());
+    if (!typeVisibility.sameOrMorePermissive(functionVisibility) && i < function.getValueParameters().size()) {
+      trace.report(EXPOSED_PARAMETER_TYPE.on(function.getValueParameters().get(i),functionVisibility,typeVisibility));
+    }
+    i++;
+  }
+  checkMemberReceiverExposedType(function.getReceiverTypeReference(),functionDescriptor);
+}
