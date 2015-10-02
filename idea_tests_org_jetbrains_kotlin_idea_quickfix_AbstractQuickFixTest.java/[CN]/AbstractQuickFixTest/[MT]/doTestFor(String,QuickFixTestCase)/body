@@ -4,8 +4,10 @@
   final File testFile=new File(testFullPath);
   CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(),new Runnable(){
     @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod","CallToPrintStackTrace"}) @Override public void run(){
+      String fileText="";
       try {
-        String contents=StringUtil.convertLineSeparators(FileUtil.loadFile(testFile,CharsetToolkit.UTF8_CHARSET));
+        fileText=FileUtil.loadFile(testFile,CharsetToolkit.UTF8_CHARSET);
+        String contents=StringUtil.convertLineSeparators(fileText);
         quickFixTestCase.configureFromFileText(testFile.getName(),contents);
         quickFixTestCase.bringRealEditorBack();
         checkForUnexpectedActions();
@@ -17,6 +19,9 @@
 catch (      Throwable e) {
         e.printStackTrace();
         fail(testName);
+      }
+ finally {
+        unconfigureLibrariesAsSpecified(fileText);
       }
     }
   }
