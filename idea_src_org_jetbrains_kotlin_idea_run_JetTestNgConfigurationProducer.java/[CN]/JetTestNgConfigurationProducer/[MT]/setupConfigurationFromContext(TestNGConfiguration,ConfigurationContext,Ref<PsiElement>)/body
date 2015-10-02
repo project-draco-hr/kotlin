@@ -15,8 +15,9 @@
   if (ProjectStructureUtil.isJsKotlinModule(jetFile)) {
     return false;
   }
-  JetNamedFunction function=PsiTreeUtil.getParentOfType(leaf,JetNamedFunction.class,false);
-  if (function != null) {
+  JetNamedDeclaration declarationToRun=getDeclarationToRun(leaf);
+  if (declarationToRun instanceof JetNamedFunction) {
+    JetNamedFunction function=(JetNamedFunction)declarationToRun;
     @SuppressWarnings("unchecked") JetElement owner=PsiTreeUtil.getParentOfType(function,JetFunction.class,JetClass.class);
     if (owner instanceof JetClass) {
       PsiClass delegate=LightClassUtil.INSTANCE$.getPsiClass((JetClass)owner);
@@ -32,16 +33,12 @@
       }
     }
   }
-  JetClass jetClass=PsiTreeUtil.getParentOfType(leaf,JetClass.class,false);
-  if (jetClass == null) {
-    jetClass=getClassDeclarationInFile(jetFile);
+  if (declarationToRun instanceof JetClass) {
+    PsiClass delegate=LightClassUtil.INSTANCE$.getPsiClass((JetClassOrObject)declarationToRun);
+    if (!isTestNGClass(delegate)) {
+      return false;
+    }
+    return configure(configuration,location,context,project,delegate,null);
   }
-  if (jetClass == null) {
-    return false;
-  }
-  PsiClass delegate=LightClassUtil.INSTANCE$.getPsiClass(jetClass);
-  if (!isTestNGClass(delegate)) {
-    return false;
-  }
-  return configure(configuration,location,context,project,delegate,null);
+  return false;
 }

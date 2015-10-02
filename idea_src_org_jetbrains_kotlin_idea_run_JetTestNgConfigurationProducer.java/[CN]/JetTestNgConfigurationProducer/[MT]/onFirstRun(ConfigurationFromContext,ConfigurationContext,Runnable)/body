@@ -1,0 +1,41 @@
+{
+  JetNamedDeclaration declarationToRun=getDeclarationToRun(configuration.getSourceElement());
+  final PsiNamedElement lightElement=CollectionsKt.firstOrNull(LightClassUtilsKt.toLightElements(declarationToRun));
+  if (lightElement instanceof PsiMethod || lightElement instanceof PsiClass) {
+    PsiMethod psiMethod;
+    PsiClass containingClass;
+    if (lightElement instanceof PsiMethod) {
+      psiMethod=(PsiMethod)lightElement;
+      containingClass=psiMethod.getContainingClass();
+    }
+ else {
+      psiMethod=null;
+      containingClass=(PsiClass)lightElement;
+    }
+    InheritorChooser inheritorChooser=new InheritorChooser(){
+      @Override protected void runForClasses(      List<PsiClass> classes,      PsiMethod method,      ConfigurationContext context,      Runnable performRunnable){
+        ((TestNGConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes,method);
+        super.runForClasses(classes,method,context,performRunnable);
+      }
+      @Override protected void runForClass(      PsiClass aClass,      PsiMethod psiMethod,      ConfigurationContext context,      Runnable performRunnable){
+        if (lightElement instanceof PsiMethod) {
+          Project project=psiMethod.getProject();
+          MethodLocation methodLocation=new MethodLocation(project,psiMethod,PsiLocation.fromPsiElement(aClass));
+          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setMethodConfiguration(methodLocation);
+        }
+ else {
+          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setClassConfiguration(aClass);
+        }
+        super.runForClass(aClass,psiMethod,context,performRunnable);
+      }
+    }
+;
+    if (inheritorChooser.runMethodInAbstractClass(context,startRunnable,psiMethod,containingClass,new Condition<PsiClass>(){
+      @Override public boolean value(      PsiClass aClass){
+        return aClass.hasModifierProperty(PsiModifier.ABSTRACT) && TestNGUtil.hasTest(aClass);
+      }
+    }
+))     return;
+  }
+  super.onFirstRun(configuration,context,startRunnable);
+}
