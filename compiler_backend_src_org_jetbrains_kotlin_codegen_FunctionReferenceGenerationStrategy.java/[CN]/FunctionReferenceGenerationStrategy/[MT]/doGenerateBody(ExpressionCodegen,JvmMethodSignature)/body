@@ -5,6 +5,16 @@
   final ReceiverValue extensionReceiver=computeAndSaveReceiver(signature,codegen,referencedFunction.getExtensionReceiverParameter());
   computeAndSaveArguments(fakeArguments,codegen);
   ResolvedCall<CallableDescriptor> fakeResolvedCall=new DelegatingResolvedCall<CallableDescriptor>(resolvedCall){
+    private final Map<ValueParameterDescriptor,ResolvedValueArgument> argumentMap;
+{
+      argumentMap=new LinkedHashMap<ValueParameterDescriptor,ResolvedValueArgument>(fakeArguments.size());
+      int index=0;
+      List<ValueParameterDescriptor> parameters=callableDescriptor.getValueParameters();
+      for (      ValueArgument argument : fakeArguments) {
+        argumentMap.put(parameters.get(index),new ExpressionValueArgument(argument));
+        index++;
+      }
+    }
     @NotNull @Override public ReceiverValue getExtensionReceiver(){
       return extensionReceiver;
     }
@@ -12,11 +22,10 @@
       return dispatchReceiver;
     }
     @NotNull @Override public List<ResolvedValueArgument> getValueArgumentsByIndex(){
-      List<ResolvedValueArgument> result=new ArrayList<ResolvedValueArgument>(fakeArguments.size());
-      for (      ValueArgument argument : fakeArguments) {
-        result.add(new ExpressionValueArgument(argument));
-      }
-      return result;
+      return new ArrayList<ResolvedValueArgument>(argumentMap.values());
+    }
+    @NotNull @Override public Map<ValueParameterDescriptor,ResolvedValueArgument> getValueArguments(){
+      return argumentMap;
     }
   }
 ;
