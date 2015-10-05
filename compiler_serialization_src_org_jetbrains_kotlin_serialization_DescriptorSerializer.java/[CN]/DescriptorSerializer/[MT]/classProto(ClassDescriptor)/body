@@ -11,28 +11,13 @@
       builder.addSupertype(type(supertype));
     }
   }
-  ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
-  if (primaryConstructor != null) {
-    if (DescriptorFactory.isDefaultPrimaryConstructor(primaryConstructor)) {
-      builder.setPrimaryConstructor(ProtoBuf.Class.PrimaryConstructor.getDefaultInstance());
-    }
- else {
-      ProtoBuf.Class.PrimaryConstructor.Builder constructorBuilder=ProtoBuf.Class.PrimaryConstructor.newBuilder();
-      constructorBuilder.setData(callableProto(primaryConstructor));
-      builder.setPrimaryConstructor(constructorBuilder);
-    }
-  }
   for (  ConstructorDescriptor descriptor : classDescriptor.getConstructors()) {
     builder.addConstructor(constructorProto(descriptor));
-  }
-  for (  ConstructorDescriptor constructorDescriptor : getSecondaryConstructors(classDescriptor)) {
-    builder.addSecondaryConstructor(callableProto(constructorDescriptor));
   }
   for (  DeclarationDescriptor descriptor : sort(classDescriptor.getDefaultType().getMemberScope().getAllDescriptors())) {
     if (descriptor instanceof CallableMemberDescriptor) {
       CallableMemberDescriptor member=(CallableMemberDescriptor)descriptor;
       if (member.getKind() == CallableMemberDescriptor.Kind.FAKE_OVERRIDE)       continue;
-      builder.addMember(callableProto(member));
       if (descriptor instanceof PropertyDescriptor) {
         builder.addProperty(propertyProto((PropertyDescriptor)descriptor));
       }
