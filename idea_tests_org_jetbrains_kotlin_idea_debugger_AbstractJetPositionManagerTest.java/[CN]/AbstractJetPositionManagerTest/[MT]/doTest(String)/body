@@ -1,12 +1,19 @@
 {
   if (fileName.endsWith(".kt")) {
-    String path=KotlinPackage.substringAfter(fileName,PluginTestCaseBase.TEST_DATA_PROJECT_RELATIVE.substring(1),fileName);
-    configureByFile(path);
+    String path=getPath(fileName);
+    myFixture.configureByFile(path);
   }
  else {
-    VirtualFile rootDir=PsiTestUtil.createTestProjectStructure(myProject,myModule,fileName,myFilesToDelete,false);
-    prepareProject(rootDir);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    String path=getPath(fileName);
+    SequencesKt.forEach(FilesKt.walkTopDown(new File(path)),new Function1<File,Unit>(){
+      @Override public Unit invoke(      File file){
+        String fileName=file.getName();
+        String path=getPath(fileName);
+        myFixture.configureByFile(path);
+        return null;
+      }
+    }
+);
   }
   performTest();
 }
