@@ -3,12 +3,13 @@
   if (descriptor.getVisibility() == Visibilities.INVISIBLE_FAKE)   return;
   Collection<? extends CallableMemberDescriptor> directOverridden=descriptor.getOverriddenDescriptors();
   if (directOverridden.size() == 0) {
-    throw new IllegalStateException("A 'fake override' must override something");
+    throw new IllegalStateException("A 'fake override' " + descriptor.getName().asString() + " must override something");
   }
   Map<CallableMemberDescriptor,Set<CallableMemberDescriptor>> overriddenDeclarationsByDirectParent=collectOverriddenDeclarations(directOverridden);
   List<CallableMemberDescriptor> allOverriddenDeclarations=ContainerUtil.flatten(overriddenDeclarationsByDirectParent.values());
   Set<CallableMemberDescriptor> allFilteredOverriddenDeclarations=filterOutOverridden(Sets.newLinkedHashSet(allOverriddenDeclarations));
   Set<CallableMemberDescriptor> relevantDirectlyOverridden=getRelevantDirectlyOverridden(overriddenDeclarationsByDirectParent,allFilteredOverriddenDeclarations);
+  collectJava8MissingOverrides(relevantDirectlyOverridden,abstractInBaseClassNoImpl,conflictingInterfaceOverrides);
   List<CallableMemberDescriptor> implementations=collectImplementations(relevantDirectlyOverridden);
   if (implementations.size() == 1 && isReturnTypeOkForOverride(descriptor,implementations.get(0)))   return;
   List<CallableMemberDescriptor> abstractOverridden=new ArrayList<CallableMemberDescriptor>(allFilteredOverriddenDeclarations.size());

@@ -4,11 +4,21 @@
   }
   Set<CallableMemberDescriptor> abstractNoImpl=Sets.newLinkedHashSet();
   Set<CallableMemberDescriptor> manyImpl=Sets.newLinkedHashSet();
-  collectMissingImplementations(classDescriptor,abstractNoImpl,manyImpl);
-  if (!manyImpl.isEmpty()) {
-    trace.report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(klass,klass,manyImpl.iterator().next()));
+  Set<CallableMemberDescriptor> abstractInBaseClassNoImpl=Sets.newLinkedHashSet();
+  Set<CallableMemberDescriptor> conflictingInterfaceOverrides=Sets.newLinkedHashSet();
+  collectMissingImplementations(classDescriptor,abstractNoImpl,manyImpl,abstractInBaseClassNoImpl,conflictingInterfaceOverrides);
+  if (!classCanHaveAbstractMembers(classDescriptor)) {
+    if (!abstractInBaseClassNoImpl.isEmpty()) {
+      trace.report(ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.on(klass,klass,abstractInBaseClassNoImpl.iterator().next()));
+    }
+ else     if (!abstractNoImpl.isEmpty()) {
+      trace.report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(klass,klass,abstractNoImpl.iterator().next()));
+    }
   }
-  if (!classCanHaveAbstractMembers(classDescriptor) && !abstractNoImpl.isEmpty()) {
-    trace.report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(klass,klass,abstractNoImpl.iterator().next()));
+  if (!conflictingInterfaceOverrides.isEmpty()) {
+    trace.report(MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED.on(klass,klass,conflictingInterfaceOverrides.iterator().next()));
+  }
+ else   if (!manyImpl.isEmpty()) {
+    trace.report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(klass,klass,manyImpl.iterator().next()));
   }
 }
