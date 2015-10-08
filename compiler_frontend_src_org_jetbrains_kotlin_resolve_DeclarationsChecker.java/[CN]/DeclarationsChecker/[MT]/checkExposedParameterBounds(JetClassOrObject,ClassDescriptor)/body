@@ -1,0 +1,17 @@
+{
+  EffectiveVisibility classVisibility=EffectiveVisibility.Companion.forClass(classDescriptor);
+  List<JetTypeParameter> typeParameterList=klass.getTypeParameters();
+  int i=0;
+  for (  TypeParameterDescriptor typeParameterDescriptor : classDescriptor.getTypeConstructor().getParameters()) {
+    if (i >= typeParameterList.size())     return;
+    for (    JetType upperBound : typeParameterDescriptor.getUpperBounds()) {
+      EffectiveVisibility upperBoundVisibility=EffectiveVisibility.Companion.forType(upperBound);
+      if (!upperBoundVisibility.sameOrMorePermissive(classVisibility)) {
+        JetTypeParameter typeParameter=typeParameterList.get(i);
+        trace.report(EXPOSED_TYPE_PARAMETER_BOUND.on(typeParameter,classVisibility,upperBoundVisibility));
+        break;
+      }
+    }
+    i++;
+  }
+}
