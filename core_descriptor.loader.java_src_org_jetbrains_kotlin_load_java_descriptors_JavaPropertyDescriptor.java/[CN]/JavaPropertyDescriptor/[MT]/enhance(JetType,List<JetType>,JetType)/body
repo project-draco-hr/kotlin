@@ -1,2 +1,25 @@
 {
+  JavaPropertyDescriptor enhanced=new JavaPropertyDescriptor(getContainingDeclaration(),getAnnotations(),getModality(),getVisibility(),isVar(),getName(),getSource(),getOriginal(),isStaticFinal);
+  PropertyGetterDescriptorImpl newGetter=null;
+  PropertyGetterDescriptorImpl getter=getGetter();
+  if (getter != null) {
+    newGetter=new PropertyGetterDescriptorImpl(enhanced,getter.getAnnotations(),getter.getModality(),getter.getVisibility(),getter.hasBody(),getter.isDefault(),getKind(),getter,SourceElement.NO_SOURCE);
+    newGetter.initialize(enhancedReturnType);
+  }
+  PropertySetterDescriptorImpl newSetter=null;
+  PropertySetterDescriptor setter=getSetter();
+  if (setter != null) {
+    newSetter=new PropertySetterDescriptorImpl(enhanced,setter.getAnnotations(),setter.getModality(),setter.getVisibility(),setter.hasBody(),setter.isDefault(),getKind(),setter,SourceElement.NO_SOURCE);
+    newSetter.initialize(setter.getValueParameters().get(0));
+  }
+  enhanced.initialize(newGetter,newSetter);
+  enhanced.setSetterProjectedOut(isSetterProjectedOut());
+  if (compileTimeInitializer != null) {
+    enhanced.setCompileTimeInitializer(compileTimeInitializer);
+  }
+  for (  PropertyDescriptor descriptor : getOverriddenDescriptors()) {
+    enhanced.addOverriddenDescriptor(descriptor);
+  }
+  enhanced.setType(enhancedReturnType,getTypeParameters(),getDispatchReceiverParameter(),enhancedReceiverType);
+  return enhanced;
 }
