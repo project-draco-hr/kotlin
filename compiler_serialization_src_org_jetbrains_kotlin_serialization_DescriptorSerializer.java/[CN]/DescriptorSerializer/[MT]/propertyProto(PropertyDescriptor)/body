@@ -35,13 +35,23 @@
     builder.setFlags(flags);
   }
   builder.setName(getSimpleNameIndex(descriptor.getName()));
-  builder.setReturnType(local.type(descriptor.getType()));
+  if (useTypeTable()) {
+    builder.setReturnTypeId(local.typeId(descriptor.getType()));
+  }
+ else {
+    builder.setReturnType(local.type(descriptor.getType()));
+  }
   for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
     builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
   }
   ReceiverParameterDescriptor receiverParameter=descriptor.getExtensionReceiverParameter();
   if (receiverParameter != null) {
-    builder.setReceiverType(local.type(receiverParameter.getType()));
+    if (useTypeTable()) {
+      builder.setReceiverTypeId(local.typeId(receiverParameter.getType()));
+    }
+ else {
+      builder.setReceiverType(local.type(receiverParameter.getType()));
+    }
   }
   extension.serializeProperty(descriptor,builder);
   return builder;

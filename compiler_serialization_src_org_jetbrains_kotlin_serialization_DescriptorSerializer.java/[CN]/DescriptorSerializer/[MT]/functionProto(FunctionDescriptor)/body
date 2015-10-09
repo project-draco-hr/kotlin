@@ -6,16 +6,32 @@
     builder.setFlags(flags);
   }
   builder.setName(getSimpleNameIndex(descriptor.getName()));
-  builder.setReturnType(local.type(descriptor.getReturnType()));
+  if (useTypeTable()) {
+    builder.setReturnTypeId(local.typeId(descriptor.getReturnType()));
+  }
+ else {
+    builder.setReturnType(local.type(descriptor.getReturnType()));
+  }
   for (  TypeParameterDescriptor typeParameterDescriptor : descriptor.getTypeParameters()) {
     builder.addTypeParameter(local.typeParameter(typeParameterDescriptor));
   }
   ReceiverParameterDescriptor receiverParameter=descriptor.getExtensionReceiverParameter();
   if (receiverParameter != null) {
-    builder.setReceiverType(local.type(receiverParameter.getType()));
+    if (useTypeTable()) {
+      builder.setReceiverTypeId(local.typeId(receiverParameter.getType()));
+    }
+ else {
+      builder.setReceiverType(local.type(receiverParameter.getType()));
+    }
   }
   for (  ValueParameterDescriptor valueParameterDescriptor : descriptor.getValueParameters()) {
     builder.addValueParameter(local.valueParameter(valueParameterDescriptor));
+  }
+  if (serializeTypeTableToFunction) {
+    ProtoBuf.TypeTable typeTableProto=typeTable.serialize();
+    if (typeTableProto != null) {
+      builder.setTypeTable(typeTableProto);
+    }
   }
   extension.serializeFunction(descriptor,builder);
   return builder;

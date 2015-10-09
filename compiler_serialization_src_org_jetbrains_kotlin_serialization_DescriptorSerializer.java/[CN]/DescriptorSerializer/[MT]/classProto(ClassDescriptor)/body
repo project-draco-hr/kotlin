@@ -10,7 +10,12 @@
   }
   if (!KotlinBuiltIns.isSpecialClassWithNoSupertypes(classDescriptor)) {
     for (    JetType supertype : classDescriptor.getTypeConstructor().getSupertypes()) {
-      builder.addSupertype(type(supertype));
+      if (useTypeTable()) {
+        builder.addSupertypeId(typeId(supertype));
+      }
+ else {
+        builder.addSupertype(type(supertype));
+      }
     }
   }
   for (  ConstructorDescriptor descriptor : classDescriptor.getConstructors()) {
@@ -40,6 +45,10 @@
   ClassDescriptor companionObjectDescriptor=classDescriptor.getCompanionObjectDescriptor();
   if (companionObjectDescriptor != null) {
     builder.setCompanionObjectName(getSimpleNameIndex(companionObjectDescriptor.getName()));
+  }
+  ProtoBuf.TypeTable typeTableProto=typeTable.serialize();
+  if (typeTableProto != null) {
+    builder.setTypeTable(typeTableProto);
   }
   extension.serializeClass(classDescriptor,builder);
   return builder;
