@@ -1,6 +1,7 @@
 {
   PsiBuilder.Marker typeRefMarker=mark();
   parseAnnotations(ONLY_ESCAPED_REGULAR_ANNOTATIONS);
+  PsiBuilder.Marker typeElementMarker=mark();
   IElementType lookahead=lookahead(1);
   IElementType lookahead2=lookahead(2);
   boolean typeBeforeDot=true;
@@ -39,7 +40,7 @@
     typeBeforeDot=false;
   }
   myBuilder.disableJoiningComplexTokens();
-  typeRefMarker=parseNullableTypeSuffix(typeRefMarker);
+  typeElementMarker=parseNullableTypeSuffix(typeElementMarker);
   myBuilder.restoreJoiningComplexTokensState();
   if (typeBeforeDot && at(DOT)) {
     PsiBuilder.Marker functionType=typeRefMarker.precede();
@@ -56,5 +57,6 @@
     typeRefMarker=functionType.precede();
     functionType.done(FUNCTION_TYPE);
   }
+  typeElementMarker.drop();
   return typeRefMarker;
 }
