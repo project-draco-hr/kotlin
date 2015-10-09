@@ -5,7 +5,7 @@
     if (actionShouldBeAvailable) {
       List<String> texts=getActionsTexts(availableActions);
       Collection<HighlightInfo> infos=doHighlighting();
-      fail("Action with text '" + text + "' is not available in test "+ testFullPath+ "\n"+ "Available actions ("+ texts.size()+ "): "+ texts+ "\n"+ availableActions+ "\n"+ "Infos:"+ infos);
+      fail("Action with text '" + text + "' is not available in test "+ testFilePath+ "\n"+ "Available actions ("+ texts.size()+ "): "+ texts+ "\n"+ availableActions+ "\n"+ "Infos:"+ infos);
     }
  else {
       DirectiveBasedActionUtils.INSTANCE$.checkAvailableActionsAreExpected(getFile(),availableActions);
@@ -13,32 +13,14 @@
   }
  else {
     if (!actionShouldBeAvailable) {
-      fail("Action '" + text + "' is available (but must not) in test "+ testFullPath);
+      fail("Action '" + text + "' is available (but must not) in test "+ testFilePath);
     }
     ShowIntentionActionsHandler.chooseActionAndInvoke(getFile(),getEditor(),action,action.getText());
     UIUtil.dispatchAllInvocationEvents();
     if (!shouldBeAvailableAfterExecution()) {
       IntentionAction afterAction=LightQuickFixTestCase.findActionWithText(getAvailableActions(),text);
       if (afterAction != null) {
-        fail("Action '" + text + "' is still available after its invocation in test "+ testFullPath);
-      }
-    }
-    checkResultByFile(testFullPath.replace(".before.Main.",".after."));
-    PsiFile mainFile=myFile;
-    String mainFileName=mainFile.getName();
-    for (    PsiFile file : mainFile.getContainingDirectory().getFiles()) {
-      String fileName=file.getName();
-      if (fileName.equals(mainFileName) || !fileName.startsWith(extraFileNamePrefix(myFile.getName())))       continue;
-      myFile=file;
-      String extraFileFullPath=testFullPath.replace(mainFileName,fileName);
-      try {
-        checkResultByFile(extraFileFullPath.replace(".before.",".after."));
-      }
- catch (      AssertionError e) {
-        if (e.getMessage().startsWith("Cannot find file")) {
-          checkResultByFile(extraFileFullPath);
-        }
- else         throw e;
+        fail("Action '" + text + "' is still available after its invocation in test "+ testFilePath);
       }
     }
   }
