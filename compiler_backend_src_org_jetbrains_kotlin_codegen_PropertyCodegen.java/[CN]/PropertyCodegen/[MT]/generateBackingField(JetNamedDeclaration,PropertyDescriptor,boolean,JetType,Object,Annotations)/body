@@ -16,7 +16,7 @@
   }
   Type type=typeMapper.mapType(jetType);
   ClassBuilder builder=v;
-  boolean hasJvmFieldAnnotation=findJvmFieldAnnotation(propertyDescriptor) != null;
+  boolean hasJvmFieldAnnotation=hasJvmFieldAnnotation(propertyDescriptor);
   FieldOwnerContext backingFieldContext=context;
   boolean takeVisibilityFromDescriptor=propertyDescriptor.isLateInit() || propertyDescriptor.isConst();
   if (AsmUtil.isInstancePropertyWithStaticBackingField(propertyDescriptor)) {
@@ -25,7 +25,7 @@
       modifiers|=getVisibilityAccessFlag(propertyDescriptor);
     }
  else     if (hasJvmFieldAnnotation && !isDelegate) {
-      modifiers|=ACC_PUBLIC;
+      modifiers|=getDefaultVisibilityFlag(propertyDescriptor.getVisibility());
     }
  else {
       modifiers|=getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
@@ -41,7 +41,7 @@
     modifiers|=getVisibilityAccessFlag(propertyDescriptor);
   }
  else   if (!isDelegate && hasJvmFieldAnnotation) {
-    modifiers|=ACC_PUBLIC;
+    modifiers|=getDefaultVisibilityFlag(propertyDescriptor.getVisibility());
   }
  else   if (kind != OwnerKind.PACKAGE || isDelegate) {
     modifiers|=ACC_PRIVATE;
