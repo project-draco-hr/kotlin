@@ -9,7 +9,7 @@
     }
   }
   if (delegatedProperties.isEmpty())   return;
-  v.newField(NO_ORIGIN,ACC_PRIVATE | ACC_STATIC | ACC_FINAL| ACC_SYNTHETIC,JvmAbi.PROPERTY_METADATA_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE,null,null);
+  v.newField(NO_ORIGIN,ACC_PRIVATE | ACC_STATIC | ACC_FINAL| ACC_SYNTHETIC,JvmAbi.DELEGATED_PROPERTIES_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE,null,null);
   if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES)   return;
   InstructionAdapter iv=createOrGetClInitCodegen().v;
   iv.iconst(delegatedProperties.size());
@@ -18,11 +18,10 @@
     VariableDescriptor property=BindingContextUtils.getNotNull(bindingContext,VARIABLE,delegatedProperties.get(i));
     iv.dup();
     iv.iconst(i);
-    iv.anew(PROPERTY_METADATA_IMPL_TYPE);
-    iv.dup();
-    iv.visitLdcInsn(property.getName().asString());
-    iv.invokespecial(PROPERTY_METADATA_IMPL_TYPE.getInternalName(),"<init>","(Ljava/lang/String;)V",false);
-    iv.astore(PROPERTY_METADATA_IMPL_TYPE);
+    ReceiverParameterDescriptor dispatchReceiver=property.getDispatchReceiverParameter();
+    StackValue value=createOrGetClInitCodegen().generatePropertyReference(delegatedProperties.get(i).getDelegate(),property,property,dispatchReceiver != null ? new TransientReceiver(dispatchReceiver.getType()) : ReceiverValue.NO_RECEIVER);
+    value.put(PROPERTY_METADATA_TYPE,iv);
+    iv.astore(PROPERTY_METADATA_TYPE);
   }
-  iv.putstatic(thisAsmType.getInternalName(),JvmAbi.PROPERTY_METADATA_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE);
+  iv.putstatic(thisAsmType.getInternalName(),JvmAbi.DELEGATED_PROPERTIES_ARRAY_NAME,"[" + PROPERTY_METADATA_TYPE);
 }
