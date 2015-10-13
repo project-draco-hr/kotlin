@@ -3,7 +3,7 @@
   Project project=environment.getProject();
   this.psiFileFactory=(PsiFileFactoryImpl)PsiFileFactory.getInstance(project);
   this.trace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
-  MutableModuleContext moduleContext=TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project,getModuleName(environment));
+  MutableModuleContext moduleContext=TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project,ModuleNameKt.getModuleName(environment));
   this.module=moduleContext.getModule();
   scriptDeclarationFactory=new ScriptMutableDeclarationProviderFactory();
   FileScopeProvider.AdditionalScopes scopeProvider=new FileScopeProvider.AdditionalScopes(){
@@ -12,18 +12,18 @@
     }
   }
 ;
-  ContainerForReplWithJava container=DiPackage.createContainerForReplWithJava(moduleContext,trace,scriptDeclarationFactory,ProjectScope.getAllScope(project),scopeProvider,new JvmPackagePartProvider(environment));
+  ContainerForReplWithJava container=InjectionKt.createContainerForReplWithJava(moduleContext,trace,scriptDeclarationFactory,ProjectScope.getAllScope(project),scopeProvider,new JvmPackagePartProvider(environment));
   this.topDownAnalysisContext=new TopDownAnalysisContext(TopDownAnalysisMode.LocalDeclarations,DataFlowInfo.EMPTY,container.getResolveSession().getDeclarationScopeProvider());
   this.topDownAnalyzer=container.getLazyTopDownAnalyzerForTopLevel();
   this.resolveSession=container.getResolveSession();
   moduleContext.initializeModuleContents(new CompositePackageFragmentProvider(Arrays.asList(container.getResolveSession().getPackageFragmentProvider(),container.getJavaDescriptorResolver().getPackageFragmentProvider())));
   List<URL> classpath=Lists.newArrayList();
-  for (  File file : getJvmClasspathRoots(configuration)) {
+  for (  File file : JvmContentRootsKt.getJvmClasspathRoots(configuration)) {
     try {
       classpath.add(file.toURI().toURL());
     }
  catch (    MalformedURLException e) {
-      throw UtilsPackage.rethrow(e);
+      throw ExceptionUtilsKt.rethrow(e);
     }
   }
   this.classLoader=new ReplClassLoader(new URLClassLoader(classpath.toArray(new URL[classpath.size()]),null));

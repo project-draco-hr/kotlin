@@ -11,11 +11,11 @@ class KindAndCall {
     }
   }
   final Map<JetElement,KindAndCall> calls=new HashMap<JetElement,KindAndCall>();
-  PseudocodeTraverserPackage.traverse(pseudocode,FORWARD,new FunctionVoid1<Instruction>(){
+  PseudocodeTraverserKt.traverse(pseudocode,FORWARD,new FunctionVoid1<Instruction>(){
     public void execute(    @NotNull Instruction instruction){
       if (!(instruction instanceof CallInstruction))       return;
       CallInstruction callInstruction=(CallInstruction)instruction;
-      ResolvedCall<?> resolvedCall=getResolvedCall(callInstruction.getElement(),trace.getBindingContext());
+      ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(callInstruction.getElement(),trace.getBindingContext());
       if (resolvedCall == null)       return;
       CallableDescriptor functionDescriptor=resolvedCall.getResultingDescriptor();
       if (!functionDescriptor.getOriginal().equals(subroutineDescriptor))       return;
@@ -25,8 +25,8 @@ class KindAndCall {
         calls.put(element,new KindAndCall(IN_TRY,resolvedCall));
         return;
       }
-      boolean isTail=PseudocodeTraverserPackage.traverseFollowingInstructions(callInstruction,new HashSet<Instruction>(),FORWARD,new TailRecursionDetector(subroutine,callInstruction));
-      boolean sameDispatchReceiver=ResolvedCallUtilPackage.hasThisOrNoDispatchReceiver(resolvedCall,trace.getBindingContext());
+      boolean isTail=PseudocodeTraverserKt.traverseFollowingInstructions(callInstruction,new HashSet<Instruction>(),FORWARD,new TailRecursionDetector(subroutine,callInstruction));
+      boolean sameDispatchReceiver=ResolvedCallUtilKt.hasThisOrNoDispatchReceiver(resolvedCall,trace.getBindingContext());
       TailRecursionKind kind=isTail && sameDispatchReceiver ? TAIL_CALL : NON_TAIL;
       KindAndCall kindAndCall=calls.get(element);
       calls.put(element,new KindAndCall(combineKinds(kind,kindAndCall == null ? null : kindAndCall.kind),resolvedCall));

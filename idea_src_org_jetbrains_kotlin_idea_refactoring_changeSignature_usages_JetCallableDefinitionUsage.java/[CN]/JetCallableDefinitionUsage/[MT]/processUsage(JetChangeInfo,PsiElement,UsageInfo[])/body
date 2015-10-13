@@ -1,6 +1,6 @@
 {
   if (!(element instanceof JetNamedDeclaration))   return true;
-  JetPsiFactory psiFactory=JetPsiFactory(element.getProject());
+  JetPsiFactory psiFactory=JetPsiFactoryKt.JetPsiFactory(element.getProject());
   if (changeInfo.isNameChanged()) {
     PsiElement identifier=((JetCallableDeclaration)element).getNameIdentifier();
     if (identifier != null) {
@@ -8,7 +8,7 @@
     }
   }
   changeReturnTypeIfNeeded(changeInfo,element);
-  JetParameterList parameterList=PsiUtilPackage.getValueParameterList((JetNamedDeclaration)element);
+  JetParameterList parameterList=JetPsiUtilKt.getValueParameterList((JetNamedDeclaration)element);
   if (changeInfo.isParameterSetOrOrderChanged()) {
     processParameterListWithStructuralChanges(changeInfo,element,parameterList,psiFactory);
   }
@@ -19,14 +19,14 @@
       changeParameter(paramIndex,parameter,parameterInfo);
       paramIndex++;
     }
-    ShortenPackage.addToShorteningWaitSet(parameterList,Options.DEFAULT);
+    ShortenWaitingSetKt.addToShorteningWaitSet(parameterList,Options.DEFAULT);
   }
   if (element instanceof JetCallableDeclaration && changeInfo.isReceiverTypeChanged()) {
     String receiverTypeText=changeInfo.renderReceiverType((JetCallableDefinitionUsage<PsiElement>)this);
     JetTypeReference receiverTypeRef=receiverTypeText != null ? psiFactory.createType(receiverTypeText) : null;
-    JetTypeReference newReceiverTypeRef=TypeRefHelpersPackage.setReceiverTypeReference((JetCallableDeclaration)element,receiverTypeRef);
+    JetTypeReference newReceiverTypeRef=TypeRefHelpersKt.setReceiverTypeReference((JetCallableDeclaration)element,receiverTypeRef);
     if (newReceiverTypeRef != null) {
-      ShortenPackage.addToShorteningWaitSet(newReceiverTypeRef,ShortenReferences.Options.DEFAULT);
+      ShortenWaitingSetKt.addToShorteningWaitSet(newReceiverTypeRef,ShortenReferences.Options.DEFAULT);
     }
   }
   if (changeInfo.isVisibilityChanged() && !JetPsiUtil.isLocal((JetDeclaration)element)) {

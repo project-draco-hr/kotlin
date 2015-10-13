@@ -8,12 +8,12 @@
   }
 );
   CompilerConfiguration configuration=JetTestUtils.compilerConfigurationForTests(ConfigurationKind.JDK_ONLY,TestJdkKind.MOCK_JDK);
-  addKotlinSourceRoot(configuration,sourcesDir.getAbsolutePath());
-  addJavaSourceRoot(configuration,new File("compiler/testData/loadJava/include"));
-  addJavaSourceRoot(configuration,tmpdir);
+  ContentRootsKt.addKotlinSourceRoot(configuration,sourcesDir.getAbsolutePath());
+  JvmContentRootsKt.addJavaSourceRoot(configuration,new File("compiler/testData/loadJava/include"));
+  JvmContentRootsKt.addJavaSourceRoot(configuration,tmpdir);
   KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForTests(getTestRootDisposable(),configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
   BindingTrace trace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
-  ModuleContext moduleContext=TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(environment.getProject(),getModuleName(environment));
+  ModuleContext moduleContext=TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(environment.getProject(),ModuleNameKt.getModuleName(environment));
   TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegrationNoIncremental(moduleContext,environment.getSourceFiles(),trace,TopDownAnalysisMode.TopLevelDeclarations,new JvmPackagePartProvider(environment));
   PackageViewDescriptor packageView=moduleContext.getModule().getPackage(TEST_PACKAGE_FQNAME);
   checkJavaPackage(expectedFile,packageView,trace.getBindingContext(),DONT_INCLUDE_METHODS_OF_OBJECT);

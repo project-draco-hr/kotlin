@@ -16,17 +16,17 @@
   }
 );
   CompilerConfiguration configuration=JetTestUtils.compilerConfigurationForTests(ConfigurationKind.ALL,TestJdkKind.MOCK_JDK,JetTestUtils.getAnnotationsJar());
-  addJavaSourceRoot(configuration,dirFile);
+  JvmContentRootsKt.addJavaSourceRoot(configuration,dirFile);
   myEnvironment=KotlinCoreEnvironment.createForTests(getTestRootDisposable(),configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
   loadFiles(ArrayUtil.toStringArray(ktFilePaths));
   classFileFactory=GenerationUtils.compileManyFilesGetGenerationStateForTest(myEnvironment.getProject(),myFiles.getPsiFiles(),new JvmPackagePartProvider(myEnvironment)).getFactory();
   File kotlinOut=JetTestUtils.tmpDir(toString());
-  OutputUtilsPackage.writeAllTo(classFileFactory,kotlinOut);
+  OutputUtilsKt.writeAllTo(classFileFactory,kotlinOut);
   List<String> javacOptions=new ArrayList<String>(0);
   for (  JetFile jetFile : myFiles.getPsiFiles()) {
     javacOptions.addAll(InTextDirectivesUtils.findListWithPrefixes(jetFile.getText(),"// JAVAC_OPTIONS:"));
   }
   File javaOut=compileJava(javaFilePaths,Collections.singletonList(kotlinOut.getPath()),javacOptions);
-  addJvmClasspathRoot(configuration,javaOut);
+  JvmContentRootsKt.addJvmClasspathRoot(configuration,javaOut);
   blackBox();
 }

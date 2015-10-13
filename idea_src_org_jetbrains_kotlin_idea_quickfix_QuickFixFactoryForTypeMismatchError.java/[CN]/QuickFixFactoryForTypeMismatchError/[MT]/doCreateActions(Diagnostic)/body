@@ -40,20 +40,20 @@
     JetPropertyAccessor getter=property.getGetter();
     JetExpression initializer=property.getInitializer();
     if (QuickFixUtil.canEvaluateTo(initializer,expression) || (getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(property.getGetter(),expression))) {
-      LexicalScope scope=CorePackage.getResolutionScope(property,context,ResolutionUtils.getResolutionFacade(property));
+      LexicalScope scope=UtilsKt.getResolutionScope(property,context,ResolutionUtils.getResolutionFacade(property));
       JetType typeToInsert=TypeUtils.approximateWithResolvableType(expressionType,scope,false);
       actions.add(new ChangeVariableTypeFix(property,typeToInsert));
     }
   }
   PsiElement expressionParent=expression.getParent();
-  JetCallableDeclaration function=expressionParent instanceof JetReturnExpression ? BindingContextUtilPackage.getTargetFunction((JetReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
+  JetCallableDeclaration function=expressionParent instanceof JetReturnExpression ? BindingContextUtilsKt.getTargetFunction((JetReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,JetFunction.class,true);
   if (function instanceof JetFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
-    LexicalScope scope=CorePackage.getResolutionScope(function,context,ResolutionUtils.getResolutionFacade(function));
+    LexicalScope scope=UtilsKt.getResolutionScope(function,context,ResolutionUtils.getResolutionFacade(function));
     JetType typeToInsert=TypeUtils.approximateWithResolvableType(expressionType,scope,false);
     actions.add(new ChangeFunctionReturnTypeFix((JetFunction)function,typeToInsert));
   }
   if (expression instanceof JetOperationExpression) {
-    ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(expression,context);
+    ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(expression,context);
     if (resolvedCall != null) {
       JetFunction declaration=getFunctionDeclaration(resolvedCall);
       if (declaration != null) {
@@ -62,7 +62,7 @@
     }
   }
   if (expression instanceof JetCallExpression) {
-    ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(expression,context);
+    ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(expression,context);
     if (resolvedCall != null) {
       JetFunction declaration=getFunctionDeclaration(resolvedCall);
       if (declaration != null) {
@@ -70,17 +70,17 @@
       }
     }
   }
-  ResolvedCall<? extends CallableDescriptor> resolvedCall=CallUtilPackage.getParentResolvedCall(expression,context,true);
+  ResolvedCall<? extends CallableDescriptor> resolvedCall=CallUtilKt.getParentResolvedCall(expression,context,true);
   if (resolvedCall != null) {
     JetExpression parentIf=QuickFixUtil.getParentIfForBranch(expression);
     JetExpression argumentExpression=(parentIf != null) ? parentIf : expression;
-    ValueArgument valueArgument=CallUtilPackage.getValueArgumentForExpression(resolvedCall.getCall(),argumentExpression);
+    ValueArgument valueArgument=CallUtilKt.getValueArgumentForExpression(resolvedCall.getCall(),argumentExpression);
     if (valueArgument != null) {
       JetParameter correspondingParameter=QuickFixUtil.getParameterDeclarationForValueArgument(resolvedCall,valueArgument);
       JetType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.getType(valueArgument.getArgumentExpression());
       if (correspondingParameter != null && valueArgumentType != null) {
         JetCallableDeclaration callable=PsiTreeUtil.getParentOfType(correspondingParameter,JetCallableDeclaration.class,true);
-        LexicalScope scope=callable != null ? CorePackage.getResolutionScope(callable,context,ResolutionUtils.getResolutionFacade(callable)) : null;
+        LexicalScope scope=callable != null ? UtilsKt.getResolutionScope(callable,context,ResolutionUtils.getResolutionFacade(callable)) : null;
         JetType typeToInsert=TypeUtils.approximateWithResolvableType(valueArgumentType,scope,true);
         actions.add(new ChangeParameterTypeFix(correspondingParameter,typeToInsert));
       }

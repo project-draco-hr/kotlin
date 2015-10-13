@@ -2,13 +2,13 @@
   if (newReceiverInfo != null && (callable instanceof JetNamedFunction) && ((JetNamedFunction)callable).getBodyExpression() != null) {
     Map<JetReferenceExpression,BindingContext> noReceiverRefToContext=MapsKt.filter(JetFileReferencesResolver.INSTANCE$.resolve((JetNamedFunction)callable,true,true),new Function1<Map.Entry<? extends JetReferenceExpression,? extends BindingContext>,Boolean>(){
       @Override public Boolean invoke(      Map.Entry<? extends JetReferenceExpression,? extends BindingContext> entry){
-        ResolvedCall<?> resolvedCall=CallUtilPackage.getResolvedCall(entry.getKey(),entry.getValue());
+        ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(entry.getKey(),entry.getValue());
         return resolvedCall != null && !resolvedCall.getDispatchReceiver().exists() && !resolvedCall.getExtensionReceiver().exists();
       }
     }
 );
     JetPsiFactory psiFactory=new JetPsiFactory(callable.getProject());
-    JetFile tempFile=RefactoringPackage.createTempCopy((JetFile)callable.getContainingFile(),new Function1<String,String>(){
+    JetFile tempFile=JetRefactoringUtilKt.createTempCopy((JetFile)callable.getContainingFile(),new Function1<String,String>(){
       @Override public String invoke(      String s){
         return s;
       }
@@ -16,7 +16,7 @@
 );
     JetNamedFunction functionWithReceiver=PsiTreeUtil.getParentOfType(tempFile.findElementAt(callable.getTextOffset()),JetNamedFunction.class);
     JetTypeReference receiverTypeRef=psiFactory.createType(newReceiverInfo.getCurrentTypeText());
-    TypeRefHelpersPackage.setReceiverTypeReference(functionWithReceiver,receiverTypeRef);
+    TypeRefHelpersKt.setReceiverTypeReference(functionWithReceiver,receiverTypeRef);
     BindingContext newContext=ResolutionUtils.analyze(functionWithReceiver.getBodyExpression(),BodyResolveMode.FULL);
     int originalOffset=((JetNamedFunction)callable).getBodyExpression().getTextOffset();
     JetExpression newBody=functionWithReceiver.getBodyExpression();
@@ -24,9 +24,9 @@
       JetReferenceExpression originalRef=entry.getKey();
       BindingContext originalContext=entry.getValue();
       JetReferenceExpression newRef=PsiTreeUtil.getParentOfType(newBody.findElementAt(originalRef.getTextOffset() - originalOffset),JetReferenceExpression.class);
-      ResolvedCall<?> newResolvedCall=CallUtilPackage.getResolvedCall(newRef,newContext);
+      ResolvedCall<?> newResolvedCall=CallUtilKt.getResolvedCall(newRef,newContext);
       if (newResolvedCall == null || newResolvedCall.getExtensionReceiver().exists() || newResolvedCall.getDispatchReceiver().exists()) {
-        CallableDescriptor descriptor=CallUtilPackage.getResolvedCall(originalRef,originalContext).getCandidateDescriptor();
+        CallableDescriptor descriptor=CallUtilKt.getResolvedCall(originalRef,originalContext).getCandidateDescriptor();
         PsiElement declaration=DescriptorToSourceUtilsIde.INSTANCE$.getAnyDeclaration(callable.getProject(),descriptor);
         String prefix=declaration != null ? RefactoringUIUtil.getDescription(declaration,true) : originalRef.getText();
         result.putValue(originalRef,StringsKt.capitalize(prefix + " will no longer be accessible after signature change"));
