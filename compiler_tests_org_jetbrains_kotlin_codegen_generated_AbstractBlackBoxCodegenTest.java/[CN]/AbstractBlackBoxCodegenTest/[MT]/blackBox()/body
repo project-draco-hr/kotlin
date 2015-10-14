@@ -1,14 +1,19 @@
 {
-  JetFile firstFile=myFiles.getPsiFiles().get(0);
-  String fqName=getPackageClassFqName(firstFile.getPackageFqName()).asString();
-  Class<?> aClass=generateClass(fqName);
-  try {
-    Method method=aClass.getMethod("box");
-    String r=(String)method.invoke(null);
-    assertEquals("OK",r);
-  }
- catch (  Throwable e) {
-    System.out.println(generateToText());
-    throw ExceptionUtilsKt.rethrow(e);
+  GeneratedClassLoader generatedClassLoader=generateAndCreateClassLoader();
+  for (  JetFile firstFile : myFiles.getPsiFiles()) {
+    String className=JvmFileClassUtil.getFileClassInfoNoResolve(firstFile).getFacadeClassFqName().asString();
+    Class<?> aClass=getGeneratedClass(generatedClassLoader,className);
+    try {
+      Method method=getBoxMethodOrNull(aClass);
+      if (method != null) {
+        String r=(String)method.invoke(null);
+        assertEquals("OK",r);
+        return;
+      }
+    }
+ catch (    Throwable e) {
+      System.out.println(generateToText());
+      throw ExceptionUtilsKt.rethrow(e);
+    }
   }
 }

@@ -1,0 +1,22 @@
+{
+  OutputFileCollection classes=generateClassesInFile();
+  OutputFile file=classes.get(className + ".class");
+  if (noClassFileIsAnError) {
+    assertNotNull("File for " + className + " is absent",file);
+  }
+ else   if (file == null) {
+    return;
+  }
+  ClassReader reader=new ClassReader(file.asByteArray());
+  reader.accept(new ClassVisitor(Opcodes.ASM5){
+    @Override public MethodVisitor visitMethod(    int access,    @NotNull final String callerName,    @NotNull final String callerDesc,    String signature,    String[] exceptions){
+      return new MethodVisitor(Opcodes.ASM5){
+        @Override public void visitMethodInsn(        int opcode,        String owner,        String name,        String desc,        boolean itf){
+          assertFalse("Intrinsics method is called: " + name + desc+ "  Caller: "+ callerName+ callerDesc,"kotlin/jvm/internal/Intrinsics".equals(owner));
+        }
+      }
+;
+    }
+  }
+,0);
+}

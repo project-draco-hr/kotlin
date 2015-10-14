@@ -1,13 +1,8 @@
 {
-  List<JvmSerializationBindings> bindings=new ArrayList<JvmSerializationBindings>(files.size() + 1);
-  Map<CallableMemberDescriptor,Runnable> generateCallableMemberTasks=new HashMap<CallableMemberDescriptor,Runnable>();
   for (  JetFile file : files) {
     ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
     try {
-      ClassBuilder builder=generateFile(file,generateCallableMemberTasks);
-      if (builder != null) {
-        bindings.add(builder.getSerializationBindings());
-      }
+      generateFile(file);
     }
  catch (    ProcessCanceledException e) {
       throw e;
@@ -20,9 +15,5 @@ catch (    Throwable e) {
         e.printStackTrace();
       }
     }
-  }
-  generateDelegationsToPreviouslyCompiled(generateCallableMemberTasks);
-  if (!generateCallableMemberTasks.isEmpty()) {
-    generatePackageFacadeClass(generateCallableMemberTasks,bindings);
   }
 }
