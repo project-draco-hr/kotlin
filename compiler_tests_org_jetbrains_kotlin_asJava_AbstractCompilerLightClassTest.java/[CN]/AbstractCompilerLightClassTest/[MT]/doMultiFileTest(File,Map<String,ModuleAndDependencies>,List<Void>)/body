@@ -1,19 +1,13 @@
 {
-  String text=FileUtil.loadFile(file,true);
-  Matcher matcher=SUBJECT_FQ_NAME_PATTERN.matcher(text);
-  assertTrue("No FqName specified. First line of the form '// f.q.Name' expected",matcher.find());
-  String fqName=matcher.group(1);
-  JavaElementFinder finder=createFinder(getEnvironment());
-  PsiClass psiClass=finder.findClass(fqName,GlobalSearchScope.allScope(getEnvironment().getProject()));
-  if (!(psiClass instanceof KotlinLightClass)) {
-    throw new IllegalStateException("Not a light class: " + psiClass + " ("+ fqName+ ")");
+  LightClassTestCommon.INSTANCE.testLightClass(file,new Function1<String,PsiClass>(){
+    @Override public PsiClass invoke(    String s){
+      try {
+        return createFinder(getEnvironment()).findClass(s,GlobalSearchScope.allScope(getEnvironment().getProject()));
+      }
+ catch (      IOException e) {
+        throw ExceptionUtilsKt.rethrow(e);
+      }
+    }
   }
-  PsiClass delegate=((KotlinLightClass)psiClass).getDelegate();
-  if (!(delegate instanceof ClsElementImpl)) {
-    throw new IllegalStateException("Not a CLS element: " + delegate);
-  }
-  StringBuilder buffer=new StringBuilder();
-  ((ClsElementImpl)delegate).appendMirrorText(0,buffer);
-  String actual=buffer.toString();
-  JetTestUtils.assertEqualsToFile(JetTestUtils.replaceExtension(file,"java"),actual);
+);
 }
