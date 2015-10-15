@@ -1,13 +1,14 @@
 {
   CallableMethod callableMethod=typeMapper.mapToCallableMethod(functionDescriptor,accessorDescriptor instanceof AccessorForCallableDescriptor && ((AccessorForCallableDescriptor)accessorDescriptor).getSuperCallExpression() != null);
-  int reg=1;
+  boolean isTopLevelDeclaration=isTopLevelDeclaration(functionDescriptor);
+  int reg=isTopLevelDeclaration ? 0 : 1;
   boolean accessorIsConstructor=accessorDescriptor instanceof AccessorForConstructorDescriptor;
   if (!accessorIsConstructor && functionDescriptor instanceof ConstructorDescriptor) {
     iv.anew(callableMethod.getOwner());
     iv.dup();
     reg=0;
   }
- else   if (accessorIsConstructor || (accessorDescriptor != null && JetTypeMapper.isAccessor(accessorDescriptor))) {
+ else   if (accessorIsConstructor || (accessorDescriptor != null && JetTypeMapper.isAccessor(accessorDescriptor) && !isTopLevelDeclaration)) {
     if (!AnnotationUtilKt.isPlatformStaticInObjectOrClass(functionDescriptor)) {
       iv.load(0,OBJECT_TYPE);
     }
