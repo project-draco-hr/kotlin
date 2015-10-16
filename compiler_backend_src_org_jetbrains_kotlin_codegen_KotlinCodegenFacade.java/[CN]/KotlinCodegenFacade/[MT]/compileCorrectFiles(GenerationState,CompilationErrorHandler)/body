@@ -2,28 +2,5 @@
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   prepareForCompilation(state);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-  MultiMap<FqName,JetFile> filesInPackages=new MultiMap<FqName,JetFile>();
-  MultiMap<FqName,JetFile> filesInMultifileClasses=new MultiMap<FqName,JetFile>();
-  for (  JetFile file : state.getFiles()) {
-    if (file == null)     throw new IllegalArgumentException("A null file given for compilation");
-    JvmFileClassInfo fileClassInfo=state.getFileClassesProvider().getFileClassInfo(file);
-    if (fileClassInfo.getWithJvmMultifileClass()) {
-      filesInMultifileClasses.putValue(fileClassInfo.getFacadeClassFqName(),file);
-    }
- else {
-      filesInPackages.putValue(file.getPackageFqName(),file);
-    }
-  }
-  Set<FqName> obsoleteMultifileClasses=new HashSet<FqName>(state.getObsoleteMultifileClasses());
-  for (  FqName multifileClassFqName : Sets.union(filesInMultifileClasses.keySet(),obsoleteMultifileClasses)) {
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-    generateMultifileClass(state,multifileClassFqName,filesInMultifileClasses.get(multifileClassFqName),errorHandler);
-  }
-  Set<FqName> packagesWithObsoleteParts=new HashSet<FqName>(state.getPackagesWithObsoleteParts());
-  for (  FqName packageFqName : Sets.union(packagesWithObsoleteParts,filesInPackages.keySet())) {
-    ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-    generatePackage(state,packageFqName,filesInPackages.get(packageFqName),errorHandler);
-  }
-  ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-  state.getFactory().done();
+  doGenerateFiles(state.getFiles(),state,errorHandler);
 }
