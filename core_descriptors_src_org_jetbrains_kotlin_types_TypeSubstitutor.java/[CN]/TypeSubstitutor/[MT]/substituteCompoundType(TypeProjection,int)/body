@@ -5,13 +5,10 @@
     return originalProjection;
   }
   List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);
-  TypeSubstitution substitutionFilteringTypeParameters=new TypeSubstitution(){
+  TypeSubstitution substitutionFilteringTypeParameters=new DelegatedTypeSubstitution(substitution){
     private final Collection<TypeConstructor> containedOrCapturedTypeParameters=TypeUtilsKt.getContainedAndCapturedTypeParameterConstructors(type);
     @Nullable @Override public TypeProjection get(    @NotNull KtType key){
       return containedOrCapturedTypeParameters.contains(key.getConstructor()) ? substitution.get(key) : null;
-    }
-    @Override public boolean isEmpty(){
-      return substitution.isEmpty();
     }
   }
 ;
