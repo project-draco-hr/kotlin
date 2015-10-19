@@ -1,0 +1,15 @@
+{
+  mark(expression);
+  IElementType operationType=expression.getOperationReference().getReferencedNameElementType();
+  KtExpression left=expression.getLeft();
+  if (operationType == KtTokens.AS_KEYWORD || operationType == KtTokens.AS_SAFE) {
+    generateInstructions(left);
+    if (getBoundOrUnreachableValue(left) != null) {
+      createNonSyntheticValue(expression,MagicKind.CAST,left);
+    }
+  }
+ else {
+    visitJetElement(expression);
+    createNonSyntheticValue(expression,MagicKind.UNSUPPORTED_ELEMENT,left);
+  }
+}

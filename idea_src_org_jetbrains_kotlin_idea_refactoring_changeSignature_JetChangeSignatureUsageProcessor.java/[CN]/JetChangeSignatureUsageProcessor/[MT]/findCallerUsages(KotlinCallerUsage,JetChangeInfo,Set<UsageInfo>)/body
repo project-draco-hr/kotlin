@@ -1,15 +1,15 @@
 {
   result.add(callerUsage);
-  JetNamedDeclaration element=callerUsage.getElement();
+  KtNamedDeclaration element=callerUsage.getElement();
   if (element == null)   return;
   for (  PsiReference ref : ReferencesSearch.search(element,element.getUseScope())) {
     PsiElement refElement=ref.getElement();
-    JetCallElement callElement=PsiTreeUtil.getParentOfType(refElement,JetCallElement.class);
+    KtCallElement callElement=PsiTreeUtil.getParentOfType(refElement,KtCallElement.class);
     if (callElement != null && PsiTreeUtil.isAncestor(callElement.getCalleeExpression(),refElement,false)) {
       result.add(new KotlinCallerCallUsage(callElement));
     }
   }
-  JetElement body=ChangeSignatureUtilsKt.getDeclarationBody(element);
+  KtElement body=ChangeSignatureUtilsKt.getDeclarationBody(element);
   final Set<String> newParameterNames=CollectionsKt.mapTo(changeInfo.getNonReceiverParameters(),new HashSet<String>(),new Function1<JetParameterInfo,String>(){
     @Override public String invoke(    JetParameterInfo info){
       return info.getName();
@@ -19,8 +19,8 @@
   if (body != null) {
     final DeclarationDescriptor callerDescriptor=ResolutionUtils.resolveToDescriptor(element);
     final BindingContext context=ResolutionUtils.analyze(body);
-    body.accept(new JetTreeVisitorVoid(){
-      @Override public void visitSimpleNameExpression(      @NotNull JetSimpleNameExpression expression){
+    body.accept(new KtTreeVisitorVoid(){
+      @Override public void visitSimpleNameExpression(      @NotNull KtSimpleNameExpression expression){
         final String currentName=expression.getReferencedName();
         if (!newParameterNames.contains(currentName))         return;
         ResolvedCall<? extends CallableDescriptor> resolvedCall=CallUtilKt.getResolvedCall(expression,context);
@@ -29,7 +29,7 @@
         CallableDescriptor resultingDescriptor=resolvedCall.getResultingDescriptor();
         if (!(resultingDescriptor instanceof VariableDescriptor))         return;
         if (resultingDescriptor instanceof ValueParameterDescriptor && resultingDescriptor.getContainingDeclaration() == callerDescriptor)         return;
-        JetElement callElement=resolvedCall.getCall().getCallElement();
+        KtElement callElement=resolvedCall.getCall().getCallElement();
         ReceiverValue receiver=resolvedCall.getExtensionReceiver();
         if (!(receiver instanceof ThisReceiver)) {
           receiver=resolvedCall.getDispatchReceiver();

@@ -1,0 +1,25 @@
+{
+  KtType type=whenSubjectType(expression,trace.getBindingContext());
+  if (type == null)   return false;
+  ClassDescriptor enumClassDescriptor=getClassDescriptorOfTypeIfEnum(type);
+  boolean exhaustive;
+  if (enumClassDescriptor == null) {
+    if (KotlinBuiltIns.isBoolean(TypeUtils.makeNotNullable(type))) {
+      exhaustive=isWhenOnBooleanExhaustive(expression,trace);
+    }
+ else {
+      ClassDescriptor classDescriptor=TypeUtils.getClassDescriptor(type);
+      exhaustive=(classDescriptor != null && classDescriptor.getModality() == Modality.SEALED && isWhenOnSealedClassExhaustive(expression,trace,classDescriptor));
+    }
+  }
+ else {
+    exhaustive=isWhenOnEnumExhaustive(expression,trace,enumClassDescriptor);
+  }
+  if (exhaustive) {
+    if ((enumClassDescriptor != null && FlexibleTypesKt.isFlexible(type)) || containsNullCase(expression,trace) || !isNullableTypeWithoutPossibleSmartCast(expression.getSubjectExpression(),type,trace.getBindingContext())) {
+      trace.record(BindingContext.EXHAUSTIVE_WHEN,expression);
+      return true;
+    }
+  }
+  return false;
+}

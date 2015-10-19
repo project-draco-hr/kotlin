@@ -1,0 +1,52 @@
+{
+  GenerationState state;
+  DiagnosticSink.CollectAll sink=new DiagnosticSink.CollectAll();
+  try {
+    ResolutionFacade resolutionFacade=ResolutionUtils.getResolutionFacade(jetFile);
+    BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(jetFile)).getBindingContext();
+    kotlin.Pair<BindingContext,List<KtFile>> result=DebuggerUtils.analyzeInlinedFunctions(resolutionFacade,bindingContextForFile,jetFile,!enableInline);
+    BindingContext bindingContext=result.getFirst();
+    List<KtFile> toProcess=result.getSecond();
+    GenerationState.GenerateClassFilter generateClassFilter=new GenerationState.GenerateClassFilter(){
+      @Override public boolean shouldGeneratePackagePart(      KtFile file){
+        return file == jetFile;
+      }
+      @Override public boolean shouldAnnotateClass(      KtClassOrObject classOrObject){
+        return true;
+      }
+      @Override public boolean shouldGenerateClass(      KtClassOrObject classOrObject){
+        return classOrObject.getContainingJetFile() == jetFile;
+      }
+      @Override public boolean shouldGenerateScript(      KtScript script){
+        return script.getContainingJetFile() == jetFile;
+      }
+    }
+;
+    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,false,sink);
+    KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
+  }
+ catch (  ProcessCanceledException e) {
+    throw e;
+  }
+catch (  Exception e) {
+    return printStackTraceToString(e);
+  }
+  StringBuilder answer=new StringBuilder();
+  List<Diagnostic> diagnostics=sink.getDiagnostics();
+  if (!diagnostics.isEmpty()) {
+    answer.append("// Backend Errors: \n");
+    answer.append("// ================\n");
+    for (    Diagnostic diagnostic : diagnostics) {
+      answer.append("// Error at ").append(diagnostic.getPsiFile().getName()).append(StringsKt.join(diagnostic.getTextRanges(),",")).append(": ").append(DefaultErrorMessages.render(diagnostic)).append("\n");
+    }
+    answer.append("// ================\n\n");
+  }
+  OutputFileCollection outputFiles=state.getFactory();
+  for (  OutputFile outputFile : outputFiles.asList()) {
+    answer.append("// ================");
+    answer.append(outputFile.getRelativePath());
+    answer.append(" =================\n");
+    answer.append(outputFile.asText()).append("\n\n");
+  }
+  return answer.toString();
+}

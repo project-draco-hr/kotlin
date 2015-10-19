@@ -1,0 +1,17 @@
+{
+  if (expression instanceof KtConstantExpression) {
+    KtConstantExpression constantExpression=(KtConstantExpression)expression;
+    if (constantExpression.getNode().getElementType() == KtNodeTypes.NULL) {
+      return DataFlowValue.nullValue(DescriptorUtilsKt.getBuiltIns(containingDeclarationOrModule));
+    }
+  }
+  if (type.isError())   return DataFlowValue.ERROR;
+  if (isNullableNothing(type)) {
+    return DataFlowValue.nullValue(DescriptorUtilsKt.getBuiltIns(containingDeclarationOrModule));
+  }
+  if (ExpressionTypingUtils.isExclExclExpression(KtPsiUtil.deparenthesize(expression))) {
+    return new DataFlowValue(expression,type,OTHER,Nullability.NOT_NULL);
+  }
+  IdentifierInfo result=getIdForStableIdentifier(expression,bindingContext,containingDeclarationOrModule);
+  return new DataFlowValue(result == NO_IDENTIFIER_INFO ? expression : result.id,type,result.kind,getImmanentNullability(type));
+}

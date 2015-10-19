@@ -1,35 +1,35 @@
 {
-  if (!(element instanceof JetNamedDeclaration))   return true;
-  JetPsiFactory psiFactory=JetPsiFactoryKt.JetPsiFactory(element.getProject());
+  if (!(element instanceof KtNamedDeclaration))   return true;
+  KtPsiFactory psiFactory=KtPsiFactoryKt.KtPsiFactory(element.getProject());
   if (changeInfo.isNameChanged()) {
-    PsiElement identifier=((JetCallableDeclaration)element).getNameIdentifier();
+    PsiElement identifier=((KtCallableDeclaration)element).getNameIdentifier();
     if (identifier != null) {
       identifier.replace(psiFactory.createIdentifier(changeInfo.getNewName()));
     }
   }
   changeReturnTypeIfNeeded(changeInfo,element);
-  JetParameterList parameterList=JetPsiUtilKt.getValueParameterList((JetNamedDeclaration)element);
+  KtParameterList parameterList=JetPsiUtilKt.getValueParameterList((KtNamedDeclaration)element);
   if (changeInfo.isParameterSetOrOrderChanged()) {
     processParameterListWithStructuralChanges(changeInfo,element,parameterList,psiFactory);
   }
  else   if (parameterList != null) {
     int paramIndex=originalCallableDescriptor.getExtensionReceiverParameter() != null ? 1 : 0;
-    for (    JetParameter parameter : parameterList.getParameters()) {
+    for (    KtParameter parameter : parameterList.getParameters()) {
       JetParameterInfo parameterInfo=changeInfo.getNewParameters()[paramIndex];
       changeParameter(paramIndex,parameter,parameterInfo);
       paramIndex++;
     }
     ShortenWaitingSetKt.addToShorteningWaitSet(parameterList,Options.DEFAULT);
   }
-  if (element instanceof JetCallableDeclaration && changeInfo.isReceiverTypeChanged()) {
+  if (element instanceof KtCallableDeclaration && changeInfo.isReceiverTypeChanged()) {
     String receiverTypeText=changeInfo.renderReceiverType((JetCallableDefinitionUsage<PsiElement>)this);
-    JetTypeReference receiverTypeRef=receiverTypeText != null ? psiFactory.createType(receiverTypeText) : null;
-    JetTypeReference newReceiverTypeRef=TypeRefHelpersKt.setReceiverTypeReference((JetCallableDeclaration)element,receiverTypeRef);
+    KtTypeReference receiverTypeRef=receiverTypeText != null ? psiFactory.createType(receiverTypeText) : null;
+    KtTypeReference newReceiverTypeRef=TypeRefHelpersKt.setReceiverTypeReference((KtCallableDeclaration)element,receiverTypeRef);
     if (newReceiverTypeRef != null) {
       ShortenWaitingSetKt.addToShorteningWaitSet(newReceiverTypeRef,ShortenReferences.Options.DEFAULT);
     }
   }
-  if (changeInfo.isVisibilityChanged() && !JetPsiUtil.isLocal((JetDeclaration)element)) {
+  if (changeInfo.isVisibilityChanged() && !KtPsiUtil.isLocal((KtDeclaration)element)) {
     changeVisibility(changeInfo,element);
   }
   return true;

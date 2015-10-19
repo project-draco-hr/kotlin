@@ -1,0 +1,16 @@
+{
+  for (  KtWhenEntry entry : expression.getEntries()) {
+    for (    KtWhenCondition condition : entry.getConditions()) {
+      if (!(condition instanceof KtWhenConditionWithExpression)) {
+        return false;
+      }
+      KtExpression patternExpression=((KtWhenConditionWithExpression)condition).getExpression();
+      if (patternExpression == null)       return false;
+      ConstantValue<?> constant=ExpressionCodegen.getCompileTimeConstant(patternExpression,bindingContext);
+      if (constant == null || !predicate.invoke(constant)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

@@ -1,0 +1,20 @@
+{
+  Set<TypeConstructor> parentEnumOrSealed;
+  if (jetClass instanceof KtEnumEntry) {
+    parentEnumOrSealed=Collections.singleton(((ClassDescriptor)descriptor.getContainingDeclaration()).getTypeConstructor());
+  }
+ else {
+    parentEnumOrSealed=Collections.emptySet();
+    ClassDescriptor currentDescriptor=descriptor;
+    while (currentDescriptor.getContainingDeclaration() instanceof ClassDescriptor) {
+      currentDescriptor=(ClassDescriptor)currentDescriptor.getContainingDeclaration();
+      if (currentDescriptor.getModality() == Modality.SEALED) {
+        if (parentEnumOrSealed.isEmpty()) {
+          parentEnumOrSealed=new HashSet<TypeConstructor>();
+        }
+        parentEnumOrSealed.add(currentDescriptor.getTypeConstructor());
+      }
+    }
+  }
+  return parentEnumOrSealed;
+}

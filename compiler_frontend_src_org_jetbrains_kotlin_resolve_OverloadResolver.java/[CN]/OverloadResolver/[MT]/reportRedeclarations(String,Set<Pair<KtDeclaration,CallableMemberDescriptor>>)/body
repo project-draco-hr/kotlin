@@ -1,0 +1,14 @@
+{
+  for (  Pair<KtDeclaration,CallableMemberDescriptor> redeclaration : redeclarations) {
+    CallableMemberDescriptor memberDescriptor=redeclaration.getSecond();
+    if (DescriptorToSourceUtils.isTopLevelMainFunction(memberDescriptor,mainFunctionDetector))     return;
+    KtDeclaration ktDeclaration=redeclaration.getFirst();
+    if (memberDescriptor instanceof PropertyDescriptor) {
+      trace.report(Errors.REDECLARATION.on(ktDeclaration,memberDescriptor.getName().asString()));
+    }
+ else {
+      String containingClassName=ktDeclaration instanceof KtSecondaryConstructor ? ((KtSecondaryConstructor)ktDeclaration).getContainingClassOrObject().getName() : null;
+      trace.report(Errors.CONFLICTING_OVERLOADS.on(ktDeclaration,memberDescriptor,containingClassName != null ? containingClassName : functionContainer));
+    }
+  }
+}

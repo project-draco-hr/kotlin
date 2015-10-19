@@ -1,0 +1,39 @@
+{
+  final List<PsiElement> memberSuspects=new ArrayList<PsiElement>();
+  KtModifierList modifierList=declaration.getModifierList();
+  if (modifierList != null)   memberSuspects.add(modifierList);
+  if (declaration instanceof KtNamedDeclaration) {
+    PsiElement nameIdentifier=((KtNamedDeclaration)declaration).getNameIdentifier();
+    if (nameIdentifier != null)     memberSuspects.add(nameIdentifier);
+  }
+  declaration.accept(new KtVisitorVoid(){
+    @Override public void visitAnonymousInitializer(    @NotNull KtClassInitializer initializer){
+      PsiElement brace=initializer.getOpenBraceNode();
+      if (brace != null) {
+        memberSuspects.add(brace);
+      }
+    }
+    @Override public void visitNamedFunction(    @NotNull KtNamedFunction function){
+      PsiElement equalsToken=function.getEqualsToken();
+      if (equalsToken != null)       memberSuspects.add(equalsToken);
+      KtTypeParameterList typeParameterList=function.getTypeParameterList();
+      if (typeParameterList != null)       memberSuspects.add(typeParameterList);
+      KtTypeReference receiverTypeRef=function.getReceiverTypeReference();
+      if (receiverTypeRef != null)       memberSuspects.add(receiverTypeRef);
+      KtTypeReference returnTypeRef=function.getTypeReference();
+      if (returnTypeRef != null)       memberSuspects.add(returnTypeRef);
+    }
+    @Override public void visitProperty(    @NotNull KtProperty property){
+      PsiElement valOrVarKeyword=property.getValOrVarKeyword();
+      if (valOrVarKeyword != null)       memberSuspects.add(valOrVarKeyword);
+      KtTypeParameterList typeParameterList=property.getTypeParameterList();
+      if (typeParameterList != null)       memberSuspects.add(typeParameterList);
+      KtTypeReference receiverTypeRef=property.getReceiverTypeReference();
+      if (receiverTypeRef != null)       memberSuspects.add(receiverTypeRef);
+      KtTypeReference returnTypeRef=property.getTypeReference();
+      if (returnTypeRef != null)       memberSuspects.add(returnTypeRef);
+    }
+  }
+);
+  return memberSuspects;
+}

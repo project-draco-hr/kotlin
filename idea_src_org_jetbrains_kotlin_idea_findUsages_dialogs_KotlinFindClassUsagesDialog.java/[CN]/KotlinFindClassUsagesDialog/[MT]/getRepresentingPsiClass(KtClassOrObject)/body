@@ -1,0 +1,20 @@
+{
+  PsiClass lightClass=LightClassUtil.INSTANCE$.getPsiClass(classOrObject);
+  if (lightClass != null)   return lightClass;
+  PsiElementFactory factory=PsiElementFactory.SERVICE.getInstance(classOrObject.getProject());
+  String name=classOrObject.getName();
+  if (name == null || name.isEmpty()) {
+    name="Anonymous";
+  }
+  PsiClass javaClass;
+  if (classOrObject instanceof KtClass) {
+    KtClass klass=(KtClass)classOrObject;
+    javaClass=!klass.isInterface() ? factory.createClass(name) : klass.isAnnotation() ? factory.createAnnotationType(name) : factory.createInterface(name);
+  }
+ else {
+    javaClass=factory.createClass(name);
+  }
+  javaClass.getModifierList().setModifierProperty(PsiModifier.FINAL,!(classOrObject instanceof KtClass && JetPsiUtilKt.isInheritable((KtClass)classOrObject)));
+  javaClass.putUserData(ORIGINAL_CLASS,classOrObject);
+  return javaClass;
+}

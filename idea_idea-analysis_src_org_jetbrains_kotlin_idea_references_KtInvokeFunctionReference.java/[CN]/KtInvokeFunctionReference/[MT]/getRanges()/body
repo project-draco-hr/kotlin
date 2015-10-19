@@ -1,0 +1,30 @@
+{
+  List<TextRange> list=new ArrayList<TextRange>();
+  KtValueArgumentList valueArgumentList=getExpression().getValueArgumentList();
+  if (valueArgumentList != null) {
+    if (valueArgumentList.getArguments().size() > 0) {
+      ASTNode valueArgumentListNode=valueArgumentList.getNode();
+      ASTNode lPar=valueArgumentListNode.findChildByType(KtTokens.LPAR);
+      if (lPar != null) {
+        list.add(getRange(lPar));
+      }
+      ASTNode rPar=valueArgumentListNode.findChildByType(KtTokens.RPAR);
+      if (rPar != null) {
+        list.add(getRange(rPar));
+      }
+    }
+ else {
+      list.add(getRange(valueArgumentList.getNode()));
+    }
+  }
+  List<KtFunctionLiteralArgument> functionLiteralArguments=getExpression().getFunctionLiteralArguments();
+  for (  KtFunctionLiteralArgument functionLiteralArgument : functionLiteralArguments) {
+    KtFunctionLiteralExpression functionLiteralExpression=functionLiteralArgument.getFunctionLiteral();
+    list.add(getRange(functionLiteralExpression.getLeftCurlyBrace()));
+    ASTNode rightCurlyBrace=functionLiteralExpression.getRightCurlyBrace();
+    if (rightCurlyBrace != null) {
+      list.add(getRange(rightCurlyBrace));
+    }
+  }
+  return list;
+}

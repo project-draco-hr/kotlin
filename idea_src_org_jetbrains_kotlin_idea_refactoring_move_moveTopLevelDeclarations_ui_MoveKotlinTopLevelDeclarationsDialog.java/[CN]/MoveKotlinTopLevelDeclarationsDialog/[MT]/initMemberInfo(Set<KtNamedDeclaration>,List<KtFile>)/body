@@ -1,0 +1,38 @@
+{
+  final List<KotlinMemberInfo> memberInfos=CollectionsKt.map(getAllDeclarations(sourceFiles),new Function1<KtNamedDeclaration,KotlinMemberInfo>(){
+    @Override public KotlinMemberInfo invoke(    KtNamedDeclaration declaration){
+      KotlinMemberInfo memberInfo=new KotlinMemberInfo(declaration,false);
+      memberInfo.setChecked(elementsToMove.contains(declaration));
+      return memberInfo;
+    }
+  }
+);
+  KotlinMemberSelectionPanel selectionPanel=new KotlinMemberSelectionPanel(getTitle(),memberInfos,null);
+  memberTable=selectionPanel.getTable();
+  MemberInfoModelImpl memberInfoModel=new MemberInfoModelImpl();
+  memberInfoModel.memberInfoChanged(new MemberInfoChange<KtNamedDeclaration,KotlinMemberInfo>(memberInfos));
+  selectionPanel.getTable().setMemberInfoModel(memberInfoModel);
+  selectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
+  selectionPanel.getTable().addMemberInfoChangeListener(new MemberInfoChangeListener<KtNamedDeclaration,KotlinMemberInfo>(){
+    private boolean shouldUpdateFileNameField(    final Collection<KotlinMemberInfo> changedMembers){
+      if (!tfFileNameInPackage.isEnabled())       return true;
+      Collection<KtNamedDeclaration> previousDeclarations=CollectionsKt.filterNotNull(CollectionsKt.map(memberInfos,new Function1<KotlinMemberInfo,KtNamedDeclaration>(){
+        @Override public KtNamedDeclaration invoke(        KotlinMemberInfo info){
+          return changedMembers.contains(info) != info.isChecked() ? info.getMember() : null;
+        }
+      }
+));
+      String suggestedText=previousDeclarations.isEmpty() ? "" : MoveUtilsKt.guessNewFileName(previousDeclarations);
+      return tfFileNameInPackage.getText().equals(suggestedText);
+    }
+    @Override public void memberInfoChanged(    MemberInfoChange<KtNamedDeclaration,KotlinMemberInfo> event){
+      updatePackageDirectiveCheckBox();
+      updateFileNameInPackageField();
+      if (shouldUpdateFileNameField(event.getChangedMembers())) {
+        updateSuggestedFileName();
+      }
+    }
+  }
+);
+  memberInfoPanel.add(selectionPanel,BorderLayout.CENTER);
+}

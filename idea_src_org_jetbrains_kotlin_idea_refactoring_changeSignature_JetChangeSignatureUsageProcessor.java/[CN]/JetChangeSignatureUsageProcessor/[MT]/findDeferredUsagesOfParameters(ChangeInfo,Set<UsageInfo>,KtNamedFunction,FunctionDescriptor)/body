@@ -1,0 +1,31 @@
+{
+  final JetCallableDefinitionUsage<?> functionInfoForParameters=new JetCallableDefinitionUsage<PsiElement>(function,functionDescriptor,null,null);
+  List<KtParameter> oldParameters=JetPsiUtilKt.getValueParameters(function);
+  ParameterInfo[] parameters=changeInfo.getNewParameters();
+  for (int i=0; i < parameters.length; i++) {
+    final int paramIndex=i;
+    ParameterInfo parameterInfo=parameters[paramIndex];
+    if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < oldParameters.size()) {
+      KtParameter oldParam=oldParameters.get(parameterInfo.getOldIndex());
+      String oldParamName=oldParam.getName();
+      if (oldParamName != null && !oldParamName.equals(parameterInfo.getName())) {
+        for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
+          final PsiElement element=reference.getElement();
+          if ((element instanceof KtSimpleNameExpression || element instanceof KDocName) && !(element.getParent() instanceof KtValueArgumentName)) {
+            result.add(new JavaMethodDeferredKotlinUsage<KtElement>((KtElement)element){
+              @NotNull @Override public JavaMethodKotlinUsageWithDelegate<KtElement> resolve(              @NotNull JetChangeInfo javaMethodChangeInfo){
+                return new JavaMethodKotlinUsageWithDelegate<KtElement>((KtElement)element,javaMethodChangeInfo){
+                  @NotNull @Override public JetUsageInfo<KtElement> getDelegateUsage(){
+                    return new JetParameterUsage((KtElement)element,getJavaMethodChangeInfo().getNewParameters()[paramIndex],functionInfoForParameters);
+                  }
+                }
+;
+              }
+            }
+);
+          }
+        }
+      }
+    }
+  }
+}

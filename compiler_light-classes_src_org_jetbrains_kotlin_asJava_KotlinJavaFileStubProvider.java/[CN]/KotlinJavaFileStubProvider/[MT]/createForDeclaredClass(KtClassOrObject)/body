@@ -1,0 +1,74 @@
+{
+  return new KotlinJavaFileStubProvider<OutermostKotlinClassLightClassData>(classOrObject.getProject(),classOrObject.isLocal(),new StubGenerationStrategy<OutermostKotlinClassLightClassData>(){
+    private KtFile getFile(){
+      return classOrObject.getContainingJetFile();
+    }
+    @NotNull @Override public LightClassConstructionContext getContext(    @NotNull Collection<KtFile> files){
+      return LightClassGenerationSupport.getInstance(classOrObject.getProject()).getContextForClassOrObject(classOrObject);
+    }
+    @NotNull @Override public OutermostKotlinClassLightClassData createLightClassData(    PsiJavaFileStub javaFileStub,    BindingContext bindingContext,    Diagnostics extraDiagnostics){
+      ClassDescriptor classDescriptor=bindingContext.get(BindingContext.CLASS,classOrObject);
+      if (classDescriptor == null) {
+        return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,FqName.ROOT,classOrObject,Collections.<KtClassOrObject,InnerKotlinClassLightClassData>emptyMap());
+      }
+      FqName fqName=predictClassFqName(bindingContext,classDescriptor);
+      Collection<ClassDescriptor> allInnerClasses=CodegenBinding.getAllInnerClasses(bindingContext,classDescriptor);
+      Map<KtClassOrObject,InnerKotlinClassLightClassData> innerClassesMap=ContainerUtil.newHashMap();
+      for (      ClassDescriptor innerClassDescriptor : allInnerClasses) {
+        PsiElement declaration=descriptorToDeclaration(innerClassDescriptor);
+        if (!(declaration instanceof KtClassOrObject))         continue;
+        KtClassOrObject innerClass=(KtClassOrObject)declaration;
+        InnerKotlinClassLightClassData innerLightClassData=new InnerKotlinClassLightClassData(predictClassFqName(bindingContext,innerClassDescriptor),innerClass);
+        innerClassesMap.put(innerClass,innerLightClassData);
+      }
+      return new OutermostKotlinClassLightClassData(javaFileStub,extraDiagnostics,fqName,classOrObject,innerClassesMap);
+    }
+    @NotNull private FqName predictClassFqName(    BindingContext bindingContext,    ClassDescriptor classDescriptor){
+      Type asmType=CodegenBinding.getAsmType(bindingContext,classDescriptor);
+      return JvmClassName.byInternalName(asmType.getClassName().replace('.','/')).getFqNameForClassNameWithoutDollars();
+    }
+    @NotNull @Override public Collection<KtFile> getFiles(){
+      return Collections.singletonList(getFile());
+    }
+    @NotNull @Override public FqName getPackageFqName(){
+      return getFile().getPackageFqName();
+    }
+    @Override public GenerationState.GenerateClassFilter getGenerateClassFilter(){
+      return new GenerationState.GenerateClassFilter(){
+        @Override public boolean shouldGeneratePackagePart(        KtFile jetFile){
+          return true;
+        }
+        @Override public boolean shouldAnnotateClass(        KtClassOrObject classOrObject){
+          return shouldGenerateClass(classOrObject);
+        }
+        @Override public boolean shouldGenerateClass(        KtClassOrObject generatedClassOrObject){
+          if (generatedClassOrObject == classOrObject)           return true;
+          if (PsiTreeUtil.isAncestor(generatedClassOrObject,classOrObject,true) || PsiTreeUtil.isAncestor(classOrObject,generatedClassOrObject,true)) {
+            return true;
+          }
+          if (generatedClassOrObject.isLocal() && classOrObject.isLocal()) {
+            PsiElement commonParent=PsiTreeUtil.findCommonParent(generatedClassOrObject,classOrObject);
+            return commonParent != null && !(commonParent instanceof PsiFile);
+          }
+          return false;
+        }
+        @Override public boolean shouldGenerateScript(        KtScript script){
+          return PsiTreeUtil.isAncestor(script,classOrObject,false);
+        }
+      }
+;
+    }
+    @Override public void generate(    @NotNull GenerationState state,    @NotNull Collection<KtFile> files){
+      PackageCodegen packageCodegen=state.getFactory().forPackage(getPackageFqName(),files);
+      KtFile file=classOrObject.getContainingJetFile();
+      Type packagePartType=FileClasses.getFileClassType(state.getFileClassesProvider(),file);
+      PackageContext context=state.getRootContext().intoPackagePart(packageCodegen.getPackageFragment(),packagePartType,file);
+      packageCodegen.generateClassOrObject(classOrObject,context);
+      state.getFactory().asList();
+    }
+    @Override public String toString(){
+      return StubGenerationStrategy.class.getName() + " for explicit class " + classOrObject.getName();
+    }
+  }
+);
+}

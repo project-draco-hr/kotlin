@@ -1,0 +1,18 @@
+{
+  KtExpression nameExpression=getPackageNameExpression();
+  if (nameExpression == null)   return Collections.emptyList();
+  List<KtSimpleNameExpression> packageNames=ContainerUtil.newArrayList();
+  while (nameExpression instanceof KtQualifiedExpression) {
+    KtQualifiedExpression qualifiedExpression=(KtQualifiedExpression)nameExpression;
+    KtExpression selector=qualifiedExpression.getSelectorExpression();
+    if (selector instanceof KtSimpleNameExpression) {
+      packageNames.add((KtSimpleNameExpression)selector);
+    }
+    nameExpression=qualifiedExpression.getReceiverExpression();
+  }
+  if (nameExpression instanceof KtSimpleNameExpression) {
+    packageNames.add((KtSimpleNameExpression)nameExpression);
+  }
+  Collections.reverse(packageNames);
+  return packageNames;
+}

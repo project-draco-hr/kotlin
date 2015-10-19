@@ -1,0 +1,24 @@
+{
+  if (expression == null) {
+    return null;
+  }
+  if (expression instanceof KtDotQualifiedExpression) {
+    KtDotQualifiedExpression dotQualifiedExpression=(KtDotQualifiedExpression)expression;
+    FqName parentFqn=fqNameFromExpression(dotQualifiedExpression.getReceiverExpression());
+    Name child=nameFromExpression(dotQualifiedExpression.getSelectorExpression());
+    if (child == null) {
+      return parentFqn;
+    }
+    if (parentFqn != null) {
+      return parentFqn.child(child);
+    }
+    return null;
+  }
+ else   if (expression instanceof KtSimpleNameExpression) {
+    KtSimpleNameExpression simpleNameExpression=(KtSimpleNameExpression)expression;
+    return FqName.topLevel(simpleNameExpression.getReferencedNameAsName());
+  }
+ else {
+    throw new IllegalArgumentException("Can't construct fqn for: " + expression.getClass().toString());
+  }
+}

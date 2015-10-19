@@ -1,0 +1,22 @@
+{
+  ASTNode callOperationNode=call.getCallOperationNode();
+  if (callOperationNode != null && !isCallForImplicitInvoke) {
+    trace.report(UNSAFE_CALL.on(callOperationNode.getPsi(),type));
+  }
+ else {
+    PsiElement callElement=call.getCallElement();
+    if (callElement instanceof KtBinaryExpression) {
+      KtBinaryExpression binaryExpression=(KtBinaryExpression)callElement;
+      KtSimpleNameExpression operationReference=binaryExpression.getOperationReference();
+      Name operationString=operationReference.getReferencedNameElementType() == KtTokens.IDENTIFIER ? Name.identifier(operationReference.getText()) : OperatorConventions.getNameForOperationSymbol((KtToken)operationReference.getReferencedNameElementType());
+      KtExpression left=binaryExpression.getLeft();
+      KtExpression right=binaryExpression.getRight();
+      if (left != null && right != null) {
+        trace.report(UNSAFE_INFIX_CALL.on(reference,left.getText(),operationString.asString(),right.getText()));
+      }
+    }
+ else {
+      trace.report(UNSAFE_CALL.on(reference,type));
+    }
+  }
+}

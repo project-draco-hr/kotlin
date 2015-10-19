@@ -1,29 +1,29 @@
 {
-  if (newReceiverInfo != null && (callable instanceof JetNamedFunction) && ((JetNamedFunction)callable).getBodyExpression() != null) {
-    Map<JetReferenceExpression,BindingContext> noReceiverRefToContext=MapsKt.filter(JetFileReferencesResolver.INSTANCE$.resolve((JetNamedFunction)callable,true,true),new Function1<Map.Entry<? extends JetReferenceExpression,? extends BindingContext>,Boolean>(){
-      @Override public Boolean invoke(      Map.Entry<? extends JetReferenceExpression,? extends BindingContext> entry){
+  if (newReceiverInfo != null && (callable instanceof KtNamedFunction) && ((KtNamedFunction)callable).getBodyExpression() != null) {
+    Map<KtReferenceExpression,BindingContext> noReceiverRefToContext=MapsKt.filter(JetFileReferencesResolver.INSTANCE$.resolve((KtNamedFunction)callable,true,true),new Function1<Map.Entry<? extends KtReferenceExpression,? extends BindingContext>,Boolean>(){
+      @Override public Boolean invoke(      Map.Entry<? extends KtReferenceExpression,? extends BindingContext> entry){
         ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(entry.getKey(),entry.getValue());
         return resolvedCall != null && !resolvedCall.getDispatchReceiver().exists() && !resolvedCall.getExtensionReceiver().exists();
       }
     }
 );
-    JetPsiFactory psiFactory=new JetPsiFactory(callable.getProject());
-    JetFile tempFile=JetRefactoringUtilKt.createTempCopy((JetFile)callable.getContainingFile(),new Function1<String,String>(){
+    KtPsiFactory psiFactory=new KtPsiFactory(callable.getProject());
+    KtFile tempFile=JetRefactoringUtilKt.createTempCopy((KtFile)callable.getContainingFile(),new Function1<String,String>(){
       @Override public String invoke(      String s){
         return s;
       }
     }
 );
-    JetNamedFunction functionWithReceiver=PsiTreeUtil.getParentOfType(tempFile.findElementAt(callable.getTextOffset()),JetNamedFunction.class);
-    JetTypeReference receiverTypeRef=psiFactory.createType(newReceiverInfo.getCurrentTypeText());
+    KtNamedFunction functionWithReceiver=PsiTreeUtil.getParentOfType(tempFile.findElementAt(callable.getTextOffset()),KtNamedFunction.class);
+    KtTypeReference receiverTypeRef=psiFactory.createType(newReceiverInfo.getCurrentTypeText());
     TypeRefHelpersKt.setReceiverTypeReference(functionWithReceiver,receiverTypeRef);
     BindingContext newContext=ResolutionUtils.analyze(functionWithReceiver.getBodyExpression(),BodyResolveMode.FULL);
-    int originalOffset=((JetNamedFunction)callable).getBodyExpression().getTextOffset();
-    JetExpression newBody=functionWithReceiver.getBodyExpression();
-    for (    Map.Entry<JetReferenceExpression,BindingContext> entry : noReceiverRefToContext.entrySet()) {
-      JetReferenceExpression originalRef=entry.getKey();
+    int originalOffset=((KtNamedFunction)callable).getBodyExpression().getTextOffset();
+    KtExpression newBody=functionWithReceiver.getBodyExpression();
+    for (    Map.Entry<KtReferenceExpression,BindingContext> entry : noReceiverRefToContext.entrySet()) {
+      KtReferenceExpression originalRef=entry.getKey();
       BindingContext originalContext=entry.getValue();
-      JetReferenceExpression newRef=PsiTreeUtil.getParentOfType(newBody.findElementAt(originalRef.getTextOffset() - originalOffset),JetReferenceExpression.class);
+      KtReferenceExpression newRef=PsiTreeUtil.getParentOfType(newBody.findElementAt(originalRef.getTextOffset() - originalOffset),KtReferenceExpression.class);
       ResolvedCall<?> newResolvedCall=CallUtilKt.getResolvedCall(newRef,newContext);
       if (newResolvedCall == null || newResolvedCall.getExtensionReceiver().exists() || newResolvedCall.getDispatchReceiver().exists()) {
         CallableDescriptor descriptor=CallUtilKt.getResolvedCall(originalRef,originalContext).getCandidateDescriptor();

@@ -1,0 +1,32 @@
+{
+  JvmFileClassInfo fileClassInfo=state.getFileClassesProvider().getFileClassInfo(file);
+  if (fileClassInfo.getWithJvmMultifileClass()) {
+    return null;
+  }
+  Type fileClassType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFileClassFqName());
+  PackageContext packagePartContext=state.getRootContext().intoPackagePart(packageFragment,fileClassType,file);
+  boolean generatePackagePart=false;
+  for (  KtDeclaration declaration : file.getDeclarations()) {
+    if (declaration instanceof KtProperty || declaration instanceof KtNamedFunction) {
+      generatePackagePart=true;
+    }
+ else     if (declaration instanceof KtClassOrObject) {
+      KtClassOrObject classOrObject=(KtClassOrObject)declaration;
+      if (state.getGenerateDeclaredClassFilter().shouldGenerateClass(classOrObject)) {
+        generateClassOrObject(classOrObject,packagePartContext);
+      }
+    }
+ else     if (declaration instanceof KtScript) {
+      KtScript script=(KtScript)declaration;
+      if (state.getGenerateDeclaredClassFilter().shouldGenerateScript(script)) {
+        ScriptCodegen.createScriptCodegen(script,state,packagePartContext).generate();
+      }
+    }
+  }
+  if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file))   return null;
+  String name=fileClassType.getInternalName();
+  packageParts.getParts().add(name.substring(name.lastIndexOf('/') + 1));
+  ClassBuilder builder=state.getFactory().newVisitor(JvmDeclarationOriginKt.PackagePart(file,packageFragment),fileClassType,file);
+  new PackagePartCodegen(builder,file,fileClassType,packagePartContext,state).generate();
+  return builder;
+}

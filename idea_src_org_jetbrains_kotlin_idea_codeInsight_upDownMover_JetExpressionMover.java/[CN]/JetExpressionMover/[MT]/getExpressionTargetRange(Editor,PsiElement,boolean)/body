@@ -1,20 +1,20 @@
 {
-  if (sibling instanceof JetIfExpression && !down) {
-    JetExpression elseBranch=((JetIfExpression)sibling).getElse();
-    if (elseBranch instanceof JetBlockExpression) {
+  if (sibling instanceof KtIfExpression && !down) {
+    KtExpression elseBranch=((KtIfExpression)sibling).getElse();
+    if (elseBranch instanceof KtBlockExpression) {
       sibling=elseBranch;
     }
   }
   PsiElement start=sibling;
   PsiElement end=sibling;
-  if (sibling.getNode().getElementType() == (down ? JetTokens.RBRACE : JetTokens.LBRACE)) {
+  if (sibling.getNode().getElementType() == (down ? KtTokens.RBRACE : KtTokens.LBRACE)) {
     PsiElement parent=sibling.getParent();
-    if (!(parent instanceof JetBlockExpression || parent instanceof JetFunctionLiteral))     return null;
-    JetBlockExpression newBlock;
-    if (parent instanceof JetFunctionLiteral) {
-      newBlock=findClosestBlock(((JetFunctionLiteral)parent).getBodyExpression(),down,false);
+    if (!(parent instanceof KtBlockExpression || parent instanceof KtFunctionLiteral))     return null;
+    KtBlockExpression newBlock;
+    if (parent instanceof KtFunctionLiteral) {
+      newBlock=findClosestBlock(((KtFunctionLiteral)parent).getBodyExpression(),down,false);
       if (!down) {
-        PsiElement arrow=((JetFunctionLiteral)parent).getArrow();
+        PsiElement arrow=((KtFunctionLiteral)parent).getArrow();
         if (arrow != null) {
           end=arrow;
         }
@@ -25,7 +25,7 @@
     }
     if (newBlock == null)     return null;
     if (PsiTreeUtil.isAncestor(newBlock,parent,true)) {
-      PsiElement outermostParent=JetPsiUtil.getOutermostParent(parent,newBlock,true);
+      PsiElement outermostParent=KtPsiUtil.getOutermostParent(parent,newBlock,true);
       if (down) {
         end=outermostParent;
       }
@@ -44,25 +44,25 @@
   }
  else {
     PsiElement blockLikeElement;
-    JetBlockExpression dslBlock=getDSLLambdaBlock(sibling,down);
+    KtBlockExpression dslBlock=getDSLLambdaBlock(sibling,down);
     if (dslBlock != null) {
       blockLikeElement=dslBlock.getParent();
     }
  else {
-      blockLikeElement=JetPsiUtil.getOutermostDescendantElement(sibling,down,CHECK_BLOCK_LIKE_ELEMENT);
+      blockLikeElement=KtPsiUtil.getOutermostDescendantElement(sibling,down,CHECK_BLOCK_LIKE_ELEMENT);
     }
     if (blockLikeElement != null) {
       if (down) {
-        end=JetPsiUtil.findChildByType(blockLikeElement,JetTokens.LBRACE);
-        if (blockLikeElement instanceof JetFunctionLiteral) {
-          PsiElement arrow=((JetFunctionLiteral)blockLikeElement).getArrow();
+        end=KtPsiUtil.findChildByType(blockLikeElement,KtTokens.LBRACE);
+        if (blockLikeElement instanceof KtFunctionLiteral) {
+          PsiElement arrow=((KtFunctionLiteral)blockLikeElement).getArrow();
           if (arrow != null) {
             end=arrow;
           }
         }
       }
  else {
-        start=JetPsiUtil.findChildByType(blockLikeElement,JetTokens.RBRACE);
+        start=KtPsiUtil.findChildByType(blockLikeElement,KtTokens.RBRACE);
       }
     }
   }

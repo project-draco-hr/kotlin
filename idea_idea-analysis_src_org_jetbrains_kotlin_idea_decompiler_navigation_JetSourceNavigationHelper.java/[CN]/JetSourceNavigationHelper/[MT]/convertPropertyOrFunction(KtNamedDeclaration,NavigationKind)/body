@@ -1,0 +1,54 @@
+{
+  if (declaration instanceof KtPrimaryConstructor) {
+    KtClassOrObject sourceClassOrObject=convertNamedClassOrObject(((KtPrimaryConstructor)declaration).getContainingClassOrObject(),navigationKind);
+    KtPrimaryConstructor primaryConstructor=sourceClassOrObject != null ? sourceClassOrObject.getPrimaryConstructor() : null;
+    return primaryConstructor != null ? primaryConstructor : sourceClassOrObject;
+  }
+  String memberNameAsString=declaration.getName();
+  if (memberNameAsString == null) {
+    LOG.debug("JetSourceNavigationHelper.convertPropertyOrFunction(): null name for declaration " + declaration);
+    return null;
+  }
+  Name memberName=Name.identifier(memberNameAsString);
+  PsiElement decompiledContainer=declaration.getParent();
+  Collection<KtNamedDeclaration> candidates;
+  if (decompiledContainer instanceof KtFile) {
+    candidates=getInitialTopLevelCandidates(declaration,navigationKind);
+  }
+ else   if (decompiledContainer instanceof KtClassBody) {
+    KtClassOrObject decompiledClassOrObject=(KtClassOrObject)decompiledContainer.getParent();
+    KtClassOrObject sourceClassOrObject=convertNamedClassOrObject(decompiledClassOrObject,navigationKind);
+    candidates=sourceClassOrObject == null ? Collections.<KtNamedDeclaration>emptyList() : getInitialMemberCandidates(sourceClassOrObject,memberName,(Class<KtNamedDeclaration>)declaration.getClass());
+    if (candidates.isEmpty()) {
+      if (declaration instanceof KtProperty && sourceClassOrObject instanceof KtClass) {
+        return findSpecialProperty(memberName,(KtClass)sourceClassOrObject);
+      }
+    }
+  }
+ else {
+    throw new IllegalStateException("Unexpected container of " + (navigationKind == NavigationKind.CLASS_FILES_TO_SOURCES ? "decompiled" : "source") + " declaration: "+ decompiledContainer.getClass().getSimpleName());
+  }
+  if (candidates.isEmpty()) {
+    return null;
+  }
+  if (!forceResolve) {
+    candidates=filterByReceiverPresenceAndParametersCount(declaration,candidates);
+    if (candidates.size() <= 1) {
+      return candidates.isEmpty() ? null : candidates.iterator().next();
+    }
+    if (!haveRenamesInImports(getContainingFiles(candidates))) {
+      candidates=filterByReceiverAndParameterTypes(declaration,candidates);
+      if (candidates.size() <= 1) {
+        return candidates.isEmpty() ? null : candidates.iterator().next();
+      }
+    }
+  }
+  KotlinCodeAnalyzer analyzer=createAnalyzer(candidates,declaration.getProject());
+  for (  KtNamedDeclaration candidate : candidates) {
+    CallableDescriptor candidateDescriptor=(CallableDescriptor)analyzer.resolveToDescriptor(candidate);
+    if (receiversMatch(declaration,candidateDescriptor) && valueParametersTypesMatch(declaration,candidateDescriptor) && typeParametersMatch((KtTypeParameterListOwner)declaration,candidateDescriptor.getTypeParameters())) {
+      return candidate;
+    }
+  }
+  return null;
+}

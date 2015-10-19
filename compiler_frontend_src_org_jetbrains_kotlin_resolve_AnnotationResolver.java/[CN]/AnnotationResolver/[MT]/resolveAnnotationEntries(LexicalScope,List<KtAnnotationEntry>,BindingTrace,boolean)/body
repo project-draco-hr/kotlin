@@ -1,0 +1,21 @@
+{
+  if (annotationEntryElements.isEmpty())   return Annotations.Companion.getEMPTY();
+  List<AnnotationWithTarget> result=new ArrayList<AnnotationWithTarget>(0);
+  for (  KtAnnotationEntry entryElement : annotationEntryElements) {
+    AnnotationDescriptor descriptor=trace.get(BindingContext.ANNOTATION,entryElement);
+    if (descriptor == null) {
+      descriptor=new LazyAnnotationDescriptor(new LazyAnnotationsContextImpl(this,storageManager,trace,scope),entryElement);
+    }
+    if (shouldResolveArguments) {
+      ForceResolveUtil.forceResolveAllContents(descriptor);
+    }
+    KtAnnotationUseSiteTarget target=entryElement.getUseSiteTarget();
+    if (target != null) {
+      result.add(new AnnotationWithTarget(descriptor,target.getAnnotationUseSiteTarget()));
+    }
+ else {
+      result.add(new AnnotationWithTarget(descriptor,null));
+    }
+  }
+  return AnnotationsImpl.create(result);
+}

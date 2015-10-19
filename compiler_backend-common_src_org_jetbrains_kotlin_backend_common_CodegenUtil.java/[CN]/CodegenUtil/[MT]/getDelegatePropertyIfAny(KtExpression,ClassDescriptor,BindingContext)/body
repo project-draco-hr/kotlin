@@ -1,0 +1,18 @@
+{
+  PropertyDescriptor propertyDescriptor=null;
+  if (expression instanceof KtSimpleNameExpression) {
+    ResolvedCall<?> call=CallUtilKt.getResolvedCall(expression,bindingContext);
+    if (call != null) {
+      CallableDescriptor callResultingDescriptor=call.getResultingDescriptor();
+      if (callResultingDescriptor instanceof ValueParameterDescriptor) {
+        ValueParameterDescriptor valueParameterDescriptor=(ValueParameterDescriptor)callResultingDescriptor;
+        if (valueParameterDescriptor.getContainingDeclaration() instanceof ConstructorDescriptor) {
+          if (valueParameterDescriptor.getContainingDeclaration().getContainingDeclaration() == classDescriptor) {
+            propertyDescriptor=bindingContext.get(BindingContext.VALUE_PARAMETER_AS_PROPERTY,valueParameterDescriptor);
+          }
+        }
+      }
+    }
+  }
+  return propertyDescriptor;
+}

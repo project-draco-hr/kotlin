@@ -1,0 +1,17 @@
+{
+  if (jetClass instanceof KtEnumEntry) {
+    KtClassOrObject parent=KtStubbedPsiUtil.getContainingDeclaration(jetClass,KtClassOrObject.class);
+    ClassDescriptor parentDescriptor=trace.getBindingContext().get(BindingContext.CLASS,parent);
+    if (parentDescriptor.getTypeConstructor().getParameters().isEmpty()) {
+      return parentDescriptor.getDefaultType();
+    }
+ else {
+      trace.report(NO_GENERICS_IN_SUPERTYPE_SPECIFIER.on(jetClass.getNameIdentifier()));
+      return ErrorUtils.createErrorType("Supertype not specified");
+    }
+  }
+ else   if (isAnnotation) {
+    return builtIns.getAnnotationType();
+  }
+  return builtIns.getAnyType();
+}

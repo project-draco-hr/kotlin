@@ -1,0 +1,47 @@
+{
+  List<KtElement> elementsToAnalyze=new ArrayList<KtElement>();
+  if (rootElement instanceof KtNamedFunction) {
+    elementsToAnalyze.add(((KtNamedFunction)rootElement).getBodyExpression());
+  }
+ else   if (rootElement instanceof KtProperty) {
+    for (    KtPropertyAccessor accessor : ((KtProperty)rootElement).getAccessors()) {
+      KtExpression body=accessor.getBodyExpression();
+      if (body != null) {
+        elementsToAnalyze.add(body);
+      }
+    }
+  }
+ else {
+    KtClassOrObject classOrObject=(KtClassOrObject)rootElement;
+    for (    KtDelegationSpecifier specifier : classOrObject.getDelegationSpecifiers()) {
+      if (specifier instanceof KtCallElement) {
+        elementsToAnalyze.add(specifier);
+      }
+    }
+    KtClassBody body=classOrObject.getBody();
+    if (body != null) {
+      for (      KtClassInitializer initializer : body.getAnonymousInitializers()) {
+        KtExpression initializerBody=initializer.getBody();
+        if (initializerBody != null) {
+          elementsToAnalyze.add(initializerBody);
+        }
+      }
+      for (      KtProperty property : body.getProperties()) {
+        KtExpression initializer=property.getInitializer();
+        if (initializer != null) {
+          elementsToAnalyze.add(initializer);
+        }
+      }
+    }
+  }
+  final Map<PsiReference,PsiElement> referencesToCalleeElements=new HashMap<PsiReference,PsiElement>();
+  for (  KtElement element : elementsToAnalyze) {
+    element.accept(new CalleeReferenceVisitorBase(ResolutionUtils.analyze(element,BodyResolveMode.FULL),false){
+      @Override protected void processDeclaration(      KtSimpleNameExpression reference,      PsiElement declaration){
+        referencesToCalleeElements.put(ReferenceUtilKt.getMainReference(reference),declaration);
+      }
+    }
+);
+  }
+  return referencesToCalleeElements;
+}

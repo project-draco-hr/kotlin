@@ -1,0 +1,31 @@
+{
+  mark(expression);
+  List<KtExpression> branches=new ArrayList<KtExpression>(2);
+  KtExpression condition=expression.getCondition();
+  if (condition != null) {
+    generateInstructions(condition);
+  }
+  Label elseLabel=builder.createUnboundLabel("else branch");
+  builder.jumpOnFalse(elseLabel,expression,builder.getBoundValue(condition));
+  KtExpression thenBranch=expression.getThen();
+  if (thenBranch != null) {
+    branches.add(thenBranch);
+    generateInstructions(thenBranch);
+  }
+ else {
+    builder.loadUnit(expression);
+  }
+  Label resultLabel=builder.createUnboundLabel("'if' expression result");
+  builder.jump(resultLabel,expression);
+  builder.bindLabel(elseLabel);
+  KtExpression elseBranch=expression.getElse();
+  if (elseBranch != null) {
+    branches.add(elseBranch);
+    generateInstructions(elseBranch);
+  }
+ else {
+    builder.loadUnit(expression);
+  }
+  builder.bindLabel(resultLabel);
+  mergeValues(branches,expression);
+}

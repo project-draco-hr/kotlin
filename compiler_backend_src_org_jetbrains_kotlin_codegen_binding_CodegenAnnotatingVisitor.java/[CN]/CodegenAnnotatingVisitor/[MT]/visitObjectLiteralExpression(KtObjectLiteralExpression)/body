@@ -1,0 +1,22 @@
+{
+  KtObjectDeclaration object=expression.getObjectDeclaration();
+  ClassDescriptor classDescriptor=bindingContext.get(CLASS,object);
+  if (classDescriptor == null) {
+    super.visitObjectLiteralExpression(expression);
+    return;
+  }
+  String name=inventAnonymousClassName();
+  recordClosure(classDescriptor,name);
+  KtDelegationSpecifierList delegationSpecifierList=object.getDelegationSpecifierList();
+  if (delegationSpecifierList != null) {
+    delegationSpecifierList.accept(this);
+  }
+  classStack.push(classDescriptor);
+  nameStack.push(CodegenBinding.getAsmType(bindingContext,classDescriptor).getInternalName());
+  KtClassBody body=object.getBody();
+  if (body != null) {
+    super.visitClassBody(body);
+  }
+  nameStack.pop();
+  classStack.pop();
+}

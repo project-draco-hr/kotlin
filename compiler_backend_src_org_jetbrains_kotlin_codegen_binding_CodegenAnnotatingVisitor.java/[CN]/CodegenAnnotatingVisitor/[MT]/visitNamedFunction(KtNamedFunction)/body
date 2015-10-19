@@ -1,0 +1,21 @@
+{
+  FunctionDescriptor functionDescriptor=(FunctionDescriptor)bindingContext.get(DECLARATION_TO_DESCRIPTOR,function);
+  if (functionDescriptor == null)   return;
+  String nameForClassOrPackageMember=getNameForClassOrPackageMember(functionDescriptor);
+  if (nameForClassOrPackageMember != null) {
+    nameStack.push(nameForClassOrPackageMember);
+    super.visitNamedFunction(function);
+    nameStack.pop();
+  }
+ else {
+    String name=inventAnonymousClassName();
+    Collection<KtType> supertypes=runtimeTypes.getSupertypesForClosure(functionDescriptor);
+    ClassDescriptor classDescriptor=recordClassForCallable(function,functionDescriptor,supertypes,name);
+    recordClosure(classDescriptor,name);
+    classStack.push(classDescriptor);
+    nameStack.push(name);
+    super.visitNamedFunction(function);
+    nameStack.pop();
+    classStack.pop();
+  }
+}

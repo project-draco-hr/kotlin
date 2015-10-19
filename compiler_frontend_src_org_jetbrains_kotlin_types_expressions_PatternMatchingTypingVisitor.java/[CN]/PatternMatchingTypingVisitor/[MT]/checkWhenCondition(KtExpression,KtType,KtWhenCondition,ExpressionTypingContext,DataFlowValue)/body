@@ -1,0 +1,48 @@
+{
+  final Ref<DataFlowInfos> newDataFlowInfo=new Ref<DataFlowInfos>(noChange(context));
+  condition.accept(new KtVisitorVoid(){
+    @Override public void visitWhenConditionInRange(    @NotNull KtWhenConditionInRange condition){
+      KtExpression rangeExpression=condition.getRangeExpression();
+      if (rangeExpression == null)       return;
+      if (subjectExpression == null) {
+        context.trace.report(EXPECTED_CONDITION.on(condition));
+        DataFlowInfo dataFlowInfo=facade.getTypeInfo(rangeExpression,context).getDataFlowInfo();
+        newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
+        return;
+      }
+      ValueArgument argumentForSubject=CallMaker.makeExternalValueArgument(subjectExpression);
+      JetTypeInfo typeInfo=facade.checkInExpression(condition,condition.getOperationReference(),argumentForSubject,rangeExpression,context);
+      DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
+      newDataFlowInfo.set(new DataFlowInfos(dataFlowInfo,dataFlowInfo));
+      KtType type=typeInfo.getType();
+      if (type == null || !isBoolean(type)) {
+        context.trace.report(TYPE_MISMATCH_IN_RANGE.on(condition));
+      }
+    }
+    @Override public void visitWhenConditionIsPattern(    @NotNull KtWhenConditionIsPattern condition){
+      if (subjectExpression == null) {
+        context.trace.report(EXPECTED_CONDITION.on(condition));
+      }
+      if (condition.getTypeReference() != null) {
+        DataFlowInfos result=checkTypeForIs(context,subjectType,condition.getTypeReference(),subjectDataFlowValue);
+        if (condition.isNegated()) {
+          newDataFlowInfo.set(new DataFlowInfos(result.elseInfo,result.thenInfo));
+        }
+ else {
+          newDataFlowInfo.set(result);
+        }
+      }
+    }
+    @Override public void visitWhenConditionWithExpression(    @NotNull KtWhenConditionWithExpression condition){
+      KtExpression expression=condition.getExpression();
+      if (expression != null) {
+        newDataFlowInfo.set(checkTypeForExpressionCondition(context,expression,subjectType,subjectExpression == null,subjectDataFlowValue));
+      }
+    }
+    @Override public void visitJetElement(    @NotNull KtElement element){
+      context.trace.report(UNSUPPORTED.on(element,getClass().getCanonicalName()));
+    }
+  }
+);
+  return newDataFlowInfo.get();
+}

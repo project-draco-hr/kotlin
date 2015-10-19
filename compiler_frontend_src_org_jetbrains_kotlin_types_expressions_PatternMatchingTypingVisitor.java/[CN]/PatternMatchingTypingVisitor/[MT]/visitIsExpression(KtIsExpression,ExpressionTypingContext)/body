@@ -1,0 +1,13 @@
+{
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  KtExpression leftHandSide=expression.getLeftHandSide();
+  JetTypeInfo typeInfo=facade.safeGetTypeInfo(leftHandSide,context.replaceScope(context.scope));
+  KtType knownType=typeInfo.getType();
+  if (expression.getTypeReference() != null) {
+    DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(leftHandSide,knownType,context);
+    DataFlowInfo conditionInfo=checkTypeForIs(context,knownType,expression.getTypeReference(),dataFlowValue).thenInfo;
+    DataFlowInfo newDataFlowInfo=conditionInfo.and(typeInfo.getDataFlowInfo());
+    context.trace.record(BindingContext.DATAFLOW_INFO_AFTER_CONDITION,expression,newDataFlowInfo);
+  }
+  return components.dataFlowAnalyzer.checkType(typeInfo.replaceType(components.builtIns.getBooleanType()),expression,contextWithExpectedType);
+}

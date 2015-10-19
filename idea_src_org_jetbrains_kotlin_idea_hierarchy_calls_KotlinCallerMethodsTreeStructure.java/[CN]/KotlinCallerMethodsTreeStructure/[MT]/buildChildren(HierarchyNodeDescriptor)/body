@@ -1,15 +1,15 @@
 {
   final PsiElement element=getTargetElement(descriptor);
-  JetElement codeBlockForLocalDeclaration=getEnclosingElementForLocalDeclaration(element);
+  KtElement codeBlockForLocalDeclaration=getEnclosingElementForLocalDeclaration(element);
   if (codeBlockForLocalDeclaration != null) {
-    BindingContext bindingContext=ResolutionUtils.analyze((JetElement)element,BodyResolveMode.FULL);
+    BindingContext bindingContext=ResolutionUtils.analyze((KtElement)element,BodyResolveMode.FULL);
     final Map<PsiReference,PsiElement> referencesToElements=new HashMap<PsiReference,PsiElement>();
     codeBlockForLocalDeclaration.accept(new CalleeReferenceVisitorBase(bindingContext,true){
-      @Override protected void processDeclaration(      JetSimpleNameExpression reference,      PsiElement declaration){
+      @Override protected void processDeclaration(      KtSimpleNameExpression reference,      PsiElement declaration){
         if (!declaration.equals(element))         return;
-        PsiElement container=PsiTreeUtil.getParentOfType(reference,JetNamedFunction.class,JetPropertyAccessor.class,JetClassOrObject.class);
-        if (container instanceof JetPropertyAccessor) {
-          container=PsiTreeUtil.getParentOfType(container,JetProperty.class);
+        PsiElement container=PsiTreeUtil.getParentOfType(reference,KtNamedFunction.class,KtPropertyAccessor.class,KtClassOrObject.class);
+        if (container instanceof KtPropertyAccessor) {
+          container=PsiTreeUtil.getParentOfType(container,KtProperty.class);
         }
         if (container != null) {
           referencesToElements.put(ReferenceUtilKt.getMainReference(reference),container);
@@ -26,22 +26,22 @@
     javaCallers=javaTreeStructure.getChildElements(getJavaNodeDescriptor(descriptor));
     processPsiMethodCallers(Collections.singleton((PsiMethod)element),descriptor,methodToDescriptorMap,searchScope,true);
   }
-  if (element instanceof JetNamedFunction || element instanceof JetSecondaryConstructor) {
-    Collection<PsiMethod> lightMethods=LightClassUtil.INSTANCE$.getLightClassMethods((JetFunction)element);
+  if (element instanceof KtNamedFunction || element instanceof KtSecondaryConstructor) {
+    Collection<PsiMethod> lightMethods=LightClassUtil.INSTANCE$.getLightClassMethods((KtFunction)element);
     processPsiMethodCallers(lightMethods,descriptor,methodToDescriptorMap,searchScope,false);
   }
-  if (element instanceof JetProperty) {
-    LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=LightClassUtil.INSTANCE$.getLightClassPropertyMethods((JetProperty)element);
+  if (element instanceof KtProperty) {
+    LightClassUtil.PropertyAccessorsPsiMethods propertyMethods=LightClassUtil.INSTANCE$.getLightClassPropertyMethods((KtProperty)element);
     processPsiMethodCallers(propertyMethods,descriptor,methodToDescriptorMap,searchScope,false);
   }
-  if (element instanceof JetClassOrObject) {
-    JetPrimaryConstructor constructor=((JetClassOrObject)element).getPrimaryConstructor();
+  if (element instanceof KtClassOrObject) {
+    KtPrimaryConstructor constructor=((KtClassOrObject)element).getPrimaryConstructor();
     if (constructor != null) {
       PsiMethod lightMethod=LightClassUtil.INSTANCE$.getLightClassMethod(constructor);
       processPsiMethodCallers(Collections.singleton(lightMethod),descriptor,methodToDescriptorMap,searchScope,false);
     }
  else {
-      processJetClassOrObjectCallers((JetClassOrObject)element,descriptor,methodToDescriptorMap,searchScope);
+      processJetClassOrObjectCallers((KtClassOrObject)element,descriptor,methodToDescriptorMap,searchScope);
     }
   }
   Object[] callers=methodToDescriptorMap.values().toArray(new Object[methodToDescriptorMap.size()]);

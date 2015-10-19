@@ -1,0 +1,32 @@
+{
+  VariableDescriptor variableDescriptor=cxtx.variableDescriptor;
+  boolean[] error=new boolean[1];
+  if (!isCorrectBackingFieldReference(element,cxtx,error,true))   return false;
+  if (error[0])   return true;
+  if (!(variableDescriptor instanceof PropertyDescriptor)) {
+    report(Errors.NOT_PROPERTY_BACKING_FIELD.on(element),cxtx);
+    return true;
+  }
+  PsiElement property=DescriptorToSourceUtils.descriptorToDeclaration(variableDescriptor);
+  boolean insideSelfAccessors=PsiTreeUtil.isAncestor(property,element,false);
+  if (!trace.get(BindingContext.BACKING_FIELD_REQUIRED,(PropertyDescriptor)variableDescriptor) && !insideSelfAccessors) {
+    if (((PropertyDescriptor)variableDescriptor).getModality() == Modality.ABSTRACT) {
+      report(NO_BACKING_FIELD_ABSTRACT_PROPERTY.on(element),cxtx);
+    }
+ else {
+      report(NO_BACKING_FIELD_CUSTOM_ACCESSORS.on(element),cxtx);
+    }
+    return true;
+  }
+  if (insideSelfAccessors)   return false;
+  DeclarationDescriptor declarationDescriptor=BindingContextUtils.getEnclosingDescriptor(trace.getBindingContext(),element);
+  DeclarationDescriptor containingDeclaration=variableDescriptor.getContainingDeclaration();
+  if ((containingDeclaration instanceof ClassDescriptor) && DescriptorUtils.isAncestor(containingDeclaration,declarationDescriptor,false)) {
+    if (element instanceof KtSimpleNameExpression) {
+      report(Errors.BACKING_FIELD_USAGE_FORBIDDEN.on((KtSimpleNameExpression)element),cxtx);
+    }
+    return false;
+  }
+  report(Errors.INACCESSIBLE_BACKING_FIELD.on(element),cxtx);
+  return true;
+}

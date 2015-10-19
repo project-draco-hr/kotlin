@@ -1,0 +1,28 @@
+{
+  KtSimpleNameExpression labelElement=expression.getTargetLabel();
+  Name labelName=expression.getLabelNameAsName();
+  if (labelElement == null || labelName == null)   return null;
+  Collection<DeclarationDescriptor> declarationsByLabel=ScopeUtilsKt.getDeclarationsByLabel(context.scope,labelName);
+  int size=declarationsByLabel.size();
+  if (size > 1) {
+    BindingContextUtils.reportAmbiguousLabel(context.trace,labelElement,declarationsByLabel);
+    return null;
+  }
+  if (size == 0) {
+    KtElement element=resolveNamedLabel(labelName,labelElement,context.trace);
+    if (element == null) {
+      context.trace.report(UNRESOLVED_REFERENCE.on(labelElement,labelElement));
+    }
+    return element;
+  }
+  DeclarationDescriptor declarationDescriptor=declarationsByLabel.iterator().next();
+  KtElement element;
+  if (declarationDescriptor instanceof FunctionDescriptor || declarationDescriptor instanceof ClassDescriptor) {
+    element=(KtElement)DescriptorToSourceUtils.descriptorToDeclaration(declarationDescriptor);
+  }
+ else {
+    throw new UnsupportedOperationException(declarationDescriptor.getClass().toString());
+  }
+  context.trace.record(LABEL_TARGET,labelElement,element);
+  return element;
+}

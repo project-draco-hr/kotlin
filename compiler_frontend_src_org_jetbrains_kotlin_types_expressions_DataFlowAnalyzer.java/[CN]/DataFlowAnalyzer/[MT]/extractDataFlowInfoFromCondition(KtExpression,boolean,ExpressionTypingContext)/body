@@ -1,0 +1,76 @@
+{
+  if (condition == null)   return context.dataFlowInfo;
+  final Ref<DataFlowInfo> result=new Ref<DataFlowInfo>(null);
+  condition.accept(new KtVisitorVoid(){
+    @Override public void visitIsExpression(    @NotNull KtIsExpression expression){
+      if (conditionValue && !expression.isNegated() || !conditionValue && expression.isNegated()) {
+        result.set(context.trace.get(BindingContext.DATAFLOW_INFO_AFTER_CONDITION,expression));
+      }
+    }
+    @Override public void visitBinaryExpression(    @NotNull KtBinaryExpression expression){
+      IElementType operationToken=expression.getOperationToken();
+      if (OperatorConventions.BOOLEAN_OPERATIONS.containsKey(operationToken)) {
+        DataFlowInfo dataFlowInfo=extractDataFlowInfoFromCondition(expression.getLeft(),conditionValue,context);
+        KtExpression expressionRight=expression.getRight();
+        if (expressionRight != null) {
+          DataFlowInfo rightInfo=extractDataFlowInfoFromCondition(expressionRight,conditionValue,context);
+          boolean and=operationToken == KtTokens.ANDAND;
+          if (and == conditionValue) {
+            dataFlowInfo=dataFlowInfo.and(rightInfo);
+          }
+ else {
+            dataFlowInfo=dataFlowInfo.or(rightInfo);
+          }
+        }
+        result.set(dataFlowInfo);
+      }
+ else {
+        KtExpression left=expression.getLeft();
+        if (left == null)         return;
+        KtExpression right=expression.getRight();
+        if (right == null)         return;
+        KtType lhsType=context.trace.getBindingContext().getType(left);
+        if (lhsType == null)         return;
+        KtType rhsType=context.trace.getBindingContext().getType(right);
+        if (rhsType == null)         return;
+        DataFlowValue leftValue=DataFlowValueFactory.createDataFlowValue(left,lhsType,context);
+        DataFlowValue rightValue=DataFlowValueFactory.createDataFlowValue(right,rhsType,context);
+        Boolean equals=null;
+        if (operationToken == KtTokens.EQEQ || operationToken == KtTokens.EQEQEQ) {
+          equals=true;
+        }
+ else         if (operationToken == KtTokens.EXCLEQ || operationToken == KtTokens.EXCLEQEQEQ) {
+          equals=false;
+        }
+        if (equals != null) {
+          if (equals == conditionValue) {
+            result.set(context.dataFlowInfo.equate(leftValue,rightValue));
+          }
+ else {
+            result.set(context.dataFlowInfo.disequate(leftValue,rightValue));
+          }
+        }
+      }
+    }
+    @Override public void visitUnaryExpression(    @NotNull KtUnaryExpression expression){
+      IElementType operationTokenType=expression.getOperationReference().getReferencedNameElementType();
+      if (operationTokenType == KtTokens.EXCL) {
+        KtExpression baseExpression=expression.getBaseExpression();
+        if (baseExpression != null) {
+          result.set(extractDataFlowInfoFromCondition(baseExpression,!conditionValue,context));
+        }
+      }
+    }
+    @Override public void visitParenthesizedExpression(    @NotNull KtParenthesizedExpression expression){
+      KtExpression body=expression.getExpression();
+      if (body != null) {
+        body.accept(this);
+      }
+    }
+  }
+);
+  if (result.get() == null) {
+    return context.dataFlowInfo;
+  }
+  return context.dataFlowInfo.and(result.get());
+}

@@ -1,0 +1,26 @@
+{
+  checkOpenMembers(classDescriptor);
+  checkTypeParameters(aClass);
+  checkTypeParameterConstraints(aClass);
+  if (aClass.isInterface()) {
+    checkConstructorInInterface(aClass);
+    checkMethodsOfAnyInInterface(classDescriptor);
+    if (aClass.isLocal() && !(classDescriptor.getContainingDeclaration() instanceof ClassDescriptor)) {
+      trace.report(LOCAL_INTERFACE_NOT_ALLOWED.on(aClass,classDescriptor));
+    }
+  }
+ else   if (classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
+    checkAnnotationClassWithBody(aClass);
+    checkValOnAnnotationParameter(aClass);
+  }
+ else   if (aClass instanceof KtEnumEntry) {
+    checkEnumEntry((KtEnumEntry)aClass,classDescriptor);
+  }
+  for (  CallableMemberDescriptor memberDescriptor : classDescriptor.getDeclaredCallableMembers()) {
+    if (memberDescriptor.getKind() != CallableMemberDescriptor.Kind.DECLARATION)     continue;
+    KtNamedDeclaration member=(KtNamedDeclaration)DescriptorToSourceUtils.descriptorToDeclaration(memberDescriptor);
+    if (member instanceof KtFunction && memberDescriptor instanceof FunctionDescriptor) {
+      checkFunctionExposedType((KtFunction)member,(FunctionDescriptor)memberDescriptor);
+    }
+  }
+}

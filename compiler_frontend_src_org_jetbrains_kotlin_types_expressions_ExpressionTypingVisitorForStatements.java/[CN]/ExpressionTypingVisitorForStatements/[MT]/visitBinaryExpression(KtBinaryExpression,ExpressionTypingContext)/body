@@ -1,0 +1,15 @@
+{
+  KtSimpleNameExpression operationSign=expression.getOperationReference();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  JetTypeInfo result;
+  if (operationType == KtTokens.EQ) {
+    result=visitAssignment(expression,context);
+  }
+ else   if (OperatorConventions.ASSIGNMENT_OPERATIONS.containsKey(operationType)) {
+    result=visitAssignmentOperation(expression,context);
+  }
+ else {
+    return facade.getTypeInfo(expression,context);
+  }
+  return components.dataFlowAnalyzer.checkType(result,expression,context);
+}

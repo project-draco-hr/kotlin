@@ -2,27 +2,27 @@
   return new JetIntentionActionsFactory(){
     @NotNull @Override protected List<IntentionAction> doCreateActions(    @NotNull Diagnostic diagnostic){
       List<IntentionAction> actions=new LinkedList<IntentionAction>();
-      JetFunction function=QuickFixUtil.getParentElementOfType(diagnostic,JetFunction.class);
+      KtFunction function=QuickFixUtil.getParentElementOfType(diagnostic,KtFunction.class);
       if (function != null) {
         FunctionDescriptor descriptor=(FunctionDescriptor)ResolutionUtils.resolveToDescriptor(function);
-        JetType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor);
+        KtType matchingReturnType=QuickFixUtil.findLowerBoundOfOverriddenCallablesReturnTypes(descriptor);
         if (matchingReturnType != null) {
           actions.add(new ChangeFunctionReturnTypeFix(function,matchingReturnType));
         }
-        JetType functionType=descriptor.getReturnType();
+        KtType functionType=descriptor.getReturnType();
         if (functionType == null)         return actions;
         List<FunctionDescriptor> overriddenMismatchingFunctions=new LinkedList<FunctionDescriptor>();
         for (        FunctionDescriptor overriddenFunction : descriptor.getOverriddenDescriptors()) {
-          JetType overriddenFunctionType=overriddenFunction.getReturnType();
+          KtType overriddenFunctionType=overriddenFunction.getReturnType();
           if (overriddenFunctionType == null)           continue;
-          if (!JetTypeChecker.DEFAULT.isSubtypeOf(functionType,overriddenFunctionType)) {
+          if (!KotlinTypeChecker.DEFAULT.isSubtypeOf(functionType,overriddenFunctionType)) {
             overriddenMismatchingFunctions.add(overriddenFunction);
           }
         }
         if (overriddenMismatchingFunctions.size() == 1) {
           PsiElement overriddenFunction=DescriptorToSourceUtils.descriptorToDeclaration(overriddenMismatchingFunctions.get(0));
-          if (overriddenFunction instanceof JetFunction) {
-            actions.add(new ChangeFunctionReturnTypeFix((JetFunction)overriddenFunction,functionType));
+          if (overriddenFunction instanceof KtFunction) {
+            actions.add(new ChangeFunctionReturnTypeFix((KtFunction)overriddenFunction,functionType));
           }
         }
       }

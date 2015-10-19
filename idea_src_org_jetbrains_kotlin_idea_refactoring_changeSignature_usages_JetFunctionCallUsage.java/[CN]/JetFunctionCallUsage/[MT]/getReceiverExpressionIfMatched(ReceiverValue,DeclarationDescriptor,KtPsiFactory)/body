@@ -1,0 +1,14 @@
+{
+  if (!receiverValue.exists())   return null;
+  if (originalDescriptor instanceof CallableDescriptor && !(originalDescriptor instanceof ReceiverParameterDescriptor)) {
+    ReceiverParameterDescriptor receiverParameter=((CallableDescriptor)originalDescriptor).getExtensionReceiverParameter();
+    if (receiverParameter == null)     return null;
+    originalDescriptor=receiverParameter;
+  }
+  boolean currentIsExtension=resolvedCall.getExtensionReceiver() == receiverValue;
+  boolean originalIsExtension=originalDescriptor instanceof ReceiverParameterDescriptor && ((ReceiverParameterDescriptor)originalDescriptor).getValue() instanceof ExtensionReceiver;
+  if (currentIsExtension != originalIsExtension)   return null;
+  KtType originalType=originalDescriptor instanceof ReceiverParameterDescriptor ? ((ReceiverParameterDescriptor)originalDescriptor).getType() : originalDescriptor instanceof ClassDescriptor ? ((ClassDescriptor)originalDescriptor).getDefaultType() : null;
+  if (originalType == null || !KotlinTypeChecker.DEFAULT.isSubtypeOf(receiverValue.getType(),originalType))   return null;
+  return getReceiverExpression(receiverValue,psiFactory);
+}

@@ -1,0 +1,14 @@
+{
+  if (functionOrGetter instanceof KtFunctionLiteral) {
+    KtBlockExpression functionLiteralBody=((KtFunctionLiteral)functionOrGetter).getBodyExpression();
+    PsiElement returnedElement=functionLiteralBody == null ? null : functionLiteralBody.getLastChild();
+    return returnedElement instanceof KtExpression && canEvaluateTo((KtExpression)returnedElement,expression);
+  }
+ else {
+    if (functionOrGetter instanceof KtWithExpressionInitializer && canEvaluateTo(((KtWithExpressionInitializer)functionOrGetter).getInitializer(),expression)) {
+      return true;
+    }
+    KtReturnExpression returnExpression=PsiTreeUtil.getParentOfType(expression,KtReturnExpression.class);
+    return returnExpression != null && canEvaluateTo(returnExpression.getReturnedExpression(),expression);
+  }
+}

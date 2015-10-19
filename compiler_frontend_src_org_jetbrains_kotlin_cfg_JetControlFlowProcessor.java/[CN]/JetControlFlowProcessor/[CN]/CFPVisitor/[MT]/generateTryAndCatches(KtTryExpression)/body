@@ -1,0 +1,52 @@
+{
+  List<KtCatchClause> catchClauses=expression.getCatchClauses();
+  boolean hasCatches=!catchClauses.isEmpty();
+  Label onException=null;
+  if (hasCatches) {
+    onException=builder.createUnboundLabel("onException");
+    builder.nondeterministicJump(onException,expression,null);
+  }
+  Label onExceptionToFinallyBlock=null;
+  if (expression.getFinallyBlock() != null) {
+    onExceptionToFinallyBlock=builder.createUnboundLabel("onExceptionToFinallyBlock");
+    builder.nondeterministicJump(onExceptionToFinallyBlock,expression,null);
+  }
+  KtBlockExpression tryBlock=expression.getTryBlock();
+  generateInstructions(tryBlock);
+  if (hasCatches) {
+    Label afterCatches=builder.createUnboundLabel("afterCatches");
+    builder.jump(afterCatches,expression);
+    builder.bindLabel(onException);
+    LinkedList<Label> catchLabels=Lists.newLinkedList();
+    int catchClausesSize=catchClauses.size();
+    for (int i=0; i < catchClausesSize - 1; i++) {
+      catchLabels.add(builder.createUnboundLabel("catch " + i));
+    }
+    if (!catchLabels.isEmpty()) {
+      builder.nondeterministicJump(catchLabels,expression);
+    }
+    boolean isFirst=true;
+    for (    KtCatchClause catchClause : catchClauses) {
+      builder.enterLexicalScope(catchClause);
+      if (!isFirst) {
+        builder.bindLabel(catchLabels.remove());
+      }
+ else {
+        isFirst=false;
+      }
+      KtParameter catchParameter=catchClause.getCatchParameter();
+      if (catchParameter != null) {
+        builder.declareParameter(catchParameter);
+        generateInitializer(catchParameter,createSyntheticValue(catchParameter,MagicKind.FAKE_INITIALIZER));
+      }
+      KtExpression catchBody=catchClause.getCatchBody();
+      if (catchBody != null) {
+        generateInstructions(catchBody);
+      }
+      builder.jump(afterCatches,expression);
+      builder.exitLexicalScope(catchClause);
+    }
+    builder.bindLabel(afterCatches);
+  }
+  return onExceptionToFinallyBlock;
+}

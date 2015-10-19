@@ -1,38 +1,38 @@
 {
-  final Map<JetReferenceExpression,DiagnosticFactory<?>> markedWithErrorElements=Maps.newHashMap();
+  final Map<KtReferenceExpression,DiagnosticFactory<?>> markedWithErrorElements=Maps.newHashMap();
   for (  Diagnostic diagnostic : bindingContext.getDiagnostics()) {
     DiagnosticFactory<?> factory=diagnostic.getFactory();
     if (Errors.UNRESOLVED_REFERENCE_DIAGNOSTICS.contains(diagnostic.getFactory())) {
-      markedWithErrorElements.put((JetReferenceExpression)diagnostic.getPsiElement(),factory);
+      markedWithErrorElements.put((KtReferenceExpression)diagnostic.getPsiElement(),factory);
     }
  else     if (factory == Errors.SUPER_IS_NOT_AN_EXPRESSION || factory == Errors.SUPER_NOT_AVAILABLE) {
-      JetSuperExpression superExpression=(JetSuperExpression)diagnostic.getPsiElement();
+      KtSuperExpression superExpression=(KtSuperExpression)diagnostic.getPsiElement();
       markedWithErrorElements.put(superExpression.getInstanceReference(),factory);
     }
  else     if (factory == Errors.EXPRESSION_EXPECTED_PACKAGE_FOUND) {
-      markedWithErrorElements.put((JetSimpleNameExpression)diagnostic.getPsiElement(),factory);
+      markedWithErrorElements.put((KtSimpleNameExpression)diagnostic.getPsiElement(),factory);
     }
  else     if (factory == Errors.UNSUPPORTED) {
-      for (      JetReferenceExpression reference : PsiTreeUtil.findChildrenOfType(diagnostic.getPsiElement(),JetReferenceExpression.class)) {
+      for (      KtReferenceExpression reference : PsiTreeUtil.findChildrenOfType(diagnostic.getPsiElement(),KtReferenceExpression.class)) {
         markedWithErrorElements.put(reference,factory);
       }
     }
   }
-  root.acceptChildren(new JetTreeVisitorVoid(){
-    @Override public void visitForExpression(    @NotNull JetForExpression expression){
-      JetExpression range=expression.getLoopRange();
+  root.acceptChildren(new KtTreeVisitorVoid(){
+    @Override public void visitForExpression(    @NotNull KtForExpression expression){
+      KtExpression range=expression.getLoopRange();
       reportIfDynamicCall(range,range,LOOP_RANGE_ITERATOR_RESOLVED_CALL);
       reportIfDynamicCall(range,range,LOOP_RANGE_HAS_NEXT_RESOLVED_CALL);
       reportIfDynamicCall(range,range,LOOP_RANGE_NEXT_RESOLVED_CALL);
       super.visitForExpression(expression);
     }
-    @Override public void visitMultiDeclaration(    @NotNull JetMultiDeclaration multiDeclaration){
-      for (      JetMultiDeclarationEntry entry : multiDeclaration.getEntries()) {
+    @Override public void visitMultiDeclaration(    @NotNull KtMultiDeclaration multiDeclaration){
+      for (      KtMultiDeclarationEntry entry : multiDeclaration.getEntries()) {
         reportIfDynamicCall(entry,entry,COMPONENT_RESOLVED_CALL);
       }
       super.visitMultiDeclaration(multiDeclaration);
     }
-    @Override public void visitProperty(    @NotNull JetProperty property){
+    @Override public void visitProperty(    @NotNull KtProperty property){
       VariableDescriptor descriptor=bindingContext.get(VARIABLE,property);
       if (descriptor instanceof PropertyDescriptor && property.getDelegate() != null) {
         PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
@@ -42,29 +42,29 @@
       }
       super.visitProperty(property);
     }
-    @Override public void visitThisExpression(    @NotNull JetThisExpression expression){
+    @Override public void visitThisExpression(    @NotNull KtThisExpression expression){
       ResolvedCall<? extends CallableDescriptor> resolvedCall=CallUtilKt.getResolvedCall(expression,bindingContext);
       if (resolvedCall != null) {
         reportIfDynamic(expression,resolvedCall.getResultingDescriptor(),debugInfoReporter);
       }
       super.visitThisExpression(expression);
     }
-    @Override public void visitReferenceExpression(    @NotNull JetReferenceExpression expression){
+    @Override public void visitReferenceExpression(    @NotNull KtReferenceExpression expression){
       super.visitReferenceExpression(expression);
       if (!BindingContextUtils.isExpressionWithValidReference(expression,bindingContext)) {
         return;
       }
       IElementType referencedNameElementType=null;
-      if (expression instanceof JetSimpleNameExpression) {
-        JetSimpleNameExpression nameExpression=(JetSimpleNameExpression)expression;
+      if (expression instanceof KtSimpleNameExpression) {
+        KtSimpleNameExpression nameExpression=(KtSimpleNameExpression)expression;
         IElementType elementType=expression.getNode().getElementType();
-        if (elementType == JetNodeTypes.OPERATION_REFERENCE) {
+        if (elementType == KtNodeTypes.OPERATION_REFERENCE) {
           referencedNameElementType=nameExpression.getReferencedNameElementType();
           if (EXCLUDED.contains(referencedNameElementType)) {
             return;
           }
         }
-        if (elementType == JetNodeTypes.LABEL || nameExpression.getReferencedNameElementType() == JetTokens.THIS_KEYWORD) {
+        if (elementType == KtNodeTypes.LABEL || nameExpression.getReferencedNameElementType() == KtTokens.THIS_KEYWORD) {
           return;
         }
       }
@@ -98,10 +98,10 @@
       }
       boolean resolved=target != null;
       boolean markedWithError=markedWithErrorElements.containsKey(expression);
-      if (expression instanceof JetArrayAccessExpression && markedWithErrorElements.containsKey(((JetArrayAccessExpression)expression).getArrayExpression())) {
+      if (expression instanceof KtArrayAccessExpression && markedWithErrorElements.containsKey(((KtArrayAccessExpression)expression).getArrayExpression())) {
         markedWithError=true;
       }
-      JetType expressionType=bindingContext.getType(expression);
+      KtType expressionType=bindingContext.getType(expression);
       DiagnosticFactory<?> factory=markedWithErrorElements.get(expression);
       if (declarationDescriptor != null && (ErrorUtils.isError(declarationDescriptor) || ErrorUtils.containsErrorType(expressionType))) {
         if (factory != Errors.EXPRESSION_EXPECTED_PACKAGE_FOUND) {
@@ -117,7 +117,7 @@
         debugInfoReporter.reportMissingUnresolved(expression);
       }
     }
-    private <E extends JetElement,K,D extends CallableDescriptor>boolean reportIfDynamicCall(    E element,    K key,    WritableSlice<K,ResolvedCall<D>> slice){
+    private <E extends KtElement,K,D extends CallableDescriptor>boolean reportIfDynamicCall(    E element,    K key,    WritableSlice<K,ResolvedCall<D>> slice){
       ResolvedCall<D> resolvedCall=bindingContext.get(slice,key);
       if (resolvedCall != null) {
         return reportIfDynamic(element,resolvedCall.getResultingDescriptor(),debugInfoReporter);

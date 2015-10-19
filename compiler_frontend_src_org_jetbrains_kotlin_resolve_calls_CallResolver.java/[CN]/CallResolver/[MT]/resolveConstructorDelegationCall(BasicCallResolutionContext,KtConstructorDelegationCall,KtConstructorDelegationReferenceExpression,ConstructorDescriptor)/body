@@ -1,0 +1,30 @@
+{
+  context.trace.record(BindingContext.LEXICAL_SCOPE,call,context.scope);
+  ClassDescriptor currentClassDescriptor=calleeConstructor.getContainingDeclaration();
+  boolean isThisCall=calleeExpression.isThis();
+  if (currentClassDescriptor.getKind() == ClassKind.ENUM_CLASS && !isThisCall) {
+    context.trace.report(DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR.on(calleeExpression));
+    return checkArgumentTypesAndFail(context);
+  }
+  ClassDescriptor delegateClassDescriptor=isThisCall ? currentClassDescriptor : DescriptorUtilsKt.getSuperClassOrAny(currentClassDescriptor);
+  Collection<ConstructorDescriptor> constructors=delegateClassDescriptor.getConstructors();
+  if (!isThisCall && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
+    if (DescriptorUtils.canHaveDeclaredConstructors(currentClassDescriptor)) {
+      context.trace.report(PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.on((KtConstructorDelegationCall)calleeExpression.getParent()));
+    }
+    if (call.isImplicit())     return OverloadResolutionResultsImpl.nameNotFound();
+  }
+  if (constructors.isEmpty()) {
+    context.trace.report(NO_CONSTRUCTOR.on(CallUtilKt.getValueArgumentListOrElement(context.call)));
+    return checkArgumentTypesAndFail(context);
+  }
+  List<ResolutionCandidate<CallableDescriptor>> candidates=Lists.newArrayList();
+  ReceiverValue constructorDispatchReceiver=!delegateClassDescriptor.isInner() ? ReceiverValue.NO_RECEIVER : ((ClassDescriptor)delegateClassDescriptor.getContainingDeclaration()).getThisAsReceiverParameter().getValue();
+  KtType expectedType=isThisCall ? calleeConstructor.getContainingDeclaration().getDefaultType() : DescriptorUtils.getSuperClassType(currentClassDescriptor);
+  TypeSubstitutor knownTypeParametersSubstitutor=TypeSubstitutor.create(expectedType);
+  for (  CallableDescriptor descriptor : constructors) {
+    candidates.add(ResolutionCandidate.create(context.call,descriptor,constructorDispatchReceiver,ReceiverValue.NO_RECEIVER,ExplicitReceiverKind.NO_EXPLICIT_RECEIVER,knownTypeParametersSubstitutor));
+  }
+  TracingStrategy tracing=call.isImplicit() ? new TracingStrategyForImplicitConstructorDelegationCall(call,context.call) : TracingStrategyImpl.create(calleeExpression,context.call);
+  return computeTasksFromCandidatesAndResolvedCall(context,candidates,CallTransformer.FUNCTION_CALL_TRANSFORMER,tracing);
+}

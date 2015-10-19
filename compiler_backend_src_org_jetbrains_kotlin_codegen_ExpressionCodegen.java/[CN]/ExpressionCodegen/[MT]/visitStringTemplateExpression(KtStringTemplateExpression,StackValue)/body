@@ -1,0 +1,44 @@
+{
+  StringBuilder constantValue=new StringBuilder("");
+  final KtStringTemplateEntry[] entries=expression.getEntries();
+  if (entries.length == 1 && entries[0] instanceof KtStringTemplateEntryWithExpression) {
+    KtExpression expr=entries[0].getExpression();
+    return genToString(gen(expr),expressionType(expr));
+  }
+  for (  KtStringTemplateEntry entry : entries) {
+    if (entry instanceof KtLiteralStringTemplateEntry) {
+      constantValue.append(entry.getText());
+    }
+ else     if (entry instanceof KtEscapeStringTemplateEntry) {
+      constantValue.append(((KtEscapeStringTemplateEntry)entry).getUnescapedValue());
+    }
+ else {
+      constantValue=null;
+      break;
+    }
+  }
+  if (constantValue != null) {
+    Type type=expressionType(expression);
+    return StackValue.constant(constantValue.toString(),type);
+  }
+ else {
+    return StackValue.operation(JAVA_STRING_TYPE,new Function1<InstructionAdapter,Unit>(){
+      @Override public Unit invoke(      InstructionAdapter v){
+        genStringBuilderConstructor(v);
+        for (        KtStringTemplateEntry entry : entries) {
+          if (entry instanceof KtStringTemplateEntryWithExpression) {
+            invokeAppend(entry.getExpression());
+          }
+ else {
+            String text=entry instanceof KtEscapeStringTemplateEntry ? ((KtEscapeStringTemplateEntry)entry).getUnescapedValue() : entry.getText();
+            v.aconst(text);
+            genInvokeAppendMethod(v,JAVA_STRING_TYPE);
+          }
+        }
+        v.invokevirtual("java/lang/StringBuilder","toString","()Ljava/lang/String;",false);
+        return Unit.INSTANCE$;
+      }
+    }
+);
+  }
+}

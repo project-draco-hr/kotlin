@@ -7,54 +7,54 @@
   if (functionPsi == null)   return;
   for (  PsiReference reference : ReferencesSearch.search(functionPsi,functionPsi.getUseScope())) {
     PsiElement element=reference.getElement();
-    if (functionPsi instanceof JetClass && reference.resolve() != functionPsi)     continue;
-    if (element instanceof JetReferenceExpression) {
+    if (functionPsi instanceof KtClass && reference.resolve() != functionPsi)     continue;
+    if (element instanceof KtReferenceExpression) {
       PsiElement parent=element.getParent();
-      if (parent instanceof JetCallExpression)       result.add(new JetFunctionCallUsage((JetCallExpression)parent,functionUsageInfo));
- else       if (parent instanceof JetUserType && parent.getParent() instanceof JetTypeReference) {
+      if (parent instanceof KtCallExpression)       result.add(new JetFunctionCallUsage((KtCallExpression)parent,functionUsageInfo));
+ else       if (parent instanceof KtUserType && parent.getParent() instanceof KtTypeReference) {
         parent=parent.getParent().getParent();
-        if (parent instanceof JetConstructorCalleeExpression && parent.getParent() instanceof JetDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((JetDelegatorToSuperCall)parent.getParent(),functionUsageInfo));
+        if (parent instanceof KtConstructorCalleeExpression && parent.getParent() instanceof KtDelegatorToSuperCall)         result.add(new JetFunctionCallUsage((KtDelegatorToSuperCall)parent.getParent(),functionUsageInfo));
       }
- else       if (element instanceof JetSimpleNameExpression && (functionPsi instanceof JetProperty || functionPsi instanceof JetParameter)) {
-        result.add(new JetPropertyCallUsage((JetSimpleNameExpression)element));
+ else       if (element instanceof KtSimpleNameExpression && (functionPsi instanceof KtProperty || functionPsi instanceof KtParameter)) {
+        result.add(new JetPropertyCallUsage((KtSimpleNameExpression)element));
       }
     }
   }
   String oldName=JetChangeInfoKt.getOldName(changeInfo);
   if (oldName != null)   TextOccurrencesUtil.findNonCodeUsages(functionPsi,oldName,true,true,changeInfo.getNewName(),result);
-  List<JetParameter> oldParameters=JetPsiUtilKt.getValueParameters((JetNamedDeclaration)functionPsi);
+  List<KtParameter> oldParameters=JetPsiUtilKt.getValueParameters((KtNamedDeclaration)functionPsi);
   JetParameterInfo newReceiverInfo=changeInfo.getReceiverParameterInfo();
   for (  JetParameterInfo parameterInfo : changeInfo.getNewParameters()) {
     if (parameterInfo.getOldIndex() >= 0 && parameterInfo.getOldIndex() < oldParameters.size()) {
-      JetParameter oldParam=oldParameters.get(parameterInfo.getOldIndex());
+      KtParameter oldParam=oldParameters.get(parameterInfo.getOldIndex());
       String oldParamName=oldParam.getName();
       if (parameterInfo == newReceiverInfo || (oldParamName != null && !oldParamName.equals(parameterInfo.getName()))) {
         for (        PsiReference reference : ReferencesSearch.search(oldParam,oldParam.getUseScope())) {
           PsiElement element=reference.getElement();
-          if ((element instanceof JetSimpleNameExpression || element instanceof KDocName) && !(element.getParent() instanceof JetValueArgumentName)) {
-            JetParameterUsage parameterUsage=new JetParameterUsage((JetElement)element,parameterInfo,functionUsageInfo);
+          if ((element instanceof KtSimpleNameExpression || element instanceof KDocName) && !(element.getParent() instanceof KtValueArgumentName)) {
+            JetParameterUsage parameterUsage=new JetParameterUsage((KtElement)element,parameterInfo,functionUsageInfo);
             result.add(parameterUsage);
           }
         }
       }
     }
   }
-  if (functionPsi instanceof JetFunction && newReceiverInfo != changeInfo.getMethodDescriptor().getReceiver()) {
+  if (functionPsi instanceof KtFunction && newReceiverInfo != changeInfo.getMethodDescriptor().getReceiver()) {
     findOriginalReceiversUsages(functionUsageInfo,result,changeInfo);
   }
-  if (functionPsi instanceof JetClass && ((JetClass)functionPsi).isEnum()) {
-    for (    JetDeclaration declaration : ((JetClass)functionPsi).getDeclarations()) {
-      if (declaration instanceof JetEnumEntry && ((JetEnumEntry)declaration).getDelegationSpecifiers().isEmpty()) {
-        result.add(new JetEnumEntryWithoutSuperCallUsage((JetEnumEntry)declaration));
+  if (functionPsi instanceof KtClass && ((KtClass)functionPsi).isEnum()) {
+    for (    KtDeclaration declaration : ((KtClass)functionPsi).getDeclarations()) {
+      if (declaration instanceof KtEnumEntry && ((KtEnumEntry)declaration).getDelegationSpecifiers().isEmpty()) {
+        result.add(new JetEnumEntryWithoutSuperCallUsage((KtEnumEntry)declaration));
       }
     }
   }
-  UtilsKt.processDelegationCallConstructorUsages(functionPsi,functionPsi.getUseScope(),new Function1<JetCallElement,Boolean>(){
-    @Override public Boolean invoke(    JetCallElement element){
-      if (element instanceof JetConstructorDelegationCall) {
-        result.add(new JetConstructorDelegationCallUsage((JetConstructorDelegationCall)element,changeInfo));
+  UtilsKt.processDelegationCallConstructorUsages(functionPsi,functionPsi.getUseScope(),new Function1<KtCallElement,Boolean>(){
+    @Override public Boolean invoke(    KtCallElement element){
+      if (element instanceof KtConstructorDelegationCall) {
+        result.add(new JetConstructorDelegationCallUsage((KtConstructorDelegationCall)element,changeInfo));
       }
- else       if (element instanceof JetDelegatorToSuperCall) {
+ else       if (element instanceof KtDelegatorToSuperCall) {
         result.add(new JetFunctionCallUsage(element,functionUsageInfo));
       }
       return true;

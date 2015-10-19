@@ -1,21 +1,21 @@
 {
-  final JetProperty val=(JetProperty)element;
-  final JetFile file=val.getContainingJetFile();
+  final KtProperty val=(KtProperty)element;
+  final KtFile file=val.getContainingJetFile();
   String name=val.getName();
-  JetExpression initializerInDeclaration=val.getInitializer();
-  final List<JetExpression> referenceExpressions=findReferenceExpressions(val);
+  KtExpression initializerInDeclaration=val.getInitializer();
+  final List<KtExpression> referenceExpressions=findReferenceExpressions(val);
   final Set<PsiElement> assignments=Sets.newHashSet();
-  for (  JetExpression expression : referenceExpressions) {
+  for (  KtExpression expression : referenceExpressions) {
     PsiElement parent=expression.getParent();
-    JetBinaryExpression assignment=JetPsiUtilKt.getAssignmentByLHS(expression);
+    KtBinaryExpression assignment=JetPsiUtilKt.getAssignmentByLHS(expression);
     if (assignment != null) {
       assignments.add(parent);
     }
-    if (parent instanceof JetUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(((JetUnaryExpression)parent).getOperationToken())) {
+    if (parent instanceof KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(((KtUnaryExpression)parent).getOperationToken())) {
       assignments.add(parent);
     }
   }
-  final JetExpression initializer;
+  final KtExpression initializer;
   if (initializerInDeclaration != null) {
     initializer=initializerInDeclaration;
     if (!assignments.isEmpty()) {
@@ -25,7 +25,7 @@
   }
  else {
     if (assignments.size() == 1) {
-      initializer=((JetBinaryExpression)assignments.iterator().next()).getRight();
+      initializer=((KtBinaryExpression)assignments.iterator().next()).getRight();
     }
  else {
       initializer=null;
@@ -37,8 +37,8 @@
   }
   final String typeArgumentsForCall=getTypeArgumentsStringForCall(initializer);
   final String parametersForFunctionLiteral=getParametersForFunctionLiteral(initializer);
-  final boolean canHighlight=CollectionsKt.all(referenceExpressions,new Function1<JetExpression,Boolean>(){
-    @Override public Boolean invoke(    JetExpression expression){
+  final boolean canHighlight=CollectionsKt.all(referenceExpressions,new Function1<KtExpression,Boolean>(){
+    @Override public Boolean invoke(    KtExpression expression){
       return expression.getContainingFile() == file;
     }
   }
@@ -55,16 +55,16 @@
     }
     return;
   }
-  final List<JetExpression> inlinedExpressions=Lists.newArrayList();
+  final List<KtExpression> inlinedExpressions=Lists.newArrayList();
   CommandProcessor.getInstance().executeCommand(project,new Runnable(){
     @Override public void run(){
       ApplicationManager.getApplication().runWriteAction(new Runnable(){
         @Override public void run(){
-          for (          JetExpression referenceExpression : referenceExpressions) {
+          for (          KtExpression referenceExpression : referenceExpressions) {
             if (assignments.contains(referenceExpression.getParent())) {
               continue;
             }
-            inlinedExpressions.add((JetExpression)referenceExpression.replace(initializer));
+            inlinedExpressions.add((KtExpression)referenceExpression.replace(initializer));
           }
           for (          PsiElement assignment : assignments) {
             assignment.delete();

@@ -1,0 +1,71 @@
+{
+  TemporaryTraceAndCache temporary=TemporaryTraceAndCache.create(contextWithExpectedType,"trace to resolve array set method for binary expression",expression);
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceTraceAndCache(temporary).replaceContextDependency(INDEPENDENT);
+  KtSimpleNameExpression operationSign=expression.getOperationReference();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  KtExpression leftOperand=expression.getLeft();
+  JetTypeInfo leftInfo=ExpressionTypingUtils.getTypeInfoOrNullType(leftOperand,context,facade);
+  KtType leftType=leftInfo.getType();
+  KtExpression right=expression.getRight();
+  KtExpression left=leftOperand == null ? null : deparenthesize(leftOperand);
+  if (right == null || left == null) {
+    temporary.commit();
+    return leftInfo.clearType();
+  }
+  if (leftType == null) {
+    JetTypeInfo rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
+    context.trace.report(UNRESOLVED_REFERENCE.on(operationSign,operationSign));
+    temporary.commit();
+    return rightInfo.clearType();
+  }
+  ExpressionReceiver receiver=new ExpressionReceiver(left,leftType);
+  Name name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
+  TemporaryTraceAndCache temporaryForAssignmentOperation=TemporaryTraceAndCache.create(context,"trace to check assignment operation like '+=' for",expression);
+  OverloadResolutionResults<FunctionDescriptor> assignmentOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForAssignmentOperation).replaceScope(scope),receiver,expression,name);
+  KtType assignmentOperationType=OverloadResolutionResultsUtil.getResultingType(assignmentOperationDescriptors,context.contextDependency);
+  OverloadResolutionResults<FunctionDescriptor> binaryOperationDescriptors;
+  KtType binaryOperationType;
+  TemporaryTraceAndCache temporaryForBinaryOperation=TemporaryTraceAndCache.create(context,"trace to check binary operation like '+' for",expression);
+  TemporaryBindingTrace ignoreReportsTrace=TemporaryBindingTrace.create(context.trace,"Trace for checking assignability");
+  boolean lhsAssignable=basic.checkLValue(ignoreReportsTrace,context,left,right);
+  if (assignmentOperationType == null || lhsAssignable) {
+    Name counterpartName=OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
+    binaryOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForBinaryOperation).replaceScope(scope),receiver,expression,counterpartName);
+    binaryOperationType=OverloadResolutionResultsUtil.getResultingType(binaryOperationDescriptors,context.contextDependency);
+  }
+ else {
+    binaryOperationDescriptors=OverloadResolutionResultsImpl.nameNotFound();
+    binaryOperationType=null;
+  }
+  KtType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
+  JetTypeInfo rightInfo=leftInfo;
+  if (assignmentOperationDescriptors.isSuccess() && binaryOperationDescriptors.isSuccess()) {
+    OverloadResolutionResults<FunctionDescriptor> ambiguityResolutionResults=OverloadResolutionResultsUtil.ambiguity(assignmentOperationDescriptors,binaryOperationDescriptors);
+    context.trace.report(ASSIGN_OPERATOR_AMBIGUITY.on(operationSign,ambiguityResolutionResults.getResultingCalls()));
+    Collection<DeclarationDescriptor> descriptors=Sets.newHashSet();
+    for (    ResolvedCall<?> resolvedCall : ambiguityResolutionResults.getResultingCalls()) {
+      descriptors.add(resolvedCall.getResultingDescriptor());
+    }
+    rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
+    context.trace.record(AMBIGUOUS_REFERENCE_TARGET,operationSign,descriptors);
+  }
+ else   if (assignmentOperationType != null && (assignmentOperationDescriptors.isSuccess() || !binaryOperationDescriptors.isSuccess())) {
+    temporaryForAssignmentOperation.commit();
+    if (!KotlinTypeChecker.DEFAULT.equalTypes(components.builtIns.getUnitType(),assignmentOperationType)) {
+      context.trace.report(ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT.on(operationSign,assignmentOperationDescriptors.getResultingDescriptor(),operationSign));
+    }
+  }
+ else {
+    temporaryForBinaryOperation.commit();
+    context.trace.record(VARIABLE_REASSIGNMENT,expression);
+    if (left instanceof KtArrayAccessExpression) {
+      ExpressionTypingContext contextForResolve=context.replaceScope(scope).replaceBindingTrace(TemporaryBindingTrace.create(context.trace,"trace to resolve array set method for assignment",expression));
+      basic.resolveArrayAccessSetMethod((KtArrayAccessExpression)left,right,contextForResolve,context.trace);
+    }
+    rightInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(leftInfo.getDataFlowInfo()));
+    components.dataFlowAnalyzer.checkType(binaryOperationType,expression,context.replaceExpectedType(leftType).replaceDataFlowInfo(rightInfo.getDataFlowInfo()));
+    basic.checkLValue(context.trace,context,leftOperand,right);
+  }
+  temporary.commit();
+  return rightInfo.replaceType(checkAssignmentType(type,expression,contextWithExpectedType));
+}

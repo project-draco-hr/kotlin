@@ -1,0 +1,44 @@
+{
+  if (right == null || left == null) {
+    ExpressionTypingUtils.getTypeInfoOrNullType(right,context,facade);
+    ExpressionTypingUtils.getTypeInfoOrNullType(left,context,facade);
+    return TypeInfoFactoryKt.createTypeInfo(components.builtIns.getBooleanType(),context);
+  }
+  JetTypeInfo leftTypeInfo=getTypeInfoOrNullType(left,context,facade);
+  DataFlowInfo dataFlowInfo=leftTypeInfo.getDataFlowInfo();
+  ExpressionTypingContext contextWithDataFlow=context.replaceDataFlowInfo(dataFlowInfo);
+  JetTypeInfo rightTypeInfo=facade.getTypeInfo(right,contextWithDataFlow);
+  TemporaryBindingTrace traceInterpretingRightAsNullableAny=TemporaryBindingTrace.create(context.trace,"trace to resolve 'equals(Any?)' interpreting as of type Any? an expression:",right);
+  traceInterpretingRightAsNullableAny.recordType(right,components.builtIns.getNullableAnyType());
+  KtType leftType=leftTypeInfo.getType();
+  if (leftType != null && KotlinBuiltIns.isNothingOrNullableNothing(leftType)) {
+    traceInterpretingRightAsNullableAny.recordType(left,components.builtIns.getNullableAnyType());
+  }
+  ExpressionTypingContext newContext=context.replaceBindingTrace(traceInterpretingRightAsNullableAny);
+  ExpressionReceiver receiver=ExpressionTypingUtils.safeGetExpressionReceiver(facade,left,newContext);
+  Call call=CallMaker.makeCallWithExpressions(expression,receiver,new KtPsiFactory(expression.getProject()).createSafeCallNode(),operationSign,Collections.singletonList(right));
+  OverloadResolutionResults<FunctionDescriptor> resolutionResults=components.callResolver.resolveCallWithGivenName(newContext,call,operationSign,OperatorNameConventions.EQUALS);
+  traceInterpretingRightAsNullableAny.commit(new TraceEntryFilter(){
+    @Override public boolean accept(    @Nullable WritableSlice<?,?> slice,    Object key){
+      if ((key == right || key == left) && slice == EXPRESSION_TYPE_INFO)       return false;
+      if (key == left && slice == SMARTCAST)       return false;
+      return true;
+    }
+  }
+,true);
+  if (resolutionResults.isSuccess()) {
+    FunctionDescriptor equals=resolutionResults.getResultingCall().getResultingDescriptor();
+    if (ensureBooleanResult(operationSign,OperatorNameConventions.EQUALS,equals.getReturnType(),context)) {
+      ensureNonemptyIntersectionOfOperandTypes(expression,context);
+    }
+  }
+ else {
+    if (resolutionResults.isAmbiguity()) {
+      context.trace.report(OVERLOAD_RESOLUTION_AMBIGUITY.on(operationSign,resolutionResults.getResultingCalls()));
+    }
+ else {
+      context.trace.report(EQUALS_MISSING.on(operationSign));
+    }
+  }
+  return rightTypeInfo.replaceType(components.builtIns.getBooleanType());
+}

@@ -1,0 +1,37 @@
+{
+  return DFS.dfs(Collections.singletonList(type),new DFS.Neighbors<KtType>(){
+    @NotNull @Override public Iterable<KtType> getNeighbors(    KtType current){
+      TypeSubstitutor substitutor=TypeSubstitutor.create(current);
+      Collection<KtType> supertypes=current.getConstructor().getSupertypes();
+      List<KtType> result=new ArrayList<KtType>(supertypes.size());
+      for (      KtType supertype : supertypes) {
+        if (visited.contains(supertype.getConstructor())) {
+          continue;
+        }
+        result.add(substitutor.safeSubstitute(supertype,Variance.INVARIANT));
+      }
+      return result;
+    }
+  }
+,new DFS.Visited<KtType>(){
+    @Override public boolean checkAndMarkVisited(    KtType current){
+      return visited.add(current.getConstructor());
+    }
+  }
+,new DFS.NodeHandlerWithListResult<KtType,TypeConstructor>(){
+    @Override public boolean beforeChildren(    KtType current){
+      TypeConstructor constructor=current.getConstructor();
+      Set<KtType> instances=constructorToAllInstances.get(constructor);
+      if (instances == null) {
+        instances=new HashSet<KtType>();
+        constructorToAllInstances.put(constructor,instances);
+      }
+      instances.add(current);
+      return true;
+    }
+    @Override public void afterChildren(    KtType current){
+      result.addFirst(current.getConstructor());
+    }
+  }
+);
+}

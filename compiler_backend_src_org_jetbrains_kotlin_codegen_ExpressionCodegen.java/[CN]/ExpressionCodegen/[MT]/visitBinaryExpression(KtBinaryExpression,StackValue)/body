@@ -1,0 +1,36 @@
+{
+  KtSimpleNameExpression reference=expression.getOperationReference();
+  IElementType opToken=reference.getReferencedNameElementType();
+  if (opToken == KtTokens.EQ) {
+    return generateAssignmentExpression(expression);
+  }
+ else   if (KtTokens.AUGMENTED_ASSIGNMENTS.contains(opToken)) {
+    return generateAugmentedAssignment(expression);
+  }
+ else   if (opToken == KtTokens.ANDAND) {
+    return generateBooleanAnd(expression);
+  }
+ else   if (opToken == KtTokens.OROR) {
+    return generateBooleanOr(expression);
+  }
+ else   if (opToken == KtTokens.EQEQ || opToken == KtTokens.EXCLEQ || opToken == KtTokens.EQEQEQ || opToken == KtTokens.EXCLEQEQEQ) {
+    return generateEquals(expression.getLeft(),expression.getRight(),opToken);
+  }
+ else   if (opToken == KtTokens.LT || opToken == KtTokens.LTEQ || opToken == KtTokens.GT || opToken == KtTokens.GTEQ) {
+    return generateComparison(expression,receiver);
+  }
+ else   if (opToken == KtTokens.ELVIS) {
+    return generateElvis(expression);
+  }
+ else   if (opToken == KtTokens.IN_KEYWORD || opToken == KtTokens.NOT_IN) {
+    return generateIn(StackValue.expression(expressionType(expression.getLeft()),expression.getLeft(),this),expression.getRight(),reference);
+  }
+ else {
+    ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCallWithAssert(expression,bindingContext);
+    FunctionDescriptor descriptor=(FunctionDescriptor)resolvedCall.getResultingDescriptor();
+    if (descriptor instanceof ConstructorDescriptor) {
+      return generateConstructorCall(resolvedCall,expressionType(expression));
+    }
+    return invokeFunction(resolvedCall,receiver);
+  }
+}

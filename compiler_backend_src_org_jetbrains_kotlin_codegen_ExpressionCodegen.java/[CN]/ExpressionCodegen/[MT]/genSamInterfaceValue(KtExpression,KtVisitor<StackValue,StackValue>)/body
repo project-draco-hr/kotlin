@@ -1,0 +1,33 @@
+{
+  final KtExpression expression=KtPsiUtil.deparenthesize(probablyParenthesizedExpression);
+  final SamType samType=bindingContext.get(SAM_VALUE,probablyParenthesizedExpression);
+  if (samType == null || expression == null)   return null;
+  if (expression instanceof KtFunctionLiteralExpression) {
+    return genClosure(((KtFunctionLiteralExpression)expression).getFunctionLiteral(),samType);
+  }
+  if (expression instanceof KtNamedFunction) {
+    return genClosure((KtNamedFunction)expression,samType);
+  }
+  final Type asmType=state.getSamWrapperClasses().getSamWrapperClass(samType,expression.getContainingJetFile(),getParentCodegen());
+  return StackValue.operation(asmType,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter v){
+      v.anew(asmType);
+      v.dup();
+      Type functionType=typeMapper.mapType(samType.getKotlinFunctionType());
+      expression.accept(visitor,StackValue.none()).put(functionType,v);
+      Label ifNonNull=new Label();
+      Label afterAll=new Label();
+      v.dup();
+      v.ifnonnull(ifNonNull);
+      v.pop();
+      v.pop2();
+      v.aconst(null);
+      v.goTo(afterAll);
+      v.mark(ifNonNull);
+      v.invokespecial(asmType.getInternalName(),"<init>",Type.getMethodDescriptor(Type.VOID_TYPE,functionType),false);
+      v.mark(afterAll);
+      return null;
+    }
+  }
+);
+}

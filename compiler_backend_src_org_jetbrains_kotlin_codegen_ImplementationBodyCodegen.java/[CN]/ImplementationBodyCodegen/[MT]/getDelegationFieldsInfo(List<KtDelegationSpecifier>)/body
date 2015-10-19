@@ -1,0 +1,20 @@
+{
+  DelegationFieldsInfo result=new DelegationFieldsInfo();
+  int n=0;
+  for (  KtDelegationSpecifier specifier : delegationSpecifiers) {
+    if (specifier instanceof KtDelegatorByExpressionSpecifier) {
+      KtExpression expression=((KtDelegatorByExpressionSpecifier)specifier).getDelegateExpression();
+      PropertyDescriptor propertyDescriptor=CodegenUtil.getDelegatePropertyIfAny(expression,descriptor,bindingContext);
+      if (CodegenUtil.isFinalPropertyWithBackingField(propertyDescriptor,bindingContext)) {
+        result.addField((KtDelegatorByExpressionSpecifier)specifier,propertyDescriptor);
+      }
+ else {
+        KtType expressionType=expression != null ? bindingContext.getType(expression) : null;
+        Type asmType=expressionType != null ? typeMapper.mapType(expressionType) : typeMapper.mapType(getSuperClass(specifier));
+        result.addField((KtDelegatorByExpressionSpecifier)specifier,asmType,"$delegate_" + n);
+      }
+      n++;
+    }
+  }
+  return result;
+}

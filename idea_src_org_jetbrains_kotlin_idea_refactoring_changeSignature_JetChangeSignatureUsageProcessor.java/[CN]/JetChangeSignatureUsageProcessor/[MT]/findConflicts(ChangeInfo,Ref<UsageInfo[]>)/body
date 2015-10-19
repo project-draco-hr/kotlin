@@ -15,13 +15,13 @@
   JetChangeInfo changeInfo=(JetChangeInfo)info;
   PsiElement function=info.getMethod();
   PsiElement element=function != null ? function : changeInfo.getContext();
-  BindingContext bindingContext=ResolutionUtils.analyze((JetElement)element,BodyResolveMode.FULL);
+  BindingContext bindingContext=ResolutionUtils.analyze((KtElement)element,BodyResolveMode.FULL);
   CallableDescriptor oldDescriptor=JetChangeInfoKt.getOriginalBaseFunctionDescriptor(changeInfo);
   DeclarationDescriptor containingDeclaration=oldDescriptor.getContainingDeclaration();
-  JetScope parametersScope=null;
+  KtScope parametersScope=null;
   if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=ScopeUtilsKt.asJetScope(((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution());
- else   if (function instanceof JetFunction)   parametersScope=CallableRefactoringKt.getBodyScope((JetFunction)function,bindingContext);
-  JetScope callableScope=CallableRefactoringKt.getContainingScope(oldDescriptor);
+ else   if (function instanceof KtFunction)   parametersScope=CallableRefactoringKt.getBodyScope((KtFunction)function,bindingContext);
+  KtScope callableScope=CallableRefactoringKt.getContainingScope(oldDescriptor);
   JetMethodDescriptor.Kind kind=JetChangeInfoKt.getKind(changeInfo);
   if (!kind.isConstructor() && callableScope != null && !info.getNewName().isEmpty()) {
     Name newName=Name.identifier(info.getNewName());
@@ -46,13 +46,13 @@
       if (kind == JetMethodDescriptor.Kind.PRIMARY_CONSTRUCTOR && valOrVar != JetValVar.None) {
         for (        VariableDescriptor property : ScopeUtils.getVariablesFromImplicitReceivers(parametersScope,Name.identifier(parameterName))) {
           PsiElement propertyDeclaration=DescriptorToSourceUtils.descriptorToDeclaration(property);
-          if (propertyDeclaration != null && !(propertyDeclaration.getParent() instanceof JetParameterList)) {
+          if (propertyDeclaration != null && !(propertyDeclaration.getParent() instanceof KtParameterList)) {
             result.putValue(propertyDeclaration,"Duplicating property '" + parameterName + "'");
             break;
           }
         }
       }
- else       if (function instanceof JetFunction) {
+ else       if (function instanceof KtFunction) {
         VariableDescriptor variable=parametersScope.getLocalVariable(Name.identifier(parameterName));
         if (variable != null && !(variable instanceof ValueParameterDescriptor)) {
           PsiElement conflictElement=DescriptorToSourceUtils.descriptorToDeclaration(variable);
@@ -63,14 +63,14 @@
   }
   JetParameterInfo newReceiverInfo=changeInfo.getReceiverParameterInfo();
   JetParameterInfo originalReceiverInfo=changeInfo.getMethodDescriptor().getReceiver();
-  if (function instanceof JetCallableDeclaration && newReceiverInfo != originalReceiverInfo) {
+  if (function instanceof KtCallableDeclaration && newReceiverInfo != originalReceiverInfo) {
     findReceiverIntroducingConflicts(result,function,newReceiverInfo);
     findInternalExplicitReceiverConflicts(refUsages.get(),result,originalReceiverInfo);
-    findThisLabelConflicts(refUsages,result,changeInfo,(JetCallableDeclaration)function);
+    findThisLabelConflicts(refUsages,result,changeInfo,(KtCallableDeclaration)function);
   }
   for (  UsageInfo usageInfo : usageInfos) {
     if (!(usageInfo instanceof KotlinCallerUsage))     continue;
-    JetNamedDeclaration caller=(JetNamedDeclaration)usageInfo.getElement();
+    KtNamedDeclaration caller=(KtNamedDeclaration)usageInfo.getElement();
     DeclarationDescriptor callerDescriptor=ResolutionUtils.resolveToDescriptor(caller);
     findParameterDuplicationInCaller(result,changeInfo,caller,callerDescriptor);
   }

@@ -1,0 +1,19 @@
+{
+  if (expression == null) {
+    return TypeInfoFactoryKt.noTypeInfo(context);
+  }
+  KtFunction functionLiteralArgument=getFunctionLiteralArgumentIfAny(expression,context);
+  if (functionLiteralArgument != null) {
+    return getFunctionLiteralTypeInfo(expression,functionLiteralArgument,context,resolveArgumentsMode);
+  }
+  KtCallableReferenceExpression callableReferenceExpression=getCallableReferenceExpressionIfAny(expression,context);
+  if (callableReferenceExpression != null) {
+    return getCallableReferenceTypeInfo(expression,callableReferenceExpression,context,resolveArgumentsMode);
+  }
+  JetTypeInfo recordedTypeInfo=getRecordedTypeInfo(expression,context.trace.getBindingContext());
+  if (recordedTypeInfo != null) {
+    return recordedTypeInfo;
+  }
+  ResolutionContext newContext=context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(DEPENDENT);
+  return expressionTypingServices.getTypeInfo(expression,newContext);
+}

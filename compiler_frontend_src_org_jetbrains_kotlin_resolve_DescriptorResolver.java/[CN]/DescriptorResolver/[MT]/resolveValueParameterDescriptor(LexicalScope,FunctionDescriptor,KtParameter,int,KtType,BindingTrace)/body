@@ -1,0 +1,23 @@
+{
+  KtType varargElementType=null;
+  KtType variableType=type;
+  if (valueParameter.hasModifier(VARARG_KEYWORD)) {
+    varargElementType=type;
+    variableType=getVarargParameterType(type);
+  }
+  KtModifierList modifierList=valueParameter.getModifierList();
+  Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,valueParameter.getModifierList(),trace);
+  Annotations valueParameterAnnotations=Annotations.Companion.getEMPTY();
+  if (modifierList != null) {
+    if (valueParameter.hasValOrVar()) {
+      AnnotationSplitter annotationSplitter=AnnotationSplitter.create(storageManager,allAnnotations,SetsKt.setOf(CONSTRUCTOR_PARAMETER));
+      valueParameterAnnotations=annotationSplitter.getAnnotationsForTarget(CONSTRUCTOR_PARAMETER);
+    }
+ else {
+      valueParameterAnnotations=allAnnotations;
+    }
+  }
+  ValueParameterDescriptorImpl valueParameterDescriptor=new ValueParameterDescriptorImpl(owner,null,index,valueParameterAnnotations,KtPsiUtil.safeName(valueParameter.getName()),variableType,valueParameter.hasDefaultValue(),valueParameter.hasModifier(CROSSINLINE_KEYWORD),valueParameter.hasModifier(NOINLINE_KEYWORD),varargElementType,KotlinSourceElementKt.toSourceElement(valueParameter));
+  trace.record(BindingContext.VALUE_PARAMETER,valueParameter,valueParameterDescriptor);
+  return valueParameterDescriptor;
+}

@@ -1,0 +1,25 @@
+{
+  ExpressionTypingContext contextWithNoExpectedType=context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  KtExpression left=expression.getLeft();
+  KtTypeReference right=expression.getRight();
+  if (right == null) {
+    return facade.getTypeInfo(left,contextWithNoExpectedType).clearType();
+  }
+  IElementType operationType=expression.getOperationReference().getReferencedNameElementType();
+  boolean allowBareTypes=BARE_TYPES_ALLOWED.contains(operationType);
+  TypeResolutionContext typeResolutionContext=new TypeResolutionContext(context.scope,context.trace,true,allowBareTypes);
+  PossiblyBareType possiblyBareTarget=components.typeResolver.resolvePossiblyBareType(typeResolutionContext,right);
+  JetTypeInfo typeInfo=facade.getTypeInfo(left,contextWithNoExpectedType);
+  KtType subjectType=typeInfo.getType();
+  KtType targetType=reconstructBareType(right,possiblyBareTarget,subjectType,context.trace,components.builtIns);
+  if (subjectType != null) {
+    checkBinaryWithTypeRHS(expression,contextWithNoExpectedType,targetType,subjectType);
+    DataFlowInfo dataFlowInfo=typeInfo.getDataFlowInfo();
+    if (operationType == AS_KEYWORD) {
+      DataFlowValue value=createDataFlowValue(left,subjectType,context);
+      typeInfo=typeInfo.replaceDataFlowInfo(dataFlowInfo.establishSubtyping(value,targetType));
+    }
+  }
+  KtType result=operationType == AS_SAFE ? TypeUtils.makeNullable(targetType) : targetType;
+  return components.dataFlowAnalyzer.checkType(typeInfo.replaceType(result),expression,context);
+}

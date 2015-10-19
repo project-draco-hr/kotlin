@@ -1,0 +1,17 @@
+{
+  components.annotationResolver.resolveAnnotationsWithArguments(scope,multiDeclaration.getModifierList(),context.trace);
+  KtExpression initializer=multiDeclaration.getInitializer();
+  if (initializer == null) {
+    context.trace.report(INITIALIZER_REQUIRED_FOR_MULTIDECLARATION.on(multiDeclaration));
+    return TypeInfoFactoryKt.noTypeInfo(context);
+  }
+  ExpressionReceiver expressionReceiver=ExpressionTypingUtils.getExpressionReceiver(facade,initializer,context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT));
+  JetTypeInfo typeInfo=facade.getTypeInfo(initializer,context);
+  if (expressionReceiver == null) {
+    return TypeInfoFactoryKt.noTypeInfo(context);
+  }
+  components.multiDeclarationResolver.defineLocalVariablesFromMultiDeclaration(scope,multiDeclaration,expressionReceiver,initializer,context);
+  components.modifiersChecker.withTrace(context.trace).checkModifiersForMultiDeclaration(multiDeclaration);
+  components.identifierChecker.checkDeclaration(multiDeclaration,context.trace);
+  return typeInfo.replaceType(components.dataFlowAnalyzer.checkStatementType(multiDeclaration,context));
+}

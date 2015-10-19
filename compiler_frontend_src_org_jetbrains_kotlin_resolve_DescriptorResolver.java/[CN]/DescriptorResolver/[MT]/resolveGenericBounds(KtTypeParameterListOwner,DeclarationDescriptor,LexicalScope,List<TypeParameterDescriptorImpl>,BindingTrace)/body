@@ -1,0 +1,47 @@
+{
+  List<UpperBoundCheckerTask> deferredUpperBoundCheckerTasks=Lists.newArrayList();
+  List<KtTypeParameter> typeParameters=declaration.getTypeParameters();
+  Map<Name,TypeParameterDescriptorImpl> parameterByName=Maps.newHashMap();
+  for (int i=0; i < typeParameters.size(); i++) {
+    KtTypeParameter jetTypeParameter=typeParameters.get(i);
+    TypeParameterDescriptorImpl typeParameterDescriptor=parameters.get(i);
+    parameterByName.put(typeParameterDescriptor.getName(),typeParameterDescriptor);
+    KtTypeReference extendsBound=jetTypeParameter.getExtendsBound();
+    if (extendsBound != null) {
+      KtType type=resolveTypeParameterExtendsBound(typeParameterDescriptor,extendsBound,scope,trace);
+      typeParameterDescriptor.addUpperBound(type);
+      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(extendsBound,type));
+    }
+  }
+  for (  KtTypeConstraint constraint : declaration.getTypeConstraints()) {
+    KtSimpleNameExpression subjectTypeParameterName=constraint.getSubjectTypeParameterName();
+    if (subjectTypeParameterName == null) {
+      continue;
+    }
+    Name referencedName=subjectTypeParameterName.getReferencedNameAsName();
+    TypeParameterDescriptorImpl typeParameterDescriptor=parameterByName.get(referencedName);
+    KtTypeReference boundTypeReference=constraint.getBoundTypeReference();
+    KtType bound=null;
+    if (boundTypeReference != null) {
+      bound=typeResolver.resolveType(scope,boundTypeReference,trace,false);
+      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(boundTypeReference,bound));
+    }
+    if (typeParameterDescriptor != null) {
+      trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
+      if (bound != null) {
+        typeParameterDescriptor.addUpperBound(bound);
+      }
+    }
+  }
+  for (  TypeParameterDescriptorImpl parameter : parameters) {
+    parameter.addDefaultUpperBound();
+    parameter.setInitialized();
+    checkConflictingUpperBounds(trace,parameter,typeParameters.get(parameter.getIndex()));
+  }
+  if (!(declaration instanceof KtClass)) {
+    for (    UpperBoundCheckerTask checkerTask : deferredUpperBoundCheckerTasks) {
+      checkUpperBoundType(checkerTask.upperBound,checkerTask.upperBoundType,trace);
+    }
+    checkNamesInConstraints(declaration,descriptor,scope,trace);
+  }
+}

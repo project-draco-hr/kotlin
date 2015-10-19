@@ -1,0 +1,23 @@
+{
+  List<KtExpression> block=StatementFilterKt.filterStatements(statementFilter,expression);
+  DeclarationDescriptor containingDescriptor=context.scope.getOwnerDescriptor();
+  if (containingDescriptor instanceof ScriptDescriptor) {
+    if (!(expression.getParent() instanceof KtScript)) {
+      containingDescriptor=((ScriptDescriptor)containingDescriptor).getScriptCodeDescriptor();
+    }
+  }
+  LexicalWritableScope scope=new LexicalWritableScope(context.scope,containingDescriptor,false,null,new TraceBasedRedeclarationHandler(context.trace),"getBlockReturnedType");
+  scope.changeLockLevel(WritableScope.LockLevel.BOTH);
+  JetTypeInfo r;
+  if (block.isEmpty()) {
+    r=expressionTypingComponents.dataFlowAnalyzer.createCheckedTypeInfo(expressionTypingComponents.builtIns.getUnitType(),context,expression);
+  }
+ else {
+    r=getBlockReturnedTypeWithWritableScope(scope,block,coercionStrategyForLastExpression,context.replaceStatementFilter(statementFilter));
+  }
+  scope.changeLockLevel(WritableScope.LockLevel.READING);
+  if (containingDescriptor instanceof ScriptDescriptor) {
+    context.trace.record(BindingContext.SCRIPT_SCOPE,(ScriptDescriptor)containingDescriptor,ScopeUtilsKt.asJetScope(scope));
+  }
+  return r;
+}

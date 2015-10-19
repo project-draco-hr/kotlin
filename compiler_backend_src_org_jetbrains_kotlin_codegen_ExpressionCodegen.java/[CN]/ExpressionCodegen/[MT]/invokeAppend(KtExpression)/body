@@ -1,0 +1,18 @@
+{
+  if (expr instanceof KtBinaryExpression) {
+    KtBinaryExpression binaryExpression=(KtBinaryExpression)expr;
+    if (binaryExpression.getOperationToken() == KtTokens.PLUS) {
+      KtExpression left=binaryExpression.getLeft();
+      KtExpression right=binaryExpression.getRight();
+      Type leftType=expressionType(left);
+      if (leftType.equals(JAVA_STRING_TYPE)) {
+        invokeAppend(left);
+        invokeAppend(right);
+        return;
+      }
+    }
+  }
+  Type exprType=expressionType(expr);
+  gen(expr,exprType);
+  genInvokeAppendMethod(v,exprType.getSort() == Type.ARRAY ? OBJECT_TYPE : exprType);
+}

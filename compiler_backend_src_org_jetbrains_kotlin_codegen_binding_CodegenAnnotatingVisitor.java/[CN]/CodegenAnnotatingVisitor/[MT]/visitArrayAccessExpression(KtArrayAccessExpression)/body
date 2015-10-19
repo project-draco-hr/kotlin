@@ -1,0 +1,25 @@
+{
+  super.visitArrayAccessExpression(expression);
+  DeclarationDescriptor operationDescriptor=bindingContext.get(BindingContext.REFERENCE_TARGET,expression);
+  if (!(operationDescriptor instanceof FunctionDescriptor))   return;
+  boolean isSetter=operationDescriptor.getName().asString().equals("set");
+  FunctionDescriptor original=SamCodegenUtil.getOriginalIfSamAdapter((FunctionDescriptor)operationDescriptor);
+  if (original == null)   return;
+  List<KtExpression> indexExpressions=expression.getIndexExpressions();
+  List<ValueParameterDescriptor> parameters=original.getValueParameters();
+  for (  ValueParameterDescriptor valueParameter : parameters) {
+    SamType samType=SamType.create(valueParameter.getType());
+    if (samType == null)     continue;
+    if (isSetter && valueParameter.getIndex() == parameters.size() - 1) {
+      PsiElement parent=expression.getParent();
+      if (parent instanceof KtBinaryExpression && ((KtBinaryExpression)parent).getOperationToken() == EQ) {
+        KtExpression right=((KtBinaryExpression)parent).getRight();
+        bindingTrace.record(CodegenBinding.SAM_VALUE,right,samType);
+      }
+    }
+ else {
+      KtExpression indexExpression=indexExpressions.get(valueParameter.getIndex());
+      bindingTrace.record(CodegenBinding.SAM_VALUE,indexExpression,samType);
+    }
+  }
+}

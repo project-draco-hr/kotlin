@@ -1,0 +1,19 @@
+{
+  if (fqName.isRoot()) {
+    delete();
+    return;
+  }
+  KtPsiFactory psiFactory=new KtPsiFactory(getProject());
+  PsiElement newExpression=psiFactory.createExpression(fqName.asString());
+  KtExpression currentExpression=getPackageNameExpression();
+  if (currentExpression != null) {
+    currentExpression.replace(newExpression);
+    return;
+  }
+  PsiElement keyword=getPackageKeyword();
+  if (keyword != null) {
+    addAfter(newExpression,keyword);
+    return;
+  }
+  replace(psiFactory.createPackageDirective(fqName));
+}

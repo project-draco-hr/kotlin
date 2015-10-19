@@ -1,0 +1,23 @@
+{
+  PsiElement parent=property.getParent();
+  KtDeclarationContainer container;
+  if (parent instanceof KtClassBody) {
+    container=((KtClassOrObject)parent.getParent());
+  }
+ else   if (parent instanceof KtFile) {
+    container=(KtFile)parent;
+  }
+ else {
+    throw new UnsupportedOperationException("Unknown delegated property container: " + parent);
+  }
+  int index=0;
+  for (  KtDeclaration declaration : container.getDeclarations()) {
+    if (declaration instanceof KtProperty && ((KtProperty)declaration).hasDelegate()) {
+      if (declaration == property) {
+        return index;
+      }
+      index++;
+    }
+  }
+  throw new IllegalStateException("Delegated property not found in its parent: " + PsiUtilsKt.getElementTextWithContext(property));
+}

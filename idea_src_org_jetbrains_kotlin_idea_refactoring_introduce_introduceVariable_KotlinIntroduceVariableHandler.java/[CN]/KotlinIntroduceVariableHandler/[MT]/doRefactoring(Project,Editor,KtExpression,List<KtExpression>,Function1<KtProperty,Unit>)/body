@@ -1,0 +1,122 @@
+{
+  if (_expression == null) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+    return;
+  }
+  if (_expression.getParent() instanceof KtParenthesizedExpression) {
+    _expression=(KtExpression)_expression.getParent();
+  }
+  final KtExpression expression=_expression;
+  boolean noTypeInference=false;
+  if (expression.getParent() instanceof KtQualifiedExpression) {
+    KtQualifiedExpression qualifiedExpression=(KtQualifiedExpression)expression.getParent();
+    if (qualifiedExpression.getReceiverExpression() != expression) {
+      showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+      return;
+    }
+  }
+ else   if (expression instanceof KtStatementExpression) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+    return;
+  }
+ else   if (expression.getParent() instanceof KtOperationExpression) {
+    KtOperationExpression operationExpression=(KtOperationExpression)expression.getParent();
+    if (operationExpression.getOperationReference() == expression) {
+      showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.expression"));
+      return;
+    }
+  }
+  if (PsiTreeUtil.getNonStrictParentOfType(expression,KtTypeReference.class,KtConstructorCalleeExpression.class,KtSuperExpression.class) != null) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.container"));
+    return;
+  }
+  AnalysisResult analysisResult=ResolutionUtils.analyzeAndGetResult(expression);
+  final BindingContext bindingContext=analysisResult.getBindingContext();
+  final KtType expressionType=bindingContext.getType(expression);
+  KtScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
+  if (scope != null) {
+    DataFlowInfo dataFlowInfo=BindingContextUtilsKt.getDataFlowInfo(bindingContext,expression);
+    ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
+    KtType typeNoExpectedType=AnalyzerUtilKt.computeTypeInfoInContext(expression,scope,expression,bindingTrace,dataFlowInfo).getType();
+    if (expressionType != null && typeNoExpectedType != null && !KotlinTypeChecker.DEFAULT.equalTypes(expressionType,typeNoExpectedType)) {
+      noTypeInference=true;
+    }
+  }
+  if (expressionType == null && bindingContext.get(BindingContext.QUALIFIER,expression) != null) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.package.expression"));
+    return;
+  }
+  if (expressionType != null && KotlinTypeChecker.DEFAULT.equalTypes(analysisResult.getModuleDescriptor().getBuiltIns().getUnitType(),expressionType)) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.expression.has.unit.type"));
+    return;
+  }
+  if (expressionType == null && noTypeInference) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.expression.should.have.inferred.type"));
+    return;
+  }
+  final PsiElement container=getContainer(expression);
+  PsiElement occurrenceContainer=getOccurrenceContainer(expression);
+  if (container == null) {
+    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.container"));
+    return;
+  }
+  final boolean isInplaceAvailableOnDataContext=editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && !ApplicationManager.getApplication().isUnitTestMode();
+  final List<KtExpression> allOccurrences;
+  if (occurrencesToReplace == null) {
+    allOccurrences=findOccurrences(occurrenceContainer,expression);
+  }
+ else {
+    allOccurrences=occurrencesToReplace;
+  }
+  final boolean finalNoTypeInference=noTypeInference;
+  Pass<OccurrencesChooser.ReplaceChoice> callback=new Pass<OccurrencesChooser.ReplaceChoice>(){
+    @Override public void pass(    OccurrencesChooser.ReplaceChoice replaceChoice){
+      boolean replaceOccurrence=shouldReplaceOccurrence(expression,bindingContext,container);
+      List<KtExpression> allReplaces;
+      if (OccurrencesChooser.ReplaceChoice.ALL == replaceChoice) {
+        if (allOccurrences.size() > 1)         replaceOccurrence=true;
+        allReplaces=allOccurrences;
+      }
+ else {
+        allReplaces=Collections.singletonList(expression);
+      }
+      PsiElement commonParent=PsiTreeUtil.findCommonParent(allReplaces);
+      PsiElement commonContainer=getContainer(commonParent);
+      NewDeclarationNameValidator validator=new NewDeclarationNameValidator(commonContainer,calculateAnchor(commonParent,commonContainer,allReplaces),NewDeclarationNameValidator.Target.VARIABLES);
+      final Collection<String> suggestedNames=KotlinNameSuggester.INSTANCE$.suggestNamesByExpressionAndType(expression,ResolutionUtils.analyze(expression,BodyResolveMode.PARTIAL),validator,"value");
+      final Ref<KtProperty> propertyRef=new Ref<KtProperty>();
+      final ArrayList<KtExpression> references=new ArrayList<KtExpression>();
+      final Ref<KtExpression> reference=new Ref<KtExpression>();
+      final Runnable introduceRunnable=introduceVariable(expression,suggestedNames.iterator().next(),allReplaces,commonContainer,commonParent,replaceOccurrence,propertyRef,references,reference,finalNoTypeInference,expressionType,bindingContext);
+      CommandProcessor.getInstance().executeCommand(project,new Runnable(){
+        @Override public void run(){
+          ApplicationManager.getApplication().runWriteAction(introduceRunnable);
+          KtProperty property=propertyRef.get();
+          if (property != null) {
+            if (editor != null) {
+              editor.getCaretModel().moveToOffset(property.getTextOffset());
+              editor.getSelectionModel().removeSelection();
+              if (isInplaceAvailableOnDataContext) {
+                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+                KotlinVariableInplaceIntroducer variableIntroducer=new KotlinVariableInplaceIntroducer(property,reference.get(),references.toArray(new KtExpression[references.size()]),suggestedNames,false,false,expressionType,finalNoTypeInference,project,editor);
+                variableIntroducer.startInplaceIntroduceTemplate();
+              }
+            }
+ else             if (onNonInteractiveFinish != null) {
+              onNonInteractiveFinish.invoke(property);
+            }
+          }
+        }
+      }
+,INTRODUCE_VARIABLE,null);
+    }
+  }
+;
+  if (isInplaceAvailableOnDataContext && occurrencesToReplace == null) {
+    OccurrencesChooser.<KtExpression>simpleChooser(editor).showChooser(expression,allOccurrences,callback);
+  }
+ else {
+    callback.pass(OccurrencesChooser.ReplaceChoice.ALL);
+  }
+}

@@ -1,0 +1,34 @@
+{
+  if (expression != null) {
+    KtExpression deparenthesized=KtPsiUtil.deparenthesize(expression);
+    if (expression != deparenthesized) {
+      return getIdForStableIdentifier(deparenthesized,bindingContext,containingDeclarationOrModule);
+    }
+  }
+  if (expression instanceof KtQualifiedExpression) {
+    KtQualifiedExpression qualifiedExpression=(KtQualifiedExpression)expression;
+    KtExpression receiverExpression=qualifiedExpression.getReceiverExpression();
+    KtExpression selectorExpression=qualifiedExpression.getSelectorExpression();
+    IdentifierInfo receiverId=getIdForStableIdentifier(receiverExpression,bindingContext,containingDeclarationOrModule);
+    IdentifierInfo selectorId=getIdForStableIdentifier(selectorExpression,bindingContext,containingDeclarationOrModule);
+    return combineInfo(receiverId,selectorId);
+  }
+  if (expression instanceof KtSimpleNameExpression) {
+    return getIdForSimpleNameExpression((KtSimpleNameExpression)expression,bindingContext,containingDeclarationOrModule);
+  }
+ else   if (expression instanceof KtThisExpression) {
+    KtThisExpression thisExpression=(KtThisExpression)expression;
+    DeclarationDescriptor declarationDescriptor=bindingContext.get(REFERENCE_TARGET,thisExpression.getInstanceReference());
+    return getIdForThisReceiver(declarationDescriptor);
+  }
+ else   if (expression instanceof KtPostfixExpression) {
+    KtPostfixExpression postfixExpression=(KtPostfixExpression)expression;
+    IElementType operationType=postfixExpression.getOperationReference().getReferencedNameElementType();
+    if (operationType == KtTokens.PLUSPLUS || operationType == KtTokens.MINUSMINUS) {
+      return createPostfixInfo(postfixExpression,getIdForStableIdentifier(postfixExpression.getBaseExpression(),bindingContext,containingDeclarationOrModule));
+    }
+  }
+ else   if (expression instanceof KtRootPackageExpression) {
+  }
+  return NO_IDENTIFIER_INFO;
+}

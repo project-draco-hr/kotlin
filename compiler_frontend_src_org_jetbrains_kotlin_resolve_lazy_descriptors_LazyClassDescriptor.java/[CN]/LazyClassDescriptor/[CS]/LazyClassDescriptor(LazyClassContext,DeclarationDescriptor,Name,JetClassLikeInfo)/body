@@ -1,7 +1,7 @@
 {
   super(c.getStorageManager(),containingDeclaration,name,KotlinSourceElementKt.toSourceElement(classLikeInfo.getCorrespondingClassOrObject()));
   this.c=c;
-  JetClassOrObject classOrObject=classLikeInfo.getCorrespondingClassOrObject();
+  KtClassOrObject classOrObject=classLikeInfo.getCorrespondingClassOrObject();
   if (classOrObject != null) {
     this.c.getTrace().record(BindingContext.CLASS,classOrObject,this);
   }
@@ -12,7 +12,7 @@
   this.typeConstructor=new LazyClassTypeConstructor();
   final ClassKind syntaxKind=classLikeInfo.getClassKind();
   this.isCompanionObject=classLikeInfo instanceof JetObjectInfo && ((JetObjectInfo)classLikeInfo).isCompanionObject();
-  final JetModifierList modifierList=classLikeInfo.getModifierList();
+  final KtModifierList modifierList=classLikeInfo.getModifierList();
   if (syntaxKind.isSingleton()) {
     this.modality=Modality.FINAL;
   }
@@ -20,7 +20,7 @@
     Modality defaultModality=syntaxKind == ClassKind.INTERFACE ? Modality.ABSTRACT : Modality.FINAL;
     this.modality=resolveModalityFromModifiers(modifierList,defaultModality);
   }
-  boolean isLocal=classOrObject != null && JetPsiUtil.isLocal(classOrObject);
+  boolean isLocal=classOrObject != null && KtPsiUtil.isLocal(classOrObject);
   Visibility defaultVisibility;
   if (syntaxKind == ClassKind.ENUM_ENTRY || (syntaxKind == ClassKind.OBJECT && isCompanionObject)) {
     defaultVisibility=Visibilities.PUBLIC;
@@ -39,13 +39,13 @@
 );
   this.isData=storageManager.createLazyValue(new Function0<Boolean>(){
     @Override public Boolean invoke(){
-      return modifierList != null && modifierList.hasModifier(JetTokens.DATA_KEYWORD);
+      return modifierList != null && modifierList.hasModifier(KtTokens.DATA_KEYWORD);
     }
   }
 );
   this.kind=storageManager.createLazyValue(new Function0<ClassKind>(){
     @Override public ClassKind invoke(){
-      return (syntaxKind == ClassKind.CLASS && modifierList != null && modifierList.hasModifier(JetTokens.ANNOTATION_KEYWORD)) ? ClassKind.ANNOTATION_CLASS : syntaxKind;
+      return (syntaxKind == ClassKind.CLASS && modifierList != null && modifierList.hasModifier(KtTokens.ANNOTATION_KEYWORD)) ? ClassKind.ANNOTATION_CLASS : syntaxKind;
     }
   }
 );
@@ -60,7 +60,7 @@
  else {
     this.annotations=Annotations.Companion.getEMPTY();
   }
-  List<JetAnnotationEntry> jetDanglingAnnotations=classLikeInfo.getDanglingAnnotations();
+  List<KtAnnotationEntry> jetDanglingAnnotations=classLikeInfo.getDanglingAnnotations();
   if (jetDanglingAnnotations.isEmpty()) {
     this.danglingAnnotations=Annotations.Companion.getEMPTY();
   }
@@ -78,8 +78,8 @@
     }
   }
 );
-  this.extraCompanionObjectDescriptors=storageManager.createMemoizedFunction(new Function1<JetObjectDeclaration,ClassDescriptor>(){
-    @Override public ClassDescriptor invoke(    JetObjectDeclaration companionObject){
+  this.extraCompanionObjectDescriptors=storageManager.createMemoizedFunction(new Function1<KtObjectDeclaration,ClassDescriptor>(){
+    @Override public ClassDescriptor invoke(    KtObjectDeclaration companionObject){
       return computeCompanionObjectDescriptor(companionObject);
     }
   }

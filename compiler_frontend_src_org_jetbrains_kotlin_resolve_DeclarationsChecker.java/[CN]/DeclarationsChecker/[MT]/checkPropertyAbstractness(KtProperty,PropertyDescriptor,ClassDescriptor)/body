@@ -1,0 +1,31 @@
+{
+  KtPropertyAccessor getter=property.getGetter();
+  KtPropertyAccessor setter=property.getSetter();
+  KtModifierList modifierList=property.getModifierList();
+  if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+    if (!classCanHaveAbstractMembers(classDescriptor)) {
+      String name=property.getName();
+      trace.report(ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.on(property,name != null ? name : "",classDescriptor));
+      return;
+    }
+    if (classDescriptor.getKind() == ClassKind.INTERFACE) {
+      trace.report(ABSTRACT_MODIFIER_IN_INTERFACE.on(property));
+    }
+  }
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
+    KtExpression initializer=property.getInitializer();
+    if (initializer != null) {
+      trace.report(ABSTRACT_PROPERTY_WITH_INITIALIZER.on(initializer));
+    }
+    KtPropertyDelegate delegate=property.getDelegate();
+    if (delegate != null) {
+      trace.report(ABSTRACT_DELEGATED_PROPERTY.on(delegate));
+    }
+    if (getter != null && getter.hasBody()) {
+      trace.report(ABSTRACT_PROPERTY_WITH_GETTER.on(getter));
+    }
+    if (setter != null && setter.hasBody()) {
+      trace.report(ABSTRACT_PROPERTY_WITH_SETTER.on(setter));
+    }
+  }
+}

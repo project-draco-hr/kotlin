@@ -1,0 +1,31 @@
+{
+  final boolean[] result=new boolean[1];
+  result[0]=false;
+  loopExpression.accept(new KtTreeVisitor<List<KtLoopExpression>>(){
+    @Override public Void visitBreakExpression(    @NotNull KtBreakExpression breakExpression,    List<KtLoopExpression> outerLoops){
+      KtSimpleNameExpression targetLabel=breakExpression.getTargetLabel();
+      PsiElement element=targetLabel != null ? context.trace.get(LABEL_TARGET,targetLabel) : null;
+      if (element == loopExpression || (targetLabel == null && outerLoops.get(outerLoops.size() - 1) == loopExpression)) {
+        result[0]=true;
+      }
+      return null;
+    }
+    @Override public Void visitContinueExpression(    @NotNull KtContinueExpression expression,    List<KtLoopExpression> outerLoops){
+      KtSimpleNameExpression targetLabel=expression.getTargetLabel();
+      if (targetLabel != null) {
+        PsiElement element=context.trace.get(LABEL_TARGET,targetLabel);
+        if (element instanceof KtLoopExpression && !outerLoops.contains(element)) {
+          result[0]=true;
+        }
+      }
+      return null;
+    }
+    @Override public Void visitLoopExpression(    @NotNull KtLoopExpression loopExpression,    List<KtLoopExpression> outerLoops){
+      List<KtLoopExpression> newOuterLoops=Lists.newArrayList(outerLoops);
+      newOuterLoops.add(loopExpression);
+      return super.visitLoopExpression(loopExpression,newOuterLoops);
+    }
+  }
+,Lists.newArrayList(loopExpression));
+  return result[0];
+}

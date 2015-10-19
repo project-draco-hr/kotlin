@@ -4,21 +4,21 @@
   }
   Project project=container.getProject();
   List<PsiElement> resultStatements=new ArrayList<PsiElement>();
-  List<JetProperty> propertiesDeclarations=new ArrayList<JetProperty>();
-  JetPsiFactory psiFactory=JetPsiFactoryKt.JetPsiFactory(project);
+  List<KtProperty> propertiesDeclarations=new ArrayList<KtProperty>();
+  KtPsiFactory psiFactory=KtPsiFactoryKt.KtPsiFactory(project);
   PsiElement dummyFirstStatement=container.addBefore(psiFactory.createExpression("dummyStatement"),statements[0]);
   try {
     SearchScope scope=new LocalSearchScope(container);
     int lastStatementOffset=statements[statements.length - 1].getTextRange().getEndOffset();
     for (    PsiElement statement : statements) {
       if (needToDeclareOut(statement,lastStatementOffset,scope)) {
-        if (statement instanceof JetProperty && ((JetProperty)statement).getInitializer() != null) {
-          JetProperty property=(JetProperty)statement;
-          JetProperty declaration=createVariableDeclaration(property,generateDefaultInitializers);
-          declaration=(JetProperty)container.addBefore(declaration,dummyFirstStatement);
+        if (statement instanceof KtProperty && ((KtProperty)statement).getInitializer() != null) {
+          KtProperty property=(KtProperty)statement;
+          KtProperty declaration=createVariableDeclaration(property,generateDefaultInitializers);
+          declaration=(KtProperty)container.addBefore(declaration,dummyFirstStatement);
           propertiesDeclarations.add(declaration);
           container.addAfter(psiFactory.createNewLine(),declaration);
-          JetBinaryExpression assignment=createVariableAssignment(property);
+          KtBinaryExpression assignment=createVariableAssignment(property);
           resultStatements.add(property.replace(assignment));
         }
  else {

@@ -1,0 +1,73 @@
+{
+  Set<TypeConstructor> allowedFinalSupertypes=getAllowedFinalSupertypes(supertypeOwner,jetClass);
+  Set<TypeConstructor> typeConstructors=Sets.newHashSet();
+  boolean classAppeared=false;
+  for (  Map.Entry<KtTypeReference,KtType> entry : supertypes.entrySet()) {
+    KtTypeReference typeReference=entry.getKey();
+    KtType supertype=entry.getValue();
+    KtTypeElement typeElement=typeReference.getTypeElement();
+    if (typeElement instanceof KtFunctionType) {
+      for (      KtParameter parameter : ((KtFunctionType)typeElement).getParameters()) {
+        PsiElement nameIdentifier=parameter.getNameIdentifier();
+        if (nameIdentifier != null) {
+          trace.report(Errors.UNSUPPORTED.on(nameIdentifier,"named parameter in function type in supertype position"));
+        }
+      }
+    }
+    boolean addSupertype=true;
+    ClassDescriptor classDescriptor=TypeUtils.getClassDescriptor(supertype);
+    if (classDescriptor != null) {
+      if (ErrorUtils.isError(classDescriptor))       continue;
+      if (KotlinBuiltIns.isExactExtensionFunctionType(supertype)) {
+        trace.report(SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE.on(typeReference));
+      }
+      if (classDescriptor.getKind() != ClassKind.INTERFACE) {
+        if (supertypeOwner.getKind() == ClassKind.ENUM_CLASS) {
+          trace.report(CLASS_IN_SUPERTYPE_FOR_ENUM.on(typeReference));
+          addSupertype=false;
+        }
+ else         if (supertypeOwner.getKind() == ClassKind.INTERFACE && !classAppeared && !DynamicTypesKt.isDynamic(supertype)) {
+          trace.report(INTERFACE_WITH_SUPERCLASS.on(typeReference));
+          addSupertype=false;
+        }
+ else         if (jetClass.hasModifier(KtTokens.DATA_KEYWORD)) {
+          trace.report(DATA_CLASS_CANNOT_HAVE_CLASS_SUPERTYPES.on(typeReference));
+          addSupertype=false;
+        }
+        if (classAppeared) {
+          trace.report(MANY_CLASSES_IN_SUPERTYPE_LIST.on(typeReference));
+        }
+ else {
+          classAppeared=true;
+        }
+      }
+    }
+ else {
+      trace.report(SUPERTYPE_NOT_A_CLASS_OR_INTERFACE.on(typeReference));
+    }
+    TypeConstructor constructor=supertype.getConstructor();
+    if (addSupertype && !typeConstructors.add(constructor)) {
+      trace.report(SUPERTYPE_APPEARS_TWICE.on(typeReference));
+    }
+    if (DescriptorUtils.isSingleton(classDescriptor)) {
+      trace.report(SINGLETON_IN_SUPERTYPE.on(typeReference));
+    }
+ else     if (constructor.isFinal() && !allowedFinalSupertypes.contains(constructor)) {
+      if (classDescriptor.getModality() == Modality.SEALED) {
+        DeclarationDescriptor containingDescriptor=supertypeOwner.getContainingDeclaration();
+        while (containingDescriptor != null && containingDescriptor != classDescriptor) {
+          containingDescriptor=containingDescriptor.getContainingDeclaration();
+        }
+        if (containingDescriptor == null) {
+          trace.report(SEALED_SUPERTYPE.on(typeReference));
+        }
+ else {
+          trace.report(SEALED_SUPERTYPE_IN_LOCAL_CLASS.on(typeReference));
+        }
+      }
+ else {
+        trace.report(FINAL_SUPERTYPE.on(typeReference));
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  KtSimpleNameExpression operationReference=expression.getOperationReference();
+  IElementType operationType=operationReference.getReferencedNameElementType();
+  KtExpression left=expression.getLeft();
+  KtExpression right=expression.getRight();
+  if (operationType == ANDAND || operationType == OROR) {
+    generateBooleanOperation(expression);
+  }
+ else   if (operationType == EQ) {
+    visitAssignment(left,getDeferredValue(right),expression);
+  }
+ else   if (OperatorConventions.ASSIGNMENT_OPERATIONS.containsKey(operationType)) {
+    ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(expression,trace.getBindingContext());
+    if (resolvedCall != null) {
+      PseudoValue rhsValue=generateCall(resolvedCall).getOutputValue();
+      Name assignMethodName=OperatorConventions.getNameForOperationSymbol((KtToken)expression.getOperationToken());
+      if (!resolvedCall.getResultingDescriptor().getName().equals(assignMethodName)) {
+        visitAssignment(left,getValueAsFunction(rhsValue),expression);
+      }
+    }
+ else {
+      generateBothArgumentsAndMark(expression);
+    }
+  }
+ else   if (operationType == ELVIS) {
+    generateInstructions(left);
+    mark(expression);
+    Label afterElvis=builder.createUnboundLabel("after elvis operator");
+    builder.jumpOnTrue(afterElvis,expression,builder.getBoundValue(left));
+    if (right != null) {
+      generateInstructions(right);
+    }
+    builder.bindLabel(afterElvis);
+    mergeValues(Arrays.asList(left,right),expression);
+  }
+ else {
+    if (!generateCall(expression)) {
+      generateBothArgumentsAndMark(expression);
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  KtPropertyAccessor getter=property.getGetter();
+  KtPropertyAccessor setter=property.getSetter();
+  boolean hasAccessorImplementation=(getter != null && getter.hasBody()) || (setter != null && setter.hasBody());
+  DeclarationDescriptor containingDeclaration=propertyDescriptor.getContainingDeclaration();
+  boolean inTrait=containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind() == ClassKind.INTERFACE;
+  if (propertyDescriptor.getModality() == Modality.ABSTRACT) {
+    if (!property.hasDelegateExpressionOrInitializer() && property.getTypeReference() == null) {
+      trace.report(PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.on(property));
+    }
+    if (inTrait && property.hasModifier(KtTokens.PRIVATE_KEYWORD) && !property.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+      trace.report(PRIVATE_PROPERTY_IN_INTERFACE.on(property));
+    }
+    return;
+  }
+  KtExpression initializer=property.getInitializer();
+  KtPropertyDelegate delegate=property.getDelegate();
+  boolean backingFieldRequired=Boolean.TRUE.equals(trace.getBindingContext().get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor));
+  if (inTrait && backingFieldRequired && hasAccessorImplementation) {
+    trace.report(BACKING_FIELD_IN_INTERFACE.on(property));
+  }
+  if (initializer == null && delegate == null) {
+    boolean error=false;
+    if (backingFieldRequired && !inTrait && !propertyDescriptor.isLateInit()&& Boolean.TRUE.equals(trace.getBindingContext().get(BindingContext.IS_UNINITIALIZED,propertyDescriptor))) {
+      if (!(containingDeclaration instanceof ClassDescriptor) || hasAccessorImplementation) {
+        error=true;
+        trace.report(MUST_BE_INITIALIZED.on(property));
+      }
+ else {
+        error=true;
+        trace.report(MUST_BE_INITIALIZED_OR_BE_ABSTRACT.on(property));
+      }
+    }
+    if (!error && property.getTypeReference() == null) {
+      trace.report(PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.on(property));
+    }
+    if (inTrait && property.hasModifier(KtTokens.FINAL_KEYWORD) && backingFieldRequired) {
+      trace.report(FINAL_PROPERTY_IN_INTERFACE.on(property));
+    }
+    return;
+  }
+  if (inTrait) {
+    if (delegate != null) {
+      trace.report(DELEGATED_PROPERTY_IN_INTERFACE.on(delegate));
+    }
+ else {
+      trace.report(PROPERTY_INITIALIZER_IN_INTERFACE.on(initializer));
+    }
+  }
+ else   if (delegate == null) {
+    if (!backingFieldRequired) {
+      trace.report(PROPERTY_INITIALIZER_NO_BACKING_FIELD.on(initializer));
+    }
+ else     if (property.getReceiverTypeReference() != null) {
+      trace.report(EXTENSION_PROPERTY_WITH_BACKING_FIELD.on(initializer));
+    }
+  }
+}

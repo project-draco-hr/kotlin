@@ -1,0 +1,16 @@
+{
+  List<KtType> supertypes=Lists.newArrayList();
+  List<KtDelegationSpecifier> delegationSpecifiers=jetClass.getDelegationSpecifiers();
+  Collection<KtType> declaredSupertypes=resolveDelegationSpecifiers(scope,delegationSpecifiers,typeResolver,trace,false);
+  for (  KtType declaredSupertype : declaredSupertypes) {
+    addValidSupertype(supertypes,declaredSupertype);
+  }
+  if (classDescriptor.getKind() == ClassKind.ENUM_CLASS && !containsClass(supertypes)) {
+    supertypes.add(0,builtIns.getEnumType(classDescriptor.getDefaultType()));
+  }
+  if (supertypes.isEmpty()) {
+    KtType defaultSupertype=getDefaultSupertype(jetClass,trace,classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS);
+    addValidSupertype(supertypes,defaultSupertype);
+  }
+  return supertypes;
+}

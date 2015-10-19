@@ -1,0 +1,40 @@
+{
+  if (!isStatement)   return components.dataFlowAnalyzer.illegalStatementType(expression,contextWithExpectedType,facade);
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  KtExpression body=expression.getBody();
+  LexicalScope conditionScope=context.scope;
+  PreliminaryLoopVisitor loopVisitor=PreliminaryLoopVisitor.visitLoop(expression);
+  context=context.replaceDataFlowInfo(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(context.dataFlowInfo));
+  JetTypeInfo bodyTypeInfo;
+  if (body instanceof KtFunctionLiteralExpression) {
+    bodyTypeInfo=facade.getTypeInfo(body,context.replaceScope(context.scope));
+  }
+ else   if (body != null) {
+    LexicalWritableScope writableScope=newWritableScopeImpl(context,"do..while body scope");
+    conditionScope=writableScope;
+    List<KtExpression> block;
+    if (body instanceof KtBlockExpression) {
+      block=((KtBlockExpression)body).getStatements();
+    }
+ else {
+      block=Collections.singletonList(body);
+    }
+    bodyTypeInfo=components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(writableScope,block,CoercionStrategy.NO_COERCION,context);
+  }
+ else {
+    bodyTypeInfo=TypeInfoFactoryKt.noTypeInfo(context);
+  }
+  KtExpression condition=expression.getCondition();
+  DataFlowInfo conditionDataFlowInfo=checkCondition(conditionScope,condition,context);
+  DataFlowInfo dataFlowInfo;
+  if (!containsJumpOutOfLoop(expression,context)) {
+    dataFlowInfo=components.dataFlowAnalyzer.extractDataFlowInfoFromCondition(condition,false,context).and(conditionDataFlowInfo);
+  }
+ else {
+    dataFlowInfo=context.dataFlowInfo;
+  }
+  if (body != null) {
+    dataFlowInfo=dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
+  }
+  return components.dataFlowAnalyzer.checkType(bodyTypeInfo.replaceType(components.builtIns.getUnitType()),expression,contextWithExpectedType).replaceDataFlowInfo(dataFlowInfo);
+}

@@ -1,0 +1,33 @@
+{
+  if (tempVariables.containsKey(selector)) {
+    throw new IllegalStateException("Inconsistent state: expression saved to a temporary variable is a selector");
+  }
+  if (!(selector instanceof KtBlockExpression)) {
+    markStartLineNumber(selector);
+  }
+  try {
+    if (selector instanceof KtExpression) {
+      StackValue samValue=genSamInterfaceValue((KtExpression)selector,visitor);
+      if (samValue != null) {
+        return samValue;
+      }
+    }
+    StackValue stackValue=selector.accept(visitor,receiver);
+    RuntimeAssertionInfo runtimeAssertionInfo=null;
+    if (selector instanceof KtExpression) {
+      runtimeAssertionInfo=bindingContext.get(BindingContextSlicesKt.getRUNTIME_ASSERTION_INFO(),(KtExpression)selector);
+    }
+    if (BuiltinSpecialBridgesKt.isValueArgumentForCallToMethodWithTypeCheckBarrier(selector,bindingContext))     return stackValue;
+    return genNotNullAssertions(state,stackValue,runtimeAssertionInfo);
+  }
+ catch (  ProcessCanceledException e) {
+    throw e;
+  }
+catch (  CompilationException e) {
+    throw e;
+  }
+catch (  Throwable error) {
+    String message=error.getMessage();
+    throw new CompilationException(message != null ? message : "null",error,selector);
+  }
+}

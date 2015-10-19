@@ -1,0 +1,18 @@
+{
+  if (context instanceof MultifileClassFacadeContext && Visibilities.isPrivate(accessorDescriptor.getVisibility())) {
+    return;
+  }
+  FunctionGenerationStrategy strategy;
+  if (accessor == null || !accessor.hasBody()) {
+    if (p instanceof KtProperty && ((KtProperty)p).hasDelegate()) {
+      strategy=new DelegatedPropertyAccessorStrategy(state,accessorDescriptor,indexOfDelegatedProperty((KtProperty)p));
+    }
+ else {
+      strategy=new DefaultPropertyAccessorStrategy(state,accessorDescriptor);
+    }
+  }
+ else {
+    strategy=new FunctionGenerationStrategy.FunctionDefault(state,accessorDescriptor,accessor);
+  }
+  functionCodegen.generateMethod(JvmDeclarationOriginKt.OtherOrigin(accessor != null ? accessor : p,accessorDescriptor),accessorDescriptor,strategy);
+}

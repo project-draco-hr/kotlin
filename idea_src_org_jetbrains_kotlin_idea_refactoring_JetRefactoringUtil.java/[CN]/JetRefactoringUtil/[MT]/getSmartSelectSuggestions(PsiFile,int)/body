@@ -1,46 +1,46 @@
 {
   if (offset < 0) {
-    return new ArrayList<JetExpression>();
+    return new ArrayList<KtExpression>();
   }
   PsiElement element=file.findElementAt(offset);
   if (element == null) {
-    return new ArrayList<JetExpression>();
+    return new ArrayList<KtExpression>();
   }
   if (element instanceof PsiWhiteSpace) {
     return getSmartSelectSuggestions(file,offset - 1);
   }
-  List<JetExpression> expressions=new ArrayList<JetExpression>();
-  while (element != null && !(element instanceof JetBlockExpression && !(element.getParent() instanceof JetFunctionLiteral)) && !(element instanceof JetNamedFunction) && !(element instanceof JetClassBody)) {
-    if (element instanceof JetExpression && !(element instanceof JetStatementExpression)) {
+  List<KtExpression> expressions=new ArrayList<KtExpression>();
+  while (element != null && !(element instanceof KtBlockExpression && !(element.getParent() instanceof KtFunctionLiteral)) && !(element instanceof KtNamedFunction) && !(element instanceof KtClassBody)) {
+    if (element instanceof KtExpression && !(element instanceof KtStatementExpression)) {
       boolean addExpression=true;
-      if (JetPsiUtil.isLabelIdentifierExpression(element)) {
+      if (KtPsiUtil.isLabelIdentifierExpression(element)) {
         addExpression=false;
       }
- else       if (element.getParent() instanceof JetQualifiedExpression) {
-        JetQualifiedExpression qualifiedExpression=(JetQualifiedExpression)element.getParent();
+ else       if (element.getParent() instanceof KtQualifiedExpression) {
+        KtQualifiedExpression qualifiedExpression=(KtQualifiedExpression)element.getParent();
         if (qualifiedExpression.getReceiverExpression() != element) {
           addExpression=false;
         }
       }
- else       if (element.getParent() instanceof JetCallElement || element.getParent() instanceof JetThisExpression || PsiTreeUtil.getParentOfType(element,JetSuperExpression.class) != null) {
+ else       if (element.getParent() instanceof KtCallElement || element.getParent() instanceof KtThisExpression || PsiTreeUtil.getParentOfType(element,KtSuperExpression.class) != null) {
         addExpression=false;
       }
- else       if (element.getParent() instanceof JetOperationExpression) {
-        JetOperationExpression operationExpression=(JetOperationExpression)element.getParent();
+ else       if (element.getParent() instanceof KtOperationExpression) {
+        KtOperationExpression operationExpression=(KtOperationExpression)element.getParent();
         if (operationExpression.getOperationReference() == element) {
           addExpression=false;
         }
       }
       if (addExpression) {
-        JetExpression expression=(JetExpression)element;
+        KtExpression expression=(KtExpression)element;
         BindingContext bindingContext=ResolutionUtils.analyze(expression,BodyResolveMode.FULL);
-        JetType expressionType=bindingContext.getType(expression);
+        KtType expressionType=bindingContext.getType(expression);
         if (expressionType == null || !KotlinBuiltIns.isUnit(expressionType)) {
           expressions.add(expression);
         }
       }
     }
- else     if (element instanceof JetTypeElement) {
+ else     if (element instanceof KtTypeElement) {
       expressions.clear();
     }
     element=element.getParent();

@@ -1,0 +1,25 @@
+{
+  KtExpression left=expression.getLeft();
+  if (left == null)   return;
+  KtExpression right=expression.getRight();
+  KtType leftType=facade.getTypeInfo(left,context).getType();
+  if (leftType != null && right != null) {
+    KtType rightType=facade.getTypeInfo(right,context).getType();
+    if (rightType != null) {
+      if (TypeIntersector.isIntersectionEmpty(leftType,rightType)) {
+        context.trace.report(EQUALITY_NOT_APPLICABLE.on(expression,expression.getOperationReference(),leftType,rightType));
+      }
+      SenselessComparisonChecker.checkSenselessComparisonWithNull(expression,left,right,context,new Function1<KtExpression,KtType>(){
+        @Override public KtType invoke(        KtExpression expression){
+          return facade.getTypeInfo(expression,context).getType();
+        }
+      }
+,new Function1<DataFlowValue,Nullability>(){
+        @Override public Nullability invoke(        DataFlowValue value){
+          return context.dataFlowInfo.getNullability(value);
+        }
+      }
+);
+    }
+  }
+}

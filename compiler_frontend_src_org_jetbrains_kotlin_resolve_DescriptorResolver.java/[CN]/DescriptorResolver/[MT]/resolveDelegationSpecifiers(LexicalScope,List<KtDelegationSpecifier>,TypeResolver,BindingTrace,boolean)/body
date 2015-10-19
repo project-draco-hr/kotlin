@@ -1,0 +1,24 @@
+{
+  if (delegationSpecifiers.isEmpty()) {
+    return Collections.emptyList();
+  }
+  Collection<KtType> result=Lists.newArrayList();
+  for (  KtDelegationSpecifier delegationSpecifier : delegationSpecifiers) {
+    KtTypeReference typeReference=delegationSpecifier.getTypeReference();
+    if (typeReference != null) {
+      KtType supertype=resolver.resolveType(extensibleScope,typeReference,trace,checkBounds);
+      if (DynamicTypesKt.isDynamic(supertype)) {
+        trace.report(DYNAMIC_SUPERTYPE.on(typeReference));
+      }
+ else {
+        result.add(supertype);
+        KtTypeElement bareSuperType=checkNullableSupertypeAndStripQuestionMarks(trace,typeReference.getTypeElement());
+        checkProjectionsInImmediateArguments(trace,bareSuperType);
+      }
+    }
+ else {
+      result.add(ErrorUtils.createErrorType("No type reference"));
+    }
+  }
+  return result;
+}

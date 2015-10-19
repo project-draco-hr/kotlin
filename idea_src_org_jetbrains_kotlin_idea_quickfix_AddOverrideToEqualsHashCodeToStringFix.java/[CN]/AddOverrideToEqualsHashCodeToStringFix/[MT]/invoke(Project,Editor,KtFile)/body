@@ -1,0 +1,12 @@
+{
+  Collection<KtFile> files=PluginJetFilesProvider.allFilesInProject(file.getProject());
+  for (  KtFile jetFile : files) {
+    for (    Diagnostic diagnostic : ResolutionUtils.analyzeFully(jetFile).getDiagnostics()) {
+      if (diagnostic.getFactory() != Errors.VIRTUAL_MEMBER_HIDDEN)       continue;
+      KtModifierListOwner element=(KtModifierListOwner)diagnostic.getPsiElement();
+      if (!isEqualsHashCodeOrToString(element))       continue;
+      element.addModifier(OVERRIDE_KEYWORD);
+      element.removeModifier(PUBLIC_KEYWORD);
+    }
+  }
+}

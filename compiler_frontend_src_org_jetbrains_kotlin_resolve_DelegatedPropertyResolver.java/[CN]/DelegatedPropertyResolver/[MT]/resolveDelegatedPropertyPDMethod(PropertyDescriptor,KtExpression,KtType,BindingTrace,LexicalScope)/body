@@ -1,0 +1,21 @@
+{
+  TemporaryBindingTrace traceToResolvePDMethod=TemporaryBindingTrace.create(trace,"Trace to resolve propertyDelegated method in delegated property");
+  ExpressionTypingContext context=ExpressionTypingContext.newContext(traceToResolvePDMethod,scope,DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE);
+  KtPsiFactory psiFactory=KtPsiFactory(delegateExpression);
+  List<KtExpression> arguments=Collections.singletonList(createExpressionForProperty(psiFactory));
+  ExpressionReceiver receiver=new ExpressionReceiver(delegateExpression,delegateType);
+  Pair<Call,OverloadResolutionResults<FunctionDescriptor>> resolutionResult=fakeCallResolver.makeAndResolveFakeCallInContext(receiver,context,arguments,PROPERTY_DELEGATED_FUNCTION_NAME,delegateExpression);
+  Call call=resolutionResult.getFirst();
+  OverloadResolutionResults<FunctionDescriptor> functionResults=resolutionResult.getSecond();
+  if (!functionResults.isSuccess()) {
+    String expectedFunction=renderCall(call,traceToResolvePDMethod.getBindingContext());
+    if (functionResults.isIncomplete() || functionResults.isSingleResult() || functionResults.getResultCode() == OverloadResolutionResults.Code.MANY_FAILED_CANDIDATES) {
+      trace.report(DELEGATE_PD_METHOD_NONE_APPLICABLE.on(delegateExpression,expectedFunction,functionResults.getResultingCalls()));
+    }
+ else     if (functionResults.isAmbiguity()) {
+      trace.report(DELEGATE_SPECIAL_FUNCTION_AMBIGUITY.on(delegateExpression,expectedFunction,functionResults.getResultingCalls()));
+    }
+    return;
+  }
+  trace.record(DELEGATED_PROPERTY_PD_RESOLVED_CALL,propertyDescriptor,functionResults.getResultingCall());
+}

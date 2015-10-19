@@ -1,0 +1,41 @@
+{
+  Set<ClassDescriptor> checkedDescriptors=new HashSet<ClassDescriptor>();
+  for (  KtWhenEntry whenEntry : whenExpression.getEntries()) {
+    for (    KtWhenCondition condition : whenEntry.getConditions()) {
+      boolean negated=false;
+      ClassDescriptor checkedDescriptor=null;
+      if (condition instanceof KtWhenConditionIsPattern) {
+        KtWhenConditionIsPattern conditionIsPattern=(KtWhenConditionIsPattern)condition;
+        KtType checkedType=trace.get(BindingContext.TYPE,conditionIsPattern.getTypeReference());
+        if (checkedType != null) {
+          checkedDescriptor=TypeUtils.getClassDescriptor(checkedType);
+        }
+        negated=conditionIsPattern.isNegated();
+      }
+ else       if (condition instanceof KtWhenConditionWithExpression) {
+        KtWhenConditionWithExpression conditionWithExpression=(KtWhenConditionWithExpression)condition;
+        if (conditionWithExpression.getExpression() != null) {
+          KtSimpleNameExpression reference=getReference(conditionWithExpression.getExpression());
+          if (reference != null) {
+            DeclarationDescriptor target=trace.get(BindingContext.REFERENCE_TARGET,reference);
+            if (target instanceof ClassDescriptor) {
+              checkedDescriptor=(ClassDescriptor)target;
+            }
+          }
+        }
+      }
+      if (checkedDescriptor == null || !memberDescriptors.contains(checkedDescriptor) || (condition instanceof KtWhenConditionWithExpression && !DescriptorUtils.isObject(checkedDescriptor) && !DescriptorUtils.isEnumEntry(checkedDescriptor))) {
+        continue;
+      }
+      if (negated) {
+        if (checkedDescriptors.contains(checkedDescriptor))         return true;
+        checkedDescriptors.addAll(memberDescriptors);
+        checkedDescriptors.remove(checkedDescriptor);
+      }
+ else {
+        checkedDescriptors.add(checkedDescriptor);
+      }
+    }
+  }
+  return checkedDescriptors.containsAll(memberDescriptors);
+}

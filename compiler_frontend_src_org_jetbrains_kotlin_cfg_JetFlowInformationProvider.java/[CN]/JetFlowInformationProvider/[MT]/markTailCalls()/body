@@ -10,7 +10,7 @@ class KindAndCall {
       this.call=call;
     }
   }
-  final Map<JetElement,KindAndCall> calls=new HashMap<JetElement,KindAndCall>();
+  final Map<KtElement,KindAndCall> calls=new HashMap<KtElement,KindAndCall>();
   PseudocodeTraverserKt.traverse(pseudocode,FORWARD,new FunctionVoid1<Instruction>(){
     public void execute(    @NotNull Instruction instruction){
       if (!(instruction instanceof CallInstruction))       return;
@@ -19,9 +19,9 @@ class KindAndCall {
       if (resolvedCall == null)       return;
       CallableDescriptor functionDescriptor=resolvedCall.getResultingDescriptor();
       if (!functionDescriptor.getOriginal().equals(subroutineDescriptor))       return;
-      JetElement element=callInstruction.getElement();
-      JetExpression parent=PsiTreeUtil.getParentOfType(element,JetTryExpression.class,JetFunction.class,JetClassInitializer.class);
-      if (parent instanceof JetTryExpression) {
+      KtElement element=callInstruction.getElement();
+      KtExpression parent=PsiTreeUtil.getParentOfType(element,KtTryExpression.class,KtFunction.class,KtClassInitializer.class);
+      if (parent instanceof KtTryExpression) {
         calls.put(element,new KindAndCall(IN_TRY,resolvedCall));
         return;
       }
@@ -34,8 +34,8 @@ class KindAndCall {
   }
 );
   boolean hasTailCalls=false;
-  for (  Map.Entry<JetElement,KindAndCall> entry : calls.entrySet()) {
-    JetElement element=entry.getKey();
+  for (  Map.Entry<KtElement,KindAndCall> entry : calls.entrySet()) {
+    KtElement element=entry.getKey();
     KindAndCall kindAndCall=entry.getValue();
 switch (kindAndCall.kind) {
 case TAIL_CALL:
@@ -51,6 +51,6 @@ break;
 }
 }
 if (!hasTailCalls) {
-trace.report(Errors.NO_TAIL_CALLS_FOUND.on((JetNamedFunction)subroutine));
+trace.report(Errors.NO_TAIL_CALLS_FOUND.on((KtNamedFunction)subroutine));
 }
 }

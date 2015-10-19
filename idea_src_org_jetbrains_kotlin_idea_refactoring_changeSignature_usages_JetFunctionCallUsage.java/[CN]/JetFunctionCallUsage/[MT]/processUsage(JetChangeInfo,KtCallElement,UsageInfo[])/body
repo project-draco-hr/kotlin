@@ -1,0 +1,21 @@
+{
+  if (shouldSkipUsage(element))   return true;
+  changeNameIfNeeded(changeInfo,element);
+  if (element.getValueArgumentList() != null) {
+    if (changeInfo.isParameterSetOrOrderChanged()) {
+      updateArgumentsAndReceiver(changeInfo,element,allUsages);
+    }
+ else {
+      changeArgumentNames(changeInfo,element);
+    }
+  }
+  if (changeInfo.getNewParametersCount() == 0 && element instanceof KtDelegatorToSuperCall) {
+    KtEnumEntry enumEntry=PsiTreeUtil.getParentOfType(element,KtEnumEntry.class,true);
+    if (enumEntry != null && enumEntry.getInitializerList() == element.getParent()) {
+      PsiElement colon=enumEntry.getColon();
+      KtInitializerList initializerList=enumEntry.getInitializerList();
+      enumEntry.deleteChildRange(colon != null ? colon : initializerList,initializerList);
+    }
+  }
+  return true;
+}

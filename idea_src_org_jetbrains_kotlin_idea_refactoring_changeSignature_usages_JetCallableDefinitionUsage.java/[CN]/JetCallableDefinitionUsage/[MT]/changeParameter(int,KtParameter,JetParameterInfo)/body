@@ -1,0 +1,28 @@
+{
+  PsiElement valOrVarKeyword=parameter.getValOrVarKeyword();
+  JetValVar valOrVar=parameterInfo.getValOrVar();
+  KtPsiFactory psiFactory=KtPsiFactoryKt.KtPsiFactory(getProject());
+  if (valOrVarKeyword != null) {
+    PsiElement newKeyword=valOrVar.createKeyword(psiFactory);
+    if (newKeyword != null) {
+      valOrVarKeyword.replace(newKeyword);
+    }
+ else {
+      valOrVarKeyword.delete();
+    }
+  }
+ else   if (valOrVar != JetValVar.None) {
+    PsiElement firstChild=parameter.getFirstChild();
+    parameter.addBefore(valOrVar.createKeyword(psiFactory),firstChild);
+    parameter.addBefore(psiFactory.createWhiteSpace(),firstChild);
+  }
+  if (parameterInfo.isTypeChanged() && parameter.getTypeReference() != null) {
+    String renderedType=parameterInfo.renderType(parameterIndex,this);
+    parameter.setTypeReference(psiFactory.createType(renderedType));
+  }
+  PsiElement identifier=parameter.getNameIdentifier();
+  if (identifier != null) {
+    String newName=parameterInfo.getInheritedName(this);
+    identifier.replace(psiFactory.createIdentifier(newName));
+  }
+}

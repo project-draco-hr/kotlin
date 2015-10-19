@@ -15,15 +15,15 @@
   if (receiverAndParameterResult != null) {
     return receiverAndParameterResult;
   }
-  List<JetType> superValueParameters=compiledValueParameters(superDescriptor);
-  List<JetType> subValueParameters=compiledValueParameters(subDescriptor);
+  List<KtType> superValueParameters=compiledValueParameters(superDescriptor);
+  List<KtType> subValueParameters=compiledValueParameters(subDescriptor);
   List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
   List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
   if (superTypeParameters.size() != subTypeParameters.size()) {
     for (int i=0; i < superValueParameters.size(); ++i) {
-      JetType superValueParameterType=getUpperBound(superValueParameters.get(i));
-      JetType subValueParameterType=getUpperBound(subValueParameters.get(i));
-      if (!JetTypeChecker.DEFAULT.equalTypes(superValueParameterType,subValueParameterType)) {
+      KtType superValueParameterType=getUpperBound(superValueParameters.get(i));
+      KtType subValueParameterType=getUpperBound(subValueParameters.get(i));
+      if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameterType,subValueParameterType)) {
         return OverrideCompatibilityInfo.typeParameterNumberMismatch();
       }
     }
@@ -35,7 +35,7 @@
     TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
     matchingTypeConstructors.put(superTypeParameter.getTypeConstructor(),subTypeParameter.getTypeConstructor());
   }
-  JetTypeChecker.TypeConstructorEquality localEqualityAxioms=new JetTypeChecker.TypeConstructorEquality(){
+  KotlinTypeChecker.TypeConstructorEquality localEqualityAxioms=new KotlinTypeChecker.TypeConstructorEquality(){
     @Override public boolean equals(    @NotNull TypeConstructor a,    @NotNull TypeConstructor b){
       if (equalityAxioms.equals(a,b))       return true;
       TypeConstructor img1=matchingTypeConstructors.get(a);
@@ -55,18 +55,18 @@
     }
   }
   for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
-    JetType superValueParameter=superValueParameters.get(i);
-    JetType subValueParameter=subValueParameters.get(i);
+    KtType superValueParameter=superValueParameters.get(i);
+    KtType subValueParameter=subValueParameters.get(i);
     if (!areTypesEquivalent(superValueParameter,subValueParameter,localEqualityAxioms)) {
       return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,INCOMPATIBLE);
     }
   }
   if (checkReturnType) {
-    JetType superReturnType=superDescriptor.getReturnType();
-    JetType subReturnType=subDescriptor.getReturnType();
+    KtType superReturnType=superDescriptor.getReturnType();
+    KtType subReturnType=subDescriptor.getReturnType();
     if (superReturnType != null && subReturnType != null) {
       boolean bothErrors=subReturnType.isError() && superReturnType.isError();
-      if (!bothErrors && !JetTypeChecker.withAxioms(localEqualityAxioms).isSubtypeOf(subReturnType,superReturnType)) {
+      if (!bothErrors && !KotlinTypeChecker.withAxioms(localEqualityAxioms).isSubtypeOf(subReturnType,superReturnType)) {
         return OverrideCompatibilityInfo.returnTypeMismatch(superReturnType,subReturnType);
       }
     }

@@ -1,0 +1,27 @@
+{
+  KtSimpleNameExpression operationSign=expression.getOperationReference();
+  IElementType operationType=operationSign.getReferencedNameElementType();
+  KtExpression baseExpression=expression.getBaseExpression();
+  if (baseExpression == null)   return;
+  if (KtTokens.EXCLEXCL == operationType) {
+    generateInstructions(baseExpression);
+    builder.predefinedOperation(expression,NOT_NULL_ASSERTION,elementsToValues(Collections.singletonList(baseExpression)));
+    return;
+  }
+  boolean incrementOrDecrement=isIncrementOrDecrement(operationType);
+  ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCall(expression,trace.getBindingContext());
+  PseudoValue rhsValue;
+  if (resolvedCall != null) {
+    rhsValue=generateCall(resolvedCall).getOutputValue();
+  }
+ else {
+    generateInstructions(baseExpression);
+    rhsValue=createNonSyntheticValue(expression,MagicKind.UNRESOLVED_CALL,baseExpression);
+  }
+  if (incrementOrDecrement) {
+    visitAssignment(baseExpression,getValueAsFunction(rhsValue),expression);
+    if (expression instanceof KtPostfixExpression) {
+      copyValue(baseExpression,expression);
+    }
+  }
+}

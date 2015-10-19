@@ -1,0 +1,18 @@
+{
+  if (condition instanceof KtWhenConditionInRange) {
+    KtWhenConditionInRange conditionInRange=(KtWhenConditionInRange)condition;
+    return generateIn(StackValue.local(subjectLocal,subjectType),conditionInRange.getRangeExpression(),conditionInRange.getOperationReference());
+  }
+  StackValue.Local match=subjectLocal == -1 ? null : StackValue.local(subjectLocal,subjectType);
+  if (condition instanceof KtWhenConditionIsPattern) {
+    KtWhenConditionIsPattern patternCondition=(KtWhenConditionIsPattern)condition;
+    return generateIsCheck(match,patternCondition.getTypeReference(),patternCondition.isNegated());
+  }
+ else   if (condition instanceof KtWhenConditionWithExpression) {
+    KtExpression patternExpression=((KtWhenConditionWithExpression)condition).getExpression();
+    return generateExpressionMatch(match,patternExpression);
+  }
+ else {
+    throw new UnsupportedOperationException("unsupported kind of when condition");
+  }
+}

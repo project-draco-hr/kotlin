@@ -1,0 +1,41 @@
+{
+  KtExpression expression=KtPsiUtil.deparenthesize(expressionWithParenthesis);
+  if (expression instanceof KtArrayAccessExpression) {
+    KtArrayAccessExpression arrayAccessExpression=(KtArrayAccessExpression)expression;
+    KtExpression arrayExpression=arrayAccessExpression.getArrayExpression();
+    if (arrayExpression == null || rightHandSide == null)     return false;
+    TemporaryBindingTrace ignoreReportsTrace=TemporaryBindingTrace.create(trace,"Trace for checking set function");
+    ExpressionTypingContext findSetterContext=context.replaceBindingTrace(ignoreReportsTrace);
+    JetTypeInfo info=resolveArrayAccessSetMethod(arrayAccessExpression,rightHandSide,findSetterContext,ignoreReportsTrace);
+    return info.getType() != null;
+  }
+  if (canBeThis && expression instanceof KtThisExpression)   return true;
+  VariableDescriptor variable=BindingContextUtils.extractVariableDescriptorIfAny(trace.getBindingContext(),expression,true);
+  boolean result=true;
+  KtExpression reportOn=expression != null ? expression : expressionWithParenthesis;
+  if (reportOn instanceof KtQualifiedExpression) {
+    KtExpression selector=((KtQualifiedExpression)reportOn).getSelectorExpression();
+    if (selector != null)     reportOn=selector;
+  }
+  if (variable instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)variable;
+    PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+    if (propertyDescriptor.isSetterProjectedOut()) {
+      trace.report(SETTER_PROJECTED_OUT.on(reportOn,propertyDescriptor));
+      result=false;
+    }
+ else {
+      if (setter != null) {
+        components.symbolUsageValidator.validateCall(null,setter,trace,reportOn);
+      }
+    }
+  }
+  if (variable == null) {
+    trace.report(VARIABLE_EXPECTED.on(reportOn));
+    result=false;
+  }
+ else   if (!variable.isVar()) {
+    result=false;
+  }
+  return result;
+}

@@ -1,0 +1,40 @@
+{
+  final Label blockEnd=labelBlockEnd != null ? labelBlockEnd : new Label();
+  final List<Function<StackValue,Void>> leaveTasks=Lists.newArrayList();
+  StackValue answer=StackValue.none();
+  for (Iterator<KtExpression> iterator=statements.iterator(); iterator.hasNext(); ) {
+    KtExpression possiblyLabeledStatement=iterator.next();
+    KtElement statement=KtPsiUtil.safeDeparenthesize(possiblyLabeledStatement);
+    if (statement instanceof KtNamedDeclaration) {
+      KtNamedDeclaration declaration=(KtNamedDeclaration)statement;
+      if (KtPsiUtil.isScriptDeclaration(declaration)) {
+        continue;
+      }
+    }
+    putDescriptorIntoFrameMap(statement);
+    boolean isExpression=!iterator.hasNext() && !isStatement;
+    if (isExpression && labelBeforeLastExpression != null) {
+      v.mark(labelBeforeLastExpression);
+    }
+    StackValue result=isExpression ? gen(possiblyLabeledStatement) : genStatement(possiblyLabeledStatement);
+    if (!iterator.hasNext()) {
+      answer=result;
+    }
+ else {
+      result.put(Type.VOID_TYPE,v);
+    }
+    addLeaveTaskToRemoveDescriptorFromFrameMap(statement,blockEnd,leaveTasks);
+  }
+  return new StackValueWithLeaveTask(answer,new Function1<StackValue,Unit>(){
+    @Override public Unit invoke(    StackValue value){
+      if (labelBlockEnd == null) {
+        v.mark(blockEnd);
+      }
+      for (      Function<StackValue,Void> task : Lists.reverse(leaveTasks)) {
+        task.fun(value);
+      }
+      return Unit.INSTANCE$;
+    }
+  }
+);
+}

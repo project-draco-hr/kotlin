@@ -1,0 +1,25 @@
+{
+  ExpressionCodegen codegen=createOrGetClInitCodegen();
+  InstructionAdapter iv=codegen.v;
+  KtEnumEntry enumEntry=enumEntries.get(ordinal);
+  iv.dup();
+  iv.iconst(ordinal);
+  ClassDescriptor classDescriptor=getNotNull(bindingContext,BindingContext.CLASS,enumEntry);
+  Type implClass=typeMapper.mapClass(classDescriptor);
+  iv.anew(implClass);
+  iv.dup();
+  iv.aconst(enumEntry.getName());
+  iv.iconst(ordinal);
+  List<KtDelegationSpecifier> delegationSpecifiers=enumEntry.getDelegationSpecifiers();
+  if (delegationSpecifiers.size() == 1 && !enumEntryNeedSubclass(bindingContext,enumEntry)) {
+    ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCallWithAssert(delegationSpecifiers.get(0),bindingContext);
+    CallableMethod method=typeMapper.mapToCallableMethod((ConstructorDescriptor)resolvedCall.getResultingDescriptor(),false);
+    codegen.invokeMethodWithArguments(method,resolvedCall,StackValue.none());
+  }
+ else {
+    iv.invokespecial(implClass.getInternalName(),"<init>","(Ljava/lang/String;I)V",false);
+  }
+  iv.dup();
+  iv.putstatic(classAsmType.getInternalName(),enumEntry.getName(),classAsmType.getDescriptor());
+  iv.astore(OBJECT_TYPE);
+}

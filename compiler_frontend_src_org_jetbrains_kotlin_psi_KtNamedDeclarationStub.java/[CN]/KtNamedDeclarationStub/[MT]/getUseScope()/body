@@ -1,0 +1,17 @@
+{
+  KtElement enclosingBlock=KtPsiUtil.getEnclosingElementForLocalDeclaration(this,false);
+  if (enclosingBlock != null)   return new LocalSearchScope(enclosingBlock);
+  if (hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+    KtElement containingClass=PsiTreeUtil.getParentOfType(this,KtClassOrObject.class);
+    if (containingClass instanceof KtObjectDeclaration && ((KtObjectDeclaration)containingClass).isCompanion()) {
+      KtElement companionObjectClass=PsiTreeUtil.getParentOfType(containingClass,KtClassOrObject.class);
+      if (companionObjectClass != null) {
+        containingClass=companionObjectClass;
+      }
+    }
+    if (containingClass != null) {
+      return new LocalSearchScope(containingClass);
+    }
+  }
+  return super.getUseScope();
+}

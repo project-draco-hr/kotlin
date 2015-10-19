@@ -1,0 +1,27 @@
+{
+  Type leftType=expressionType(left);
+  Type rightType=expressionType(right);
+  if (KtPsiUtil.isNullConstant(left)) {
+    return genCmpWithNull(right,opToken);
+  }
+  if (KtPsiUtil.isNullConstant(right)) {
+    return genCmpWithNull(left,opToken);
+  }
+  if (isIntZero(left,leftType) && isIntPrimitive(rightType)) {
+    return genCmpWithZero(right,opToken);
+  }
+  if (isIntZero(right,rightType) && isIntPrimitive(leftType)) {
+    return genCmpWithZero(left,opToken);
+  }
+  if (isPrimitive(leftType) != isPrimitive(rightType)) {
+    leftType=boxType(leftType);
+    rightType=boxType(rightType);
+  }
+  StackValue leftValue=genLazy(left,leftType);
+  StackValue rightValue=genLazy(right,rightType);
+  if (opToken == KtTokens.EQEQEQ || opToken == KtTokens.EXCLEQEQEQ) {
+    Type operandType=isPrimitive(leftType) ? leftType : OBJECT_TYPE;
+    return StackValue.cmp(opToken,operandType,leftValue,rightValue);
+  }
+  return genEqualsForExpressionsOnStack(opToken,leftValue,rightValue);
+}

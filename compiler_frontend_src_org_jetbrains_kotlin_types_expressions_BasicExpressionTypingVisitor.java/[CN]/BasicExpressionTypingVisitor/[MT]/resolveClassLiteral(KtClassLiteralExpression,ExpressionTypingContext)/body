@@ -1,0 +1,35 @@
+{
+  KtTypeReference typeReference=expression.getTypeReference();
+  if (typeReference == null) {
+    c.trace.report(UNSUPPORTED.on(expression,"Class literals with empty left hand side are not yet supported"));
+    return null;
+  }
+  TypeResolutionContext context=new TypeResolutionContext(c.scope,c.trace,false,true);
+  PossiblyBareType possiblyBareType=components.typeResolver.resolvePossiblyBareType(context,typeReference);
+  KtType type=null;
+  if (possiblyBareType.isBare()) {
+    if (!possiblyBareType.isNullable()) {
+      ClassifierDescriptor descriptor=possiblyBareType.getBareTypeConstructor().getDeclarationDescriptor();
+      if (descriptor instanceof ClassDescriptor) {
+        ClassDescriptor classDescriptor=(ClassDescriptor)descriptor;
+        if (KotlinBuiltIns.isNonPrimitiveArray(classDescriptor)) {
+          context.trace.report(ARRAY_CLASS_LITERAL_REQUIRES_ARGUMENT.on(expression));
+          return null;
+        }
+        type=substituteWithStarProjections(classDescriptor);
+      }
+    }
+  }
+ else {
+    KtType actualType=possiblyBareType.getActualType();
+    if (actualType.isError())     return null;
+    if (isAllowedInClassLiteral(actualType)) {
+      type=actualType;
+    }
+  }
+  if (type != null) {
+    return type;
+  }
+  context.trace.report(CLASS_LITERAL_LHS_NOT_A_CLASS.on(expression));
+  return null;
+}
