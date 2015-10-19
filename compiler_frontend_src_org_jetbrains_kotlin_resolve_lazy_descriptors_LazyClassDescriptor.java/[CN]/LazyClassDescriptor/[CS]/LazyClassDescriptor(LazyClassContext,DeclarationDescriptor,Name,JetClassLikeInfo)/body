@@ -37,20 +37,25 @@
     }
   }
 );
+  this.isData=storageManager.createLazyValue(new Function0<Boolean>(){
+    @Override public Boolean invoke(){
+      return modifierList != null && modifierList.hasModifier(JetTokens.DATA_KEYWORD);
+    }
+  }
+);
   this.kind=storageManager.createLazyValue(new Function0<ClassKind>(){
     @Override public ClassKind invoke(){
-      return (syntaxKind == ClassKind.CLASS && KotlinBuiltIns.isAnnotation(descriptor)) ? ClassKind.ANNOTATION_CLASS : syntaxKind;
+      return (syntaxKind == ClassKind.CLASS && modifierList != null && modifierList.hasModifier(JetTokens.ANNOTATION_KEYWORD)) ? ClassKind.ANNOTATION_CLASS : syntaxKind;
     }
   }
 );
   if (modifierList != null) {
-    LazyAnnotations classAnnotations=new LazyAnnotations(new LazyAnnotationsContext(c.getAnnotationResolver(),storageManager,c.getTrace()){
+    this.annotations=new LazyAnnotations(new LazyAnnotationsContext(c.getAnnotationResolver(),storageManager,c.getTrace()){
       @NotNull @Override public LexicalScope getScope(){
         return getOuterScope();
       }
     }
 ,modifierList.getAnnotationEntries());
-    this.annotations=c.getAnnotationResolver().resolveAndAppendAnnotationsFromModifiers(classAnnotations,modifierList);
   }
  else {
     this.annotations=Annotations.Companion.getEMPTY();
