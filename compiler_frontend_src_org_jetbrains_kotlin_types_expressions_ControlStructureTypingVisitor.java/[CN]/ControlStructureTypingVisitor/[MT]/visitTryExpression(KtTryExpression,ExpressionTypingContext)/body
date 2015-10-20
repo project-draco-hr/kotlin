@@ -3,7 +3,7 @@
   KtExpression tryBlock=expression.getTryBlock();
   List<KtCatchClause> catchClauses=expression.getCatchClauses();
   KtFinallySection finallyBlock=expression.getFinallyBlock();
-  List<KtType> types=new ArrayList<KtType>();
+  List<KotlinType> types=new ArrayList<KotlinType>();
   for (  KtCatchClause catchClause : catchClauses) {
     KtParameter catchParameter=catchClause.getCatchParameter();
     KtExpression catchBody=catchClause.getCatchBody();
@@ -13,12 +13,12 @@
       modifiersChecking.checkParameterHasNoValOrVar(catchParameter,VAL_OR_VAR_ON_CATCH_PARAMETER);
       ModifierCheckerCore.INSTANCE$.check(catchParameter,context.trace,null);
       VariableDescriptor variableDescriptor=components.descriptorResolver.resolveLocalVariableDescriptor(context.scope,catchParameter,context.trace);
-      KtType throwableType=components.builtIns.getThrowable().getDefaultType();
+      KotlinType throwableType=components.builtIns.getThrowable().getDefaultType();
       components.dataFlowAnalyzer.checkType(variableDescriptor.getType(),catchParameter,context.replaceExpectedType(throwableType));
       if (catchBody != null) {
         LexicalWritableScope catchScope=newWritableScopeImpl(context,"Catch scope");
         catchScope.addVariableDescriptor(variableDescriptor);
-        KtType type=facade.getTypeInfo(catchBody,context.replaceScope(catchScope)).getType();
+        KotlinType type=facade.getTypeInfo(catchBody,context.replaceScope(catchScope)).getType();
         if (type != null) {
           types.add(type);
         }
@@ -29,7 +29,7 @@
   if (finallyBlock != null) {
     result=facade.getTypeInfo(finallyBlock.getFinalExpression(),context.replaceExpectedType(NO_EXPECTED_TYPE));
   }
-  KtType type=facade.getTypeInfo(tryBlock,context).getType();
+  KotlinType type=facade.getTypeInfo(tryBlock,context).getType();
   if (type != null) {
     types.add(type);
   }

@@ -1,10 +1,10 @@
 {
   final LexicalScope scopeForConstructor=primaryConstructor == null ? null : FunctionDescriptorUtil.getFunctionInnerScope(scopeForSupertypeResolution,primaryConstructor,trace);
   final ExpressionTypingServices typeInferrer=expressionTypingServices;
-  final Map<KtTypeReference,KtType> supertypes=Maps.newLinkedHashMap();
+  final Map<KtTypeReference,KotlinType> supertypes=Maps.newLinkedHashMap();
   final ResolvedCall<?>[] primaryConstructorDelegationCall=new ResolvedCall[1];
   KtVisitorVoid visitor=new KtVisitorVoid(){
-    private void recordSupertype(    KtTypeReference typeReference,    KtType supertype){
+    private void recordSupertype(    KtTypeReference typeReference,    KotlinType supertype){
       if (supertype == null)       return;
       supertypes.put(typeReference,supertype);
     }
@@ -12,7 +12,7 @@
       if (descriptor.getKind() == ClassKind.INTERFACE) {
         trace.report(DELEGATION_IN_INTERFACE.on(specifier));
       }
-      KtType supertype=trace.getBindingContext().get(BindingContext.TYPE,specifier.getTypeReference());
+      KotlinType supertype=trace.getBindingContext().get(BindingContext.TYPE,specifier.getTypeReference());
       recordSupertype(specifier.getTypeReference(),supertype);
       if (supertype != null) {
         DeclarationDescriptor declarationDescriptor=supertype.getConstructor().getDeclarationDescriptor();
@@ -26,7 +26,7 @@
       KtExpression delegateExpression=specifier.getDelegateExpression();
       if (delegateExpression != null) {
         LexicalScope scope=scopeForConstructor == null ? scopeForMemberResolution : scopeForConstructor;
-        KtType expectedType=supertype != null ? supertype : NO_EXPECTED_TYPE;
+        KotlinType expectedType=supertype != null ? supertype : NO_EXPECTED_TYPE;
         typeInferrer.getType(scope,delegateExpression,expectedType,outerDataFlowInfo,trace);
       }
       if (primaryConstructor == null) {
@@ -50,7 +50,7 @@
       }
       OverloadResolutionResults<FunctionDescriptor> results=callResolver.resolveFunctionCall(trace,scopeForConstructor,CallMaker.makeCall(ReceiverValue.NO_RECEIVER,null,call),NO_EXPECTED_TYPE,outerDataFlowInfo,false);
       if (results.isSuccess()) {
-        KtType supertype=results.getResultingDescriptor().getReturnType();
+        KotlinType supertype=results.getResultingDescriptor().getReturnType();
         recordSupertype(typeReference,supertype);
         ClassDescriptor classDescriptor=TypeUtils.getClassDescriptor(supertype);
         if (classDescriptor != null) {
@@ -70,7 +70,7 @@
     }
     @Override public void visitDelegationToSuperClassSpecifier(    @NotNull KtDelegatorToSuperClass specifier){
       KtTypeReference typeReference=specifier.getTypeReference();
-      KtType supertype=trace.getBindingContext().get(BindingContext.TYPE,typeReference);
+      KotlinType supertype=trace.getBindingContext().get(BindingContext.TYPE,typeReference);
       recordSupertype(typeReference,supertype);
       if (supertype == null)       return;
       ClassDescriptor superClass=TypeUtils.getClassDescriptor(supertype);

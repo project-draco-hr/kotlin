@@ -1,0 +1,40 @@
+{
+  FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(newOwner,original,kind);
+  List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
+  List<TypeParameterDescriptor> substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
+  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,originalSubstitutor.getSubstitution(),substitutedDescriptor,substitutedTypeParameters);
+  KotlinType substitutedReceiverParameterType=null;
+  if (newExtensionReceiverParameterType != null) {
+    substitutedReceiverParameterType=substitutor.substitute(newExtensionReceiverParameterType,Variance.IN_VARIANCE);
+    if (substitutedReceiverParameterType == null) {
+      return null;
+    }
+  }
+  ReceiverParameterDescriptor substitutedExpectedThis=null;
+  if (dispatchReceiverParameter != null) {
+    substitutedExpectedThis=dispatchReceiverParameter.substitute(substitutor);
+    if (substitutedExpectedThis == null) {
+      return null;
+    }
+  }
+  List<ValueParameterDescriptor> substitutedValueParameters=getSubstitutedValueParameters(substitutedDescriptor,newValueParameterDescriptors,substitutor);
+  if (substitutedValueParameters == null) {
+    return null;
+  }
+  KotlinType substitutedReturnType=substitutor.substitute(newReturnType,Variance.OUT_VARIANCE);
+  if (substitutedReturnType == null) {
+    return null;
+  }
+  substitutedDescriptor.initialize(substitutedReceiverParameterType,substitutedExpectedThis,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,newModality,newVisibility);
+  substitutedDescriptor.setOperator(isOperator);
+  substitutedDescriptor.setInfix(isInfix);
+  substitutedDescriptor.setExternal(isExternal);
+  substitutedDescriptor.setInline(isInline);
+  substitutedDescriptor.setTailrec(isTailrec);
+  if (copyOverrides) {
+    for (    FunctionDescriptor overriddenFunction : overriddenFunctions) {
+      substitutedDescriptor.addOverriddenDescriptor(overriddenFunction.substitute(substitutor));
+    }
+  }
+  return substitutedDescriptor;
+}

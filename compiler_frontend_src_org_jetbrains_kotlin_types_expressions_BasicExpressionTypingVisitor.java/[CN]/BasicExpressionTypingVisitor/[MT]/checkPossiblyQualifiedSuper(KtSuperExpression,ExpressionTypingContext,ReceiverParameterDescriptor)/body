@@ -1,13 +1,13 @@
 {
-  KtType result=null;
-  KtType thisType=thisReceiver.getType();
-  Collection<KtType> supertypes=thisType.getConstructor().getSupertypes();
+  KotlinType result=null;
+  KotlinType thisType=thisReceiver.getType();
+  Collection<KotlinType> supertypes=thisType.getConstructor().getSupertypes();
   TypeSubstitutor substitutor=TypeSubstitutor.create(thisType);
   KtTypeReference superTypeQualifier=expression.getSuperTypeQualifier();
   if (superTypeQualifier != null) {
     KtTypeElement typeElement=superTypeQualifier.getTypeElement();
     DeclarationDescriptor classifierCandidate=null;
-    KtType supertype=null;
+    KotlinType supertype=null;
     PsiElement redundantTypeArguments=null;
     if (typeElement instanceof KtUserType) {
       KtUserType userType=(KtUserType)typeElement;
@@ -29,7 +29,7 @@
     }
  else     if (classifierCandidate instanceof ClassDescriptor) {
       ClassDescriptor superclass=(ClassDescriptor)classifierCandidate;
-      for (      KtType declaredSupertype : supertypes) {
+      for (      KotlinType declaredSupertype : supertypes) {
         if (declaredSupertype.getConstructor().equals(superclass.getTypeConstructor())) {
           result=substitutor.safeSubstitute(declaredSupertype,Variance.INVARIANT);
           break;
@@ -47,9 +47,9 @@
   }
  else {
     if (UnqualifiedSuperKt.isPossiblyAmbiguousUnqualifiedSuper(expression,supertypes)) {
-      Collection<KtType> supertypesResolvedFromContext=UnqualifiedSuperKt.resolveUnqualifiedSuperFromExpressionContext(expression,supertypes,components.builtIns.getAnyType());
+      Collection<KotlinType> supertypesResolvedFromContext=UnqualifiedSuperKt.resolveUnqualifiedSuperFromExpressionContext(expression,supertypes,components.builtIns.getAnyType());
       if (supertypesResolvedFromContext.size() == 1) {
-        KtType singleResolvedType=supertypesResolvedFromContext.iterator().next();
+        KotlinType singleResolvedType=supertypesResolvedFromContext.iterator().next();
         result=substitutor.substitute(singleResolvedType,Variance.INVARIANT);
       }
  else       if (supertypesResolvedFromContext.isEmpty()) {
@@ -60,7 +60,7 @@
       }
     }
  else {
-      KtType type=supertypes.isEmpty() ? components.builtIns.getAnyType() : supertypes.iterator().next();
+      KotlinType type=supertypes.isEmpty() ? components.builtIns.getAnyType() : supertypes.iterator().next();
       result=substitutor.substitute(type,Variance.INVARIANT);
     }
   }

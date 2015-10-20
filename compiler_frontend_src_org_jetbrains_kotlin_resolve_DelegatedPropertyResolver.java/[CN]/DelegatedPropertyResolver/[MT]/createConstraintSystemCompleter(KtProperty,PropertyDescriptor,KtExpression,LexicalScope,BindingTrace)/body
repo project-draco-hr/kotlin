@@ -1,14 +1,14 @@
 {
-  final KtType expectedType=property.getTypeReference() != null ? propertyDescriptor.getType() : NO_EXPECTED_TYPE;
+  final KotlinType expectedType=property.getTypeReference() != null ? propertyDescriptor.getType() : NO_EXPECTED_TYPE;
   return new ConstraintSystemCompleter(){
     @Override public void completeConstraintSystem(    @NotNull ConstraintSystem constraintSystem,    @NotNull ResolvedCall<?> resolvedCall){
-      KtType returnType=resolvedCall.getCandidateDescriptor().getReturnType();
+      KotlinType returnType=resolvedCall.getCandidateDescriptor().getReturnType();
       if (returnType == null)       return;
       TemporaryBindingTrace traceToResolveConventionMethods=TemporaryBindingTrace.create(trace,"Trace to resolve delegated property convention methods");
       OverloadResolutionResults<FunctionDescriptor> getMethodResults=getDelegatedPropertyConventionMethod(propertyDescriptor,delegateExpression,returnType,traceToResolveConventionMethods,accessorScope,true,false);
       if (conventionMethodFound(getMethodResults)) {
         FunctionDescriptor descriptor=getMethodResults.getResultingDescriptor();
-        KtType returnTypeOfGetMethod=descriptor.getReturnType();
+        KotlinType returnTypeOfGetMethod=descriptor.getReturnType();
         if (returnTypeOfGetMethod != null) {
           constraintSystem.addSupertypeConstraint(expectedType,returnTypeOfGetMethod,FROM_COMPLETER.position());
         }
@@ -35,7 +35,7 @@
     private void addConstraintForThisValue(    ConstraintSystem constraintSystem,    FunctionDescriptor resultingDescriptor){
       ReceiverParameterDescriptor extensionReceiver=propertyDescriptor.getExtensionReceiverParameter();
       ReceiverParameterDescriptor dispatchReceiver=propertyDescriptor.getDispatchReceiverParameter();
-      KtType typeOfThis=extensionReceiver != null ? extensionReceiver.getType() : dispatchReceiver != null ? dispatchReceiver.getType() : builtIns.getNullableNothingType();
+      KotlinType typeOfThis=extensionReceiver != null ? extensionReceiver.getType() : dispatchReceiver != null ? dispatchReceiver.getType() : builtIns.getNullableNothingType();
       List<ValueParameterDescriptor> valueParameters=resultingDescriptor.getValueParameters();
       if (valueParameters.isEmpty())       return;
       ValueParameterDescriptor valueParameterForThis=valueParameters.get(0);

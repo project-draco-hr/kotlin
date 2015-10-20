@@ -15,14 +15,14 @@
   if (receiverAndParameterResult != null) {
     return receiverAndParameterResult;
   }
-  List<KtType> superValueParameters=compiledValueParameters(superDescriptor);
-  List<KtType> subValueParameters=compiledValueParameters(subDescriptor);
+  List<KotlinType> superValueParameters=compiledValueParameters(superDescriptor);
+  List<KotlinType> subValueParameters=compiledValueParameters(subDescriptor);
   List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
   List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
   if (superTypeParameters.size() != subTypeParameters.size()) {
     for (int i=0; i < superValueParameters.size(); ++i) {
-      KtType superValueParameterType=getUpperBound(superValueParameters.get(i));
-      KtType subValueParameterType=getUpperBound(subValueParameters.get(i));
+      KotlinType superValueParameterType=getUpperBound(superValueParameters.get(i));
+      KotlinType subValueParameterType=getUpperBound(subValueParameters.get(i));
       if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameterType,subValueParameterType)) {
         return OverrideCompatibilityInfo.typeParameterNumberMismatch();
       }
@@ -55,15 +55,15 @@
     }
   }
   for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
-    KtType superValueParameter=superValueParameters.get(i);
-    KtType subValueParameter=subValueParameters.get(i);
+    KotlinType superValueParameter=superValueParameters.get(i);
+    KotlinType subValueParameter=subValueParameters.get(i);
     if (!areTypesEquivalent(superValueParameter,subValueParameter,localEqualityAxioms)) {
       return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,INCOMPATIBLE);
     }
   }
   if (checkReturnType) {
-    KtType superReturnType=superDescriptor.getReturnType();
-    KtType subReturnType=subDescriptor.getReturnType();
+    KotlinType superReturnType=superDescriptor.getReturnType();
+    KotlinType subReturnType=subDescriptor.getReturnType();
     if (superReturnType != null && subReturnType != null) {
       boolean bothErrors=subReturnType.isError() && superReturnType.isError();
       if (!bothErrors && !KotlinTypeChecker.withAxioms(localEqualityAxioms).isSubtypeOf(subReturnType,superReturnType)) {

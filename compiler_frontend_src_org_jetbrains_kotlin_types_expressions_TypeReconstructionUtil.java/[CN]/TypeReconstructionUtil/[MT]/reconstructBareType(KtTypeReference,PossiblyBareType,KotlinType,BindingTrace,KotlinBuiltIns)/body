@@ -1,0 +1,18 @@
+{
+  if (subjectType == null) {
+    subjectType=builtIns.getAnyType();
+  }
+  TypeReconstructionResult reconstructionResult=possiblyBareTarget.reconstruct(subjectType);
+  if (!reconstructionResult.isAllArgumentsInferred()) {
+    TypeConstructor typeConstructor=possiblyBareTarget.getBareTypeConstructor();
+    trace.report(NO_TYPE_ARGUMENTS_ON_RHS.on(right,typeConstructor.getParameters().size(),allStarProjectionsString(typeConstructor)));
+  }
+  KotlinType targetType=reconstructionResult.getResultingType();
+  if (targetType != null) {
+    if (possiblyBareTarget.isBare()) {
+      trace.record(BindingContext.TYPE,right,targetType);
+    }
+    return targetType;
+  }
+  return ErrorUtils.createErrorType("Failed to reconstruct type: " + right.getText());
+}

@@ -1,0 +1,19 @@
+{
+  if (subtype.isError() || supertype.isError()) {
+    return true;
+  }
+  if (!supertype.isMarkedNullable() && subtype.isMarkedNullable()) {
+    return false;
+  }
+  if (KotlinBuiltIns.isNothingOrNullableNothing(subtype)) {
+    return true;
+  }
+  @Nullable KotlinType closestSupertype=findCorrespondingSupertype(subtype,supertype,constraints);
+  if (closestSupertype == null) {
+    return constraints.noCorrespondingSupertype(subtype,supertype);
+  }
+  if (!supertype.isMarkedNullable() && closestSupertype.isMarkedNullable()) {
+    return false;
+  }
+  return checkSubtypeForTheSameConstructor(closestSupertype,supertype);
+}

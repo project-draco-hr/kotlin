@@ -5,7 +5,7 @@
   IElementType operationType=operationSign.getReferencedNameElementType();
   KtExpression leftOperand=expression.getLeft();
   JetTypeInfo leftInfo=ExpressionTypingUtils.getTypeInfoOrNullType(leftOperand,context,facade);
-  KtType leftType=leftInfo.getType();
+  KotlinType leftType=leftInfo.getType();
   KtExpression right=expression.getRight();
   KtExpression left=leftOperand == null ? null : deparenthesize(leftOperand);
   if (right == null || left == null) {
@@ -22,9 +22,9 @@
   Name name=OperatorConventions.ASSIGNMENT_OPERATIONS.get(operationType);
   TemporaryTraceAndCache temporaryForAssignmentOperation=TemporaryTraceAndCache.create(context,"trace to check assignment operation like '+=' for",expression);
   OverloadResolutionResults<FunctionDescriptor> assignmentOperationDescriptors=components.callResolver.resolveBinaryCall(context.replaceTraceAndCache(temporaryForAssignmentOperation).replaceScope(scope),receiver,expression,name);
-  KtType assignmentOperationType=OverloadResolutionResultsUtil.getResultingType(assignmentOperationDescriptors,context.contextDependency);
+  KotlinType assignmentOperationType=OverloadResolutionResultsUtil.getResultingType(assignmentOperationDescriptors,context.contextDependency);
   OverloadResolutionResults<FunctionDescriptor> binaryOperationDescriptors;
-  KtType binaryOperationType;
+  KotlinType binaryOperationType;
   TemporaryTraceAndCache temporaryForBinaryOperation=TemporaryTraceAndCache.create(context,"trace to check binary operation like '+' for",expression);
   TemporaryBindingTrace ignoreReportsTrace=TemporaryBindingTrace.create(context.trace,"Trace for checking assignability");
   boolean lhsAssignable=basic.checkLValue(ignoreReportsTrace,context,left,right);
@@ -37,7 +37,7 @@
     binaryOperationDescriptors=OverloadResolutionResultsImpl.nameNotFound();
     binaryOperationType=null;
   }
-  KtType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
+  KotlinType type=assignmentOperationType != null ? assignmentOperationType : binaryOperationType;
   JetTypeInfo rightInfo=leftInfo;
   if (assignmentOperationDescriptors.isSuccess() && binaryOperationDescriptors.isSuccess()) {
     OverloadResolutionResults<FunctionDescriptor> ambiguityResolutionResults=OverloadResolutionResultsUtil.ambiguity(assignmentOperationDescriptors,binaryOperationDescriptors);
