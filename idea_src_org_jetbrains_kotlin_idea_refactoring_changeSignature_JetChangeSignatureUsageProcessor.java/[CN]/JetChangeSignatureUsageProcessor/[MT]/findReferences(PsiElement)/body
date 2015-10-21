@@ -1,0 +1,13 @@
+{
+  Set<PsiReference> result=new LinkedHashSet<PsiReference>();
+  SearchScope searchScope=functionPsi.getUseScope();
+  KotlinReferencesSearchOptions options=new KotlinReferencesSearchOptions(true,false,false,false);
+  KotlinReferencesSearchParameters parameters=new KotlinReferencesSearchParameters(functionPsi,searchScope,false,null,options);
+  result.addAll(ReferencesSearch.search(parameters).findAll());
+  if (functionPsi instanceof KtProperty || functionPsi instanceof KtParameter) {
+    for (    PsiMethod lightMethod : LightClassUtilsKt.toLightMethods(functionPsi)) {
+      result.addAll(MethodReferencesSearch.search(lightMethod,searchScope,true).findAll());
+    }
+  }
+  return result;
+}
