@@ -1,0 +1,14 @@
+{
+  Set<JpsLibrary> libraries=getAllDependencies(target).getLibraries();
+  for (  JpsLibrary library : libraries) {
+    for (    JpsLibraryRoot root : library.getRoots(JpsOrderRootType.COMPILED)) {
+      String url=root.getUrl();
+      Boolean cachedValue=IS_KOTLIN_JS_STDLIB_JAR_CACHE.get(url);
+      if (cachedValue != null)       return cachedValue;
+      boolean isKotlinJavascriptStdLibrary=LibraryUtils.isKotlinJavascriptStdLibrary(JpsPathUtil.urlToFile(url));
+      IS_KOTLIN_JS_STDLIB_JAR_CACHE.put(url,isKotlinJavascriptStdLibrary);
+      if (isKotlinJavascriptStdLibrary)       return true;
+    }
+  }
+  return false;
+}
