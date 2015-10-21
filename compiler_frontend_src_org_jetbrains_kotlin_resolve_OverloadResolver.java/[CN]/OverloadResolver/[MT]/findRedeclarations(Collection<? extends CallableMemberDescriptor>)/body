@@ -1,12 +1,11 @@
 {
   Set<Pair<KtDeclaration,CallableMemberDescriptor>> redeclarations=Sets.newLinkedHashSet();
-  for (  CallableMemberDescriptor member : functions) {
-    for (    CallableMemberDescriptor member2 : functions) {
+  for (  CallableMemberDescriptor member : members) {
+    for (    CallableMemberDescriptor member2 : members) {
       if (member == member2 || isConstructorsOfDifferentRedeclaredClasses(member,member2)) {
         continue;
       }
-      OverloadUtil.OverloadCompatibilityInfo overloadable=OverloadUtil.isOverloadable(member,member2);
-      if (!overloadable.isSuccess() && member.getKind() != CallableMemberDescriptor.Kind.SYNTHESIZED) {
+      if (!OverloadUtil.isOverloadable(member,member2) && member.getKind() != CallableMemberDescriptor.Kind.SYNTHESIZED) {
         KtDeclaration ktDeclaration=(KtDeclaration)DescriptorToSourceUtils.descriptorToDeclaration(member);
         if (ktDeclaration != null) {
           redeclarations.add(Pair.create(ktDeclaration,member));
