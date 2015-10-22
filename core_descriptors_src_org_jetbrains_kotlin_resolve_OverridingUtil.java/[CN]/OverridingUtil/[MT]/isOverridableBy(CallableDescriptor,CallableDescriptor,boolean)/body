@@ -18,43 +18,20 @@
   List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
   if (superTypeParameters.size() != subTypeParameters.size()) {
     for (int i=0; i < superValueParameters.size(); ++i) {
-      KotlinType superValueParameterType=getUpperBound(superValueParameters.get(i));
-      KotlinType subValueParameterType=getUpperBound(subValueParameters.get(i));
-      if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameterType,subValueParameterType)) {
+      if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameters.get(i),subValueParameters.get(i))) {
         return OverrideCompatibilityInfo.incompatible("Type parameter number mismatch");
       }
     }
     return OverrideCompatibilityInfo.conflict("Type parameter number mismatch");
   }
-  final Map<TypeConstructor,TypeConstructor> matchingTypeConstructors=new HashMap<TypeConstructor,TypeConstructor>();
-  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
-    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
-    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
-    matchingTypeConstructors.put(superTypeParameter.getTypeConstructor(),subTypeParameter.getTypeConstructor());
-  }
-  KotlinTypeChecker.TypeConstructorEquality localEqualityAxioms=new KotlinTypeChecker.TypeConstructorEquality(){
-    @Override public boolean equals(    @NotNull TypeConstructor a,    @NotNull TypeConstructor b){
-      if (equalityAxioms.equals(a,b))       return true;
-      TypeConstructor img1=matchingTypeConstructors.get(a);
-      TypeConstructor img2=matchingTypeConstructors.get(b);
-      if (!(img1 != null && img1.equals(b)) && !(img2 != null && img2.equals(a))) {
-        return false;
-      }
-      return true;
-    }
-  }
-;
-  for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
-    TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
-    TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
-    if (!areTypesEquivalent(superTypeParameter.getUpperBoundsAsType(),subTypeParameter.getUpperBoundsAsType(),localEqualityAxioms)) {
+  KotlinTypeChecker typeChecker=createTypeChecker(superTypeParameters,subTypeParameters);
+  for (int i=0; i < superTypeParameters.size(); i++) {
+    if (!areTypeParametersEquivalent(superTypeParameters.get(i),subTypeParameters.get(i),typeChecker)) {
       return OverrideCompatibilityInfo.incompatible("Type parameter bounds mismatch");
     }
   }
-  for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
-    KotlinType superValueParameter=superValueParameters.get(i);
-    KotlinType subValueParameter=subValueParameters.get(i);
-    if (!areTypesEquivalent(superValueParameter,subValueParameter,localEqualityAxioms)) {
+  for (int i=0; i < superValueParameters.size(); i++) {
+    if (!areTypesEquivalent(superValueParameters.get(i),subValueParameters.get(i),typeChecker)) {
       return OverrideCompatibilityInfo.incompatible("Value parameter type mismatch");
     }
   }
@@ -63,7 +40,7 @@
     KotlinType subReturnType=subDescriptor.getReturnType();
     if (superReturnType != null && subReturnType != null) {
       boolean bothErrors=subReturnType.isError() && superReturnType.isError();
-      if (!bothErrors && !KotlinTypeChecker.withAxioms(localEqualityAxioms).isSubtypeOf(subReturnType,superReturnType)) {
+      if (!bothErrors && !typeChecker.isSubtypeOf(subReturnType,superReturnType)) {
         return OverrideCompatibilityInfo.conflict("Return type mismatch");
       }
     }
