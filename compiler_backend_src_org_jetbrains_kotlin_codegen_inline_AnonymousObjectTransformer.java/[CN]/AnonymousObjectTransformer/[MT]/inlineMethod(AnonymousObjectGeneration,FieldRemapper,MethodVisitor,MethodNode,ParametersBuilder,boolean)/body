@@ -1,7 +1,7 @@
 {
   ReifiedTypeParametersUsages typeParametersToReify=inliningContext.reifedTypeInliner.reifyInstructions(sourceNode.instructions);
-  Parameters parameters=getMethodParametersWithCaptured(capturedBuilder,sourceNode);
-  RegeneratedLambdaFieldRemapper remapper=new RegeneratedLambdaFieldRemapper(oldObjectType.getInternalName(),newLambdaType.getInternalName(),parameters,anonymousObjectGen.getCapturedLambdasToInline(),parentRemapper,false);
+  Parameters parameters=isConstructor ? capturedBuilder.buildParameters() : getMethodParametersWithCaptured(capturedBuilder,sourceNode);
+  RegeneratedLambdaFieldRemapper remapper=new RegeneratedLambdaFieldRemapper(oldObjectType.getInternalName(),newLambdaType.getInternalName(),parameters,anonymousObjectGen.getCapturedLambdasToInline(),parentRemapper,isConstructor);
   MethodInliner inliner=new MethodInliner(sourceNode,parameters,inliningContext.subInline(inliningContext.nameGenerator.subGenerator("lambda")),remapper,isSameModule,"Transformer for " + anonymousObjectGen.getOwnerInternalName(),sourceMapper);
   InlineResult result=inliner.doInline(deferringVisitor,new LocalVarRemapper(parameters,0),false,LabelOwner.NOT_APPLICABLE);
   result.getReifiedTypeParametersUsages().mergeAll(typeParametersToReify);
