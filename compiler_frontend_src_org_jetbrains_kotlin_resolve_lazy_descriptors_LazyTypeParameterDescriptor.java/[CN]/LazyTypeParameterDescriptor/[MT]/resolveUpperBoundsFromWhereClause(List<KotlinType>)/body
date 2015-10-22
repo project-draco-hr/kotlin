@@ -1,0 +1,17 @@
+{
+  KtClassOrObject classOrObject=KtStubbedPsiUtil.getPsiOrStubParent(typeParameter,KtClassOrObject.class,true);
+  if (classOrObject instanceof KtClass) {
+    for (    KtTypeConstraint typeConstraint : classOrObject.getTypeConstraints()) {
+      KtSimpleNameExpression constrainedParameterName=typeConstraint.getSubjectTypeParameterName();
+      if (constrainedParameterName != null) {
+        if (getName().equals(constrainedParameterName.getReferencedNameAsName())) {
+          c.getTrace().record(BindingContext.REFERENCE_TARGET,constrainedParameterName,this);
+          KtTypeReference boundTypeReference=typeConstraint.getBoundTypeReference();
+          if (boundTypeReference != null) {
+            upperBounds.add(resolveBoundType(boundTypeReference));
+          }
+        }
+      }
+    }
+  }
+}

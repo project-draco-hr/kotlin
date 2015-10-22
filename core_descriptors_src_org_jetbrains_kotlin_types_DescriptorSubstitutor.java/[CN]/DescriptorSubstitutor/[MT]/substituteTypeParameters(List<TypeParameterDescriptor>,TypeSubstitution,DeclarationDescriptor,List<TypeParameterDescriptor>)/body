@@ -1,20 +1,2 @@
 {
-  Map<TypeConstructor,TypeProjection> mutableSubstitution=new HashMap<TypeConstructor,TypeProjection>();
-  Map<TypeParameterDescriptor,TypeParameterDescriptorImpl> substitutedMap=new HashMap<TypeParameterDescriptor,TypeParameterDescriptorImpl>();
-  int index=0;
-  for (  TypeParameterDescriptor descriptor : typeParameters) {
-    TypeParameterDescriptorImpl substituted=TypeParameterDescriptorImpl.createForFurtherModification(newContainingDeclaration,descriptor.getAnnotations(),descriptor.isReified(),descriptor.getVariance(),descriptor.getName(),index++,SourceElement.NO_SOURCE);
-    substituted.setInitialized();
-    mutableSubstitution.put(descriptor.getTypeConstructor(),new TypeProjectionImpl(substituted.getDefaultType()));
-    substitutedMap.put(descriptor,substituted);
-    result.add(substituted);
-  }
-  TypeSubstitutor substitutor=TypeSubstitutor.createChainedSubstitutor(originalSubstitution,TypeConstructorSubstitution.createByConstructorsMap(mutableSubstitution));
-  for (  TypeParameterDescriptor descriptor : typeParameters) {
-    TypeParameterDescriptorImpl substituted=substitutedMap.get(descriptor);
-    for (    KotlinType upperBound : descriptor.getUpperBounds()) {
-      substituted.getUpperBounds().add(substitutor.substitute(upperBound,Variance.INVARIANT));
-    }
-  }
-  return substitutor;
 }
