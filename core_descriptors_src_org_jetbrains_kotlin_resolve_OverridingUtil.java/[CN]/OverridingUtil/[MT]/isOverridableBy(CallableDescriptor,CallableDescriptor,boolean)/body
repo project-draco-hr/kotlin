@@ -1,15 +1,12 @@
 {
-  if (superDescriptor instanceof FunctionDescriptor) {
-    if (!(subDescriptor instanceof FunctionDescriptor))     return OverrideCompatibilityInfo.memberKindMismatch();
+  if (superDescriptor instanceof FunctionDescriptor && !(subDescriptor instanceof FunctionDescriptor) || superDescriptor instanceof PropertyDescriptor && !(subDescriptor instanceof PropertyDescriptor)) {
+    return OverrideCompatibilityInfo.incompatible("Member kind mismatch");
   }
- else   if (superDescriptor instanceof PropertyDescriptor) {
-    if (!(subDescriptor instanceof PropertyDescriptor))     return OverrideCompatibilityInfo.memberKindMismatch();
-  }
- else {
+  if (!(superDescriptor instanceof FunctionDescriptor) && !(superDescriptor instanceof PropertyDescriptor)) {
     throw new IllegalArgumentException("This type of CallableDescriptor cannot be checked for overridability: " + superDescriptor);
   }
   if (!superDescriptor.getName().equals(subDescriptor.getName())) {
-    return OverrideCompatibilityInfo.nameMismatch();
+    return OverrideCompatibilityInfo.incompatible("Name mismatch");
   }
   OverrideCompatibilityInfo receiverAndParameterResult=checkReceiverAndParameterCount(superDescriptor,subDescriptor);
   if (receiverAndParameterResult != null) {
@@ -24,10 +21,10 @@
       KotlinType superValueParameterType=getUpperBound(superValueParameters.get(i));
       KotlinType subValueParameterType=getUpperBound(subValueParameters.get(i));
       if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameterType,subValueParameterType)) {
-        return OverrideCompatibilityInfo.typeParameterNumberMismatch();
+        return OverrideCompatibilityInfo.incompatible("Type parameter number mismatch");
       }
     }
-    return OverrideCompatibilityInfo.valueParameterTypeMismatch(null,null,OverrideCompatibilityInfo.Result.CONFLICT);
+    return OverrideCompatibilityInfo.conflict("Type parameter number mismatch");
   }
   final Map<TypeConstructor,TypeConstructor> matchingTypeConstructors=new HashMap<TypeConstructor,TypeConstructor>();
   for (int i=0, typeParametersSize=superTypeParameters.size(); i < typeParametersSize; i++) {
@@ -51,14 +48,14 @@
     TypeParameterDescriptor superTypeParameter=superTypeParameters.get(i);
     TypeParameterDescriptor subTypeParameter=subTypeParameters.get(i);
     if (!areTypesEquivalent(superTypeParameter.getUpperBoundsAsType(),subTypeParameter.getUpperBoundsAsType(),localEqualityAxioms)) {
-      return OverrideCompatibilityInfo.boundsMismatch(superTypeParameter,subTypeParameter);
+      return OverrideCompatibilityInfo.incompatible("Type parameter bounds mismatch");
     }
   }
   for (int i=0, unsubstitutedValueParametersSize=superValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
     KotlinType superValueParameter=superValueParameters.get(i);
     KotlinType subValueParameter=subValueParameters.get(i);
     if (!areTypesEquivalent(superValueParameter,subValueParameter,localEqualityAxioms)) {
-      return OverrideCompatibilityInfo.valueParameterTypeMismatch(superValueParameter,subValueParameter,INCOMPATIBLE);
+      return OverrideCompatibilityInfo.incompatible("Value parameter type mismatch");
     }
   }
   if (checkReturnType) {
@@ -67,13 +64,13 @@
     if (superReturnType != null && subReturnType != null) {
       boolean bothErrors=subReturnType.isError() && superReturnType.isError();
       if (!bothErrors && !KotlinTypeChecker.withAxioms(localEqualityAxioms).isSubtypeOf(subReturnType,superReturnType)) {
-        return OverrideCompatibilityInfo.returnTypeMismatch(superReturnType,subReturnType);
+        return OverrideCompatibilityInfo.conflict("Return type mismatch");
       }
     }
   }
   for (  ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
     if (!externalCondition.isOverridable(superDescriptor,subDescriptor)) {
-      return OverrideCompatibilityInfo.externalConditionFailed(externalCondition.getClass());
+      return OverrideCompatibilityInfo.incompatible("External condition failed");
     }
   }
   return OverrideCompatibilityInfo.success();
