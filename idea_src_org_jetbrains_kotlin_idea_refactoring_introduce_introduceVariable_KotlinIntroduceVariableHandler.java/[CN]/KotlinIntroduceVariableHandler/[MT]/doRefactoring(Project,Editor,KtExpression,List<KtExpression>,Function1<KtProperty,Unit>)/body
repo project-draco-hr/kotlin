@@ -30,28 +30,22 @@
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.no.container"));
     return;
   }
-  AnalysisResult analysisResult=ResolutionUtils.analyzeAndGetResult(expression);
-  final BindingContext bindingContext=analysisResult.getBindingContext();
+  ResolutionFacade resolutionFacade=ResolutionUtils.getResolutionFacade(expression);
+  final BindingContext bindingContext=resolutionFacade.analyze(expression,BodyResolveMode.FULL);
   final KotlinType expressionType=bindingContext.getType(expression);
-  KtScope scope=bindingContext.get(BindingContext.RESOLUTION_SCOPE,expression);
-  if (scope != null) {
-    DataFlowInfo dataFlowInfo=BindingContextUtilsKt.getDataFlowInfo(bindingContext,expression);
-    ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
-    KotlinType typeNoExpectedType=AnalyzerUtilKt.computeTypeInfoInContext(expression,scope,expression,bindingTrace,dataFlowInfo).getType();
-    if (expressionType != null && typeNoExpectedType != null && !KotlinTypeChecker.DEFAULT.equalTypes(expressionType,typeNoExpectedType)) {
-      noTypeInference=true;
-    }
+  LexicalScope scope=UtilsKt.getResolutionScope(expression,bindingContext,resolutionFacade);
+  DataFlowInfo dataFlowInfo=BindingContextUtilsKt.getDataFlowInfo(bindingContext,expression);
+  ObservableBindingTrace bindingTrace=new ObservableBindingTrace(new BindingTraceContext());
+  KotlinType typeNoExpectedType=AnalyzerUtilKt.computeTypeInfoInContext(expression,scope,expression,bindingTrace,dataFlowInfo).getType();
+  if (expressionType != null && typeNoExpectedType != null && !KotlinTypeChecker.DEFAULT.equalTypes(expressionType,typeNoExpectedType)) {
+    noTypeInference=true;
   }
   if (expressionType == null && bindingContext.get(BindingContext.QUALIFIER,expression) != null) {
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.package.expression"));
     return;
   }
-  if (expressionType != null && KotlinTypeChecker.DEFAULT.equalTypes(analysisResult.getModuleDescriptor().getBuiltIns().getUnitType(),expressionType)) {
+  if (expressionType != null && KotlinBuiltIns.isUnit(expressionType)) {
     showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.expression.has.unit.type"));
-    return;
-  }
-  if (expressionType == null && noTypeInference) {
-    showErrorHint(project,editor,JetRefactoringBundle.message("cannot.refactor.expression.should.have.inferred.type"));
     return;
   }
   final PsiElement container=getContainer(expression);

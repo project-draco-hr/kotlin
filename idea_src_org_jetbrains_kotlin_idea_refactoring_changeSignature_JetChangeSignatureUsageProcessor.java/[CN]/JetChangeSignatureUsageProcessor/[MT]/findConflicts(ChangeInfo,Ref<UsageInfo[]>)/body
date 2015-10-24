@@ -18,10 +18,10 @@
   BindingContext bindingContext=ResolutionUtils.analyze((KtElement)element,BodyResolveMode.FULL);
   CallableDescriptor oldDescriptor=JetChangeInfoKt.getOriginalBaseFunctionDescriptor(changeInfo);
   DeclarationDescriptor containingDeclaration=oldDescriptor.getContainingDeclaration();
-  KtScope parametersScope=null;
-  if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=ScopeUtilsKt.asKtScope(((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution());
+  LexicalScope parametersScope=null;
+  if (oldDescriptor instanceof ConstructorDescriptor && containingDeclaration instanceof ClassDescriptorWithResolutionScopes)   parametersScope=((ClassDescriptorWithResolutionScopes)containingDeclaration).getScopeForInitializerResolution();
  else   if (function instanceof KtFunction)   parametersScope=CallableRefactoringKt.getBodyScope((KtFunction)function,bindingContext);
-  KtScope callableScope=CallableRefactoringKt.getContainingScope(oldDescriptor);
+  LexicalScope callableScope=CallableRefactoringKt.getContainingScope(oldDescriptor);
   JetMethodDescriptor.Kind kind=JetChangeInfoKt.getKind(changeInfo);
   if (!kind.isConstructor() && callableScope != null && !info.getNewName().isEmpty()) {
     Name newName=Name.identifier(info.getNewName());
@@ -53,7 +53,7 @@
         }
       }
  else       if (function instanceof KtFunction) {
-        VariableDescriptor variable=parametersScope.getLocalVariable(Name.identifier(parameterName));
+        VariableDescriptor variable=ScopeUtilsKt.getLocalVariable(parametersScope,Name.identifier(parameterName));
         if (variable != null && !(variable instanceof ValueParameterDescriptor)) {
           PsiElement conflictElement=DescriptorToSourceUtils.descriptorToDeclaration(variable);
           result.putValue(conflictElement,"Duplicating local variable '" + parameterName + "'");
