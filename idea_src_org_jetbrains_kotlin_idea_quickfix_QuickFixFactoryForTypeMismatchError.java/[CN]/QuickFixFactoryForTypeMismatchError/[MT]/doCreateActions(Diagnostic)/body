@@ -40,7 +40,7 @@
     KtPropertyAccessor getter=property.getGetter();
     KtExpression initializer=property.getInitializer();
     if (QuickFixUtil.canEvaluateTo(initializer,expression) || (getter != null && QuickFixUtil.canFunctionOrGetterReturnExpression(property.getGetter(),expression))) {
-      LexicalScope scope=UtilsKt.getResolutionScope(property,context,ResolutionUtils.getResolutionFacade(property));
+      LexicalScope scope=ScopeUtils.getResolutionScope(property,context,ResolutionUtils.getResolutionFacade(property));
       KotlinType typeToInsert=TypeUtils.approximateWithResolvableType(expressionType,scope,false);
       actions.add(new ChangeVariableTypeFix(property,typeToInsert));
     }
@@ -48,7 +48,7 @@
   PsiElement expressionParent=expression.getParent();
   KtCallableDeclaration function=expressionParent instanceof KtReturnExpression ? BindingContextUtilsKt.getTargetFunction((KtReturnExpression)expressionParent,context) : PsiTreeUtil.getParentOfType(expression,KtFunction.class,true);
   if (function instanceof KtFunction && QuickFixUtil.canFunctionOrGetterReturnExpression(function,expression)) {
-    LexicalScope scope=UtilsKt.getResolutionScope(function,context,ResolutionUtils.getResolutionFacade(function));
+    LexicalScope scope=ScopeUtils.getResolutionScope(function,context,ResolutionUtils.getResolutionFacade(function));
     KotlinType typeToInsert=TypeUtils.approximateWithResolvableType(expressionType,scope,false);
     actions.add(new ChangeFunctionReturnTypeFix((KtFunction)function,typeToInsert));
   }
@@ -80,7 +80,7 @@
       KotlinType valueArgumentType=diagnostic.getFactory() == Errors.NULL_FOR_NONNULL_TYPE ? expressionType : context.getType(valueArgument.getArgumentExpression());
       if (correspondingParameter != null && valueArgumentType != null) {
         KtCallableDeclaration callable=PsiTreeUtil.getParentOfType(correspondingParameter,KtCallableDeclaration.class,true);
-        LexicalScope scope=callable != null ? UtilsKt.getResolutionScope(callable,context,ResolutionUtils.getResolutionFacade(callable)) : null;
+        LexicalScope scope=callable != null ? ScopeUtils.getResolutionScope(callable,context,ResolutionUtils.getResolutionFacade(callable)) : null;
         KotlinType typeToInsert=TypeUtils.approximateWithResolvableType(valueArgumentType,scope,true);
         actions.add(new ChangeParameterTypeFix(correspondingParameter,typeToInsert));
       }
