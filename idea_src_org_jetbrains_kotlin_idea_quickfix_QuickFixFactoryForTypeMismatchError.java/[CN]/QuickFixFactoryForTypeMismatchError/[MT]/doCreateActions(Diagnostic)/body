@@ -35,6 +35,12 @@
   if (!(expression instanceof KtBinaryExpressionWithTypeRHS) && !(expression.getParent() instanceof KtBinaryExpressionWithTypeRHS)) {
     actions.add(new CastExpressionFix(expression,expectedType));
   }
+  if (!expectedType.isMarkedNullable() && org.jetbrains.kotlin.types.TypeUtils.isNullableType(expressionType)) {
+    KotlinType nullableExpected=TypeUtilsKt.makeNullable(expectedType);
+    if (TypeUtilsKt.isSubtypeOf(expressionType,nullableExpected)) {
+      actions.add(new AddExclExclCallFix(expression));
+    }
+  }
   KtProperty property=PsiTreeUtil.getParentOfType(expression,KtProperty.class);
   if (property != null) {
     KtPropertyAccessor getter=property.getGetter();
