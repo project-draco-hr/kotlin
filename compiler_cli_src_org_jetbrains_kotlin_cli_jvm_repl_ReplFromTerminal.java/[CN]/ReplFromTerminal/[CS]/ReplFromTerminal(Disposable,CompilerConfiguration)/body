@@ -1,8 +1,14 @@
 {
   String replIdeMode=System.getProperty("kotlin.repl.ideMode");
   ideMode=replIdeMode != null && replIdeMode.equals("true");
-  replWriter=new ReplSystemOutWrapper(ideMode,System.out);
-  System.setOut(replWriter);
+  if (ideMode) {
+    ReplSystemOutWrapperForIde soutWrapper=new ReplSystemOutWrapperForIde(System.out);
+    replWriter=soutWrapper;
+    System.setOut(soutWrapper);
+  }
+ else {
+    replWriter=new ReplConsoleWriter();
+  }
   if (ideMode) {
     replReader=new ReplSystemInWrapper(System.in,replWriter);
     System.setIn(replReader);
