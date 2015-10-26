@@ -6,13 +6,12 @@
   MutableModuleContext moduleContext=TopDownAnalyzerFacadeForJVM.createContextWithSealedModule(project,ModuleNameKt.getModuleName(environment));
   this.module=moduleContext.getModule();
   scriptDeclarationFactory=new ScriptMutableDeclarationProviderFactory();
-  FileScopeProvider.AdditionalScopes scopeProvider=new FileScopeProvider.AdditionalScopes(){
-    @NotNull @Override public List<ImportingScope> getScopes(){
-      return lastLineScope != null ? new SmartList<ImportingScope>(ScopeUtilsKt.memberScopeAsImportingScope(lastLineScope)) : Collections.<ImportingScope>emptyList();
+  ContainerForReplWithJava container=InjectionKt.createContainerForReplWithJava(moduleContext,trace,scriptDeclarationFactory,ProjectScope.getAllScope(project),new ReplLastLineScopeProvider(){
+    @Nullable @Override public LexicalScope getLastLineScope(){
+      return lastLineScope;
     }
   }
-;
-  ContainerForReplWithJava container=InjectionKt.createContainerForReplWithJava(moduleContext,trace,scriptDeclarationFactory,ProjectScope.getAllScope(project),scopeProvider,new JvmPackagePartProvider(environment));
+,new JvmPackagePartProvider(environment));
   this.topDownAnalysisContext=new TopDownAnalysisContext(TopDownAnalysisMode.LocalDeclarations,DataFlowInfo.EMPTY,container.getResolveSession().getDeclarationScopeProvider());
   this.topDownAnalyzer=container.getLazyTopDownAnalyzerForTopLevel();
   this.resolveSession=container.getResolveSession();
