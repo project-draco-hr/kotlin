@@ -3,7 +3,13 @@
   for (  Editor editor : editors) {
     setActiveEditor(editor);
     PsiFile currentFile=getFile();
-    checkResultByFile(currentFile.getName().replace("Before.","After."));
+    String afterFilePath=currentFile.getName().replace("Before.","After.");
+    try {
+      checkResultByFile(afterFilePath);
+    }
+ catch (    ComparisonFailure e) {
+      JetTestUtils.assertEqualsToFile(new File(afterFilePath),getEditor());
+    }
     if (checkErrorsAfter && currentFile instanceof KtFile) {
       DirectiveBasedActionUtils.INSTANCE$.checkForUnexpectedErrors((KtFile)currentFile);
     }
