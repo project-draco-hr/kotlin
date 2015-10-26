@@ -1,9 +1,5 @@
 {
   CallableMemberDescriptor unwrappedDescriptor=DescriptorUtils.unwrapFakeOverride(descriptor);
-  int flag=getAccessFlags(unwrappedDescriptor);
-  if ((flag & ACC_PRIVATE) == 0 && (flag & ACC_PROTECTED) == 0) {
-    return descriptor;
-  }
   DeclarationDescriptor enclosed=descriptor.getContainingDeclaration();
   CodegenContext descriptorContext=findParentContextWithDescriptor(enclosed);
   if (descriptorContext == null && DescriptorUtils.isCompanionObject(enclosed)) {
@@ -15,13 +11,25 @@
   if (descriptorContext == null) {
     return descriptor;
   }
-  if ((flag & ACC_PROTECTED) != 0) {
-    PackageFragmentDescriptor unwrappedDescriptorPackage=DescriptorUtils.getParentOfType(unwrappedDescriptor,PackageFragmentDescriptor.class,false);
-    PackageFragmentDescriptor contextDescriptorPackage=DescriptorUtils.getParentOfType(descriptorContext.getContextDescriptor(),PackageFragmentDescriptor.class,false);
-    boolean inSamePackage=contextDescriptorPackage != null && unwrappedDescriptorPackage != null && unwrappedDescriptorPackage.getFqName().equals(contextDescriptorPackage.getFqName());
-    if (inSamePackage) {
+  if (descriptor instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+    int propertyAccessFlag=getVisibilityAccessFlag(descriptor);
+    PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
+    int getterAccessFlag=getter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(getter);
+    boolean getterAccessorRequired=isAccessorRequired(getterAccessFlag,unwrappedDescriptor,descriptorContext);
+    PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+    int setterAccessFlag=setter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(setter);
+    boolean setterAccessorRequired=isAccessorRequired(setterAccessFlag,unwrappedDescriptor,descriptorContext);
+    if (!getterAccessorRequired && !setterAccessorRequired) {
       return descriptor;
     }
+    return (D)descriptorContext.getPropertyAccessor(propertyDescriptor,superCallExpression,getterAccessorRequired,setterAccessorRequired);
   }
-  return (D)descriptorContext.getAccessor(descriptor,superCallExpression);
+ else {
+    int flag=getVisibilityAccessFlag(unwrappedDescriptor);
+    if (!isAccessorRequired(flag,unwrappedDescriptor,descriptorContext)) {
+      return descriptor;
+    }
+    return (D)descriptorContext.getAccessor(descriptor,superCallExpression);
+  }
 }
