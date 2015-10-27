@@ -8,7 +8,7 @@
     parameterByName.put(typeParameterDescriptor.getName(),typeParameterDescriptor);
     KtTypeReference extendsBound=jetTypeParameter.getExtendsBound();
     if (extendsBound != null) {
-      KotlinType type=resolveTypeParameterExtendsBound(typeParameterDescriptor,extendsBound,scope,trace);
+      KotlinType type=typeResolver.resolveType(scope,extendsBound,trace,false);
       typeParameterDescriptor.addUpperBound(type);
       deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(extendsBound,type));
     }
@@ -36,6 +36,8 @@
   for (  TypeParameterDescriptorImpl parameter : parameters) {
     parameter.addDefaultUpperBound();
     parameter.setInitialized();
+  }
+  for (  TypeParameterDescriptorImpl parameter : parameters) {
     checkConflictingUpperBounds(trace,parameter,typeParameters.get(parameter.getIndex()));
   }
   if (!(declaration instanceof KtClass)) {
