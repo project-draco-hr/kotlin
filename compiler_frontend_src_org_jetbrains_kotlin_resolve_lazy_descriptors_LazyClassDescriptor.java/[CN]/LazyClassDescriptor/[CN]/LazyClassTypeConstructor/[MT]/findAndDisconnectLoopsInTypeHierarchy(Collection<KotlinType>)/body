@@ -1,13 +1,18 @@
 {
-  for (Iterator<KotlinType> iterator=supertypes.iterator(); iterator.hasNext(); ) {
-    KotlinType supertype=iterator.next();
-    if (isReachable(supertype.getConstructor(),this,new HashSet<TypeConstructor>())) {
-      iterator.remove();
-      ClassifierDescriptor supertypeDescriptor=supertype.getConstructor().getDeclarationDescriptor();
+  FindLoopsInSupertypes.findLoopsInSupertypesAndDisconnect(typeConstructor,supertypes,new Function1<TypeConstructor,Iterable<? extends KotlinType>>(){
+    @Override public Iterable<? extends KotlinType> invoke(    TypeConstructor typeConstructor){
+      return getNeighbors(typeConstructor);
+    }
+  }
+,new Function1<KotlinType,Unit>(){
+    @Override public Unit invoke(    KotlinType type){
+      ClassifierDescriptor supertypeDescriptor=type.getConstructor().getDeclarationDescriptor();
       if (supertypeDescriptor instanceof ClassDescriptor) {
         ClassDescriptor superclass=(ClassDescriptor)supertypeDescriptor;
         reportCyclicInheritanceHierarchyError(c.getTrace(),LazyClassDescriptor.this,superclass);
       }
+      return Unit.INSTANCE;
     }
   }
+);
 }
