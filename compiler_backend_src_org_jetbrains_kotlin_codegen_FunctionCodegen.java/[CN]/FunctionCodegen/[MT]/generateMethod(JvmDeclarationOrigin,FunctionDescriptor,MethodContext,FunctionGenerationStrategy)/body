@@ -24,7 +24,7 @@
   boolean staticInCompanionObject=AnnotationUtilKt.isPlatformStaticInCompanionObject(functionDescriptor);
   if (staticInCompanionObject) {
     ImplementationBodyCodegen parentBodyCodegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
-    parentBodyCodegen.addAdditionalTask(new PlatformStaticGenerator(functionDescriptor,origin,state));
+    parentBodyCodegen.addAdditionalTask(new JvmStaticGenerator(functionDescriptor,origin,state));
   }
   if (state.getClassBuilderMode() == ClassBuilderMode.LIGHT_CLASSES || isAbstractMethod(functionDescriptor,contextKind)) {
     generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),contextKind);
@@ -36,7 +36,7 @@
   }
  else   if (staticInCompanionObject) {
     mv.visitCode();
-    FunctionDescriptor staticFunctionDescriptor=PlatformStaticGenerator.createStaticFunctionDescriptor(functionDescriptor);
+    FunctionDescriptor staticFunctionDescriptor=JvmStaticGenerator.createStaticFunctionDescriptor(functionDescriptor);
     JvmMethodSignature jvmMethodSignature=typeMapper.mapSignature(memberCodegen.getContext().accessibleDescriptor(staticFunctionDescriptor,null));
     Type owningType=typeMapper.mapClass((ClassifierDescriptor)staticFunctionDescriptor.getContainingDeclaration());
     generateDelegateToMethodBody(false,mv,jvmMethodSignature.getAsmMethod(),owningType.getInternalName());
