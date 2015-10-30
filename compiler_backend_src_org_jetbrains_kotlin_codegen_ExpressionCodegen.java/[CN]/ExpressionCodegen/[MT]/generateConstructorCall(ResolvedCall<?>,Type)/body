@@ -5,11 +5,14 @@
       v.dup();
       ConstructorDescriptor constructor=getConstructorDescriptor(resolvedCall);
       ReceiverParameterDescriptor dispatchReceiver=constructor.getDispatchReceiverParameter();
+      ClassDescriptor containingDeclaration=constructor.getContainingDeclaration();
       if (dispatchReceiver != null) {
         Type receiverType=typeMapper.mapType(dispatchReceiver.getType());
-        generateReceiverValue(resolvedCall.getDispatchReceiver()).put(receiverType,v);
+        ReceiverValue receiver=resolvedCall.getDispatchReceiver();
+        boolean callSuper=containingDeclaration.isInner() && receiver instanceof ClassReceiver && ((ClassReceiver)receiver).getDeclarationDescriptor().getOriginal() != containingDeclaration.getOriginal();
+        generateReceiverValue(receiver,callSuper).put(receiverType,v);
       }
-      pushClosureOnStack(constructor.getContainingDeclaration(),dispatchReceiver == null,defaultCallGenerator);
+      pushClosureOnStack(containingDeclaration,dispatchReceiver == null,defaultCallGenerator);
       constructor=SamCodegenUtil.resolveSamAdapter(constructor);
       CallableMethod method=typeMapper.mapToCallableMethod(constructor,false);
       invokeMethodWithArguments(method,resolvedCall,StackValue.none());
