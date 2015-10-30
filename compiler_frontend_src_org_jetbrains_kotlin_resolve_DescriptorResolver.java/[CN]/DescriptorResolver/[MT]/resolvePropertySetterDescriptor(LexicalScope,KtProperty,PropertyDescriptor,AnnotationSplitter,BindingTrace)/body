@@ -5,6 +5,13 @@
     Annotations annotations=new CompositeAnnotations(CollectionsKt.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER),annotationResolver.resolveAnnotationsWithoutArguments(scope,setter.getModifierList(),trace)));
     KtParameter parameter=setter.getParameter();
     setterDescriptor=new PropertySetterDescriptorImpl(propertyDescriptor,annotations,resolveModalityFromModifiers(setter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(setter,propertyDescriptor.getVisibility()),setter.hasBody(),false,setter.hasModifier(EXTERNAL_KEYWORD),CallableMemberDescriptor.Kind.DECLARATION,null,KotlinSourceElementKt.toSourceElement(setter));
+    KtTypeReference returnTypeReference=setter.getReturnTypeReference();
+    if (returnTypeReference != null) {
+      KotlinType returnType=typeResolver.resolveType(scope,returnTypeReference,trace,true);
+      if (!KotlinBuiltIns.isUnit(returnType)) {
+        trace.report(WRONG_SETTER_RETURN_TYPE.on(returnTypeReference));
+      }
+    }
     if (parameter != null) {
       if (parameter.hasDefaultValue()) {
         trace.report(SETTER_PARAMETER_WITH_DEFAULT_VALUE.on(parameter.getDefaultValue()));
