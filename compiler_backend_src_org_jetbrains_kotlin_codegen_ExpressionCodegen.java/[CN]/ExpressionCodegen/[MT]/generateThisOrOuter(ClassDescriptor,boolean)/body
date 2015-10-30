@@ -1,38 +1,3 @@
 {
-  boolean isSingleton=calleeContainingClass.getKind().isSingleton();
-  if (isSingleton) {
-    if (calleeContainingClass.equals(context.getThisDescriptor()) && !AnnotationUtilKt.isPlatformStaticInObjectOrClass(context.getContextDescriptor())) {
-      return StackValue.local(0,typeMapper.mapType(calleeContainingClass));
-    }
- else     if (isEnumEntry(calleeContainingClass)) {
-      return StackValue.enumEntry(calleeContainingClass,typeMapper);
-    }
- else {
-      return StackValue.singleton(calleeContainingClass,typeMapper);
-    }
-  }
-  CodegenContext cur=context;
-  Type type=asmType(calleeContainingClass.getDefaultType());
-  StackValue result=StackValue.local(0,type);
-  boolean inStartConstructorContext=cur instanceof ConstructorContext;
-  while (cur != null) {
-    ClassDescriptor thisDescriptor=cur.getThisDescriptor();
-    if (!isSuper && thisDescriptor == calleeContainingClass) {
-      return result;
-    }
-    if (isSuper && DescriptorUtils.isSubclass(thisDescriptor,calleeContainingClass)) {
-      return castToRequiredTypeOfInterfaceIfNeeded(result,thisDescriptor,calleeContainingClass);
-    }
-    if (inStartConstructorContext) {
-      result=cur.getOuterExpression(result,false);
-      cur=getNotNullParentContextForMethod(cur);
-      inStartConstructorContext=false;
-    }
- else {
-      cur=getNotNullParentContextForMethod(cur);
-      result=cur.getOuterExpression(result,false);
-    }
-    cur=cur.getParentContext();
-  }
-  throw new UnsupportedOperationException();
+  return generateThisOrOuter(calleeContainingClass,isSuper,false);
 }
