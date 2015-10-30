@@ -25,6 +25,7 @@
         result.set(dataFlowInfo);
       }
  else {
+        DataFlowInfo expressionFlowInfo=facade.getTypeInfo(expression,context).getDataFlowInfo();
         KtExpression left=expression.getLeft();
         if (left == null)         return;
         KtExpression right=expression.getRight();
@@ -44,11 +45,14 @@
         }
         if (equals != null) {
           if (equals == conditionValue) {
-            result.set(context.dataFlowInfo.equate(leftValue,rightValue));
+            result.set(context.dataFlowInfo.equate(leftValue,rightValue).and(expressionFlowInfo));
           }
  else {
-            result.set(context.dataFlowInfo.disequate(leftValue,rightValue));
+            result.set(context.dataFlowInfo.disequate(leftValue,rightValue).and(expressionFlowInfo));
           }
+        }
+ else {
+          result.set(expressionFlowInfo);
         }
       }
     }
@@ -60,6 +64,12 @@
           result.set(extractDataFlowInfoFromCondition(baseExpression,!conditionValue,context));
         }
       }
+ else {
+        visitExpression(expression);
+      }
+    }
+    @Override public void visitExpression(    @NotNull KtExpression expression){
+      result.set(facade.getTypeInfo(expression,context).getDataFlowInfo());
     }
     @Override public void visitParenthesizedExpression(    @NotNull KtParenthesizedExpression expression){
       KtExpression body=expression.getExpression();
