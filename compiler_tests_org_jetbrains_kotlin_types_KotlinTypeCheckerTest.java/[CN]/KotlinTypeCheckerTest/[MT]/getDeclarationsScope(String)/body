@@ -1,7 +1,6 @@
 {
-  ModuleDescriptor moduleDescriptor=LazyResolveTestUtil.resolve(getProject(),Collections.singletonList(KotlinTestUtils.loadJetFile(getProject(),new File(path))),getEnvironment());
-  FqName fqName=new FqName("testData");
-  PackageViewDescriptor packageView=moduleDescriptor.getPackage(fqName);
-  assertNotNull("Package " + fqName + " not found",packageView);
-  return addImports(packageView.getMemberScope());
+  KtFile ktFile=KotlinTestUtils.loadJetFile(getProject(),new File(path));
+  BindingTrace trace=new CliLightClassGenerationSupport.CliBindingTrace();
+  LazyResolveTestUtil.resolve(getProject(),trace,Collections.singletonList(ktFile),getEnvironment());
+  return trace.get(BindingContext.LEXICAL_SCOPE,ktFile);
 }

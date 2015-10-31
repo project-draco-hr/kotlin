@@ -1,13 +1,6 @@
 {
-  final KotlinType thisType=makeType(contextType);
-  KtScope scope=new AbstractScopeAdapter(){
-    @NotNull @Override protected KtScope getWorkerScope(){
-      return scopeWithImports;
-    }
-    @NotNull @Override public List<ReceiverParameterDescriptor> getImplicitReceiversHierarchy(){
-      return Lists.<ReceiverParameterDescriptor>newArrayList(new ReceiverParameterDescriptorImpl(getContainingDeclaration(),new ExpressionReceiver(KtPsiFactoryKt.KtPsiFactory(getProject()).createExpression(expression),thisType)));
-    }
-  }
-;
+  KotlinType thisType=makeType(contextType);
+  ReceiverParameterDescriptorImpl receiverParameterDescriptor=new ReceiverParameterDescriptorImpl(scopeWithImports.getOwnerDescriptor(),new ExpressionReceiver(KtPsiFactoryKt.KtPsiFactory(getProject()).createExpression(expression),thisType));
+  LexicalScope scope=new LexicalScopeImpl(scopeWithImports,scopeWithImports.getOwnerDescriptor(),false,receiverParameterDescriptor,"Scope with receiver: " + thisType);
   assertType(scope,expression,expectedType);
 }
