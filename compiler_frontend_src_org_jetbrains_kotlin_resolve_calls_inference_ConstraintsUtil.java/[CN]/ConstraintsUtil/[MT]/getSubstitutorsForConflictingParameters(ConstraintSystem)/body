@@ -1,22 +1,23 @@
 {
-  TypeParameterDescriptor firstConflictingParameter=getFirstConflictingParameter(constraintSystem);
-  if (firstConflictingParameter == null)   return Collections.emptyList();
-  Collection<KotlinType> conflictingTypes=constraintSystem.getTypeBounds(firstConflictingParameter).getValues();
+  TypeParameterDescriptor firstConflictingVariable=getFirstConflictingVariable(constraintSystem);
+  if (firstConflictingVariable == null)   return Collections.emptyList();
+  TypeParameterDescriptor firstConflictingParameter=constraintSystem.variableToDescriptor(firstConflictingVariable);
+  Collection<KotlinType> conflictingTypes=constraintSystem.getTypeBounds(firstConflictingVariable).getValues();
   List<Map<TypeConstructor,TypeProjection>> substitutionContexts=Lists.newArrayList();
   for (  KotlinType type : conflictingTypes) {
     Map<TypeConstructor,TypeProjection> context=Maps.newLinkedHashMap();
     context.put(firstConflictingParameter.getTypeConstructor(),new TypeProjectionImpl(type));
     substitutionContexts.add(context);
   }
-  for (  TypeParameterDescriptor typeParameter : constraintSystem.getTypeParameterDescriptors()) {
-    if (typeParameter == firstConflictingParameter)     continue;
-    KotlinType safeType=getSafeValue(constraintSystem,typeParameter);
+  for (  TypeParameterDescriptor typeVariable : constraintSystem.getTypeVariables()) {
+    if (typeVariable == firstConflictingVariable)     continue;
+    KotlinType safeType=getSafeValue(constraintSystem,typeVariable);
     for (    Map<TypeConstructor,TypeProjection> context : substitutionContexts) {
       TypeProjection typeProjection=new TypeProjectionImpl(safeType);
-      context.put(typeParameter.getTypeConstructor(),typeProjection);
+      context.put(constraintSystem.variableToDescriptor(typeVariable).getTypeConstructor(),typeProjection);
     }
   }
-  Collection<TypeSubstitutor> typeSubstitutors=Lists.newArrayList();
+  Collection<TypeSubstitutor> typeSubstitutors=new ArrayList<TypeSubstitutor>(substitutionContexts.size());
   for (  Map<TypeConstructor,TypeProjection> context : substitutionContexts) {
     typeSubstitutors.add(TypeSubstitutor.create(context));
   }
