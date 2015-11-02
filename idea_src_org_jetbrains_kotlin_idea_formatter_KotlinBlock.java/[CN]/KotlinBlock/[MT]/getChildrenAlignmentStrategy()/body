@@ -1,0 +1,41 @@
+{
+  final CommonCodeStyleSettings jetCommonSettings=mySettings.getCommonSettings(KotlinLanguage.INSTANCE);
+  KotlinCodeStyleSettings jetSettings=mySettings.getCustomSettings(KotlinCodeStyleSettings.class);
+  IElementType parentType=myNode.getElementType();
+  if (parentType == VALUE_PARAMETER_LIST) {
+    return getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS,VALUE_PARAMETER,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
+  }
+ else   if (parentType == VALUE_ARGUMENT_LIST) {
+    return getAlignmentForChildInParenthesis(jetCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS,VALUE_ARGUMENT,COMMA,jetCommonSettings.ALIGN_MULTILINE_METHOD_BRACKETS,LPAR,RPAR);
+  }
+ else   if (parentType == WHEN) {
+    return getAlignmentForCaseBranch(jetSettings.ALIGN_IN_COLUMNS_CASE_BRANCH);
+  }
+ else   if (parentType == WHEN_ENTRY) {
+    return myAlignmentStrategy;
+  }
+ else   if (BINARY_EXPRESSIONS.contains(parentType) && ALIGN_FOR_BINARY_OPERATIONS.contains(getOperationType(getNode()))) {
+    return NodeAlignmentStrategy.fromTypes(AlignmentStrategy.wrap(createAlignment(jetCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION,getAlignment())));
+  }
+ else   if (parentType == DELEGATION_SPECIFIER_LIST || parentType == INITIALIZER_LIST) {
+    return NodeAlignmentStrategy.fromTypes(AlignmentStrategy.wrap(createAlignment(jetCommonSettings.ALIGN_MULTILINE_EXTENDS_LIST,getAlignment())));
+  }
+ else   if (parentType == PARENTHESIZED) {
+    return new NodeAlignmentStrategy(){
+      Alignment bracketsAlignment=jetCommonSettings.ALIGN_MULTILINE_BINARY_OPERATION ? Alignment.createAlignment() : null;
+      @Nullable @Override public Alignment getAlignment(      @NotNull ASTNode childNode){
+        IElementType childNodeType=childNode.getElementType();
+        ASTNode prev=getPrevWithoutWhitespace(childNode);
+        if ((prev != null && prev.getElementType() == TokenType.ERROR_ELEMENT) || childNodeType == TokenType.ERROR_ELEMENT) {
+          return bracketsAlignment;
+        }
+        if (childNodeType == LPAR || childNodeType == RPAR) {
+          return bracketsAlignment;
+        }
+        return null;
+      }
+    }
+;
+  }
+  return NodeAlignmentStrategy.getNullStrategy();
+}

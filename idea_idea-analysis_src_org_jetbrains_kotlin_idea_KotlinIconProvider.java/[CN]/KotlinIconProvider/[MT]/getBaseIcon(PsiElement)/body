@@ -1,0 +1,66 @@
+{
+  if (psiElement instanceof KtPackageDirective) {
+    return PlatformIcons.PACKAGE_ICON;
+  }
+  if (psiElement instanceof KtLightClassForFacade) {
+    return KotlinIcons.FILE;
+  }
+  if (psiElement instanceof KtLightClassForDecompiledDeclaration) {
+    KtClassOrObject origin=((KtLightClassForDecompiledDeclaration)psiElement).getOrigin();
+    if (origin != null) {
+      psiElement=origin;
+    }
+ else {
+      return KotlinIcons.CLASS;
+    }
+  }
+  if (psiElement instanceof KtLightClassForExplicitDeclaration) {
+    psiElement=psiElement.getNavigationElement();
+  }
+  if (psiElement instanceof KtNamedFunction) {
+    if (((KtFunction)psiElement).getReceiverTypeReference() != null) {
+      return KotlinIcons.EXTENSION_FUNCTION;
+    }
+    if (PsiTreeUtil.getParentOfType(psiElement,KtNamedDeclaration.class) instanceof KtClass) {
+      if (KtPsiUtil.isAbstract((KtFunction)psiElement)) {
+        return PlatformIcons.ABSTRACT_METHOD_ICON;
+      }
+ else {
+        return PlatformIcons.METHOD_ICON;
+      }
+    }
+ else {
+      return KotlinIcons.FUNCTION;
+    }
+  }
+  if (psiElement instanceof KtFunctionLiteral)   return KotlinIcons.LAMBDA;
+  if (psiElement instanceof KtClass) {
+    KtClass ktClass=(KtClass)psiElement;
+    if (ktClass.isInterface()) {
+      return KotlinIcons.TRAIT;
+    }
+    Icon icon=ktClass.isEnum() ? KotlinIcons.ENUM : KotlinIcons.CLASS;
+    if (ktClass instanceof KtEnumEntry) {
+      KtEnumEntry enumEntry=(KtEnumEntry)ktClass;
+      if (enumEntry.getPrimaryConstructorParameterList() == null) {
+        icon=KotlinIcons.ENUM;
+      }
+    }
+    return icon;
+  }
+  if (psiElement instanceof KtObjectDeclaration) {
+    return KotlinIcons.OBJECT;
+  }
+  if (psiElement instanceof KtParameter) {
+    KtParameter parameter=(KtParameter)psiElement;
+    if (KtPsiUtil.getClassIfParameterIsProperty(parameter) != null) {
+      return parameter.isMutable() ? KotlinIcons.FIELD_VAR : KotlinIcons.FIELD_VAL;
+    }
+    return KotlinIcons.PARAMETER;
+  }
+  if (psiElement instanceof KtProperty) {
+    KtProperty property=(KtProperty)psiElement;
+    return property.isVar() ? KotlinIcons.FIELD_VAR : KotlinIcons.FIELD_VAL;
+  }
+  return null;
+}

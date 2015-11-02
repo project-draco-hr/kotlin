@@ -1,0 +1,39 @@
+{
+  if (function instanceof KtFunctionLiteral)   return null;
+  return new KotlinDefaultNamedDeclarationPresentation(function){
+    @Override public String getPresentableText(){
+      StringBuilder presentation=new StringBuilder(function.getName() != null ? function.getName() : "");
+      Collection<String> paramsStrings=Collections2.transform(function.getValueParameters(),new Function<KtParameter,String>(){
+        @Override public String apply(        KtParameter parameter){
+          if (parameter != null) {
+            KtTypeReference reference=parameter.getTypeReference();
+            if (reference != null) {
+              String text=reference.getText();
+              if (text != null) {
+                return text;
+              }
+            }
+          }
+          return "?";
+        }
+      }
+);
+      presentation.append("(").append(StringUtils.join(paramsStrings,",")).append(")");
+      return presentation.toString();
+    }
+    @Override public String getLocationString(){
+      if (function instanceof KtConstructor) {
+        FqName name=((KtConstructor)function).getContainingClassOrObject().getFqName();
+        return name != null ? String.format("(in %s)",name) : "";
+      }
+      FqName name=function.getFqName();
+      if (name != null) {
+        KtTypeReference receiverTypeRef=function.getReceiverTypeReference();
+        String extensionLocation=receiverTypeRef != null ? "for " + receiverTypeRef.getText() + " " : "";
+        return String.format("(%sin %s)",extensionLocation,name.parent());
+      }
+      return "";
+    }
+  }
+;
+}
