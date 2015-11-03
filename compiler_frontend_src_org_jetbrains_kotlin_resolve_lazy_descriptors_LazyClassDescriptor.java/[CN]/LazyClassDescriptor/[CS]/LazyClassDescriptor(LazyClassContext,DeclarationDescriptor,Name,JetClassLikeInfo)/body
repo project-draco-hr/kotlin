@@ -97,4 +97,21 @@
     }
   }
 ,classLikeInfo.getPrimaryConstructorParameters());
+  this.parameters=c.getStorageManager().createLazyValue(new Function0<List<TypeParameterDescriptor>>(){
+    @Override public List<TypeParameterDescriptor> invoke(){
+      JetClassLikeInfo classInfo=declarationProvider.getOwnerInfo();
+      KtTypeParameterList typeParameterList=classInfo.getTypeParameterList();
+      if (typeParameterList == null)       return Collections.emptyList();
+      if (classInfo.getClassKind() == ClassKind.ENUM_CLASS) {
+        c.getTrace().report(TYPE_PARAMETERS_IN_ENUM.on(typeParameterList));
+      }
+      List<KtTypeParameter> typeParameters=typeParameterList.getParameters();
+      List<TypeParameterDescriptor> parameters=new ArrayList<TypeParameterDescriptor>(typeParameters.size());
+      for (int i=0; i < typeParameters.size(); i++) {
+        parameters.add(new LazyTypeParameterDescriptor(c,LazyClassDescriptor.this,typeParameters.get(i),i));
+      }
+      return parameters;
+    }
+  }
+);
 }
