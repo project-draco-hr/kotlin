@@ -2,9 +2,22 @@
   if (setter == null) {
     throw new UnsupportedOperationException("no setter specified");
   }
-  Type[] argumentTypes=setter.getParameterTypes();
-  coerce(topOfStackType,argumentTypes[argumentTypes.length - 1],v);
-  setter.genInvokeInstruction(v);
+  Type lastParameterType=ArraysKt.last(setter.getParameterTypes());
+  coerce(topOfStackType,lastParameterType,v);
+  CollectionElementReceiver collectionElementReceiver=(CollectionElementReceiver)receiver;
+  if (collectionElementReceiver.isGetter) {
+    List<ResolvedValueArgument> arguments=collectionElementReceiver.valueArguments;
+    List<Type> types=getter.getValueParameterTypes();
+    for (int i=arguments.size() - 1; i >= 0; i--) {
+      ResolvedValueArgument argument=arguments.get(i);
+      if (argument instanceof DefaultValueArgument) {
+        Type defaultType=types.get(i);
+        AsmUtil.swap(v,lastParameterType,defaultType);
+        AsmUtil.pop(v,defaultType);
+      }
+    }
+  }
+  codegen.defaultCallGenerator.genCall(setter,resolvedSetCall,false,codegen);
   Type returnType=setter.getReturnType();
   if (returnType != Type.VOID_TYPE) {
     pop(v,returnType);
