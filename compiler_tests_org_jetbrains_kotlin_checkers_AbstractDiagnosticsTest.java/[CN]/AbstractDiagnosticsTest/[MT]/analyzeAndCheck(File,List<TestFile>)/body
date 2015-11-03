@@ -1,0 +1,77 @@
+{
+  Map<TestModule,List<TestFile>> groupedByModule=CollectionsKt.groupByTo(testFiles,new LinkedHashMap<TestModule,List<TestFile>>(),new Function1<TestFile,TestModule>(){
+    @Override public TestModule invoke(    TestFile file){
+      return file.getModule();
+    }
+  }
+);
+  boolean checkLazyResolveLog=CollectionsKt.any(testFiles,new Function1<TestFile,Boolean>(){
+    @Override public Boolean invoke(    TestFile file){
+      return file.checkLazyLog;
+    }
+  }
+);
+  LazyOperationsLog lazyOperationsLog=null;
+  GlobalContext context;
+  ExceptionTracker tracker=new ExceptionTracker();
+  if (checkLazyResolveLog) {
+    lazyOperationsLog=new LazyOperationsLog(HASH_SANITIZER);
+    context=new SimpleGlobalContext(new LoggingStorageManager(LockBasedStorageManager.createWithExceptionHandling(tracker),lazyOperationsLog.getAddRecordFunction()),tracker);
+  }
+ else {
+    context=new SimpleGlobalContext(LockBasedStorageManager.createWithExceptionHandling(tracker),tracker);
+  }
+  Map<TestModule,ModuleDescriptorImpl> modules=createModules(groupedByModule,context.getStorageManager());
+  Map<TestModule,BindingContext> moduleBindings=new HashMap<TestModule,BindingContext>();
+  for (  Map.Entry<TestModule,List<TestFile>> entry : groupedByModule.entrySet()) {
+    TestModule testModule=entry.getKey();
+    List<? extends TestFile> testFilesInModule=entry.getValue();
+    List<KtFile> jetFiles=getJetFiles(testFilesInModule,true);
+    ModuleDescriptorImpl module=modules.get(testModule);
+    BindingTrace moduleTrace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
+    moduleBindings.put(testModule,moduleTrace.getBindingContext());
+    ModuleContext moduleContext=ContextKt.withModule(ContextKt.withProject(context,getProject()),module);
+    analyzeModuleContents(moduleContext,jetFiles,moduleTrace);
+    checkAllResolvedCallsAreCompleted(jetFiles,moduleTrace.getBindingContext());
+  }
+  Throwable exceptionFromLazyResolveLogValidation=null;
+  if (checkLazyResolveLog) {
+    exceptionFromLazyResolveLogValidation=checkLazyResolveLog(lazyOperationsLog,testDataFile);
+  }
+ else {
+    File lazyLogFile=getLazyLogFile(testDataFile);
+    assertFalse("No lazy log expected, but found: " + lazyLogFile.getAbsolutePath(),lazyLogFile.exists());
+  }
+  Throwable exceptionFromDescriptorValidation=null;
+  try {
+    File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".txt");
+    validateAndCompareDescriptorWithFile(expectedFile,testFiles,modules);
+  }
+ catch (  Throwable e) {
+    exceptionFromDescriptorValidation=e;
+  }
+  boolean ok=true;
+  StringBuilder actualText=new StringBuilder();
+  for (  TestFile testFile : testFiles) {
+    ok&=testFile.getActualText(moduleBindings.get(testFile.getModule()),actualText,shouldSkipJvmSignatureDiagnostics(groupedByModule));
+  }
+  Throwable exceptionFromDynamicCallDescriptorsValidation=null;
+  try {
+    File expectedFile=new File(FileUtil.getNameWithoutExtension(testDataFile.getAbsolutePath()) + ".dynamic.txt");
+    checkDynamicCallDescriptors(expectedFile,testFiles);
+  }
+ catch (  Throwable e) {
+    exceptionFromDynamicCallDescriptorsValidation=e;
+  }
+  KotlinTestUtils.assertEqualsToFile(testDataFile,actualText.toString());
+  assertTrue("Diagnostics mismatch. See the output above",ok);
+  if (exceptionFromDescriptorValidation != null) {
+    throw ExceptionUtilsKt.rethrow(exceptionFromDescriptorValidation);
+  }
+  if (exceptionFromLazyResolveLogValidation != null) {
+    throw ExceptionUtilsKt.rethrow(exceptionFromLazyResolveLogValidation);
+  }
+  if (exceptionFromDynamicCallDescriptorsValidation != null) {
+    throw ExceptionUtilsKt.rethrow(exceptionFromDynamicCallDescriptorsValidation);
+  }
+}

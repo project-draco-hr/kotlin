@@ -1,0 +1,18 @@
+{
+  ModuleDescriptorImpl emptyModule=KotlinTestUtils.createEmptyModule();
+  ContainerForTests container=InjectionKt.createContainerForTests(project,emptyModule);
+  emptyModule.setDependencies(emptyModule);
+  emptyModule.initialize(PackageFragmentProvider.Empty.INSTANCE$);
+  ExpressionTypingContext context=ExpressionTypingContext.newContext(new BindingTraceContext(),ScopeUtilsKt.memberScopeAsImportingScope(classDescriptor.getDefaultType().getMemberScope()),DataFlowInfo.EMPTY,TypeUtils.NO_EXPECTED_TYPE);
+  OverloadResolutionResults<FunctionDescriptor> functions=container.getFakeCallResolver().resolveFakeCall(context,ReceiverValue.NO_RECEIVER,Name.identifier(name),null,parameterTypes);
+  for (  ResolvedCall<? extends FunctionDescriptor> resolvedCall : functions.getResultingCalls()) {
+    List<ValueParameterDescriptor> unsubstitutedValueParameters=resolvedCall.getResultingDescriptor().getValueParameters();
+    for (int i=0, unsubstitutedValueParametersSize=unsubstitutedValueParameters.size(); i < unsubstitutedValueParametersSize; i++) {
+      ValueParameterDescriptor unsubstitutedValueParameter=unsubstitutedValueParameters.get(i);
+      if (unsubstitutedValueParameter.getType().equals(parameterTypes[i])) {
+        return resolvedCall.getResultingDescriptor();
+      }
+    }
+  }
+  throw new IllegalArgumentException("Not found: kotlin::" + classDescriptor.getName() + "."+ name+ "("+ Arrays.toString(parameterTypes)+ ")");
+}
