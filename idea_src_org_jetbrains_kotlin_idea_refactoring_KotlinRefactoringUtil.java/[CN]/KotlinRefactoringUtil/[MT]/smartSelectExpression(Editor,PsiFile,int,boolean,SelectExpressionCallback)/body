@@ -1,0 +1,51 @@
+{
+  List<KtExpression> expressions=getSmartSelectSuggestions(file,offset);
+  if (expressions.size() == 0) {
+    if (failOnEmptySuggestion)     throw new IntroduceRefactoringException(KotlinRefactoringBundle.message("cannot.refactor.not.expression"));
+    return;
+  }
+  if (expressions.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+    callback.run(expressions.get(0));
+    return;
+  }
+  final DefaultListModel model=new DefaultListModel();
+  for (  KtExpression expression : expressions) {
+    model.addElement(expression);
+  }
+  final ScopeHighlighter highlighter=new ScopeHighlighter(editor);
+  final JList list=new JBList(model);
+  list.setCellRenderer(new DefaultListCellRenderer(){
+    @Override public Component getListCellRendererComponent(    @NotNull JList list,    Object value,    int index,    boolean isSelected,    boolean cellHasFocus){
+      Component rendererComponent=super.getListCellRendererComponent(list,value,index,isSelected,cellHasFocus);
+      KtExpression element=(KtExpression)value;
+      if (element.isValid()) {
+        setText(getExpressionShortText(element));
+      }
+      return rendererComponent;
+    }
+  }
+);
+  list.addListSelectionListener(new ListSelectionListener(){
+    @Override public void valueChanged(    @NotNull ListSelectionEvent e){
+      highlighter.dropHighlight();
+      int selectedIndex=list.getSelectedIndex();
+      if (selectedIndex < 0)       return;
+      KtExpression expression=(KtExpression)model.get(selectedIndex);
+      List<PsiElement> toExtract=new ArrayList<PsiElement>();
+      toExtract.add(expression);
+      highlighter.highlight(expression,toExtract);
+    }
+  }
+);
+  JBPopupFactory.getInstance().createListPopupBuilder(list).setTitle(KotlinRefactoringBundle.message("expressions.title")).setMovable(false).setResizable(false).setRequestFocus(true).setItemChoosenCallback(new Runnable(){
+    @Override public void run(){
+      callback.run((KtExpression)list.getSelectedValue());
+    }
+  }
+).addListener(new JBPopupAdapter(){
+    @Override public void onClosed(    LightweightWindowEvent event){
+      highlighter.dropHighlight();
+    }
+  }
+).createPopup().showInBestPositionFor(editor);
+}
