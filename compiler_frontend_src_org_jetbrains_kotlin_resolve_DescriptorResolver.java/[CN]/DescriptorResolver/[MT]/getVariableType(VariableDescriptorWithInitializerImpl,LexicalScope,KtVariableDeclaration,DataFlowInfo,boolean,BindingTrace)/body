@@ -8,7 +8,7 @@
         if (property.hasDelegateExpression()) {
           return DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<KotlinType>(){
             @Override public KotlinType invoke(){
-              return resolveDelegatedPropertyType(property,(PropertyDescriptor)variableDescriptor,scope,property.getDelegateExpression(),dataFlowInfo,trace);
+              return resolveDelegatedPropertyType(property,(PropertyDescriptor)variableDescriptor,scopeForInitializer,property.getDelegateExpression(),dataFlowInfo,trace);
             }
           }
 );
@@ -24,23 +24,23 @@
         return DeferredType.createRecursionIntolerant(storageManager,trace,new Function0<KotlinType>(){
           @Override public KotlinType invoke(){
             PreliminaryDeclarationVisitor.Companion.createForDeclaration(variable,trace);
-            KotlinType initializerType=resolveInitializerType(scope,variable.getInitializer(),dataFlowInfo,trace);
-            setConstantForVariableIfNeeded(variableDescriptor,scope,variable,dataFlowInfo,initializerType,trace);
+            KotlinType initializerType=resolveInitializerType(scopeForInitializer,variable.getInitializer(),dataFlowInfo,trace);
+            setConstantForVariableIfNeeded(variableDescriptor,scopeForInitializer,variable,dataFlowInfo,initializerType,trace);
             return transformAnonymousTypeIfNeeded(variableDescriptor,variable,initializerType,trace);
           }
         }
 );
       }
  else {
-        KotlinType initializerType=resolveInitializerType(scope,variable.getInitializer(),dataFlowInfo,trace);
-        setConstantForVariableIfNeeded(variableDescriptor,scope,variable,dataFlowInfo,initializerType,trace);
+        KotlinType initializerType=resolveInitializerType(scopeForInitializer,variable.getInitializer(),dataFlowInfo,trace);
+        setConstantForVariableIfNeeded(variableDescriptor,scopeForInitializer,variable,dataFlowInfo,initializerType,trace);
         return initializerType;
       }
     }
   }
  else {
-    KotlinType type=typeResolver.resolveType(scope,propertyTypeRef,trace,true);
-    setConstantForVariableIfNeeded(variableDescriptor,scope,variable,dataFlowInfo,type,trace);
+    KotlinType type=typeResolver.resolveType(scopeForInitializer,propertyTypeRef,trace,true);
+    setConstantForVariableIfNeeded(variableDescriptor,scopeForInitializer,variable,dataFlowInfo,type,trace);
     return type;
   }
 }
