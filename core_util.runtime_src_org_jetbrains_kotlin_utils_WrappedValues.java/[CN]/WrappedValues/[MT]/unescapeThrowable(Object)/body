@@ -1,6 +1,10 @@
 {
   if (value instanceof ThrowableWrapper) {
-    throw ExceptionUtilsKt.rethrow(((ThrowableWrapper)value).getThrowable());
+    Throwable originThrowable=((ThrowableWrapper)value).getThrowable();
+    if (throwWrappedProcessCanceledException && originThrowable.getClass().getName().equals("com.intellij.openapi.progress.ProcessCanceledException")) {
+      throw new WrappedProcessCanceledException(originThrowable);
+    }
+    throw ExceptionUtilsKt.rethrow(originThrowable);
   }
   return (V)value;
 }
