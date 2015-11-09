@@ -1,0 +1,32 @@
+{
+  PsiBuilder.Marker userType=mark();
+  if (at(PACKAGE_KEYWORD)) {
+    advance();
+    expect(DOT,"Expecting '.'",TokenSet.create(IDENTIFIER,LBRACE,RBRACE));
+  }
+  PsiBuilder.Marker reference=mark();
+  while (true) {
+    recoverOnParenthesizedWordForPlatformTypes(0,"Mutable",true);
+    if (expect(IDENTIFIER,"Expecting type name",TokenSet.orSet(KotlinExpressionParsing.EXPRESSION_FIRST,KotlinExpressionParsing.EXPRESSION_FOLLOW,DECLARATION_FIRST))) {
+      reference.done(REFERENCE_EXPRESSION);
+    }
+ else {
+      reference.drop();
+      break;
+    }
+    parseTypeArgumentList();
+    recoverOnPlatformTypeSuffix();
+    if (!at(DOT)) {
+      break;
+    }
+    if (lookahead(1) == LPAR && !atParenthesizedMutableForPlatformTypes(1)) {
+      break;
+    }
+    PsiBuilder.Marker precede=userType.precede();
+    userType.done(USER_TYPE);
+    userType=precede;
+    advance();
+    reference=mark();
+  }
+  userType.done(USER_TYPE);
+}
