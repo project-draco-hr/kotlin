@@ -4,6 +4,9 @@
       if (expression != null) {
         recordCastOrError(expression,possibleType,c.trace,dataFlowValue,recordExpressionType);
       }
+ else       if (calleeExpression != null && dataFlowValue.isPredictable()) {
+        c.trace.record(IMPLICIT_RECEIVER_SMARTCAST,calleeExpression,possibleType);
+      }
       return new SmartCastResult(possibleType,dataFlowValue.isPredictable());
     }
   }
@@ -18,7 +21,7 @@
       }
       return new SmartCastResult(dataFlowValue.getType(),immanentlyNotNull || dataFlowValue.isPredictable());
     }
-    return checkAndRecordPossibleCast(dataFlowValue,nullableExpectedType,expression,c,recordExpressionType);
+    return checkAndRecordPossibleCast(dataFlowValue,nullableExpectedType,expression,c,calleeExpression,recordExpressionType);
   }
   return null;
 }
