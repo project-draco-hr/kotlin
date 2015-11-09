@@ -2,10 +2,15 @@
   AutoPopupController.getInstance(project).autoPopupMemberLookup(editor,new Condition<PsiFile>(){
     @Override public boolean value(    PsiFile file){
       int offset=editor.getCaretModel().getOffset();
-      PsiElement lastElement=file.findElementAt(offset - 1);
-      if (lastElement == null)       return false;
-      IElementType elementType=lastElement.getNode().getElementType();
-      return elementType == KtTokens.DOT || elementType == KtTokens.SAFE_ACCESS;
+      PsiElement lastToken=file.findElementAt(offset - 1);
+      if (lastToken == null)       return false;
+      IElementType elementType=lastToken.getNode().getElementType();
+      if (elementType == KtTokens.DOT || elementType == KtTokens.SAFE_ACCESS)       return true;
+      if (elementType == KtTokens.REGULAR_STRING_PART && lastToken.getTextRange().getStartOffset() == offset - 1) {
+        PsiElement prevSibling=lastToken.getParent().getPrevSibling();
+        return prevSibling != null && prevSibling instanceof KtSimpleNameStringTemplateEntry;
+      }
+      return false;
     }
   }
 );
