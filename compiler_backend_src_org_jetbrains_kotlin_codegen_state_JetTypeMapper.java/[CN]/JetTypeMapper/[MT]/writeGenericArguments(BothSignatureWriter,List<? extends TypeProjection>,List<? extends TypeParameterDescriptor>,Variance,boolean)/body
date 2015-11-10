@@ -1,0 +1,15 @@
+{
+  for (  Pair<? extends TypeParameterDescriptor,? extends TypeProjection> item : CollectionsKt.zip(parameters,arguments)) {
+    TypeParameterDescriptor parameter=item.getFirst();
+    TypeProjection argument=item.getSecond();
+    if (projectionsAllowed && argument.isStarProjection()) {
+      signatureVisitor.writeUnboundedWildcard();
+    }
+ else {
+      Variance projectionKind=projectionsAllowed ? getEffectiveVariance(parameter.getVariance(),argument.getProjectionKind(),howThisTypeIsUsed) : Variance.INVARIANT;
+      signatureVisitor.writeTypeArgument(projectionKind);
+      mapType(argument.getType(),signatureVisitor,JetTypeMapperMode.TYPE_PARAMETER);
+      signatureVisitor.writeTypeArgumentEnd();
+    }
+  }
+}

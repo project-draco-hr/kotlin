@@ -1,24 +1,2 @@
 {
-  if (signatureVisitor != null) {
-    if (hasNothingInArguments(jetType)) {
-      signatureVisitor.writeAsmType(asmType);
-      return;
-    }
-    signatureVisitor.writeClassBegin(asmType);
-    List<TypeProjection> arguments=jetType.getArguments();
-    for (    TypeParameterDescriptor parameter : jetType.getConstructor().getParameters()) {
-      if (parameter.isCopyFromOuterDeclaration())       continue;
-      TypeProjection argument=arguments.get(parameter.getIndex());
-      if (projectionsAllowed && argument.isStarProjection()) {
-        signatureVisitor.writeUnboundedWildcard();
-      }
- else {
-        Variance projectionKind=projectionsAllowed ? getEffectiveVariance(parameter.getVariance(),argument.getProjectionKind(),howThisTypeIsUsed) : Variance.INVARIANT;
-        signatureVisitor.writeTypeArgument(projectionKind);
-        mapType(argument.getType(),signatureVisitor,JetTypeMapperMode.TYPE_PARAMETER);
-        signatureVisitor.writeTypeArgumentEnd();
-      }
-    }
-    signatureVisitor.writeClassEnd();
-  }
 }
