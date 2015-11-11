@@ -1,0 +1,43 @@
+{
+  CallableMemberDescriptor unwrappedDescriptor=DescriptorUtils.unwrapFakeOverride(descriptor);
+  DeclarationDescriptor enclosed=descriptor.getContainingDeclaration();
+  CodegenContext descriptorContext=findParentContextWithDescriptor(enclosed);
+  if (descriptorContext == null && DescriptorUtils.isCompanionObject(enclosed)) {
+    CodegenContext classContext=findParentContextWithDescriptor(enclosed.getContainingDeclaration());
+    if (classContext instanceof ClassContext) {
+      descriptorContext=((ClassContext)classContext).getCompanionObjectContext();
+    }
+  }
+  if (descriptorContext == null && JavaVisibilities.PROTECTED_STATIC_VISIBILITY == descriptor.getVisibility() && !(descriptor instanceof SamConstructorDescriptor)) {
+    descriptorContext=ExpressionCodegen.getParentContextSubclassOf((ClassDescriptor)enclosed,this);
+    superCallTarget=(ClassDescriptor)enclosed;
+  }
+  if (descriptorContext == null && withinInliningContext && superCallTarget != null) {
+    descriptorContext=ExpressionCodegen.getParentContextSubclassOf((ClassDescriptor)enclosed,this);
+  }
+  if (descriptorContext == null) {
+    return descriptor;
+  }
+  boolean isSuperCallInsideInline=withinInliningContext && superCallTarget != null;
+  if (descriptor instanceof PropertyDescriptor) {
+    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
+    int propertyAccessFlag=getVisibilityAccessFlag(descriptor);
+    PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
+    int getterAccessFlag=getter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(getter);
+    boolean getterAccessorRequired=isAccessorRequired(getterAccessFlag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline);
+    PropertySetterDescriptor setter=propertyDescriptor.getSetter();
+    int setterAccessFlag=setter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(setter);
+    boolean setterAccessorRequired=isAccessorRequired(setterAccessFlag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline);
+    if (!getterAccessorRequired && !setterAccessorRequired) {
+      return descriptor;
+    }
+    return (D)descriptorContext.getPropertyAccessor(propertyDescriptor,superCallTarget,getterAccessorRequired,setterAccessorRequired);
+  }
+ else {
+    int flag=getVisibilityAccessFlag(unwrappedDescriptor);
+    if (!isAccessorRequired(flag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline)) {
+      return descriptor;
+    }
+    return (D)descriptorContext.getAccessor(descriptor,superCallTarget);
+  }
+}
