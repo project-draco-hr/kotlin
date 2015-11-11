@@ -18,16 +18,15 @@
   if (descriptorContext == null) {
     return descriptor;
   }
-  boolean isSuperCallInsideInline=withinInliningContext && superCallTarget != null;
   if (descriptor instanceof PropertyDescriptor) {
     PropertyDescriptor propertyDescriptor=(PropertyDescriptor)descriptor;
     int propertyAccessFlag=getVisibilityAccessFlag(descriptor);
     PropertyGetterDescriptor getter=propertyDescriptor.getGetter();
     int getterAccessFlag=getter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(getter);
-    boolean getterAccessorRequired=isAccessorRequired(getterAccessFlag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline);
+    boolean getterAccessorRequired=isAccessorRequired(getterAccessFlag,unwrappedDescriptor,descriptorContext,withinInliningContext,superCallTarget != null);
     PropertySetterDescriptor setter=propertyDescriptor.getSetter();
     int setterAccessFlag=setter == null ? propertyAccessFlag : propertyAccessFlag | getVisibilityAccessFlag(setter);
-    boolean setterAccessorRequired=isAccessorRequired(setterAccessFlag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline);
+    boolean setterAccessorRequired=isAccessorRequired(setterAccessFlag,unwrappedDescriptor,descriptorContext,withinInliningContext,superCallTarget != null);
     if (!getterAccessorRequired && !setterAccessorRequired) {
       return descriptor;
     }
@@ -35,7 +34,7 @@
   }
  else {
     int flag=getVisibilityAccessFlag(unwrappedDescriptor);
-    if (!isAccessorRequired(flag,unwrappedDescriptor,descriptorContext,isSuperCallInsideInline)) {
+    if (!isAccessorRequired(flag,unwrappedDescriptor,descriptorContext,withinInliningContext,superCallTarget != null)) {
       return descriptor;
     }
     return (D)descriptorContext.getAccessor(descriptor,superCallTarget);
