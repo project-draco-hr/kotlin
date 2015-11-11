@@ -1,7 +1,7 @@
 {
   TypeVariable firstConflictingVariable=getFirstConflictingVariable(constraintSystem);
   if (firstConflictingVariable == null)   return Collections.emptyList();
-  TypeParameterDescriptor firstConflictingParameter=constraintSystem.variableToDescriptor(firstConflictingVariable);
+  TypeParameterDescriptor firstConflictingParameter=firstConflictingVariable.getOriginalTypeParameter();
   Collection<KotlinType> conflictingTypes=constraintSystem.getTypeBounds(firstConflictingVariable).getValues();
   List<Map<TypeConstructor,TypeProjection>> substitutionContexts=Lists.newArrayList();
   for (  KotlinType type : conflictingTypes) {
@@ -14,7 +14,7 @@
     KotlinType safeType=getSafeValue(constraintSystem,typeVariable);
     for (    Map<TypeConstructor,TypeProjection> context : substitutionContexts) {
       TypeProjection typeProjection=new TypeProjectionImpl(safeType);
-      context.put(constraintSystem.variableToDescriptor(typeVariable).getTypeConstructor(),typeProjection);
+      context.put(typeVariable.getOriginalTypeParameter().getTypeConstructor(),typeProjection);
     }
   }
   Collection<TypeSubstitutor> typeSubstitutors=new ArrayList<TypeSubstitutor>(substitutionContexts.size());
