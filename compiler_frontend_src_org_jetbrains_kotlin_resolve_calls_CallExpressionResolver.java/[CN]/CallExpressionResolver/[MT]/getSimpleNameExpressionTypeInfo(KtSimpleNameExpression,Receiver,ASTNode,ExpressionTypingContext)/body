@@ -24,6 +24,14 @@
     type=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
     return TypeInfoFactoryKt.createTypeInfo(type,context);
   }
+  TemporaryTraceAndCache temporaryForQualifier=TemporaryTraceAndCache.create(context,"trace to resolve as qualifier",nameExpression);
+  ExpressionTypingContext contextForQualifier=context.replaceTraceAndCache(temporaryForQualifier);
+  Qualifier qualifier=qualifiedExpressionResolver.resolveNameExpressionAsQualifierForDiagnostics(nameExpression,receiver,contextForQualifier);
+  if (qualifier != null) {
+    QualifiedExpressionResolveUtilKt.resolveQualifierAsStandaloneExpression(qualifier,contextForQualifier,symbolUsageValidator);
+    temporaryForQualifier.commit();
+    return TypeInfoFactoryKt.createTypeInfo(null,context);
+  }
   temporaryForVariable.commit();
   return TypeInfoFactoryKt.noTypeInfo(context);
 }
