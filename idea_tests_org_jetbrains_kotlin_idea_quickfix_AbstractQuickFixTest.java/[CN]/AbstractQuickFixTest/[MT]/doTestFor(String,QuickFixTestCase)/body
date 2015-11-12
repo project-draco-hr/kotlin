@@ -5,13 +5,16 @@
   CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(),new Runnable(){
     @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod","CallToPrintStackTrace"}) @Override public void run(){
       String fileText="";
+      String expectedErrorMessage="";
       try {
         fileText=FileUtil.loadFile(testFile,CharsetToolkit.UTF8_CHARSET);
+        expectedErrorMessage=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// SHOULD_FAIL_WITH: ");
         String contents=StringUtil.convertLineSeparators(fileText);
         quickFixTestCase.configureFromFileText(testFile.getName(),contents);
         quickFixTestCase.bringRealEditorBack();
         checkForUnexpectedActions();
         applyAction(contents,quickFixTestCase,testName,testFullPath);
+        assertEmpty(expectedErrorMessage);
       }
  catch (      FileComparisonFailure e) {
         throw e;
@@ -20,8 +23,10 @@ catch (      AssertionError e) {
         throw e;
       }
 catch (      Throwable e) {
-        e.printStackTrace();
-        fail(testName);
+        if (!e.getMessage().equals(expectedErrorMessage)) {
+          e.printStackTrace();
+          fail(testName);
+        }
       }
  finally {
         ConfigLibraryUtil.unconfigureLibrariesByDirective(getModule(),fileText);
