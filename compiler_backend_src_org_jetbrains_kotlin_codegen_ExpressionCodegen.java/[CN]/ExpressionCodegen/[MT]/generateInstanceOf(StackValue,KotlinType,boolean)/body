@@ -5,21 +5,13 @@
       if (leaveExpressionOnStack) {
         v.dup();
       }
-      if (jetType.isMarkedNullable()) {
-        Label nope=new Label();
-        Label end=new Label();
-        v.dup();
-        v.ifnull(nope);
-        generateInstanceOfInstruction(jetType);
-        v.goTo(end);
-        v.mark(nope);
-        v.pop();
-        v.iconst(1);
-        v.mark(end);
+      CodegenUtilKt.generateIsCheck(v,kotlinType,new Function1<InstructionAdapter,Unit>(){
+        @Override public Unit invoke(        InstructionAdapter adapter){
+          generateInstanceOfInstruction(kotlinType);
+          return Unit.INSTANCE;
+        }
       }
- else {
-        generateInstanceOfInstruction(jetType);
-      }
+);
       return null;
     }
   }
