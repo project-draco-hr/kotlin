@@ -1,0 +1,42 @@
+{
+  this.project=project;
+  this.modules=ConfigureKotlinInProjectUtilsKt.getNonConfiguredModules(project,configurator);
+  this.modulesWithKtFiles=ConfigureKotlinInProjectUtilsKt.getNonConfiguredModulesWithKotlinFiles(project,configurator);
+  DefaultComboBoxModel comboBoxModel=new DefaultComboBoxModel();
+  for (  Module module : modules) {
+    comboBoxModel.addElement(module.getName());
+  }
+  if (modulesWithKtFiles.isEmpty()) {
+    allModulesWithKtRadioButton.setVisible(false);
+    allModulesWithKtNames.setVisible(false);
+  }
+  singleModuleComboBox.setModel(comboBoxModel);
+  ActionListener listener=new ActionListener(){
+    @Override public void actionPerformed(    ActionEvent e){
+      updateComponents();
+    }
+  }
+;
+  singleModuleRadioButton.addActionListener(listener);
+  allModulesWithKtRadioButton.addActionListener(listener);
+  allModulesRadioButton.addActionListener(listener);
+  String fullList=StringUtil.join(modules,new Function<Module,String>(){
+    @Override public String fun(    Module module){
+      return module.getName();
+    }
+  }
+,", ");
+  allModulesWithKtNames.setText(fullList);
+  allModulesWithKtNames.setBorder(null);
+  ButtonGroup modulesGroup=new ButtonGroup();
+  modulesGroup.add(allModulesRadioButton);
+  modulesGroup.add(allModulesWithKtRadioButton);
+  modulesGroup.add(singleModuleRadioButton);
+  if (allModulesWithKtRadioButton.isVisible()) {
+    allModulesWithKtRadioButton.setSelected(true);
+  }
+ else {
+    allModulesRadioButton.setSelected(true);
+  }
+  updateComponents();
+}
