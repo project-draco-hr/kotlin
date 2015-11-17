@@ -8,16 +8,13 @@
     }
     if (cur instanceof ScriptContext) {
       ScriptContext scriptContext=(ScriptContext)cur;
-      ScriptDescriptor receiverDeclarationDescriptor=receiver.getDeclarationDescriptor();
-      if (scriptContext.getScriptDescriptor() == receiverDeclarationDescriptor) {
+      if (scriptContext.getScriptDescriptor() == receiver) {
         return result;
       }
- else {
-        Type currentScriptType=asmTypeForScriptDescriptor(bindingContext,scriptContext.getScriptDescriptor());
-        Type classType=asmTypeForScriptDescriptor(bindingContext,receiverDeclarationDescriptor);
-        String fieldName=scriptContext.getScriptFieldName(receiverDeclarationDescriptor);
-        return StackValue.field(classType,currentScriptType,fieldName,false,result,receiverDeclarationDescriptor);
-      }
+      Type currentScriptType=typeMapper.mapType(scriptContext.getScriptDescriptor());
+      Type classType=typeMapper.mapType(receiver);
+      String fieldName=scriptContext.getScriptFieldName(receiver);
+      return StackValue.field(classType,currentScriptType,fieldName,false,result,receiver);
     }
     result=cur.getOuterExpression(result,false);
     if (inStartConstructorContext) {

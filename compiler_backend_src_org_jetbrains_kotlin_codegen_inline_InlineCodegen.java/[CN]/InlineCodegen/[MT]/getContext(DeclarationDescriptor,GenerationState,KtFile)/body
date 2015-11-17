@@ -1,2 +1,18 @@
 {
+  if (descriptor instanceof PackageFragmentDescriptor) {
+    return new PackageContext((PackageFragmentDescriptor)descriptor,state.getRootContext(),null,sourceFile);
+  }
+  CodegenContext parent=getContext(descriptor.getContainingDeclaration(),state,sourceFile);
+  if (descriptor instanceof ScriptDescriptor) {
+    List<ScriptDescriptor> earlierScripts=state.getEarlierScriptsForReplInterpreter();
+    return parent.intoScript((ScriptDescriptor)descriptor,earlierScripts == null ? Collections.emptyList() : earlierScripts,(ClassDescriptor)descriptor,state.getTypeMapper());
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    OwnerKind kind=DescriptorUtils.isInterface(descriptor) ? OwnerKind.DEFAULT_IMPLS : OwnerKind.IMPLEMENTATION;
+    return parent.intoClass((ClassDescriptor)descriptor,kind,state);
+  }
+ else   if (descriptor instanceof FunctionDescriptor) {
+    return parent.intoFunction((FunctionDescriptor)descriptor);
+  }
+  throw new IllegalStateException("Couldn't build context for " + descriptorName(descriptor));
 }
