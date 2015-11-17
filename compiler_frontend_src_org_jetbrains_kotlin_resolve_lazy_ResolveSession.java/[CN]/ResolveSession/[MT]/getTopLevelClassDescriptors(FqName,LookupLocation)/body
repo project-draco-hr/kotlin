@@ -4,12 +4,15 @@
   if (provider == null)   return Collections.emptyList();
   return ContainerUtil.mapNotNull(provider.getClassOrObjectDeclarations(fqName.shortName()),new Function<JetClassLikeInfo,ClassDescriptor>(){
     @Override public ClassDescriptor fun(    JetClassLikeInfo classLikeInfo){
-      if (classLikeInfo instanceof JetScriptInfo) {
-        return getClassDescriptorForScript(((JetScriptInfo)classLikeInfo).getScript());
+      if (classLikeInfo instanceof JetClassOrObjectInfo) {
+        return getClassDescriptor(((JetClassOrObjectInfo)classLikeInfo).getCorrespondingClassOrObject(),location);
       }
-      KtClassOrObject classOrObject=classLikeInfo.getCorrespondingClassOrObject();
-      if (classOrObject == null)       return null;
-      return getClassDescriptor(classOrObject,location);
+ else       if (classLikeInfo instanceof JetScriptInfo) {
+        return getScriptDescriptor(((JetScriptInfo)classLikeInfo).getScript());
+      }
+ else {
+        throw new IllegalStateException("Unexpected " + classLikeInfo + " of type "+ classLikeInfo.getClass().getName());
+      }
     }
   }
 );
