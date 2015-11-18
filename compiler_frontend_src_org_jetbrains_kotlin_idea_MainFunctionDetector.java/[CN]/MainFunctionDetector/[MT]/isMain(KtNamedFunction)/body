@@ -11,25 +11,5 @@
   if (!function.isTopLevel() && !hasAnnotationWithExactNumberOfArguments(function,0)) {
     return false;
   }
-  FunctionDescriptor functionDescriptor=getFunctionDescriptor.fun(function);
-  if (!getJVMFunctionName(functionDescriptor).equals("main")) {
-    return false;
-  }
-  List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
-  if (parameters.size() != 1)   return false;
-  ValueParameterDescriptor parameter=parameters.get(0);
-  KotlinType parameterType=parameter.getType();
-  if (!KotlinBuiltIns.isArray(parameterType))   return false;
-  List<TypeProjection> typeArguments=parameterType.getArguments();
-  if (typeArguments.size() != 1)   return false;
-  KotlinType typeArgument=typeArguments.get(0).getType();
-  if (!KotlinBuiltIns.isString(typeArgument)) {
-    return false;
-  }
-  if (typeArguments.get(0).getProjectionKind() == Variance.IN_VARIANCE) {
-    return false;
-  }
-  if (DescriptorUtils.isTopLevelDeclaration(functionDescriptor))   return true;
-  DeclarationDescriptor containingDeclaration=functionDescriptor.getContainingDeclaration();
-  return containingDeclaration instanceof ClassDescriptor && ((ClassDescriptor)containingDeclaration).getKind().isSingleton() && AnnotationUtilKt.hasJvmStaticAnnotation(functionDescriptor);
+  return isMain(getFunctionDescriptor.fun(function));
 }
