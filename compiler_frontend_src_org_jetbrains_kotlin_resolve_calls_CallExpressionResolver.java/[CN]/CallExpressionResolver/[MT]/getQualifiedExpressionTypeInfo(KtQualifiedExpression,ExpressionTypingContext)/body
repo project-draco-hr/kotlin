@@ -44,7 +44,12 @@
     Receiver receiver=qualifierReceiver == null ? ExpressionReceiver.Companion.create(element.getReceiver(),receiverType,trace.getBindingContext()) : qualifierReceiver;
     boolean lastStage=element.getQualified() == expression;
     ExpressionTypingContext baseContext=lastStage ? context : currentContext;
-    contextForSelector=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
+    if (TypeUtils.isNullableType(receiverType) && !element.getSafe()) {
+      contextForSelector=baseContext.replaceDataFlowInfo(unconditionalDataFlowInfo);
+    }
+ else {
+      contextForSelector=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
+    }
     if (receiver.exists() && receiver instanceof ReceiverValue) {
       DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue((ReceiverValue)receiver,context);
       if (element.getSafe()) {
