@@ -1,9 +1,8 @@
 {
   Type builtinType=mapBuiltinType(jetType);
-  boolean projectionsAllowed=kind != TypeMappingMode.SUPER_TYPE;
   if (builtinType != null) {
-    Type asmType=kind.getNeedPrimitiveBoxing() ? boxType(builtinType) : builtinType;
-    writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,projectionsAllowed);
+    Type asmType=mode.getNeedPrimitiveBoxing() ? boxType(builtinType) : builtinType;
+    writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,mode);
     return asmType;
   }
   TypeConstructor constructor=jetType.getConstructor();
@@ -40,10 +39,10 @@
       }
     }
  else {
-      arrayElementType=boxType(mapType(memberType,kind));
+      arrayElementType=boxType(mapType(memberType,mode));
       if (signatureVisitor != null) {
         signatureVisitor.writeArrayType();
-        TypeMappingMode newMode=kind.isForAnnotationParameter() ? TypeMappingMode.TYPE_PARAMETER_FOR_ANNOTATION : TypeMappingMode.TYPE_PARAMETER;
+        TypeMappingMode newMode=mode.isForAnnotationParameter() ? TypeMappingMode.TYPE_PARAMETER_FOR_ANNOTATION : TypeMappingMode.TYPE_PARAMETER;
         mapType(memberType,signatureVisitor,newMode,memberProjection.getProjectionKind());
         signatureVisitor.writeArrayEnd();
       }
@@ -51,12 +50,12 @@
     return Type.getType("[" + arrayElementType.getDescriptor());
   }
   if (descriptor instanceof ClassDescriptor) {
-    Type asmType=kind.isForAnnotationParameter() && KotlinBuiltIns.isKClass((ClassDescriptor)descriptor) ? AsmTypes.JAVA_CLASS_TYPE : computeAsmType((ClassDescriptor)descriptor.getOriginal());
-    writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,projectionsAllowed);
+    Type asmType=mode.isForAnnotationParameter() && KotlinBuiltIns.isKClass((ClassDescriptor)descriptor) ? AsmTypes.JAVA_CLASS_TYPE : computeAsmType((ClassDescriptor)descriptor.getOriginal());
+    writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,mode);
     return asmType;
   }
   if (descriptor instanceof TypeParameterDescriptor) {
-    Type type=mapType(getRepresentativeUpperBound((TypeParameterDescriptor)descriptor),kind);
+    Type type=mapType(getRepresentativeUpperBound((TypeParameterDescriptor)descriptor),mode);
     if (signatureVisitor != null) {
       signatureVisitor.writeTypeVariable(descriptor.getName(),type);
     }
