@@ -1,9 +1,15 @@
 {
   return callResolvePerfCounter.time(new Function0<OverloadResolutionResults<FunctionDescriptor>>(){
     @Override public OverloadResolutionResults<FunctionDescriptor> invoke(){
-      BasicCallResolutionContext basicCallResolutionContext=BasicCallResolutionContext.create(context,call,CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,dataFlowInfoForArguments);
-      List<ResolutionTask<CallableDescriptor,FunctionDescriptor>> tasks=taskPrioritizer.<CallableDescriptor,FunctionDescriptor>computePrioritizedTasksFromCandidates(basicCallResolutionContext,Collections.singleton(candidate),tracing);
-      return doResolveCallOrGetCachedResults(basicCallResolutionContext,tasks,CallTransformer.FUNCTION_CALL_TRANSFORMER,tracing);
+      final BasicCallResolutionContext basicCallResolutionContext=BasicCallResolutionContext.create(context,call,CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,dataFlowInfoForArguments);
+      final Set<ResolutionCandidate<CallableDescriptor>> candidates=Collections.singleton(candidate);
+      TaskContextForMigration<CallableDescriptor,FunctionDescriptor> contextForMigration=new TaskContextForMigration<CallableDescriptor,FunctionDescriptor>(ResolveKind.GIVEN_CANDIDATES,CallTransformer.FUNCTION_CALL_TRANSFORMER,null,candidates,new Function0<List<ResolutionTask<CallableDescriptor,FunctionDescriptor>>>(){
+        @Override public List<ResolutionTask<CallableDescriptor,FunctionDescriptor>> invoke(){
+          return taskPrioritizer.<CallableDescriptor,FunctionDescriptor>computePrioritizedTasksFromCandidates(basicCallResolutionContext,candidates,tracing);
+        }
+      }
+);
+      return doResolveCallOrGetCachedResults(basicCallResolutionContext,contextForMigration,tracing);
     }
   }
 );

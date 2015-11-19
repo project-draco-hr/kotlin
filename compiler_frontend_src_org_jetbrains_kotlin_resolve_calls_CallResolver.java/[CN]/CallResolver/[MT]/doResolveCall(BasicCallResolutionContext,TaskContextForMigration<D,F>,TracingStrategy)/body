@@ -1,0 +1,17 @@
+{
+  if (context.checkArguments == CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS) {
+    argumentTypeResolver.analyzeArgumentsAndRecordTypes(context);
+  }
+  List<KtTypeProjection> typeArguments=context.call.getTypeArguments();
+  for (  KtTypeProjection projection : typeArguments) {
+    if (projection.getProjectionKind() != KtProjectionKind.NONE) {
+      context.trace.report(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.on(projection));
+      ModifierCheckerCore.INSTANCE.check(projection,context.trace,null);
+    }
+    KotlinType type=argumentTypeResolver.resolveTypeRefWithDefault(projection.getTypeReference(),context.scope,context.trace,null);
+    if (type != null) {
+      ForceResolveUtil.forceResolveAllContents(type);
+    }
+  }
+  return doResolveCall(context,contextForMigration.lazyTasks.invoke(),contextForMigration.callTransformer,tracing);
+}
