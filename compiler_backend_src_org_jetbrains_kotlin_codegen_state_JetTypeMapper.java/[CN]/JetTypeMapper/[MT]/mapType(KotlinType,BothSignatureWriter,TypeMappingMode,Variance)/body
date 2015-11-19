@@ -1,8 +1,8 @@
 {
   Type builtinType=mapBuiltinType(jetType);
-  boolean projectionsAllowed=kind != JetTypeMapperMode.SUPER_TYPE;
+  boolean projectionsAllowed=kind != TypeMappingMode.SUPER_TYPE;
   if (builtinType != null) {
-    Type asmType=kind.needPrimitiveBoxing() ? boxType(builtinType) : builtinType;
+    Type asmType=kind.getNeedPrimitiveBoxing() ? boxType(builtinType) : builtinType;
     writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,projectionsAllowed);
     return asmType;
   }
@@ -43,7 +43,7 @@
       arrayElementType=boxType(mapType(memberType,kind));
       if (signatureVisitor != null) {
         signatureVisitor.writeArrayType();
-        JetTypeMapperMode newMode=kind.isForAnnotation() ? JetTypeMapperMode.TYPE_PARAMETER_FOR_ANNOTATION : JetTypeMapperMode.TYPE_PARAMETER;
+        TypeMappingMode newMode=kind.isForAnnotationParameter() ? TypeMappingMode.TYPE_PARAMETER_FOR_ANNOTATION : TypeMappingMode.TYPE_PARAMETER;
         mapType(memberType,signatureVisitor,newMode,memberProjection.getProjectionKind());
         signatureVisitor.writeArrayEnd();
       }
@@ -51,7 +51,7 @@
     return Type.getType("[" + arrayElementType.getDescriptor());
   }
   if (descriptor instanceof ClassDescriptor) {
-    Type asmType=kind.isForAnnotation() && KotlinBuiltIns.isKClass((ClassDescriptor)descriptor) ? AsmTypes.JAVA_CLASS_TYPE : computeAsmType((ClassDescriptor)descriptor.getOriginal());
+    Type asmType=kind.isForAnnotationParameter() && KotlinBuiltIns.isKClass((ClassDescriptor)descriptor) ? AsmTypes.JAVA_CLASS_TYPE : computeAsmType((ClassDescriptor)descriptor.getOriginal());
     writeGenericType(jetType,asmType,signatureVisitor,howThisTypeIsUsed,projectionsAllowed);
     return asmType;
   }
