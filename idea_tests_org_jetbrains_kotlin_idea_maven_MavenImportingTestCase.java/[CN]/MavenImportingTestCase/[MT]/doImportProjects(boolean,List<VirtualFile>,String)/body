@@ -1,0 +1,18 @@
+{
+  MavenServerManager.getInstance().setUseMaven2(useMaven2);
+  initProjectsManager(false);
+  readProjects(files,profiles);
+  UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+    @Override public void run(){
+      myProjectsManager.waitForResolvingCompletion();
+      myProjectsManager.scheduleImportInTests(files);
+      myProjectsManager.importProjects();
+    }
+  }
+);
+  for (  MavenProject each : myProjectsTree.getProjects()) {
+    if (each.hasReadingProblems()) {
+      System.out.println(each + " has problems: " + each.getProblems());
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  super.setUp();
+  ensureTempDirCreated();
+  myDir=new File(ourTempDir,getTestName(false));
+  FileUtil.ensureExists(myDir);
+  setUpFixtures();
+  myProject=myTestFixture.getProject();
+  MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
+  String home=getTestMavenHome();
+  if (home != null) {
+    getMavenGeneralSettings().setMavenHome(home);
+  }
+  UIUtil.invokeAndWaitIfNeeded(new Runnable(){
+    @Override public void run(){
+      try {
+        restoreSettingsFile();
+      }
+ catch (      IOException e) {
+        throw new RuntimeException(e);
+      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          try {
+            setUpInWriteAction();
+          }
+ catch (          Throwable e) {
+            try {
+              tearDown();
+            }
+ catch (            Exception e1) {
+              e1.printStackTrace();
+            }
+            throw new RuntimeException(e);
+          }
+        }
+      }
+);
+    }
+  }
+);
+}
