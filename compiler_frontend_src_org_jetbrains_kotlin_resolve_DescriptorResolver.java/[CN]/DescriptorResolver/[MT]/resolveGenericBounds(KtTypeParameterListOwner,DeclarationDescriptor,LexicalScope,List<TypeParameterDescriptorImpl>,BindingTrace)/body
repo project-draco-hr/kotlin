@@ -3,14 +3,14 @@
   List<KtTypeParameter> typeParameters=declaration.getTypeParameters();
   Map<Name,TypeParameterDescriptorImpl> parameterByName=Maps.newHashMap();
   for (int i=0; i < typeParameters.size(); i++) {
-    KtTypeParameter jetTypeParameter=typeParameters.get(i);
+    KtTypeParameter ktTypeParameter=typeParameters.get(i);
     TypeParameterDescriptorImpl typeParameterDescriptor=parameters.get(i);
     parameterByName.put(typeParameterDescriptor.getName(),typeParameterDescriptor);
-    KtTypeReference extendsBound=jetTypeParameter.getExtendsBound();
+    KtTypeReference extendsBound=ktTypeParameter.getExtendsBound();
     if (extendsBound != null) {
       KotlinType type=typeResolver.resolveType(scope,extendsBound,trace,false);
       typeParameterDescriptor.addUpperBound(type);
-      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(extendsBound,type));
+      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(ktTypeParameter.getNameAsName(),extendsBound,type));
     }
   }
   for (  KtTypeConstraint constraint : declaration.getTypeConstraints()) {
@@ -24,7 +24,7 @@
     KotlinType bound=null;
     if (boundTypeReference != null) {
       bound=typeResolver.resolveType(scope,boundTypeReference,trace,false);
-      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(boundTypeReference,bound));
+      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(referencedName,boundTypeReference,bound));
     }
     if (typeParameterDescriptor != null) {
       trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
@@ -41,9 +41,7 @@
     checkConflictingUpperBounds(trace,parameter,typeParameters.get(parameter.getIndex()));
   }
   if (!(declaration instanceof KtClass)) {
-    for (    UpperBoundCheckerTask checkerTask : deferredUpperBoundCheckerTasks) {
-      checkUpperBoundType(checkerTask.upperBound,checkerTask.upperBoundType,trace);
-    }
+    checkUpperBoundTypes(trace,deferredUpperBoundCheckerTasks);
     checkNamesInConstraints(declaration,descriptor,scope,trace);
   }
 }
