@@ -1,0 +1,25 @@
+{
+  Variance projectionKind=projection.getProjectionKind();
+  if (mode.getSkipDeclarationSiteWildcards() && projectionKind == Variance.INVARIANT) {
+    return Variance.INVARIANT;
+  }
+  Variance parameterVariance=parameter.getVariance();
+  if (parameterVariance == Variance.INVARIANT) {
+    return projectionKind;
+  }
+  if (projectionKind == Variance.INVARIANT) {
+    if (mode.getSkipDeclarationSiteWildcardsIfPossible() && !projection.isStarProjection()) {
+      if (parameterVariance == Variance.OUT_VARIANCE && TypeMappingUtil.isMostPreciseCovariantArgument(projection.getType())) {
+        return Variance.INVARIANT;
+      }
+      if (parameterVariance == Variance.IN_VARIANCE && TypeMappingUtil.isMostPreciseContravariantArgument(projection.getType(),parameter)) {
+        return Variance.INVARIANT;
+      }
+    }
+    return parameterVariance;
+  }
+  if (parameterVariance == projectionKind) {
+    return parameterVariance;
+  }
+  return Variance.OUT_VARIANCE;
+}
