@@ -1,13 +1,11 @@
 {
   Class<?> scriptClass=compileScript(configuration,paths,environment);
   if (scriptClass == null)   return;
+  Constructor<?> scriptConstructor=getScriptConstructor(scriptClass);
   try {
-    scriptClass.getConstructor(String[].class).newInstance(new Object[]{ArrayUtil.toStringArray(scriptArgs)});
+    scriptConstructor.newInstance(new Object[]{ArrayUtil.toStringArray(scriptArgs)});
   }
- catch (  RuntimeException e) {
-    throw e;
-  }
-catch (  Exception e) {
-    throw new RuntimeException("Failed to evaluate script: " + e,e);
+ catch (  Throwable e) {
+    reportExceptionFromScript(e);
   }
 }
