@@ -1,0 +1,14 @@
+{
+  if (type != null && !type.isError() && !isLValue(expression)) {
+    DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(expression,type,context);
+    Nullability nullability=context.dataFlowInfo.getPredictableNullability(dataFlowValue);
+    if (!nullability.canBeNonNull() && nullability.canBeNull()) {
+      if (isDangerousWithNull(expression,context)) {
+        context.trace.report(ALWAYS_NULL.on(expression));
+      }
+ else {
+        context.trace.record(SMARTCAST_NULL,expression);
+      }
+    }
+  }
+}

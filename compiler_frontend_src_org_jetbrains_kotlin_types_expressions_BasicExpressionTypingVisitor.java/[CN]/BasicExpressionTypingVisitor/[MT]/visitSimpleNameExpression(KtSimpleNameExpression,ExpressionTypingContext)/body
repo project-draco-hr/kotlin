@@ -1,12 +1,6 @@
 {
   CallExpressionResolver callExpressionResolver=components.callExpressionResolver;
   KotlinTypeInfo typeInfo=callExpressionResolver.getSimpleNameExpressionTypeInfo(expression,NO_RECEIVER,null,context);
-  if (typeInfo.getType() != null && !typeInfo.getType().isError() && !isLValue(expression)) {
-    DataFlowValue dataFlowValue=DataFlowValueFactory.createDataFlowValue(expression,typeInfo.getType(),context);
-    Nullability nullability=context.dataFlowInfo.getPredictableNullability(dataFlowValue);
-    if (!nullability.canBeNonNull() && nullability.canBeNull()) {
-      context.trace.report(ALWAYS_NULL.on(expression));
-    }
-  }
+  checkNull(expression,context,typeInfo.getType());
   return components.dataFlowAnalyzer.checkType(typeInfo,expression,context);
 }
