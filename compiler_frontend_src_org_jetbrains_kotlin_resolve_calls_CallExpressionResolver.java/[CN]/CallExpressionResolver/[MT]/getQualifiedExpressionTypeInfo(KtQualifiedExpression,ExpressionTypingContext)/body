@@ -43,6 +43,16 @@
     boolean lastStage=element.getQualified() == expression;
     ExpressionTypingContext baseContext=lastStage ? context : currentContext;
     currentContext=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
+    if (receiver.exists() && receiver instanceof ReceiverValue) {
+      DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue((ReceiverValue)receiver,context);
+      if (element.getSafe()) {
+        DataFlowInfo dataFlowInfo=currentContext.dataFlowInfo;
+        if (!dataFlowInfo.getNullability(receiverDataFlowValue).canBeNull()) {
+          reportUnnecessarySafeCall(context.trace,receiverType,element.getNode(),receiver);
+        }
+        currentContext=currentContext.replaceDataFlowInfo(dataFlowInfo.disequate(receiverDataFlowValue,DataFlowValue.nullValue(builtIns)));
+      }
+    }
     KtExpression selectorExpression=element.getSelector();
     KotlinTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,element.getNode(),selectorExpression,currentContext);
     KotlinType selectorReturnType=selectorReturnTypeInfo.getType();
