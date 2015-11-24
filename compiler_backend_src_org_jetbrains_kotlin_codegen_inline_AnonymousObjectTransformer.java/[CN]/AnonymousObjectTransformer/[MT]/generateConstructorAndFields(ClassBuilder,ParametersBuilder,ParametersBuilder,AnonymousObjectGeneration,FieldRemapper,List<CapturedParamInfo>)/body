@@ -16,19 +16,17 @@
       size+=info.getType().getSize();
     }
   }
-  List<Pair<String,Type>> capturedFieldsToGenerate=new ArrayList<Pair<String,Type>>();
-  for (  CapturedParamInfo capturedParamInfo : allCapturedBuilder.listCaptured()) {
-    if (capturedParamInfo.getLambda() == null) {
-      capturedFieldsToGenerate.add(new Pair<String,Type>(capturedParamInfo.getNewFieldName(),capturedParamInfo.getType()));
-    }
-  }
   String constructorDescriptor=Type.getMethodDescriptor(Type.VOID_TYPE,descTypes.toArray(new Type[descTypes.size()]));
   MethodVisitor constructorVisitor=classBuilder.newMethod(NO_ORIGIN,AsmUtil.NO_FLAG_PACKAGE_PRIVATE,"<init>",constructorDescriptor,null,ArrayUtil.EMPTY_STRING_ARRAY);
-  List<FieldInfo> fields=AsmUtil.transformCapturedParams(capturedFieldsToGenerate,newLambdaType);
+  List<NewJavaField> newFieldsWithSkipped=TransformationUtilsKt.getNewFieldsToGenerate(allCapturedBuilder.listCaptured());
+  List<FieldInfo> fieldInfoWithSkipped=TransformationUtilsKt.transformToFieldInfo(newLambdaType,newFieldsWithSkipped);
   int paramIndex=0;
   InstructionAdapter capturedFieldInitializer=new InstructionAdapter(constructorVisitor);
-  for (  FieldInfo fieldInfo : fields) {
-    AsmUtil.genAssignInstanceFieldFromParam(fieldInfo,capturedIndexes[paramIndex],capturedFieldInitializer);
+  for (int i=0; i < fieldInfoWithSkipped.size(); i++) {
+    FieldInfo fieldInfo=fieldInfoWithSkipped.get(i);
+    if (!newFieldsWithSkipped.get(i).getSkip()) {
+      AsmUtil.genAssignInstanceFieldFromParam(fieldInfo,capturedIndexes[paramIndex],capturedFieldInitializer);
+    }
     paramIndex++;
   }
   for (  CapturedParamInfo info : constructorAdditionalFakeParams) {
@@ -40,6 +38,6 @@
   }
   inlineMethodAndUpdateGlobalResult(anonymousObjectGen,parentRemapper,capturedFieldInitializer,constructor,constructorInlineBuilder,true);
   constructorVisitor.visitEnd();
-  AsmUtil.genClosureFields(capturedFieldsToGenerate,classBuilder);
+  AsmUtil.genClosureFields(TransformationUtilsKt.toNameTypePair(TransformationUtilsKt.filterSkipped(newFieldsWithSkipped)),classBuilder);
   anonymousObjectGen.setNewConstructorDescriptor(constructorDescriptor);
 }
