@@ -1,5 +1,6 @@
 {
   ExpressionTypingContext currentContext=context.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT);
+  BindingTrace trace=currentContext.trace;
   Function1<KtSimpleNameExpression,Boolean> isValueFunction=new Function1<KtSimpleNameExpression,Boolean>(){
     @Override public Boolean invoke(    KtSimpleNameExpression nameExpression){
       TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as local variable or property",nameExpression);
@@ -20,7 +21,7 @@
   DataFlowInfo receiverDataFlowInfo;
   CallExpressionElement firstElement=elementChain.iterator().next();
   KtExpression firstReceiver=firstElement.getReceiver();
-  Qualifier firstQualifier=context.trace.get(BindingContext.QUALIFIER,firstReceiver);
+  Qualifier firstQualifier=trace.get(BindingContext.QUALIFIER,firstReceiver);
   if (firstQualifier == null) {
     receiverTypeInfo=expressionTypingServices.getTypeInfo(firstReceiver,currentContext);
     receiverType=receiverTypeInfo.getType();
@@ -34,48 +35,51 @@
   KotlinTypeInfo resultTypeInfo=receiverTypeInfo;
   boolean unconditional=true;
   DataFlowInfo unconditionalDataFlowInfo=receiverDataFlowInfo;
+  ExpressionTypingContext contextForSelector=currentContext;
   for (  CallExpressionElement element : elementChain) {
     if (receiverType == null) {
       receiverType=ErrorUtils.createErrorType("Type for " + expression.getText());
     }
-    QualifierReceiver qualifierReceiver=(QualifierReceiver)context.trace.get(BindingContext.QUALIFIER,element.getReceiver());
-    Receiver receiver=qualifierReceiver == null ? ExpressionReceiver.Companion.create(element.getReceiver(),receiverType,context.trace.getBindingContext()) : qualifierReceiver;
+    QualifierReceiver qualifierReceiver=(QualifierReceiver)trace.get(BindingContext.QUALIFIER,element.getReceiver());
+    Receiver receiver=qualifierReceiver == null ? ExpressionReceiver.Companion.create(element.getReceiver(),receiverType,trace.getBindingContext()) : qualifierReceiver;
     boolean lastStage=element.getQualified() == expression;
     ExpressionTypingContext baseContext=lastStage ? context : currentContext;
-    currentContext=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
+    contextForSelector=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
     if (receiver.exists() && receiver instanceof ReceiverValue) {
       DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue((ReceiverValue)receiver,context);
       if (element.getSafe()) {
-        DataFlowInfo dataFlowInfo=currentContext.dataFlowInfo;
-        if (!dataFlowInfo.getNullability(receiverDataFlowValue).canBeNull()) {
-          reportUnnecessarySafeCall(context.trace,receiverType,element.getNode(),receiver);
+        DataFlowInfo dataFlowInfo=contextForSelector.dataFlowInfo;
+        if (dataFlowInfo.getNullability(receiverDataFlowValue).canBeNull()) {
+          contextForSelector=contextForSelector.replaceDataFlowInfo(dataFlowInfo.disequate(receiverDataFlowValue,DataFlowValue.nullValue(builtIns)));
         }
-        currentContext=currentContext.replaceDataFlowInfo(dataFlowInfo.disequate(receiverDataFlowValue,DataFlowValue.nullValue(builtIns)));
+ else {
+          reportUnnecessarySafeCall(trace,receiverType,element.getNode(),receiver);
+        }
       }
     }
     KtExpression selectorExpression=element.getSelector();
-    KotlinTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,element.getNode(),selectorExpression,currentContext);
+    KotlinTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,element.getNode(),selectorExpression,contextForSelector);
     KotlinType selectorReturnType=selectorReturnTypeInfo.getType();
     if (qualifierReceiver != null) {
-      resolveDeferredReceiverInQualifiedExpression(qualifierReceiver,element.getQualified(),currentContext);
+      resolveDeferredReceiverInQualifiedExpression(qualifierReceiver,element.getQualified(),contextForSelector);
     }
-    checkNestedClassAccess(element.getQualified(),currentContext);
+    checkNestedClassAccess(element.getQualified(),contextForSelector);
     boolean safeCall=element.getSafe();
     if (safeCall && selectorReturnType != null && TypeUtils.isNullableType(receiverType)) {
       selectorReturnType=TypeUtils.makeNullable(selectorReturnType);
       selectorReturnTypeInfo=selectorReturnTypeInfo.replaceType(selectorReturnType);
     }
     if (selectorExpression != null && selectorReturnType != null) {
-      currentContext.trace.recordType(selectorExpression,selectorReturnType);
+      trace.recordType(selectorExpression,selectorReturnType);
     }
     resultTypeInfo=selectorReturnTypeInfo;
-    CompileTimeConstant<?> value=constantExpressionEvaluator.evaluateExpression(element.getQualified(),currentContext.trace,currentContext.expectedType);
+    CompileTimeConstant<?> value=constantExpressionEvaluator.evaluateExpression(element.getQualified(),trace,contextForSelector.expectedType);
     if (value != null && value.isPure()) {
-      resultTypeInfo=dataFlowAnalyzer.createCompileTimeConstantTypeInfo(value,element.getQualified(),currentContext);
+      resultTypeInfo=dataFlowAnalyzer.createCompileTimeConstantTypeInfo(value,element.getQualified(),contextForSelector);
       if (lastStage)       return resultTypeInfo;
     }
-    if (currentContext.contextDependency == INDEPENDENT) {
-      dataFlowAnalyzer.checkType(resultTypeInfo.getType(),element.getQualified(),currentContext);
+    if (contextForSelector.contextDependency == INDEPENDENT) {
+      dataFlowAnalyzer.checkType(resultTypeInfo.getType(),element.getQualified(),contextForSelector);
     }
     receiverTypeInfo=selectorReturnTypeInfo;
     receiverType=selectorReturnType;
@@ -86,11 +90,11 @@
  else     if (unconditional) {
       unconditionalDataFlowInfo=receiverDataFlowInfo;
     }
-    if (!lastStage && !currentContext.trace.get(BindingContext.PROCESSED,element.getQualified())) {
-      currentContext.trace.record(BindingContext.PROCESSED,element.getQualified());
-      currentContext.trace.record(BindingContext.EXPRESSION_TYPE_INFO,element.getQualified(),resultTypeInfo.replaceDataFlowInfo(unconditionalDataFlowInfo));
-      BindingContextUtilsKt.recordScope(currentContext.trace,currentContext.scope,element.getQualified());
-      BindingContextUtilsKt.recordDataFlowInfo(currentContext.replaceDataFlowInfo(unconditionalDataFlowInfo),element.getQualified());
+    if (!lastStage && !trace.get(BindingContext.PROCESSED,element.getQualified())) {
+      trace.record(BindingContext.PROCESSED,element.getQualified());
+      trace.record(BindingContext.EXPRESSION_TYPE_INFO,element.getQualified(),resultTypeInfo.replaceDataFlowInfo(unconditionalDataFlowInfo));
+      BindingContextUtilsKt.recordScope(trace,contextForSelector.scope,element.getQualified());
+      BindingContextUtilsKt.recordDataFlowInfo(contextForSelector.replaceDataFlowInfo(unconditionalDataFlowInfo),element.getQualified());
     }
   }
   return resultTypeInfo.replaceDataFlowInfo(unconditionalDataFlowInfo);
