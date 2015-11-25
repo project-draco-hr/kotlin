@@ -10,14 +10,14 @@
     }
   }
 ));
-  PackageFragmentDescriptor deserialized=createBuiltInsPackageFragment();
+  PackageFragmentProvider packageFragmentProvider=createBuiltInsPackageFragmentProvider();
   List<KtFile> files=KotlinTestUtils.loadToJetFiles(getEnvironment(),ContainerUtil.concat(allFilesUnder("core/builtins/native"),allFilesUnder("core/builtins/src")));
-  ModuleDescriptor module=LazyResolveTestUtil.resolveLazily(files,getEnvironment(),false);
-  List<PackageFragmentDescriptor> fragments=module.getPackage(BUILT_INS_PACKAGE_FQ_NAME).getFragments();
-  for (  PackageFragmentDescriptor fromLazyResolve : fragments) {
+  final ModuleDescriptor module=LazyResolveTestUtil.resolveLazily(files,getEnvironment(),false);
+  for (  FqName packageFqName : CollectionsKt.listOf(BUILT_INS_PACKAGE_FQ_NAME,COLLECTIONS_PACKAGE_FQ_NAME,RANGES_PACKAGE_FQ_NAME)) {
+    PackageFragmentDescriptor fromLazyResolve=CollectionsKt.single(module.getPackage(packageFqName).getFragments());
     if (fromLazyResolve instanceof LazyPackageDescriptor) {
-      RecursiveDescriptorComparator.validateAndCompareDescriptors(fromLazyResolve,deserialized,configuration,new File("compiler/testData/builtin-classes.txt"));
-      break;
+      PackageFragmentDescriptor deserialized=CollectionsKt.single(packageFragmentProvider.getPackageFragments(packageFqName));
+      RecursiveDescriptorComparator.validateAndCompareDescriptors(fromLazyResolve,deserialized,configuration,new File("compiler/testData/builtin-classes-" + packageFqName.asString().replace('.','-') + ".txt"));
     }
   }
 }
