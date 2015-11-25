@@ -1,0 +1,15 @@
+{
+  PsiElement parent=PsiTreeUtil.skipParentsOfType(expression,KtParenthesizedExpression.class);
+  if (parent instanceof KtQualifiedExpression) {
+    KtQualifiedExpression qualifiedExpression=(KtQualifiedExpression)parent;
+    return qualifiedExpression.getOperationSign() == KtTokens.DOT && qualifiedExpression.getReceiverExpression() == KtPsiUtil.deparenthesize(expression);
+  }
+  if (parent instanceof KtBinaryExpression) {
+    KtBinaryExpression binaryExpression=(KtBinaryExpression)parent;
+    if (!OperatorConventions.BINARY_OPERATION_NAMES.containsKey(binaryExpression.getOperationToken()) && !KtTokens.ALL_ASSIGNMENTS.contains(binaryExpression.getOperationToken())) {
+      return false;
+    }
+    return PsiTreeUtil.isAncestor(binaryExpression.getLeft(),expression,false);
+  }
+  return false;
+}
