@@ -1,6 +1,5 @@
 {
   GenerationState state;
-  DiagnosticSink.CollectAll sink=new DiagnosticSink.CollectAll();
   try {
     ResolutionFacade resolutionFacade=ResolutionUtils.getResolutionFacade(jetFile);
     BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(jetFile)).getBindingContext();
@@ -8,21 +7,21 @@
     BindingContext bindingContext=result.getFirst();
     List<KtFile> toProcess=result.getSecond();
     GenerationState.GenerateClassFilter generateClassFilter=new GenerationState.GenerateClassFilter(){
-      @Override public boolean shouldGeneratePackagePart(      KtFile file){
+      @Override public boolean shouldGeneratePackagePart(      @NotNull KtFile file){
         return file == jetFile;
       }
-      @Override public boolean shouldAnnotateClass(      KtClassOrObject classOrObject){
+      @Override public boolean shouldAnnotateClass(      @NotNull KtClassOrObject classOrObject){
         return true;
       }
-      @Override public boolean shouldGenerateClass(      KtClassOrObject classOrObject){
+      @Override public boolean shouldGenerateClass(      @NotNull KtClassOrObject classOrObject){
         return classOrObject.getContainingKtFile() == jetFile;
       }
-      @Override public boolean shouldGenerateScript(      KtScript script){
+      @Override public boolean shouldGenerateScript(      @NotNull KtScript script){
         return script.getContainingKtFile() == jetFile;
       }
     }
 ;
-    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,false,sink);
+    state=new GenerationState(jetFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,false);
     KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   }
  catch (  ProcessCanceledException e) {
@@ -32,7 +31,7 @@ catch (  Exception e) {
     return printStackTraceToString(e);
   }
   StringBuilder answer=new StringBuilder();
-  List<Diagnostic> diagnostics=sink.getDiagnostics();
+  Collection<Diagnostic> diagnostics=state.getCollectedExtraJvmDiagnostics().all();
   if (!diagnostics.isEmpty()) {
     answer.append("// Backend Errors: \n");
     answer.append("// ================\n");

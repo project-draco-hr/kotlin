@@ -20,8 +20,7 @@
       obsoleteMultifileClasses.add(JvmClassName.byInternalName(obsoleteFacadeInternalName).getFqNameForClassNameWithoutDollars());
     }
   }
-  BindingTrace diagnosticHolder=new DelegatingBindingTrace(result.getBindingContext(),false,"For extra diagnostics in ${this.javaClass}");
-  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),false,diagnosticHolder,packagesWithObsoleteParts,obsoleteMultifileClasses,targetId,moduleName,outputDirectory,incrementalCompilationComponents);
+  GenerationState generationState=new GenerationState(environment.getProject(),ClassBuilderFactories.BINARIES,result.getModuleDescriptor(),result.getBindingContext(),sourceFiles,configuration.get(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS,false),configuration.get(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS,false),GenerationState.GenerateClassFilter.GENERATE_ALL,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false),configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION,false),false,packagesWithObsoleteParts,obsoleteMultifileClasses,targetId,moduleName,outputDirectory,incrementalCompilationComponents);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   long generationStart=PerformanceCounter.Companion.currentTime();
   KotlinCodegenFacade.compileCorrectFiles(generationState,CompilationErrorHandler.THROW_EXCEPTION);
@@ -30,7 +29,7 @@
   String message="GENERATE: " + sourceFiles.size() + " files ("+ environment.countLinesOfCode(sourceFiles)+ " lines) "+ desc+ "in "+ TimeUnit.NANOSECONDS.toMillis(generationNanos)+ " ms";
   K2JVMCompiler.Companion.reportPerf(environment.getConfiguration(),message);
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
-  AnalyzerWithCompilerReport.reportDiagnostics(new FilteredJvmDiagnostics(diagnosticHolder.getBindingContext().getDiagnostics(),result.getBindingContext().getDiagnostics()),environment.getConfiguration().get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY));
+  AnalyzerWithCompilerReport.reportDiagnostics(new FilteredJvmDiagnostics(generationState.getCollectedExtraJvmDiagnostics(),result.getBindingContext().getDiagnostics()),environment.getConfiguration().get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY));
   ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
   return generationState;
 }
