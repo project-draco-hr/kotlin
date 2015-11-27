@@ -3,16 +3,15 @@
   KtFile psiFile=fileAndEnv.getFirst();
   KotlinCoreEnvironment environment=fileAndEnv.getSecond();
   GenerationState state=GenerationUtils.compileFileGetGenerationStateForTest(psiFile,environment);
-  List<Integer> expectedLineNumbers;
-  List<Integer> actualLineNumbers;
   if (custom) {
-    expectedLineNumbers=extractCustomLineNumbersFromSource(psiFile);
-    actualLineNumbers=extractActualLineNumbersFromBytecode(state,false);
-    assertEquals(expectedLineNumbers,actualLineNumbers);
+    List<Integer> actualLineNumbers=extractActualLineNumbersFromBytecode(state,false);
+    String text=psiFile.getText();
+    String newFileText=text.substring(0,text.indexOf("// ")) + getActualLineNumbersAsString(actualLineNumbers);
+    KotlinTestUtils.assertEqualsToFile(new File(filename),newFileText);
   }
  else {
-    expectedLineNumbers=extractSelectedLineNumbersFromSource(psiFile);
-    actualLineNumbers=extractActualLineNumbersFromBytecode(state,true);
+    List<Integer> expectedLineNumbers=extractSelectedLineNumbersFromSource(psiFile);
+    List<Integer> actualLineNumbers=extractActualLineNumbersFromBytecode(state,true);
     assertSameElements(actualLineNumbers,expectedLineNumbers);
   }
 }
