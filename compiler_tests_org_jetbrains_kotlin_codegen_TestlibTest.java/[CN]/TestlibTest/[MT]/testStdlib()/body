@@ -1,0 +1,31 @@
+{
+  GenerationState state=KotlinToJVMBytecodeCompiler.analyzeAndGenerate(getEnvironment());
+  if (state == null) {
+    fail("There were compilation errors");
+  }
+  GeneratedClassLoader classLoader=new GeneratedClassLoader(state.getFactory(),ForTestCompileRuntime.runtimeAndReflectJarClassLoader()){
+    @Override public Class<?> loadClass(    @NotNull String name) throws ClassNotFoundException {
+      if (name.startsWith("junit.") || name.startsWith("org.junit.")) {
+        return TestlibTest.class.getClassLoader().loadClass(name);
+      }
+      return super.loadClass(name);
+    }
+  }
+;
+  TestSuite tests=new TestSuite("Standard Library Tests");
+  for (  KtFile file : getEnvironment().getSourceFiles()) {
+    if (file.getVirtualFile().getPath().contains("/js/"))     continue;
+    for (    KtDeclaration declaration : file.getDeclarations()) {
+      if (!(declaration instanceof KtClass))       continue;
+      ClassDescriptor descriptor=(ClassDescriptor)BindingContextUtils.getNotNull(state.getBindingContext(),BindingContext.DECLARATION_TO_DESCRIPTOR,declaration);
+      Test test=createTest(classLoader,state.getTypeMapper().mapClass(descriptor).getClassName());
+      if (test != null) {
+        tests.addTest(test);
+      }
+    }
+  }
+  TestResult result=new TestRunner(System.err).doRun(tests);
+  if (!result.wasSuccessful()) {
+    fail("Some stdlib tests failed, see stderr for details");
+  }
+}
