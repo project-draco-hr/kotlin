@@ -13,8 +13,12 @@
       modifiersChecking.checkParameterHasNoValOrVar(catchParameter,VAL_OR_VAR_ON_CATCH_PARAMETER);
       ModifierCheckerCore.INSTANCE$.check(catchParameter,context.trace,null);
       VariableDescriptor variableDescriptor=components.descriptorResolver.resolveLocalVariableDescriptor(context.scope,catchParameter,context.trace);
+      KotlinType catchParameterType=variableDescriptor.getType();
+      if (TypeUtils.isReifiedTypeParameter(catchParameterType)) {
+        context.trace.report(REIFIED_TYPE_IN_CATCH_CLAUSE.on(catchParameter));
+      }
       KotlinType throwableType=components.builtIns.getThrowable().getDefaultType();
-      components.dataFlowAnalyzer.checkType(variableDescriptor.getType(),catchParameter,context.replaceExpectedType(throwableType));
+      components.dataFlowAnalyzer.checkType(catchParameterType,catchParameter,context.replaceExpectedType(throwableType));
       if (catchBody != null) {
         LexicalWritableScope catchScope=newWritableScopeImpl(context,LexicalScopeKind.CATCH);
         catchScope.addVariableDescriptor(variableDescriptor);
