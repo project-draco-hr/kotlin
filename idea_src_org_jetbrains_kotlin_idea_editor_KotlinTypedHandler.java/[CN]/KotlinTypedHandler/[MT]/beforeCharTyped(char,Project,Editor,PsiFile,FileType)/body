@@ -22,16 +22,17 @@ HighlighterIterator iterator=((EditorEx)editor).getHighlighter().createIterator(
 while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
 iterator.retreat();
 }
-if (iterator.atEnd() || iterator.getTokenType() != KtTokens.RPAR) {
+if (iterator.atEnd() || !(SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER.contains(iterator.getTokenType()))) {
 return Result.CONTINUE;
 }
+int tokenBeforeBraceOffset=iterator.getStart();
 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 PsiElement leaf=file.findElementAt(offset);
 if (leaf != null) {
 PsiElement parent=leaf.getParent();
 if (parent != null && CONTROL_FLOW_EXPRESSIONS.contains(parent.getNode().getElementType())) {
 ASTNode nonWhitespaceSibling=FormatterUtil.getPreviousNonWhitespaceSibling(leaf.getNode());
-if (nonWhitespaceSibling != null && nonWhitespaceSibling.getText().equals(")")) {
+if (nonWhitespaceSibling != null && nonWhitespaceSibling.getStartOffset() == tokenBeforeBraceOffset) {
 EditorModificationUtil.insertStringAtCaret(editor,"{",false,true);
 indentBrace(project,editor,'{');
 return Result.STOP;
