@@ -1,11 +1,11 @@
 {
-  FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(newOwner,original,kind,name,preserveSource);
+  FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(configuration.newOwner,configuration.original,configuration.kind,configuration.name,configuration.signatureChange);
   List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
   List<TypeParameterDescriptor> substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
-  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,originalSubstitutor.getSubstitution(),substitutedDescriptor,substitutedTypeParameters);
+  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,configuration.originalSubstitutor.getSubstitution(),substitutedDescriptor,substitutedTypeParameters);
   KotlinType substitutedReceiverParameterType=null;
-  if (newExtensionReceiverParameterType != null) {
-    substitutedReceiverParameterType=substitutor.substitute(newExtensionReceiverParameterType,Variance.IN_VARIANCE);
+  if (configuration.newExtensionReceiverParameterType != null) {
+    substitutedReceiverParameterType=substitutor.substitute(configuration.newExtensionReceiverParameterType,Variance.IN_VARIANCE);
     if (substitutedReceiverParameterType == null) {
       return null;
     }
@@ -17,15 +17,15 @@
       return null;
     }
   }
-  List<ValueParameterDescriptor> substitutedValueParameters=getSubstitutedValueParameters(substitutedDescriptor,newValueParameterDescriptors,substitutor);
+  List<ValueParameterDescriptor> substitutedValueParameters=getSubstitutedValueParameters(substitutedDescriptor,configuration.newValueParameterDescriptors,substitutor);
   if (substitutedValueParameters == null) {
     return null;
   }
-  KotlinType substitutedReturnType=substitutor.substitute(newReturnType,Variance.OUT_VARIANCE);
+  KotlinType substitutedReturnType=substitutor.substitute(configuration.newReturnType,Variance.OUT_VARIANCE);
   if (substitutedReturnType == null) {
     return null;
   }
-  substitutedDescriptor.initialize(substitutedReceiverParameterType,substitutedExpectedThis,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,newModality,newVisibility);
+  substitutedDescriptor.initialize(substitutedReceiverParameterType,substitutedExpectedThis,substitutedTypeParameters,substitutedValueParameters,substitutedReturnType,configuration.newModality,configuration.newVisibility);
   substitutedDescriptor.setOperator(isOperator);
   substitutedDescriptor.setInfix(isInfix);
   substitutedDescriptor.setExternal(isExternal);
@@ -33,12 +33,12 @@
   substitutedDescriptor.setTailrec(isTailrec);
   substitutedDescriptor.setHasStableParameterNames(hasStableParameterNames);
   substitutedDescriptor.setHasSynthesizedParameterNames(hasSynthesizedParameterNames);
-  if (signatureChange || getInitialSignatureDescriptor() != null) {
+  if (configuration.signatureChange || getInitialSignatureDescriptor() != null) {
     FunctionDescriptor initialSignature=(getInitialSignatureDescriptor() != null ? getInitialSignatureDescriptor() : this);
     FunctionDescriptor initialSignatureSubstituted=initialSignature.substitute(substitutor);
     substitutedDescriptor.setInitialSignatureDescriptor(initialSignatureSubstituted);
   }
-  if (copyOverrides) {
+  if (configuration.copyOverrides) {
     for (    FunctionDescriptor overriddenFunction : overriddenFunctions) {
       substitutedDescriptor.addOverriddenDescriptor(overriddenFunction.substitute(substitutor));
     }
