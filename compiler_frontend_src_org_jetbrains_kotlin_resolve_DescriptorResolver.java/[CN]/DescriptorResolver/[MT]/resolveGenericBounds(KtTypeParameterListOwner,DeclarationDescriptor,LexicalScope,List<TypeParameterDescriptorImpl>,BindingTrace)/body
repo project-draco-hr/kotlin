@@ -1,5 +1,5 @@
 {
-  List<UpperBoundCheckerTask> deferredUpperBoundCheckerTasks=Lists.newArrayList();
+  List<UpperBoundCheckRequest> upperBoundCheckRequests=Lists.newArrayList();
   List<KtTypeParameter> typeParameters=declaration.getTypeParameters();
   Map<Name,TypeParameterDescriptorImpl> parameterByName=Maps.newHashMap();
   for (int i=0; i < typeParameters.size(); i++) {
@@ -10,7 +10,7 @@
     if (extendsBound != null) {
       KotlinType type=typeResolver.resolveType(scope,extendsBound,trace,false);
       typeParameterDescriptor.addUpperBound(type);
-      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(ktTypeParameter.getNameAsName(),extendsBound,type));
+      upperBoundCheckRequests.add(new UpperBoundCheckRequest(ktTypeParameter.getNameAsName(),extendsBound,type));
     }
   }
   for (  KtTypeConstraint constraint : declaration.getTypeConstraints()) {
@@ -24,7 +24,7 @@
     KotlinType bound=null;
     if (boundTypeReference != null) {
       bound=typeResolver.resolveType(scope,boundTypeReference,trace,false);
-      deferredUpperBoundCheckerTasks.add(new UpperBoundCheckerTask(referencedName,boundTypeReference,bound));
+      upperBoundCheckRequests.add(new UpperBoundCheckRequest(referencedName,boundTypeReference,bound));
     }
     if (typeParameterDescriptor != null) {
       trace.record(BindingContext.REFERENCE_TARGET,subjectTypeParameterName,typeParameterDescriptor);
@@ -41,7 +41,7 @@
     checkConflictingUpperBounds(trace,parameter,typeParameters.get(parameter.getIndex()));
   }
   if (!(declaration instanceof KtClass)) {
-    checkUpperBoundTypes(trace,deferredUpperBoundCheckerTasks);
+    checkUpperBoundTypes(trace,upperBoundCheckRequests);
     checkNamesInConstraints(declaration,descriptor,scope,trace);
   }
 }
