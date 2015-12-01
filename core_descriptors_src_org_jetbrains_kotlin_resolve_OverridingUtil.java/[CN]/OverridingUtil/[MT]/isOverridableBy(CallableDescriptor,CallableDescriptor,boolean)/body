@@ -1,54 +1,15 @@
 {
-  if (superDescriptor instanceof FunctionDescriptor && !(subDescriptor instanceof FunctionDescriptor) || superDescriptor instanceof PropertyDescriptor && !(subDescriptor instanceof PropertyDescriptor)) {
-    return OverrideCompatibilityInfo.incompatible("Member kind mismatch");
-  }
-  if (!(superDescriptor instanceof FunctionDescriptor) && !(superDescriptor instanceof PropertyDescriptor)) {
-    throw new IllegalArgumentException("This type of CallableDescriptor cannot be checked for overridability: " + superDescriptor);
-  }
-  if (!superDescriptor.getName().equals(subDescriptor.getName())) {
-    return OverrideCompatibilityInfo.incompatible("Name mismatch");
-  }
-  OverrideCompatibilityInfo receiverAndParameterResult=checkReceiverAndParameterCount(superDescriptor,subDescriptor);
-  if (receiverAndParameterResult != null) {
-    return receiverAndParameterResult;
-  }
-  List<KotlinType> superValueParameters=compiledValueParameters(superDescriptor);
-  List<KotlinType> subValueParameters=compiledValueParameters(subDescriptor);
-  List<TypeParameterDescriptor> superTypeParameters=superDescriptor.getTypeParameters();
-  List<TypeParameterDescriptor> subTypeParameters=subDescriptor.getTypeParameters();
-  if (superTypeParameters.size() != subTypeParameters.size()) {
-    for (int i=0; i < superValueParameters.size(); ++i) {
-      if (!KotlinTypeChecker.DEFAULT.equalTypes(superValueParameters.get(i),subValueParameters.get(i))) {
-        return OverrideCompatibilityInfo.incompatible("Type parameter number mismatch");
-      }
-    }
-    return OverrideCompatibilityInfo.conflict("Type parameter number mismatch");
-  }
-  KotlinTypeChecker typeChecker=createTypeChecker(superTypeParameters,subTypeParameters);
-  for (int i=0; i < superTypeParameters.size(); i++) {
-    if (!areTypeParametersEquivalent(superTypeParameters.get(i),subTypeParameters.get(i),typeChecker)) {
-      return OverrideCompatibilityInfo.incompatible("Type parameter bounds mismatch");
-    }
-  }
-  for (int i=0; i < superValueParameters.size(); i++) {
-    if (!areTypesEquivalent(superValueParameters.get(i),subValueParameters.get(i),typeChecker)) {
-      return OverrideCompatibilityInfo.incompatible("Value parameter type mismatch");
-    }
-  }
-  if (checkReturnType) {
-    KotlinType superReturnType=superDescriptor.getReturnType();
-    KotlinType subReturnType=subDescriptor.getReturnType();
-    if (superReturnType != null && subReturnType != null) {
-      boolean bothErrors=subReturnType.isError() && superReturnType.isError();
-      if (!bothErrors && !typeChecker.isSubtypeOf(subReturnType,superReturnType)) {
-        return OverrideCompatibilityInfo.conflict("Return type mismatch");
-      }
-    }
-  }
   for (  ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
-    if (!externalCondition.isOverridable(superDescriptor,subDescriptor)) {
-      return OverrideCompatibilityInfo.incompatible("External condition failed");
-    }
-  }
-  return OverrideCompatibilityInfo.success();
+    ExternalOverridabilityCondition.Result result=externalCondition.isOverridable(superDescriptor,subDescriptor);
+switch (result) {
+case OVERRIDABLE:
+      return OverrideCompatibilityInfo.success();
+case CONFLICT:
+    return OverrideCompatibilityInfo.conflict("External condition failed");
+case INCOMPATIBLE:
+  return OverrideCompatibilityInfo.incompatible("External condition");
+case UNKNOWN:
+}
+}
+return isOverridableByWithoutExternalConditions(superDescriptor,subDescriptor,checkReturnType);
 }
