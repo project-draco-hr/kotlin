@@ -1,8 +1,16 @@
 {
   FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(configuration.newOwner,configuration.original,configuration.kind,configuration.name,configuration.signatureChange);
-  List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
-  List<TypeParameterDescriptor> substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
-  TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,configuration.originalSubstitutor.getSubstitution(),substitutedDescriptor,substitutedTypeParameters);
+  List<TypeParameterDescriptor> substitutedTypeParameters;
+  TypeSubstitutor substitutor;
+  if (configuration.newTypeParameters == null) {
+    List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
+    substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
+    substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,configuration.originalSubstitutor.getSubstitution(),substitutedDescriptor,substitutedTypeParameters);
+  }
+ else {
+    substitutedTypeParameters=configuration.newTypeParameters;
+    substitutor=configuration.originalSubstitutor;
+  }
   KotlinType substitutedReceiverParameterType=null;
   if (configuration.newExtensionReceiverParameterType != null) {
     substitutedReceiverParameterType=substitutor.substitute(configuration.newExtensionReceiverParameterType,Variance.IN_VARIANCE);
