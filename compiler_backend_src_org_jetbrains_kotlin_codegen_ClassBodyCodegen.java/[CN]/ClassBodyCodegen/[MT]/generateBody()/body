@@ -1,8 +1,15 @@
 {
+  List<KtObjectDeclaration> companions=new ArrayList<KtObjectDeclaration>();
   if (kind != OwnerKind.DEFAULT_IMPLS) {
     for (    KtDeclaration declaration : myClass.getDeclarations()) {
       if (shouldProcessFirst(declaration)) {
-        generateDeclaration(declaration);
+        if (declaration instanceof KtObjectDeclaration && ((KtObjectDeclaration)declaration).isCompanion()) {
+          companions.add((KtObjectDeclaration)declaration);
+          CodegenUtilKt.populateCompanionBackingFieldNamesToOuterContextIfNeeded((KtObjectDeclaration)declaration,context,state);
+        }
+ else {
+          generateDeclaration(declaration);
+        }
       }
     }
   }
@@ -10,6 +17,11 @@
     if (!shouldProcessFirst(declaration)) {
       generateDeclaration(declaration);
     }
+  }
+  generatePrimaryConstructorProperties();
+  generateConstructors();
+  for (  KtObjectDeclaration companion : companions) {
+    generateDeclaration(companion);
   }
   if (!DescriptorUtils.isInterface(descriptor)) {
     for (    DeclarationDescriptor memberDescriptor : DescriptorUtils.getAllDescriptors(descriptor.getDefaultType().getMemberScope())) {
@@ -33,5 +45,4 @@
       }
     }
   }
-  generatePrimaryConstructorProperties();
 }
