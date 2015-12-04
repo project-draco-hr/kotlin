@@ -1,13 +1,13 @@
 {
   prepareConfiguration();
   boolean hasElse=expression.getElseExpression() != null;
-  defaultLabel=(hasElse || !isStatement) ? elseLabel : endLabel;
+  defaultLabel=(hasElse || !isStatement || isExhaustive) ? elseLabel : endLabel;
   generateSubject();
   generateSwitchInstructionByTransitionsTable();
   generateEntries();
-  if (!hasElse && !isStatement) {
+  if (!hasElse && (!isStatement || isExhaustive)) {
     v.visitLabel(elseLabel);
-    codegen.putUnitInstanceOntoStackForNonExhaustiveWhen(expression);
+    codegen.putUnitInstanceOntoStackForNonExhaustiveWhen(expression,isStatement);
   }
   codegen.markLineNumber(expression,isStatement);
   v.mark(endLabel);

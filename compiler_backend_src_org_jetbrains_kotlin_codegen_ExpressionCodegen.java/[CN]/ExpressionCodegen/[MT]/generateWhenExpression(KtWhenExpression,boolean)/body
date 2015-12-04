@@ -4,7 +4,7 @@
   final Type resultType=isStatement ? Type.VOID_TYPE : expressionType(expression);
   return StackValue.operation(resultType,new Function1<InstructionAdapter,Unit>(){
     @Override public Unit invoke(    InstructionAdapter v){
-      SwitchCodegen switchCodegen=SwitchCodegenUtil.buildAppropriateSwitchCodegenIfPossible(expression,isStatement,ExpressionCodegen.this);
+      SwitchCodegen switchCodegen=SwitchCodegenUtil.buildAppropriateSwitchCodegenIfPossible(expression,isStatement,isExhaustive(expression,isStatement),ExpressionCodegen.this);
       if (switchCodegen != null) {
         switchCodegen.generate();
         return Unit.INSTANCE;
@@ -46,9 +46,7 @@
       }
       if (!hasElse && nextCondition != null) {
         v.mark(nextCondition);
-        if (!isStatement) {
-          putUnitInstanceOntoStackForNonExhaustiveWhen(expression);
-        }
+        putUnitInstanceOntoStackForNonExhaustiveWhen(expression,isStatement);
       }
       markLineNumber(expression,isStatement);
       v.mark(end);
