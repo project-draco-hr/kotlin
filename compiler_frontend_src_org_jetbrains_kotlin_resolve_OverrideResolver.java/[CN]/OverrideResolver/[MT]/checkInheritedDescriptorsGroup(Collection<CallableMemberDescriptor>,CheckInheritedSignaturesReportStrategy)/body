@@ -1,0 +1,22 @@
+{
+  if (inheritedDescriptors.size() > 1) {
+    Iterator<CallableMemberDescriptor> inheritedIterator=inheritedDescriptors.iterator();
+    CallableMemberDescriptor mostSpecificInherited=inheritedIterator.next();
+    while (inheritedIterator.hasNext()) {
+      CallableMemberDescriptor overriddenDescriptor=inheritedIterator.next();
+      if (OverridingUtil.isMoreSpecific(overriddenDescriptor,mostSpecificInherited)) {
+        mostSpecificInherited=overriddenDescriptor;
+      }
+    }
+    for (    CallableMemberDescriptor inheritedDescriptor : inheritedDescriptors) {
+      if (!OverridingUtil.isMoreSpecific(mostSpecificInherited,inheritedDescriptor)) {
+        if (inheritedDescriptor instanceof PropertyDescriptor) {
+          reportingStrategy.propertyTypeMismatchOnInheritance(mostSpecificInherited,inheritedDescriptor);
+        }
+ else {
+          reportingStrategy.returnTypeMismatchOnInheritance(mostSpecificInherited,inheritedDescriptor);
+        }
+      }
+    }
+  }
+}

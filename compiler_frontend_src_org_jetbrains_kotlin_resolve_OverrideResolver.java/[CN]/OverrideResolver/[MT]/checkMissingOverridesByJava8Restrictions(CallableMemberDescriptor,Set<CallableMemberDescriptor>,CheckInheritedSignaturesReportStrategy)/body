@@ -1,0 +1,32 @@
+{
+  boolean overridesClassMember=false;
+  boolean overridesNonAbstractInterfaceMember=false;
+  CallableMemberDescriptor overridesAbstractInBaseClass=null;
+  List<CallableMemberDescriptor> overriddenInterfaceMembers=new SmartList<CallableMemberDescriptor>();
+  for (  CallableMemberDescriptor overridden : relevantDirectlyOverridden) {
+    DeclarationDescriptor containingDeclaration=overridden.getContainingDeclaration();
+    if (containingDeclaration instanceof ClassDescriptor) {
+      ClassDescriptor baseClassOrInterface=(ClassDescriptor)containingDeclaration;
+      if (baseClassOrInterface.getKind() == ClassKind.CLASS) {
+        overridesClassMember=true;
+        if (overridden.getModality() == Modality.ABSTRACT) {
+          overridesAbstractInBaseClass=overridden;
+        }
+      }
+ else       if (baseClassOrInterface.getKind() == ClassKind.INTERFACE) {
+        overriddenInterfaceMembers.add(overridden);
+        if (overridden.getModality() != Modality.ABSTRACT) {
+          overridesNonAbstractInterfaceMember=true;
+        }
+      }
+    }
+  }
+  if (overridesAbstractInBaseClass != null) {
+    reportingStrategy.abstractBaseClassMemberNotImplemented(overridesAbstractInBaseClass);
+  }
+  if (!overridesClassMember && overridesNonAbstractInterfaceMember && overriddenInterfaceMembers.size() > 1) {
+    for (    CallableMemberDescriptor member : overriddenInterfaceMembers) {
+      reportingStrategy.conflictingInterfaceMemberNotImplemented(member);
+    }
+  }
+}

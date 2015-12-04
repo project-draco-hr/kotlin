@@ -2,51 +2,7 @@
   for (  CallableMemberDescriptor member : classDescriptor.getDeclaredCallableMembers()) {
     checkOverrideForMember(member);
   }
-  final Set<CallableMemberDescriptor> abstractNoImpl=Sets.newLinkedHashSet();
-  final Set<CallableMemberDescriptor> manyImpl=Sets.newLinkedHashSet();
-  final Set<CallableMemberDescriptor> abstractInBaseClassNoImpl=Sets.newLinkedHashSet();
-  final Set<CallableMemberDescriptor> conflictingInterfaceOverrides=Sets.newLinkedHashSet();
-  checkInheritedSignatures(classDescriptor,new CheckInheritedSignaturesReportingStrategy(){
-    private boolean returnTypeMismatch=false;
-    private boolean propertyTypeMismatch=false;
-    @Override public void abstractMemberNoImpl(    CallableMemberDescriptor descriptor){
-      abstractNoImpl.add(descriptor);
-    }
-    @Override public void abstractBaseClassMemberNoImpl(    CallableMemberDescriptor descriptor){
-      abstractInBaseClassNoImpl.add(descriptor);
-    }
-    @Override public void manyImplMemberNoImpl(    CallableMemberDescriptor descriptor){
-      manyImpl.add(descriptor);
-    }
-    @Override public void conflictingMemberFromInterface(    CallableMemberDescriptor descriptor){
-      conflictingInterfaceOverrides.add(descriptor);
-    }
-    @Override public void clashingWithReturnType(    CallableMemberDescriptor descriptor1,    CallableMemberDescriptor descriptor2){
-      if (!returnTypeMismatch) {
-        returnTypeMismatch=true;
-        trace.report(RETURN_TYPE_MISMATCH_ON_INHERITANCE.on(klass,descriptor1,descriptor2));
-      }
-    }
-    @Override public void clashingWithPropertyType(    CallableMemberDescriptor descriptor1,    CallableMemberDescriptor descriptor2){
-      if (!propertyTypeMismatch) {
-        propertyTypeMismatch=true;
-        trace.report(PROPERTY_TYPE_MISMATCH_ON_INHERITANCE.on(klass,descriptor1,descriptor2));
-      }
-    }
-  }
-);
-  if (!classCanHaveAbstractMembers(classDescriptor)) {
-    if (!abstractInBaseClassNoImpl.isEmpty()) {
-      trace.report(ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.on(klass,klass,abstractInBaseClassNoImpl.iterator().next()));
-    }
- else     if (!abstractNoImpl.isEmpty()) {
-      trace.report(ABSTRACT_MEMBER_NOT_IMPLEMENTED.on(klass,klass,abstractNoImpl.iterator().next()));
-    }
-  }
-  if (!conflictingInterfaceOverrides.isEmpty()) {
-    trace.report(MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED.on(klass,klass,conflictingInterfaceOverrides.iterator().next()));
-  }
- else   if (!manyImpl.isEmpty()) {
-    trace.report(MANY_IMPL_MEMBER_NOT_IMPLEMENTED.on(klass,klass,manyImpl.iterator().next()));
-  }
+  CollectErrorInformationForInheritedMembersStrategy inheritedMemberErrors=new CollectErrorInformationForInheritedMembersStrategy(klass,classDescriptor);
+  checkInheritedAndDelegatedSignatures(classDescriptor,inheritedMemberErrors,inheritedMemberErrors);
+  inheritedMemberErrors.doReportErrors();
 }

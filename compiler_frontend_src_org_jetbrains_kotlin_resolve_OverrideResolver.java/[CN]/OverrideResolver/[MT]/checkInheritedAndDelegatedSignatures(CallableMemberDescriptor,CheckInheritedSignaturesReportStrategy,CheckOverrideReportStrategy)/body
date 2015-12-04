@@ -1,0 +1,48 @@
+{
+  CallableMemberDescriptor.Kind kind=descriptor.getKind();
+  if (kind != FAKE_OVERRIDE && kind != DELEGATION)   return;
+  if (descriptor.getVisibility() == Visibilities.INVISIBLE_FAKE)   return;
+  Collection<? extends CallableMemberDescriptor> directOverridden=descriptor.getOverriddenDescriptors();
+  if (directOverridden.size() == 0) {
+    throw new IllegalStateException(kind + " " + descriptor.getName().asString()+ " must override something");
+  }
+  Map<CallableMemberDescriptor,Set<CallableMemberDescriptor>> overriddenDeclarationsByDirectParent=collectOverriddenDeclarations(directOverridden);
+  List<CallableMemberDescriptor> allOverriddenDeclarations=ContainerUtil.flatten(overriddenDeclarationsByDirectParent.values());
+  Set<CallableMemberDescriptor> allFilteredOverriddenDeclarations=filterOutOverridden(Sets.newLinkedHashSet(allOverriddenDeclarations));
+  Set<CallableMemberDescriptor> relevantDirectlyOverridden=getRelevantDirectlyOverridden(overriddenDeclarationsByDirectParent,allFilteredOverriddenDeclarations);
+  checkInheritedDescriptorsGroup(relevantDirectlyOverridden,reportingStrategy);
+  if (kind == DELEGATION) {
+    if (overrideReportStrategyForDelegates != null) {
+      checkOverridesForMember(descriptor,relevantDirectlyOverridden,overrideReportStrategyForDelegates);
+    }
+  }
+  if (kind != DELEGATION) {
+    checkMissingOverridesByJava8Restrictions(descriptor,relevantDirectlyOverridden,reportingStrategy);
+  }
+  List<CallableMemberDescriptor> implementations=collectImplementations(relevantDirectlyOverridden);
+  int numImplementations=implementations.size();
+  if (numImplementations == 1 && isReturnTypeOkForOverride(descriptor,implementations.get(0)))   return;
+  List<CallableMemberDescriptor> abstractOverridden=new ArrayList<CallableMemberDescriptor>(allFilteredOverriddenDeclarations.size());
+  List<CallableMemberDescriptor> concreteOverridden=new ArrayList<CallableMemberDescriptor>(allFilteredOverriddenDeclarations.size());
+  filterNotSynthesizedDescriptorsByModality(allFilteredOverriddenDeclarations,abstractOverridden,concreteOverridden);
+  if (numImplementations == 0) {
+    if (kind != DELEGATION) {
+      for (      CallableMemberDescriptor member : abstractOverridden) {
+        reportingStrategy.abstractMemberNotImplemented(member);
+      }
+    }
+  }
+ else   if (numImplementations > 1) {
+    for (    CallableMemberDescriptor member : concreteOverridden) {
+      reportingStrategy.multipleImplementationsMemberNotImplemented(member);
+    }
+  }
+ else {
+    if (kind != DELEGATION) {
+      List<CallableMemberDescriptor> membersWithMoreSpecificReturnType=collectAbstractMethodsWithMoreSpecificReturnType(abstractOverridden,implementations.get(0));
+      for (      CallableMemberDescriptor member : membersWithMoreSpecificReturnType) {
+        reportingStrategy.abstractMemberNotImplemented(member);
+      }
+    }
+  }
+}
