@@ -4,7 +4,10 @@
   Collection<CallableMemberDescriptor> effectiveOverridden=allInvisible ? overridables : visibleOverridables;
   Modality modality=getMinimalModality(effectiveOverridden);
   Visibility visibility=allInvisible ? Visibilities.INVISIBLE_FAKE : Visibilities.INHERITED;
-  CallableMemberDescriptor mostSpecific=selectMostSpecificMemberFromSuper(effectiveOverridden);
+  CallableMemberDescriptor mostSpecific=OverridingUtilsKt.getOverriddenWithMostSpecificReturnTypeOrNull(KotlinTypeChecker.DEFAULT,effectiveOverridden);
+  if (mostSpecific == null) {
+    mostSpecific=selectMostSpecificMemberFromSuper(effectiveOverridden);
+  }
   CallableMemberDescriptor fakeOverride=mostSpecific.copy(current,modality,visibility,CallableMemberDescriptor.Kind.FAKE_OVERRIDE,false);
   for (  CallableMemberDescriptor descriptor : effectiveOverridden) {
     fakeOverride.addOverriddenDescriptor(descriptor);
