@@ -1,0 +1,19 @@
+{
+  Set<KtElement> reachableElements=Sets.newHashSet();
+  Set<KtElement> unreachableElements=Sets.newHashSet();
+  for (  Instruction instruction : pseudocode.getInstructionsIncludingDeadCode()) {
+    if (!(instruction instanceof KtElementInstruction) || instruction instanceof LoadUnitValueInstruction || instruction instanceof MergeInstruction|| (instruction instanceof MagicInstruction && ((MagicInstruction)instruction).getSynthetic()))     continue;
+    KtElement element=((KtElementInstruction)instruction).getElement();
+    if (instruction instanceof JumpInstruction) {
+      boolean isJumpElement=element instanceof KtBreakExpression || element instanceof KtContinueExpression || element instanceof KtReturnExpression|| element instanceof KtThrowExpression;
+      if (!isJumpElement)       continue;
+    }
+    if (instruction.getDead()) {
+      unreachableElements.add(element);
+    }
+ else {
+      reachableElements.add(element);
+    }
+  }
+  return new UnreachableCodeImpl(reachableElements,unreachableElements);
+}
