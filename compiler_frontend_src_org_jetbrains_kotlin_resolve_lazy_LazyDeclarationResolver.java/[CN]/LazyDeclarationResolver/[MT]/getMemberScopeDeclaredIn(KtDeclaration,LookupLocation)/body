@@ -1,2 +1,29 @@
 {
+  KtDeclaration parentDeclaration=KtStubbedPsiUtil.getContainingDeclaration(declaration);
+  boolean isTopLevel=parentDeclaration == null;
+  if (isTopLevel) {
+    KtFile ktFile=(KtFile)declaration.getContainingFile();
+    FqName fqName=ktFile.getPackageFqName();
+    LazyPackageDescriptor packageDescriptor=topLevelDescriptorProvider.getPackageFragment(fqName);
+    if (packageDescriptor == null) {
+      if (topLevelDescriptorProvider instanceof LazyClassContext) {
+        ((LazyClassContext)topLevelDescriptorProvider).getDeclarationProviderFactory().diagnoseMissingPackageFragment(ktFile);
+      }
+ else {
+        throw new IllegalStateException("Cannot find package fragment for file " + ktFile.getName() + " with package "+ fqName);
+      }
+    }
+    return packageDescriptor.getMemberScope();
+  }
+ else {
+    if (parentDeclaration instanceof KtClassOrObject) {
+      return getClassDescriptor((KtClassOrObject)parentDeclaration,location).getUnsubstitutedMemberScope();
+    }
+ else     if (parentDeclaration instanceof KtScript) {
+      return getScriptDescriptor((KtScript)parentDeclaration,location).getUnsubstitutedMemberScope();
+    }
+ else {
+      throw new IllegalStateException("Don't call this method for local declarations: " + declaration + "\n"+ PsiUtilsKt.getElementTextWithContext(declaration));
+    }
+  }
 }
