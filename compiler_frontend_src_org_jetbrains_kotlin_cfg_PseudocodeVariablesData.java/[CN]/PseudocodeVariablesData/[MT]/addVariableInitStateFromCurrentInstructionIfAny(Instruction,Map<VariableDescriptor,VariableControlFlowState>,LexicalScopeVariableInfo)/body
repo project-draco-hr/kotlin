@@ -1,4 +1,16 @@
 {
+  if (instruction instanceof MagicInstruction) {
+    MagicInstruction magicInstruction=(MagicInstruction)instruction;
+    if (magicInstruction.getKind() == MagicKind.EXHAUSTIVE_WHEN_ELSE) {
+      Map<VariableDescriptor,VariableControlFlowState> exitInstructionData=Maps.newHashMap(enterInstructionData);
+      for (      Map.Entry<VariableDescriptor,VariableControlFlowState> entry : enterInstructionData.entrySet()) {
+        if (!entry.getValue().definitelyInitialized()) {
+          exitInstructionData.put(entry.getKey(),VariableControlFlowState.createInitializedExhaustively(entry.getValue().isDeclared));
+        }
+      }
+      return exitInstructionData;
+    }
+  }
   if (!(instruction instanceof WriteValueInstruction) && !(instruction instanceof VariableDeclarationInstruction)) {
     return enterInstructionData;
   }

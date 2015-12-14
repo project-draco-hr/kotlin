@@ -1,6 +1,14 @@
 {
   Set<Instruction> visited=Sets.newHashSet();
-  PseudocodeTraverserKt.traverseFollowingInstructions(getEnterInstruction(),visited,FORWARD,null);
+  PseudocodeTraverserKt.traverseFollowingInstructions(getEnterInstruction(),visited,FORWARD,new Function1<Instruction,TraverseInstructionResult>(){
+    @Override public TraverseInstructionResult invoke(    Instruction instruction){
+      if (instruction instanceof MagicInstruction && ((MagicInstruction)instruction).getKind() == MagicKind.EXHAUSTIVE_WHEN_ELSE) {
+        return TraverseInstructionResult.SKIP;
+      }
+      return TraverseInstructionResult.CONTINUE;
+    }
+  }
+);
   if (!visited.contains(getExitInstruction())) {
     visited.add(getExitInstruction());
   }
