@@ -1,2 +1,15 @@
 {
+  FunctionDescriptor fd=accessibleFunctionDescriptor(resolvedCall);
+  ClassDescriptor superCallTarget=getSuperCallTarget(call);
+  fd=context.getAccessorForSuperCallIfNeeded(fd,superCallTarget);
+  Collection<ExpressionCodegenExtension> codegenExtensions=ExpressionCodegenExtension.Companion.getInstances(state.getProject());
+  if (!codegenExtensions.isEmpty()) {
+    ExpressionCodegenExtension.Context context=new ExpressionCodegenExtension.Context(typeMapper,v);
+    for (    ExpressionCodegenExtension extension : codegenExtensions) {
+      StackValue stackValue=extension.applyFunction(receiver,resolvedCall,context);
+      if (stackValue != null)       return stackValue;
+    }
+  }
+  Callable callable=resolveToCallable(fd,superCallTarget != null,resolvedCall);
+  return callable.invokeMethodWithArguments(resolvedCall,receiver,this);
 }
