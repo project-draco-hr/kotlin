@@ -1,0 +1,19 @@
+{
+  if (KotlinTestUtils.isAllFilesPresentTest(getTestName(false)))   return super.configureLocalInspectionTools();
+  String testRoot=KotlinTestUtils.getTestsRoot(this.getClass());
+  String configFileText=FilesKt.readText(new File(testRoot,getTestName(true) + ".kt"),Charset.defaultCharset());
+  List<String> toolsStrings=InTextDirectivesUtils.findListWithPrefixes(configFileText,"TOOL:");
+  if (toolsStrings.isEmpty())   return super.configureLocalInspectionTools();
+  return ArrayUtil.toObjectArray(CollectionsKt.map(toolsStrings,new Function1<String,LocalInspectionTool>(){
+    @Override public LocalInspectionTool invoke(    String toolFqName){
+      try {
+        Class<?> aClass=Class.forName(toolFqName);
+        return (LocalInspectionTool)aClass.newInstance();
+      }
+ catch (      Exception e) {
+        throw new IllegalArgumentException("Failed to create inspection for key '" + toolFqName + "'",e);
+      }
+    }
+  }
+),LocalInspectionTool.class);
+}
