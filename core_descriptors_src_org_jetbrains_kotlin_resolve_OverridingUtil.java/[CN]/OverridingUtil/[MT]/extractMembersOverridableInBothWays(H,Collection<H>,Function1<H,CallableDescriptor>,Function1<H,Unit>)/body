@@ -1,0 +1,23 @@
+{
+  Collection<H> overridable=new ArrayList<H>();
+  overridable.add(overrider);
+  CallableDescriptor overriderDescriptor=descriptorByHandle.invoke(overrider);
+  for (Iterator<H> iterator=extractFrom.iterator(); iterator.hasNext(); ) {
+    H candidate=iterator.next();
+    CallableDescriptor candidateDescriptor=descriptorByHandle.invoke(candidate);
+    if (overrider == candidate) {
+      iterator.remove();
+      continue;
+    }
+    OverrideCompatibilityInfo.Result finalResult=getBothWaysOverridability(overriderDescriptor,candidateDescriptor);
+    if (finalResult == OVERRIDABLE) {
+      overridable.add(candidate);
+      iterator.remove();
+    }
+ else     if (finalResult == CONFLICT) {
+      onConflict.invoke(candidate);
+      iterator.remove();
+    }
+  }
+  return overridable;
+}
