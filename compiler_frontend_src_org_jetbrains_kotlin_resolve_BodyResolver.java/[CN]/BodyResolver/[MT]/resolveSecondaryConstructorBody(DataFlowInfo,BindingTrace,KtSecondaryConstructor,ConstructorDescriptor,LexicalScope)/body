@@ -1,10 +1,14 @@
 {
   ForceResolveUtil.forceResolveAllContents(descriptor.getAnnotations());
-  final CallChecker callChecker=new ConstructorHeaderCallChecker(descriptor);
   resolveFunctionBody(outerDataFlowInfo,trace,constructor,descriptor,declaringScope,new Function1<LexicalScope,DataFlowInfo>(){
     @Override public DataFlowInfo invoke(    @NotNull LexicalScope headerInnerScope){
-      return resolveSecondaryConstructorDelegationCall(outerDataFlowInfo,trace,headerInnerScope,constructor,descriptor,callChecker);
+      return resolveSecondaryConstructorDelegationCall(outerDataFlowInfo,trace,headerInnerScope,constructor,descriptor);
     }
   }
-,callChecker);
+,new Function1<LexicalScope,LexicalScope>(){
+    @Override public LexicalScope invoke(    LexicalScope scope){
+      return new LexicalScopeImpl(scope,descriptor,scope.isOwnerDescriptorAccessibleByLabel(),scope.getImplicitReceiver(),LexicalScopeKind.CONSTRUCTOR_HEADER);
+    }
+  }
+);
 }
