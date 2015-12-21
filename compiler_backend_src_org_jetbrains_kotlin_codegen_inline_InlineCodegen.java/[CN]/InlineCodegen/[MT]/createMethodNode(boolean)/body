@@ -10,7 +10,11 @@
   SMAPAndMethodNode nodeAndSMAP;
   if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
     JetTypeMapper.ContainingClassesInfo containingClasses=typeMapper.getContainingClassesForDeserializedCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor);
-    VirtualFile file=InlineCodegenUtil.getVirtualFileForCallable(containingClasses.getImplClassId(),state);
+    ClassId containerId=containingClasses.getImplClassId();
+    VirtualFile file=InlineCodegenUtil.findVirtualFile(state,containerId);
+    if (file == null) {
+      throw new IllegalStateException("Couldn't find declaration file for " + containerId);
+    }
     nodeAndSMAP=InlineCodegenUtil.getMethodNode(file.contentsToByteArray(),asmMethod.getName(),asmMethod.getDescriptor(),containingClasses.getFacadeClassId());
     if (nodeAndSMAP == null) {
       throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
