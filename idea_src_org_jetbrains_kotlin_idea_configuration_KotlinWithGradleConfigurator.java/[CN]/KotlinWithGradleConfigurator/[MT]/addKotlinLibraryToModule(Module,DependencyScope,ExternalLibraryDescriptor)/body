@@ -1,0 +1,41 @@
+{
+  String gradleFilePath=getDefaultPathToBuildGradleFile(module);
+  final GroovyFile gradleFile=getBuildGradleFile(module.getProject(),gradleFilePath);
+  if (gradleFile != null && canConfigureFile(gradleFile)) {
+    new WriteCommandAction(gradleFile.getProject()){
+      @Override protected void run(      @NotNull Result result){
+        String groovyScope;
+switch (scope) {
+case COMPILE:
+          groovyScope="compile";
+        break;
+case TEST:
+      if (KotlinPluginUtil.isAndroidGradleModule(module)) {
+        groovyScope="compile";
+      }
+ else {
+        groovyScope="testCompile";
+      }
+    break;
+case RUNTIME:
+  groovyScope="runtime";
+break;
+case PROVIDED:
+groovyScope="compile";
+break;
+default :
+groovyScope="compile";
+}
+String dependencyString=String.format("%s \"%s:%s:%s\"",groovyScope,libraryDescriptor.getLibraryGroupId(),libraryDescriptor.getLibraryArtifactId(),libraryDescriptor.getMaxVersion());
+GrClosableBlock dependenciesBlock=getDependenciesBlock(gradleFile);
+addLastExpressionInBlockIfNeeded(dependencyString,dependenciesBlock);
+CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(gradleFile);
+}
+}
+.execute();
+VirtualFile virtualFile=gradleFile.getVirtualFile();
+if (virtualFile != null) {
+showInfoNotification(gradleFile.getProject(),virtualFile.getPath() + " was modified");
+}
+}
+}

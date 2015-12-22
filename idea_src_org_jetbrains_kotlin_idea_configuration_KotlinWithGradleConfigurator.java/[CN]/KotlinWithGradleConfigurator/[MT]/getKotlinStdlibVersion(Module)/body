@@ -1,0 +1,21 @@
+{
+  String gradleFilePath=getDefaultPathToBuildGradleFile(module);
+  GroovyFile gradleFile=getBuildGradleFile(module.getProject(),gradleFilePath);
+  if (gradleFile == null)   return null;
+  String versionProperty="$kotlin_version";
+  GrClosableBlock block=getBuildScriptBlock(gradleFile);
+  if (block.getText().contains("ext.kotlin_version = ")) {
+    return versionProperty;
+  }
+  GrStatement[] dependencies=getDependenciesBlock(gradleFile).getStatements();
+  String stdlibArtifactPrefix="org.jetbrains.kotlin:kotlin-stdlib:";
+  for (  GrStatement dependency : dependencies) {
+    String dependencyText=dependency.getText();
+    int startIndex=dependencyText.indexOf(stdlibArtifactPrefix) + stdlibArtifactPrefix.length();
+    int endIndex=dependencyText.length() - 1;
+    if (startIndex != -1 && endIndex != -1) {
+      return dependencyText.substring(startIndex,endIndex);
+    }
+  }
+  return null;
+}
