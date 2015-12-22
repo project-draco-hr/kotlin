@@ -1,5 +1,5 @@
 {
-  final ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(scope).replaceContextDependency(INDEPENDENT);
+  ExpressionTypingContext context=contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceScope(scope).replaceContextDependency(INDEPENDENT);
   KtExpression leftOperand=expression.getLeft();
   if (leftOperand instanceof KtAnnotatedExpression) {
     components.annotationResolver.resolveAnnotationsWithArguments(scope,((KtAnnotatedExpression)leftOperand).getAnnotationEntries(),context.trace);
@@ -14,15 +14,15 @@
     return typeInfo.replaceType(checkAssignmentType(typeInfo.getType(),expression,contextWithExpectedType));
   }
   KotlinTypeInfo leftInfo=ExpressionTypingUtils.getTypeInfoOrNullType(left,context,facade);
-  KotlinType leftType=leftInfo.getType();
+  KotlinType expectedType=refineTypeFromPropertySetterIfPossible(context.trace.getBindingContext(),leftOperand,leftInfo.getType());
   DataFlowInfo dataFlowInfo=leftInfo.getDataFlowInfo();
   KotlinTypeInfo resultInfo;
   if (right != null) {
-    resultInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(leftType));
+    resultInfo=facade.getTypeInfo(right,context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(expectedType));
     dataFlowInfo=resultInfo.getDataFlowInfo();
     KotlinType rightType=resultInfo.getType();
-    if (left != null && leftType != null && rightType != null) {
-      DataFlowValue leftValue=DataFlowValueFactory.createDataFlowValue(left,leftType,context);
+    if (left != null && expectedType != null && rightType != null) {
+      DataFlowValue leftValue=DataFlowValueFactory.createDataFlowValue(left,expectedType,context);
       DataFlowValue rightValue=DataFlowValueFactory.createDataFlowValue(right,rightType,context);
       resultInfo=resultInfo.replaceDataFlowInfo(dataFlowInfo.assign(leftValue,rightValue));
     }
@@ -30,7 +30,7 @@
  else {
     resultInfo=leftInfo;
   }
-  if (leftType != null && leftOperand != null) {
+  if (expectedType != null && leftOperand != null) {
     basic.checkLValue(context.trace,context,leftOperand,right);
   }
   return resultInfo.replaceType(components.dataFlowAnalyzer.checkStatementType(expression,contextWithExpectedType));
