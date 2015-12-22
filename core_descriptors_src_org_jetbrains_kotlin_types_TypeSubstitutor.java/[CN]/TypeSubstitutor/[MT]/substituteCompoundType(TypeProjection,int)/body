@@ -1,17 +1,10 @@
 {
-  final KotlinType type=originalProjection.getType();
+  KotlinType type=originalProjection.getType();
   Variance projectionKind=originalProjection.getProjectionKind();
   if (type.getConstructor().getDeclarationDescriptor() instanceof TypeParameterDescriptor) {
     return originalProjection;
   }
   List<TypeProjection> substitutedArguments=substituteTypeArguments(type.getConstructor().getParameters(),type.getArguments(),recursionDepth);
-  TypeSubstitution substitutionFilteringTypeParameters=new DelegatedTypeSubstitution(substitution){
-    private final Collection<TypeConstructor> containedOrCapturedTypeParameters=TypeUtilsKt.getContainedAndCapturedTypeParameterConstructors(type);
-    @Nullable @Override public TypeProjection get(    @NotNull KotlinType key){
-      return containedOrCapturedTypeParameters.contains(key.getConstructor()) ? substitution.get(key) : null;
-    }
-  }
-;
-  KotlinType substitutedType=KotlinTypeImpl.create(substitution.filterAnnotations(type.getAnnotations()),type.getConstructor(),type.isMarkedNullable(),substitutedArguments,substitutionFilteringTypeParameters,new SubstitutingScope(type.getMemberScope(),create(substitutionFilteringTypeParameters)),type.getCapabilities());
+  KotlinType substitutedType=TypeSubstitutionKt.replace(type,substitutedArguments,substitution.filterAnnotations(type.getAnnotations()));
   return new TypeProjectionImpl(projectionKind,substitutedType);
 }
