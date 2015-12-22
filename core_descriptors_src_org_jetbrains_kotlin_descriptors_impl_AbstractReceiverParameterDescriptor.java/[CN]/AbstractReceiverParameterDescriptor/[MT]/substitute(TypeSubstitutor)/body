@@ -1,6 +1,12 @@
 {
   if (substitutor.isEmpty())   return this;
-  KotlinType substitutedType=substitutor.substitute(getType(),Variance.INVARIANT);
+  KotlinType substitutedType;
+  if (getContainingDeclaration() instanceof ClassDescriptor) {
+    substitutedType=substitutor.substitute(getType(),Variance.OUT_VARIANCE);
+  }
+ else {
+    substitutedType=substitutor.substitute(getType(),Variance.INVARIANT);
+  }
   if (substitutedType == null)   return null;
   return new ReceiverParameterDescriptorImpl(getContainingDeclaration(),new TransientReceiver(substitutedType));
 }
