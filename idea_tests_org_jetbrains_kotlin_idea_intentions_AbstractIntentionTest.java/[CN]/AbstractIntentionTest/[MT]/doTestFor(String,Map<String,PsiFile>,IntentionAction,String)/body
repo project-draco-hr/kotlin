@@ -16,15 +16,20 @@
         }
       }
 );
-      if (shouldFailString.isEmpty()) {
-        for (        Map.Entry<String,PsiFile> entry : pathToFile.entrySet()) {
-          myFile=entry.getValue();
-          String canonicalPathToExpectedFile=PathUtil.getCanonicalPath(entry.getKey() + ".after");
-          try {
-            checkResultByFile(canonicalPathToExpectedFile);
+      if (shouldFailString == null) {
+        for (        Map.Entry<String,PsiFile> entry : pathToFiles.entrySet()) {
+          String filePath=entry.getKey();
+          String canonicalPathToExpectedFile=PathUtil.getCanonicalPath(filePath + ".after");
+          if (filePath.equals(mainFilePath)) {
+            try {
+              checkResultByFile(canonicalPathToExpectedFile);
+            }
+ catch (            ComparisonFailure e) {
+              KotlinTestUtils.assertEqualsToFile(new File(canonicalPathToExpectedFile),getEditor().getDocument().getText());
+            }
           }
- catch (          ComparisonFailure e) {
-            KotlinTestUtils.assertEqualsToFile(new File(canonicalPathToExpectedFile),getEditor().getDocument().getText());
+ else {
+            KotlinTestUtils.assertEqualsToFile(new File(canonicalPathToExpectedFile),entry.getValue().getText());
           }
         }
       }
