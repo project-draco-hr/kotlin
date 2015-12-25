@@ -16,42 +16,16 @@
   }
   Type type=typeMapper.mapType(jetType);
   ClassBuilder builder=v;
-  boolean hasJvmFieldAnnotation=hasJvmFieldAnnotation(propertyDescriptor);
   FieldOwnerContext backingFieldContext=context;
-  boolean takeVisibilityFromDescriptor=propertyDescriptor.isLateInit() || propertyDescriptor.isConst();
-  boolean takeVisibilityFromSetter=propertyDescriptor.isLateInit() && propertyDescriptor.getSetter() != null;
   if (AsmUtil.isInstancePropertyWithStaticBackingField(propertyDescriptor)) {
     modifiers|=ACC_STATIC;
-    if (takeVisibilityFromDescriptor) {
-      modifiers|=getVisibilityAccessFlag(propertyDescriptor);
-    }
- else     if (hasJvmFieldAnnotation && !isDelegate) {
-      modifiers|=getDefaultVisibilityFlag(propertyDescriptor.getVisibility());
-    }
- else {
-      modifiers|=getVisibilityForSpecialPropertyBackingField(propertyDescriptor,isDelegate);
-    }
     if (JvmAbi.isPropertyWithBackingFieldInOuterClass(propertyDescriptor)) {
       ImplementationBodyCodegen codegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
       builder=codegen.v;
       backingFieldContext=codegen.context;
     }
-    if (isObject(propertyDescriptor.getContainingDeclaration()) && !hasJvmFieldAnnotation && !propertyDescriptor.isConst()&& (modifiers & ACC_PRIVATE) == 0) {
-      modifiers|=ACC_DEPRECATED;
-    }
   }
- else   if (takeVisibilityFromSetter) {
-    modifiers|=getVisibilityAccessFlag(propertyDescriptor.getSetter());
-  }
- else   if (takeVisibilityFromDescriptor) {
-    modifiers|=getVisibilityAccessFlag(propertyDescriptor);
-  }
- else   if (!isDelegate && hasJvmFieldAnnotation) {
-    modifiers|=getDefaultVisibilityFlag(propertyDescriptor.getVisibility());
-  }
- else {
-    modifiers|=ACC_PRIVATE;
-  }
+  modifiers|=getVisibilityForBackingField(propertyDescriptor,isDelegate);
   if (AsmUtil.isPropertyWithBackingFieldCopyInOuterClass(propertyDescriptor)) {
     ImplementationBodyCodegen parentBodyCodegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
     parentBodyCodegen.addCompanionObjectPropertyToCopy(propertyDescriptor,defaultValue);
