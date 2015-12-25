@@ -1,22 +1,22 @@
 {
   PseudocodeVariablesData pseudocodeVariablesData=new PseudocodeVariablesData(pseudocode.getRootPseudocode(),bindingContext);
-  final Map<Instruction,Edges<Map<VariableDescriptor,VariableControlFlowState>>> variableInitializers=pseudocodeVariablesData.getVariableInitializers();
-  final Map<Instruction,Edges<Map<VariableDescriptor,VariableUseState>>> useStatusData=pseudocodeVariablesData.getVariableUseStatusData();
+  final Map<Instruction,Edges<InitControlFlowInfo>> variableInitializers=pseudocodeVariablesData.getVariableInitializers();
+  final Map<Instruction,Edges<UseControlFlowInfo>> useStatusData=pseudocodeVariablesData.getVariableUseStatusData();
   final String initPrefix="    INIT:";
   final String usePrefix="    USE:";
   final int initializersColumnWidth=countDataColumnWidth(initPrefix,pseudocode.getInstructionsIncludingDeadCode(),variableInitializers);
   dumpInstructions(pseudocode,out,new Function3<Instruction,Instruction,Instruction,String>(){
     @Override public String invoke(    Instruction instruction,    Instruction next,    Instruction prev){
       StringBuilder result=new StringBuilder();
-      Edges<Map<VariableDescriptor,VariableControlFlowState>> initializersEdges=variableInitializers.get(instruction);
-      Edges<Map<VariableDescriptor,VariableControlFlowState>> previousInitializersEdges=variableInitializers.get(prev);
+      Edges<InitControlFlowInfo> initializersEdges=variableInitializers.get(instruction);
+      Edges<InitControlFlowInfo> previousInitializersEdges=variableInitializers.get(prev);
       String initializersData="";
       if (initializersEdges != null && !initializersEdges.equals(previousInitializersEdges)) {
         initializersData=dumpEdgesData(initPrefix,initializersEdges);
       }
       result.append(String.format("%1$-" + initializersColumnWidth + "s",initializersData));
-      Edges<Map<VariableDescriptor,VariableUseState>> useStatusEdges=useStatusData.get(instruction);
-      Edges<Map<VariableDescriptor,VariableUseState>> nextUseStatusEdges=useStatusData.get(next);
+      Edges<UseControlFlowInfo> useStatusEdges=useStatusData.get(instruction);
+      Edges<UseControlFlowInfo> nextUseStatusEdges=useStatusData.get(next);
       if (useStatusEdges != null && !useStatusEdges.equals(nextUseStatusEdges)) {
         result.append(dumpEdgesData(usePrefix,useStatusEdges));
       }
