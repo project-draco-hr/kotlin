@@ -1,3 +1,17 @@
 {
-  return new JavaVariableFindUsagesOptions(project);
+  KotlinFunctionFindUsagesOptions options=new KotlinFunctionFindUsagesOptions(project);
+  options.isUsages=false;
+  for (  String s : InTextDirectivesUtils.findListWithPrefixes(text,"// OPTIONS: ")) {
+    if (parseCommonOptions(options,s))     continue;
+    if (s.equals("overrides")) {
+      options.isOverridingMethods=true;
+      options.isImplementingMethods=true;
+    }
+ else     if (s.equals("overloadUsages")) {
+      options.isIncludeOverloadUsages=true;
+      options.isUsages=true;
+    }
+ else     fail("Invalid option: " + s);
+  }
+  return options;
 }
