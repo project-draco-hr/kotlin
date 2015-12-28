@@ -1,9 +1,18 @@
 {
   writeKotlinSyntheticClassAnnotation(v,state);
-  DescriptorSerializer serializer=DescriptorSerializer.createForLambda(new JvmSerializerExtension(v.getSerializationBindings(),typeMapper,state.getUseTypeTableInSerializer()));
-  ProtoBuf.Function functionProto=serializer.functionProto(funDescriptor).build();
+  final DescriptorSerializer serializer=DescriptorSerializer.createForLambda(new JvmSerializerExtension(v.getSerializationBindings(),typeMapper,state.getUseTypeTableInSerializer()));
+  final ProtoBuf.Function functionProto=serializer.functionProto(funDescriptor).build();
+  WriteAnnotationUtilKt.writeKotlinMetadata(v,KotlinClassHeader.Kind.SYNTHETIC_CLASS,new Function1<AnnotationVisitor,Unit>(){
+    @Override public Unit invoke(    AnnotationVisitor av){
+      writeAnnotationData(av,serializer,functionProto,false);
+      av.visit(JvmAnnotationNames.SYNTHETIC_CLASS_KIND_FIELD_NAME,KotlinClassHeader.SyntheticClassKind.FUNCTION.getId());
+      return Unit.INSTANCE;
+    }
+  }
+);
   AnnotationVisitor av=v.getVisitor().visitAnnotation(asmDescByFqNameWithoutInnerClasses(JvmAnnotationNames.KOTLIN_FUNCTION),true);
-  writeAnnotationData(av,serializer,functionProto);
+  writeAbiVersion(av);
+  writeAnnotationData(av,serializer,functionProto,true);
   writeModuleName(av,state);
   av.visitEnd();
 }
