@@ -1,4 +1,7 @@
 {
+  if (declaration instanceof KtPropertyAccessor) {
+    return getPredefinedJvmInternalName(((KtPropertyAccessor)declaration).getProperty(),fileClassesProvider);
+  }
   KtDeclaration parentDeclaration=KtStubbedPsiUtil.getContainingDeclaration(declaration);
   String parentInternalName;
   if (parentDeclaration != null) {
@@ -9,8 +12,8 @@
   }
  else {
     KtFile containingFile=declaration.getContainingKtFile();
-    if (declaration instanceof KtNamedFunction) {
-      Name name=((KtNamedFunction)declaration).getNameAsName();
+    if (declaration instanceof KtNamedFunction || declaration instanceof KtProperty) {
+      Name name=((KtNamedDeclaration)declaration).getNameAsName();
       return name == null ? null : FileClasses.getFileClassInternalName(fileClassesProvider,containingFile) + "$" + name.asString();
     }
     parentInternalName=AsmUtil.internalNameByFqNameWithoutInnerClasses(containingFile.getPackageFqName());
