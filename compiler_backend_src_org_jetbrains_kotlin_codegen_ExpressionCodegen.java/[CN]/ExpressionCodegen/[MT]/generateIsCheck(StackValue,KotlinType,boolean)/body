@@ -5,7 +5,12 @@
       if (leaveExpressionOnStack) {
         v.dup();
       }
-      CodegenUtilKt.generateIsCheck(v,kotlinType.isMarkedNullable() && !TypeUtils.isReifiedTypeParameter(kotlinType),new Function1<InstructionAdapter,Unit>(){
+      if (TypeUtils.isReifiedTypeParameter(kotlinType)) {
+        putReifiedOperationMarkerIfTypeIsReifiedParameter(kotlinType,ReifiedTypeInliner.OperationKind.IS);
+        v.instanceOf(boxType(asmType(kotlinType)));
+        return null;
+      }
+      CodegenUtilKt.generateIsCheck(v,kotlinType.isMarkedNullable(),new Function1<InstructionAdapter,Unit>(){
         @Override public Unit invoke(        InstructionAdapter adapter){
           generateInstanceOfInstruction(kotlinType);
           return Unit.INSTANCE;
