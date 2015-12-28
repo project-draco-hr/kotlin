@@ -5,18 +5,13 @@
       if (leaveExpressionOnStack) {
         v.dup();
       }
+      Type type=boxType(asmType(kotlinType));
       if (TypeUtils.isReifiedTypeParameter(kotlinType)) {
         putReifiedOperationMarkerIfTypeIsReifiedParameter(kotlinType,ReifiedTypeInliner.OperationKind.IS);
-        v.instanceOf(boxType(asmType(kotlinType)));
+        v.instanceOf(type);
         return null;
       }
-      CodegenUtilKt.generateIsCheck(v,kotlinType.isMarkedNullable(),new Function1<InstructionAdapter,Unit>(){
-        @Override public Unit invoke(        InstructionAdapter adapter){
-          generateInstanceOfInstruction(kotlinType);
-          return Unit.INSTANCE;
-        }
-      }
-);
+      CodegenUtilKt.generateIsCheck(v,kotlinType,type);
       return null;
     }
   }
