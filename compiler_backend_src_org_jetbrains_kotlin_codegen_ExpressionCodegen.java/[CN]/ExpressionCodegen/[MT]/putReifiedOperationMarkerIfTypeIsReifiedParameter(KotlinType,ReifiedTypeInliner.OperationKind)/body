@@ -4,8 +4,9 @@
     if (typeParameterDescriptor.getContainingDeclaration() != context.getContextDescriptor()) {
       parentCodegen.getReifiedTypeParametersUsages().addUsedReifiedParameter(typeParameterDescriptor.getName().asString());
     }
-    boolean putNullableFlag=ReifiedTypeInliner.isNullableMarkerInstruction(markerMethodName) && type.isMarkedNullable();
+    v.iconst(operationKind.getId());
+    boolean putNullableFlag=operationKind.isTypeNullabilityAware() && type.isMarkedNullable();
     v.visitLdcInsn(typeParameterDescriptor.getName().asString() + (putNullableFlag ? "?" : ""));
-    v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,markerMethodName,Type.getMethodDescriptor(Type.VOID_TYPE,Type.getType(String.class)),false);
+    v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,ReifiedTypeInliner.REIFIED_OPERATION_MARKER_METHOD_NAME,Type.getMethodDescriptor(Type.VOID_TYPE,Type.INT_TYPE,Type.getType(String.class)),false);
   }
 }
