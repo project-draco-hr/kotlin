@@ -1,2 +1,88 @@
 {
+  final List<InnerClassNode> innerClassNodes=new ArrayList<InnerClassNode>();
+  ClassBuilder classBuilder=createClassBuilder();
+  final List<MethodNode> methodsToTransform=new ArrayList<MethodNode>();
+  reader.accept(new ClassVisitor(InlineCodegenUtil.API,classBuilder.getVisitor()){
+    @Override public void visit(    int version,    int access,    @NotNull String name,    String signature,    String superName,    String[] interfaces){
+      InlineCodegenUtil.assertVersionNotGreaterThanJava6(version);
+      super.visit(version,access,name,signature,superName,interfaces);
+    }
+    @Override public void visitInnerClass(    @NotNull String name,    String outerName,    String innerName,    int access){
+      innerClassNodes.add(new InnerClassNode(name,outerName,innerName,access));
+    }
+    @Override public MethodVisitor visitMethod(    int access,    @NotNull String name,    @NotNull String desc,    String signature,    String[] exceptions){
+      MethodNode node=new MethodNode(access,name,desc,signature,exceptions);
+      if (name.equals("<init>")) {
+        if (constructor != null)         throw new RuntimeException("Lambda, SAM or anonymous object should have only one constructor");
+        constructor=node;
+      }
+ else {
+        methodsToTransform.add(node);
+      }
+      return node;
+    }
+    @Override public FieldVisitor visitField(    int access,    @NotNull String name,    @NotNull String desc,    String signature,    Object value){
+      addUniqueField(name);
+      if (InlineCodegenUtil.isCapturedFieldName(name)) {
+        return null;
+      }
+ else {
+        return super.visitField(access,name,desc,signature,value);
+      }
+    }
+    @Override public void visitSource(    String source,    String debug){
+      sourceInfo=source;
+      debugInfo=debug;
+    }
+    @Override public void visitEnd(){
+    }
+  }
+,ClassReader.SKIP_FRAMES);
+  if (!inliningContext.isInliningLambda) {
+    if (debugInfo != null && !debugInfo.isEmpty()) {
+      sourceMapper=SourceMapper.Companion.createFromSmap(SMAPParser.parse(debugInfo));
+    }
+ else {
+      sourceMapper=IdenticalSourceMapper.INSTANCE;
+    }
+    if (sourceInfo != null && !InlineCodegenUtil.GENERATE_SMAP) {
+      classBuilder.visitSource(sourceInfo,debugInfo);
+    }
+  }
+ else {
+    if (sourceInfo != null) {
+      classBuilder.visitSource(sourceInfo,debugInfo);
+    }
+    sourceMapper=IdenticalSourceMapper.INSTANCE;
+  }
+  ParametersBuilder allCapturedParamBuilder=ParametersBuilder.newBuilder();
+  ParametersBuilder constructorParamBuilder=ParametersBuilder.newBuilder();
+  List<CapturedParamInfo> additionalFakeParams=extractParametersMappingAndPatchConstructor(constructor,allCapturedParamBuilder,constructorParamBuilder,anonymousObjectGen,parentRemapper);
+  List<MethodVisitor> deferringMethods=new ArrayList<MethodVisitor>();
+  for (  MethodNode next : methodsToTransform) {
+    MethodVisitor deferringVisitor=newMethod(classBuilder,next);
+    InlineResult funResult=inlineMethodAndUpdateGlobalResult(anonymousObjectGen,parentRemapper,deferringVisitor,next,allCapturedParamBuilder,false);
+    Type returnType=Type.getReturnType(next.desc);
+    if (!AsmUtil.isPrimitive(returnType)) {
+      String oldFunReturnType=returnType.getInternalName();
+      String newFunReturnType=funResult.getChangedTypes().get(oldFunReturnType);
+      if (newFunReturnType != null) {
+        inliningContext.typeRemapper.addAdditionalMappings(oldFunReturnType,newFunReturnType);
+      }
+    }
+    deferringMethods.add(deferringVisitor);
+  }
+  for (  MethodVisitor method : deferringMethods) {
+    method.visitEnd();
+  }
+  generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,anonymousObjectGen,parentRemapper,additionalFakeParams);
+  SourceMapper.Companion.flushToClassBuilder(sourceMapper,classBuilder);
+  ClassVisitor visitor=classBuilder.getVisitor();
+  for (  InnerClassNode node : innerClassNodes) {
+    visitor.visitInnerClass(node.name,node.outerName,node.innerName,node.access);
+  }
+  writeOuterInfo(visitor);
+  classBuilder.done();
+  anonymousObjectGen.setNewLambdaType(newLambdaType);
+  return transformationResult;
 }
