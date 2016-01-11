@@ -35,7 +35,6 @@
   KotlinTypeInfo resultTypeInfo=receiverTypeInfo;
   boolean unconditional=true;
   DataFlowInfo unconditionalDataFlowInfo=receiverDataFlowInfo;
-  ExpressionTypingContext contextForSelector=currentContext;
   for (  CallExpressionElement element : elementChain) {
     if (receiverType == null) {
       receiverType=ErrorUtils.createErrorType("Type for " + expression.getText());
@@ -43,12 +42,12 @@
     QualifierReceiver qualifierReceiver=(QualifierReceiver)trace.get(BindingContext.QUALIFIER,element.getReceiver());
     Receiver receiver=qualifierReceiver == null ? ExpressionReceiver.Companion.create(element.getReceiver(),receiverType,trace.getBindingContext()) : qualifierReceiver;
     boolean lastStage=element.getQualified() == expression;
-    ExpressionTypingContext baseContext=lastStage ? context : currentContext;
+    ExpressionTypingContext contextForSelector=lastStage ? context : currentContext;
     if (TypeUtils.isNullableType(receiverType) && !element.getSafe()) {
-      contextForSelector=baseContext.replaceDataFlowInfo(unconditionalDataFlowInfo);
+      contextForSelector=contextForSelector.replaceDataFlowInfo(unconditionalDataFlowInfo);
     }
  else {
-      contextForSelector=baseContext.replaceDataFlowInfo(receiverDataFlowInfo);
+      contextForSelector=contextForSelector.replaceDataFlowInfo(receiverDataFlowInfo);
     }
     if (receiver instanceof ReceiverValue) {
       DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue((ReceiverValue)receiver,context);
