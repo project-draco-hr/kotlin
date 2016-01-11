@@ -1,0 +1,33 @@
+{
+  boolean[] result=new boolean[1];
+  TemporaryTraceAndCache temporaryForVariable=TemporaryTraceAndCache.create(context,"trace to resolve as variable",nameExpression);
+  KotlinType type=getVariableType(nameExpression,receiver,callOperationNode,context.replaceTraceAndCache(temporaryForVariable),result);
+  if (result[0]) {
+    temporaryForVariable.commit();
+    return TypeInfoFactoryKt.createTypeInfo(type,initialDataFlowInfoForArguments);
+  }
+  Call call=CallMaker.makeCall(nameExpression,receiver,callOperationNode,nameExpression,Collections.<ValueArgument>emptyList());
+  TemporaryTraceAndCache temporaryForFunction=TemporaryTraceAndCache.create(context,"trace to resolve as function",nameExpression);
+  ResolutionContext newContext=context.replaceTraceAndCache(temporaryForFunction);
+  ResolvedCall<FunctionDescriptor> resolvedCall=getResolvedCallForFunction(call,newContext,CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS,result,initialDataFlowInfoForArguments);
+  if (result[0]) {
+    FunctionDescriptor functionDescriptor=resolvedCall != null ? resolvedCall.getResultingDescriptor() : null;
+    if (!(functionDescriptor instanceof ConstructorDescriptor)) {
+      temporaryForFunction.commit();
+      boolean hasValueParameters=functionDescriptor == null || functionDescriptor.getValueParameters().size() > 0;
+      context.trace.report(FUNCTION_CALL_EXPECTED.on(nameExpression,nameExpression,hasValueParameters));
+      type=functionDescriptor != null ? functionDescriptor.getReturnType() : null;
+      return TypeInfoFactoryKt.createTypeInfo(type,context);
+    }
+  }
+  TemporaryTraceAndCache temporaryForQualifier=TemporaryTraceAndCache.create(context,"trace to resolve as qualifier",nameExpression);
+  ExpressionTypingContext contextForQualifier=context.replaceTraceAndCache(temporaryForQualifier);
+  Qualifier qualifier=qualifiedExpressionResolver.resolveNameExpressionAsQualifierForDiagnostics(nameExpression,receiver,contextForQualifier);
+  if (qualifier != null) {
+    QualifiedExpressionResolveUtilKt.resolveQualifierAsStandaloneExpression(qualifier,contextForQualifier,symbolUsageValidator);
+    temporaryForQualifier.commit();
+    return TypeInfoFactoryKt.noTypeInfo(context);
+  }
+  temporaryForVariable.commit();
+  return TypeInfoFactoryKt.noTypeInfo(context);
+}

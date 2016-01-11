@@ -49,12 +49,12 @@
  else {
       contextForSelector=contextForSelector.replaceDataFlowInfo(receiverDataFlowInfo);
     }
+    DataFlowInfo initialDataFlowInfoForArguments=contextForSelector.dataFlowInfo;
     if (receiver instanceof ReceiverValue) {
       DataFlowValue receiverDataFlowValue=DataFlowValueFactory.createDataFlowValue((ReceiverValue)receiver,context);
       if (element.getSafe()) {
-        DataFlowInfo dataFlowInfo=contextForSelector.dataFlowInfo;
-        if (dataFlowInfo.getPredictableNullability(receiverDataFlowValue).canBeNull()) {
-          contextForSelector=contextForSelector.replaceDataFlowInfo(dataFlowInfo.disequate(receiverDataFlowValue,DataFlowValue.nullValue(builtIns)));
+        if (initialDataFlowInfoForArguments.getPredictableNullability(receiverDataFlowValue).canBeNull()) {
+          initialDataFlowInfoForArguments=initialDataFlowInfoForArguments.disequate(receiverDataFlowValue,DataFlowValue.nullValue(builtIns));
         }
  else {
           reportUnnecessarySafeCall(trace,receiverType,element.getNode(),receiver);
@@ -62,7 +62,7 @@
       }
     }
     KtExpression selectorExpression=element.getSelector();
-    KotlinTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,element.getNode(),selectorExpression,contextForSelector);
+    KotlinTypeInfo selectorReturnTypeInfo=getSelectorReturnTypeInfo(receiver,element.getNode(),selectorExpression,contextForSelector,initialDataFlowInfoForArguments);
     KotlinType selectorReturnType=selectorReturnTypeInfo.getType();
     if (qualifierReceiver != null) {
       resolveDeferredReceiverInQualifiedExpression(qualifierReceiver,element.getQualified(),contextForSelector);
