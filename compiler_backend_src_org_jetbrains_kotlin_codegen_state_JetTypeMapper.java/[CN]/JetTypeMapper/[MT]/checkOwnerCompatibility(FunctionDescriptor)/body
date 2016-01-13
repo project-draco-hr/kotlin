@@ -1,0 +1,23 @@
+{
+  if (!(descriptor instanceof DeserializedCallableMemberDescriptor))   return;
+  KotlinJvmBinaryClass ownerClass=null;
+  DeclarationDescriptor container=descriptor.getContainingDeclaration();
+  if (container instanceof DeserializedClassDescriptor) {
+    SourceElement source=((DeserializedClassDescriptor)container).getSource();
+    if (source instanceof KotlinJvmBinarySourceElement) {
+      ownerClass=((KotlinJvmBinarySourceElement)source).getBinaryClass();
+    }
+  }
+ else   if (container instanceof LazyJavaPackageFragment) {
+    SourceElement source=((LazyJavaPackageFragment)container).getSource();
+    if (source instanceof KotlinJvmBinaryPackageSourceElement) {
+      ownerClass=((KotlinJvmBinaryPackageSourceElement)source).getRepresentativeBinaryClass();
+    }
+  }
+  if (ownerClass != null) {
+    JvmBytecodeBinaryVersion version=ownerClass.getClassHeader().getBytecodeVersion();
+    if (!version.isCompatible()) {
+      incompatibleClassTracker.record(ownerClass);
+    }
+  }
+}
