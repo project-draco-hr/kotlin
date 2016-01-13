@@ -1,0 +1,20 @@
+{
+  KotlinType expectedExpressionType=trace.get(EXPECTED_EXPRESSION_TYPE,expression);
+  if (expectedExpressionType != null)   return;
+  KotlinType expressionType=trace.getType(expression);
+  if (expressionType == null) {
+    return;
+  }
+  if (KotlinBuiltIns.isAnyOrNullableAny(expressionType)) {
+    for (    KtExpression branchExpression : branchExpressions) {
+      KotlinType branchType=trace.getType(branchExpression);
+      if (branchType == null || KotlinBuiltIns.isAnyOrNullableAny(branchType)) {
+        return;
+      }
+    }
+    trace.report(IMPLICIT_CAST_TO_UNIT_OR_ANY.on(expression,expressionType));
+  }
+ else   if (KotlinBuiltIns.isUnit(expressionType)) {
+    trace.report(IMPLICIT_CAST_TO_UNIT_OR_ANY.on(expression,expressionType));
+  }
+}

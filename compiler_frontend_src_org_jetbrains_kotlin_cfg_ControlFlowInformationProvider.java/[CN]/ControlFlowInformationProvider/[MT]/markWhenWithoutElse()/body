@@ -22,6 +22,16 @@
       for (      KtElement element : instruction.getOwner().getValueElements(value)) {
         if (!(element instanceof KtWhenExpression))         continue;
         KtWhenExpression whenExpression=(KtWhenExpression)element;
+        if (BindingContextUtilsKt.isUsedAsExpression(whenExpression,trace.getBindingContext())) {
+          List<KtExpression> branchExpressions=new ArrayList<KtExpression>(whenExpression.getEntries().size() + 1);
+          for (          KtWhenEntry whenEntry : whenExpression.getEntries()) {
+            branchExpressions.add(whenEntry.getExpression());
+          }
+          if (whenExpression.getElseExpression() != null) {
+            branchExpressions.add(whenExpression.getElseExpression());
+          }
+          checkImplicitCastOnConditionalExpression(whenExpression,branchExpressions);
+        }
         if (whenExpression.getElseExpression() != null)         continue;
         BindingContext context=trace.getBindingContext();
         List<WhenMissingCase> necessaryCases=WhenChecker.getNecessaryCases(whenExpression,context);
