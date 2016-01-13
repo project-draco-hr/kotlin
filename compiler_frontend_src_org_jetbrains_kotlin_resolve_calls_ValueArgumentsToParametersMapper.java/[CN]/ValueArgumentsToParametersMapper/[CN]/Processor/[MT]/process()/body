@@ -1,13 +1,17 @@
 {
   ProcessorState state=positionedOnly;
+  boolean isArraySetMethod=call.getCallType() == Call.CallType.ARRAY_SET_METHOD;
   List<? extends ValueArgument> argumentsInParentheses=CallUtilKt.getValueArgumentsInParentheses(call);
-  for (int i=0; i < argumentsInParentheses.size(); i++) {
-    ValueArgument valueArgument=argumentsInParentheses.get(i);
+  for (Iterator<? extends ValueArgument> iterator=argumentsInParentheses.iterator(); iterator.hasNext(); ) {
+    ValueArgument valueArgument=iterator.next();
     if (valueArgument.isNamed()) {
       state=state.processNamedArgument(valueArgument);
     }
+ else     if (isArraySetMethod && !iterator.hasNext()) {
+      state=state.processArraySetRHS(valueArgument);
+    }
  else {
-      state=state.processPositionedArgument(valueArgument,i);
+      state=state.processPositionedArgument(valueArgument);
     }
   }
   for (  Map.Entry<ValueParameterDescriptor,VarargValueArgument> entry : varargs.entrySet()) {
