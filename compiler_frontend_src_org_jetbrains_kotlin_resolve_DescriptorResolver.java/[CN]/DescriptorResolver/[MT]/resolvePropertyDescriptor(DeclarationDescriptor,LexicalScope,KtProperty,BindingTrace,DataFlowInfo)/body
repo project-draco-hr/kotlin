@@ -4,7 +4,7 @@
   boolean hasBody=hasBody(property);
   Visibility visibility=resolveVisibilityFromModifiers(property,getDefaultVisibility(property,containingDeclaration));
   Modality modality=containingDeclaration instanceof ClassDescriptor ? resolveModalityFromModifiers(property,getDefaultModality(containingDeclaration,visibility,hasBody)) : Modality.FINAL;
-  final AnnotationSplitter.PropertyWrapper wrapper=new AnnotationSplitter.PropertyWrapper();
+  final AnnotationSplitter.PropertyWrapper wrapper=new AnnotationSplitter.PropertyWrapper(property);
   Annotations allAnnotations=annotationResolver.resolveAnnotationsWithoutArguments(scope,modifierList,trace);
   AnnotationSplitter annotationSplitter=new AnnotationSplitter(storageManager,allAnnotations,new Function0<Set<AnnotationUseSiteTarget>>(){
     @Override public Set<AnnotationUseSiteTarget> invoke(){
@@ -12,9 +12,9 @@
     }
   }
 );
-  Annotations propertyAnnotations=new CompositeAnnotations(CollectionsKt.listOf(annotationSplitter.getAnnotationsForTargets(PROPERTY,FIELD),annotationSplitter.getOtherAnnotations()));
+  Annotations propertyAnnotations=new CompositeAnnotations(CollectionsKt.listOf(annotationSplitter.getAnnotationsForTargets(PROPERTY,FIELD,PROPERTY_DELEGATE_FIELD),annotationSplitter.getOtherAnnotations()));
   PropertyDescriptorImpl propertyDescriptor=PropertyDescriptorImpl.create(containingDeclaration,propertyAnnotations,modality,visibility,isVar,KtPsiUtil.safeName(property.getName()),CallableMemberDescriptor.Kind.DECLARATION,KotlinSourceElementKt.toSourceElement(property),modifierList != null && modifierList.hasModifier(KtTokens.LATEINIT_KEYWORD),modifierList != null && modifierList.hasModifier(KtTokens.CONST_KEYWORD));
-  wrapper.setProperty(propertyDescriptor);
+  wrapper.setDescriptor(propertyDescriptor);
   List<TypeParameterDescriptorImpl> typeParameterDescriptors;
   LexicalScope scopeWithTypeParameters;
   KotlinType receiverType=null;
