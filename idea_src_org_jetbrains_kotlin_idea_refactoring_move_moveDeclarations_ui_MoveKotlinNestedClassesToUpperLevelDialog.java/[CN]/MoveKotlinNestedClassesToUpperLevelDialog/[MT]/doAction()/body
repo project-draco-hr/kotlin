@@ -1,0 +1,36 @@
+{
+  String errorMessage=getErrorMessageIfAny();
+  if (errorMessage != null) {
+    CommonRefactoringUtil.showErrorMessage(MoveInnerImpl.REFACTORING_NAME,errorMessage,HelpID.MOVE_INNER_UPPER,project);
+    return;
+  }
+  PsiElement target=getTargetContainer();
+  if (target == null)   return;
+  KotlinMoveTarget moveTarget;
+  if (target instanceof PsiDirectory) {
+    final PsiDirectory targetDir=(PsiDirectory)target;
+    final FqName targetPackageFqName=getTargetPackageFqName();
+    if (targetPackageFqName == null)     return;
+    final String targetFileName=KotlinNameSuggester.INSTANCE.suggestNameByName(innerClass.getName() + "." + KotlinFileType.EXTENSION,new Function1<String,Boolean>(){
+      @Override public Boolean invoke(      String s){
+        return targetDir.findFile(s) == null;
+      }
+    }
+);
+    moveTarget=new KotlinMoveTargetForDeferredFile(targetPackageFqName,new Function1<KtFile,KtFile>(){
+      @Override public KtFile invoke(      @NotNull KtFile originalFile){
+        return JetRefactoringUtilKt.createKotlinFile(targetFileName,targetDir,targetPackageFqName.asString());
+      }
+    }
+);
+  }
+ else {
+    moveTarget=new KotlinMoveTargetForExistingElement((KtElement)target);
+  }
+  String outerInstanceParameterName=passOuterClassCheckBox.isSelected() ? getParameterName() : null;
+  String newClassName=getClassName();
+  MoveDeclarationsDelegate delegate=new MoveDeclarationsDelegate.NestedClass(newClassName,outerInstanceParameterName);
+  MoveDeclarationsDescriptor moveDescriptor=new MoveDeclarationsDescriptor(CollectionsKt.listOf(innerClass),moveTarget,delegate,isSearchInComments(),isSearchInNonJavaFiles(),true,false,null,isOpenInEditor());
+  saveOpenInEditorOption();
+  invokeRefactoring(new MoveKotlinDeclarationsProcessor(project,moveDescriptor,Mover.Default.INSTANCE));
+}

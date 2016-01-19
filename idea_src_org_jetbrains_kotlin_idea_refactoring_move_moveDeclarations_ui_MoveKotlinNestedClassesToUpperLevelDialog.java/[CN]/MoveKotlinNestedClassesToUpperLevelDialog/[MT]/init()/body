@@ -1,0 +1,48 @@
+{
+  classNameField.setText(innerClass.getName());
+  classNameField.selectAll();
+  if (innerClass instanceof KtClass && ((KtClass)innerClass).isInner()) {
+    passOuterClassCheckBox.setSelected(true);
+    passOuterClassCheckBox.addItemListener(new ItemListener(){
+      @Override public void itemStateChanged(      ItemEvent e){
+        parameterField.setEnabled(passOuterClassCheckBox.isSelected());
+      }
+    }
+);
+  }
+ else {
+    passOuterClassCheckBox.setSelected(false);
+    passOuterClassCheckBox.setEnabled(false);
+    parameterField.setEnabled(false);
+  }
+  if (passOuterClassCheckBox.isEnabled()) {
+    boolean thisNeeded=isThisNeeded();
+    passOuterClassCheckBox.setSelected(thisNeeded);
+    parameterField.setEnabled(thisNeeded);
+  }
+  passOuterClassCheckBox.addItemListener(new ItemListener(){
+    @Override public void itemStateChanged(    ItemEvent e){
+      boolean selected=passOuterClassCheckBox.isSelected();
+      parameterField.getComponent().setEnabled(selected);
+    }
+  }
+);
+  if (!(targetContainer instanceof PsiDirectory)) {
+    packageNameField.setVisible(false);
+    packageNameLabel.setVisible(false);
+  }
+  if (innerClass instanceof KtClass && ((KtClass)innerClass).isInner()) {
+    KtClassBody innerClassBody=innerClass.getBody();
+    Function1<String,Boolean> validator=innerClassBody != null ? new NewDeclarationNameValidator(innerClassBody,(PsiElement)null,NewDeclarationNameValidator.Target.VARIABLES) : new CollectingNameValidator();
+    List<String> suggestions=KotlinNameSuggester.INSTANCE.suggestNamesByType(getOuterInstanceType(),validator,"outer");
+    parameterField.setSuggestions(ArrayUtil.toStringArray(suggestions));
+  }
+ else {
+    parameterField.getComponent().setEnabled(false);
+  }
+  FqName packageFqName=getTargetPackageFqName();
+  if (packageFqName != null) {
+    packageNameField.prependItem(packageFqName.asString());
+  }
+  super.init();
+}

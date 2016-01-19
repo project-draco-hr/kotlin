@@ -1,0 +1,50 @@
+{
+  if (targetContainer instanceof PsiDirectory) {
+    PsiDirectory psiDirectory=(PsiDirectory)targetContainer;
+    FqName oldPackageFqName=getTargetPackageFqName();
+    String targetName=packageNameField.getText();
+    if (!Comparing.equal(oldPackageFqName != null ? oldPackageFqName.asString() : null,targetName)) {
+      ProjectRootManager projectRootManager=ProjectRootManager.getInstance(project);
+      List<VirtualFile> contentSourceRoots=JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
+      final PackageWrapper newPackage=new PackageWrapper(PsiManager.getInstance(project),targetName);
+      final VirtualFile targetSourceRoot;
+      if (contentSourceRoots.size() > 1) {
+        PsiDirectory initialDir=null;
+        PsiPackage oldPackage=oldPackageFqName != null ? JavaPsiFacade.getInstance(project).findPackage(oldPackageFqName.asString()) : null;
+        if (oldPackage != null) {
+          PsiDirectory[] directories=oldPackage.getDirectories();
+          VirtualFile root=projectRootManager.getFileIndex().getContentRootForFile(psiDirectory.getVirtualFile());
+          for (          PsiDirectory dir : directories) {
+            if (Comparing.equal(projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()),root)) {
+              initialDir=dir;
+            }
+          }
+        }
+        VirtualFile sourceRoot=MoveClassesOrPackagesUtil.chooseSourceRoot(newPackage,contentSourceRoots,initialDir);
+        if (sourceRoot == null)         return null;
+        targetSourceRoot=sourceRoot;
+      }
+ else {
+        targetSourceRoot=contentSourceRoots.get(0);
+      }
+      PsiDirectory dir=RefactoringUtil.findPackageDirectoryInSourceRoot(newPackage,targetSourceRoot);
+      if (dir == null) {
+        dir=ApplicationManager.getApplication().runWriteAction(new NullableComputable<PsiDirectory>(){
+          @Override public PsiDirectory compute(){
+            try {
+              return RefactoringUtil.createPackageDirectoryInSourceRoot(newPackage,targetSourceRoot);
+            }
+ catch (            IncorrectOperationException e) {
+              return null;
+            }
+          }
+        }
+);
+      }
+      return dir;
+    }
+    return targetContainer;
+  }
+  if (targetContainer instanceof KtFile || targetContainer instanceof KtClassOrObject)   return targetContainer;
+  return null;
+}

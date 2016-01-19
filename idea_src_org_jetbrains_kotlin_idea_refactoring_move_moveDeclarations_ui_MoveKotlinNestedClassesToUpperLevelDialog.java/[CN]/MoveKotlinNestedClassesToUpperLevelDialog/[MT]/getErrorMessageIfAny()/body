@@ -1,0 +1,28 @@
+{
+  String className=getClassName();
+  String parameterName=getParameterName();
+  if (className != null && className.isEmpty())   return RefactoringBundle.message("no.class.name.specified");
+  if (!KotlinNameSuggester.INSTANCE.isIdentifier(className))   return RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
+  if (passOuterClassCheckBox.isSelected()) {
+    if (parameterName != null && parameterName.isEmpty())     return RefactoringBundle.message("no.parameter.name.specified");
+    if (!KotlinNameSuggester.INSTANCE.isIdentifier(parameterName))     return RefactoringMessageUtil.getIncorrectIdentifierMessage(parameterName);
+  }
+  PsiElement targetContainer=getTargetContainer();
+  if (targetContainer instanceof KtClassOrObject) {
+    KtClassOrObject targetClass=(KtClassOrObject)targetContainer;
+    for (    KtDeclaration member : targetClass.getDeclarations()) {
+      if (member instanceof KtClassOrObject && className != null && className.equals(member.getName())) {
+        return RefactoringBundle.message("inner.class.exists",className,targetClass.getName());
+      }
+    }
+  }
+  if (targetContainer instanceof PsiDirectory || targetContainer instanceof KtFile) {
+    FqName targetPackageFqName=getTargetPackageFqName();
+    if (targetPackageFqName == null)     return "No package corresponds to this directory";
+    ClassifierDescriptor existingClass=DescriptorUtils.getContainingModule(innerClassDescriptor).getPackage(targetPackageFqName).getMemberScope().getContributedClassifier(Name.identifier(className),NoLookupLocation.FROM_IDE);
+    if (existingClass != null)     return "Class " + className + " already exists in package "+ targetPackageFqName;
+    PsiDirectory targetDir=targetContainer instanceof PsiDirectory ? (PsiDirectory)targetContainer : targetContainer.getContainingFile().getContainingDirectory();
+    return RefactoringMessageUtil.checkCanCreateFile(targetDir,className + ".kt");
+  }
+  return null;
+}
