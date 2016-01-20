@@ -1,34 +1,29 @@
 {
-  D candidate=candidateCall.getCandidateDescriptor();
-  List<ValueParameterDescriptor> valueParameters=candidate.getValueParameters();
   List<? extends LambdaArgument> functionLiteralArguments=call.getFunctionLiteralArguments();
-  if (!functionLiteralArguments.isEmpty()) {
-    LambdaArgument lambdaArgument=functionLiteralArguments.get(0);
-    KtExpression possiblyLabeledFunctionLiteral=lambdaArgument.getArgumentExpression();
-    if (valueParameters.isEmpty()) {
-      report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
+  if (functionLiteralArguments.isEmpty())   return;
+  LambdaArgument lambdaArgument=functionLiteralArguments.get(0);
+  KtExpression possiblyLabeledFunctionLiteral=lambdaArgument.getArgumentExpression();
+  if (parameters.isEmpty()) {
+    report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidateCall.getCandidateDescriptor()));
+    setStatus(ERROR);
+  }
+ else {
+    ValueParameterDescriptor lastParameter=CollectionsKt.last(parameters);
+    if (lastParameter.getVarargElementType() != null) {
+      report(VARARG_OUTSIDE_PARENTHESES.on(possiblyLabeledFunctionLiteral));
       setStatus(ERROR);
     }
- else {
-      ValueParameterDescriptor valueParameterDescriptor=valueParameters.get(valueParameters.size() - 1);
-      if (valueParameterDescriptor.getVarargElementType() != null) {
-        report(VARARG_OUTSIDE_PARENTHESES.on(possiblyLabeledFunctionLiteral));
-        setStatus(ERROR);
-      }
- else {
-        if (!usedParameters.add(valueParameterDescriptor)) {
-          report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidate));
-          setStatus(WEAK_ERROR);
-        }
- else {
-          putVararg(valueParameterDescriptor,lambdaArgument);
-        }
-      }
-    }
-    for (int i=1; i < functionLiteralArguments.size(); i++) {
-      KtExpression argument=functionLiteralArguments.get(i).getArgumentExpression();
-      report(MANY_LAMBDA_EXPRESSION_ARGUMENTS.on(argument));
+ else     if (!usedParameters.add(lastParameter)) {
+      report(TOO_MANY_ARGUMENTS.on(possiblyLabeledFunctionLiteral,candidateCall.getCandidateDescriptor()));
       setStatus(WEAK_ERROR);
     }
+ else {
+      putVararg(lastParameter,lambdaArgument);
+    }
+  }
+  for (int i=1; i < functionLiteralArguments.size(); i++) {
+    KtExpression argument=functionLiteralArguments.get(i).getArgumentExpression();
+    report(MANY_LAMBDA_EXPRESSION_ARGUMENTS.on(argument));
+    setStatus(WEAK_ERROR);
   }
 }
