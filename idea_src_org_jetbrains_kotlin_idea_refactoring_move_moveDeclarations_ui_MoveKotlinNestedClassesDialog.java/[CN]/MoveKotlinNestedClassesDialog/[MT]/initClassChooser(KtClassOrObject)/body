@@ -1,0 +1,48 @@
+{
+  originalClassField.setText(originalClass.getFqName().asString());
+  targetClassChooser=new ReferenceEditorComboWithBrowseButton(new ActionListener(){
+    @Override public void actionPerformed(    ActionEvent e){
+      TreeClassChooser chooser=new TreeJavaClassChooserDialog(RefactoringBundle.message("choose.destination.class"),myProject,GlobalSearchScope.projectScope(myProject),new ClassFilter(){
+        @Override public boolean isAccepted(        PsiClass aClass){
+          if (!(aClass instanceof KtLightClassForExplicitDeclaration))           return false;
+          KtClassOrObject classOrObject=((KtLightClassForExplicitDeclaration)aClass).getOrigin();
+          if (classOrObject.isTopLevel())           return true;
+          if (classOrObject instanceof KtObjectDeclaration) {
+            return !((KtObjectDeclaration)classOrObject).isObjectLiteral();
+          }
+          if (classOrObject instanceof KtClass) {
+            return !((KtClass)classOrObject).isInner();
+          }
+          return false;
+        }
+      }
+,null,null,true){
+        @Nullable @Override protected PsiClass getSelectedFromTreeUserObject(        DefaultMutableTreeNode node){
+          PsiClass psiClass=super.getSelectedFromTreeUserObject(node);
+          if (psiClass != null)           return psiClass;
+          Object userObject=node.getUserObject();
+          if (!(userObject instanceof KtClassOrObjectTreeNode))           return null;
+          return LightClassUtilsKt.toLightClass(((KtClassOrObjectTreeNode)userObject).getValue());
+        }
+      }
+;
+      chooser.selectDirectory((targetClass != null ? targetClass : originalClass).getContainingFile().getContainingDirectory());
+      chooser.showDialog();
+      PsiClass aClass=chooser.getSelected();
+      if (aClass instanceof KtLightClassForExplicitDeclaration) {
+        targetClass=((KtLightClassForExplicitDeclaration)aClass).getOrigin();
+        targetClassChooser.setText(aClass.getQualifiedName());
+      }
+    }
+  }
+,initialTargetClass.getFqName().asString(),myProject,true,JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE,RECENTS_KEY);
+  targetClassChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter(){
+    @Override public void documentChanged(    DocumentEvent e){
+      PsiClass aClass=JavaPsiFacade.getInstance(myProject).findClass(targetClassChooser.getText(),GlobalSearchScope.projectScope(myProject));
+      targetClass=aClass instanceof KtLightClassForExplicitDeclaration ? ((KtLightClassForExplicitDeclaration)aClass).getOrigin() : null;
+      validateButtons();
+    }
+  }
+);
+  targetClassChooserPanel.add(targetClassChooser);
+}

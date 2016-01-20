@@ -1,0 +1,18 @@
+{
+  List<KotlinMemberInfo> memberInfos=CollectionsKt.mapNotNull(originalClass.getDeclarations(),new Function1<KtDeclaration,KotlinMemberInfo>(){
+    @Override public KotlinMemberInfo invoke(    KtDeclaration declaration){
+      if (!(declaration instanceof KtClassOrObject))       return null;
+      KotlinMemberInfo memberInfo=new KotlinMemberInfo((KtClassOrObject)declaration,false);
+      memberInfo.setChecked(elementsToMove.contains(declaration));
+      return memberInfo;
+    }
+  }
+);
+  KotlinMemberSelectionPanel selectionPanel=new KotlinMemberSelectionPanel(getTitle(),memberInfos,null);
+  memberTable=selectionPanel.getTable();
+  MemberInfoModelImpl memberInfoModel=new MemberInfoModelImpl();
+  memberInfoModel.memberInfoChanged(new MemberInfoChange<KtNamedDeclaration,KotlinMemberInfo>(memberInfos));
+  selectionPanel.getTable().setMemberInfoModel(memberInfoModel);
+  selectionPanel.getTable().addMemberInfoChangeListener(memberInfoModel);
+  membersInfoPanel.add(selectionPanel,BorderLayout.CENTER);
+}
