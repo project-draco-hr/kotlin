@@ -1,12 +1,12 @@
 {
-  TypeParameterDescriptor typeParameterDescriptor=TypeUtils.getTypeParameterDescriptorOrNull(type);
-  if (typeParameterDescriptor != null && typeParameterDescriptor.isReified()) {
+  Pair<TypeParameterDescriptor,ReificationArgument> typeParameterAndReificationArgument=extractReificationArgument(type);
+  if (typeParameterAndReificationArgument != null && typeParameterAndReificationArgument.getFirst().isReified()) {
+    TypeParameterDescriptor typeParameterDescriptor=typeParameterAndReificationArgument.getFirst();
     if (typeParameterDescriptor.getContainingDeclaration() != context.getContextDescriptor()) {
       parentCodegen.getReifiedTypeParametersUsages().addUsedReifiedParameter(typeParameterDescriptor.getName().asString());
     }
     v.iconst(operationKind.getId());
-    boolean putNullableFlag=operationKind.isTypeNullabilityAware() && type.isMarkedNullable();
-    v.visitLdcInsn(typeParameterDescriptor.getName().asString() + (putNullableFlag ? "?" : ""));
+    v.visitLdcInsn(typeParameterAndReificationArgument.getSecond().asString());
     v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME,ReifiedTypeInliner.REIFIED_OPERATION_MARKER_METHOD_NAME,Type.getMethodDescriptor(Type.VOID_TYPE,Type.INT_TYPE,Type.getType(String.class)),false);
   }
 }
