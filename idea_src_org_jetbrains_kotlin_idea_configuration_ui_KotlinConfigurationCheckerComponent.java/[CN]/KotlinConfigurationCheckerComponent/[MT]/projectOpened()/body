@@ -1,0 +1,18 @@
+{
+  super.projectOpened();
+  StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
+    @Override public void run(){
+      DumbService.getInstance(myProject).smartInvokeLater(new Runnable(){
+        @Override public void run(){
+          List<VersionedLibrary> libraries=OutdatedKotlinRuntimeCheckerKt.findOutdatedKotlinLibraries(myProject);
+          if (!libraries.isEmpty()) {
+            OutdatedKotlinRuntimeCheckerKt.notifyOutdatedKotlinRuntime(myProject,libraries);
+          }
+          ConfigureKotlinInProjectUtilsKt.showConfigureKotlinNotificationIfNeeded(myProject,OutdatedKotlinRuntimeCheckerKt.collectModulesWithOutdatedRuntime(libraries));
+        }
+      }
+);
+    }
+  }
+);
+}
