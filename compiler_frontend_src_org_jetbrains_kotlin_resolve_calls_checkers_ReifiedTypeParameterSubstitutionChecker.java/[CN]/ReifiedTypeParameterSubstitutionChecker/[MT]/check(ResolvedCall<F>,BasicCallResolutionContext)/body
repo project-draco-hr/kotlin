@@ -3,17 +3,18 @@
   for (  Map.Entry<TypeParameterDescriptor,KotlinType> entry : typeArguments.entrySet()) {
     TypeParameterDescriptor parameter=entry.getKey();
     KotlinType argument=entry.getValue();
-    ClassifierDescriptor argumentDeclarationDescription=argument.getConstructor().getDeclarationDescriptor();
-    if (parameter.isReified()) {
-      if (argumentDeclarationDescription instanceof TypeParameterDescriptor && !((TypeParameterDescriptor)argumentDeclarationDescription).isReified()) {
-        context.trace.report(Errors.TYPE_PARAMETER_AS_REIFIED.on(getElementToReport(context,parameter.getIndex()),parameter));
-      }
- else       if (TypeUtilsKt.cannotBeReified(argument)) {
-        context.trace.report(Errors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION.on(getElementToReport(context,parameter.getIndex()),argument));
-      }
- else       if (TypeUtilsKt.unsafeAsReifiedArgument(argument) && !hasPureReifiableAnnotation(parameter)) {
-        context.trace.report(Errors.REIFIED_TYPE_UNSAFE_SUBSTITUTION.on(getElementToReport(context,parameter.getIndex()),argument));
-      }
+    ClassifierDescriptor argumentDeclarationDescriptor=argument.getConstructor().getDeclarationDescriptor();
+    if (!parameter.isReified() && !isTypeParameterOfKotlinArray(parameter)) {
+      continue;
+    }
+    if (argumentDeclarationDescriptor instanceof TypeParameterDescriptor && !((TypeParameterDescriptor)argumentDeclarationDescriptor).isReified()) {
+      context.trace.report(Errors.TYPE_PARAMETER_AS_REIFIED.on(getElementToReport(context,parameter.getIndex()),parameter));
+    }
+ else     if (TypeUtilsKt.cannotBeReified(argument)) {
+      context.trace.report(Errors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION.on(getElementToReport(context,parameter.getIndex()),argument));
+    }
+ else     if (TypeUtilsKt.unsafeAsReifiedArgument(argument) && !hasPureReifiableAnnotation(parameter)) {
+      context.trace.report(Errors.REIFIED_TYPE_UNSAFE_SUBSTITUTION.on(getElementToReport(context,parameter.getIndex()),argument));
     }
   }
 }
