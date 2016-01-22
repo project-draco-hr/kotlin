@@ -1,0 +1,13 @@
+{
+  if (!(superType.getConstructor().getDeclarationDescriptor() instanceof ClassDescriptor)) {
+    return new Pair<Collection<ResolutionCandidate<CallableDescriptor>>,BasicCallResolutionContext>(Collections.<ResolutionCandidate<CallableDescriptor>>emptyList(),context);
+  }
+  ClassDescriptor superClass=(ClassDescriptor)superType.getConstructor().getDeclarationDescriptor();
+  boolean anyConstructorHasDeclaredTypeParameters=anyConstructorHasDeclaredTypeParameters(superType.getConstructor().getDeclarationDescriptor());
+  TypeSubstitutor knownTypeParametersSubstitutor=anyConstructorHasDeclaredTypeParameters ? null : TypeSubstitutor.create(superType);
+  if (anyConstructorHasDeclaredTypeParameters) {
+    context=context.replaceExpectedType(superType);
+  }
+  Collection<ResolutionCandidate<CallableDescriptor>> candidates=taskPrioritizer.<CallableDescriptor>convertWithImpliedThisAndNoReceiver(context.scope,superClass.getConstructors(),context.call,knownTypeParametersSubstitutor);
+  return new Pair<Collection<ResolutionCandidate<CallableDescriptor>>,BasicCallResolutionContext>(candidates,context);
+}

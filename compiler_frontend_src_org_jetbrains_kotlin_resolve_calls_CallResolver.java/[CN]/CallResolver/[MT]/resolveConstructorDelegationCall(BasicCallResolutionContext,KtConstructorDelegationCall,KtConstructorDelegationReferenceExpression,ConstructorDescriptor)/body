@@ -19,8 +19,9 @@
     return checkArgumentTypesAndFail(context);
   }
   KotlinType superType=isThisCall ? calleeConstructor.getContainingDeclaration().getDefaultType() : DescriptorUtils.getSuperClassType(currentClassDescriptor);
-  TypeSubstitutor knownTypeParametersSubstitutor=TypeSubstitutor.create(superType);
-  Collection<ResolutionCandidate<CallableDescriptor>> candidates=taskPrioritizer.<CallableDescriptor>convertWithImpliedThisAndNoReceiver(context.scope,constructors,context.call,knownTypeParametersSubstitutor);
+  Pair<Collection<ResolutionCandidate<CallableDescriptor>>,BasicCallResolutionContext> candidatesAndContext=prepareCandidatesAndContextForConstructorCall(superType,context);
+  Collection<ResolutionCandidate<CallableDescriptor>> candidates=candidatesAndContext.getFirst();
+  context=candidatesAndContext.getSecond();
   TracingStrategy tracing=call.isImplicit() ? new TracingStrategyForImplicitConstructorDelegationCall(call,context.call) : TracingStrategyImpl.create(calleeExpression,context.call);
   PsiElement reportOn=call.isImplicit() ? call : calleeExpression;
   if (delegateClassDescriptor.isInner() && !DescriptorResolver.checkHasOuterClassInstance(context.scope,context.trace,reportOn,(ClassDescriptor)delegateClassDescriptor.getContainingDeclaration())) {
