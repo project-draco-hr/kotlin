@@ -1,6 +1,10 @@
 {
-  SLRUCache<FindClassesRequest,PsiClass[]> value=findClassesCache.getValue();
-synchronized (value) {
-    return value.get(new FindClassesRequest(qualifiedNameString,scope));
+  if (!FqNamesUtilKt.isValidJavaFqName(qualifiedNameString)) {
+    return PsiClass.EMPTY_ARRAY;
   }
+  List<PsiClass> answer=new SmartList<PsiClass>();
+  FqName qualifiedName=new FqName(qualifiedNameString);
+  findClassesAndObjects(qualifiedName,scope,answer);
+  answer.addAll(lightClassGenerationSupport.getFacadeClasses(qualifiedName,scope));
+  return sortByClasspath(answer,scope).toArray(new PsiClass[answer.size()]);
 }
