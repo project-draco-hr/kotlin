@@ -1,2 +1,70 @@
 {
+  String message=verifyBeforeRun();
+  if (message != null) {
+    setErrorText(message);
+    return null;
+  }
+  setErrorText(null);
+  List<KtFile> sourceFiles=getSourceFiles(getSelectedElementsToMove());
+  PsiDirectory sourceDirectory=getSourceDirectory(sourceFiles);
+  if (isMoveToPackage()) {
+    final MoveDestination moveDestination=selectPackageBasedMoveDestination(true);
+    if (moveDestination == null)     return null;
+    final String targetFileName=sourceFiles.size() > 1 ? null : tfFileNameInPackage.getText();
+    if (targetFileName != null && !checkTargetFileName(targetFileName))     return null;
+    PsiDirectory targetDirectory=moveDestination.getTargetIfExists(sourceDirectory);
+    List<PsiFile> filesExistingInTargetDir=getFilesExistingInTargetDir(sourceFiles,targetFileName,targetDirectory);
+    if (!filesExistingInTargetDir.isEmpty()) {
+      if (!CollectionsKt.intersect(sourceFiles,filesExistingInTargetDir).isEmpty()) {
+        setErrorText("Can't move to the original file(s)");
+        return null;
+      }
+      if (filesExistingInTargetDir.size() > 1) {
+        String filePathsToReport=StringUtil.join(filesExistingInTargetDir,new Function<PsiFile,String>(){
+          @Override public String fun(          PsiFile file){
+            return file.getVirtualFile().getPath();
+          }
+        }
+,"\n");
+        Messages.showErrorDialog(myProject,"Cannot perform refactoring since the following files already exist:\n\n" + filePathsToReport,RefactoringBundle.message("move.title"));
+        return null;
+      }
+      String question=String.format("File '%s' already exists. Do you want to move selected declarations to this file?",filesExistingInTargetDir.get(0).getVirtualFile().getPath());
+      int ret=Messages.showYesNoDialog(myProject,question,RefactoringBundle.message("move.title"),Messages.getQuestionIcon());
+      if (ret != Messages.YES)       return null;
+    }
+    return new KotlinMoveTargetForDeferredFile(new FqName(getTargetPackage()),moveDestination.getTargetIfExists(sourceFiles.get(0)),new Function1<KtFile,KtFile>(){
+      @Override public KtFile invoke(      @NotNull KtFile originalFile){
+        return JetRefactoringUtilKt.getOrCreateKotlinFile(targetFileName != null ? targetFileName : originalFile.getName(),moveDestination.getTargetDirectory(originalFile));
+      }
+    }
+);
+  }
+  final File targetFile=new File(getTargetFilePath());
+  if (!checkTargetFileName(targetFile.getName()))   return null;
+  KtFile jetFile=(KtFile)JetRefactoringUtilKt.toPsiFile(targetFile,myProject);
+  if (jetFile != null) {
+    if (sourceFiles.size() == 1 && sourceFiles.contains(jetFile)) {
+      setErrorText("Can't move to the original file");
+      return null;
+    }
+    return new KotlinMoveTargetForExistingElement(jetFile);
+  }
+  File targetDir=targetFile.getParentFile();
+  final PsiDirectory psiDirectory=targetDir != null ? JetRefactoringUtilKt.toPsiDirectory(targetDir,myProject) : null;
+  if (psiDirectory == null) {
+    setErrorText("No directory found for file: " + targetFile.getPath());
+    return null;
+  }
+  PsiPackage psiPackage=JavaDirectoryService.getInstance().getPackage(psiDirectory);
+  if (psiPackage == null) {
+    setErrorText("Could not find package corresponding to " + targetDir.getPath());
+    return null;
+  }
+  return new KotlinMoveTargetForDeferredFile(new FqName(psiPackage.getQualifiedName()),psiDirectory,new Function1<KtFile,KtFile>(){
+    @Override public KtFile invoke(    @NotNull KtFile originalFile){
+      return JetRefactoringUtilKt.getOrCreateKotlinFile(targetFile.getName(),psiDirectory);
+    }
+  }
+);
 }
