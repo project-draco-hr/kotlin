@@ -11,12 +11,14 @@
     final PsiDirectory targetDir=(PsiDirectory)target;
     final FqName targetPackageFqName=getTargetPackageFqName();
     if (targetPackageFqName == null)     return;
-    final String targetFileName=KotlinNameSuggester.INSTANCE.suggestNameByName(innerClass.getName() + "." + KotlinFileType.EXTENSION,new Function1<String,Boolean>(){
+    String innerClassName=innerClass.getName();
+    if (innerClassName == null)     return;
+    final String targetFileName=KotlinNameSuggester.INSTANCE.suggestNameByName(innerClassName,new Function1<String,Boolean>(){
       @Override public Boolean invoke(      String s){
-        return targetDir.findFile(s) == null;
+        return targetDir.findFile(s + "." + KotlinFileType.EXTENSION) == null;
       }
     }
-);
+) + "." + KotlinFileType.EXTENSION;
     moveTarget=new KotlinMoveTargetForDeferredFile(targetPackageFqName,targetDir,new Function1<KtFile,KtFile>(){
       @Override public KtFile invoke(      @NotNull KtFile originalFile){
         return JetRefactoringUtilKt.createKotlinFile(targetFileName,targetDir,targetPackageFqName.asString());
