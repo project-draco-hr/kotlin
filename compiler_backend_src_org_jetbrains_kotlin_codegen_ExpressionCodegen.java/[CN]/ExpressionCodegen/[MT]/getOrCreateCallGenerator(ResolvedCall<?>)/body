@@ -3,13 +3,14 @@
   TypeParameterMappings mappings=new TypeParameterMappings();
   for (  Map.Entry<TypeParameterDescriptor,KotlinType> entry : typeArguments.entrySet()) {
     TypeParameterDescriptor key=entry.getKey();
-    KotlinType type=TypeUtils.uncaptureTypeForInlineMapping(entry.getValue());
+    KotlinType type=entry.getValue();
     boolean isReified=key.isReified() || InlineUtil.isArrayConstructorWithLambda(resolvedCall.getResultingDescriptor());
     Pair<TypeParameterDescriptor,ReificationArgument> typeParameterAndReificationArgument=extractReificationArgument(type);
     if (typeParameterAndReificationArgument == null) {
+      KotlinType approximatedType=CapturedTypeApproximationKt.approximateCapturedTypes(entry.getValue()).getUpper();
       BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.TYPE);
-      Type asmType=typeMapper.mapTypeParameter(type,signatureWriter);
-      mappings.addParameterMappingToType(key.getName().getIdentifier(),type,asmType,signatureWriter.toString(),isReified);
+      Type asmType=typeMapper.mapTypeParameter(approximatedType,signatureWriter);
+      mappings.addParameterMappingToType(key.getName().getIdentifier(),approximatedType,asmType,signatureWriter.toString(),isReified);
     }
  else {
       mappings.addParameterMappingForFurtherReification(key.getName().getIdentifier(),type,typeParameterAndReificationArgument.getSecond(),isReified);
