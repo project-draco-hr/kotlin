@@ -1,14 +1,13 @@
 {
-  JvmMethodSignature jvmSignature=typeMapper.mapSignature(functionDescriptor,context.getContextKind());
-  Method asmMethod;
-  if (callDefault) {
-    asmMethod=typeMapper.mapDefaultMethod(functionDescriptor,context.getContextKind());
-  }
- else {
-    asmMethod=jvmSignature.getAsmMethod();
-  }
+  Method asmMethod=callDefault ? typeMapper.mapDefaultMethod(functionDescriptor,context.getContextKind()) : jvmSignature.getAsmMethod();
   SMAPAndMethodNode nodeAndSMAP;
-  if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
+  if (functionDescriptor instanceof FictitiousArrayConstructor) {
+    nodeAndSMAP=InlineCodegenUtil.getMethodNode(IntrinsicArrayConstructorsKt.getBytecode(),asmMethod.getName(),asmMethod.getDescriptor(),IntrinsicArrayConstructorsKt.getClassId());
+    if (nodeAndSMAP == null) {
+      throw new IllegalStateException("Couldn't obtain array constructor body for " + descriptorName(functionDescriptor));
+    }
+  }
+ else   if (functionDescriptor instanceof DeserializedSimpleFunctionDescriptor) {
     JetTypeMapper.ContainingClassesInfo containingClasses=typeMapper.getContainingClassesForDeserializedCallable((DeserializedSimpleFunctionDescriptor)functionDescriptor);
     ClassId containerId=containingClasses.getImplClassId();
     VirtualFile file=InlineCodegenUtil.findVirtualFile(state,containerId);
@@ -17,13 +16,13 @@
     }
     nodeAndSMAP=InlineCodegenUtil.getMethodNode(file.contentsToByteArray(),asmMethod.getName(),asmMethod.getDescriptor(),containingClasses.getFacadeClassId());
     if (nodeAndSMAP == null) {
-      throw new RuntimeException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
+      throw new IllegalStateException("Couldn't obtain compiled function body for " + descriptorName(functionDescriptor));
     }
   }
  else {
     PsiElement element=DescriptorToSourceUtils.descriptorToDeclaration(functionDescriptor);
-    if (element == null || !(element instanceof KtNamedFunction)) {
-      throw new RuntimeException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
+    if (!(element instanceof KtNamedFunction)) {
+      throw new IllegalStateException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
     }
     KtNamedFunction inliningFunction=(KtNamedFunction)element;
     MethodNode node=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(functionDescriptor,context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),asmMethod.getName(),asmMethod.getDescriptor(),jvmSignature.getGenericsSignature(),null);

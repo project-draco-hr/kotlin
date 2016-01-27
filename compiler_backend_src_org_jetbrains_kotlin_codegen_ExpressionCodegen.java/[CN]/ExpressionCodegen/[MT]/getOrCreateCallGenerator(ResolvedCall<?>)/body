@@ -4,14 +4,15 @@
   for (  Map.Entry<TypeParameterDescriptor,KotlinType> entry : typeArguments.entrySet()) {
     TypeParameterDescriptor key=entry.getKey();
     KotlinType type=TypeUtils.uncaptureTypeForInlineMapping(entry.getValue());
+    boolean isReified=key.isReified() || InlineUtil.isArrayConstructorWithLambda(resolvedCall.getResultingDescriptor());
     Pair<TypeParameterDescriptor,ReificationArgument> typeParameterAndReificationArgument=extractReificationArgument(type);
     if (typeParameterAndReificationArgument == null) {
       BothSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.TYPE);
       Type asmType=typeMapper.mapTypeParameter(type,signatureWriter);
-      mappings.addParameterMappingToType(key.getName().getIdentifier(),type,asmType,signatureWriter.toString(),key.isReified());
+      mappings.addParameterMappingToType(key.getName().getIdentifier(),type,asmType,signatureWriter.toString(),isReified);
     }
  else {
-      mappings.addParameterMappingForFurtherReification(key.getName().getIdentifier(),type,typeParameterAndReificationArgument.getSecond(),key.isReified());
+      mappings.addParameterMappingForFurtherReification(key.getName().getIdentifier(),type,typeParameterAndReificationArgument.getSecond(),isReified);
     }
   }
   return getOrCreateCallGenerator(resolvedCall.getResultingDescriptor(),resolvedCall.getCall().getCallElement(),mappings);
