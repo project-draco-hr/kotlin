@@ -49,13 +49,20 @@
     }
   }
 );
+  List<KtAnnotationEntry> annotationEntries=new ArrayList<KtAnnotationEntry>();
+  if (classOrObject != null && classOrObject.getParent() instanceof KtObjectLiteralExpression) {
+    annotationEntries.addAll(KtPsiUtilKt.getAnnotationEntries((KtObjectLiteralExpression)classOrObject.getParent()));
+  }
   if (modifierList != null) {
+    annotationEntries.addAll(modifierList.getAnnotationEntries());
+  }
+  if (!annotationEntries.isEmpty()) {
     this.annotations=new LazyAnnotations(new LazyAnnotationsContext(c.getAnnotationResolver(),storageManager,c.getTrace()){
       @NotNull @Override public LexicalScope getScope(){
         return getOuterScope();
       }
     }
-,modifierList.getAnnotationEntries());
+,annotationEntries);
   }
  else {
     this.annotations=Annotations.Companion.getEMPTY();
