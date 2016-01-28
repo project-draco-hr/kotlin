@@ -1,2 +1,15 @@
 {
+  boolean hasInlinable=false;
+  List<ValueParameterDescriptor> parameters=functionDescriptor.getValueParameters();
+  int index=0;
+  for (  ValueParameterDescriptor parameter : parameters) {
+    hasInlinable|=checkInlinableParameter(parameter,function.getValueParameters().get(index++),functionDescriptor,trace);
+  }
+  hasInlinable|=InlineUtil.containsReifiedTypeParameters(functionDescriptor);
+  if (!hasInlinable && !AnnotationUtilKt.isInlineOnly(functionDescriptor)) {
+    KtModifierList modifierList=function.getModifierList();
+    PsiElement inlineModifier=modifierList == null ? null : modifierList.getModifier(KtTokens.INLINE_KEYWORD);
+    PsiElement reportOn=inlineModifier == null ? function : inlineModifier;
+    trace.report(Errors.NOTHING_TO_INLINE.on(reportOn,functionDescriptor));
+  }
 }
