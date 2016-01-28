@@ -5,13 +5,14 @@
   FrameMap frameMap=createFrameMap(state,functionDescriptor,signature,isStatic);
   ExpressionCodegen codegen=new ExpressionCodegen(mv,frameMap,signature.getReturnType(),methodContext,state,parentCodegen);
   CallGenerator generator=codegen.getOrCreateCallGeneratorForDefaultImplBody(functionDescriptor,function);
+  InstructionAdapter iv=new InstructionAdapter(mv);
+  genDefaultSuperCallCheckIfNeeded(iv,defaultMethod);
   loadExplicitArgumentsOnStack(OBJECT_TYPE,isStatic,signature,generator);
   List<JvmMethodParameterSignature> mappedParameters=signature.getValueParameters();
   int capturedArgumentsCount=0;
   while (capturedArgumentsCount < mappedParameters.size() && mappedParameters.get(capturedArgumentsCount).getKind() != JvmMethodParameterKind.VALUE) {
     capturedArgumentsCount++;
   }
-  InstructionAdapter iv=new InstructionAdapter(mv);
   int maskIndex=0;
   List<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters();
   for (int index=0; index < valueParameters.size(); index++) {
