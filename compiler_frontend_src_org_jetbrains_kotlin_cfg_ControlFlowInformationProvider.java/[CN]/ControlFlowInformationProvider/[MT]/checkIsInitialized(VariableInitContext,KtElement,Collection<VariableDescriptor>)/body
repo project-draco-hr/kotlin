@@ -2,11 +2,8 @@
   if (!(element instanceof KtSimpleNameExpression))   return;
   boolean isDefinitelyInitialized=ctxt.exitInitState.definitelyInitialized();
   VariableDescriptor variableDescriptor=ctxt.variableDescriptor;
-  if (variableDescriptor instanceof PropertyDescriptor) {
-    PropertyDescriptor propertyDescriptor=(PropertyDescriptor)variableDescriptor;
-    if (propertyDescriptor.isLateInit() || !trace.get(BindingContext.BACKING_FIELD_REQUIRED,propertyDescriptor)) {
-      isDefinitelyInitialized=true;
-    }
+  if (!isDefinitelyInitialized && variableDescriptor instanceof PropertyDescriptor) {
+    isDefinitelyInitialized=isDefinitelyInitialized((PropertyDescriptor)variableDescriptor);
   }
   if (!isDefinitelyInitialized && !varWithUninitializedErrorGenerated.contains(variableDescriptor)) {
     if (!(variableDescriptor instanceof PropertyDescriptor)) {
