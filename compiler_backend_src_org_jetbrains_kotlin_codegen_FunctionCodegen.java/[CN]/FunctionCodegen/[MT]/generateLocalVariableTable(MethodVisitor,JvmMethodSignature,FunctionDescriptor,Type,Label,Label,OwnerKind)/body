@@ -1,30 +1,3 @@
 {
-  Iterator<ValueParameterDescriptor> valueParameters=functionDescriptor.getValueParameters().iterator();
-  List<JvmMethodParameterSignature> params=jvmMethodSignature.getValueParameters();
-  int shift=0;
-  boolean isStatic=AsmUtil.isStaticMethod(ownerKind,functionDescriptor);
-  if (!isStatic) {
-    if (thisType != null) {
-      mv.visitLocalVariable("this",thisType.getDescriptor(),null,methodBegin,methodEnd,shift);
-    }
- else {
-    }
-    shift++;
-  }
-  for (int i=0; i < params.size(); i++) {
-    JvmMethodParameterSignature param=params.get(i);
-    JvmMethodParameterKind kind=param.getKind();
-    String parameterName;
-    if (kind == JvmMethodParameterKind.VALUE) {
-      ValueParameterDescriptor parameter=valueParameters.next();
-      parameterName=parameter.getName().asString();
-    }
- else {
-      String lowercaseKind=kind.name().toLowerCase();
-      parameterName=needIndexForVar(kind) ? "$" + lowercaseKind + "$"+ i : "$" + lowercaseKind;
-    }
-    Type type=param.getAsmType();
-    mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,methodEnd,shift);
-    shift+=type.getSize();
-  }
+  generateLocalVariablesForParameters(mv,jvmMethodSignature,thisType,methodBegin,methodEnd,functionDescriptor.getValueParameters(),AsmUtil.isStaticMethod(ownerKind,functionDescriptor));
 }
