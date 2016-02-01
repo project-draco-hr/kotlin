@@ -1,13 +1,26 @@
 {
+  if (redeclarations.isEmpty())   return;
+  Iterator<Pair<KtDeclaration,CallableMemberDescriptor>> redeclarationsIterator=redeclarations.iterator();
+  CallableMemberDescriptor firstRedeclarationDescriptor=redeclarationsIterator.next().getSecond();
+  CallableMemberDescriptor otherRedeclarationDescriptor=redeclarationsIterator.hasNext() ? redeclarationsIterator.next().getSecond() : null;
   for (  Pair<KtDeclaration,CallableMemberDescriptor> redeclaration : redeclarations) {
-    CallableMemberDescriptor memberDescriptor=redeclaration.getSecond();
     KtDeclaration ktDeclaration=redeclaration.getFirst();
+    CallableMemberDescriptor memberDescriptor=redeclaration.getSecond();
+    CallableMemberDescriptor redeclarationDescriptor;
+    if (otherRedeclarationDescriptor == null) {
+      redeclarationDescriptor=firstRedeclarationDescriptor;
+    }
+ else     if (firstRedeclarationDescriptor == memberDescriptor) {
+      redeclarationDescriptor=otherRedeclarationDescriptor;
+    }
+ else {
+      redeclarationDescriptor=firstRedeclarationDescriptor;
+    }
     if (memberDescriptor instanceof PropertyDescriptor) {
       trace.report(Errors.REDECLARATION.on(ktDeclaration,memberDescriptor.getName().asString()));
     }
  else {
-      String containingClassName=ktDeclaration instanceof KtSecondaryConstructor ? ((KtSecondaryConstructor)ktDeclaration).getContainingClassOrObject().getName() : null;
-      trace.report(Errors.CONFLICTING_OVERLOADS.on(ktDeclaration,memberDescriptor,containingClassName != null ? containingClassName : functionContainer));
+      trace.report(Errors.CONFLICTING_OVERLOADS.on(ktDeclaration,memberDescriptor,redeclarationDescriptor));
     }
   }
 }

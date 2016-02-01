@@ -1,20 +1,19 @@
 {
+  MultiMap<ClassDescriptor,ConstructorDescriptor> inClasses=MultiMap.create();
   for (  ClassDescriptorWithResolutionScopes klass : c.getDeclaredClasses().values()) {
     if (klass.getKind().isSingleton() || klass.getName().isSpecial()) {
       continue;
     }
     DeclarationDescriptor containingDeclaration=klass.getContainingDeclaration();
-    if (containingDeclaration instanceof ClassDescriptor) {
+    if (containingDeclaration instanceof ScriptDescriptor) {
+    }
+ else     if (containingDeclaration instanceof ClassDescriptor) {
       ClassDescriptor classDescriptor=(ClassDescriptor)containingDeclaration;
       inClasses.putValues(classDescriptor,klass.getConstructors());
     }
- else     if (containingDeclaration instanceof PackageFragmentDescriptor) {
-      inPackages.putValues(getFqName(klass),klass.getConstructors());
-    }
- else     if (containingDeclaration instanceof ScriptDescriptor) {
-    }
- else     if (!(containingDeclaration instanceof FunctionDescriptor || containingDeclaration instanceof PropertyDescriptor)) {
+ else     if (!(containingDeclaration instanceof FunctionDescriptor || containingDeclaration instanceof PropertyDescriptor || containingDeclaration instanceof PackageFragmentDescriptor)) {
       throw new IllegalStateException("Illegal class container: " + containingDeclaration);
     }
   }
+  return inClasses;
 }
