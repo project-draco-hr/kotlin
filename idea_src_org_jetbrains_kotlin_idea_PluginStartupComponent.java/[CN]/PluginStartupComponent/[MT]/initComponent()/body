@@ -2,7 +2,13 @@
   registerPathVariable();
   JarUserDataManager.INSTANCE.register(KotlinJavaScriptLibraryDetectionUtil.HasKotlinJSMetadataInJar.INSTANCE);
   DebuggerFiltersUtilKt.addKotlinStdlibDebugFilterIfNeeded();
-  UpdateChecker.getDisabledToUpdatePlugins().add("org.jetbrains.kotlin");
+  try {
+    UpdateChecker.INSTANCE.getExcludedFromUpdateCheckPlugins().add("org.jetbrains.kotlin");
+  }
+ catch (  Throwable throwable) {
+    LOG.debug("Excluding Kotlin plugin updates using old API",throwable);
+    UpdateChecker.getDisabledToUpdatePlugins().add("org.jetbrains.kotlin");
+  }
   EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter(){
     @Override public void documentChanged(    DocumentEvent e){
       VirtualFile virtualFile=FileDocumentManager.getInstance().getFile(e.getDocument());
