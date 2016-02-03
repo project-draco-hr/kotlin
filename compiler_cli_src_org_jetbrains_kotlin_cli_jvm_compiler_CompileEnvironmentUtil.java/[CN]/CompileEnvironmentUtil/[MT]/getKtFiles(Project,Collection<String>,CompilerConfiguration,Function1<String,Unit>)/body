@@ -8,7 +8,13 @@
     }
     VirtualFile vFile=localFileSystem.findFileByPath(sourceRootPath);
     if (vFile == null) {
-      reportError.invoke("Source file or directory not found: " + sourceRootPath);
+      String message="Source file or directory not found: " + sourceRootPath;
+      String moduleFilePath=configuration.get(JVMConfigurationKeys.MODULE_XML_FILE_PATH);
+      if (moduleFilePath != null) {
+        String moduleFileContent=FileUtil.loadFile(new File(moduleFilePath));
+        LOG.warn(message + "\n\nmodule file path: " + moduleFilePath+ "\ncontent:\n"+ moduleFileContent);
+      }
+      reportError.invoke(message);
       continue;
     }
     if (!vFile.isDirectory() && vFile.getFileType() != KotlinFileType.INSTANCE) {
