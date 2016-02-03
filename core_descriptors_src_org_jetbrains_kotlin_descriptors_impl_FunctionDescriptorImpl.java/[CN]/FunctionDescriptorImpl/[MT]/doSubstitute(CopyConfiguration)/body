@@ -1,7 +1,7 @@
 {
   FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(configuration.newOwner,configuration.original,configuration.kind,configuration.name,configuration.preserveSourceElement);
   List<TypeParameterDescriptor> substitutedTypeParameters;
-  TypeSubstitutor substitutor;
+  final TypeSubstitutor substitutor;
   if (configuration.newTypeParameters == null) {
     List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
     substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
@@ -47,16 +47,27 @@
     FunctionDescriptor initialSignatureSubstituted=initialSignature.substitute(substitutor);
     substitutedDescriptor.setInitialSignatureDescriptor(initialSignatureSubstituted);
   }
-  if (configuration.copyOverrides && !getOverriddenDescriptors().isEmpty()) {
+  if (configuration.copyOverrides && !getOriginal().getOverriddenDescriptors().isEmpty()) {
     if (configuration.originalSubstitutor.isEmpty()) {
-      substitutedDescriptor.setOverriddenDescriptors(getOverriddenDescriptors());
+      Function0<Set<FunctionDescriptor>> overriddenFunctionsTask=lazyOverriddenFunctionsTask;
+      if (overriddenFunctionsTask != null) {
+        substitutedDescriptor.lazyOverriddenFunctionsTask=overriddenFunctionsTask;
+      }
+ else {
+        substitutedDescriptor.setOverriddenDescriptors(getOverriddenDescriptors());
+      }
     }
  else {
-      Collection<CallableMemberDescriptor> substitutedOverridden=SmartSet.create();
-      for (      FunctionDescriptor overriddenFunction : getOverriddenDescriptors()) {
-        substitutedOverridden.add(overriddenFunction.substitute(substitutor));
+      substitutedDescriptor.lazyOverriddenFunctionsTask=new Function0<Set<FunctionDescriptor>>(){
+        @Override public Set<FunctionDescriptor> invoke(){
+          SmartSet<FunctionDescriptor> result=SmartSet.create();
+          for (          FunctionDescriptor overriddenFunction : getOverriddenDescriptors()) {
+            result.add(overriddenFunction.substitute(substitutor));
+          }
+          return result;
+        }
       }
-      substitutedDescriptor.setOverriddenDescriptors(substitutedOverridden);
+;
     }
   }
   return substitutedDescriptor;
