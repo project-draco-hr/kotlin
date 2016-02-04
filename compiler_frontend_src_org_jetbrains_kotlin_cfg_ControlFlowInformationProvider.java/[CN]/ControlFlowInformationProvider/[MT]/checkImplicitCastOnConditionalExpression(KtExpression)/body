@@ -1,4 +1,5 @@
 {
+  Collection<KtExpression> branchExpressions=collectResultingExpressionsOfConditionalExpression(expression);
   KotlinType expectedExpressionType=trace.get(EXPECTED_EXPRESSION_TYPE,expression);
   if (expectedExpressionType != null && expectedExpressionType != DONT_CARE)   return;
   KotlinType expressionType=trace.getType(expression);
@@ -6,10 +7,11 @@
     return;
   }
   if (KotlinBuiltIns.isAnyOrNullableAny(expressionType)) {
+    boolean isUsedAsResultOfLambda=BindingContextUtilsKt.isUsedAsResultOfLambda(expression,trace.getBindingContext());
     for (    KtExpression branchExpression : branchExpressions) {
       if (branchExpression == null)       continue;
       KotlinType branchType=trace.getType(branchExpression);
-      if (branchType == null || KotlinBuiltIns.isAnyOrNullableAny(branchType)) {
+      if (branchType == null || KotlinBuiltIns.isAnyOrNullableAny(branchType) || (isUsedAsResultOfLambda && KotlinBuiltIns.isUnitOrNullableUnit(branchType))) {
         return;
       }
     }
