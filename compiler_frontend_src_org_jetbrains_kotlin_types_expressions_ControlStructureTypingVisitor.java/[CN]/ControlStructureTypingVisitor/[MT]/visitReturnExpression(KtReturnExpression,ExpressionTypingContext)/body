@@ -1,2 +1,51 @@
 {
+  KtElement labelTargetElement=LabelResolver.INSTANCE.resolveControlLabel(expression,context);
+  KtExpression returnedExpression=expression.getReturnedExpression();
+  KotlinType expectedType=NO_EXPECTED_TYPE;
+  KotlinType resultType=components.builtIns.getNothingType();
+  KtDeclaration parentDeclaration=PsiTreeUtil.getParentOfType(expression,KtDeclaration.class);
+  if (parentDeclaration instanceof KtParameter) {
+    context.trace.report(RETURN_NOT_ALLOWED.on(expression));
+  }
+  if (expression.getTargetLabel() == null) {
+    while (parentDeclaration instanceof KtDestructuringDeclaration) {
+      parentDeclaration=PsiTreeUtil.getParentOfType(parentDeclaration,KtDeclaration.class);
+    }
+    DeclarationDescriptor declarationDescriptor=context.trace.get(DECLARATION_TO_DESCRIPTOR,parentDeclaration);
+    Pair<FunctionDescriptor,PsiElement> containingFunInfo=BindingContextUtils.getContainingFunctionSkipFunctionLiterals(declarationDescriptor,false);
+    FunctionDescriptor containingFunctionDescriptor=containingFunInfo.getFirst();
+    if (containingFunctionDescriptor != null) {
+      if (!InlineUtil.checkNonLocalReturnUsage(containingFunctionDescriptor,expression,context.trace) || isClassInitializer(containingFunInfo)) {
+        context.trace.report(RETURN_NOT_ALLOWED.on(expression));
+        resultType=ErrorUtils.createErrorType(RETURN_NOT_ALLOWED_MESSAGE);
+      }
+      expectedType=getFunctionExpectedReturnType(containingFunctionDescriptor,(KtElement)containingFunInfo.getSecond(),context);
+    }
+ else {
+      context.trace.report(RETURN_NOT_ALLOWED.on(expression));
+      resultType=ErrorUtils.createErrorType(RETURN_NOT_ALLOWED_MESSAGE);
+    }
+  }
+ else   if (labelTargetElement != null) {
+    SimpleFunctionDescriptor functionDescriptor=context.trace.get(FUNCTION,labelTargetElement);
+    if (functionDescriptor != null) {
+      expectedType=getFunctionExpectedReturnType(functionDescriptor,labelTargetElement,context);
+      if (!InlineUtil.checkNonLocalReturnUsage(functionDescriptor,expression,context.trace)) {
+        context.trace.report(RETURN_NOT_ALLOWED.on(expression));
+        resultType=ErrorUtils.createErrorType(RETURN_NOT_ALLOWED_MESSAGE);
+      }
+    }
+ else {
+      context.trace.report(NOT_A_RETURN_LABEL.on(expression,expression.getLabelName()));
+    }
+  }
+  if (returnedExpression != null) {
+    facade.getTypeInfo(returnedExpression,context.replaceExpectedType(expectedType).replaceScope(context.scope).replaceContextDependency(INDEPENDENT));
+  }
+ else {
+    if (expectedType != null && !noExpectedType(expectedType) && !KotlinBuiltIns.isUnit(expectedType) && !isDontCarePlaceholder(expectedType)) {
+      context.trace.report(RETURN_TYPE_MISMATCH.on(expression,expectedType));
+    }
+  }
+  return components.dataFlowAnalyzer.createCheckedTypeInfo(resultType,context,expression);
 }
