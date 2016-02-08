@@ -1,2 +1,112 @@
 {
+  node=prepareNode(node,finallyDeepShift);
+  try {
+    new MandatoryMethodTransformer().transform("fake",node);
+  }
+ catch (  Throwable e) {
+    throw wrapException(e,node,"couldn't inline method call");
+  }
+  Analyzer<SourceValue> analyzer=new Analyzer<SourceValue>(new SourceInterpreter()){
+    @NotNull @Override protected Frame<SourceValue> newFrame(    int nLocals,    int nStack){
+      return new Frame<SourceValue>(nLocals,nStack){
+        @Override public void execute(        @NotNull AbstractInsnNode insn,        Interpreter<SourceValue> interpreter) throws AnalyzerException {
+          if (insn.getOpcode() == Opcodes.RETURN) {
+            return;
+          }
+          super.execute(insn,interpreter);
+        }
+      }
+;
+    }
+  }
+;
+  Frame<SourceValue>[] sources;
+  try {
+    sources=analyzer.analyze("fake",node);
+  }
+ catch (  AnalyzerException e) {
+    throw wrapException(e,node,"couldn't inline method call");
+  }
+  Set<AbstractInsnNode> toDelete=new SmartHashSet<AbstractInsnNode>();
+  InstructionsAndFrames instructionsAndFrames=new InstructionsAndFrames(sources,node.instructions);
+  AbstractInsnNode cur=node.instructions.getFirst();
+  int index=0;
+  boolean awaitClassReification=false;
+  int currentFinallyDeep=0;
+  while (cur != null) {
+    Frame<SourceValue> frame=sources[index];
+    if (frame != null) {
+      if (ReifiedTypeInliner.isNeedClassReificationMarker(cur)) {
+        awaitClassReification=true;
+      }
+ else       if (cur.getType() == AbstractInsnNode.METHOD_INSN) {
+        if (InlineCodegenUtil.isFinallyStart(cur)) {
+          currentFinallyDeep=InlineCodegenUtil.getConstant(cur.getPrevious());
+        }
+        MethodInsnNode methodInsnNode=(MethodInsnNode)cur;
+        String owner=methodInsnNode.owner;
+        String desc=methodInsnNode.desc;
+        String name=methodInsnNode.name;
+        Type[] argTypes=Type.getArgumentTypes(desc);
+        int paramCount=argTypes.length + 1;
+        int firstParameterIndex=frame.getStackSize() - paramCount;
+        if (isInvokeOnLambda(owner,name)) {
+          SourceValue sourceValue=frame.getStack(firstParameterIndex);
+          LambdaInfo lambdaInfo=null;
+          int varIndex=-1;
+          AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
+          if (insnNode != null) {
+            lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,instructionsAndFrames,toDelete,true);
+          }
+          invokeCalls.add(new InvokeCall(varIndex,lambdaInfo,currentFinallyDeep));
+        }
+ else         if (isAnonymousConstructorCall(owner,name)) {
+          Map<Integer,LambdaInfo> lambdaMapping=new HashMap<Integer,LambdaInfo>();
+          int offset=0;
+          for (int i=0; i < paramCount; i++) {
+            SourceValue sourceValue=frame.getStack(firstParameterIndex + i);
+            AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
+            if (insnNode != null) {
+              LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,instructionsAndFrames,toDelete,false);
+              if (lambdaInfo != null) {
+                lambdaMapping.put(offset,lambdaInfo);
+              }
+            }
+            offset+=i == 0 ? 1 : argTypes[i - 1].getSize();
+          }
+          anonymousObjectGenerations.add(buildConstructorInvocation(owner,desc,lambdaMapping,awaitClassReification));
+          awaitClassReification=false;
+        }
+      }
+ else       if (cur.getOpcode() == Opcodes.GETSTATIC) {
+        FieldInsnNode fieldInsnNode=(FieldInsnNode)cur;
+        String owner=fieldInsnNode.owner;
+        if (isAnonymousSingletonLoad(owner,fieldInsnNode.name)) {
+          anonymousObjectGenerations.add(new AnonymousObjectGeneration(owner,isSameModule,awaitClassReification,isAlreadyRegenerated(owner),true));
+          awaitClassReification=false;
+        }
+      }
+    }
+    AbstractInsnNode prevNode=cur;
+    cur=cur.getNext();
+    index++;
+    if (frame == null) {
+      if (prevNode.getType() == AbstractInsnNode.LABEL) {
+      }
+ else {
+        node.instructions.remove(prevNode);
+      }
+    }
+  }
+  for (  AbstractInsnNode insnNode : toDelete) {
+    node.instructions.remove(insnNode);
+  }
+  List<TryCatchBlockNode> blocks=node.tryCatchBlocks;
+  for (Iterator<TryCatchBlockNode> iterator=blocks.iterator(); iterator.hasNext(); ) {
+    TryCatchBlockNode block=iterator.next();
+    if (isEmptyTryInterval(block)) {
+      iterator.remove();
+    }
+  }
+  return node;
 }
