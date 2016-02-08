@@ -1,6 +1,11 @@
 {
   System.setProperty("java.awt.headless","true");
-  Pair<String,ExitCode> outputAndExitCode=executeCompilerGrabOutput(compiler,readArgs(testDataDir + "/" + testName.getMethodName()+ ".args",testDataDir,tmpdir.getTmpDir().getPath()));
+  String testMethodName=testName.getMethodName();
+  Pair<String,ExitCode> outputAndExitCode=executeCompilerGrabOutput(compiler,readArgs(testDataDir + "/" + testMethodName+ ".args",testDataDir,tmpdir.getTmpDir().getPath()));
   String actual=getNormalizedCompilerOutput(outputAndExitCode.getFirst(),outputAndExitCode.getSecond(),testDataDir);
-  KotlinTestUtils.assertEqualsToFile(new File(testDataDir + "/" + testName.getMethodName()+ ".out"),actual);
+  KotlinTestUtils.assertEqualsToFile(new File(testDataDir + "/" + testMethodName+ ".out"),actual);
+  File additionalTestConfig=new File(testDataDir + "/" + testMethodName+ ".test");
+  if (additionalTestConfig.exists()) {
+    doTestAdditionalChecks(additionalTestConfig);
+  }
 }

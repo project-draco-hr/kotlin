@@ -1,0 +1,25 @@
+{
+  List<String> diagnostics=new ArrayList<String>(0);
+  String content=FilesKt.readText(testConfigFile,Charsets.UTF_8);
+  List<String> existsList=InTextDirectivesUtils.findListWithPrefixes(content,"// EXISTS: ");
+  for (  String fileName : existsList) {
+    File file=new File(tmpdir.getTmpDir(),fileName);
+    if (!file.exists()) {
+      diagnostics.add("File does not exist, but should: " + fileName);
+    }
+ else     if (!file.isFile()) {
+      diagnostics.add("File is a directory, but should be a normal file: " + fileName);
+    }
+  }
+  List<String> absentList=InTextDirectivesUtils.findListWithPrefixes(content,"// ABSENT: ");
+  for (  String fileName : absentList) {
+    File file=new File(tmpdir.getTmpDir(),fileName);
+    if (file.exists() && file.isFile()) {
+      diagnostics.add("File exists, but shouldn't: " + fileName);
+    }
+  }
+  if (!diagnostics.isEmpty()) {
+    diagnostics.add(0,diagnostics.size() + " problem(s) found:");
+    Assert.fail(StringsKt.join(diagnostics,"\n"));
+  }
+}
