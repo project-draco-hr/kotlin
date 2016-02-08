@@ -30,11 +30,10 @@
   Set<AbstractInsnNode> toDelete=SmartSet.create();
   InsnList instructions=node.instructions;
   AbstractInsnNode cur=instructions.getFirst();
-  int index=0;
   boolean awaitClassReification=false;
   int currentFinallyDeep=0;
   while (cur != null) {
-    Frame<SourceValue> frame=sources[index];
+    Frame<SourceValue> frame=sources[instructions.indexOf(cur)];
     if (frame != null) {
       if (ReifiedTypeInliner.isNeedClassReificationMarker(cur)) {
         awaitClassReification=true;
@@ -52,25 +51,17 @@
         int firstParameterIndex=frame.getStackSize() - paramCount;
         if (isInvokeOnLambda(owner,name)) {
           SourceValue sourceValue=frame.getStack(firstParameterIndex);
-          LambdaInfo lambdaInfo=null;
-          int varIndex=-1;
-          AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
-          if (insnNode != null) {
-            lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,true,instructions,sources,toDelete);
-          }
-          invokeCalls.add(new InvokeCall(varIndex,lambdaInfo,currentFinallyDeep));
+          LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,MethodInlinerUtilKt.singleOrNullInsn(sourceValue),true,instructions,sources,toDelete);
+          invokeCalls.add(new InvokeCall(lambdaInfo,currentFinallyDeep));
         }
  else         if (isAnonymousConstructorCall(owner,name)) {
           Map<Integer,LambdaInfo> lambdaMapping=new HashMap<Integer,LambdaInfo>();
           int offset=0;
           for (int i=0; i < paramCount; i++) {
             SourceValue sourceValue=frame.getStack(firstParameterIndex + i);
-            AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
-            if (insnNode != null) {
-              LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,false,instructions,sources,toDelete);
-              if (lambdaInfo != null) {
-                lambdaMapping.put(offset,lambdaInfo);
-              }
+            LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,MethodInlinerUtilKt.singleOrNullInsn(sourceValue),false,instructions,sources,toDelete);
+            if (lambdaInfo != null) {
+              lambdaMapping.put(offset,lambdaInfo);
             }
             offset+=i == 0 ? 1 : argTypes[i - 1].getSize();
           }
@@ -89,7 +80,6 @@
     }
     AbstractInsnNode prevNode=cur;
     cur=cur.getNext();
-    index++;
     if (frame == null) {
       if (prevNode.getType() == AbstractInsnNode.LABEL) {
       }
