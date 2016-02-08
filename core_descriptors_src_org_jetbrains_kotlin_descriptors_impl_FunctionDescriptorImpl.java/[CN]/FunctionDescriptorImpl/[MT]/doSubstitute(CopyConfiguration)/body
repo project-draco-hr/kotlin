@@ -47,14 +47,16 @@
     FunctionDescriptor initialSignatureSubstituted=initialSignature.substitute(substitutor);
     substitutedDescriptor.setInitialSignatureDescriptor(initialSignatureSubstituted);
   }
-  if (configuration.copyOverrides) {
-    for (    FunctionDescriptor overriddenFunction : overriddenFunctions) {
-      if (configuration.originalSubstitutor.isEmpty()) {
-        substitutedDescriptor.addOverriddenDescriptor(overriddenFunction);
-      }
+  if (configuration.copyOverrides && !getOverriddenDescriptors().isEmpty()) {
+    if (configuration.originalSubstitutor.isEmpty()) {
+      substitutedDescriptor.setOverriddenDescriptors(getOverriddenDescriptors());
+    }
  else {
-        substitutedDescriptor.addOverriddenDescriptor(overriddenFunction.substitute(substitutor));
+      Collection<CallableMemberDescriptor> substitutedOverridden=SmartSet.create();
+      for (      FunctionDescriptor overriddenFunction : getOverriddenDescriptors()) {
+        substitutedOverridden.add(overriddenFunction.substitute(substitutor));
       }
+      substitutedDescriptor.setOverriddenDescriptors(substitutedOverridden);
     }
   }
   return substitutedDescriptor;

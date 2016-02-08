@@ -1,12 +1,13 @@
 {
   Collection<CallableMemberDescriptor> bound=new ArrayList<CallableMemberDescriptor>(descriptorsFromSuper.size());
+  Collection<CallableMemberDescriptor> overridden=SmartSet.create();
   for (  CallableMemberDescriptor fromSupertype : descriptorsFromSuper) {
     OverrideCompatibilityInfo.Result result=DEFAULT.isOverridableBy(fromSupertype,fromCurrent,current).getResult();
     boolean isVisible=Visibilities.isVisibleWithIrrelevantReceiver(fromSupertype,current);
 switch (result) {
 case OVERRIDABLE:
       if (isVisible) {
-        fromCurrent.addOverriddenDescriptor(fromSupertype);
+        overridden.add(fromSupertype);
       }
     bound.add(fromSupertype);
   break;
@@ -20,5 +21,6 @@ case INCOMPATIBLE:
 break;
 }
 }
+fromCurrent.setOverriddenDescriptors(overridden);
 return bound;
 }
