@@ -27,9 +27,9 @@
  catch (  AnalyzerException e) {
     throw wrapException(e,node,"couldn't inline method call");
   }
-  Set<AbstractInsnNode> toDelete=new SmartHashSet<AbstractInsnNode>();
-  InstructionsAndFrames instructionsAndFrames=new InstructionsAndFrames(sources,node.instructions);
-  AbstractInsnNode cur=node.instructions.getFirst();
+  Set<AbstractInsnNode> toDelete=SmartSet.create();
+  InsnList instructions=node.instructions;
+  AbstractInsnNode cur=instructions.getFirst();
   int index=0;
   boolean awaitClassReification=false;
   int currentFinallyDeep=0;
@@ -56,7 +56,7 @@
           int varIndex=-1;
           AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
           if (insnNode != null) {
-            lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,instructionsAndFrames,toDelete,true);
+            lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,true,instructions,sources,toDelete);
           }
           invokeCalls.add(new InvokeCall(varIndex,lambdaInfo,currentFinallyDeep));
         }
@@ -67,7 +67,7 @@
             SourceValue sourceValue=frame.getStack(firstParameterIndex + i);
             AbstractInsnNode insnNode=MethodInlinerUtilKt.singleOrNullInsn(sourceValue);
             if (insnNode != null) {
-              LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,instructionsAndFrames,toDelete,false);
+              LambdaInfo lambdaInfo=MethodInlinerUtilKt.getLambdaIfExistsAndMarkInstructions(this,insnNode,frame,false,instructions,sources,toDelete);
               if (lambdaInfo != null) {
                 lambdaMapping.put(offset,lambdaInfo);
               }
@@ -94,12 +94,12 @@
       if (prevNode.getType() == AbstractInsnNode.LABEL) {
       }
  else {
-        node.instructions.remove(prevNode);
+        toDelete.add(prevNode);
       }
     }
   }
   for (  AbstractInsnNode insnNode : toDelete) {
-    node.instructions.remove(insnNode);
+    instructions.remove(insnNode);
   }
   List<TryCatchBlockNode> blocks=node.tryCatchBlocks;
   for (Iterator<TryCatchBlockNode> iterator=blocks.iterator(); iterator.hasNext(); ) {
