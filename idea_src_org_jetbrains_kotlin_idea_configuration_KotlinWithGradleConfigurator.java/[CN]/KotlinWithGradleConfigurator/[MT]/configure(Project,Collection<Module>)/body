@@ -2,15 +2,17 @@
   ConfigureDialogWithModulesAndVersion dialog=new ConfigureDialogWithModulesAndVersion(project,this,KOTLIN_VERSIONS,excludeModules);
   dialog.show();
   if (!dialog.isOK())   return;
+  NotificationMessageCollector collector=NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(project);
   for (  Module module : dialog.getModulesToConfigure()) {
     String gradleFilePath=getDefaultPathToBuildGradleFile(module);
     GroovyFile file=getBuildGradleFile(project,gradleFilePath);
     if (file != null && canConfigureFile(file)) {
-      changeGradleFile(file,dialog.getKotlinVersion());
+      changeGradleFile(file,dialog.getKotlinVersion(),collector);
       OpenFileAction.openFile(gradleFilePath,project);
     }
  else {
       showErrorMessage(project,"Cannot find build.gradle file for module " + module.getName());
     }
   }
+  collector.showNotification();
 }

@@ -1,0 +1,19 @@
+{
+  String oldLibrarySourceRoot=getOldSourceRootUrl(library);
+  String[] librarySourceRoots=library.getUrls(OrderRootType.SOURCES);
+  for (  String sourceRoot : librarySourceRoots) {
+    if (sourceRoot.equals(oldLibrarySourceRoot)) {
+      final Library.ModifiableModel model=library.getModifiableModel();
+      model.removeRoot(oldLibrarySourceRoot,OrderRootType.SOURCES);
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          model.commit();
+        }
+      }
+);
+      collector.addMessage("Source root '" + oldLibrarySourceRoot + "' was removed for "+ library.getName()+ " library");
+      return true;
+    }
+  }
+  return false;
+}

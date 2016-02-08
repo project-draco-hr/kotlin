@@ -1,0 +1,71 @@
+{
+  Project project=module.getProject();
+  RuntimeLibraryFiles files=getExistingJarFiles();
+  File runtimeJar=files.getRuntimeJar();
+  File reflectJar=files.getReflectJar();
+switch (libraryState) {
+case LIBRARY:
+switch (jarState) {
+case EXISTS:
+{
+        break;
+      }
+case COPY:
+{
+      copyFileToDir(runtimeJar,dirToCopyJarTo,collector);
+      if (reflectJar != null) {
+        copyFileToDir(reflectJar,dirToCopyJarTo,collector);
+      }
+      break;
+    }
+case DO_NOT_COPY:
+{
+    throw new IllegalStateException("Kotlin library exists, so path to copy should be hidden in configuration dialog and jar should be copied using path in library table");
+  }
+}
+break;
+case NON_CONFIGURED_LIBRARY:
+switch (jarState) {
+case EXISTS:
+{
+addJarsToExistingLibrary(project,files.getRuntimeDestination(dirToCopyJarTo),files.getReflectDestination(dirToCopyJarTo),collector);
+break;
+}
+case COPY:
+{
+File copiedRuntimeJar=copyFileToDir(runtimeJar,dirToCopyJarTo,collector);
+File copiedReflectJar=copyFileToDir(reflectJar,dirToCopyJarTo,collector);
+addJarsToExistingLibrary(project,copiedRuntimeJar,copiedReflectJar,collector);
+break;
+}
+case DO_NOT_COPY:
+{
+addJarsToExistingLibrary(project,runtimeJar,reflectJar,collector);
+break;
+}
+}
+break;
+case NEW_LIBRARY:
+switch (jarState) {
+case EXISTS:
+{
+addJarsToNewLibrary(project,files.getRuntimeDestination(dirToCopyJarTo),files.getReflectDestination(dirToCopyJarTo),collector);
+break;
+}
+case COPY:
+{
+File copiedRuntimeJar=copyFileToDir(runtimeJar,dirToCopyJarTo,collector);
+File copiedReflectJar=copyFileToDir(reflectJar,dirToCopyJarTo,collector);
+addJarsToNewLibrary(project,copiedRuntimeJar,copiedReflectJar,collector);
+break;
+}
+case DO_NOT_COPY:
+{
+addJarsToNewLibrary(project,runtimeJar,reflectJar,collector);
+break;
+}
+}
+break;
+}
+addLibraryToModuleIfNeeded(module,collector);
+}

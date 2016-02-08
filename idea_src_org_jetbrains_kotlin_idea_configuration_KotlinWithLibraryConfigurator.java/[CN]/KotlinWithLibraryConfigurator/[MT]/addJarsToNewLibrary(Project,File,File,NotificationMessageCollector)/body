@@ -1,0 +1,17 @@
+{
+  final LibraryTable table=LibraryTablesRegistrar.getInstance().getLibraryTable(project);
+  final Ref<Library> library=new Ref<Library>();
+  ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    @Override public void run(){
+      library.set(table.createLibrary(getLibraryName()));
+      Library.ModifiableModel model=library.get().getModifiableModel();
+      model.addRoot(VfsUtil.getUrlForLibraryRoot(runtimeJar),OrderRootType.CLASSES);
+      if (reflectJar != null) {
+        model.addRoot(VfsUtil.getUrlForLibraryRoot(reflectJar),OrderRootType.CLASSES);
+      }
+      model.commit();
+    }
+  }
+);
+  collector.addMessage(library.get().getName() + " library was created");
+}
