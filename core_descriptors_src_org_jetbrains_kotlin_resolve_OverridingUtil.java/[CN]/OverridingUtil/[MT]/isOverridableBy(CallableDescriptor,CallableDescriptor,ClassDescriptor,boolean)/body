@@ -1,10 +1,13 @@
 {
-  boolean wasSuccessfulExternalCondition=false;
+  OverrideCompatibilityInfo basicResult=isOverridableByWithoutExternalConditions(superDescriptor,subDescriptor,checkReturnType);
+  boolean wasSuccess=basicResult.getResult() == OVERRIDABLE;
   for (  ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
+    if (externalCondition.getContract() == ExternalOverridabilityCondition.Contract.CONFLICTS_ONLY)     continue;
+    if (wasSuccess && externalCondition.getContract() == ExternalOverridabilityCondition.Contract.SUCCESS_ONLY)     continue;
     ExternalOverridabilityCondition.Result result=externalCondition.isOverridable(superDescriptor,subDescriptor,subClassDescriptor);
 switch (result) {
 case OVERRIDABLE:
-      wasSuccessfulExternalCondition=true;
+      wasSuccess=true;
     break;
 case CONFLICT:
   return OverrideCompatibilityInfo.conflict("External condition failed");
@@ -13,8 +16,21 @@ return OverrideCompatibilityInfo.incompatible("External condition");
 case UNKNOWN:
 }
 }
-if (wasSuccessfulExternalCondition) {
-return OverrideCompatibilityInfo.success();
+if (!wasSuccess) {
+return basicResult;
 }
-return isOverridableByWithoutExternalConditions(superDescriptor,subDescriptor,checkReturnType);
+for (ExternalOverridabilityCondition externalCondition : EXTERNAL_CONDITIONS) {
+if (externalCondition.getContract() != ExternalOverridabilityCondition.Contract.CONFLICTS_ONLY) continue;
+ExternalOverridabilityCondition.Result result=externalCondition.isOverridable(superDescriptor,subDescriptor,subClassDescriptor);
+switch (result) {
+case CONFLICT:
+return OverrideCompatibilityInfo.conflict("External condition failed");
+case INCOMPATIBLE:
+return OverrideCompatibilityInfo.incompatible("External condition");
+case OVERRIDABLE:
+throw new IllegalStateException("Contract violation in " + externalCondition.getClass().getName() + " condition. It's not supposed to end with success");
+case UNKNOWN:
+}
+}
+return OverrideCompatibilityInfo.success();
 }
