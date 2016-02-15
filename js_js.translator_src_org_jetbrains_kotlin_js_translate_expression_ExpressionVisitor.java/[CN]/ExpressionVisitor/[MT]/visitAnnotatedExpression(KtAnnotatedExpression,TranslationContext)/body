@@ -1,0 +1,15 @@
+{
+  for (  KtAnnotationEntry entry : expression.getAnnotationEntries()) {
+    AnnotationDescriptor descriptor=context.bindingContext().get(BindingContext.ANNOTATION,entry);
+    if (descriptor == null)     continue;
+    ClassifierDescriptor classifierDescriptor=descriptor.getType().getConstructor().getDeclarationDescriptor();
+    if (classifierDescriptor == null)     continue;
+    KotlinRetention retention=DescriptorUtilsKt.getAnnotationRetention(classifierDescriptor);
+    if (retention == KotlinRetention.SOURCE) {
+      KtExpression baseExpression=expression.getBaseExpression();
+      if (baseExpression == null)       continue;
+      return baseExpression.accept(this,context);
+    }
+  }
+  return super.visitAnnotatedExpression(expression,context);
+}
