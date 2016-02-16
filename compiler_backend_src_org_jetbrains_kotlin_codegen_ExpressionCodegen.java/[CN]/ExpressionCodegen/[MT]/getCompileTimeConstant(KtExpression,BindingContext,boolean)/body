@@ -1,9 +1,34 @@
 {
   CompileTimeConstant<?> compileTimeValue=ConstantExpressionEvaluator.getConstant(expression,bindingContext);
-  if (compileTimeValue == null) {
+  if (compileTimeValue == null || compileTimeValue.getUsesNonConstValAsConstant()) {
     return null;
   }
-  if (compileTimeValue.getUsesNonConstValAsConstant() || (checkPure && !compileTimeValue.getParameters().isPure()))   return null;
+  if (!takeUpConstValsAsConst && compileTimeValue.getUsesVariableAsConstant()) {
+    final Ref<Boolean> containsNonInlinedVals=new Ref<Boolean>(false);
+    KtVisitor constantChecker=new KtVisitor(){
+      @Override public Object visitSimpleNameExpression(      @NotNull KtSimpleNameExpression expression,      Object data){
+        ResolvedCall resolvedCall=CallUtilKt.getResolvedCall(expression,bindingContext);
+        if (resolvedCall != null) {
+          CallableDescriptor callableDescriptor=resolvedCall.getResultingDescriptor();
+          if (callableDescriptor instanceof PropertyDescriptor && !JvmCodegenUtil.isInlinedJavaConstProperty((VariableDescriptor)callableDescriptor)) {
+            containsNonInlinedVals.set(true);
+          }
+        }
+        return null;
+      }
+      @Override public Object visitKtElement(      @NotNull KtElement element,      Object data){
+        if (!containsNonInlinedVals.get()) {
+          element.acceptChildren(this);
+        }
+        return null;
+      }
+    }
+;
+    expression.accept(constantChecker);
+    if (containsNonInlinedVals.get()) {
+      return null;
+    }
+  }
   KotlinType expectedType=bindingContext.getType(expression);
   return compileTimeValue.toConstantValue(expectedType);
 }
