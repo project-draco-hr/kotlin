@@ -7,6 +7,7 @@
   Type[] allTypes=ArrayUtil.mergeArrays(types,capturedTypes.toArray(new Type[capturedTypes.size()]));
   node.instructions.resetLabels();
   MethodNode transformedNode=new MethodNode(InlineCodegenUtil.API,node.access,node.name,Type.getMethodDescriptor(returnType,allTypes),node.signature,null){
+    private final boolean GENERATE_DEBUG_INFO=InlineCodegenUtil.GENERATE_SMAP && !skipSmap;
     private final boolean isInliningLambda=nodeRemapper.isInsideInliningLambda();
     private int getNewIndex(    int var){
       return var + (var < realParametersSize ? 0 : capturedParamsSize);
@@ -21,12 +22,12 @@
       super.visitMaxs(maxStack,maxLocals + capturedParamsSize);
     }
     @Override public void visitLineNumber(    int line,    @NotNull Label start){
-      if (isInliningLambda || InlineCodegenUtil.GENERATE_SMAP) {
+      if (isInliningLambda || GENERATE_DEBUG_INFO) {
         super.visitLineNumber(line,start);
       }
     }
     @Override public void visitLocalVariable(    @NotNull String name,    @NotNull String desc,    String signature,    @NotNull Label start,    @NotNull Label end,    int index){
-      if (isInliningLambda || InlineCodegenUtil.GENERATE_SMAP) {
+      if (isInliningLambda || GENERATE_DEBUG_INFO) {
         String varSuffix=inliningContext.isRoot() && !isDefaultCompilation() && !InlineCodegenUtil.isFakeLocalVariableForInline(name) ? INLINE_FUN_VAR_SUFFIX : "";
         String varName=!varSuffix.isEmpty() && name.equals("this") ? name + "_" : name;
         super.visitLocalVariable(varName + varSuffix,desc,signature,start,end,getNewIndex(index));
