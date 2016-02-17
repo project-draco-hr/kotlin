@@ -1,7 +1,7 @@
 {
   JvmFileClassInfo fileClassInfo=state.getFileClassesProvider().getFileClassInfo(file);
   if (fileClassInfo.getWithJvmMultifileClass()) {
-    return null;
+    return;
   }
   Type fileClassType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFileClassFqName());
   PackageContext packagePartContext=state.getRootContext().intoPackagePart(packageFragment,fileClassType,file);
@@ -23,10 +23,9 @@
       }
     }
   }
-  if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file))   return null;
+  if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file))   return;
   String name=fileClassType.getInternalName();
   packagePartRegistry.addPart(name.substring(name.lastIndexOf('/') + 1));
   ClassBuilder builder=state.getFactory().newVisitor(JvmDeclarationOriginKt.PackagePart(file,packageFragment),fileClassType,file);
   new PackagePartCodegen(builder,file,fileClassType,packagePartContext,state).generate();
-  return builder;
 }
