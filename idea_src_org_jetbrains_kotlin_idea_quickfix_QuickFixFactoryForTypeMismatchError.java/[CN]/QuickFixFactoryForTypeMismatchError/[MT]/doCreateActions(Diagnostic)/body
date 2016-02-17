@@ -76,6 +76,12 @@
       }
     }
   }
+  KtAnnotationEntry annotationEntry=PsiTreeUtil.getParentOfType(expression,KtAnnotationEntry.class);
+  if (annotationEntry != null) {
+    if (KotlinBuiltIns.isArray(expectedType) && TypeUtilsKt.isSubtypeOf(expressionType,expectedType.getArguments().get(0).getType()) || KotlinBuiltIns.isPrimitiveArray(expectedType)) {
+      actions.add(new AddArrayOfTypeFix(expression,expectedType));
+    }
+  }
   ResolvedCall<? extends CallableDescriptor> resolvedCall=CallUtilKt.getParentResolvedCall(expression,context,true);
   if (resolvedCall != null) {
     KtExpression parentIf=QuickFixUtil.getParentIfForBranch(expression);
