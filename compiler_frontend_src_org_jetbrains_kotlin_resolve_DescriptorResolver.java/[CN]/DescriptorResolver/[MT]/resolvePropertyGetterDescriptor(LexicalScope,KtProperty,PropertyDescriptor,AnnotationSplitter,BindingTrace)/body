@@ -8,11 +8,14 @@
     KtTypeReference returnTypeReference=getter.getReturnTypeReference();
     if (returnTypeReference != null) {
       returnType=typeResolver.resolveType(scopeWithTypeParameters,returnTypeReference,trace,true);
-      if (outType != null && !TypeUtils.equalTypes(returnType,outType)) {
+      if (!TypeUtils.equalTypes(returnType,outType)) {
         trace.report(WRONG_GETTER_RETURN_TYPE.on(returnTypeReference,propertyDescriptor.getReturnType(),outType));
       }
     }
     getterDescriptor=new PropertyGetterDescriptorImpl(propertyDescriptor,getterAnnotations,resolveModalityFromModifiers(getter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(getter,propertyDescriptor.getVisibility()),getter.hasBody(),false,getter.hasModifier(EXTERNAL_KEYWORD),CallableMemberDescriptor.Kind.DECLARATION,null,KotlinSourceElementKt.toSourceElement(getter));
+    if (returnType.isError() && !getter.hasBlockBody() && getter.hasBody()) {
+      returnType=inferReturnTypeFromExpressionBody(storageManager,expressionTypingServices,trace,scopeWithTypeParameters,DataFlowInfoFactory.EMPTY,getter,getterDescriptor);
+    }
     getterDescriptor.initialize(returnType);
     trace.record(BindingContext.PROPERTY_ACCESSOR,getter,getterDescriptor);
   }
