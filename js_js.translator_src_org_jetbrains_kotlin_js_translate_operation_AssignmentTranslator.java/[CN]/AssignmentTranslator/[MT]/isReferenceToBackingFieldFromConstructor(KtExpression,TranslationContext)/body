@@ -1,0 +1,16 @@
+{
+  if (expression instanceof KtSimpleNameExpression) {
+    KtSimpleNameExpression nameExpression=(KtSimpleNameExpression)expression;
+    DeclarationDescriptor descriptor=getDescriptorForReferenceExpression(context.bindingContext(),nameExpression);
+    return isReferenceToBackingFieldFromConstructor(descriptor,context);
+  }
+ else   if (expression instanceof KtDotQualifiedExpression) {
+    KtDotQualifiedExpression qualifiedExpression=(KtDotQualifiedExpression)expression;
+    if (qualifiedExpression.getReceiverExpression() instanceof KtThisExpression && qualifiedExpression.getSelectorExpression() instanceof KtSimpleNameExpression) {
+      KtSimpleNameExpression nameExpression=(KtSimpleNameExpression)qualifiedExpression.getSelectorExpression();
+      DeclarationDescriptor descriptor=getDescriptorForReferenceExpression(context.bindingContext(),nameExpression);
+      return isReferenceToBackingFieldFromConstructor(descriptor,context);
+    }
+  }
+  return false;
+}
