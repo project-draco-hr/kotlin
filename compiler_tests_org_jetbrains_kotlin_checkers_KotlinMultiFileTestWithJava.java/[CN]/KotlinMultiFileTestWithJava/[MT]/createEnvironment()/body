@@ -1,10 +1,10 @@
 {
-  File javaFilesDir=createJavaFilesDir();
-  CompilerConfiguration configuration=createCompilerConfiguration(javaFilesDir);
+  javaFilesDir=KotlinTestUtils.tmpDir("java-files");
+  CompilerConfiguration configuration=KotlinTestUtils.compilerConfigurationForTests(getConfigurationKind(),getTestJdkKind(),CollectionsKt.plus(Collections.singletonList(KotlinTestUtils.getAnnotationsJar()),getExtraClasspath()),Collections.singletonList(javaFilesDir));
   configuration.add(CommonConfigurationKeys.SCRIPT_DEFINITIONS_KEY,StandardScriptDefinition.INSTANCE);
-  File kotlinSourceRoot=getKotlinSourceRoot();
-  if (kotlinSourceRoot != null) {
+  if (isKotlinSourceRootNeeded()) {
+    kotlinSourceRoot=KotlinTestUtils.tmpDir("kotlin-src");
     ContentRootsKt.addKotlinSourceRoot(configuration,kotlinSourceRoot.getPath());
   }
-  return createEnvironment(getTestRootDisposable(),configuration);
+  return KotlinCoreEnvironment.createForTests(getTestRootDisposable(),configuration,getEnvironmentConfigFiles());
 }
