@@ -20,14 +20,28 @@
   singleModuleRadioButton.addActionListener(listener);
   allModulesWithKtRadioButton.addActionListener(listener);
   allModulesRadioButton.addActionListener(listener);
-  String fullList=StringUtil.join(modulesWithKtFiles,new Function<Module,String>(){
-    @Override public String fun(    Module module){
-      return module.getName();
+  if (modulesWithKtFiles.size() > 2) {
+    allModulesWithKtNames.setHtmlText("<html>" + XmlUtil.escape(modulesWithKtFiles.get(0).getName()) + ", "+ XmlUtil.escape(modulesWithKtFiles.get(1).getName())+ " and <a href=\"#\">"+ (modulesWithKtFiles.size() - 2)+ " other modules</a>");
+    allModulesWithKtNames.addHyperlinkListener(new HyperlinkListener(){
+      @Override public void hyperlinkUpdate(      HyperlinkEvent event){
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Module>("Modules with Kotlin Files",modulesWithKtFiles){
+          @NotNull @Override public String getTextFor(          Module value){
+            return value.getName();
+          }
+        }
+).showUnderneathOf(allModulesWithKtNames);
+      }
     }
+);
   }
-,", ");
-  allModulesWithKtNames.setText(fullList);
-  allModulesWithKtNames.setBorder(null);
+ else {
+    allModulesWithKtNames.setText(StringUtil.join(modules,new Function<Module,String>(){
+      @Override public String fun(      Module module){
+        return module.getName();
+      }
+    }
+,", "));
+  }
   ButtonGroup modulesGroup=new ButtonGroup();
   modulesGroup.add(allModulesRadioButton);
   modulesGroup.add(allModulesWithKtRadioButton);
