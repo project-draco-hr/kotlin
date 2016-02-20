@@ -6,8 +6,13 @@
     @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod","CallToPrintStackTrace"}) @Override public void run(){
       String fileText="";
       String expectedErrorMessage="";
+      List<String> fixtureClasses=Collections.emptyList();
       try {
         fileText=FileUtil.loadFile(testFile,CharsetToolkit.UTF8_CHARSET);
+        fixtureClasses=InTextDirectivesUtils.findListWithPrefixes(fileText,"// FIXTURE_CLASS: ");
+        for (        String fixtureClass : fixtureClasses) {
+          TestFixtureExtension.Companion.loadFixture(fixtureClass,getModule());
+        }
         expectedErrorMessage=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// SHOULD_FAIL_WITH: ");
         String contents=StringUtil.convertLineSeparators(fileText);
         quickFixTestCase.configureFromFileText(testFile.getName(),contents);
@@ -29,6 +34,9 @@ catch (      Throwable e) {
         }
       }
  finally {
+        for (        String fixtureClass : fixtureClasses) {
+          TestFixtureExtension.Companion.unloadFixture(fixtureClass);
+        }
         ConfigLibraryUtil.unconfigureLibrariesByDirective(getModule(),fileText);
       }
     }
