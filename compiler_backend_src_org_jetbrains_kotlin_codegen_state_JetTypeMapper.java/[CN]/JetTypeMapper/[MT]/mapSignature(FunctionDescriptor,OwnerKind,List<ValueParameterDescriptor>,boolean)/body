@@ -1,0 +1,43 @@
+{
+  if (f instanceof FunctionImportedFromObject) {
+    return mapSignature(((FunctionImportedFromObject)f).getCallableFromObject(),kind,skipGenericSignature);
+  }
+  checkOwnerCompatibility(f);
+  JvmSignatureWriter sw=skipGenericSignature || f instanceof AccessorForCallableDescriptor ? new JvmSignatureWriter() : new BothSignatureWriter(BothSignatureWriter.Mode.METHOD);
+  if (f instanceof ConstructorDescriptor) {
+    sw.writeParametersStart();
+    writeAdditionalConstructorParameters((ConstructorDescriptor)f,sw);
+    for (    ValueParameterDescriptor parameter : valueParameters) {
+      writeParameter(sw,parameter.getType(),f);
+    }
+    if (f instanceof AccessorForConstructorDescriptor) {
+      writeParameter(sw,JvmMethodParameterKind.CONSTRUCTOR_MARKER,DEFAULT_CONSTRUCTOR_MARKER);
+    }
+    writeVoidReturn(sw);
+  }
+ else {
+    writeFormalTypeParameters(getDirectMember(f).getTypeParameters(),sw);
+    sw.writeParametersStart();
+    writeThisIfNeeded(f,kind,sw);
+    ReceiverParameterDescriptor receiverParameter=f.getExtensionReceiverParameter();
+    if (receiverParameter != null) {
+      writeParameter(sw,JvmMethodParameterKind.RECEIVER,receiverParameter.getType(),f);
+    }
+    for (    ValueParameterDescriptor parameter : valueParameters) {
+      if (writeCustomParameter(f,parameter,sw))       continue;
+      writeParameter(sw,parameter.getType(),f);
+    }
+    sw.writeReturnType();
+    mapReturnType(f,sw);
+    sw.writeReturnTypeEnd();
+  }
+  JvmMethodSignature signature=sw.makeJvmMethodSignature(mapFunctionName(f));
+  if (kind != OwnerKind.DEFAULT_IMPLS) {
+    SpecialSignatureInfo specialSignatureInfo=BuiltinMethodsWithSpecialGenericSignature.getSpecialSignatureInfo(f);
+    if (specialSignatureInfo != null) {
+      String newGenericSignature=CodegenUtilKt.replaceValueParametersIn(specialSignatureInfo,signature.getGenericsSignature());
+      return new JvmMethodSignature(signature.getAsmMethod(),newGenericSignature,signature.getValueParameters());
+    }
+  }
+  return signature;
+}

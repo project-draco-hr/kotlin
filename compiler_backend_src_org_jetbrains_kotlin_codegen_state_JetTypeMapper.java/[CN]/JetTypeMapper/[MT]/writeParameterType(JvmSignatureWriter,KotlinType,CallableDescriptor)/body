@@ -1,0 +1,18 @@
+{
+  if (sw.skipGenericSignature()) {
+    mapType(type,sw,TypeMappingMode.DEFAULT);
+    return;
+  }
+  TypeMappingMode typeMappingMode;
+  TypeMappingMode typeMappingModeFromAnnotation=TypeMappingUtil.extractTypeMappingModeFromAnnotation(callableDescriptor,type,false);
+  if (typeMappingModeFromAnnotation != null) {
+    typeMappingMode=typeMappingModeFromAnnotation;
+  }
+ else   if (TypeMappingUtil.isMethodWithDeclarationSiteWildcards(callableDescriptor) && !type.getArguments().isEmpty()) {
+    typeMappingMode=TypeMappingMode.GENERIC_ARGUMENT;
+  }
+ else {
+    typeMappingMode=TypeMappingMode.getOptimalModeForValueParameter(type);
+  }
+  mapType(type,sw,typeMappingMode);
+}

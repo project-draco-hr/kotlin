@@ -1,6 +1,6 @@
 {
   if (descriptor instanceof ConstructorDescriptor) {
-    JvmMethodSignature method=mapSignature(descriptor);
+    JvmMethodSignature method=mapSignatureSkipGeneric(descriptor);
     Type owner=mapClass(((ConstructorDescriptor)descriptor).getContainingDeclaration());
     String defaultImplDesc=mapDefaultMethod(descriptor,OwnerKind.IMPLEMENTATION).getDescriptor();
     return new CallableMethod(owner,owner,defaultImplDesc,method,INVOKESPECIAL,null,null,null);
@@ -27,12 +27,12 @@
       thisClass=mapClass(currentOwner);
       if (declarationOwner instanceof JavaClassDescriptor) {
         invokeOpcode=INVOKESPECIAL;
-        signature=mapSignature(functionDescriptor);
+        signature=mapSignatureSkipGeneric(functionDescriptor);
         owner=thisClass;
       }
  else {
         invokeOpcode=INVOKESTATIC;
-        signature=mapSignature(descriptor.getOriginal(),OwnerKind.DEFAULT_IMPLS);
+        signature=mapSignatureSkipGeneric(descriptor.getOriginal(),OwnerKind.DEFAULT_IMPLS);
         owner=mapDefaultImpls(currentOwner);
       }
     }
@@ -50,14 +50,14 @@
       }
       FunctionDescriptor overriddenSpecialBuiltinFunction=SpecialBuiltinMembers.<FunctionDescriptor>getOverriddenBuiltinReflectingJvmDescriptor(functionDescriptor.getOriginal());
       FunctionDescriptor functionToCall=overriddenSpecialBuiltinFunction != null && !superCall ? overriddenSpecialBuiltinFunction.getOriginal() : functionDescriptor.getOriginal();
-      signature=mapSignature(functionToCall);
+      signature=mapSignatureSkipGeneric(functionToCall);
       ClassDescriptor receiver=(currentIsInterface && !originalIsInterface) || currentOwner instanceof FunctionClassDescriptor ? declarationOwner : currentOwner;
       owner=mapClass(receiver);
       thisClass=owner;
     }
   }
  else {
-    signature=mapSignature(functionDescriptor.getOriginal());
+    signature=mapSignatureSkipGeneric(functionDescriptor.getOriginal());
     owner=mapOwner(functionDescriptor);
     ownerForDefaultImpl=owner;
     baseMethodDescriptor=functionDescriptor;

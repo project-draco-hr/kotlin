@@ -3,7 +3,7 @@
   if (isInterface(functionDescriptor.getContainingDeclaration()) && functionDescriptor.getVisibility() == Visibilities.PRIVATE && contextKind != OwnerKind.DEFAULT_IMPLS) {
     return;
   }
-  JvmMethodSignature jvmSignature=typeMapper.mapSignature(functionDescriptor,contextKind);
+  JvmMethodSignature jvmSignature=typeMapper.mapSignatureWithGeneric(functionDescriptor,contextKind);
   Method asmMethod=jvmSignature.getAsmMethod();
   int flags=getMethodAsmFlags(functionDescriptor,contextKind);
   if (origin.getOriginKind() == JvmDeclarationOriginKind.SAM_DELEGATION) {
@@ -18,7 +18,7 @@
     v.getSerializationBindings().put(METHOD_FOR_FUNCTION,functionDescriptor,asmMethod);
   }
   generateMethodAnnotations(functionDescriptor,asmMethod,mv);
-  generateParameterAnnotations(functionDescriptor,mv,typeMapper.mapSignature(functionDescriptor));
+  generateParameterAnnotations(functionDescriptor,mv,typeMapper.mapSignatureSkipGeneric(functionDescriptor));
   generateBridges(functionDescriptor);
   boolean staticInCompanionObject=AnnotationUtilKt.isPlatformStaticInCompanionObject(functionDescriptor);
   if (staticInCompanionObject) {
@@ -36,9 +36,9 @@
  else   if (staticInCompanionObject) {
     mv.visitCode();
     FunctionDescriptor staticFunctionDescriptor=JvmStaticGenerator.createStaticFunctionDescriptor(functionDescriptor);
-    JvmMethodSignature jvmMethodSignature=typeMapper.mapSignature(memberCodegen.getContext().accessibleDescriptor(staticFunctionDescriptor,null));
+    Method accessorMethod=typeMapper.mapAsmMethod(memberCodegen.getContext().accessibleDescriptor(staticFunctionDescriptor,null));
     Type owningType=typeMapper.mapClass((ClassifierDescriptor)staticFunctionDescriptor.getContainingDeclaration());
-    generateDelegateToMethodBody(false,mv,jvmMethodSignature.getAsmMethod(),owningType.getInternalName());
+    generateDelegateToMethodBody(false,mv,accessorMethod,owningType.getInternalName());
   }
   endVisit(mv,null,origin.getElement());
 }
