@@ -1,9 +1,12 @@
 {
-  if (files.size() == 1) {
-    createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.JDK_ONLY);
-    blackBoxFileByFullPath(wholeFile.getPath());
+  TestJdkKind jdkKind=TestJdkKind.MOCK_JDK;
+  List<String> javacOptions=new ArrayList<String>(0);
+  for (  TestFile file : files) {
+    if (isFullJdkDirectiveDefined(file.content)) {
+      jdkKind=TestJdkKind.FULL_JDK;
+      break;
+    }
+    javacOptions.addAll(InTextDirectivesUtils.findListWithPrefixes(file.content,"// JAVAC_OPTIONS:"));
   }
- else {
-    doTestMultiFile(files,javaFilesDir);
-  }
+  compileAndRun(files,javaFilesDir,jdkKind,javacOptions);
 }
