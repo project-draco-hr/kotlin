@@ -1,0 +1,15 @@
+{
+  IElementType operationType=left.getOperationReference().getReferencedNameElementType();
+  if (operationType == AS_SAFE) {
+    KtExpression underSafeAs=left.getLeft();
+    KotlinType underSafeAsType=context.trace.getType(underSafeAs);
+    if (underSafeAsType != null) {
+      DataFlowValue underSafeAsValue=createDataFlowValue(underSafeAs,underSafeAsType,context);
+      KotlinType targetType=context.trace.get(BindingContext.TYPE,left.getRight());
+      if (targetType != null) {
+        return dataFlowInfo.establishSubtyping(underSafeAsValue,targetType);
+      }
+    }
+  }
+  return dataFlowInfo;
+}
