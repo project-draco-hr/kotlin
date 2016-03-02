@@ -74,6 +74,9 @@
         return null;
       }
       DeclarationDescriptor container=descriptor.getContainingDeclaration();
+      if (container != null && !(container instanceof ClassDescriptor)) {
+        container=DescriptorUtils.getContainingClass(container);
+      }
       if (container == null) {
         return null;
       }
@@ -92,6 +95,18 @@
     }
   }
 ;
+  Rule<JsExpression> localClassesHavePackageQualifier=new Rule<JsExpression>(){
+    @Nullable @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
+      if (!DescriptorUtils.isLocal(descriptor) || !(descriptor instanceof ClassDescriptor))       return null;
+      descriptor=descriptor.getContainingDeclaration();
+      while (descriptor != null && !(descriptor instanceof ClassOrPackageFragmentDescriptor)) {
+        descriptor=descriptor.getContainingDeclaration();
+      }
+      if (!(descriptor instanceof PackageFragmentDescriptor))       return null;
+      return getQualifiedReference(descriptor);
+    }
+  }
+;
   addRule(libraryObjectsHaveKotlinQualifier);
   addRule(constructorOrCompanionObjectHasTheSameQualifierAsTheClass);
   addRule(standardObjectsHaveKotlinQualifier);
@@ -99,4 +114,5 @@
   addRule(nativeObjectsHaveNativePartOfFullQualifier);
   addRule(staticMembersHaveContainerQualifier);
   addRule(nestedClassesHaveContainerQualifier);
+  addRule(localClassesHavePackageQualifier);
 }
