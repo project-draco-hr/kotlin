@@ -3,16 +3,28 @@
   dialog.show();
   if (!dialog.isOK())   return;
   NotificationMessageCollector collector=NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(project);
+  Set<GroovyFile> changedFiles=new HashSet<GroovyFile>();
+  GroovyFile projectGradleFile=getBuildGradleFile(project,getTopLevelProjectFilePath(project));
+  if (projectGradleFile != null && canConfigureFile(projectGradleFile)) {
+    boolean isModified=changeGradleFile(projectGradleFile,true,dialog.getKotlinVersion(),collector);
+    if (isModified) {
+      changedFiles.add(projectGradleFile);
+    }
+  }
   for (  Module module : dialog.getModulesToConfigure()) {
-    String gradleFilePath=getDefaultPathToBuildGradleFile(module);
-    GroovyFile file=getBuildGradleFile(project,gradleFilePath);
+    GroovyFile file=getBuildGradleFile(project,getModuleFilePath(module));
     if (file != null && canConfigureFile(file)) {
-      changeGradleFile(file,dialog.getKotlinVersion(),collector);
-      OpenFileAction.openFile(gradleFilePath,project);
+      boolean isModified=changeGradleFile(file,false,dialog.getKotlinVersion(),collector);
+      if (isModified) {
+        changedFiles.add(file);
+      }
     }
  else {
       showErrorMessage(project,"Cannot find build.gradle file for module " + module.getName());
     }
+  }
+  for (  GroovyFile file : changedFiles) {
+    OpenFileAction.openFile(file.getVirtualFile(),project);
   }
   collector.showNotification();
 }

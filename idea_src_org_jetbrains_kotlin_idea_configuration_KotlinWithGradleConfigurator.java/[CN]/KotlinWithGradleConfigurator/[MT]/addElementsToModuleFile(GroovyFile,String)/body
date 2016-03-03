@@ -1,0 +1,34 @@
+{
+  if (!file.getText().contains(getApplyPluginDirective())) {
+    GrExpression apply=GroovyPsiElementFactory.getInstance(file.getProject()).createExpressionFromText(getApplyPluginDirective());
+    GrApplicationStatement applyStatement=getApplyStatement(file);
+    if (applyStatement != null) {
+      file.addAfter(apply,applyStatement);
+    }
+ else {
+      GrClosableBlock buildScript=getBlockByName(file,"buildscript");
+      if (buildScript != null) {
+        file.addAfter(apply,buildScript.getParent());
+      }
+ else {
+        GrStatement[] statements=file.getStatements();
+        if (statements.length > 0) {
+          file.addAfter(apply,statements[statements.length - 1]);
+        }
+ else {
+          file.addAfter(apply,file.getFirstChild());
+        }
+      }
+    }
+  }
+  GrClosableBlock repositoriesBlock=getRepositoriesBlock(file);
+  if (isSnapshot(version)) {
+    addLastExpressionInBlockIfNeeded(SNAPSHOT_REPOSITORY,repositoriesBlock);
+  }
+ else   if (!isRepositoryConfigured(repositoriesBlock)) {
+    addLastExpressionInBlockIfNeeded(MAVEN_CENTRAL,repositoriesBlock);
+  }
+  GrClosableBlock dependenciesBlock=getDependenciesBlock(file);
+  addLastExpressionInBlockIfNeeded(LIBRARY,dependenciesBlock);
+  addSourceSetsBlock(file);
+}
