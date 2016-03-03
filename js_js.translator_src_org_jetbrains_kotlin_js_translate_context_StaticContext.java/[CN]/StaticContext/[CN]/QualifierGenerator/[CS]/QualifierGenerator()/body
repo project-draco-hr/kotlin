@@ -73,10 +73,7 @@
       if (!(descriptor instanceof ClassDescriptor)) {
         return null;
       }
-      DeclarationDescriptor container=descriptor.getContainingDeclaration();
-      if (container != null && !(container instanceof ClassDescriptor)) {
-        container=DescriptorUtils.getContainingClass(container);
-      }
+      DeclarationDescriptor container=getEnclosingNonSingleton(descriptor.getContainingDeclaration());
       if (container == null) {
         return null;
       }
@@ -97,7 +94,9 @@
 ;
   Rule<JsExpression> localClassesHavePackageQualifier=new Rule<JsExpression>(){
     @Nullable @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
-      if (!DescriptorUtils.isLocal(descriptor) || !(descriptor instanceof ClassDescriptor))       return null;
+      if (!DescriptorUtils.isDescriptorWithLocalVisibility(descriptor) || !(descriptor instanceof ClassDescriptor)) {
+        return null;
+      }
       descriptor=descriptor.getContainingDeclaration();
       while (descriptor != null && !(descriptor instanceof ClassOrPackageFragmentDescriptor)) {
         descriptor=descriptor.getContainingDeclaration();
