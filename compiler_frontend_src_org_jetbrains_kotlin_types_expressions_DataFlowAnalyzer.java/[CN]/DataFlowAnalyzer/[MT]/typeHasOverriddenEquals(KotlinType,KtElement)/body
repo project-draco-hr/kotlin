@@ -1,0 +1,15 @@
+{
+  Collection<FunctionDescriptor> members=type.getMemberScope().getContributedFunctions(OperatorNameConventions.EQUALS,new KotlinLookupLocation(lookupElement));
+  for (  FunctionDescriptor member : members) {
+    KotlinType returnType=member.getReturnType();
+    if (returnType == null || !KotlinBuiltIns.isBoolean(returnType))     continue;
+    if (member.getValueParameters().size() != 1)     continue;
+    KotlinType parameterType=member.getValueParameters().iterator().next().getType();
+    if (!KotlinBuiltIns.isNullableAny(parameterType))     continue;
+    FunctionDescriptor fromSuperClass=getOverriddenDescriptorFromClass(member);
+    if (fromSuperClass == null)     return false;
+    ClassifierDescriptor superClassDescriptor=(ClassifierDescriptor)fromSuperClass.getContainingDeclaration();
+    return !KotlinBuiltIns.isAnyOrNullableAny(superClassDescriptor.getDefaultType());
+  }
+  return false;
+}
