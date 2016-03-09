@@ -1,2 +1,11 @@
 {
+  SimpleFunctionDescriptor functionDescriptor=bindingContext.get(BindingContext.FUNCTION,function);
+  if (functionDescriptor == null) {
+    throw ExceptionLogger.logDescriptorNotFound("No descriptor for function " + function.getName(),function);
+  }
+  if (owner.getContextKind() != OwnerKind.DEFAULT_IMPLS || function.hasBody()) {
+    generateMethod(JvmDeclarationOriginKt.OtherOrigin(function,functionDescriptor),functionDescriptor,new FunctionGenerationStrategy.FunctionDefault(state,functionDescriptor,function));
+  }
+  generateDefaultIfNeeded(owner.intoFunction(functionDescriptor),functionDescriptor,owner.getContextKind(),DefaultParameterValueLoader.DEFAULT,function);
+  generateOverloadsWithDefaultValues(function,functionDescriptor,functionDescriptor);
 }
