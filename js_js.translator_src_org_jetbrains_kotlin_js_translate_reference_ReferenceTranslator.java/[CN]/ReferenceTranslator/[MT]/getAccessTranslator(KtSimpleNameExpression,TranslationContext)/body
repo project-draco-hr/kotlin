@@ -1,3 +1,12 @@
 {
-  return getAccessTranslator(referenceExpression,null,context);
+  if (isBackingFieldReference(getDescriptorForReferenceExpression(context.bindingContext(),referenceExpression))) {
+    return BackingFieldAccessTranslator.newInstance(referenceExpression,context);
+  }
+  if (canBePropertyAccess(referenceExpression,context)) {
+    return VariableAccessTranslator.newInstance(context,referenceExpression,null);
+  }
+  if (CompanionObjectIntrinsicAccessTranslator.isCompanionObjectReference(referenceExpression,context)) {
+    return CompanionObjectIntrinsicAccessTranslator.newInstance(referenceExpression,context);
+  }
+  return ReferenceAccessTranslator.newInstance(referenceExpression,context);
 }
