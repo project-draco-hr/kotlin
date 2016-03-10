@@ -42,7 +42,15 @@
     int indexOfLambdaOrdinal=name.lastIndexOf("$");
     if (indexOfLambdaOrdinal > 0) {
       int lambdaOrdinal=Integer.parseInt(name.substring(indexOfLambdaOrdinal + 1));
-      mv.visitLocalVariable(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT + lambdaOrdinal,Type.INT_TYPE.getDescriptor(),null,methodBegin,methodEnd,lambdaFakeIndex);
+      KtElement functionArgument=parentCodegen.element;
+      String functionName="unknown";
+      if (functionArgument instanceof KtFunction) {
+        ValueParameterDescriptor inlineArgumentDescriptor=InlineUtil.getInlineArgumentDescriptor((KtFunction)functionArgument,parentCodegen.bindingContext);
+        if (inlineArgumentDescriptor != null) {
+          functionName=inlineArgumentDescriptor.getContainingDeclaration().getName().asString();
+        }
+      }
+      mv.visitLocalVariable(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT + lambdaOrdinal + "$"+ functionName,Type.INT_TYPE.getDescriptor(),null,methodBegin,methodEnd,lambdaFakeIndex);
     }
   }
 }
