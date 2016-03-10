@@ -1,11 +1,11 @@
 {
-  if (node.isInterface() || node.hasModifier(UastModifier.ABSTRACT)) {
+  if (node.getKind() != UastClassKind.CLASS || node.hasModifier(UastModifier.ABSTRACT)) {
     return true;
   }
   for (  UType reference : node.getSuperTypes()) {
     String name=reference.getName();
     if (name.equals("Parcelable")) {
-      UVariable field=UastUtils.findProperty(node,"CREATOR");
+      UVariable field=UastUtils.findStaticMemberOfType(node,"CREATOR",UVariable.class);
       if (field == null) {
         UClass parcelable=reference.resolve(mContext);
         if (parcelable != null) {
