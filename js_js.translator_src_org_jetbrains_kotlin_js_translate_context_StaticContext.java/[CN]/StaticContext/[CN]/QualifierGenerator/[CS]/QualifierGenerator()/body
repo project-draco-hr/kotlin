@@ -29,7 +29,7 @@
 ;
   Rule<JsExpression> constructorOrCompanionObjectHasTheSameQualifierAsTheClass=new Rule<JsExpression>(){
     @Override public JsExpression apply(    @NotNull DeclarationDescriptor descriptor){
-      if (descriptor instanceof ConstructorDescriptor || DescriptorUtils.isCompanionObject(descriptor)) {
+      if (descriptor instanceof ConstructorDescriptor || isNativeObject(descriptor) && DescriptorUtils.isCompanionObject(descriptor)) {
         return getQualifierForDescriptor(descriptor.getContainingDeclaration());
       }
       return null;
@@ -50,7 +50,7 @@
       if (descriptor instanceof ConstructorDescriptor || !isNativeObject(descriptor))       return null;
       DeclarationDescriptor containingDeclaration=descriptor.getContainingDeclaration();
       if (containingDeclaration != null && isNativeObject(containingDeclaration)) {
-        return getQualifiedReference(containingDeclaration);
+        return isCompanionObject(descriptor) ? getQualifierForDescriptor(containingDeclaration) : getQualifiedReference(containingDeclaration);
       }
       return null;
     }
