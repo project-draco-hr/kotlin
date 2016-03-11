@@ -1,0 +1,24 @@
+{
+  CodeStyleSettings codeStyleSettings=FormatSettingsUtil.getSettings();
+  SettingsConfigurator configurator=FormatSettingsUtil.createConfigurator(fileText,codeStyleSettings);
+  configurator.configureSettings();
+  try {
+    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+      @Override public void run(){
+        EditorAction action=down ? new MoveStatementDownAction() : new MoveStatementUpAction();
+        action.actionPerformed(getEditor(),getCurrentEditorDataContext());
+      }
+    }
+);
+    String afterFilePath=path + ".after";
+    try {
+      checkResultByFile(afterFilePath);
+    }
+ catch (    ComparisonFailure e) {
+      KotlinTestUtils.assertEqualsToFile(new File(afterFilePath),getEditor());
+    }
+  }
+  finally {
+    codeStyleSettings.clearCodeStyleSettings();
+  }
+}
