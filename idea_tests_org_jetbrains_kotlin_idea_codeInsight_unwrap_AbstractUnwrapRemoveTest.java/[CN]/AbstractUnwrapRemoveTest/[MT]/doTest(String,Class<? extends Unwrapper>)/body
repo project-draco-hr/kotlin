@@ -7,9 +7,15 @@
   Integer optionIndex=option != null ? Integer.parseInt(option) : 0;
   List<Pair<PsiElement,Unwrapper>> unwrappersWithPsi=new KotlinUnwrapDescriptor().collectUnwrappers(getProject(),getEditor(),getFile());
   if (isApplicableExpected) {
-    Pair<PsiElement,Unwrapper> selectedUnwrapperWithPsi=unwrappersWithPsi.get(optionIndex);
+    final Pair<PsiElement,Unwrapper> selectedUnwrapperWithPsi=unwrappersWithPsi.get(optionIndex);
     assertEquals(unwrapperClass,selectedUnwrapperWithPsi.second.getClass());
-    selectedUnwrapperWithPsi.second.unwrap(getEditor(),selectedUnwrapperWithPsi.first);
+    final PsiElement first=selectedUnwrapperWithPsi.first;
+    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+      @Override public void run(){
+        selectedUnwrapperWithPsi.second.unwrap(getEditor(),first);
+      }
+    }
+);
     checkResultByFile(path + ".after");
   }
  else {
