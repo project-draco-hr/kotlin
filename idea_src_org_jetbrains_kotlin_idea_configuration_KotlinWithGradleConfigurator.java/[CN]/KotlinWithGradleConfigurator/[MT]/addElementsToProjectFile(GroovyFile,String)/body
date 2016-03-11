@@ -1,13 +1,15 @@
 {
+  boolean wasModified;
   GrClosableBlock buildScriptBlock=getBuildScriptBlock(file);
-  addFirstExpressionInBlockIfNeeded(VERSION.replace(VERSION_TEMPLATE,version),buildScriptBlock);
+  wasModified=addFirstExpressionInBlockIfNeeded(VERSION.replace(VERSION_TEMPLATE,version),buildScriptBlock);
   GrClosableBlock buildScriptRepositoriesBlock=getBuildScriptRepositoriesBlock(file);
   if (isSnapshot(version)) {
-    addLastExpressionInBlockIfNeeded(SNAPSHOT_REPOSITORY,buildScriptRepositoriesBlock);
+    wasModified|=addLastExpressionInBlockIfNeeded(SNAPSHOT_REPOSITORY,buildScriptRepositoriesBlock);
   }
  else   if (!isRepositoryConfigured(buildScriptRepositoriesBlock)) {
-    addLastExpressionInBlockIfNeeded(MAVEN_CENTRAL,buildScriptRepositoriesBlock);
+    wasModified|=addLastExpressionInBlockIfNeeded(MAVEN_CENTRAL,buildScriptRepositoriesBlock);
   }
   GrClosableBlock buildScriptDependenciesBlock=getBuildScriptDependenciesBlock(file);
-  addLastExpressionInBlockIfNeeded(CLASSPATH,buildScriptDependenciesBlock);
+  wasModified|=addLastExpressionInBlockIfNeeded(CLASSPATH,buildScriptDependenciesBlock);
+  return wasModified;
 }
