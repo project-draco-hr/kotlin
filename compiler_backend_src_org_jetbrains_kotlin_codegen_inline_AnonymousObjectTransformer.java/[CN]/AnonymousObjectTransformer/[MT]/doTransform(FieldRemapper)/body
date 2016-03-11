@@ -61,7 +61,7 @@
   List<MethodVisitor> deferringMethods=new ArrayList<MethodVisitor>();
   for (  MethodNode next : methodsToTransform) {
     MethodVisitor deferringVisitor=newMethod(classBuilder,next);
-    InlineResult funResult=inlineMethodAndUpdateGlobalResult(transformationInfo,parentRemapper,deferringVisitor,next,allCapturedParamBuilder,false);
+    InlineResult funResult=inlineMethodAndUpdateGlobalResult(parentRemapper,deferringVisitor,next,allCapturedParamBuilder,false);
     Type returnType=Type.getReturnType(next.desc);
     if (!AsmUtil.isPrimitive(returnType)) {
       String oldFunReturnType=returnType.getInternalName();
@@ -75,7 +75,7 @@
   for (  MethodVisitor method : deferringMethods) {
     method.visitEnd();
   }
-  generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,transformationInfo,parentRemapper,additionalFakeParams);
+  generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,parentRemapper,additionalFakeParams);
   SourceMapper.Companion.flushToClassBuilder(sourceMapper,classBuilder);
   ClassVisitor visitor=classBuilder.getVisitor();
   for (  InnerClassNode node : innerClassNodes) {

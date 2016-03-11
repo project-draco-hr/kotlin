@@ -20,7 +20,7 @@
   transformationInfo.setNewConstructorDescriptor(constructorDescriptor);
   MethodVisitor constructorVisitor=classBuilder.newMethod(NO_ORIGIN,AsmUtil.NO_FLAG_PACKAGE_PRIVATE,"<init>",constructorDescriptor,null,ArrayUtil.EMPTY_STRING_ARRAY);
   List<NewJavaField> newFieldsWithSkipped=TransformationUtilsKt.getNewFieldsToGenerate(allCapturedBuilder.listCaptured());
-  List<FieldInfo> fieldInfoWithSkipped=TransformationUtilsKt.transformToFieldInfo(newLambdaType,newFieldsWithSkipped);
+  List<FieldInfo> fieldInfoWithSkipped=TransformationUtilsKt.transformToFieldInfo(Type.getObjectType(transformationInfo.getNewClassName()),newFieldsWithSkipped);
   int paramIndex=0;
   InstructionAdapter capturedFieldInitializer=new InstructionAdapter(constructorVisitor);
   for (int i=0; i < fieldInfoWithSkipped.size(); i++) {
@@ -37,7 +37,7 @@
       fake.setRemapValue(composed);
     }
   }
-  inlineMethodAndUpdateGlobalResult(transformationInfo,parentRemapper,capturedFieldInitializer,constructor,constructorInlineBuilder,true);
+  inlineMethodAndUpdateGlobalResult(parentRemapper,capturedFieldInitializer,constructor,constructorInlineBuilder,true);
   constructorVisitor.visitEnd();
   AsmUtil.genClosureFields(TransformationUtilsKt.toNameTypePair(TransformationUtilsKt.filterSkipped(newFieldsWithSkipped)),classBuilder);
 }

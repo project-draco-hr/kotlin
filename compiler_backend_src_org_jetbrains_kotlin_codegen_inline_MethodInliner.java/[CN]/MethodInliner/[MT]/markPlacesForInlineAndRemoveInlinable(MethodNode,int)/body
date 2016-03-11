@@ -65,16 +65,19 @@
             }
             offset+=i == 0 ? 1 : argTypes[i - 1].getSize();
           }
-          anonymousObjectRegenerations.add(buildConstructorInvocation(owner,desc,lambdaMapping,awaitClassReification));
+          transformations.add(buildConstructorInvocation(owner,desc,lambdaMapping,awaitClassReification));
           awaitClassReification=false;
         }
       }
  else       if (cur.getOpcode() == Opcodes.GETSTATIC) {
         FieldInsnNode fieldInsnNode=(FieldInsnNode)cur;
-        String owner=fieldInsnNode.owner;
-        if (isAnonymousSingletonLoad(owner,fieldInsnNode.name)) {
-          anonymousObjectRegenerations.add(new AnonymousObjectTransformationInfo(owner,awaitClassReification,isAlreadyRegenerated(owner),true,inliningContext.nameGenerator));
+        String className=fieldInsnNode.owner;
+        if (isAnonymousSingletonLoad(className,fieldInsnNode.name)) {
+          transformations.add(new AnonymousObjectTransformationInfo(className,awaitClassReification,isAlreadyRegenerated(className),true,inliningContext.nameGenerator));
           awaitClassReification=false;
+        }
+ else         if (isWhenMappingAccess(className,fieldInsnNode.name)) {
+          transformations.add(new WhenMappingTransformationInfo(className,inliningContext.nameGenerator,isAlreadyRegenerated(className),fieldInsnNode));
         }
       }
     }
