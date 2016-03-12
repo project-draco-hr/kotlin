@@ -1,11 +1,11 @@
 {
   final List<InnerClassNode> innerClassNodes=new ArrayList<InnerClassNode>();
-  ClassBuilder classBuilder=createRemappingClassBuilderViaFactory(inliningContext);
+  final ClassBuilder classBuilder=createRemappingClassBuilderViaFactory(inliningContext);
   final List<MethodNode> methodsToTransform=new ArrayList<MethodNode>();
   createClassReader().accept(new ClassVisitor(InlineCodegenUtil.API,classBuilder.getVisitor()){
     @Override public void visit(    int version,    int access,    @NotNull String name,    String signature,    String superName,    String[] interfaces){
       InlineCodegenUtil.assertVersionNotGreaterThanJava6(version,name);
-      super.visit(version,access,name,signature,superName,interfaces);
+      classBuilder.defineClass(null,version,access,name,signature,superName,interfaces);
     }
     @Override public void visitInnerClass(    @NotNull String name,    String outerName,    String innerName,    int access){
       innerClassNodes.add(new InnerClassNode(name,outerName,innerName,access));
@@ -27,7 +27,7 @@
         return null;
       }
  else {
-        return super.visitField(access,name,desc,signature,value);
+        return classBuilder.newField(JvmDeclarationOrigin.NO_ORIGIN,access,name,desc,signature,value);
       }
     }
     @Override public void visitSource(    String source,    String debug){
