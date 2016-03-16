@@ -1,3 +1,16 @@
 {
-  return equals(this,obj);
+  if (!(other instanceof TypeConstructor))   return false;
+  if (other.hashCode() != hashCode())   return false;
+  ClassifierDescriptor myDescriptor=getDeclarationDescriptor();
+  ClassifierDescriptor otherDescriptor=((TypeConstructor)other).getDeclarationDescriptor();
+  if (myDescriptor == otherDescriptor)   return true;
+  if (!hasMeaningfulFqName(myDescriptor) || otherDescriptor != null && !hasMeaningfulFqName(otherDescriptor)) {
+    return this == other;
+  }
+  if (myDescriptor instanceof ClassDescriptor && otherDescriptor instanceof ClassDescriptor) {
+    FqNameUnsafe otherFqName=DescriptorUtils.getFqName(otherDescriptor);
+    FqNameUnsafe myFqName=DescriptorUtils.getFqName(myDescriptor);
+    return myFqName.equals(otherFqName);
+  }
+  return false;
 }
