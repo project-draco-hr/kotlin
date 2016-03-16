@@ -2,27 +2,6 @@
   File file=new File(filePath);
   String expectedText=KotlinTestUtils.doLoadFile(file);
   final Ref<File> javaFilesDir=Ref.create();
-  List<TestFile> testFiles=KotlinTestUtils.createTestFiles(file.getName(),expectedText,new KotlinTestUtils.TestFileFactoryNoModules<TestFile>(){
-    @NotNull @Override public TestFile create(    @NotNull String fileName,    @NotNull String text,    @NotNull Map<String,String> directives){
-      if (fileName.endsWith(".java")) {
-        if (javaFilesDir.isNull()) {
-          try {
-            javaFilesDir.set(KotlinTestUtils.tmpDir("java-files"));
-          }
- catch (          IOException e) {
-            throw ExceptionUtilsKt.rethrow(e);
-          }
-        }
-        writeSourceFile(fileName,text,javaFilesDir.get());
-      }
-      return new TestFile(fileName,text);
-    }
-    private void writeSourceFile(    @NotNull String fileName,    @NotNull String content,    @NotNull File targetDir){
-      File file=new File(targetDir,fileName);
-      KotlinTestUtils.mkdirs(file.getParentFile());
-      FilesKt.writeText(file,content,Charsets.UTF_8);
-    }
-  }
-);
+  List<TestFile> testFiles=createTestFiles(file,expectedText,javaFilesDir);
   doMultiFileTest(file,testFiles,javaFilesDir.get());
 }
