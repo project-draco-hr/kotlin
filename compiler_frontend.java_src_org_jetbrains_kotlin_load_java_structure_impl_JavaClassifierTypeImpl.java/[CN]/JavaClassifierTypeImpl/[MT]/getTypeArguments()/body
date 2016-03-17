@@ -1,10 +1,12 @@
 {
   JavaClassifierImpl<?> classifier=getClassifier();
-  Iterable<PsiTypeParameter> parameters=classifier instanceof JavaClassImpl ? getTypeParameters(classifier.getPsi()) : Collections.<PsiTypeParameter>emptyList();
-  JavaTypeSubstitutorImpl substitutor=getSubstitutor();
-  List<JavaType> result=new ArrayList<JavaType>();
+  if (!(classifier instanceof JavaClassImpl))   return Collections.emptyList();
+  List<PsiTypeParameter> parameters=getTypeParameters(classifier.getPsi());
+  PsiSubstitutor substitutor=getSubstitutor();
+  List<JavaType> result=new ArrayList<JavaType>(parameters.size());
   for (  PsiTypeParameter typeParameter : parameters) {
-    result.add(substitutor.substitute(new JavaTypeParameterImpl(typeParameter)));
+    PsiType substitutedType=substitutor.substitute(typeParameter);
+    result.add(substitutedType == null ? null : JavaTypeImpl.create(substitutedType));
   }
   return result;
 }
