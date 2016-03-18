@@ -1,0 +1,17 @@
+{
+  MavenDomPluginExecution execution=pomFile.addExecution(kotlinPlugin,getExecutionId(isTest),getPhase(module,isTest),Collections.singletonList(getGoal(isTest)));
+  List<String> sourceDirs=new ArrayList<String>();
+  for (  ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+    SourceFolder[] folders=contentEntry.getSourceFolders();
+    for (    SourceFolder sourceFolder : folders) {
+      if (isRelatedSourceRoot(isTest,sourceFolder)) {
+        VirtualFile sourceFolderFile=sourceFolder.getFile();
+        if (sourceFolderFile != null) {
+          String relativePath=VfsUtilCore.getRelativePath(sourceFolderFile,pomFile.getXmlFile().getVirtualFile().getParent(),'/');
+          sourceDirs.add(relativePath);
+        }
+      }
+    }
+  }
+  pomFile.executionSourceDirs(execution,sourceDirs);
+}

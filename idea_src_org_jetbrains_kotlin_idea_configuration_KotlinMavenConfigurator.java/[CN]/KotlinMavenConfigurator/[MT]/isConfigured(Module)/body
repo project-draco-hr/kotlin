@@ -2,7 +2,10 @@
   if (isKotlinModule(module)) {
     return true;
   }
-  MavenDomProjectModel domProjectModel=getMavenDomProjectModel(module);
-  if (domProjectModel == null)   return false;
-  return hasKotlinMavenPlugin(domProjectModel) && hasDependencyOnLibrary(domProjectModel);
+  PsiFile psi=findModulePomFile(module);
+  if (psi == null || !psi.isValid() || !(psi instanceof XmlFile) || psi.getVirtualFile() == null || MavenDomUtil.getMavenDomProjectModel(module.getProject(),psi.getVirtualFile()) == null) {
+    return false;
+  }
+  PomFile pom=new PomFile((XmlFile)psi);
+  return pom.hasPlugin(new MavenId(GROUP_ID,MAVEN_PLUGIN_ID,null)) && pom.hasDependency(new MavenId(GROUP_ID,stdlibArtifactId,null),MavenArtifactScope.COMPILE);
 }
