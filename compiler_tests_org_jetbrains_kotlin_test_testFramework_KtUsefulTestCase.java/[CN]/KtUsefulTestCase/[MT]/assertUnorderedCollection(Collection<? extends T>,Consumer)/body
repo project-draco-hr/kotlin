@@ -1,0 +1,27 @@
+{
+  Assert.assertNotNull(collection);
+  if (collection.size() != checkers.length) {
+    Assert.fail(toString(collection));
+  }
+  HashSet checkerSet=new HashSet(Arrays.asList(checkers));
+  int i=0;
+  Throwable lastError=null;
+  for (Iterator var5=collection.iterator(); var5.hasNext(); ++i) {
+    Object actual=var5.next();
+    boolean flag=true;
+    Throwable error;
+    for (Iterator var8=checkerSet.iterator(); var8.hasNext(); lastError=error) {
+      Consumer condition=(Consumer)var8.next();
+      error=accepts(condition,actual);
+      if (error == null) {
+        checkerSet.remove(condition);
+        flag=false;
+        break;
+      }
+    }
+    if (flag) {
+      lastError.printStackTrace();
+      Assert.fail("Incorrect element(" + i + "): "+ actual);
+    }
+  }
+}
