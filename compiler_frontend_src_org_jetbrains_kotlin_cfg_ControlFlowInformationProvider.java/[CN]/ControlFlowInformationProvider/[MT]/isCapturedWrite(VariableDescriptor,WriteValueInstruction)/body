@@ -1,12 +1,17 @@
 {
   DeclarationDescriptor containingDeclarationDescriptor=variableDescriptor.getContainingDeclaration();
-  if (containingDeclarationDescriptor instanceof ClassDescriptor)   return false;
-  KtElement ownerElement=writeValueInstruction.getOwner().getCorrespondingElement();
-  DeclarationDescriptor writeOwnerDescriptor=trace.get(BindingContext.DECLARATION_TO_DESCRIPTOR,ownerElement);
-  if (containingDeclarationDescriptor.equals(writeOwnerDescriptor))   return false;
-  if (writeOwnerDescriptor instanceof ClassDescriptor) {
-    ClassDescriptor writeOwnerClass=(ClassDescriptor)writeOwnerDescriptor;
-    if (containingDeclarationDescriptor.equals(writeOwnerClass.getUnsubstitutedPrimaryConstructor()))     return false;
+  if (containingDeclarationDescriptor instanceof ClassOrPackageFragmentDescriptor)   return false;
+  KtDeclaration parentDeclaration=getElementParentDeclaration(writeValueInstruction.getElement());
+  while (true) {
+    DeclarationDescriptor parentDescriptor=getDeclarationDescriptor(parentDeclaration);
+    if (containingDeclarationDescriptor.equals(parentDescriptor)) {
+      return false;
+    }
+ else     if (parentDeclaration instanceof KtObjectDeclaration) {
+      parentDeclaration=getElementParentDeclaration(parentDeclaration);
+    }
+ else {
+      return true;
+    }
   }
-  return true;
 }
