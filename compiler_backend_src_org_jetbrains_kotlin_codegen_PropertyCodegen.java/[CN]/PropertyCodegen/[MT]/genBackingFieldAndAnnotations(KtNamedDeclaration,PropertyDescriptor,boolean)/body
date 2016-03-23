@@ -1,10 +1,12 @@
 {
+  ClassBuilder builder=getCorrectClassBuilder(descriptor);
+  if (builder == null)   return;
   boolean hasBackingField=hasBackingField(declaration,descriptor);
   boolean hasDelegate=declaration instanceof KtProperty && ((KtProperty)declaration).hasDelegate();
   AnnotationSplitter annotationSplitter=AnnotationSplitter.create(LockBasedStorageManager.NO_LOCKS,descriptor.getAnnotations(),AnnotationSplitter.getTargetSet(isParameter,descriptor.isVar(),hasBackingField,hasDelegate));
   Annotations fieldAnnotations=annotationSplitter.getAnnotationsForTarget(AnnotationUseSiteTarget.FIELD);
   Annotations delegateAnnotations=annotationSplitter.getAnnotationsForTarget(AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD);
   Annotations propertyAnnotations=annotationSplitter.getAnnotationsForTarget(AnnotationUseSiteTarget.PROPERTY);
-  generateBackingField(declaration,descriptor,fieldAnnotations,delegateAnnotations);
-  generateSyntheticMethodIfNeeded(descriptor,propertyAnnotations);
+  generateBackingField(builder,declaration,descriptor,fieldAnnotations,delegateAnnotations);
+  generateSyntheticMethodIfNeeded(builder,descriptor,propertyAnnotations);
 }
