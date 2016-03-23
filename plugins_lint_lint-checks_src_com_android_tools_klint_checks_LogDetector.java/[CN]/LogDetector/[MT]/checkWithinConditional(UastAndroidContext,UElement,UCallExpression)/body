@@ -2,9 +2,16 @@
   while (curr != null) {
     if (curr instanceof UIfExpression) {
       UIfExpression ifNode=(UIfExpression)curr;
-      if (ifNode.getCondition() instanceof UCallExpression) {
-        UCallExpression call=(UCallExpression)ifNode.getCondition();
+      UExpression condition=ifNode.getCondition();
+      if (condition instanceof UCallExpression) {
+        UCallExpression call=(UCallExpression)condition;
         if (IS_LOGGABLE.equals(call.getFunctionName())) {
+          checkTagConsistent(context,logCall,call);
+        }
+      }
+ else       if (condition instanceof UQualifiedExpression) {
+        UCallExpression call=UastUtils.getCallElementFromQualified((UQualifiedExpression)condition);
+        if (call != null && IS_LOGGABLE.equals(call.getFunctionName())) {
           checkTagConsistent(context,logCall,call);
         }
       }
