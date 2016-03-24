@@ -11,5 +11,13 @@
       return getQualifiedReference(descriptor.getContainingDeclaration());
     }
   }
-  return getDispatchReceiverPath(getNearestClass(descriptor));
+  if (descriptor.getValue() instanceof ExtensionReceiver)   return JsLiteral.THIS;
+  ClassifierDescriptor classifier=descriptor.getValue().getType().getConstructor().getDeclarationDescriptor();
+  if (!(classifier instanceof ClassDescriptor))   return JsLiteral.THIS;
+  ClassDescriptor cls=(ClassDescriptor)classifier;
+  JsExpression receiver=getAliasForDescriptor(cls.getThisAsReceiverParameter());
+  if (receiver == null) {
+    receiver=JsLiteral.THIS;
+  }
+  return getDispatchReceiverPath(cls,receiver);
 }
