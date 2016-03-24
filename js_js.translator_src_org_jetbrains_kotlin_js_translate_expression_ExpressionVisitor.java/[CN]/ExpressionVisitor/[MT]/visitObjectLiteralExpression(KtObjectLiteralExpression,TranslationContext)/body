@@ -1,3 +1,16 @@
 {
-  return ClassTranslator.generateObjectLiteral(expression.getObjectDeclaration(),context);
+  ClassDescriptor descriptor=BindingUtils.getClassDescriptor(context.bindingContext(),expression.getObjectDeclaration());
+  JsScope scope=context.getScopeForDescriptor(descriptor);
+  TranslationContext classContext=context.innerWithUsageTracker(scope,descriptor);
+  List<JsPropertyInitializer> properties=ClassTranslator.Companion.translate(expression.getObjectDeclaration(),classContext);
+  context.getDefinitionPlace().getProperties().addAll(properties);
+  JsExpression constructor=context.getQualifiedReference(descriptor);
+  List<DeclarationDescriptor> closure=context.getLocalClassClosure(descriptor);
+  List<JsExpression> closureArgs=new ArrayList<JsExpression>();
+  if (closure != null) {
+    for (    DeclarationDescriptor capturedValue : closure) {
+      closureArgs.add(context.getParameterNameRefForInvocation(capturedValue));
+    }
+  }
+  return new JsNew(constructor,closureArgs);
 }
