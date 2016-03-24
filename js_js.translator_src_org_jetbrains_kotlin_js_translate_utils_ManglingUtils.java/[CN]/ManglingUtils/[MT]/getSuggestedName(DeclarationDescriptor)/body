@@ -1,7 +1,18 @@
 {
-  String suggestedName=descriptor.getName().asString();
+  String suggestedName=descriptor.getName().isSpecial() ? "f" : descriptor.getName().getIdentifier();
   if (descriptor instanceof FunctionDescriptor || descriptor instanceof PropertyDescriptor && DescriptorUtils.isExtension((PropertyDescriptor)descriptor)) {
     suggestedName=getMangledName((CallableMemberDescriptor)descriptor);
+  }
+  ClassDescriptor localClass=null;
+  if (descriptor instanceof ConstructorDescriptor) {
+    ConstructorDescriptor constructor=(ConstructorDescriptor)descriptor;
+    localClass=constructor.getContainingDeclaration();
+  }
+ else   if (descriptor instanceof ClassDescriptor) {
+    localClass=(ClassDescriptor)descriptor;
+  }
+  if (DescriptorUtils.isDescriptorWithLocalVisibility(localClass)) {
+    suggestedName=getSuggestedLocalPrefix(localClass) + suggestedName;
   }
   return suggestedName;
 }
