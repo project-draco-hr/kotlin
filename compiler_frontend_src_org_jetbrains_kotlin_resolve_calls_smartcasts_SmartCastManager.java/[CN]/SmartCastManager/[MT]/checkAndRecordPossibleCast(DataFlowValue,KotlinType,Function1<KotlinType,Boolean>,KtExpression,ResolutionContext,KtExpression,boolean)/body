@@ -1,0 +1,27 @@
+{
+  for (  KotlinType possibleType : c.dataFlowInfo.getCollectedTypes(dataFlowValue)) {
+    if (ArgumentTypeResolver.isSubtypeOfForArgumentType(possibleType,expectedType) && (additionalPredicate == null || additionalPredicate.invoke(possibleType))) {
+      if (expression != null) {
+        recordCastOrError(expression,possibleType,c.trace,dataFlowValue,recordExpressionType);
+      }
+ else       if (calleeExpression != null && dataFlowValue.isPredictable()) {
+        c.trace.record(IMPLICIT_RECEIVER_SMARTCAST,calleeExpression,possibleType);
+      }
+      return new SmartCastResult(possibleType,dataFlowValue.isPredictable());
+    }
+  }
+  if (!c.dataFlowInfo.getCollectedNullability(dataFlowValue).canBeNull() && !expectedType.isMarkedNullable()) {
+    boolean immanentlyNotNull=!dataFlowValue.getImmanentNullability().canBeNull();
+    KotlinType nullableExpectedType=TypeUtils.makeNullable(expectedType);
+    if (ArgumentTypeResolver.isSubtypeOfForArgumentType(dataFlowValue.getType(),nullableExpectedType) && (additionalPredicate == null || additionalPredicate.invoke(dataFlowValue.getType()))) {
+      if (!immanentlyNotNull) {
+        if (expression != null) {
+          recordCastOrError(expression,dataFlowValue.getType(),c.trace,dataFlowValue,recordExpressionType);
+        }
+      }
+      return new SmartCastResult(dataFlowValue.getType(),immanentlyNotNull || dataFlowValue.isPredictable());
+    }
+    return checkAndRecordPossibleCast(dataFlowValue,nullableExpectedType,expression,c,calleeExpression,recordExpressionType);
+  }
+  return null;
+}
