@@ -1,12 +1,31 @@
 {
   try {
     LibraryOptionsPanel panel=getLibraryPanel();
-    Field modelField=panel.getClass().getDeclaredField("myButtonEnumModel");
+    Class<LibraryOptionsPanel> panelClass=LibraryOptionsPanel.class;
+    Field modelField=ArraysKt.singleOrNull(panelClass.getDeclaredFields(),new Function1<Field,Boolean>(){
+      @Override public Boolean invoke(      Field field){
+        return RadioButtonEnumModel.class.isAssignableFrom(field.getType());
+      }
+    }
+);
+    if (modelField == null) {
+      LOG.error("There must be exactly one field of type RadioButtonEnumModel: " + Arrays.toString(panelClass.getDeclaredFields()));
+      return false;
+    }
     modelField.setAccessible(true);
     RadioButtonEnumModel enumModel=(RadioButtonEnumModel)modelField.get(panel);
     int ordinal=enumModel.getSelected().ordinal();
     if (ordinal == 0) {
-      Field libComboboxField=panel.getClass().getDeclaredField("myExistingLibraryComboBox");
+      Field libComboboxField=ArraysKt.singleOrNull(panelClass.getDeclaredFields(),new Function1<Field,Boolean>(){
+        @Override public Boolean invoke(        Field field){
+          return JComboBox.class.isAssignableFrom(field.getType());
+        }
+      }
+);
+      if (libComboboxField == null) {
+        LOG.error("There must be exactly one field of type JComboBox: " + Arrays.toString(panelClass.getDeclaredFields()));
+        return false;
+      }
       libComboboxField.setAccessible(true);
       JComboBox combobox=(JComboBox)libComboboxField.get(panel);
       return combobox.getSelectedItem() != null;
