@@ -1,2 +1,41 @@
 {
+  if (classDeclaration.hasModifier(KtTokens.ENUM_KEYWORD)) {
+    addCallToSuperMethod(Collections.<JsExpression>emptyList(),initializer);
+    return;
+  }
+  if (hasAncestorClass(bindingContext(),classDeclaration)) {
+    ResolvedCall<FunctionDescriptor> superCall=BindingUtils.getSuperCall(bindingContext(),classDeclaration);
+    if (superCall == null)     return;
+    if (classDeclaration instanceof KtEnumEntry) {
+      JsExpression expression=CallTranslator.translate(context(),superCall,null);
+      JsExpression fixedInvocation=AstUtilsKt.toInvocationWith(expression,Collections.<JsExpression>emptyList(),JsLiteral.THIS);
+      initializerStatements.add(0,fixedInvocation.makeStmt());
+    }
+ else {
+      List<JsExpression> arguments=new ArrayList<JsExpression>();
+      ConstructorDescriptor superDescriptor=(ConstructorDescriptor)superCall.getResultingDescriptor();
+      List<DeclarationDescriptor> superclassClosure=context.getLocalClassClosure(superDescriptor);
+      UsageTracker tracker=context.usageTracker();
+      if (superclassClosure != null && tracker != null) {
+        for (        DeclarationDescriptor capturedValue : superclassClosure) {
+          tracker.used(capturedValue);
+          arguments.add(tracker.getCapturedDescriptorToJsName().get(capturedValue).makeRef());
+        }
+      }
+      if (superDescriptor.getContainingDeclaration().isInner() && descriptor.isInner()) {
+        arguments.add(fqnWithoutSideEffects(Namer.OUTER_FIELD_NAME,JsLiteral.THIS));
+      }
+      if (!DescriptorUtils.isAnonymousObject(descriptor)) {
+        arguments.addAll(CallArgumentTranslator.translate(superCall,null,context()).getTranslateArguments());
+      }
+ else {
+        for (        ValueParameterDescriptor parameter : superDescriptor.getValueParameters()) {
+          JsName parameterName=context.getNameForDescriptor(parameter);
+          arguments.add(parameterName.makeRef());
+          initializer.getParameters().add(new JsParameter(parameterName));
+        }
+      }
+      addCallToSuperMethod(arguments,initializer);
+    }
+  }
 }
