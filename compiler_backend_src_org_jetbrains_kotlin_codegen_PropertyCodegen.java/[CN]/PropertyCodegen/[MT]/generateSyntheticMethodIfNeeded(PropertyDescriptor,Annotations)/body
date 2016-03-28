@@ -1,15 +1,12 @@
 {
   if (annotations.getAllAnnotations().isEmpty())   return;
-  Method syntheticMethod=getSyntheticMethodSignature(descriptor);
   if (!isInterface(context.getContextDescriptor()) || kind == OwnerKind.DEFAULT_IMPLS) {
     int flags=ACC_DEPRECATED | ACC_FINAL | ACC_PRIVATE| ACC_STATIC| ACC_SYNTHETIC;
-    MethodVisitor mv=builder.newMethod(JvmDeclarationOriginKt.OtherOrigin(descriptor),flags,syntheticMethod.getName(),syntheticMethod.getDescriptor(),null,null);
+    Method syntheticMethod=getSyntheticMethodSignature(descriptor);
+    MethodVisitor mv=v.newMethod(JvmDeclarationOriginKt.OtherOrigin(descriptor),flags,syntheticMethod.getName(),syntheticMethod.getDescriptor(),null,null);
     AnnotationCodegen.forMethod(mv,typeMapper).genAnnotations(new AnnotatedSimple(annotations),Type.VOID_TYPE,AnnotationUseSiteTarget.PROPERTY);
     mv.visitCode();
     mv.visitInsn(Opcodes.RETURN);
     mv.visitEnd();
-  }
-  if (kind != OwnerKind.DEFAULT_IMPLS) {
-    v.getSerializationBindings().put(SYNTHETIC_METHOD_FOR_PROPERTY,descriptor,syntheticMethod);
   }
 }
