@@ -1,39 +1,37 @@
 {
   super.setUp();
-  this.initApplication();
-  Extensions.registerAreaClass("IDEA_PROJECT",(String)null);
-  this.myProject=new MockProjectEx(this.getTestRootDisposable());
-  this.myPsiManager=new MockPsiManager(this.myProject);
-  this.myFileFactory=new PsiFileFactoryImpl(this.myPsiManager);
+  initApplication();
+  ComponentAdapter component=getApplication().getPicoContainer().getComponentAdapter(ProgressManager.class.getName());
+  Extensions.registerAreaClass("IDEA_PROJECT",null);
+  myProject=new MockProjectEx(getTestRootDisposable());
+  myPsiManager=new MockPsiManager(myProject);
+  myFileFactory=new PsiFileFactoryImpl(myPsiManager);
   MutablePicoContainer appContainer=getApplication().getPicoContainer();
   registerComponentInstance(appContainer,MessageBus.class,MessageBusFactory.newMessageBus(getApplication()));
   registerComponentInstance(appContainer,SchemesManagerFactory.class,new MockSchemesManagerFactory());
   final MockEditorFactory editorFactory=new MockEditorFactory();
   registerComponentInstance(appContainer,EditorFactory.class,editorFactory);
   registerComponentInstance(appContainer,FileDocumentManager.class,new MockFileDocumentManagerImpl(new Function<CharSequence,Document>(){
-    public Document fun(    CharSequence charSequence){
+    @Override public Document fun(    CharSequence charSequence){
       return editorFactory.createDocument(charSequence);
     }
   }
 ,HARD_REF_TO_DOCUMENT_KEY));
   registerComponentInstance(appContainer,PsiDocumentManager.class,new MockPsiDocumentManager());
-  this.registerApplicationService(PsiBuilderFactory.class,new PsiBuilderFactoryImpl());
-  this.registerApplicationService(DefaultASTFactory.class,new CoreASTFactory());
-  this.registerApplicationService(ReferenceProvidersRegistry.class,new ReferenceProvidersRegistryImpl());
+  registerApplicationService(PsiBuilderFactory.class,new PsiBuilderFactoryImpl());
+  registerApplicationService(DefaultASTFactory.class,new CoreASTFactory());
+  registerApplicationService(ReferenceProvidersRegistry.class,new ReferenceProvidersRegistryImpl());
   registerApplicationService(ProgressManager.class,new CoreProgressManager());
-  this.myProject.registerService(CachedValuesManager.class,new CachedValuesManagerImpl(this.myProject,new PsiCachedValuesFactory(this.myPsiManager)));
-  this.myProject.registerService(PsiManager.class,this.myPsiManager);
+  myProject.registerService(CachedValuesManager.class,new CachedValuesManagerImpl(myProject,new PsiCachedValuesFactory(myPsiManager)));
+  myProject.registerService(PsiManager.class,myPsiManager);
   this.registerExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP,FileTypeFactory.class);
-  ParserDefinition[] pomModel=this.myDefinitions;
-  int var5=pomModel.length;
-  for (int var6=0; var6 < var5; ++var6) {
-    ParserDefinition definition=pomModel[var6];
-    this.addExplicitExtension(LanguageParserDefinitions.INSTANCE,definition.getFileNodeType().getLanguage(),definition);
+  for (  ParserDefinition definition : myDefinitions) {
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE,definition.getFileNodeType().getLanguage(),definition);
   }
-  if (this.myDefinitions.length > 0) {
-    this.configureFromParserDefinition(this.myDefinitions[0],this.myFileExt);
+  if (myDefinitions.length > 0) {
+    configureFromParserDefinition(myDefinitions[0],myFileExt);
   }
-  PomModelImpl var8=new PomModelImpl(this.myProject);
-  this.myProject.registerService(PomModel.class,var8);
-  new TreeAspect(var8);
+  final PomModelImpl pomModel=new PomModelImpl(myProject);
+  myProject.registerService(PomModel.class,pomModel);
+  new TreeAspect(pomModel);
 }

@@ -1,16 +1,13 @@
 {
   FileViewProvider provider=file.getViewProvider();
-  Set languages=provider.getLanguages();
-  if (checkAllPsiRoots && languages.size() != 1) {
-    Iterator var8=languages.iterator();
-    while (var8.hasNext()) {
-      Language language=(Language)var8.next();
-      PsiFile root=provider.getPsi(language);
-      String expectedName=targetDataName + "." + language.getID()+ ".txt";
-      doCheckResult(testDataDir,expectedName,toParseTreeText(root,skipSpaces,printRanges).trim());
-    }
-  }
- else {
+  Set<Language> languages=provider.getLanguages();
+  if (!checkAllPsiRoots || languages.size() == 1) {
     doCheckResult(testDataDir,targetDataName + ".txt",toParseTreeText(file,skipSpaces,printRanges).trim());
+    return;
+  }
+  for (  Language language : languages) {
+    PsiFile root=provider.getPsi(language);
+    String expectedName=targetDataName + "." + language.getID()+ ".txt";
+    doCheckResult(testDataDir,expectedName,toParseTreeText(root,skipSpaces,printRanges).trim());
   }
 }
