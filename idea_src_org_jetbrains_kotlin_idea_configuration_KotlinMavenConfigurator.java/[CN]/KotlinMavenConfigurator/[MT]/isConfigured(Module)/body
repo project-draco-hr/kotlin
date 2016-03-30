@@ -1,11 +1,29 @@
 {
-  if (isKotlinModule(module)) {
-    return true;
+  if (!isKotlinModule(module)) {
+    return false;
   }
   PsiFile psi=findModulePomFile(module);
   if (psi == null || !psi.isValid() || !(psi instanceof XmlFile) || psi.getVirtualFile() == null || MavenDomUtil.getMavenDomProjectModel(module.getProject(),psi.getVirtualFile()) == null) {
     return false;
   }
-  PomFile pom=new PomFile((XmlFile)psi);
-  return pom.hasPlugin(new MavenId(GROUP_ID,MAVEN_PLUGIN_ID,null)) && pom.hasDependency(new MavenId(GROUP_ID,stdlibArtifactId,null),MavenArtifactScope.COMPILE);
+  MavenProject mavenProject=MavenProjectsManager.getInstance(module.getProject()).findProject(module);
+  if (mavenProject == null) {
+    return false;
+  }
+  MavenPlugin plugin=mavenProject.findPlugin(GROUP_ID,MAVEN_PLUGIN_ID);
+  if (plugin == null) {
+    return false;
+  }
+  if (plugin.getExecutions() != null) {
+    for (    MavenPlugin.Execution execution : plugin.getExecutions()) {
+      if (execution.getGoals() != null) {
+        for (        String goal : execution.getGoals()) {
+          if (goal != null && isRelevantGoal(goal)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
