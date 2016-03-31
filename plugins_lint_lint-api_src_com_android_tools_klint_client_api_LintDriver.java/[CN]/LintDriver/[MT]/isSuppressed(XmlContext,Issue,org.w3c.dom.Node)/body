@@ -1,0 +1,31 @@
+{
+  if (node instanceof Attr) {
+    node=((Attr)node).getOwnerElement();
+  }
+  boolean checkComments=mClient.checkForSuppressComments() && context != null && context.containsCommentSuppress();
+  while (node != null) {
+    if (node.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+      Element element=(Element)node;
+      if (element.hasAttributeNS(TOOLS_URI,ATTR_IGNORE)) {
+        String ignore=element.getAttributeNS(TOOLS_URI,ATTR_IGNORE);
+        if (ignore.indexOf(',') == -1) {
+          if (matches(issue,ignore)) {
+            return true;
+          }
+        }
+ else {
+          for (          String id : ignore.split(",")) {
+            if (matches(issue,id)) {
+              return true;
+            }
+          }
+        }
+      }
+ else       if (checkComments && context.isSuppressedWithComment(node,issue)) {
+        return true;
+      }
+    }
+    node=node.getParentNode();
+  }
+  return false;
+}

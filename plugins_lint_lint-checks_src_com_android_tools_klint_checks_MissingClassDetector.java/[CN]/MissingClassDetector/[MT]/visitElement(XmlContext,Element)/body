@@ -1,0 +1,120 @@
+{
+  String pkg=null;
+  Node classNameNode;
+  String className;
+  String tag=element.getTagName();
+  ResourceFolderType folderType=context.getResourceFolderType();
+  if (folderType == VALUES) {
+    if (!tag.equals(TAG_STRING)) {
+      return;
+    }
+    Attr attr=element.getAttributeNode(ATTR_NAME);
+    if (attr == null) {
+      return;
+    }
+    className=attr.getValue();
+    classNameNode=attr;
+  }
+ else   if (folderType == LAYOUT) {
+    if (tag.indexOf('.') > 0) {
+      className=tag;
+      classNameNode=element;
+    }
+ else     if (tag.equals(VIEW_FRAGMENT) || tag.equals(VIEW_TAG)) {
+      Attr attr=element.getAttributeNodeNS(ANDROID_URI,ATTR_NAME);
+      if (attr == null) {
+        attr=element.getAttributeNode(ATTR_CLASS);
+      }
+      if (attr == null) {
+        return;
+      }
+      className=attr.getValue();
+      classNameNode=attr;
+    }
+ else {
+      return;
+    }
+  }
+ else   if (folderType == XML) {
+    if (!tag.equals(TAG_HEADER)) {
+      return;
+    }
+    Attr attr=element.getAttributeNodeNS(ANDROID_URI,ATTR_FRAGMENT);
+    if (attr == null) {
+      return;
+    }
+    className=attr.getValue();
+    classNameNode=attr;
+  }
+ else {
+    if (TAG_APPLICATION.equals(tag) || TAG_ACTIVITY.equals(tag) || TAG_SERVICE.equals(tag)|| TAG_RECEIVER.equals(tag)|| TAG_PROVIDER.equals(tag)) {
+      Attr attr=element.getAttributeNodeNS(ANDROID_URI,ATTR_NAME);
+      if (attr == null) {
+        return;
+      }
+      className=attr.getValue();
+      classNameNode=attr;
+      pkg=context.getMainProject().getPackage();
+    }
+ else {
+      return;
+    }
+  }
+  if (className.isEmpty()) {
+    return;
+  }
+  String fqcn;
+  int dotIndex=className.indexOf('.');
+  if (dotIndex <= 0) {
+    if (pkg == null) {
+      return;
+    }
+    if (dotIndex == 0) {
+      fqcn=pkg + className;
+    }
+ else {
+      fqcn=pkg + '.' + className;
+    }
+  }
+ else {
+    fqcn=className;
+    if (folderType == VALUES && !SdkUtils.endsWith(context.file.getPath(),"analytics.xml")) {
+      return;
+    }
+  }
+  String signature=ClassContext.getInternalName(fqcn);
+  if (signature.isEmpty() || signature.startsWith(ANDROID_PKG_PREFIX)) {
+    return;
+  }
+  if (!context.getProject().getReportIssues()) {
+    return;
+  }
+  Handle handle=null;
+  if (!context.getDriver().isSuppressed(context,MISSING,element)) {
+    if (mReferencedClasses == null) {
+      mReferencedClasses=Maps.newHashMapWithExpectedSize(16);
+      mCustomViews=Sets.newHashSetWithExpectedSize(8);
+    }
+    handle=context.createLocationHandle(element);
+    mReferencedClasses.put(signature,handle);
+    if (folderType == LAYOUT && !tag.equals(VIEW_FRAGMENT)) {
+      mCustomViews.add(ClassContext.getInternalName(className));
+    }
+  }
+  if (signature.indexOf('$') != -1) {
+    checkInnerClass(context,element,pkg,classNameNode,className);
+    if (handle != null) {
+      while (true) {
+        int index=signature.indexOf('$');
+        if (index == -1) {
+          break;
+        }
+        signature=signature.substring(0,index) + '/' + signature.substring(index + 1);
+        mReferencedClasses.put(signature,handle);
+        if (folderType == LAYOUT && !tag.equals(VIEW_FRAGMENT)) {
+          mCustomViews.add(signature);
+        }
+      }
+    }
+  }
+}

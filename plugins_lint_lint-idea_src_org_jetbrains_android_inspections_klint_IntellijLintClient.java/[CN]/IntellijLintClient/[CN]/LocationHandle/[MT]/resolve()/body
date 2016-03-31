@@ -1,0 +1,17 @@
+{
+  if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+    return ApplicationManager.getApplication().runReadAction(this);
+  }
+  TextRange textRange=myNode.getTextRange();
+  if (myNode instanceof XmlTag) {
+    String tag=((XmlTag)myNode).getName();
+    int index=myNode.getText().indexOf(tag);
+    if (index != -1) {
+      int start=textRange.getStartOffset() + index;
+      textRange=new TextRange(start,start + tag.length());
+    }
+  }
+  Position start=new DefaultPosition(-1,-1,textRange.getStartOffset());
+  Position end=new DefaultPosition(-1,-1,textRange.getEndOffset());
+  return Location.create(myFile,start,end);
+}

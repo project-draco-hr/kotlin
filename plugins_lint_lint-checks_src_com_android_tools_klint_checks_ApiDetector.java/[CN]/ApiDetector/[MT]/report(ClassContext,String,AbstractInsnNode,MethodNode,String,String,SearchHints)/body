@@ -1,0 +1,21 @@
+{
+  int lineNumber=node != null ? ClassContext.findLineNumber(node) : -1;
+  if (patternStart != null && patternStart.equals(CONSTRUCTOR_NAME) && node instanceof MethodInsnNode) {
+    if (hints != null) {
+      hints=hints.matchConstructor();
+    }
+    patternStart=((MethodInsnNode)node).owner;
+  }
+  if (patternStart != null) {
+    int index=patternStart.lastIndexOf('$');
+    if (index != -1) {
+      patternStart=patternStart.substring(index + 1);
+    }
+    index=patternStart.lastIndexOf('/');
+    if (index != -1) {
+      patternStart=patternStart.substring(index + 1);
+    }
+  }
+  Location location=context.getLocationForLine(lineNumber,patternStart,patternEnd,hints);
+  context.report(UNSUPPORTED,method,node,location,message);
+}

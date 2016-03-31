@@ -1,0 +1,31 @@
+{
+  IssueRegistry registry=mContext.getDriver().getRegistry();
+  Issue issue=registry.getIssue(id);
+  if (issue != null && !issue.getImplementation().getScope().contains(Scope.JAVA_FILE) || issue == ApiDetector.UNSUPPORTED) {
+    Node parent=node.getParent();
+    while (parent != null) {
+      if (parent instanceof MethodDeclaration || parent instanceof ConstructorDeclaration || parent instanceof Block) {
+        break;
+      }
+ else       if (parent instanceof TypeBody) {
+        return true;
+      }
+ else       if (issue == ApiDetector.UNSUPPORTED && parent instanceof VariableDefinition) {
+        VariableDefinition definition=(VariableDefinition)parent;
+        for (        VariableDefinitionEntry entry : definition.astVariables()) {
+          Expression initializer=entry.astInitializer();
+          if (initializer instanceof Select) {
+            return true;
+          }
+        }
+      }
+      parent=parent.getParent();
+      if (parent == null) {
+        return true;
+      }
+    }
+    mContext.report(ISSUE,node,mContext.getLocation(node),String.format("The `@SuppressLint` annotation cannot be used on a local " + "variable with the lint check '%1$s': move out to the " + "surrounding method",id));
+    return false;
+  }
+  return true;
+}

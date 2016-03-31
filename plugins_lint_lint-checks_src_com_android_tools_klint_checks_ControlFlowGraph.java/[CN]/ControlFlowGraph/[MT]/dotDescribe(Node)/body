@@ -1,0 +1,47 @@
+{
+  AbstractInsnNode instruction=node.instruction;
+  if (instruction instanceof LabelNode) {
+    return "Label";
+  }
+ else   if (instruction instanceof LineNumberNode) {
+    LineNumberNode lineNode=(LineNumberNode)instruction;
+    return "Line " + lineNode.line;
+  }
+ else   if (instruction instanceof FrameNode) {
+    return "Stack Frame";
+  }
+ else   if (instruction instanceof MethodInsnNode) {
+    MethodInsnNode method=(MethodInsnNode)instruction;
+    String cls=method.owner.substring(method.owner.lastIndexOf('/') + 1);
+    cls=cls.replace('$','.');
+    return "Call " + cls + "#"+ method.name;
+  }
+ else   if (instruction instanceof FieldInsnNode) {
+    FieldInsnNode field=(FieldInsnNode)instruction;
+    String cls=field.owner.substring(field.owner.lastIndexOf('/') + 1);
+    cls=cls.replace('$','.');
+    return "Field " + cls + "#"+ field.name;
+  }
+ else   if (instruction instanceof TypeInsnNode && instruction.getOpcode() == Opcodes.NEW) {
+    return "New " + ((TypeInsnNode)instruction).desc;
+  }
+  StringBuilder sb=new StringBuilder();
+  String opcodeName=getOpcodeName(instruction.getOpcode());
+  sb.append(opcodeName);
+  if (instruction instanceof IntInsnNode) {
+    IntInsnNode in=(IntInsnNode)instruction;
+    sb.append(" ").append(Integer.toString(in.operand));
+  }
+ else   if (instruction instanceof LdcInsnNode) {
+    LdcInsnNode ldc=(LdcInsnNode)instruction;
+    sb.append(" ");
+    if (ldc.cst instanceof String) {
+      sb.append("\\\"");
+    }
+    sb.append(ldc.cst);
+    if (ldc.cst instanceof String) {
+      sb.append("\\\"");
+    }
+  }
+  return sb.toString();
+}

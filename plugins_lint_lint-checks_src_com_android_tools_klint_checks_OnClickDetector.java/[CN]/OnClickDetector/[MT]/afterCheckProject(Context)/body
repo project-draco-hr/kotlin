@@ -1,0 +1,24 @@
+{
+  if (mNames != null && !mNames.isEmpty() && mHaveBytecode) {
+    List<String> names=new ArrayList<String>(mNames.keySet());
+    Collections.sort(names);
+    LintDriver driver=context.getDriver();
+    for (    String name : names) {
+      Handle handle=mNames.get(name);
+      Object clientData=handle.getClientData();
+      if (clientData instanceof Node) {
+        if (driver.isSuppressed(null,ISSUE,(Node)clientData)) {
+          continue;
+        }
+      }
+      Location location=handle.resolve();
+      String message=String.format("Corresponding method handler '`public void %1$s(android.view.View)`' not found",name);
+      List<String> similar=mSimilar != null ? mSimilar.get(name) : null;
+      if (similar != null) {
+        Collections.sort(similar);
+        message+=String.format(" (did you mean `%1$s` ?)",Joiner.on(", ").join(similar));
+      }
+      context.report(ISSUE,location,message);
+    }
+  }
+}

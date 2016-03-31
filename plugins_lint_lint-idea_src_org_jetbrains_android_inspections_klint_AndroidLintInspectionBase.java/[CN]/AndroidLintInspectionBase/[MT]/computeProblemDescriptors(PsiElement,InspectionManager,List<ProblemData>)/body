@@ -1,0 +1,25 @@
+{
+  final List<ProblemDescriptor> result=new ArrayList<ProblemDescriptor>();
+  for (  ProblemData problemData : problems) {
+    final String originalMessage=problemData.getMessage();
+    final String formattedMessage=HTML_START + RAW.convertTo(originalMessage,HTML) + HTML_END;
+    final TextRange range=problemData.getTextRange();
+    if (range.getStartOffset() == range.getEndOffset()) {
+      if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiDirectory) {
+        final LocalQuickFix[] fixes=getLocalQuickFixes(psiFile,psiFile,originalMessage);
+        result.add(new NonTextFileProblemDescriptor((PsiFileSystemItem)psiFile,formattedMessage,fixes));
+      }
+ else       if (!isSuppressedFor(psiFile)) {
+        result.add(manager.createProblemDescriptor(psiFile,formattedMessage,false,getLocalQuickFixes(psiFile,psiFile,originalMessage),ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      }
+    }
+ else {
+      final PsiElement startElement=psiFile.findElementAt(range.getStartOffset());
+      final PsiElement endElement=psiFile.findElementAt(range.getEndOffset() - 1);
+      if (startElement != null && endElement != null && !isSuppressedFor(startElement)) {
+        result.add(manager.createProblemDescriptor(startElement,endElement,formattedMessage,ProblemHighlightType.GENERIC_ERROR_OR_WARNING,false,getLocalQuickFixes(startElement,endElement,originalMessage)));
+      }
+    }
+  }
+  return result.toArray(new ProblemDescriptor[result.size()]);
+}

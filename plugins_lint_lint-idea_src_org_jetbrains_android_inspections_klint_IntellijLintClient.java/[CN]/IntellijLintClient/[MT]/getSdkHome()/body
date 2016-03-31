@@ -1,0 +1,34 @@
+{
+  Module module=getModule();
+  if (module != null) {
+    Sdk moduleSdk=ModuleRootManager.getInstance(module).getSdk();
+    if (moduleSdk != null) {
+      String path=moduleSdk.getHomePath();
+      if (path != null) {
+        File home=new File(path);
+        if (home.exists()) {
+          return home;
+        }
+      }
+    }
+  }
+  File sdkHome=super.getSdkHome();
+  if (sdkHome != null) {
+    return sdkHome;
+  }
+  for (  Module m : ModuleManager.getInstance(myProject).getModules()) {
+    Sdk moduleSdk=ModuleRootManager.getInstance(m).getSdk();
+    if (moduleSdk != null) {
+      if (moduleSdk.getSdkType() instanceof AndroidSdkType) {
+        String path=moduleSdk.getHomePath();
+        if (path != null) {
+          File home=new File(path);
+          if (home.exists()) {
+            return home;
+          }
+        }
+      }
+    }
+  }
+  return IdeSdks.getAndroidSdkPath();
+}

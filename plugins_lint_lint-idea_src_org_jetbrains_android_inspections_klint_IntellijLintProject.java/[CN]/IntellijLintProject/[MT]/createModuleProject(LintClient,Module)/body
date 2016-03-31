@@ -1,0 +1,34 @@
+{
+  AndroidFacet facet=AndroidFacet.getInstance(module);
+  File dir;
+  if (facet != null) {
+    final VirtualFile mainContentRoot=AndroidRootUtil.getMainContentRoot(facet);
+    if (mainContentRoot == null) {
+      return null;
+    }
+    dir=new File(FileUtil.toSystemDependentName(mainContentRoot.getPath()));
+  }
+ else {
+    String moduleDirPath=AndroidRootUtil.getModuleDirPath(module);
+    if (moduleDirPath == null) {
+      return null;
+    }
+    dir=new File(FileUtil.toSystemDependentName(moduleDirPath));
+  }
+  LintModuleProject project;
+  if (facet == null) {
+    project=new LintModuleProject(client,dir,dir,module);
+    AndroidFacet f=findAndroidFacetInProject(module.getProject());
+    if (f != null) {
+      project.mGradleProject=f.isGradleProject();
+    }
+  }
+ else   if (facet.isGradleProject()) {
+    project=new LintGradleProject(client,dir,dir,facet);
+  }
+ else {
+    project=new LintAndroidProject(client,dir,dir,facet);
+  }
+  client.registerProject(dir,project);
+  return project;
+}

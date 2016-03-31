@@ -1,0 +1,26 @@
+{
+  List<File> files=project.getSubset();
+  if (files != null) {
+    checkIndividualClassFiles(project,main,files);
+    return;
+  }
+  List<File> libraries=project.getJavaLibraries();
+  List<ClassEntry> libraryEntries=ClassEntry.fromClassPath(mClient,libraries,true);
+  List<File> classFolders=project.getJavaClassFolders();
+  List<ClassEntry> classEntries;
+  if (classFolders.isEmpty()) {
+    String message=String.format("No `.class` files were found in project \"%1$s\", " + "so none of the classfile based checks could be run. " + "Does the project need to be built first?",project.getName());
+    Location location=Location.create(project.getDir());
+    mClient.report(new Context(this,project,main,project.getDir()),IssueRegistry.LINT_ERROR,project.getConfiguration().getSeverity(IssueRegistry.LINT_ERROR),location,message,TextFormat.RAW);
+    classEntries=Collections.emptyList();
+  }
+ else {
+    classEntries=ClassEntry.fromClassPath(mClient,classFolders,true);
+  }
+  runClassDetectors(Scope.JAVA_LIBRARIES,libraryEntries,project,main);
+  if (mCanceled) {
+    return;
+  }
+  runClassDetectors(Scope.CLASS_FILE,classEntries,project,main);
+  runClassDetectors(Scope.ALL_CLASS_FILES,classEntries,project,main);
+}

@@ -1,0 +1,101 @@
+{
+  ClassPathInfo info;
+  if (mProjectInfo == null) {
+    mProjectInfo=Maps.newHashMap();
+    info=null;
+  }
+ else {
+    info=mProjectInfo.get(project);
+  }
+  if (info == null) {
+    List<File> sources=new ArrayList<File>(2);
+    List<File> classes=new ArrayList<File>(1);
+    List<File> libraries=new ArrayList<File>();
+    List<File> tests=Collections.emptyList();
+    File projectDir=project.getDir();
+    File classpathFile=new File(projectDir,".classpath");
+    if (classpathFile.exists()) {
+      String classpathXml=readFile(classpathFile);
+      try {
+        Document document=XmlUtils.parseDocument(classpathXml,false);
+        NodeList tags=document.getElementsByTagName("classpathentry");
+        for (int i=0, n=tags.getLength(); i < n; i++) {
+          Element element=(Element)tags.item(i);
+          String kind=element.getAttribute("kind");
+          List<File> addTo=null;
+          if (kind.equals("src")) {
+            addTo=sources;
+          }
+ else           if (kind.equals("output")) {
+            addTo=classes;
+          }
+ else           if (kind.equals("lib")) {
+            addTo=libraries;
+          }
+          if (addTo != null) {
+            String path=element.getAttribute("path");
+            File folder=new File(projectDir,path);
+            if (folder.exists()) {
+              addTo.add(folder);
+            }
+          }
+        }
+      }
+ catch (      Exception e) {
+        log(null,null);
+      }
+    }
+    File libs=new File(project.getDir(),LIBS_FOLDER);
+    if (libs.isDirectory()) {
+      File[] jars=libs.listFiles();
+      if (jars != null) {
+        for (        File jar : jars) {
+          if (LintUtils.endsWith(jar.getPath(),DOT_JAR) && !libraries.contains(jar)) {
+            libraries.add(jar);
+          }
+        }
+      }
+    }
+    if (classes.isEmpty()) {
+      File folder=new File(projectDir,CLASS_FOLDER);
+      if (folder.exists()) {
+        classes.add(folder);
+      }
+ else {
+        folder=new File(projectDir,"target" + File.separator + "classes");
+        if (folder.exists()) {
+          classes.add(folder);
+          if (sources.isEmpty()) {
+            File src=new File(projectDir,"src" + File.separator + "main"+ File.separator+ "java");
+            if (src.exists()) {
+              sources.add(src);
+            }
+ else {
+              src=new File(projectDir,SRC_FOLDER);
+              if (src.exists()) {
+                sources.add(src);
+              }
+            }
+            File gen=new File(projectDir,"target" + File.separator + "generated-sources"+ File.separator+ "r");
+            if (gen.exists()) {
+              sources.add(gen);
+            }
+          }
+        }
+      }
+    }
+    if (sources.isEmpty()) {
+      File src=new File(projectDir,SRC_FOLDER);
+      if (src.exists()) {
+        sources.add(src);
+      }
+      File gen=new File(projectDir,GEN_FOLDER);
+      if (gen.exists()) {
+        sources.add(gen);
+      }
+    }
+    info=new ClassPathInfo(sources,classes,libraries,tests);
+    mProjectInfo.put(project,info);
+  }
+  return info;
+}

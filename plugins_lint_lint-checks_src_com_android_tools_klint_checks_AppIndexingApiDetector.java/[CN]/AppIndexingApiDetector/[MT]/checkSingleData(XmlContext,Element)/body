@@ -1,0 +1,31 @@
+{
+  for (  String name : PATH_ATTR_LIST) {
+    if (data.hasAttributeNS(ANDROID_URI,name)) {
+      Attr attr=data.getAttributeNodeNS(ANDROID_URI,name);
+      String path=replaceUrlWithValue(context,attr.getValue());
+      if (!path.startsWith("/") && !path.startsWith(SdkConstants.PREFIX_RESOURCE_REF)) {
+        context.report(ISSUE_ERROR,attr,context.getLocation(attr),"android:" + name + " attribute should start with '/', but it is : "+ path);
+      }
+    }
+  }
+  if (data.hasAttributeNS(ANDROID_URI,ATTRIBUTE_PORT)) {
+    Attr attr=data.getAttributeNodeNS(ANDROID_URI,ATTRIBUTE_PORT);
+    try {
+      String port=replaceUrlWithValue(context,attr.getValue());
+      Integer.parseInt(port);
+    }
+ catch (    NumberFormatException e) {
+      context.report(ISSUE_ERROR,attr,context.getLocation(attr),"android:port is not a legal number");
+    }
+  }
+  NamedNodeMap attrs=data.getAttributes();
+  for (int i=0; i < attrs.getLength(); i++) {
+    Node item=attrs.item(i);
+    if (item.getNodeType() == Node.ATTRIBUTE_NODE) {
+      Attr attr=(Attr)attrs.item(i);
+      if (attr.getValue().isEmpty()) {
+        context.report(ISSUE_ERROR,attr,context.getLocation(attr),attr.getName() + " cannot be empty");
+      }
+    }
+  }
+}

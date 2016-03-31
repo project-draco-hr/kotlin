@@ -1,0 +1,38 @@
+{
+  Element root=document.getDocumentElement();
+  if (root == null) {
+    return;
+  }
+  mPackage=root.getAttribute(ATTR_PACKAGE);
+  if (mPackage != null && mPackage.startsWith("android.support.")) {
+    mReportIssues=false;
+  }
+  mManifestMinSdk=AndroidVersion.DEFAULT;
+  mManifestTargetSdk=AndroidVersion.DEFAULT;
+  NodeList usesSdks=root.getElementsByTagName(TAG_USES_SDK);
+  if (usesSdks.getLength() > 0) {
+    Element element=(Element)usesSdks.item(0);
+    String minSdk=null;
+    if (element.hasAttributeNS(ANDROID_URI,ATTR_MIN_SDK_VERSION)) {
+      minSdk=element.getAttributeNS(ANDROID_URI,ATTR_MIN_SDK_VERSION);
+    }
+    if (minSdk != null) {
+      IAndroidTarget[] targets=mClient.getTargets();
+      mManifestMinSdk=SdkVersionInfo.getVersion(minSdk,targets);
+    }
+    if (element.hasAttributeNS(ANDROID_URI,ATTR_TARGET_SDK_VERSION)) {
+      String targetSdk=element.getAttributeNS(ANDROID_URI,ATTR_TARGET_SDK_VERSION);
+      if (targetSdk != null) {
+        IAndroidTarget[] targets=mClient.getTargets();
+        mManifestTargetSdk=SdkVersionInfo.getVersion(targetSdk,targets);
+      }
+    }
+ else {
+      mManifestTargetSdk=mManifestMinSdk;
+    }
+  }
+ else   if (isAospBuildEnvironment()) {
+    extractAospMinSdkVersion();
+    mManifestTargetSdk=mManifestMinSdk;
+  }
+}

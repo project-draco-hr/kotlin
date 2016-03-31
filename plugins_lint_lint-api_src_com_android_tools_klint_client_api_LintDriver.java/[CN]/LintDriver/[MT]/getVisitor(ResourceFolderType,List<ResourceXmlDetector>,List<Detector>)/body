@@ -1,0 +1,37 @@
+{
+  if (type != mCurrentFolderType) {
+    mCurrentFolderType=type;
+    List<ResourceXmlDetector> applicableXmlChecks=new ArrayList<ResourceXmlDetector>(checks.size());
+    for (    ResourceXmlDetector check : checks) {
+      if (check.appliesTo(type)) {
+        applicableXmlChecks.add(check);
+      }
+    }
+    List<Detector> applicableBinaryChecks=null;
+    if (binaryChecks != null) {
+      applicableBinaryChecks=new ArrayList<Detector>(binaryChecks.size());
+      for (      Detector check : binaryChecks) {
+        if (check.appliesTo(type)) {
+          applicableBinaryChecks.add(check);
+        }
+      }
+    }
+    if (mCurrentXmlDetectors != null && mCurrentXmlDetectors.equals(applicableXmlChecks) && Objects.equal(mCurrentBinaryDetectors,applicableBinaryChecks)) {
+      return mCurrentVisitor;
+    }
+    mCurrentXmlDetectors=applicableXmlChecks;
+    mCurrentBinaryDetectors=applicableBinaryChecks;
+    if (applicableXmlChecks.isEmpty() && (applicableBinaryChecks == null || applicableBinaryChecks.isEmpty())) {
+      mCurrentVisitor=null;
+      return null;
+    }
+    XmlParser parser=mClient.getXmlParser();
+    if (parser != null) {
+      mCurrentVisitor=new ResourceVisitor(parser,applicableXmlChecks,applicableBinaryChecks);
+    }
+ else {
+      mCurrentVisitor=null;
+    }
+  }
+  return mCurrentVisitor;
+}

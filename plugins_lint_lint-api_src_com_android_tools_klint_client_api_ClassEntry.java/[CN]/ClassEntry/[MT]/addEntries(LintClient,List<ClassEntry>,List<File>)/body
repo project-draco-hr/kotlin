@@ -1,0 +1,65 @@
+{
+  for (  File classPathEntry : classPath) {
+    if (classPathEntry.getName().endsWith(DOT_JAR)) {
+      File jarFile=classPathEntry;
+      if (!jarFile.exists()) {
+        continue;
+      }
+      ZipInputStream zis=null;
+      try {
+        FileInputStream fis=new FileInputStream(jarFile);
+        try {
+          zis=new ZipInputStream(fis);
+          ZipEntry entry=zis.getNextEntry();
+          while (entry != null) {
+            String name=entry.getName();
+            if (name.endsWith(DOT_CLASS)) {
+              try {
+                byte[] bytes=ByteStreams.toByteArray(zis);
+                if (bytes != null) {
+                  File file=new File(entry.getName());
+                  entries.add(new ClassEntry(file,jarFile,jarFile,bytes));
+                }
+              }
+ catch (              Exception e) {
+                client.log(e,null);
+                continue;
+              }
+            }
+            entry=zis.getNextEntry();
+          }
+        }
+  finally {
+          Closeables.close(fis,true);
+        }
+      }
+ catch (      IOException e) {
+        client.log(e,"Could not read jar file contents from %1$s",jarFile);
+      }
+ finally {
+        try {
+          Closeables.close(zis,true);
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+ else     if (classPathEntry.isDirectory()) {
+      File binDir=classPathEntry;
+      List<File> classFiles=new ArrayList<File>();
+      addClassFiles(binDir,classFiles);
+      for (      File file : classFiles) {
+        try {
+          byte[] bytes=client.readBytes(file);
+          entries.add(new ClassEntry(file,null,binDir,bytes));
+        }
+ catch (        IOException e) {
+          client.log(e,null);
+        }
+      }
+    }
+ else {
+      client.log(null,"Ignoring class path entry %1$s",classPathEntry);
+    }
+  }
+}

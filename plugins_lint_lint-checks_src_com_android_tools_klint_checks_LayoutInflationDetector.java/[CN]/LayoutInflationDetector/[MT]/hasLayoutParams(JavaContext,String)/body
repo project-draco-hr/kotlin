@@ -1,0 +1,35 @@
+{
+  LintClient client=context.getClient();
+  if (!client.supportsProjectResources()) {
+    return true;
+  }
+  Project project=context.getProject();
+  AbstractResourceRepository resources=client.getProjectResources(project,true);
+  if (resources == null) {
+    return true;
+  }
+  List<ResourceItem> items=resources.getResourceItem(ResourceType.LAYOUT,name);
+  if (items == null || items.isEmpty()) {
+    return false;
+  }
+  for (  ResourceItem item : items) {
+    ResourceFile source=item.getSource();
+    if (source == null) {
+      return true;
+    }
+    File file=source.getFile();
+    if (file.exists()) {
+      try {
+        String s=context.getClient().readFile(file);
+        if (hasLayoutParams(new StringReader(s))) {
+          return true;
+        }
+      }
+ catch (      Exception e) {
+        context.log(e,"Could not read/parse inflated layout");
+        return true;
+      }
+    }
+  }
+  return false;
+}

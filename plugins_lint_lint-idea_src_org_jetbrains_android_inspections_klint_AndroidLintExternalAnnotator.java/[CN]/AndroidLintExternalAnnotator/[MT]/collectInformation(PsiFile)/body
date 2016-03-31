@@ -1,0 +1,42 @@
+{
+  final Module module=ModuleUtilCore.findModuleForPsiElement(file);
+  if (module == null) {
+    return null;
+  }
+  final AndroidFacet facet=AndroidFacet.getInstance(module);
+  if (facet == null && !IntellijLintProject.hasAndroidModule(module.getProject())) {
+    return null;
+  }
+  final VirtualFile vFile=file.getVirtualFile();
+  if (vFile == null) {
+    return null;
+  }
+  final FileType fileType=file.getFileType();
+  if (fileType == StdFileTypes.XML) {
+    if (facet == null || facet.getLocalResourceManager().getFileResourceType(file) == null && !SdkConstants.ANDROID_MANIFEST_XML.equals(vFile.getName())) {
+      return null;
+    }
+  }
+ else   if (fileType == FileTypes.PLAIN_TEXT) {
+    if (!AndroidCommonUtils.PROGUARD_CFG_FILE_NAME.equals(file.getName()) && !AndroidCompileUtil.OLD_PROGUARD_CFG_FILE_NAME.equals(file.getName())) {
+      return null;
+    }
+  }
+ else   if (fileType == GroovyFileType.GROOVY_FILE_TYPE) {
+    if (!SdkUtils.endsWithIgnoreCase(file.getName(),DOT_GRADLE)) {
+      return null;
+    }
+    Project project=file.getProject();
+    if (Projects.isGradleProject(project)) {
+      PsiProjectListener.getListener(project);
+    }
+  }
+ else   if (fileType != StdFileTypes.JAVA && fileType != StdFileTypes.PROPERTIES) {
+    return null;
+  }
+  final List<Issue> issues=getIssuesFromInspections(file.getProject(),file);
+  if (issues.size() == 0) {
+    return null;
+  }
+  return new State(module,vFile,file.getText(),issues);
+}

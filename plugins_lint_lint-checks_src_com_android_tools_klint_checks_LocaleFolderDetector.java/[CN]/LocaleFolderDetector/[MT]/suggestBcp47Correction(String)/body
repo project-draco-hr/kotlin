@@ -1,0 +1,63 @@
+{
+  String language=null;
+  String region=null;
+  Iterator<String> iterator=QUALIFIER_SPLITTER.split(folderName).iterator();
+  if (!iterator.hasNext()) {
+    return null;
+  }
+  iterator.next();
+  while (iterator.hasNext()) {
+    String segment=iterator.next();
+    String original=segment;
+    int length=segment.length();
+    if (language != null) {
+      segment=segment.toUpperCase(Locale.US);
+      if (length == 3) {
+        if (original.charAt(0) == 'r' && Character.isUpperCase(original.charAt(1)) && LocaleManager.isValidRegionCode(segment.substring(1))) {
+          region=segment.substring(1);
+          break;
+        }
+ else         if (Character.isDigit(original.charAt(0))) {
+          region=segment;
+        }
+ else         if (LocaleManager.isValidRegionCode(segment)) {
+          region=segment;
+        }
+      }
+ else       if (length == 4 && original.charAt(0) == 'r' && Character.isUpperCase(original.charAt(1))) {
+        if (LocaleManager.isValidRegionCode(segment.substring(1))) {
+          region=segment.substring(1);
+          break;
+        }
+      }
+    }
+ else {
+      segment=segment.toLowerCase(Locale.US);
+      if ("car".equals(segment)) {
+        return null;
+      }
+      if (LocaleManager.isValidLanguageCode(segment)) {
+        language=segment;
+      }
+    }
+  }
+  if (language != null) {
+    if (language.length() == 3) {
+      String better=LocaleManager.getLanguageAlpha2(language);
+      if (better != null) {
+        language=better;
+      }
+    }
+    if (region != null) {
+      if (region.length() == 3 && !Character.isDigit(region.charAt(0))) {
+        String better=LocaleManager.getRegionAlpha2(region);
+        if (better != null) {
+          region=better;
+        }
+      }
+      return BCP_47_PREFIX + language + '+'+ region;
+    }
+    return BCP_47_PREFIX + language;
+  }
+  return null;
+}

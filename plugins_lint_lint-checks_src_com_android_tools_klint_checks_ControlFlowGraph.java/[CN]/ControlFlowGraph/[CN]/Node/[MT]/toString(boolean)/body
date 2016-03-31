@@ -1,0 +1,40 @@
+{
+  StringBuilder sb=new StringBuilder(100);
+  sb.append(getId(instruction));
+  sb.append(':');
+  if (instruction instanceof LabelNode) {
+    sb.append("LABEL");
+  }
+ else   if (instruction instanceof LineNumberNode) {
+    sb.append("LINENUMBER ").append(((LineNumberNode)instruction).line);
+  }
+ else   if (instruction instanceof FrameNode) {
+    sb.append("FRAME");
+  }
+ else {
+    int opcode=instruction.getOpcode();
+    String opcodeName=getOpcodeName(opcode);
+    sb.append(opcodeName);
+    if (instruction.getType() == AbstractInsnNode.METHOD_INSN) {
+      sb.append('(').append(((MethodInsnNode)instruction).name).append(')');
+    }
+  }
+  if (includeAdjacent) {
+    if (successors != null && !successors.isEmpty()) {
+      sb.append(" Next:");
+      for (      Node successor : successors) {
+        sb.append(' ');
+        sb.append(successor.toString(false));
+      }
+    }
+    if (exceptions != null && !exceptions.isEmpty()) {
+      sb.append(" Exceptions:");
+      for (      Node exception : exceptions) {
+        sb.append(' ');
+        sb.append(exception.toString(false));
+      }
+    }
+    sb.append('\n');
+  }
+  return sb.toString();
+}

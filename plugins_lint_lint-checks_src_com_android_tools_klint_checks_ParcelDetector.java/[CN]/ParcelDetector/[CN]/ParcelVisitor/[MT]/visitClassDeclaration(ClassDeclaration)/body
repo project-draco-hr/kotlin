@@ -1,0 +1,29 @@
+{
+  int flags=node.astModifiers().getExplicitModifierFlags();
+  if ((flags & (Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)) != 0) {
+    return true;
+  }
+  if (node.astImplementing() != null)   for (  TypeReference reference : node.astImplementing()) {
+    String name=reference.astParts().last().astIdentifier().astValue();
+    if (name.equals("Parcelable")) {
+      JavaParser.ResolvedNode resolved=mContext.resolve(node);
+      if (resolved instanceof ResolvedClass) {
+        ResolvedClass cls=(ResolvedClass)resolved;
+        ResolvedField field=cls.getField("CREATOR",false);
+        if (field == null) {
+          JavaParser.ResolvedNode r=mContext.resolve(reference);
+          if (r instanceof ResolvedClass) {
+            ResolvedClass parcelable=(ResolvedClass)r;
+            if (!parcelable.isSubclassOf("android.os.Parcelable",false)) {
+              return true;
+            }
+          }
+          Location location=mContext.getLocation(node.astName());
+          mContext.report(ISSUE,node,location,"This class implements `Parcelable` but does not " + "provide a `CREATOR` field");
+        }
+      }
+      break;
+    }
+  }
+  return true;
+}

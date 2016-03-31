@@ -1,0 +1,56 @@
+{
+  if (state.isDirty()) {
+    return;
+  }
+  final Project project=file.getProject();
+  for (  ProblemData problemData : state.getProblems()) {
+    final Issue issue=problemData.getIssue();
+    final String message=problemData.getMessage();
+    final TextRange range=problemData.getTextRange();
+    if (range.getStartOffset() == range.getEndOffset()) {
+      continue;
+    }
+    final Pair<AndroidLintInspectionBase,HighlightDisplayLevel> pair=AndroidLintUtil.getHighlighLevelAndInspection(project,issue,file);
+    if (pair == null) {
+      continue;
+    }
+    final AndroidLintInspectionBase inspection=pair.getFirst();
+    HighlightDisplayLevel displayLevel=pair.getSecond();
+    if (inspection != null) {
+      final HighlightDisplayKey key=HighlightDisplayKey.find(inspection.getShortName());
+      if (key != null) {
+        final PsiElement startElement=file.findElementAt(range.getStartOffset());
+        final PsiElement endElement=file.findElementAt(range.getEndOffset() - 1);
+        if (startElement != null && endElement != null && !inspection.isSuppressedFor(startElement)) {
+          if (problemData.getConfiguredSeverity() != null) {
+            HighlightDisplayLevel configuredLevel=AndroidLintInspectionBase.toHighlightDisplayLevel(problemData.getConfiguredSeverity());
+            if (configuredLevel != null) {
+              displayLevel=configuredLevel;
+            }
+          }
+          final Annotation annotation=createAnnotation(holder,message,range,displayLevel,issue);
+          for (          AndroidLintQuickFix fix : inspection.getQuickFixes(startElement,endElement,message)) {
+            if (fix.isApplicable(startElement,endElement,AndroidQuickfixContexts.EditorContext.TYPE)) {
+              annotation.registerFix(new MyFixingIntention(fix,startElement,endElement));
+            }
+          }
+          for (          IntentionAction intention : inspection.getIntentions(startElement,endElement)) {
+            annotation.registerFix(intention);
+          }
+          annotation.registerFix(new SuppressLintIntentionAction(key.getID(),startElement));
+          annotation.registerFix(new MyDisableInspectionFix(key));
+          annotation.registerFix(new MyEditInspectionToolsSettingsAction(key,inspection));
+          if (INCLUDE_IDEA_SUPPRESS_ACTIONS) {
+            final SuppressQuickFix[] suppressActions=inspection.getBatchSuppressActions(startElement);
+            for (            SuppressQuickFix action : suppressActions) {
+              if (action.isAvailable(project,startElement)) {
+                ProblemHighlightType type=annotation.getHighlightType();
+                annotation.registerFix(action,null,key,InspectionManager.getInstance(project).createProblemDescriptor(startElement,endElement,message,type,true,LocalQuickFix.EMPTY_ARRAY));
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

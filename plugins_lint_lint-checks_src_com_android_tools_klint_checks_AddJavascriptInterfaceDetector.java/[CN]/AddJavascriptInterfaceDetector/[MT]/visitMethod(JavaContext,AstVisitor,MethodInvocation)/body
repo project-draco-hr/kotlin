@@ -1,0 +1,18 @@
+{
+  if (context.getMainProject().getMinSdk() >= 17) {
+    return;
+  }
+  ResolvedNode resolved=context.resolve(node);
+  if (!(resolved instanceof ResolvedMethod)) {
+    return;
+  }
+  ResolvedMethod method=(ResolvedMethod)resolved;
+  if (!method.getContainingClass().isSubclassOf(WEB_VIEW,false)) {
+    return;
+  }
+  if (method.getArgumentCount() != 2 || !method.getArgumentType(0).matchesName(TYPE_OBJECT) || !method.getArgumentType(1).matchesName(TYPE_STRING)) {
+    return;
+  }
+  String message="`WebView.addJavascriptInterface` should not be called with minSdkVersion < 17 for security reasons: " + "JavaScript can use reflection to manipulate application";
+  context.report(ISSUE,node,context.getLocation(node.astName()),message);
+}

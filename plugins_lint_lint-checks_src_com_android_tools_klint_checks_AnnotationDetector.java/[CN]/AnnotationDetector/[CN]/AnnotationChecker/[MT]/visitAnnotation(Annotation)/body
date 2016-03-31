@@ -1,0 +1,42 @@
+{
+  String type=node.astAnnotationTypeReference().getTypeName();
+  if (SUPPRESS_LINT.equals(type) || FQCN_SUPPRESS_LINT.equals(type)) {
+    Node parent=node.getParent();
+    if (parent instanceof Modifiers) {
+      parent=parent.getParent();
+      if (parent instanceof VariableDefinition) {
+        for (        AnnotationElement element : node.astElements()) {
+          AnnotationValue valueNode=element.astValue();
+          if (valueNode == null) {
+            continue;
+          }
+          if (valueNode instanceof StringLiteral) {
+            StringLiteral literal=(StringLiteral)valueNode;
+            String id=literal.astValue();
+            if (!checkId(node,id)) {
+              return super.visitAnnotation(node);
+            }
+          }
+ else           if (valueNode instanceof ArrayInitializer) {
+            ArrayInitializer array=(ArrayInitializer)valueNode;
+            StrictListAccessor<Expression,ArrayInitializer> expressions=array.astExpressions();
+            if (expressions == null) {
+              continue;
+            }
+            Iterator<Expression> arrayIterator=expressions.iterator();
+            while (arrayIterator.hasNext()) {
+              Expression arrayElement=arrayIterator.next();
+              if (arrayElement instanceof StringLiteral) {
+                String id=((StringLiteral)arrayElement).astValue();
+                if (!checkId(node,id)) {
+                  return super.visitAnnotation(node);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return super.visitAnnotation(node);
+}

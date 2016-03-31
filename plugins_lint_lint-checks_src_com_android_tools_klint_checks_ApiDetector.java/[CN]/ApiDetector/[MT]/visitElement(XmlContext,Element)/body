@@ -1,0 +1,65 @@
+{
+  if (mApiDatabase == null) {
+    return;
+  }
+  String tag=element.getTagName();
+  ResourceFolderType folderType=context.getResourceFolderType();
+  if (folderType != ResourceFolderType.LAYOUT) {
+    if (folderType == ResourceFolderType.DRAWABLE) {
+      checkElement(context,element,TAG_RIPPLE,21,UNSUPPORTED);
+      checkElement(context,element,TAG_VECTOR,21,UNSUPPORTED);
+      checkElement(context,element,TAG_ANIMATED_SELECTOR,21,UNSUPPORTED);
+      checkElement(context,element,TAG_ANIMATED_VECTOR,21,UNSUPPORTED);
+    }
+    if (element.getParentNode().getNodeType() != Node.ELEMENT_NODE) {
+      return;
+    }
+    NodeList childNodes=element.getChildNodes();
+    for (int i=0, n=childNodes.getLength(); i < n; i++) {
+      Node textNode=childNodes.item(i);
+      if (textNode.getNodeType() == Node.TEXT_NODE) {
+        String text=textNode.getNodeValue();
+        if (text.contains(ANDROID_PREFIX)) {
+          text=text.trim();
+          int index=text.indexOf('/',ANDROID_PREFIX.length());
+          if (index != -1) {
+            String owner="android/R$" + text.substring(ANDROID_PREFIX.length(),index);
+            String name=getResourceFieldName(text.substring(index + 1));
+            int api=mApiDatabase.getFieldVersion(owner,name);
+            int minSdk=getMinSdk(context);
+            if (api > minSdk && api > context.getFolderVersion() && api > getLocalMinSdk(element)) {
+              Location location=context.getLocation(textNode);
+              String message=String.format("`%1$s` requires API level %2$d (current min is %3$d)",text,api,minSdk);
+              context.report(UNSUPPORTED,element,location,message);
+            }
+          }
+        }
+      }
+    }
+  }
+ else {
+    if (VIEW_TAG.equals(tag)) {
+      tag=element.getAttribute(ATTR_CLASS);
+      if (tag == null || tag.isEmpty()) {
+        return;
+      }
+    }
+ else {
+      checkElement(context,element,TAG,21,UNUSED);
+    }
+    if (tag.indexOf('.') != -1) {
+      return;
+    }
+    String fqn="android/widget/" + tag;
+    if (tag.equals("TextureView")) {
+      fqn="android/view/TextureView";
+    }
+    int api=mApiDatabase.getClassVersion(fqn);
+    int minSdk=getMinSdk(context);
+    if (api > minSdk && api > context.getFolderVersion() && api > getLocalMinSdk(element)) {
+      Location location=context.getLocation(element);
+      String message=String.format("View requires API level %1$d (current min is %2$d): `<%3$s>`",api,minSdk,tag);
+      context.report(UNSUPPORTED,element,location,message);
+    }
+  }
+}

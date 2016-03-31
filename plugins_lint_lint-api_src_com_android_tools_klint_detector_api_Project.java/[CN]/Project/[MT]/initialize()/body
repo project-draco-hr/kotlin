@@ -1,0 +1,86 @@
+{
+  try {
+    Properties properties=new Properties();
+    File propFile=new File(mDir,PROJECT_PROPERTIES);
+    if (propFile.exists()) {
+      BufferedInputStream is=new BufferedInputStream(new FileInputStream(propFile));
+      try {
+        properties.load(is);
+        String value=properties.getProperty(ANDROID_LIBRARY);
+        mLibrary=VALUE_TRUE.equals(value);
+        String proguardPath=properties.getProperty(PROGUARD_CONFIG);
+        if (proguardPath != null) {
+          mProguardPath=proguardPath;
+        }
+        mMergeManifests=VALUE_TRUE.equals(properties.getProperty("manifestmerger.enabled"));
+        String target=properties.getProperty("target");
+        if (target != null) {
+          int index=target.lastIndexOf('-');
+          if (index == -1) {
+            index=target.lastIndexOf(':');
+          }
+          if (index != -1) {
+            String versionString=target.substring(index + 1);
+            try {
+              mBuildSdk=Integer.parseInt(versionString);
+            }
+ catch (            NumberFormatException nufe) {
+              mClient.log(Severity.WARNING,null,"Unexpected build target format: %1$s",target);
+            }
+          }
+        }
+        for (int i=1; i < 1000; i++) {
+          String key=String.format(ANDROID_LIBRARY_REFERENCE_FORMAT,i);
+          String library=properties.getProperty(key);
+          if (library == null || library.isEmpty()) {
+            break;
+          }
+          File libraryDir=new File(mDir,library).getCanonicalFile();
+          if (mDirectLibraries == null) {
+            mDirectLibraries=new ArrayList<Project>();
+          }
+          File libraryReferenceDir=mReferenceDir;
+          if (!libraryDir.getPath().startsWith(mReferenceDir.getPath())) {
+            libraryReferenceDir=libraryReferenceDir.getCanonicalFile();
+            if (!libraryDir.getPath().startsWith(mReferenceDir.getPath())) {
+              File file=libraryReferenceDir;
+              while (file != null && !file.getPath().isEmpty()) {
+                if (libraryDir.getPath().startsWith(file.getPath())) {
+                  libraryReferenceDir=file;
+                  break;
+                }
+                file=file.getParentFile();
+              }
+            }
+          }
+          try {
+            Project libraryPrj=mClient.getProject(libraryDir,libraryReferenceDir);
+            mDirectLibraries.add(libraryPrj);
+            libraryPrj.setReportIssues(false);
+          }
+ catch (          CircularDependencyException e) {
+            e.setProject(this);
+            e.setLocation(Location.create(propFile));
+            throw e;
+          }
+        }
+      }
+  finally {
+        try {
+          Closeables.close(is,true);
+        }
+ catch (        IOException e) {
+        }
+      }
+    }
+  }
+ catch (  IOException ioe) {
+    mClient.log(ioe,"Initializing project state");
+  }
+  if (mDirectLibraries != null) {
+    mDirectLibraries=Collections.unmodifiableList(mDirectLibraries);
+  }
+ else {
+    mDirectLibraries=Collections.emptyList();
+  }
+}

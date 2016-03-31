@@ -1,0 +1,30 @@
+{
+  if (classNode.invisibleAnnotations != null) {
+    @SuppressWarnings("unchecked") List<AnnotationNode> annotations=classNode.invisibleAnnotations;
+    return isSuppressed(issue,annotations);
+  }
+  if (classNode.outerClass != null && classNode.outerMethod == null && isAnonymousClass(classNode)) {
+    ClassNode outer=getOuterClassNode(classNode);
+    if (outer != null) {
+      MethodNode m=findMethod(outer,CONSTRUCTOR_NAME,false);
+      if (m != null) {
+        MethodInsnNode call=findConstructorInvocation(m,classNode.name);
+        if (call != null) {
+          if (isSuppressed(issue,outer,m,call)) {
+            return true;
+          }
+        }
+      }
+      m=findMethod(outer,CLASS_CONSTRUCTOR,false);
+      if (m != null) {
+        MethodInsnNode call=findConstructorInvocation(m,classNode.name);
+        if (call != null) {
+          if (isSuppressed(issue,outer,m,call)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

@@ -1,0 +1,66 @@
+{
+  Node compilationUnit=null;
+  try {
+    compilationUnit=mParser.parseJava(context);
+    if (compilationUnit == null) {
+      return;
+    }
+    context.setCompilationUnit(compilationUnit);
+    for (    VisitingDetector v : mAllDetectors) {
+      v.setContext(context);
+      v.getDetector().beforeCheckFile(context);
+    }
+    if (!mSuperClassDetectors.isEmpty()) {
+      SuperclassVisitor visitor=new SuperclassVisitor(context);
+      compilationUnit.accept(visitor);
+    }
+    for (    VisitingDetector v : mFullTreeDetectors) {
+      AstVisitor visitor=v.getVisitor();
+      compilationUnit.accept(visitor);
+    }
+    if (!mMethodDetectors.isEmpty() || !mResourceFieldDetectors.isEmpty() || !mConstructorDetectors.isEmpty()) {
+      AstVisitor visitor=new DelegatingJavaVisitor(context);
+      compilationUnit.accept(visitor);
+    }
+ else     if (!mNodeTypeDetectors.isEmpty()) {
+      AstVisitor visitor=new DispatchVisitor();
+      compilationUnit.accept(visitor);
+    }
+    for (    VisitingDetector v : mAllDetectors) {
+      v.getDetector().afterCheckFile(context);
+    }
+  }
+ catch (  RuntimeException e) {
+    if (sExceptionCount++ > MAX_REPORTED_CRASHES) {
+      return;
+    }
+    StringBuilder sb=new StringBuilder(100);
+    sb.append("Unexpected failure during lint analysis of ");
+    sb.append(context.file.getName());
+    sb.append(" (this is a bug in lint or one of the libraries it depends on)\n");
+    StackTraceElement[] stackTrace=e.getStackTrace();
+    int count=0;
+    for (    StackTraceElement frame : stackTrace) {
+      if (count > 0) {
+        sb.append("->");
+      }
+      String className=frame.getClassName();
+      sb.append(className.substring(className.lastIndexOf('.') + 1));
+      sb.append('.').append(frame.getMethodName());
+      sb.append('(');
+      sb.append(frame.getFileName()).append(':').append(frame.getLineNumber());
+      sb.append(')');
+      count++;
+      if (count == 4) {
+        break;
+      }
+    }
+    Throwable throwable=null;
+    context.log(throwable,sb.toString());
+  }
+ finally {
+    if (compilationUnit != null) {
+      mParser.dispose(context,compilationUnit);
+    }
+  }
+}

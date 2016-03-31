@@ -1,0 +1,39 @@
+{
+  try {
+    ImageInputStream input=ImageIO.createImageInputStream(file);
+    if (input != null) {
+      try {
+        Iterator<ImageReader> readers=ImageIO.getImageReaders(input);
+        while (readers.hasNext()) {
+          ImageReader reader=readers.next();
+          try {
+            reader.setInput(input);
+            String formatName=reader.getFormatName();
+            if (formatName != null && !formatName.isEmpty()) {
+              String path=file.getPath();
+              int index=path.lastIndexOf('.');
+              String extension=path.substring(index + 1).toLowerCase(Locale.US);
+              if (!formatName.equalsIgnoreCase(extension)) {
+                if (endsWith(path,DOT_JPG) && formatName.equals("JPEG")) {
+                  return;
+                }
+                String message=String.format("Misleading file extension; named `.%1$s` but the " + "file format is `%2$s`",extension,formatName);
+                Location location=Location.create(file);
+                context.report(ICON_EXTENSION,location,message);
+              }
+              break;
+            }
+          }
+  finally {
+            reader.dispose();
+          }
+        }
+      }
+  finally {
+        input.close();
+      }
+    }
+  }
+ catch (  IOException e) {
+  }
+}

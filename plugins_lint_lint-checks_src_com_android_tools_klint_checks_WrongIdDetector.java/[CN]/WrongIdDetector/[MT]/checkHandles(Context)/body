@@ -1,0 +1,48 @@
+{
+  if (mHandles != null) {
+    boolean checkSameLayout=context.isEnabled(UNKNOWN_ID_LAYOUT);
+    boolean checkExists=context.isEnabled(UNKNOWN_ID);
+    boolean projectScope=context.getScope().contains(Scope.ALL_RESOURCE_FILES);
+    for (    Pair<String,Handle> pair : mHandles) {
+      String id=pair.getFirst();
+      boolean isBound=projectScope ? idDefined(mGlobalIds,id) : idDefined(context,id,context.file);
+      LintClient client=context.getClient();
+      if (!isBound && checkExists && (projectScope || client.supportsProjectResources())) {
+        Handle handle=pair.getSecond();
+        boolean isDeclared=idDefined(mDeclaredIds,id);
+        id=stripIdPrefix(id);
+        String suggestionMessage;
+        Set<String> spellingDictionary=mGlobalIds;
+        if (!projectScope && client.supportsProjectResources()) {
+          AbstractResourceRepository resources=client.getProjectResources(context.getProject(),true);
+          if (resources != null) {
+            spellingDictionary=Sets.newHashSet(resources.getItemsOfType(ResourceType.ID));
+            spellingDictionary.remove(id);
+          }
+        }
+        List<String> suggestions=getSpellingSuggestions(id,spellingDictionary);
+        if (suggestions.size() > 1) {
+          suggestionMessage=String.format(" Did you mean one of {%2$s} ?",id,Joiner.on(", ").join(suggestions));
+        }
+ else         if (!suggestions.isEmpty()) {
+          suggestionMessage=String.format(" Did you mean %2$s ?",id,suggestions.get(0));
+        }
+ else {
+          suggestionMessage="";
+        }
+        String message;
+        if (isDeclared) {
+          message=String.format("The id \"`%1$s`\" is defined but not assigned to any views.%2$s",id,suggestionMessage);
+        }
+ else {
+          message=String.format("The id \"`%1$s`\" is not defined anywhere.%2$s",id,suggestionMessage);
+        }
+        report(context,UNKNOWN_ID,handle,message);
+      }
+ else       if (checkSameLayout && (!projectScope || isBound) && id.startsWith(NEW_ID_PREFIX)) {
+        Handle handle=pair.getSecond();
+        report(context,UNKNOWN_ID_LAYOUT,handle,String.format("The id \"`%1$s`\" is not referring to any views in this layout",stripIdPrefix(id)));
+      }
+    }
+  }
+}

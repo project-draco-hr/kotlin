@@ -1,0 +1,26 @@
+{
+  myIssues=Lists.newArrayList();
+  JarFile jarFile=null;
+  try {
+    jarFile=new JarFile(file);
+    Manifest manifest=jarFile.getManifest();
+    Attributes attrs=manifest.getMainAttributes();
+    Object object=attrs.get(new Attributes.Name(MF_LINT_REGISTRY));
+    if (object instanceof String) {
+      String className=(String)object;
+      URL url=SdkUtils.fileToUrl(file);
+      URLClassLoader loader=new URLClassLoader(new URL[]{url},JarFileIssueRegistry.class.getClassLoader());
+      Class<?> registryClass=Class.forName(className,true,loader);
+      IssueRegistry registry=(IssueRegistry)registryClass.newInstance();
+      myIssues.addAll(registry.getIssues());
+    }
+ else {
+      client.log(Severity.ERROR,null,"Custom lint rule jar %1$s does not contain a valid registry manifest key " + "(%2$s).\n" + "Either the custom jar is invalid, or it uses an outdated API not supported "+ "this lint client",file.getPath(),MF_LINT_REGISTRY);
+    }
+  }
+  finally {
+    if (jarFile != null) {
+      jarFile.close();
+    }
+  }
+}

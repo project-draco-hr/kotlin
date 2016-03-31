@@ -1,0 +1,19 @@
+{
+  List<File> jarFiles=findGlobalRuleJars();
+  if (!jarFiles.isEmpty()) {
+    List<IssueRegistry> registries=Lists.newArrayListWithExpectedSize(jarFiles.size());
+    registries.add(registry);
+    for (    File jarFile : jarFiles) {
+      try {
+        registries.add(JarFileIssueRegistry.get(this,jarFile));
+      }
+ catch (      Throwable e) {
+        log(e,"Could not load custom rule jar file %1$s",jarFile);
+      }
+    }
+    if (registries.size() > 1) {
+      return new CompositeIssueRegistry(registries);
+    }
+  }
+  return registry;
+}

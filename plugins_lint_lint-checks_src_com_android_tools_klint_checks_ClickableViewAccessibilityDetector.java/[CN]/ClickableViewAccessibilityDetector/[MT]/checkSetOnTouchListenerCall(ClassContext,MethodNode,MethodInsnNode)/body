@@ -1,0 +1,12 @@
+{
+  String owner=call.owner;
+  ClassNode ownerClass=context.getDriver().findClass(context,owner,0);
+  if (ownerClass == null || !context.getDriver().isSubclassOf(ownerClass,ANDROID_VIEW_VIEW)) {
+    return;
+  }
+  MethodNode performClick=findMethod(ownerClass.methods,PERFORM_CLICK,PERFORM_CLICK_SIG);
+  if (performClick == null) {
+    String message=String.format("Custom view `%1$s` has `setOnTouchListener` called on it but does not " + "override `performClick`",ownerClass.name);
+    context.report(ISSUE,method,call,context.getLocation(call),message);
+  }
+}

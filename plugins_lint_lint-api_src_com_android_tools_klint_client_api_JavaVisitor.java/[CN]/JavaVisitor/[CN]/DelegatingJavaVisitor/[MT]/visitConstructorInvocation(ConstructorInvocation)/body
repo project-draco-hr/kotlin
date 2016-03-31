@@ -1,0 +1,25 @@
+{
+  if (mVisitConstructors) {
+    TypeReference typeReference=node.astTypeReference();
+    if (typeReference != null) {
+      TypeReferencePart last=typeReference.astParts().last();
+      if (last != null) {
+        String name=last.astIdentifier().astValue();
+        if (mConstructorSimpleNames.contains(name)) {
+          ResolvedNode resolved=mContext.resolve(node);
+          if (resolved instanceof ResolvedMethod) {
+            ResolvedMethod method=(ResolvedMethod)resolved;
+            String type=method.getContainingClass().getSignature();
+            List<VisitingDetector> list=mConstructorDetectors.get(type);
+            if (list != null) {
+              for (              VisitingDetector v : list) {
+                v.getJavaScanner().visitConstructor(mContext,v.getVisitor(),node,method);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return super.visitConstructorInvocation(node);
+}

@@ -1,0 +1,26 @@
+{
+  if (mRepeatingDetectors != null) {
+    EnumSet<Scope> oldScope=mScope;
+    do {
+      mPhase++;
+      fireEvent(EventType.NEW_PHASE,new Context(this,project,null,project.getDir()));
+      if (mRepeatScope == null) {
+        mRepeatScope=Scope.ALL;
+      }
+      mScope=Scope.intersect(mScope,mRepeatScope);
+      if (mScope.isEmpty()) {
+        break;
+      }
+      computeRepeatingDetectors(mRepeatingDetectors,project);
+      if (mApplicableDetectors.isEmpty()) {
+        continue;
+      }
+      checkProject(project,main);
+      if (mCanceled) {
+        break;
+      }
+    }
+ while (mPhase < MAX_PHASES && mRepeatingDetectors != null);
+    mScope=oldScope;
+  }
+}

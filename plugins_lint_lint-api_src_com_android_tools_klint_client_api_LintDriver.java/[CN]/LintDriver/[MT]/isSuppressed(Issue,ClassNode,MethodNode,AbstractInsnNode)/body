@@ -1,0 +1,22 @@
+{
+  if (method.invisibleAnnotations != null) {
+    @SuppressWarnings("unchecked") List<AnnotationNode> annotations=method.invisibleAnnotations;
+    return isSuppressed(issue,annotations);
+  }
+  if (instruction != null && method.name.charAt(0) == '<') {
+    AbstractInsnNode next=LintUtils.getNextInstruction(instruction);
+    if (next != null && next.getType() == AbstractInsnNode.FIELD_INSN) {
+      FieldInsnNode fieldRef=(FieldInsnNode)next;
+      FieldNode field=findField(classNode,fieldRef.owner,fieldRef.name);
+      if (field != null && isSuppressed(issue,field)) {
+        return true;
+      }
+    }
+ else     if (classNode.outerClass != null && classNode.outerMethod == null && isAnonymousClass(classNode)) {
+      if (isSuppressed(issue,classNode)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}

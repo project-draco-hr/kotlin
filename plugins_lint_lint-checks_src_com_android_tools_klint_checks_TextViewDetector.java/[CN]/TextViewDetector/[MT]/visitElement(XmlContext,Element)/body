@@ -1,0 +1,81 @@
+{
+  if (element.getTagName().equals(TEXT_VIEW)) {
+    if (!element.hasAttributeNS(ANDROID_URI,ATTR_TEXT) && element.hasAttributeNS(ANDROID_URI,ATTR_ID) && !element.hasAttributeNS(ANDROID_URI,ATTR_TEXT_IS_SELECTABLE)&& !element.hasAttributeNS(ANDROID_URI,ATTR_VISIBILITY)&& !element.hasAttributeNS(ANDROID_URI,ATTR_ON_CLICK)&& context.getMainProject().getTargetSdk() >= 11 && context.isEnabled(SELECTABLE)) {
+      context.report(SELECTABLE,element,context.getLocation(element),"Consider making the text value selectable by specifying " + "`android:textIsSelectable=\"true\"`");
+    }
+  }
+  NamedNodeMap attributes=element.getAttributes();
+  for (int i=0, n=attributes.getLength(); i < n; i++) {
+    Attr attribute=(Attr)attributes.item(i);
+    String name=attribute.getLocalName();
+    if (name == null || name.isEmpty()) {
+      continue;
+    }
+    boolean isEditAttribute=false;
+switch (name.charAt(0)) {
+case 'a':
+{
+        isEditAttribute=name.equals(ATTR_AUTO_TEXT);
+        break;
+      }
+case 'b':
+{
+      isEditAttribute=name.equals(ATTR_BUFFER_TYPE) && attribute.getValue().equals(VALUE_EDITABLE);
+      break;
+    }
+case 'p':
+{
+    isEditAttribute=name.equals(ATTR_PASSWORD) || name.equals(ATTR_PHONE_NUMBER) || name.equals(ATTR_PRIVATE_IME_OPTIONS);
+    break;
+  }
+case 'c':
+{
+  isEditAttribute=name.equals(ATTR_CAPITALIZE) || name.equals(ATTR_CURSOR_VISIBLE);
+  break;
+}
+case 'd':
+{
+isEditAttribute=name.equals(ATTR_DIGITS);
+break;
+}
+case 'e':
+{
+if (name.equals(ATTR_EDITABLE)) {
+isEditAttribute=attribute.getValue().equals(VALUE_TRUE);
+}
+ else {
+isEditAttribute=name.equals(ATTR_EDITOR_EXTRAS);
+}
+break;
+}
+case 'i':
+{
+if (name.equals(ATTR_INPUT_TYPE)) {
+String value=attribute.getValue();
+isEditAttribute=!value.isEmpty() && !value.equals(VALUE_NONE);
+}
+ else {
+isEditAttribute=name.equals(ATTR_INPUT_TYPE) || name.equals(ATTR_IME_OPTIONS) || name.equals(ATTR_IME_ACTION_LABEL)|| name.equals(ATTR_IME_ACTION_ID)|| name.equals(ATTR_INPUT_METHOD);
+}
+break;
+}
+case 'n':
+{
+isEditAttribute=name.equals(ATTR_NUMERIC);
+break;
+}
+}
+if (isEditAttribute && ANDROID_URI.equals(attribute.getNamespaceURI()) && context.isEnabled(ISSUE)) {
+Location location=context.getLocation(attribute);
+String message;
+String view=element.getTagName();
+if (view.equals(TEXT_VIEW)) {
+message=String.format("Attribute `%1$s` should not be used with `<TextView>`: " + "Change element type to `<EditText>` ?",attribute.getName());
+}
+ else {
+message=String.format("Attribute `%1$s` should not be used with `<%2$s>`: " + "intended for editable text widgets",attribute.getName(),view);
+}
+context.report(ISSUE,attribute,location,message);
+}
+}
+}

@@ -1,0 +1,106 @@
+{
+  if (argument instanceof Select) {
+    Select node=(Select)argument;
+    if (node.astOperand() instanceof Select) {
+      Select select=(Select)node.astOperand();
+      if (select.astOperand() instanceof Select) {
+        Select innerSelect=(Select)select.astOperand();
+        if (innerSelect.astIdentifier().astValue().equals(R_CLASS)) {
+          String typeName=select.astIdentifier().astValue();
+          ResourceType type=ResourceType.getEnum(typeName);
+          return type != null ? Collections.singletonList(type) : null;
+        }
+      }
+      if (select.astOperand() instanceof VariableReference) {
+        VariableReference reference=(VariableReference)select.astOperand();
+        if (reference.astIdentifier().astValue().equals(R_CLASS)) {
+          String typeName=select.astIdentifier().astValue();
+          ResourceType type=ResourceType.getEnum(typeName);
+          return type != null ? Collections.singletonList(type) : null;
+        }
+      }
+    }
+    if (node.astIdentifier().astValue().equals(R_CLASS)) {
+      Node parent=node.getParent();
+      if (parent instanceof Select) {
+        Node grandParent=parent.getParent();
+        if (grandParent instanceof Select) {
+          Select select=(Select)grandParent;
+          Expression typeOperand=select.astOperand();
+          if (typeOperand instanceof Select) {
+            Select typeSelect=(Select)typeOperand;
+            String typeName=typeSelect.astIdentifier().astValue();
+            ResourceType type=ResourceType.getEnum(typeName);
+            return type != null ? Collections.singletonList(type) : null;
+          }
+        }
+      }
+    }
+  }
+ else   if (argument instanceof VariableReference) {
+    Statement statement=getParentOfType(argument,Statement.class,false);
+    if (statement != null) {
+      ListIterator<Node> iterator=statement.getParent().getChildren().listIterator();
+      while (iterator.hasNext()) {
+        if (iterator.next() == statement) {
+          if (iterator.hasPrevious()) {
+            iterator.previous();
+          }
+          break;
+        }
+      }
+      String targetName=((VariableReference)argument).astIdentifier().astValue();
+      while (iterator.hasPrevious()) {
+        Node previous=iterator.previous();
+        if (previous instanceof VariableDeclaration) {
+          VariableDeclaration declaration=(VariableDeclaration)previous;
+          VariableDefinition definition=declaration.astDefinition();
+          for (          VariableDefinitionEntry entry : definition.astVariables()) {
+            if (entry.astInitializer() != null && entry.astName().astValue().equals(targetName)) {
+              return getResourceTypes(context,entry.astInitializer());
+            }
+          }
+        }
+ else         if (previous instanceof ExpressionStatement) {
+          ExpressionStatement expressionStatement=(ExpressionStatement)previous;
+          Expression expression=expressionStatement.astExpression();
+          if (expression instanceof BinaryExpression && ((BinaryExpression)expression).astOperator() == BinaryOperator.ASSIGN) {
+            BinaryExpression binaryExpression=(BinaryExpression)expression;
+            if (targetName.equals(binaryExpression.astLeft().toString())) {
+              return getResourceTypes(context,binaryExpression.astRight());
+            }
+          }
+        }
+      }
+    }
+  }
+ else   if (argument instanceof MethodInvocation) {
+    ResolvedNode resolved=context.resolve(argument);
+    if (resolved != null) {
+      for (      ResolvedAnnotation annotation : resolved.getAnnotations()) {
+        String signature=annotation.getSignature();
+        if (signature.equals(COLOR_INT_ANNOTATION)) {
+          return Collections.singletonList(COLOR_INT_MARKER_TYPE);
+        }
+        if (signature.endsWith(RES_SUFFIX) && signature.startsWith(SUPPORT_ANNOTATIONS_PREFIX)) {
+          String typeString=signature.substring(SUPPORT_ANNOTATIONS_PREFIX.length(),signature.length() - RES_SUFFIX.length()).toLowerCase(Locale.US);
+          ResourceType type=ResourceType.getEnum(typeString);
+          if (type != null) {
+            return Collections.singletonList(type);
+          }
+ else           if (typeString.equals("any")) {
+            ResourceType[] types=ResourceType.values();
+            List<ResourceType> result=Lists.newArrayListWithExpectedSize(types.length);
+            for (            ResourceType t : types) {
+              if (t != COLOR_INT_MARKER_TYPE) {
+                result.add(t);
+              }
+            }
+            return result;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}

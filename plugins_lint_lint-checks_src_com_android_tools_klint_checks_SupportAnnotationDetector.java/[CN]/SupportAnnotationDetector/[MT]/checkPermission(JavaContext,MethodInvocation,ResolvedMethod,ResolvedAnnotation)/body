@@ -1,0 +1,58 @@
+{
+  PermissionRequirement requirement=PermissionRequirement.create(context,annotation);
+  if (requirement.isConditional()) {
+    return;
+  }
+  PermissionHolder permissions=getPermissions(context);
+  if (!requirement.isSatisfied(permissions)) {
+    permissions=addLocalPermissions(context,permissions,node);
+    if (!requirement.isSatisfied(permissions)) {
+      String name=method.getContainingClass().getSimpleName() + "." + method.getName();
+      String message=getMissingPermissionMessage(requirement,name,permissions);
+      context.report(MISSING_PERMISSION,node,context.getLocation(node),message);
+    }
+  }
+ else   if (requirement.isRevocable(permissions) && context.getMainProject().getTargetSdkVersion().getFeatureLevel() >= 23) {
+    boolean handlesMissingPermission=false;
+    Node parent=node;
+    while (true) {
+      Try tryCatch=getParentOfType(parent,Try.class);
+      if (tryCatch == null) {
+        break;
+      }
+ else {
+        for (        Catch aCatch : tryCatch.astCatches()) {
+          TypeReference catchType=aCatch.astExceptionDeclaration().astTypeReference();
+          if (isSecurityException(context,catchType)) {
+            handlesMissingPermission=true;
+            break;
+          }
+        }
+        parent=tryCatch;
+      }
+    }
+    if (!handlesMissingPermission) {
+      MethodDeclaration declaration=getParentOfType(parent,MethodDeclaration.class);
+      if (declaration != null) {
+        for (        TypeReference typeReference : declaration.astThrownTypeReferences()) {
+          if (isSecurityException(context,typeReference)) {
+            handlesMissingPermission=true;
+            break;
+          }
+        }
+      }
+    }
+    if (!handlesMissingPermission) {
+      Node methodNode=JavaContext.findSurroundingMethod(node);
+      if (methodNode != null) {
+        CheckPermissionVisitor visitor=new CheckPermissionVisitor(node);
+        methodNode.accept(visitor);
+        handlesMissingPermission=visitor.checksPermission();
+      }
+    }
+    if (!handlesMissingPermission) {
+      String message=getUnhandledPermissionMessage();
+      context.report(MISSING_PERMISSION,node,context.getLocation(node),message);
+    }
+  }
+}

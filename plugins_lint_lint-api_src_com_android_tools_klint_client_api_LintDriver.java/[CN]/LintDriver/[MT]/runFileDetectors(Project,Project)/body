@@ -1,0 +1,118 @@
+{
+  if (project.isAndroidProject()) {
+    for (    File manifestFile : project.getManifestFiles()) {
+      XmlParser parser=mClient.getXmlParser();
+      if (parser != null) {
+        XmlContext context=new XmlContext(this,project,main,manifestFile,null,parser);
+        context.document=parser.parseXml(context);
+        if (context.document != null) {
+          try {
+            project.readManifest(context.document);
+            if ((!project.isLibrary() || (main != null && main.isMergingManifests())) && mScope.contains(Scope.MANIFEST)) {
+              List<Detector> detectors=mScopeDetectors.get(Scope.MANIFEST);
+              if (detectors != null) {
+                ResourceVisitor v=new ResourceVisitor(parser,detectors,null);
+                fireEvent(EventType.SCANNING_FILE,context);
+                v.visitFile(context,manifestFile);
+              }
+            }
+          }
+  finally {
+            if (context.document != null) {
+              parser.dispose(context,context.document);
+            }
+          }
+        }
+      }
+    }
+    if (mScope.contains(Scope.ALL_RESOURCE_FILES) || mScope.contains(Scope.RESOURCE_FILE) || mScope.contains(Scope.RESOURCE_FOLDER)|| mScope.contains(Scope.BINARY_RESOURCE_FILE)) {
+      List<Detector> dirChecks=mScopeDetectors.get(Scope.RESOURCE_FOLDER);
+      List<Detector> binaryChecks=mScopeDetectors.get(Scope.BINARY_RESOURCE_FILE);
+      List<Detector> checks=union(mScopeDetectors.get(Scope.RESOURCE_FILE),mScopeDetectors.get(Scope.ALL_RESOURCE_FILES));
+      boolean haveXmlChecks=checks != null && !checks.isEmpty();
+      List<ResourceXmlDetector> xmlDetectors;
+      if (haveXmlChecks) {
+        xmlDetectors=new ArrayList<ResourceXmlDetector>(checks.size());
+        for (        Detector detector : checks) {
+          if (detector instanceof ResourceXmlDetector) {
+            xmlDetectors.add((ResourceXmlDetector)detector);
+          }
+        }
+        haveXmlChecks=!xmlDetectors.isEmpty();
+      }
+ else {
+        xmlDetectors=Collections.emptyList();
+      }
+      if (haveXmlChecks || dirChecks != null && !dirChecks.isEmpty() || binaryChecks != null && !binaryChecks.isEmpty()) {
+        List<File> files=project.getSubset();
+        if (files != null) {
+          checkIndividualResources(project,main,xmlDetectors,dirChecks,binaryChecks,files);
+        }
+ else {
+          List<File> resourceFolders=project.getResourceFolders();
+          if (!resourceFolders.isEmpty()) {
+            for (            File res : resourceFolders) {
+              checkResFolder(project,main,res,xmlDetectors,dirChecks,binaryChecks);
+            }
+          }
+        }
+      }
+    }
+    if (mCanceled) {
+      return;
+    }
+  }
+  if (mScope.contains(Scope.JAVA_FILE) || mScope.contains(Scope.ALL_JAVA_FILES)) {
+    List<Detector> checks=union(mScopeDetectors.get(Scope.JAVA_FILE),mScopeDetectors.get(Scope.ALL_JAVA_FILES));
+    if (checks != null && !checks.isEmpty()) {
+      List<File> files=project.getSubset();
+      if (files != null) {
+        checkIndividualJavaFiles(project,main,checks,files);
+      }
+ else {
+        List<File> sourceFolders=project.getJavaSourceFolders();
+        if (mScope.contains(Scope.TEST_SOURCES)) {
+          List<File> testFolders=project.getTestSourceFolders();
+          if (!testFolders.isEmpty()) {
+            List<File> combined=Lists.newArrayListWithExpectedSize(sourceFolders.size() + testFolders.size());
+            combined.addAll(sourceFolders);
+            combined.addAll(testFolders);
+            sourceFolders=combined;
+          }
+        }
+        checkJava(project,main,sourceFolders,checks);
+      }
+    }
+  }
+  if (mCanceled) {
+    return;
+  }
+  if (mScope.contains(Scope.CLASS_FILE) || mScope.contains(Scope.ALL_CLASS_FILES) || mScope.contains(Scope.JAVA_LIBRARIES)) {
+    checkClasses(project,main);
+  }
+  if (mCanceled) {
+    return;
+  }
+  if (mScope.contains(Scope.GRADLE_FILE)) {
+    checkBuildScripts(project,main);
+  }
+  if (mCanceled) {
+    return;
+  }
+  if (mScope.contains(Scope.OTHER)) {
+    List<Detector> checks=mScopeDetectors.get(Scope.OTHER);
+    if (checks != null) {
+      OtherFileVisitor visitor=new OtherFileVisitor(checks);
+      visitor.scan(this,project,main);
+    }
+  }
+  if (mCanceled) {
+    return;
+  }
+  if (project == main && mScope.contains(Scope.PROGUARD_FILE) && project.isAndroidProject()) {
+    checkProGuard(project,main);
+  }
+  if (project == main && mScope.contains(Scope.PROPERTY_FILE)) {
+    checkProperties(project,main);
+  }
+}

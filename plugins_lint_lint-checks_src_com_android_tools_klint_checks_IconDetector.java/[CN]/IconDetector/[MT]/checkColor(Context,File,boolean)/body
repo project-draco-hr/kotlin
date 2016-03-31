@@ -1,0 +1,87 @@
+{
+  int folderVersion=context.getDriver().getResourceFolderVersion(file);
+  if (isActionBarIcon) {
+    if (folderVersion != -1 && folderVersion < 11 || !isAndroid30(context,folderVersion)) {
+      return null;
+    }
+  }
+ else {
+    if (folderVersion != -1 && folderVersion < 9 || !isAndroid23(context,folderVersion) && !isAndroid30(context,folderVersion)) {
+      return null;
+    }
+  }
+  try {
+    BufferedImage image=getImage(file);
+    if (image != null) {
+      if (isActionBarIcon) {
+        checkPixels:         for (int y=0, height=image.getHeight(); y < height; y++) {
+          for (int x=0, width=image.getWidth(); x < width; x++) {
+            int rgb=image.getRGB(x,y);
+            if ((rgb & 0xFF000000) != 0) {
+              int r=(rgb & 0xFF0000) >>> 16;
+              int g=(rgb & 0x00FF00) >>> 8;
+              int b=(rgb & 0x0000FF);
+              if (r != g || r != b) {
+                String message="Action Bar icons should use a single gray " + "color (`#333333` for light themes (with 60%/30% " + "opacity for enabled/disabled), and `#FFFFFF` with "+ "opacity 80%/30% for dark themes";
+                context.report(ICON_COLORS,Location.create(file),message);
+                break checkPixels;
+              }
+            }
+          }
+        }
+      }
+ else {
+        if (folderVersion >= 11 || isAndroid30(context,folderVersion)) {
+          checkPixels:           for (int y=0, height=image.getHeight(); y < height; y++) {
+            for (int x=0, width=image.getWidth(); x < width; x++) {
+              int rgb=image.getRGB(x,y);
+              if ((rgb & 0xFF000000) != 0 && (rgb & 0xFFFFFF) != 0xFFFFFF) {
+                int r=(rgb & 0xFF0000) >>> 16;
+                int g=(rgb & 0x00FF00) >>> 8;
+                int b=(rgb & 0x0000FF);
+                if (r == g && r == b) {
+                  if (x < width - 1 && rgb != image.getRGB(x + 1,y)) {
+                    continue;
+                  }
+                  if (x > 0 && rgb != image.getRGB(x - 1,y)) {
+                    continue;
+                  }
+                  if (y < height - 1 && rgb != image.getRGB(x,y + 1)) {
+                    continue;
+                  }
+                  if (y > 0 && rgb != image.getRGB(x,y - 1)) {
+                    continue;
+                  }
+                }
+                String message="Notification icons must be entirely white";
+                context.report(ICON_COLORS,Location.create(file),message);
+                break checkPixels;
+              }
+            }
+          }
+        }
+ else {
+          checkPixels:           for (int y=0, height=image.getHeight(); y < height; y++) {
+            for (int x=0, width=image.getWidth(); x < width; x++) {
+              int rgb=image.getRGB(x,y);
+              if ((rgb & 0xFF000000) != 0) {
+                int r=(rgb & 0xFF0000) >>> 16;
+                int g=(rgb & 0x00FF00) >>> 8;
+                int b=(rgb & 0x0000FF);
+                if (r != g || r != b) {
+                  String message="Notification icons should not use " + "colors";
+                  context.report(ICON_COLORS,Location.create(file),message);
+                  break checkPixels;
+                }
+              }
+            }
+          }
+        }
+      }
+      return new Dimension(image.getWidth(),image.getHeight());
+    }
+  }
+ catch (  IOException e) {
+  }
+  return null;
+}

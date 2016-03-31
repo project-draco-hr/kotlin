@@ -1,0 +1,35 @@
+{
+  String uri=attribute.getNamespaceURI();
+  if (uri == null || uri.isEmpty()) {
+    String name=attribute.getName();
+    if (name == null) {
+      return;
+    }
+    if (NO_PREFIX_ATTRS.contains(name)) {
+      return;
+    }
+    Element element=attribute.getOwnerElement();
+    if (isCustomView(element) && context.getResourceFolderType() != null) {
+      return;
+    }
+ else     if (context.getResourceFolderType() == ResourceFolderType.LAYOUT) {
+      Element root=element.getOwnerDocument().getDocumentElement();
+      if (TAG_LAYOUT.equals(root.getTagName())) {
+        return;
+      }
+    }
+    if (name.indexOf(':') != -1) {
+      return;
+    }
+    context.report(MISSING_NAMESPACE,attribute,context.getLocation(attribute),"Attribute is missing the Android namespace prefix");
+  }
+ else   if (!ANDROID_URI.equals(uri) && !TOOLS_URI.equals(uri) && context.getResourceFolderType() == ResourceFolderType.LAYOUT && !isCustomView(attribute.getOwnerElement()) && !attribute.getLocalName().startsWith(ATTR_LAYOUT_RESOURCE_PREFIX) && attribute.getOwnerElement().getParentNode().getNodeType() == Node.ELEMENT_NODE && !isCustomView((Element)attribute.getOwnerElement().getParentNode())) {
+    if (context.getResourceFolderType() == ResourceFolderType.LAYOUT && AUTO_URI.equals(uri)) {
+      Element root=attribute.getOwnerDocument().getDocumentElement();
+      if (TAG_LAYOUT.equals(root.getTagName())) {
+        return;
+      }
+    }
+    context.report(MISSING_NAMESPACE,attribute,context.getLocation(attribute),String.format("Unexpected namespace prefix \"%1$s\" found for tag `%2$s`",attribute.getPrefix(),attribute.getOwnerElement().getTagName()));
+  }
+}

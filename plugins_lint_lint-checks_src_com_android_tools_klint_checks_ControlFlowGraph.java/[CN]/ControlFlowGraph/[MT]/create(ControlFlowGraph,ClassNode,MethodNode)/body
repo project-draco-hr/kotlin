@@ -1,0 +1,27 @@
+{
+  final ControlFlowGraph graph=initial != null ? initial : new ControlFlowGraph();
+  final InsnList instructions=method.instructions;
+  graph.mNodeMap=Maps.newHashMapWithExpectedSize(instructions.size());
+  graph.mMethod=method;
+  Analyzer analyzer=new Analyzer(new BasicInterpreter()){
+    @Override protected void newControlFlowEdge(    int insn,    int successor){
+      AbstractInsnNode from=instructions.get(insn);
+      AbstractInsnNode to=instructions.get(successor);
+      graph.add(from,to);
+    }
+    @Override protected boolean newControlFlowExceptionEdge(    int insn,    TryCatchBlockNode tcb){
+      AbstractInsnNode from=instructions.get(insn);
+      graph.exception(from,tcb);
+      return super.newControlFlowExceptionEdge(insn,tcb);
+    }
+    @Override protected boolean newControlFlowExceptionEdge(    int insn,    int successor){
+      AbstractInsnNode from=instructions.get(insn);
+      AbstractInsnNode to=instructions.get(successor);
+      graph.exception(from,to);
+      return super.newControlFlowExceptionEdge(insn,successor);
+    }
+  }
+;
+  analyzer.analyze(classNode.name,method);
+  return graph;
+}

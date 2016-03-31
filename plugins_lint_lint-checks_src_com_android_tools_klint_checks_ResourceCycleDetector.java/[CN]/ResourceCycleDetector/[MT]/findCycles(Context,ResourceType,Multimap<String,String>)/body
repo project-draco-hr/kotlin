@@ -1,0 +1,25 @@
+{
+  Set<String> visiting=Sets.newHashSetWithExpectedSize(map.size());
+  Set<String> seen=Sets.newHashSetWithExpectedSize(map.size());
+  for (  String from : map.keySet()) {
+    if (seen.contains(from)) {
+      continue;
+    }
+    List<String> chain=dfs(map,from,visiting);
+    if (chain != null && chain.size() > 2) {
+      seen.addAll(chain);
+      Collections.reverse(chain);
+      if (mChains == null) {
+        mChains=Maps.newEnumMap(ResourceType.class);
+        mLocations=Maps.newEnumMap(ResourceType.class);
+        context.getDriver().requestRepeat(this,Scope.RESOURCE_FILE_SCOPE);
+      }
+      List<List<String>> list=mChains.get(type);
+      if (list == null) {
+        list=Lists.newArrayList();
+        mChains.put(type,list);
+      }
+      list.add(chain);
+    }
+  }
+}

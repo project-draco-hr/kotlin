@@ -1,0 +1,23 @@
+{
+  if (mRootAttributes != null) {
+    for (    Pair<Location,String> pair : mRootAttributes) {
+      Location location=pair.getFirst();
+      Object clientData=location.getClientData();
+      if (clientData instanceof Node) {
+        if (context.getDriver().isSuppressed(null,ISSUE,(Node)clientData)) {
+          return;
+        }
+      }
+      String layoutName=location.getFile().getName();
+      if (endsWith(layoutName,DOT_XML)) {
+        layoutName=layoutName.substring(0,layoutName.length() - DOT_XML.length());
+      }
+      String theme=getTheme(context,layoutName);
+      if (theme == null || !isBlankTheme(theme)) {
+        String drawable=pair.getSecond();
+        String message=String.format("Possible overdraw: Root element paints background `%1$s` with " + "a theme that also paints a background (inferred theme is `%2$s`)",drawable,theme);
+        context.report(ISSUE,location,message);
+      }
+    }
+  }
+}

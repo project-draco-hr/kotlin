@@ -1,0 +1,53 @@
+{
+  StringBuilder sb=new StringBuilder();
+  sb.append("digraph G {\n");
+  AbstractInsnNode instruction=mMethod.instructions.getFirst();
+  sb.append("  start -> ").append(getId(mNodeMap.get(instruction))).append(";\n");
+  sb.append("  start [shape=plaintext];\n");
+  while (instruction != null) {
+    Node node=mNodeMap.get(instruction);
+    if (node != null) {
+      if (node.successors != null) {
+        for (        Node to : node.successors) {
+          sb.append("  ").append(getId(node)).append(" -> ").append(getId(to));
+          if (node.instruction instanceof JumpInsnNode) {
+            sb.append(" [label=\"");
+            if (((JumpInsnNode)node.instruction).label == to.instruction) {
+              sb.append("yes");
+            }
+ else {
+              sb.append("no");
+            }
+            sb.append("\"]");
+          }
+          sb.append(";\n");
+        }
+      }
+      if (node.exceptions != null) {
+        for (        Node to : node.exceptions) {
+          sb.append(getId(node)).append(" -> ").append(getId(to));
+          sb.append(" [label=\"exception\"];\n");
+        }
+      }
+    }
+    instruction=instruction.getNext();
+  }
+  sb.append("\n");
+  for (  Node node : mNodeMap.values()) {
+    instruction=node.instruction;
+    sb.append("  ").append(getId(node)).append(" ");
+    sb.append("[label=\"").append(dotDescribe(node)).append("\"");
+    if (highlight != null && highlight.contains(node)) {
+      sb.append(",shape=box,style=filled");
+    }
+ else     if (instruction instanceof LineNumberNode || instruction instanceof LabelNode || instruction instanceof FrameNode) {
+      sb.append(",shape=oval,style=dotted");
+    }
+ else {
+      sb.append(",shape=box");
+    }
+    sb.append("];\n");
+  }
+  sb.append("}");
+  return sb.toString();
+}

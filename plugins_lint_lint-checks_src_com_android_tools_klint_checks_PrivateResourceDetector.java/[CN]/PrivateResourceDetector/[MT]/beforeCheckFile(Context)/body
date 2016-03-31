@@ -1,0 +1,27 @@
+{
+  File file=context.file;
+  boolean isXmlFile=LintUtils.isXmlFile(file);
+  if (!isXmlFile && !LintUtils.isBitmapFile(file)) {
+    return;
+  }
+  String parentName=file.getParentFile().getName();
+  int dash=parentName.indexOf('-');
+  if (dash != -1 || FD_RES_VALUES.equals(parentName)) {
+    return;
+  }
+  ResourceFolderType folderType=ResourceFolderType.getFolderType(parentName);
+  if (folderType == null) {
+    return;
+  }
+  List<ResourceType> types=FolderTypeRelationship.getRelatedResourceTypes(folderType);
+  if (types.isEmpty()) {
+    return;
+  }
+  ResourceType type=types.get(0);
+  String resourceName=getResourceFieldName(getBaseName(file.getName()));
+  if (isPrivate(context,type,resourceName)) {
+    String message=createOverrideErrorMessage(context,type,resourceName);
+    Location location=Location.create(file);
+    context.report(ISSUE,location,message);
+  }
+}

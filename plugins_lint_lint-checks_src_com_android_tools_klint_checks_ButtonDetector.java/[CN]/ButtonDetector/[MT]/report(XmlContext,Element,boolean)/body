@@ -1,0 +1,60 @@
+{
+  if (!context.isEnabled(ORDER)) {
+    return;
+  }
+  if (mIgnore != null && mIgnore.contains(element)) {
+    return;
+  }
+  int target=context.getProject().getTargetSdk();
+  if (target < 14) {
+    return;
+  }
+  boolean mustCreateIcsLayout=false;
+  if (context.getProject().getMinSdk() < 14) {
+    boolean isIcsLayout=context.getFolderVersion() >= 14;
+    if (!isIcsLayout) {
+      File res=context.file.getParentFile().getParentFile();
+      File[] resFolders=res.listFiles();
+      String fileName=context.file.getName();
+      if (resFolders != null) {
+        for (        File folder : resFolders) {
+          String folderName=folder.getName();
+          if (folderName.startsWith(SdkConstants.FD_RES_LAYOUT) && folderName.contains("-v14")) {
+            File layout=new File(folder,fileName);
+            if (layout.exists()) {
+              return;
+            }
+          }
+        }
+      }
+      mustCreateIcsLayout=true;
+    }
+  }
+  List<Element> buttons=LintUtils.getChildren(element.getParentNode());
+  if (mIgnore == null) {
+    mIgnore=new HashSet<Element>();
+  }
+  for (  Element button : buttons) {
+    mIgnore.add(button);
+  }
+  String message;
+  if (isCancel) {
+    message="Cancel button should be on the left";
+  }
+ else {
+    message="OK button should be on the right";
+  }
+  if (mustCreateIcsLayout) {
+    message=String.format("Layout uses the wrong button order for API >= 14: Create a " + "`layout-v14/%1$s` file with opposite order: %2$s",context.file.getName(),message);
+  }
+  String layout=element.getParentNode().getNodeName();
+  if (layout.equals(LINEAR_LAYOUT) || layout.equals(TABLE_ROW)) {
+    List<String> labelList=getLabelList(buttons);
+    String wrong=describeButtons(labelList);
+    sortButtons(labelList);
+    String right=describeButtons(labelList);
+    message+=String.format(" (was \"%1$s\", should be \"%2$s\")",wrong,right);
+  }
+  Location location=context.getLocation(element);
+  context.report(ORDER,element,location,message);
+}

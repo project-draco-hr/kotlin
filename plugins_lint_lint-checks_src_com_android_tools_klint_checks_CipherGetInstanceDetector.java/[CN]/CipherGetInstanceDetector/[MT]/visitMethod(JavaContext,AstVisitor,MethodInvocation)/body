@@ -1,0 +1,29 @@
+{
+  JavaParser.ResolvedNode resolved=context.resolve(node);
+  if (!(resolved instanceof JavaParser.ResolvedMethod)) {
+    return;
+  }
+  JavaParser.ResolvedMethod method=(JavaParser.ResolvedMethod)resolved;
+  if (!method.getContainingClass().isSubclassOf(CIPHER,false)) {
+    return;
+  }
+  StrictListAccessor<Expression,MethodInvocation> argumentList=node.astArguments();
+  if (argumentList != null && argumentList.size() == 1) {
+    Expression expression=argumentList.first();
+    if (expression instanceof StringLiteral) {
+      StringLiteral argument=(StringLiteral)expression;
+      String parameter=argument.astValue();
+      checkParameter(context,node,argument,parameter,false);
+    }
+ else {
+      JavaParser.ResolvedNode resolve=context.resolve(expression);
+      if (resolve instanceof JavaParser.ResolvedField) {
+        JavaParser.ResolvedField field=(JavaParser.ResolvedField)resolve;
+        Object value=field.getValue();
+        if (value instanceof String) {
+          checkParameter(context,node,expression,(String)value,true);
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,137 @@
+{
+  final Project project=context.getProject();
+  if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
+    return;
+  }
+  final List<Issue> issues=AndroidLintExternalAnnotator.getIssuesFromInspections(project,null);
+  if (issues.size() == 0) {
+    return;
+  }
+  final Map<Issue,Map<File,List<ProblemData>>> problemMap=new HashMap<Issue,Map<File,List<ProblemData>>>();
+  final AnalysisScope scope=context.getRefManager().getScope();
+  if (scope == null) {
+    return;
+  }
+  final IntellijLintClient client=IntellijLintClient.forBatch(project,problemMap,scope,issues);
+  final LintDriver lint=new LintDriver(new IntellijLintIssueRegistry(),client);
+  final ProgressIndicator indicator=ProgressManager.getInstance().getProgressIndicator();
+  if (indicator != null) {
+    ProgressWrapper.unwrap(indicator).setText("Running Android Lint");
+  }
+  EnumSet<Scope> lintScope;
+  if (!IntellijLintProject.SUPPORT_CLASS_FILES) {
+    lintScope=EnumSet.copyOf(Scope.ALL);
+    lintScope.remove(Scope.CLASS_FILE);
+    lintScope.remove(Scope.ALL_CLASS_FILES);
+    lintScope.remove(Scope.JAVA_LIBRARIES);
+  }
+ else {
+    lintScope=Scope.ALL;
+  }
+  List<VirtualFile> files=null;
+  final List<Module> modules=Lists.newArrayList();
+  int scopeType=scope.getScopeType();
+switch (scopeType) {
+case AnalysisScope.MODULE:
+{
+      SearchScope searchScope=scope.toSearchScope();
+      if (searchScope instanceof ModuleWithDependenciesScope) {
+        ModuleWithDependenciesScope s=(ModuleWithDependenciesScope)searchScope;
+        if (!s.isSearchInLibraries()) {
+          modules.add(s.getModule());
+        }
+      }
+      break;
+    }
+case AnalysisScope.FILE:
+case AnalysisScope.VIRTUAL_FILES:
+case AnalysisScope.UNCOMMITTED_FILES:
+{
+    files=Lists.newArrayList();
+    SearchScope searchScope=scope.toSearchScope();
+    if (searchScope instanceof LocalSearchScope) {
+      final LocalSearchScope localSearchScope=(LocalSearchScope)searchScope;
+      final PsiElement[] elements=localSearchScope.getScope();
+      final List<VirtualFile> finalFiles=files;
+      ApplicationManager.getApplication().runReadAction(new Runnable(){
+        @Override public void run(){
+          for (          PsiElement element : elements) {
+            if (element instanceof PsiFile) {
+              Module module=ModuleUtilCore.findModuleForPsiElement(element);
+              if (module != null && !modules.contains(module)) {
+                modules.add(module);
+              }
+              VirtualFile virtualFile=((PsiFile)element).getVirtualFile();
+              if (virtualFile != null) {
+                finalFiles.add(virtualFile);
+              }
+            }
+          }
+        }
+      }
+);
+    }
+ else {
+      final List<VirtualFile> finalList=files;
+      scope.accept(new PsiElementVisitor(){
+        @Override public void visitFile(        PsiFile file){
+          VirtualFile virtualFile=file.getVirtualFile();
+          if (virtualFile != null) {
+            finalList.add(virtualFile);
+          }
+        }
+      }
+);
+    }
+    if (files.isEmpty()) {
+      files=null;
+    }
+ else {
+      lintScope=null;
+    }
+    break;
+  }
+case AnalysisScope.PROJECT:
+{
+  modules.addAll(Arrays.asList(ModuleManager.getInstance(project).getModules()));
+  break;
+}
+case AnalysisScope.CUSTOM:
+case AnalysisScope.MODULES:
+case AnalysisScope.DIRECTORY:
+{
+break;
+}
+case AnalysisScope.INVALID:
+break;
+default :
+Logger.getInstance(this.getClass()).warn("Unexpected inspection scope " + scope + ", "+ scopeType);
+}
+if (modules.isEmpty()) {
+for (Module module : ModuleManager.getInstance(project).getModules()) {
+if (scope.containsModule(module)) {
+modules.add(module);
+}
+}
+if (modules.isEmpty() && files != null) {
+for (VirtualFile file : files) {
+Module module=ModuleUtilCore.findModuleForFile(file,project);
+if (module != null && !modules.contains(module)) {
+modules.add(module);
+}
+}
+}
+if (modules.isEmpty()) {
+AnalysisScope narrowed=scope.getNarrowedComplementaryScope(project);
+for (Module module : ModuleManager.getInstance(project).getModules()) {
+if (narrowed.containsModule(module)) {
+modules.add(module);
+}
+}
+}
+}
+LintRequest request=new IntellijLintRequest(client,project,files,modules,false);
+request.setScope(lintScope);
+lint.analyze(request);
+myResults=problemMap;
+}

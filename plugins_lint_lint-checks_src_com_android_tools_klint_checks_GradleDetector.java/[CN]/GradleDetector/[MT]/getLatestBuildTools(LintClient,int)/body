@@ -1,0 +1,38 @@
+{
+  if (major != sMajorBuildTools) {
+    sMajorBuildTools=major;
+    List<PreciseRevision> revisions=Lists.newArrayList();
+    if (major == 21) {
+      revisions.add(new PreciseRevision(21,1,2));
+    }
+ else     if (major == 20) {
+      revisions.add(new PreciseRevision(20));
+    }
+ else     if (major == 19) {
+      revisions.add(new PreciseRevision(19,1));
+    }
+ else     if (major == 18) {
+      revisions.add(new PreciseRevision(18,1,1));
+    }
+    File sdkHome=client.getSdkHome();
+    if (sdkHome != null) {
+      File[] dirs=new File(sdkHome,FD_BUILD_TOOLS).listFiles();
+      if (dirs != null) {
+        for (        File dir : dirs) {
+          String name=dir.getName();
+          if (!dir.isDirectory() || !Character.isDigit(name.charAt(0))) {
+            continue;
+          }
+          PreciseRevision v=parseRevisionSilently(name);
+          if (v != null && v.getMajor() == major) {
+            revisions.add(v);
+          }
+        }
+      }
+    }
+    if (!revisions.isEmpty()) {
+      sLatestBuildTools=Collections.max(revisions);
+    }
+  }
+  return sLatestBuildTools;
+}

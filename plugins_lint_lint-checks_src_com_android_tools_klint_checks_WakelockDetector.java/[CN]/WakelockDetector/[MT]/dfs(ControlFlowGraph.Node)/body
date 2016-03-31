@@ -1,0 +1,92 @@
+{
+  AbstractInsnNode instruction=node.instruction;
+  if (instruction.getType() == AbstractInsnNode.JUMP_INSN) {
+    int opcode=instruction.getOpcode();
+    if (opcode == Opcodes.RETURN || opcode == Opcodes.ARETURN || opcode == Opcodes.LRETURN || opcode == Opcodes.IRETURN || opcode == Opcodes.DRETURN || opcode == Opcodes.FRETURN || opcode == Opcodes.ATHROW) {
+      if (DEBUG) {
+        System.out.println("Found exit via explicit return: " + node.toString(false));
+      }
+      return SEEN_RETURN;
+    }
+  }
+  if (!DEBUG) {
+    if (node.visit != 0) {
+      return 0;
+    }
+    node.visit=1;
+  }
+  if (instruction.getType() == AbstractInsnNode.METHOD_INSN) {
+    MethodInsnNode method=(MethodInsnNode)instruction;
+    if (method.name.equals(RELEASE_METHOD) && method.owner.equals(WAKELOCK_OWNER)) {
+      return SEEN_TARGET;
+    }
+ else     if (method.name.equals(ACQUIRE_METHOD) && method.owner.equals(WAKELOCK_OWNER)) {
+    }
+ else     if (method.name.equals(IS_HELD_METHOD) && method.owner.equals(WAKELOCK_OWNER)) {
+    }
+ else {
+      if (node.exceptions == null || node.exceptions.isEmpty()) {
+        AbstractInsnNode curr=method.getPrevious();
+        boolean foundFrame=false;
+        while (curr != null) {
+          if (curr.getType() == AbstractInsnNode.FRAME) {
+            foundFrame=true;
+            break;
+          }
+          curr=curr.getPrevious();
+        }
+        if (!foundFrame) {
+          if (DEBUG) {
+            System.out.println("Found exit via unguarded method call: " + node.toString(false));
+          }
+          return SEEN_RETURN;
+        }
+      }
+    }
+  }
+  int status=0;
+  boolean implicitReturn=true;
+  List<Node> successors=node.successors;
+  List<Node> exceptions=node.exceptions;
+  if (exceptions != null) {
+    if (!exceptions.isEmpty()) {
+      implicitReturn=false;
+    }
+    for (    Node successor : exceptions) {
+      status=dfs(successor) | status;
+      if ((status & SEEN_RETURN) != 0) {
+        if (DEBUG) {
+          System.out.println("Found exit via exception: " + node.toString(false));
+        }
+        return status;
+      }
+    }
+    if (status != 0) {
+      status|=SEEN_EXCEPTION;
+    }
+  }
+  if (successors != null) {
+    if (!successors.isEmpty()) {
+      implicitReturn=false;
+      if (successors.size() > 1) {
+        status|=SEEN_BRANCH;
+      }
+    }
+    for (    Node successor : successors) {
+      status=dfs(successor) | status;
+      if ((status & SEEN_RETURN) != 0) {
+        if (DEBUG) {
+          System.out.println("Found exit via branches: " + node.toString(false));
+        }
+        return status;
+      }
+    }
+  }
+  if (implicitReturn) {
+    status|=SEEN_RETURN;
+    if (DEBUG) {
+      System.out.println("Found exit: via implicit return: " + node.toString(false));
+    }
+  }
+  return status;
+}

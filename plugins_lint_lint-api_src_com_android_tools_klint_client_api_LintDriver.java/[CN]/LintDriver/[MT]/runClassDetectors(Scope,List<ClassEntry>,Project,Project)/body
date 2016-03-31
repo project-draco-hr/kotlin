@@ -1,0 +1,69 @@
+{
+  if (mScope.contains(scope)) {
+    List<Detector> classDetectors=mScopeDetectors.get(scope);
+    if (classDetectors != null && !classDetectors.isEmpty() && !entries.isEmpty()) {
+      AsmVisitor visitor=new AsmVisitor(mClient,classDetectors);
+      String sourceContents=null;
+      String sourceName="";
+      mOuterClasses=new ArrayDeque<ClassNode>();
+      ClassEntry prev=null;
+      for (      ClassEntry entry : entries) {
+        if (prev != null && prev.compareTo(entry) == 0) {
+          continue;
+        }
+        prev=entry;
+        ClassReader reader;
+        ClassNode classNode;
+        try {
+          reader=new ClassReader(entry.bytes);
+          classNode=new ClassNode();
+          reader.accept(classNode,0);
+        }
+ catch (        Throwable t) {
+          mClient.log(null,"Error processing %1$s: broken class file?",entry.path());
+          continue;
+        }
+        ClassNode peek;
+        while ((peek=mOuterClasses.peek()) != null) {
+          if (classNode.name.startsWith(peek.name)) {
+            break;
+          }
+ else {
+            mOuterClasses.pop();
+          }
+        }
+        mOuterClasses.push(classNode);
+        if (isSuppressed(null,classNode)) {
+          continue;
+        }
+        if (sourceContents != null) {
+          String newName=classNode.name;
+          int newRootLength=newName.indexOf('$');
+          if (newRootLength == -1) {
+            newRootLength=newName.length();
+          }
+          int oldRootLength=sourceName.indexOf('$');
+          if (oldRootLength == -1) {
+            oldRootLength=sourceName.length();
+          }
+          if (newRootLength != oldRootLength || !sourceName.regionMatches(0,newName,0,newRootLength)) {
+            sourceContents=null;
+          }
+        }
+        ClassContext context=new ClassContext(this,project,main,entry.file,entry.jarFile,entry.binDir,entry.bytes,classNode,scope == Scope.JAVA_LIBRARIES,sourceContents);
+        try {
+          visitor.runClassDetectors(context);
+        }
+ catch (        Exception e) {
+          mClient.log(e,null);
+        }
+        if (mCanceled) {
+          return;
+        }
+        sourceContents=context.getSourceContents(false);
+        sourceName=classNode.name;
+      }
+      mOuterClasses=null;
+    }
+  }
+}

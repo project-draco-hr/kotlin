@@ -1,0 +1,45 @@
+{
+  int prevCount=-1;
+  for (  Pair<Handle,String> pair : list) {
+    Set<Integer> indices=new HashSet<Integer>();
+    int count=getFormatArgumentCount(pair.getSecond(),indices);
+    Handle handle=pair.getFirst();
+    if (prevCount != -1 && prevCount != count) {
+      Object clientData=handle.getClientData();
+      if (clientData instanceof Node) {
+        if (context.getDriver().isSuppressed(null,ARG_COUNT,(Node)clientData)) {
+          return;
+        }
+      }
+      Location location=handle.resolve();
+      Location secondary=list.get(0).getFirst().resolve();
+      secondary.setMessage("Conflicting number of arguments here");
+      location.setSecondary(secondary);
+      String message=String.format("Inconsistent number of arguments in formatting string `%1$s`; " + "found both %2$d and %3$d",name,prevCount,count);
+      context.report(ARG_COUNT,location,message);
+      break;
+    }
+    for (int i=1; i <= count; i++) {
+      if (!indices.contains(i)) {
+        Object clientData=handle.getClientData();
+        if (clientData instanceof Node) {
+          if (context.getDriver().isSuppressed(null,ARG_COUNT,(Node)clientData)) {
+            return;
+          }
+        }
+        Set<Integer> all=new HashSet<Integer>();
+        for (int j=1; j < count; j++) {
+          all.add(j);
+        }
+        all.removeAll(indices);
+        List<Integer> sorted=new ArrayList<Integer>(all);
+        Collections.sort(sorted);
+        Location location=handle.resolve();
+        String message=String.format("Formatting string '`%1$s`' is not referencing numbered arguments %2$s",name,sorted);
+        context.report(ARG_COUNT,location,message);
+        break;
+      }
+    }
+    prevCount=count;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  Set<File> jarFiles=Sets.newHashSet();
+  for (  Project project : projects) {
+    jarFiles.addAll(mClient.findRuleJars(project));
+  }
+  jarFiles.addAll(mClient.findGlobalRuleJars());
+  if (!jarFiles.isEmpty()) {
+    List<IssueRegistry> registries=Lists.newArrayListWithExpectedSize(jarFiles.size());
+    registries.add(mRegistry);
+    for (    File jarFile : jarFiles) {
+      try {
+        registries.add(JarFileIssueRegistry.get(mClient,jarFile));
+      }
+ catch (      Throwable e) {
+        mClient.log(e,"Could not load custom rule jar file %1$s",jarFile);
+      }
+    }
+    if (registries.size() > 1) {
+      mRegistry=new CompositeIssueRegistry(registries);
+    }
+  }
+}

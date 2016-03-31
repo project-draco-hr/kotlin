@@ -1,0 +1,129 @@
+{
+  Map<String,List<File>> nameToFiles=new HashMap<String,List<File>>();
+  for (  File file : pixelSizes.keySet()) {
+    String name=file.getName();
+    List<File> list=nameToFiles.get(name);
+    if (list == null) {
+      list=new ArrayList<File>();
+      nameToFiles.put(name,list);
+    }
+    list.add(file);
+  }
+  ArrayList<String> names=new ArrayList<String>(nameToFiles.keySet());
+  Collections.sort(names);
+  Map<String,Map<String,List<File>>> configMap=new HashMap<String,Map<String,List<File>>>();
+  for (  Map.Entry<String,List<File>> entry : nameToFiles.entrySet()) {
+    String name=entry.getKey();
+    List<File> files=entry.getValue();
+    for (    File file : files) {
+      String parentName=file.getParentFile().getName();
+      int index=-1;
+      for (      String qualifier : DENSITY_QUALIFIERS) {
+        index=parentName.indexOf(qualifier);
+        if (index != -1) {
+          parentName=parentName.substring(0,index) + parentName.substring(index + qualifier.length());
+          break;
+        }
+      }
+      if (index == -1) {
+        continue;
+      }
+      Map<String,List<File>> folderMap=configMap.get(name);
+      if (folderMap == null) {
+        folderMap=new HashMap<String,List<File>>();
+        configMap.put(name,folderMap);
+      }
+      List<File> list=folderMap.get(parentName);
+      if (list == null) {
+        list=new ArrayList<File>();
+        folderMap.put(parentName,list);
+      }
+      list.add(file);
+    }
+  }
+  for (  String name : names) {
+    Map<String,List<File>> configurations=configMap.get(name);
+    if (configurations == null) {
+      continue;
+    }
+    for (    Map.Entry<String,List<File>> entry : configurations.entrySet()) {
+      List<File> files=entry.getValue();
+      Map<File,Dimension> dipSizes=new HashMap<File,Dimension>();
+      int dipWidthSum=0;
+      int dipHeightSum=0;
+      int count=0;
+      for (      File file : files) {
+        String folderName=file.getParentFile().getName();
+        float factor=getMdpiScalingFactor(folderName);
+        if (factor > 0) {
+          Dimension size=pixelSizes.get(file);
+          if (size == null) {
+            continue;
+          }
+          Dimension dip=new Dimension(Math.round(size.width / factor),Math.round(size.height / factor));
+          dipWidthSum+=dip.width;
+          dipHeightSum+=dip.height;
+          dipSizes.put(file,dip);
+          count++;
+          String fileName=file.getName();
+          Matcher matcher=DP_NAME_PATTERN.matcher(fileName);
+          if (matcher.matches()) {
+            String dpString=matcher.group(1);
+            int dp=Integer.parseInt(dpString);
+            if (Math.abs(dip.width - dp) > 2 || Math.abs(dip.height - dp) > 2) {
+              String message=String.format("" + "Suspicious file name `%1$s`: The implied %2$s `dp` " + "size does not match the actual `dp` size "+ "(pixel size %3$d\u00D7%4$d in a `%5$s` folder "+ "computes to %6$d\u00D7%7$d `dp`)",fileName,dpString,size.width,size.height,folderName,dip.width,dip.height);
+              context.report(ICON_DIP_SIZE,Location.create(file),message);
+            }
+          }
+        }
+      }
+      if (count == 0) {
+        continue;
+      }
+      int meanWidth=dipWidthSum / count;
+      int meanHeight=dipHeightSum / count;
+      int squareWidthSum=0;
+      int squareHeightSum=0;
+      for (      Dimension size : dipSizes.values()) {
+        squareWidthSum+=(size.width - meanWidth) * (size.width - meanWidth);
+        squareHeightSum+=(size.height - meanHeight) * (size.height - meanHeight);
+      }
+      double widthStdDev=Math.sqrt(squareWidthSum / count);
+      double heightStdDev=Math.sqrt(squareHeightSum / count);
+      if (widthStdDev > meanWidth / 10 || heightStdDev > meanHeight) {
+        Location location=null;
+        StringBuilder sb=new StringBuilder(100);
+        List<Map.Entry<File,Dimension>> entries=new ArrayList<Map.Entry<File,Dimension>>();
+        for (        Map.Entry<File,Dimension> entry2 : dipSizes.entrySet()) {
+          entries.add(entry2);
+        }
+        Collections.sort(entries,new Comparator<Map.Entry<File,Dimension>>(){
+          @Override public int compare(          Entry<File,Dimension> e1,          Entry<File,Dimension> e2){
+            Dimension d1=e1.getValue();
+            Dimension d2=e2.getValue();
+            if (d1.width != d2.width) {
+              return d2.width - d1.width;
+            }
+            return d2.height - d1.height;
+          }
+        }
+);
+        for (        Map.Entry<File,Dimension> entry2 : entries) {
+          if (sb.length() > 0) {
+            sb.append(", ");
+          }
+          File file=entry2.getKey();
+          Location linkedLocation=location;
+          location=Location.create(file);
+          location.setSecondary(linkedLocation);
+          Dimension dip=entry2.getValue();
+          Dimension px=pixelSizes.get(file);
+          String fileName=file.getParentFile().getName() + File.separator + file.getName();
+          sb.append(String.format("%1$s: %2$dx%3$d dp (%4$dx%5$d px)",fileName,dip.width,dip.height,px.width,px.height));
+        }
+        String message=String.format("The image `%1$s` varies significantly in its density-independent (dip) " + "size across the various density versions: %2$s",name,sb.toString());
+        context.report(ICON_DIP_SIZE,location,message);
+      }
+    }
+  }
+}

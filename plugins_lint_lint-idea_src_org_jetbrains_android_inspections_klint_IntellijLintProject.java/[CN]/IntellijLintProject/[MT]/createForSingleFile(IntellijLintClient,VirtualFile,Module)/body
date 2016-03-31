@@ -1,0 +1,24 @@
+{
+  LintModuleProject project=createModuleProject(client,module);
+  LintModuleProject main=null;
+  Map<Project,Module> projectMap=Maps.newHashMap();
+  if (project != null) {
+    project.setDirectLibraries(Collections.<Project>emptyList());
+    if (file != null) {
+      project.addFile(VfsUtilCore.virtualToIoFile(file));
+    }
+    projectMap.put(project,module);
+    if (!project.isAndroidProject()) {
+      Module androidModule=findAndroidModule(module);
+      if (androidModule != null) {
+        main=createModuleProject(client,androidModule);
+        if (main != null) {
+          projectMap.put(main,androidModule);
+          main.setDirectLibraries(Collections.<Project>singletonList(project));
+        }
+      }
+    }
+  }
+  client.setModuleMap(projectMap);
+  return Pair.<Project,Project>create(project,main);
+}

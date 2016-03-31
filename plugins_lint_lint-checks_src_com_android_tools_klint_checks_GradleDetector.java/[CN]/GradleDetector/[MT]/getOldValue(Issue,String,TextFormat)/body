@@ -1,0 +1,33 @@
+{
+  errorMessage=format.toText(errorMessage);
+  if (issue == DEPENDENCY) {
+    if (errorMessage.startsWith("A newer ")) {
+      return findSubstring(errorMessage," than "," ");
+    }
+    if (errorMessage.startsWith("Old buildToolsVersion ")) {
+      return findSubstring(errorMessage,"Old buildToolsVersion ",";");
+    }
+    return findSubstring(errorMessage,"targetSdkVersion (",")");
+  }
+ else   if (issue == STRING_INTEGER) {
+    return findSubstring(errorMessage,"replace "," with ");
+  }
+ else   if (issue == DEPRECATED) {
+    if (errorMessage.contains(GradleDetector.APP_PLUGIN_ID) && errorMessage.contains(GradleDetector.OLD_APP_PLUGIN_ID)) {
+      return GradleDetector.OLD_APP_PLUGIN_ID;
+    }
+ else     if (errorMessage.contains(GradleDetector.LIB_PLUGIN_ID) && errorMessage.contains(GradleDetector.OLD_LIB_PLUGIN_ID)) {
+      return GradleDetector.OLD_LIB_PLUGIN_ID;
+    }
+    return findSubstring(errorMessage,"Replace '","'");
+  }
+ else   if (issue == PLUS) {
+    return findSubstring(errorMessage,"(",")");
+  }
+ else   if (issue == COMPATIBILITY) {
+    if (errorMessage.startsWith("Version 5.2.08")) {
+      return "5.2.08";
+    }
+  }
+  return null;
+}

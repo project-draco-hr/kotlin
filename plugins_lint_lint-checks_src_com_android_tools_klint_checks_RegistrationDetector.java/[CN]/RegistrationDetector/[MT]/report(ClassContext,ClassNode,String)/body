@@ -1,0 +1,25 @@
+{
+  String tag=classToTag(curr);
+  String className=ClassContext.createSignature(classNode.name,null,null);
+  String wrongClass=null;
+  if (mManifestRegistrations != null) {
+    Collection<Entry<String,String>> entries=mManifestRegistrations.entries();
+    for (    Entry<String,String> entry : entries) {
+      if (entry.getValue().equals(classNode.name)) {
+        wrongClass=entry.getKey();
+        break;
+      }
+    }
+  }
+  if (wrongClass != null) {
+    Location location=context.getLocation(classNode);
+    context.report(ISSUE,location,String.format("`%1$s` is a `<%2$s>` but is registered in the manifest as a `<%3$s>`",className,tag,classToTag(wrongClass)));
+  }
+ else   if (!TAG_RECEIVER.equals(tag)) {
+    if (context.getMainProject().isGradleProject()) {
+      return;
+    }
+    Location location=context.getLocation(classNode);
+    context.report(ISSUE,location,String.format("The `<%1$s> %2$s` is not registered in the manifest",tag,className));
+  }
+}

@@ -1,0 +1,31 @@
+{
+  Iterator<Expression> iterator;
+  if (mTargetNode instanceof MethodInvocation) {
+    iterator=((MethodInvocation)mTargetNode).astArguments().iterator();
+  }
+ else   if (mTargetNode instanceof ConstructorInvocation) {
+    iterator=((ConstructorInvocation)mTargetNode).astArguments().iterator();
+  }
+ else {
+    return null;
+  }
+  int i=0;
+  while (i < mArgIndex && iterator.hasNext()) {
+    iterator.next();
+    i++;
+  }
+  if (iterator.hasNext()) {
+    Expression next=iterator.next();
+    if (next != null && mContext != null && iterator.hasNext()) {
+      TypeDescriptor type=mContext.getType(next);
+      if (isLocaleReference(type)) {
+        next=iterator.next();
+      }
+ else       if (type == null && next.toString().startsWith("Locale.")) {
+        next=iterator.next();
+      }
+    }
+    return next;
+  }
+  return null;
+}

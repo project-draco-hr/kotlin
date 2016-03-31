@@ -1,0 +1,35 @@
+{
+  String value=attribute.getValue();
+  if (value.isEmpty() || value.trim().isEmpty()) {
+    context.report(ISSUE,attribute,context.getLocation(attribute),"`onClick` attribute value cannot be empty");
+  }
+ else   if (!value.equals(value.trim())) {
+    context.report(ISSUE,attribute,context.getLocation(attribute),"There should be no whitespace around attribute values");
+  }
+ else   if (!value.startsWith(PREFIX_RESOURCE_REF)) {
+    if (!context.getProject().getReportIssues()) {
+      return;
+    }
+    if (mNames == null) {
+      mNames=new HashMap<String,Location.Handle>();
+    }
+    Handle handle=context.createLocationHandle(attribute);
+    handle.setClientData(attribute);
+    if (value.contains("\\u")) {
+      Pattern pattern=Pattern.compile("\\\\u(\\d\\d\\d\\d)");
+      Matcher matcher=pattern.matcher(value);
+      StringBuilder sb=new StringBuilder(value.length());
+      int remainder=0;
+      while (matcher.find()) {
+        sb.append(value.substring(0,matcher.start()));
+        String unicode=matcher.group(1);
+        int hex=Integer.parseInt(unicode,16);
+        sb.append((char)hex);
+        remainder=matcher.end();
+      }
+      sb.append(value.substring(remainder));
+      value=sb.toString();
+    }
+    mNames.put(value,handle);
+  }
+}

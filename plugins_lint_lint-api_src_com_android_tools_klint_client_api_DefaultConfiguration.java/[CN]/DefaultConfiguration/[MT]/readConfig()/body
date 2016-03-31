@@ -1,0 +1,90 @@
+{
+  mSuppressed=new HashMap<String,List<String>>();
+  mSeverity=new HashMap<String,Severity>();
+  if (!mConfigFile.exists()) {
+    return;
+  }
+  try {
+    Document document=XmlUtils.parseUtfXmlFile(mConfigFile,false);
+    NodeList issues=document.getElementsByTagName(TAG_ISSUE);
+    Splitter splitter=Splitter.on(',').trimResults().omitEmptyStrings();
+    for (int i=0, count=issues.getLength(); i < count; i++) {
+      Node node=issues.item(i);
+      Element element=(Element)node;
+      String idList=element.getAttribute(ATTR_ID);
+      if (idList.isEmpty()) {
+        formatError("Invalid lint config file: Missing required issue id attribute");
+        continue;
+      }
+      Iterable<String> ids=splitter.split(idList);
+      NamedNodeMap attributes=node.getAttributes();
+      for (int j=0, n=attributes.getLength(); j < n; j++) {
+        Node attribute=attributes.item(j);
+        String name=attribute.getNodeName();
+        String value=attribute.getNodeValue();
+        if (ATTR_ID.equals(name)) {
+        }
+ else         if (ATTR_SEVERITY.equals(name)) {
+          for (          Severity severity : Severity.values()) {
+            if (value.equalsIgnoreCase(severity.name())) {
+              for (              String id : ids) {
+                mSeverity.put(id,severity);
+              }
+              break;
+            }
+          }
+        }
+ else {
+          formatError("Unexpected attribute \"%1$s\"",name);
+        }
+      }
+      NodeList childNodes=element.getChildNodes();
+      if (childNodes.getLength() > 0) {
+        for (int j=0, n=childNodes.getLength(); j < n; j++) {
+          Node child=childNodes.item(j);
+          if (child.getNodeType() == Node.ELEMENT_NODE) {
+            Element ignore=(Element)child;
+            String path=ignore.getAttribute(ATTR_PATH);
+            if (path.isEmpty()) {
+              String regexp=ignore.getAttribute(ATTR_REGEXP);
+              if (regexp.isEmpty()) {
+                formatError("Missing required attribute %1$s or %2$s under %3$s",ATTR_PATH,ATTR_REGEXP,idList);
+              }
+ else {
+                addRegexp(idList,ids,n,regexp,false);
+              }
+            }
+ else {
+              if (File.separatorChar == '/') {
+                path=path.replace('\\','/');
+              }
+ else {
+                path=path.replace('/',File.separatorChar);
+              }
+              if (path.indexOf('*') != -1) {
+                String regexp=globToRegexp(path);
+                addRegexp(idList,ids,n,regexp,false);
+              }
+ else {
+                for (                String id : ids) {
+                  List<String> paths=mSuppressed.get(id);
+                  if (paths == null) {
+                    paths=new ArrayList<String>(n / 2 + 1);
+                    mSuppressed.put(id,paths);
+                  }
+                  paths.add(path);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+ catch (  SAXParseException e) {
+    formatError(e.getMessage());
+  }
+catch (  Exception e) {
+    mClient.log(e,null);
+  }
+}

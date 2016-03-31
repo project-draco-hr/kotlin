@@ -1,0 +1,56 @@
+{
+  ensureInitialized();
+  String id=issue.getId();
+  List<String> paths=mSuppressed.get(id);
+  if (paths == null) {
+    paths=mSuppressed.get(VALUE_ALL);
+  }
+  if (paths != null && location != null) {
+    File file=location.getFile();
+    String relativePath=context.getProject().getRelativePath(file);
+    for (    String suppressedPath : paths) {
+      if (suppressedPath.equals(relativePath)) {
+        return true;
+      }
+      if (relativePath.startsWith(suppressedPath)) {
+        return true;
+      }
+    }
+  }
+  if (mRegexps != null) {
+    List<Pattern> regexps=mRegexps.get(id);
+    if (regexps == null) {
+      regexps=mRegexps.get(VALUE_ALL);
+    }
+    if (regexps != null && location != null) {
+      for (      Pattern regexp : regexps) {
+        Matcher matcher=regexp.matcher(message);
+        if (matcher.find()) {
+          return true;
+        }
+      }
+      File file=location.getFile();
+      String relativePath=context.getProject().getRelativePath(file);
+      boolean checkUnixPath=false;
+      for (      Pattern regexp : regexps) {
+        Matcher matcher=regexp.matcher(relativePath);
+        if (matcher.find()) {
+          return true;
+        }
+ else         if (regexp.pattern().indexOf('/') != -1) {
+          checkUnixPath=true;
+        }
+      }
+      if (checkUnixPath && CURRENT_PLATFORM == PLATFORM_WINDOWS) {
+        relativePath=relativePath.replace('\\','/');
+        for (        Pattern regexp : regexps) {
+          Matcher matcher=regexp.matcher(relativePath);
+          if (matcher.find()) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return mParent != null && mParent.isIgnored(context,issue,location,message);
+}

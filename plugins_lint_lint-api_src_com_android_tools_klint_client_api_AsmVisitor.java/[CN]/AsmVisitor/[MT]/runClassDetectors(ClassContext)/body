@@ -1,0 +1,50 @@
+{
+  ClassNode classNode=context.getClassNode();
+  for (  Detector detector : mAllDetectors) {
+    detector.beforeCheckFile(context);
+  }
+  for (  Detector detector : mFullClassChecks) {
+    Detector.ClassScanner scanner=(Detector.ClassScanner)detector;
+    scanner.checkClass(context,classNode);
+    detector.afterCheckFile(context);
+  }
+  if (!mMethodNameToChecks.isEmpty() || !mMethodOwnerToChecks.isEmpty() || mNodeTypeDetectors != null && mNodeTypeDetectors.length > 0) {
+    List methodList=classNode.methods;
+    for (    Object m : methodList) {
+      MethodNode method=(MethodNode)m;
+      InsnList nodes=method.instructions;
+      for (int i=0, n=nodes.size(); i < n; i++) {
+        AbstractInsnNode instruction=nodes.get(i);
+        int type=instruction.getType();
+        if (type == AbstractInsnNode.METHOD_INSN) {
+          MethodInsnNode call=(MethodInsnNode)instruction;
+          String owner=call.owner;
+          List<ClassScanner> scanners=mMethodOwnerToChecks.get(owner);
+          if (scanners != null) {
+            for (            ClassScanner scanner : scanners) {
+              scanner.checkCall(context,classNode,method,call);
+            }
+          }
+          String name=call.name;
+          scanners=mMethodNameToChecks.get(name);
+          if (scanners != null) {
+            for (            ClassScanner scanner : scanners) {
+              scanner.checkCall(context,classNode,method,call);
+            }
+          }
+        }
+        if (mNodeTypeDetectors != null && type < mNodeTypeDetectors.length) {
+          List<ClassScanner> scanners=mNodeTypeDetectors[type];
+          if (scanners != null) {
+            for (            ClassScanner scanner : scanners) {
+              scanner.checkInstruction(context,classNode,method,instruction);
+            }
+          }
+        }
+      }
+    }
+  }
+  for (  Detector detector : mAllDetectors) {
+    detector.afterCheckFile(context);
+  }
+}

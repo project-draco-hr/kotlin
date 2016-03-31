@@ -1,0 +1,29 @@
+{
+  ResolvedNode resolved=context.resolve(node);
+  if (!(resolved instanceof ResolvedMethod)) {
+    return;
+  }
+  ResolvedMethod method=(ResolvedMethod)resolved;
+  ResolvedClass containingClass=method.getContainingClass();
+  if ((OBTAIN.equals(name) || OBTAIN_NO_HISTORY.equals(name)) && containingClass.isSubclassOf(MOTION_EVENT_CLS,false)) {
+    checkRecycled(context,node,MOTION_EVENT_CLS,RECYCLE);
+  }
+ else   if (OBTAIN.equals(name) && containingClass.isSubclassOf(PARCEL_CLS,false)) {
+    checkRecycled(context,node,PARCEL_CLS,RECYCLE);
+  }
+ else   if (OBTAIN.equals(name) && containingClass.isSubclassOf(VELOCITY_TRACKER_CLS,false)) {
+    checkRecycled(context,node,VELOCITY_TRACKER_CLS,RECYCLE);
+  }
+ else   if ((OBTAIN_STYLED_ATTRIBUTES.equals(name) || OBTAIN_ATTRIBUTES.equals(name) || OBTAIN_TYPED_ARRAY.equals(name)) && (containingClass.isSubclassOf(CLASS_CONTEXT,false) || containingClass.isSubclassOf(RESOURCES_CLS,false))) {
+    TypeDescriptor returnType=method.getReturnType();
+    if (returnType != null && returnType.matchesSignature(TYPED_ARRAY_CLS)) {
+      checkRecycled(context,node,TYPED_ARRAY_CLS,RECYCLE);
+    }
+  }
+ else   if (ACQUIRE_CPC.equals(name) && containingClass.isSubclassOf(CONTENT_RESOLVER_CLS,false)) {
+    checkRecycled(context,node,CONTENT_PROVIDER_CLIENT_CLS,RELEASE);
+  }
+ else   if ((QUERY.equals(name) || RAW_QUERY.equals(name) || QUERY_WITH_FACTORY.equals(name)|| RAW_QUERY_WITH_FACTORY.equals(name)) && (containingClass.isSubclassOf(SQLITE_DATABASE_CLS,false) || containingClass.isSubclassOf(CONTENT_RESOLVER_CLS,false) || containingClass.isSubclassOf(CONTENT_PROVIDER_CLS,false)|| containingClass.isSubclassOf(CONTENT_PROVIDER_CLIENT_CLS,false))) {
+    checkRecycled(context,node,CURSOR_CLS,CLOSE);
+  }
+}

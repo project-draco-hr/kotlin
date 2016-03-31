@@ -1,0 +1,20 @@
+{
+  Attr pathNode=element.getAttributeNode(ATTR_PATH);
+  if (pathNode == null) {
+    return "";
+  }
+  String value=pathNode.getValue();
+  if (value.contains("//")) {
+    context.report(ISSUE,element,context.getValueLocation(pathNode),"Paths are not allowed to contain `//`");
+  }
+ else   if (value.contains("..")) {
+    context.report(ISSUE,element,context.getValueLocation(pathNode),"Paths are not allowed to contain `..`");
+  }
+ else   if (value.contains("/")) {
+    String domain=element.getAttribute(ATTR_DOMAIN);
+    if (DOMAIN_SHARED_PREF.equals(domain) || DOMAIN_DATABASE.equals(domain)) {
+      context.report(ISSUE,element,context.getValueLocation(pathNode),String.format("Subdirectories are not allowed for domain `%1$s`",domain));
+    }
+  }
+  return value;
+}

@@ -1,0 +1,53 @@
+{
+  if (element instanceof PsiBinaryExpression) {
+    PsiBinaryExpression inner=(PsiBinaryExpression)element;
+    if (inner.getOperationTokenType() == JavaTokenType.ANDAND) {
+      return isAndedWithConditional(inner.getLOperand(),api,before) || inner.getROperand() != before && isAndedWithConditional(inner.getROperand(),api,before);
+    }
+ else     if (inner.getLOperand() instanceof PsiReferenceExpression && SDK_INT.equals(((PsiReferenceExpression)inner.getLOperand()).getReferenceName())) {
+      int level=-1;
+      IElementType tokenType=inner.getOperationTokenType();
+      PsiExpression right=inner.getROperand();
+      if (right instanceof PsiReferenceExpression) {
+        PsiReferenceExpression ref2=(PsiReferenceExpression)right;
+        String codeName=ref2.getReferenceName();
+        if (codeName == null) {
+          return false;
+        }
+        level=SdkVersionInfo.getApiByBuildCode(codeName,true);
+      }
+ else       if (right instanceof PsiLiteralExpression) {
+        PsiLiteralExpression lit=(PsiLiteralExpression)right;
+        Object value=lit.getValue();
+        if (value instanceof Integer) {
+          level=((Integer)value).intValue();
+        }
+      }
+      if (level != -1) {
+        if (tokenType == JavaTokenType.GE) {
+          return level >= api;
+        }
+ else         if (tokenType == JavaTokenType.GT) {
+          return level >= api - 1;
+        }
+ else         if (tokenType == JavaTokenType.EQEQ) {
+          return level >= api;
+        }
+      }
+    }
+  }
+ else   if (element instanceof PsiPolyadicExpression) {
+    PsiPolyadicExpression ppe=(PsiPolyadicExpression)element;
+    if (ppe.getOperationTokenType() == JavaTokenType.ANDAND) {
+      for (      PsiExpression operand : ppe.getOperands()) {
+        if (operand == before) {
+          break;
+        }
+ else         if (isAndedWithConditional(operand,api,before)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}

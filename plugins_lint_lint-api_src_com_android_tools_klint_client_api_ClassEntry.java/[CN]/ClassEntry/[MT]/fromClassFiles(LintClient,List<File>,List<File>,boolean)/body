@@ -1,0 +1,26 @@
+{
+  List<ClassEntry> entries=new ArrayList<ClassEntry>(classFiles.size());
+  if (!classFolders.isEmpty()) {
+    for (    File file : classFiles) {
+      String path=file.getPath();
+      if (file.isFile() && path.endsWith(DOT_CLASS)) {
+        try {
+          byte[] bytes=client.readBytes(file);
+          for (          File dir : classFolders) {
+            if (path.startsWith(dir.getPath())) {
+              entries.add(new ClassEntry(file,null,dir,bytes));
+              break;
+            }
+          }
+        }
+ catch (        IOException e) {
+          client.log(e,null);
+        }
+      }
+    }
+    if (sort && !entries.isEmpty()) {
+      Collections.sort(entries);
+    }
+  }
+  return entries;
+}

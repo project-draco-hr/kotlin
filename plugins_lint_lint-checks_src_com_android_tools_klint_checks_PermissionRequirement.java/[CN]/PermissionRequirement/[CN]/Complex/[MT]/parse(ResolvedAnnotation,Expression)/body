@@ -1,0 +1,15 @@
+{
+  if (expression instanceof Select) {
+    return new Single(annotation,expression.toString());
+  }
+ else   if (expression instanceof BinaryExpression) {
+    BinaryExpression binaryExpression=(BinaryExpression)expression;
+    BinaryOperator operator=binaryExpression.astOperator();
+    if (operator == BinaryOperator.LOGICAL_AND || operator == BinaryOperator.LOGICAL_OR || operator == BinaryOperator.BITWISE_XOR) {
+      PermissionRequirement left=parse(annotation,binaryExpression.astLeft());
+      PermissionRequirement right=parse(annotation,binaryExpression.astRight());
+      return new Complex(annotation,operator,left,right);
+    }
+  }
+  return NONE;
+}

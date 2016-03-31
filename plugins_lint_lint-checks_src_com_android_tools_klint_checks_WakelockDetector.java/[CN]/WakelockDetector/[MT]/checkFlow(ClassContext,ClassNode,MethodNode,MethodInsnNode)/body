@@ -1,0 +1,39 @@
+{
+  final InsnList instructions=method.instructions;
+  MethodInsnNode release=null;
+  for (int i=0, n=instructions.size(); i < n; i++) {
+    AbstractInsnNode instruction=instructions.get(i);
+    int type=instruction.getType();
+    if (type == AbstractInsnNode.METHOD_INSN) {
+      MethodInsnNode call=(MethodInsnNode)instruction;
+      if (call.name.equals(RELEASE_METHOD) && call.owner.equals(WAKELOCK_OWNER)) {
+        release=call;
+        break;
+      }
+    }
+  }
+  if (release == null) {
+    return;
+  }
+  try {
+    MyGraph graph=new MyGraph();
+    ControlFlowGraph.create(graph,classNode,method);
+    if (DEBUG) {
+      System.out.println(graph.toString(graph.getNode(acquire)));
+    }
+    int status=dfs(graph.getNode(acquire));
+    if ((status & SEEN_RETURN) != 0) {
+      String message;
+      if ((status & SEEN_EXCEPTION) != 0) {
+        message="The `release()` call is not always reached (via exceptional flow)";
+      }
+ else {
+        message="The `release()` call is not always reached";
+      }
+      context.report(ISSUE,method,acquire,context.getLocation(release),message);
+    }
+  }
+ catch (  AnalyzerException e) {
+    context.log(e,null);
+  }
+}

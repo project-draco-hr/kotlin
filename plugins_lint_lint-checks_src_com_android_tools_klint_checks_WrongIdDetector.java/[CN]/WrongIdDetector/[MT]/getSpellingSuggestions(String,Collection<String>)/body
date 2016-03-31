@@ -1,0 +1,29 @@
+{
+  int maxDistance=id.length() >= 4 ? 2 : 1;
+  Multimap<Integer,String> matches=ArrayListMultimap.create(2,10);
+  int count=0;
+  if (!ids.isEmpty()) {
+    for (    String matchWith : ids) {
+      matchWith=stripIdPrefix(matchWith);
+      if (Math.abs(id.length() - matchWith.length()) > maxDistance) {
+        continue;
+      }
+      int distance=editDistance(id,matchWith);
+      if (distance <= maxDistance) {
+        matches.put(distance,matchWith);
+      }
+      if (count++ > 100) {
+        break;
+      }
+    }
+  }
+  for (int i=0; i < maxDistance; i++) {
+    Collection<String> strings=matches.get(i);
+    if (strings != null && !strings.isEmpty()) {
+      List<String> suggestions=new ArrayList<String>(strings);
+      Collections.sort(suggestions);
+      return suggestions;
+    }
+  }
+  return Collections.emptyList();
+}

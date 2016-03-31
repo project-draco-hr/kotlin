@@ -1,0 +1,49 @@
+{
+  short nodeType=node.getNodeType();
+  if (nodeType == Node.TEXT_NODE && !mFoundText) {
+    String text=node.getNodeValue();
+    for (int i=0, n=text.length(); i < n; i++) {
+      char c=text.charAt(i);
+      if (!Character.isWhitespace(c)) {
+        String snippet=text.trim();
+        int maxLength=100;
+        if (snippet.length() > maxLength) {
+          snippet=snippet.substring(0,maxLength) + "...";
+        }
+        Location location=context.getLocation(node);
+        if (i > 0) {
+          Position start=location.getStart();
+          if (start != null) {
+            int line=start.getLine();
+            int column=start.getColumn();
+            int offset=start.getOffset();
+            for (int j=0; j < i; j++) {
+              offset++;
+              if (text.charAt(j) == '\n') {
+                if (line != -1) {
+                  line++;
+                }
+                if (column != -1) {
+                  column=0;
+                }
+              }
+ else               if (column != -1) {
+                column++;
+              }
+            }
+            start=new DefaultPosition(line,column,offset);
+            location=Location.create(context.file,start,location.getEnd());
+          }
+        }
+        context.report(ISSUE,node,location,String.format("Unexpected text found in layout file: \"%1$s\"",snippet));
+        mFoundText=true;
+        break;
+      }
+    }
+  }
+  NodeList childNodes=node.getChildNodes();
+  for (int i=0, n=childNodes.getLength(); i < n; i++) {
+    Node child=childNodes.item(i);
+    visitNode(context,child);
+  }
+}

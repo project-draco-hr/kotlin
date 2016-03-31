@@ -1,0 +1,23 @@
+{
+  List<Project> projects=Lists.newArrayList();
+  Map<Project,Module> projectMap=Maps.newHashMap();
+  Map<Module,Project> moduleMap=Maps.newHashMap();
+  Map<AndroidLibrary,Project> libraryMap=Maps.newHashMap();
+  if (files != null && !files.isEmpty()) {
+    files=Lists.newArrayList(files);
+  }
+  for (  Module module : modules) {
+    addProjects(client,module,files,moduleMap,libraryMap,projectMap,projects);
+  }
+  client.setModuleMap(projectMap);
+  if (projects.size() > 1) {
+    Set<Project> roots=new HashSet<Project>(projects);
+    for (    Project project : projects) {
+      roots.removeAll(project.getAllLibraries());
+    }
+    return Lists.newArrayList(roots);
+  }
+ else {
+    return projects;
+  }
+}

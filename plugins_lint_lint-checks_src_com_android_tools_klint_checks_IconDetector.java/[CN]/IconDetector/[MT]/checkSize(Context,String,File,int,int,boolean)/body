@@ -1,0 +1,40 @@
+{
+  String fileName=file.getName();
+  if (!((endsWith(fileName,DOT_PNG) && !endsWith(fileName,DOT_9PNG)) || endsWith(fileName,DOT_JPG) || endsWith(fileName,DOT_JPEG))) {
+    return;
+  }
+  int width;
+  int height;
+  if (folderName.startsWith(DRAWABLE_MDPI)) {
+    width=mdpiWidth;
+    height=mdpiHeight;
+  }
+ else   if (folderName.startsWith(DRAWABLE_HDPI)) {
+    width=Math.round(mdpiWidth * 3.f / 2);
+    height=Math.round(mdpiHeight * 3f / 2);
+  }
+ else   if (folderName.startsWith(DRAWABLE_XHDPI)) {
+    width=mdpiWidth * 2;
+    height=mdpiHeight * 2;
+  }
+ else   if (folderName.startsWith(DRAWABLE_XXHDPI)) {
+    width=mdpiWidth * 3;
+    height=mdpiWidth * 3;
+  }
+ else   if (folderName.startsWith(DRAWABLE_LDPI)) {
+    width=Math.round(mdpiWidth * 3f / 4);
+    height=Math.round(mdpiHeight * 3f / 4);
+  }
+ else {
+    return;
+  }
+  Dimension size=getSize(file);
+  if (size != null) {
+    if (exactMatch && (size.width != width || size.height != height)) {
+      context.report(ICON_EXPECTED_SIZE,Location.create(file),String.format("Incorrect icon size for `%1$s`: expected %2$dx%3$d, but was %4$dx%5$d",folderName + File.separator + file.getName(),width,height,size.width,size.height));
+    }
+ else     if (!exactMatch && (size.width > width || size.height > height)) {
+      context.report(ICON_EXPECTED_SIZE,Location.create(file),String.format("Incorrect icon size for `%1$s`: icon size should be at most %2$dx%3$d, but was %4$dx%5$d",folderName + File.separator + file.getName(),width,height,size.width,size.height));
+    }
+  }
+}

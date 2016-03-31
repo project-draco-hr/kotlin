@@ -1,0 +1,66 @@
+{
+  AbstractInsnNode next=field.getNext();
+  if (next == null || next.getOpcode() != Opcodes.INVOKEVIRTUAL) {
+    return;
+  }
+  next=next.getNext();
+  if (next == null) {
+    return;
+  }
+  int ordinal;
+switch (next.getOpcode()) {
+case Opcodes.ICONST_0:
+    ordinal=0;
+  break;
+case Opcodes.ICONST_1:
+ordinal=1;
+break;
+case Opcodes.ICONST_2:
+ordinal=2;
+break;
+case Opcodes.ICONST_3:
+ordinal=3;
+break;
+case Opcodes.ICONST_4:
+ordinal=4;
+break;
+case Opcodes.ICONST_5:
+ordinal=5;
+break;
+case Opcodes.BIPUSH:
+{
+IntInsnNode iin=(IntInsnNode)next;
+ordinal=iin.operand;
+break;
+}
+default :
+return;
+}
+List methodList=classNode.methods;
+for (Object m : methodList) {
+InsnList nodes=((MethodNode)m).instructions;
+for (int i=0, n=nodes.size(); i < n; i++) {
+AbstractInsnNode instruction=nodes.get(i);
+if (instruction.getOpcode() != Opcodes.INVOKESTATIC) {
+continue;
+}
+MethodInsnNode node=(MethodInsnNode)instruction;
+if (node.name.equals(method.name) && node.desc.equals(method.desc) && node.owner.equals(classNode.name)) {
+AbstractInsnNode target=getNextInstruction(node);
+while (target != null) {
+if (target.getOpcode() == Opcodes.LOOKUPSWITCH) {
+LookupSwitchInsnNode lookup=(LookupSwitchInsnNode)target;
+@SuppressWarnings("unchecked") List<Integer> keys=lookup.keys;
+if (keys != null && keys.contains(ordinal)) {
+String fqcn=ClassContext.getFqcn(owner) + '#' + name;
+String message=String.format("Enum value requires API level %1$d " + "(current min is %2$d): `%3$s`",api,minSdk,fqcn);
+report(context,message,lookup,(MethodNode)m,name,null,SearchHints.create(FORWARD).matchJavaSymbol());
+break;
+}
+}
+target=getNextInstruction(target);
+}
+}
+}
+}
+}

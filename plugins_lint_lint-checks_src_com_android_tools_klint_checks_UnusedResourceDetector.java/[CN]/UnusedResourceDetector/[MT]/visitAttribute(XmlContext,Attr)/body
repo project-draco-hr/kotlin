@@ -1,0 +1,33 @@
+{
+  String value=attribute.getValue();
+  if (value.startsWith("@+") && !value.startsWith("@+android")) {
+    String resource=R_PREFIX + value.substring(2).replace('/','.');
+    if (context.getPhase() == 1) {
+      mDeclarations.add(resource);
+    }
+ else     if (mUnused.containsKey(resource)) {
+      if (context.getDriver().isSuppressed(context,getIssue(resource),attribute)) {
+        mUnused.remove(resource);
+        return;
+      }
+      if (!context.getProject().getReportIssues()) {
+        mUnused.remove(resource);
+        return;
+      }
+      recordLocation(resource,context.getLocation(attribute));
+      return;
+    }
+  }
+ else   if (mReferences != null) {
+    if (value.startsWith("@") && !value.startsWith("@android:")) {
+      String r=R_PREFIX + value.substring(1).replace('/','.');
+      mReferences.add(r);
+    }
+ else     if (value.startsWith(ATTR_REF_PREFIX)) {
+      mReferences.add(R_ATTR_PREFIX + value.substring(ATTR_REF_PREFIX.length()));
+    }
+  }
+  if (attribute.getNamespaceURI() != null && !ANDROID_URI.equals(attribute.getNamespaceURI()) && mReferences != null) {
+    mReferences.add(R_ATTR_PREFIX + attribute.getLocalName());
+  }
+}

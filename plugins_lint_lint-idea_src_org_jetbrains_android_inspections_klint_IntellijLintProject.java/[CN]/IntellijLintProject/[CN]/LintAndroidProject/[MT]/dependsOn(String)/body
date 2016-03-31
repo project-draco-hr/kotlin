@@ -1,0 +1,55 @@
+{
+  if (SUPPORT_LIB_ARTIFACT.equals(artifact)) {
+    if (mSupportLib == null) {
+      final OrderEntry[] entries=ModuleRootManager.getInstance(myFacet.getModule()).getOrderEntries();
+      libraries:       for (int i=entries.length - 1; i >= 0; i--) {
+        final OrderEntry orderEntry=entries[i];
+        if (orderEntry instanceof LibraryOrderEntry) {
+          LibraryOrderEntry libraryOrderEntry=(LibraryOrderEntry)orderEntry;
+          VirtualFile[] classes=libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
+          if (classes != null) {
+            for (            VirtualFile file : classes) {
+              if (file.getName().equals("android-support-v4.jar")) {
+                mSupportLib=true;
+                break libraries;
+              }
+            }
+          }
+        }
+      }
+      if (mSupportLib == null) {
+        mSupportLib=depsDependsOn(this,artifact);
+      }
+    }
+    return mSupportLib;
+  }
+ else   if (APPCOMPAT_LIB_ARTIFACT.equals(artifact)) {
+    if (mAppCompat == null) {
+      mAppCompat=false;
+      final OrderEntry[] entries=ModuleRootManager.getInstance(myFacet.getModule()).getOrderEntries();
+      for (int i=entries.length - 1; i >= 0; i--) {
+        final OrderEntry orderEntry=entries[i];
+        if (orderEntry instanceof ModuleOrderEntry) {
+          ModuleOrderEntry moduleOrderEntry=(ModuleOrderEntry)orderEntry;
+          Module module=moduleOrderEntry.getModule();
+          if (module == null || module == myFacet.getModule()) {
+            continue;
+          }
+          AndroidFacet facet=AndroidFacet.getInstance(module);
+          if (facet == null) {
+            continue;
+          }
+          ManifestInfo manifestInfo=ManifestInfo.get(module,false);
+          if ("android.support.v7.appcompat".equals(manifestInfo.getPackage())) {
+            mAppCompat=true;
+            break;
+          }
+        }
+      }
+    }
+    return mAppCompat;
+  }
+ else {
+    return super.dependsOn(artifact);
+  }
+}

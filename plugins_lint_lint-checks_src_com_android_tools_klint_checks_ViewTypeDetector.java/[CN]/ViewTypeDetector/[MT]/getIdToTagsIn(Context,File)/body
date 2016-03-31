@@ -1,0 +1,19 @@
+{
+  if (!file.getPath().endsWith(DOT_XML)) {
+    return null;
+  }
+  if (mFileIdMap == null) {
+    mFileIdMap=Maps.newHashMap();
+  }
+  Multimap<String,String> map=mFileIdMap.get(file);
+  if (map == null) {
+    map=ArrayListMultimap.create();
+    mFileIdMap.put(file,map);
+    String xml=context.getClient().readFile(file);
+    Document document=XmlUtils.parseDocumentSilently(xml,true);
+    if (document != null && document.getDocumentElement() != null) {
+      addViewTags(map,document.getDocumentElement());
+    }
+  }
+  return map;
+}

@@ -1,0 +1,92 @@
+{
+  if (context.getPhase() == 1) {
+    boolean haveAllResources=context.getScope().contains(Scope.ALL_RESOURCE_FILES);
+    if (!haveAllResources) {
+      return;
+    }
+    Set<String> alreadyReported=new HashSet<String>();
+    Map<String,Integer> countMap=new HashMap<String,Integer>();
+    Map<String,File> fileMap=new HashMap<String,File>();
+    List<File> keys=new ArrayList<File>(mFileToArrayCount.keySet());
+    Collections.sort(keys);
+    for (    File file : keys) {
+      Collection<Pair<String,Integer>> pairs=mFileToArrayCount.get(file);
+      for (      Pair<String,Integer> pair : pairs) {
+        String name=pair.getFirst();
+        if (alreadyReported.contains(name)) {
+          continue;
+        }
+        Integer count=pair.getSecond();
+        Integer current=countMap.get(name);
+        if (current == null) {
+          countMap.put(name,count);
+          fileMap.put(name,file);
+        }
+ else         if (!count.equals(current)) {
+          alreadyReported.add(name);
+          if (mLocations == null) {
+            mLocations=new HashMap<String,Location>();
+            mDescriptions=new HashMap<String,String>();
+          }
+          mLocations.put(name,null);
+          String thisName=file.getParentFile().getName() + File.separator + file.getName();
+          File otherFile=fileMap.get(name);
+          String otherName=otherFile.getParentFile().getName() + File.separator + otherFile.getName();
+          String message=String.format("Array `%1$s` has an inconsistent number of items (%2$d in `%3$s`, %4$d in `%5$s`)",name,count,thisName,current,otherName);
+          mDescriptions.put(name,message);
+        }
+      }
+    }
+    if (mLocations != null) {
+      context.getDriver().requestRepeat(this,Scope.ALL_RESOURCES_SCOPE);
+    }
+    mFileToArrayCount=null;
+  }
+ else {
+    if (mLocations != null) {
+      List<String> names=new ArrayList<String>(mLocations.keySet());
+      Collections.sort(names);
+      for (      String name : names) {
+        Location location=mLocations.get(name);
+        if (location == null) {
+          continue;
+        }
+        location=Location.reverse(location);
+        int count=-1;
+        LintDriver driver=context.getDriver();
+        boolean foundConflict=false;
+        Location curr;
+        for (curr=location; curr != null; curr=curr.getSecondary()) {
+          Object clientData=curr.getClientData();
+          if (clientData instanceof Node) {
+            Node node=(Node)clientData;
+            if (driver.isSuppressed(null,INCONSISTENT,node)) {
+              continue;
+            }
+            int newCount=LintUtils.getChildCount(node);
+            if (newCount != count) {
+              if (count == -1) {
+                count=newCount;
+              }
+ else {
+                foundConflict=true;
+                break;
+              }
+            }
+          }
+ else {
+            foundConflict=true;
+            break;
+          }
+        }
+        if (!foundConflict) {
+          continue;
+        }
+        String message=mDescriptions.get(name);
+        context.report(INCONSISTENT,location,message);
+      }
+    }
+    mLocations=null;
+    mDescriptions=null;
+  }
+}

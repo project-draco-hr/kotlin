@@ -1,0 +1,33 @@
+{
+  for (  AnnotationNode annotation : annotations) {
+    String desc=annotation.desc;
+    if (desc.endsWith(SUPPRESS_LINT_VMSIG)) {
+      if (annotation.values != null) {
+        for (int i=0, n=annotation.values.size(); i < n; i+=2) {
+          String key=(String)annotation.values.get(i);
+          if (key.equals("value")) {
+            Object value=annotation.values.get(i + 1);
+            if (value instanceof String) {
+              String id=(String)value;
+              if (matches(issue,id)) {
+                return true;
+              }
+            }
+ else             if (value instanceof List) {
+              @SuppressWarnings("rawtypes") List list=(List)value;
+              for (              Object v : list) {
+                if (v instanceof String) {
+                  String id=(String)v;
+                  if (matches(issue,id)) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

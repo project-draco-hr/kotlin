@@ -1,0 +1,72 @@
+{
+  try {
+    File file=new File(mConfigFile.getParentFile(),mConfigFile.getName() + ".new");
+    Writer writer=new BufferedWriter(new FileWriter(file));
+    writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + "<lint>\n");
+    if (!mSuppressed.isEmpty() || !mSeverity.isEmpty()) {
+      Set<String> idSet=new HashSet<String>();
+      for (      String id : mSuppressed.keySet()) {
+        idSet.add(id);
+      }
+      for (      String id : mSeverity.keySet()) {
+        idSet.add(id);
+      }
+      List<String> ids=new ArrayList<String>(idSet);
+      Collections.sort(ids);
+      for (      String id : ids) {
+        writer.write("    <");
+        writer.write(TAG_ISSUE);
+        writeAttribute(writer,ATTR_ID,id);
+        Severity severity=mSeverity.get(id);
+        if (severity != null) {
+          writeAttribute(writer,ATTR_SEVERITY,severity.name().toLowerCase(Locale.US));
+        }
+        List<Pattern> regexps=mRegexps != null ? mRegexps.get(id) : null;
+        List<String> paths=mSuppressed.get(id);
+        if (paths != null && !paths.isEmpty() || regexps != null && !regexps.isEmpty()) {
+          writer.write('>');
+          writer.write('\n');
+          if (paths != null) {
+            for (            String path : paths) {
+              writer.write("        <");
+              writer.write(TAG_IGNORE);
+              writeAttribute(writer,ATTR_PATH,path.replace('\\','/'));
+              writer.write(" />\n");
+            }
+          }
+          if (regexps != null) {
+            for (            Pattern regexp : regexps) {
+              writer.write("        <");
+              writer.write(TAG_IGNORE);
+              writeAttribute(writer,ATTR_REGEXP,regexp.pattern());
+              writer.write(" />\n");
+            }
+          }
+          writer.write("    </");
+          writer.write(TAG_ISSUE);
+          writer.write('>');
+          writer.write('\n');
+        }
+ else {
+          writer.write(" />\n");
+        }
+      }
+    }
+    writer.write("</lint>");
+    writer.close();
+    File oldFile=new File(mConfigFile.getParentFile(),mConfigFile.getName() + '~');
+    if (oldFile.exists()) {
+      oldFile.delete();
+    }
+    if (mConfigFile.exists()) {
+      mConfigFile.renameTo(oldFile);
+    }
+    boolean ok=file.renameTo(mConfigFile);
+    if (ok && oldFile.exists()) {
+      oldFile.delete();
+    }
+  }
+ catch (  Exception e) {
+    mClient.log(e,null);
+  }
+}

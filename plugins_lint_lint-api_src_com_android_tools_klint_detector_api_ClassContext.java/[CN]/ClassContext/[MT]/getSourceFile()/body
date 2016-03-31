@@ -1,0 +1,46 @@
+{
+  if (mSourceFile == null && !mSearchedForSource) {
+    mSearchedForSource=true;
+    String source=mClassNode.sourceFile;
+    if (source == null) {
+      source=file.getName();
+      if (source.endsWith(DOT_CLASS)) {
+        source=source.substring(0,source.length() - DOT_CLASS.length()) + DOT_JAVA;
+      }
+      int index=source.indexOf('$');
+      if (index != -1) {
+        source=source.substring(0,index) + DOT_JAVA;
+      }
+    }
+    if (source != null) {
+      if (mJarFile != null) {
+        String relative=file.getParent() + File.separator + source;
+        List<File> sources=getProject().getJavaSourceFolders();
+        for (        File dir : sources) {
+          File sourceFile=new File(dir,relative);
+          if (sourceFile.exists()) {
+            mSourceFile=sourceFile;
+            break;
+          }
+        }
+      }
+ else {
+        String topPath=mBinDir.getPath();
+        String parentPath=file.getParentFile().getPath();
+        if (parentPath.startsWith(topPath)) {
+          int start=topPath.length() + 1;
+          String relative=start > parentPath.length() ? "" : parentPath.substring(start);
+          List<File> sources=getProject().getJavaSourceFolders();
+          for (          File dir : sources) {
+            File sourceFile=new File(dir,relative + File.separator + source);
+            if (sourceFile.exists()) {
+              mSourceFile=sourceFile;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return mSourceFile;
+}

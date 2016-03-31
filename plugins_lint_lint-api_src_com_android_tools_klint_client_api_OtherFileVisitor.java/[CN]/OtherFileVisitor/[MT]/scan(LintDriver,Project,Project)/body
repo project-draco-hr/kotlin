@@ -1,0 +1,128 @@
+{
+  File projectFolder=project.getDir();
+  EnumSet<Scope> scopes=EnumSet.noneOf(Scope.class);
+  for (  Detector detector : mDetectors) {
+    OtherFileScanner fileScanner=(OtherFileScanner)detector;
+    EnumSet<Scope> applicable=fileScanner.getApplicableFiles();
+    if (applicable.contains(Scope.OTHER)) {
+      scopes=Scope.ALL;
+      break;
+    }
+    scopes.addAll(applicable);
+  }
+  List<File> subset=project.getSubset();
+  if (scopes.contains(Scope.RESOURCE_FILE)) {
+    if (subset != null && !subset.isEmpty()) {
+      List<File> files=new ArrayList<File>(subset.size());
+      for (      File file : subset) {
+        if (SdkUtils.endsWith(file.getPath(),DOT_XML) && !file.getName().equals(ANDROID_MANIFEST_XML)) {
+          files.add(file);
+        }
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.RESOURCE_FILE,files);
+      }
+    }
+ else {
+      List<File> files=Lists.newArrayListWithExpectedSize(100);
+      for (      File res : project.getResourceFolders()) {
+        collectFiles(files,res);
+      }
+      File assets=new File(projectFolder,FD_ASSETS);
+      if (assets.exists()) {
+        collectFiles(files,assets);
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.RESOURCE_FILE,files);
+      }
+    }
+  }
+  if (scopes.contains(Scope.JAVA_FILE)) {
+    if (subset != null && !subset.isEmpty()) {
+      List<File> files=new ArrayList<File>(subset.size());
+      for (      File file : subset) {
+        if (file.getPath().endsWith(DOT_JAVA)) {
+          files.add(file);
+        }
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.JAVA_FILE,files);
+      }
+    }
+ else {
+      List<File> files=Lists.newArrayListWithExpectedSize(100);
+      for (      File srcFolder : project.getJavaSourceFolders()) {
+        collectFiles(files,srcFolder);
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.JAVA_FILE,files);
+      }
+    }
+  }
+  if (scopes.contains(Scope.CLASS_FILE)) {
+    if (subset != null && !subset.isEmpty()) {
+      List<File> files=new ArrayList<File>(subset.size());
+      for (      File file : subset) {
+        if (file.getPath().endsWith(DOT_CLASS)) {
+          files.add(file);
+        }
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.CLASS_FILE,files);
+      }
+    }
+ else {
+      List<File> files=Lists.newArrayListWithExpectedSize(100);
+      for (      File classFolder : project.getJavaClassFolders()) {
+        collectFiles(files,classFolder);
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.CLASS_FILE,files);
+      }
+    }
+  }
+  if (scopes.contains(Scope.MANIFEST)) {
+    if (subset != null && !subset.isEmpty()) {
+      List<File> files=new ArrayList<File>(subset.size());
+      for (      File file : subset) {
+        if (file.getName().equals(ANDROID_MANIFEST_XML)) {
+          files.add(file);
+        }
+      }
+      if (!files.isEmpty()) {
+        mFiles.put(Scope.MANIFEST,files);
+      }
+    }
+ else {
+      List<File> manifestFiles=project.getManifestFiles();
+      if (manifestFiles != null) {
+        mFiles.put(Scope.MANIFEST,manifestFiles);
+      }
+    }
+  }
+  for (  Map.Entry<Scope,List<File>> entry : mFiles.entrySet()) {
+    Scope scope=entry.getKey();
+    List<File> files=entry.getValue();
+    List<Detector> applicable=new ArrayList<Detector>(mDetectors.size());
+    for (    Detector detector : mDetectors) {
+      OtherFileScanner fileScanner=(OtherFileScanner)detector;
+      EnumSet<Scope> appliesTo=fileScanner.getApplicableFiles();
+      if (appliesTo.contains(Scope.OTHER) || appliesTo.contains(scope)) {
+        applicable.add(detector);
+      }
+    }
+    if (!applicable.isEmpty()) {
+      for (      File file : files) {
+        Context context=new Context(driver,project,main,file);
+        for (        Detector detector : applicable) {
+          detector.beforeCheckFile(context);
+          detector.run(context);
+          detector.afterCheckFile(context);
+        }
+        if (driver.isCanceled()) {
+          return;
+        }
+      }
+    }
+  }
+}

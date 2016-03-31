@@ -1,0 +1,46 @@
+{
+  super.visitClass(aClass);
+  if (!myCheckAccess) {
+    return;
+  }
+  for (  PsiClassType type : aClass.getSuperTypes()) {
+    String signature=IntellijLintUtils.getInternalName(type);
+    if (signature == null) {
+      continue;
+    }
+    int api=mApiDatabase.getClassVersion(signature);
+    if (api == -1) {
+      continue;
+    }
+    int minSdk=getMinSdk(myContext);
+    if (api <= minSdk) {
+      continue;
+    }
+    if (mySeenTargetApi) {
+      int target=getTargetApi(aClass,myFile);
+      if (target != -1) {
+        if (api <= target) {
+          continue;
+        }
+      }
+    }
+    if (mySeenSuppress && IntellijLintUtils.isSuppressed(aClass,myFile,UNSUPPORTED)) {
+      continue;
+    }
+    Location location;
+    if (type instanceof PsiClassReferenceType) {
+      PsiReference reference=((PsiClassReferenceType)type).getReference();
+      PsiElement element=reference.getElement();
+      if (isWithinVersionCheckConditional(element,api)) {
+        continue;
+      }
+      location=IntellijLintUtils.getLocation(myContext.file,element);
+    }
+ else {
+      location=IntellijLintUtils.getLocation(myContext.file,aClass);
+    }
+    String fqcn=type.getClassName();
+    String message=String.format("Class requires API level %1$d (current min is %2$d): %3$s",api,minSdk,fqcn);
+    myContext.report(UNSUPPORTED,location,message);
+  }
+}

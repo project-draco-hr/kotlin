@@ -1,0 +1,45 @@
+{
+  if (mCachedApplicableDensities == null) {
+    if (isGradleProject() && getGradleProjectModel() != null && getCurrentVariant() != null) {
+      Set<String> relevantDensities=Sets.newHashSet();
+      Variant variant=getCurrentVariant();
+      List<String> variantFlavors=variant.getProductFlavors();
+      AndroidProject gradleProjectModel=getGradleProjectModel();
+      addResConfigsFromFlavor(relevantDensities,null,getGradleProjectModel().getDefaultConfig());
+      for (      ProductFlavorContainer container : gradleProjectModel.getProductFlavors()) {
+        addResConfigsFromFlavor(relevantDensities,variantFlavors,container);
+      }
+      if (relevantDensities.isEmpty()) {
+        AndroidArtifact mainArtifact=variant.getMainArtifact();
+        Collection<AndroidArtifactOutput> outputs=mainArtifact.getOutputs();
+        for (        AndroidArtifactOutput output : outputs) {
+          for (          OutputFile file : output.getOutputs()) {
+            final String DENSITY_NAME=OutputFile.FilterType.DENSITY.name();
+            if (file.getFilterTypes().contains(DENSITY_NAME)) {
+              for (              FilterData data : file.getFilters()) {
+                if (DENSITY_NAME.equals(data.getFilterType())) {
+                  relevantDensities.add(data.getIdentifier());
+                }
+              }
+            }
+          }
+        }
+      }
+      if (!relevantDensities.isEmpty()) {
+        mCachedApplicableDensities=Lists.newArrayListWithExpectedSize(10);
+        for (        String density : relevantDensities) {
+          String folder=ResourceFolderType.DRAWABLE.getName() + '-' + density;
+          mCachedApplicableDensities.add(folder);
+        }
+        Collections.sort(mCachedApplicableDensities);
+      }
+ else {
+        mCachedApplicableDensities=Collections.emptyList();
+      }
+    }
+ else {
+      mCachedApplicableDensities=Collections.emptyList();
+    }
+  }
+  return mCachedApplicableDensities.isEmpty() ? null : mCachedApplicableDensities;
+}

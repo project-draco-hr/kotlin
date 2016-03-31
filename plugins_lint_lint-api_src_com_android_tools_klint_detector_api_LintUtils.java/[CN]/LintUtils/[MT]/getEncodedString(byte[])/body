@@ -1,0 +1,66 @@
+{
+  if (data == null) {
+    return "";
+  }
+  int offset=0;
+  String defaultCharset=UTF_8;
+  String charset=null;
+  if (data.length > 4) {
+    if (data[0] == (byte)0xef && data[1] == (byte)0xbb && data[2] == (byte)0xbf) {
+      defaultCharset=charset=UTF_8;
+      offset+=3;
+    }
+ else     if (data[0] == (byte)0xfe && data[1] == (byte)0xff) {
+      defaultCharset=charset=UTF_16;
+      offset+=2;
+    }
+ else     if (data[0] == (byte)0x0 && data[1] == (byte)0x0 && data[2] == (byte)0xfe && data[3] == (byte)0xff) {
+      defaultCharset=charset="UTF_32";
+      offset+=4;
+    }
+ else     if (data[0] == (byte)0xff && data[1] == (byte)0xfe && data[2] == (byte)0x0 && data[3] == (byte)0x0) {
+      defaultCharset=charset="UTF_32LE";
+      offset+=4;
+    }
+ else     if (data[0] == (byte)0xff && data[1] == (byte)0xfe) {
+      defaultCharset=charset=UTF_16LE;
+      offset+=2;
+    }
+  }
+  int length=data.length - offset;
+  boolean seenOddZero=false;
+  boolean seenEvenZero=false;
+  for (int lineEnd=offset; lineEnd < data.length; lineEnd++) {
+    if (data[lineEnd] == 0) {
+      if ((lineEnd - offset) % 2 == 0) {
+        seenEvenZero=true;
+      }
+ else {
+        seenOddZero=true;
+      }
+    }
+ else     if (data[lineEnd] == '\n' || data[lineEnd] == '\r') {
+      break;
+    }
+  }
+  if (charset == null) {
+    charset=seenOddZero ? UTF_16LE : seenEvenZero ? UTF_16 : UTF_8;
+  }
+  String text=null;
+  try {
+    text=new String(data,offset,length,charset);
+  }
+ catch (  UnsupportedEncodingException e) {
+    try {
+      if (charset != defaultCharset) {
+        text=new String(data,offset,length,defaultCharset);
+      }
+    }
+ catch (    UnsupportedEncodingException u) {
+    }
+  }
+  if (text == null) {
+    text=new String(data,offset,length);
+  }
+  return text;
+}

@@ -1,0 +1,47 @@
+{
+  if (project.isGradleProject() && project.isAndroidProject() && !project.isLibrary()) {
+    AndroidProject model=project.getGradleProjectModel();
+    if (model != null) {
+      try {
+        LintOptions lintOptions=model.getLintOptions();
+        final Map<String,Integer> overrides=lintOptions.getSeverityOverrides();
+        if (overrides != null && !overrides.isEmpty()) {
+          return new DefaultConfiguration(this,project,null){
+            @NonNull @Override public Severity getSeverity(            @NonNull Issue issue){
+              Integer severity=overrides.get(issue.getId());
+              if (severity != null) {
+switch (severity.intValue()) {
+case LintOptions.SEVERITY_FATAL:
+                  return Severity.FATAL;
+case LintOptions.SEVERITY_ERROR:
+                return Severity.ERROR;
+case LintOptions.SEVERITY_WARNING:
+              return Severity.WARNING;
+case LintOptions.SEVERITY_INFORMATIONAL:
+            return Severity.INFORMATIONAL;
+case LintOptions.SEVERITY_IGNORE:
+default :
+          return Severity.IGNORE;
+      }
+    }
+    if (!getIssues().contains(issue)) {
+      return Severity.IGNORE;
+    }
+    return super.getSeverity(issue);
+  }
+}
+;
+}
+}
+ catch (Exception e) {
+LOG.error(e);
+}
+}
+}
+return new DefaultConfiguration(this,project,null){
+@Override public boolean isEnabled(@NonNull Issue issue){
+return getIssues().contains(issue) && super.isEnabled(issue);
+}
+}
+;
+}

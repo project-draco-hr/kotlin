@@ -1,0 +1,57 @@
+{
+  List<File> resourceFolders=project.getResourceFolders();
+  for (  File res : resourceFolders) {
+    File[] folders=res.listFiles();
+    if (folders != null) {
+      boolean checkFolders=context.isEnabled(ICON_DENSITIES) || context.isEnabled(ICON_MISSING_FOLDER) || context.isEnabled(ICON_NODPI)|| context.isEnabled(ICON_MIX_9PNG)|| context.isEnabled(ICON_XML_AND_PNG);
+      boolean checkDipSizes=context.isEnabled(ICON_DIP_SIZE);
+      boolean checkDuplicates=context.isEnabled(DUPLICATES_NAMES) || context.isEnabled(DUPLICATES_CONFIGURATIONS);
+      Map<File,Dimension> pixelSizes=null;
+      Map<File,Long> fileSizes=null;
+      if (checkDipSizes || checkDuplicates) {
+        pixelSizes=new HashMap<File,Dimension>();
+        fileSizes=new HashMap<File,Long>();
+      }
+      Map<File,Set<String>> folderToNames=new HashMap<File,Set<String>>();
+      Map<File,Set<String>> nonDpiFolderNames=new HashMap<File,Set<String>>();
+      for (      File folder : folders) {
+        String folderName=folder.getName();
+        if (folderName.startsWith(DRAWABLE_FOLDER)) {
+          File[] files=folder.listFiles();
+          if (files != null) {
+            checkDrawableDir(context,folder,files,pixelSizes,fileSizes);
+            if (checkFolders && DENSITY_PATTERN.matcher(folderName).matches()) {
+              Set<String> names=new HashSet<String>(files.length);
+              for (              File f : files) {
+                String name=f.getName();
+                if (isDrawableFile(name)) {
+                  names.add(name);
+                }
+              }
+              folderToNames.put(folder,names);
+            }
+ else             if (checkFolders) {
+              Set<String> names=new HashSet<String>(files.length);
+              for (              File f : files) {
+                String name=f.getName();
+                if (isDrawableFile(name)) {
+                  names.add(name);
+                }
+              }
+              nonDpiFolderNames.put(folder,names);
+            }
+          }
+        }
+      }
+      if (checkDipSizes) {
+        checkDipSizes(context,pixelSizes);
+      }
+      if (checkDuplicates) {
+        checkDuplicates(context,pixelSizes,fileSizes);
+      }
+      if (checkFolders && !folderToNames.isEmpty()) {
+        checkDensities(context,res,folderToNames,nonDpiFolderNames);
+      }
+    }
+  }
+}

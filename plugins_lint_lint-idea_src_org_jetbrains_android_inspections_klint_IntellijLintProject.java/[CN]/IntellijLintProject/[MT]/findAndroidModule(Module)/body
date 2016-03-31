@@ -1,0 +1,21 @@
+{
+  Graph<Module> graph=ApplicationManager.getApplication().runReadAction(new Computable<Graph<Module>>(){
+    @Override public Graph<Module> compute(){
+      return ModuleManager.getInstance(module.getProject()).moduleGraph();
+    }
+  }
+);
+  Set<AndroidFacet> facets=Sets.newHashSet();
+  HashSet<Module> seen=Sets.newHashSet();
+  seen.add(module);
+  addAndroidModules(facets,seen,graph,module);
+  for (  AndroidFacet facet : facets) {
+    if (!facet.isLibraryProject()) {
+      return facet.getModule();
+    }
+  }
+  if (!facets.isEmpty()) {
+    return facets.iterator().next().getModule();
+  }
+  return null;
+}

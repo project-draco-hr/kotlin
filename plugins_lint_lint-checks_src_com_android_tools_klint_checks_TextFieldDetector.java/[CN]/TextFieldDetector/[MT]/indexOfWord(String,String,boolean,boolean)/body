@@ -1,0 +1,41 @@
+{
+  if (sentence.isEmpty()) {
+    return -1;
+  }
+  int wordLength=word.length();
+  if (wordLength > sentence.length()) {
+    return -1;
+  }
+  char firstUpper=Character.toUpperCase(word.charAt(0));
+  char firstLower=Character.toLowerCase(firstUpper);
+  int start=0;
+  if (sentence.startsWith(NEW_ID_PREFIX)) {
+    start+=NEW_ID_PREFIX.length();
+  }
+ else   if (sentence.startsWith(ID_PREFIX)) {
+    start+=ID_PREFIX.length();
+  }
+  for (int i=start, n=sentence.length(), m=n - (wordLength - 1); i < m; i++) {
+    char c=sentence.charAt(i);
+    if (c == firstUpper || c == firstLower) {
+      if (sentence.regionMatches(true,i,word,0,wordLength)) {
+        if (i <= start && allowPrefix) {
+          return i;
+        }
+        if (i == m - 1 && allowSuffix) {
+          return i;
+        }
+        if (i <= start || (sentence.charAt(i - 1) == '_') || Character.isUpperCase(c)) {
+          if (i == m - 1) {
+            return i;
+          }
+          char after=sentence.charAt(i + wordLength);
+          if (after == '_' || Character.isUpperCase(after)) {
+            return i;
+          }
+        }
+      }
+    }
+  }
+  return -1;
+}

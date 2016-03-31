@@ -1,0 +1,18 @@
+{
+  if (mPending != null && mWhitelistedLayouts != null) {
+    for (    Pair<String,Handle> pair : mPending) {
+      String layout=pair.getFirst();
+      if (mWhitelistedLayouts.contains(layout)) {
+        Handle handle=pair.getSecond();
+        Object clientData=handle.getClientData();
+        if (clientData instanceof Node) {
+          if (context.getDriver().isSuppressed(null,ISSUE,(Node)clientData)) {
+            return;
+          }
+        }
+        Location location=handle.resolve();
+        context.report(ISSUE,location,"This `<FrameLayout>` can be replaced with a `<merge>` tag");
+      }
+    }
+  }
+}

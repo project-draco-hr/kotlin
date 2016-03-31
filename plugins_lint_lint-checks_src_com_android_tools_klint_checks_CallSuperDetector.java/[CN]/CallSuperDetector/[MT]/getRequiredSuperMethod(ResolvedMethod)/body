@@ -1,0 +1,34 @@
+{
+  String name=method.getName();
+  if (ON_DETACHED_FROM_WINDOW.equals(name)) {
+    if (!method.getContainingClass().isSubclassOf(CLASS_VIEW,false)) {
+      return null;
+    }
+    return method.getSuperMethod();
+  }
+ else   if (ON_VISIBILITY_CHANGED.equals(name)) {
+    if (!method.getContainingClass().isSubclassOf("android.support.wearable.watchface.WatchFaceService.Engine",false)) {
+      return null;
+    }
+    return method.getSuperMethod();
+  }
+  ResolvedMethod directSuper=method.getSuperMethod();
+  ResolvedMethod superMethod=directSuper;
+  while (superMethod != null) {
+    Iterable<JavaParser.ResolvedAnnotation> annotations=superMethod.getAnnotations();
+    for (    JavaParser.ResolvedAnnotation annotation : annotations) {
+      annotation=SupportAnnotationDetector.getRelevantAnnotation(annotation);
+      if (annotation != null) {
+        String signature=annotation.getSignature();
+        if (CALL_SUPER_ANNOTATION.equals(signature)) {
+          return directSuper;
+        }
+ else         if (signature.endsWith(".OverrideMustInvoke")) {
+          return directSuper;
+        }
+      }
+    }
+    superMethod=superMethod.getSuperMethod();
+  }
+  return null;
+}

@@ -1,0 +1,34 @@
+{
+  File dir;
+  IdeaAndroidProject gradleProject=facet.getIdeaAndroidProject();
+  if (gradleProject != null) {
+    Collection<AndroidLibrary> libraries=gradleProject.getSelectedVariant().getMainArtifact().getDependencies().getLibraries();
+    for (    AndroidLibrary library : libraries) {
+      Project p=libraryMap.get(library);
+      if (p == null) {
+        dir=library.getFolder();
+        p=new LintGradleLibraryProject(client,dir,dir,library);
+        libraryMap.put(library,p);
+        projectMap.put(p,facet.getModule());
+        projects.add(p);
+        if (files != null) {
+          VirtualFile libraryDir=LocalFileSystem.getInstance().findFileByIoFile(dir);
+          if (libraryDir != null) {
+            ListIterator<VirtualFile> iterator=files.listIterator();
+            while (iterator.hasNext()) {
+              VirtualFile file=iterator.next();
+              if (VfsUtilCore.isAncestor(libraryDir,file,false)) {
+                project.addFile(VfsUtilCore.virtualToIoFile(file));
+                iterator.remove();
+              }
+            }
+          }
+          if (files.isEmpty()) {
+            files=null;
+          }
+        }
+      }
+      dependencies.add(p);
+    }
+  }
+}

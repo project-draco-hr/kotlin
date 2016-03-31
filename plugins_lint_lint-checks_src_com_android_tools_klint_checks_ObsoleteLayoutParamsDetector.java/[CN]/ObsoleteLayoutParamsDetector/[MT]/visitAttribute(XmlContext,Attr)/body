@@ -1,0 +1,38 @@
+{
+  String name=attribute.getLocalName();
+  if (name != null && name.startsWith(ATTR_LAYOUT_RESOURCE_PREFIX) && ANDROID_URI.equals(attribute.getNamespaceURI())) {
+    if (VALID.contains(name)) {
+      return;
+    }
+    String parent=PARAM_TO_VIEW.get(name);
+    if (parent != null) {
+      Element viewElement=attribute.getOwnerElement();
+      Node layoutNode=viewElement.getParentNode();
+      if (layoutNode == null || layoutNode.getNodeType() != Node.ELEMENT_NODE) {
+        if (context.getScope().contains(Scope.ALL_RESOURCE_FILES)) {
+          Location.Handle handle=context.createLocationHandle(attribute);
+          handle.setClientData(attribute);
+          mPending.add(Pair.of(name,handle));
+        }
+        return;
+      }
+      String parentTag=((Element)layoutNode).getTagName();
+      if (parentTag.equals(VIEW_MERGE)) {
+        if (context.getScope().contains(Scope.ALL_RESOURCE_FILES)) {
+          Location.Handle handle=context.createLocationHandle(attribute);
+          handle.setClientData(attribute);
+          mPending.add(Pair.of(name,handle));
+        }
+        return;
+      }
+      if (!isValidParamForParent(context,name,parent,parentTag)) {
+        if (name.equals(ATTR_LAYOUT_COLUMN) && isValidParamForParent(context,name,TABLE_ROW,parentTag)) {
+          return;
+        }
+        context.report(ISSUE,attribute,context.getLocation(attribute),String.format("Invalid layout param in a `%1$s`: `%2$s`",parentTag,name));
+      }
+    }
+ else {
+    }
+  }
+}

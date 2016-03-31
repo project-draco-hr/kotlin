@@ -1,0 +1,23 @@
+{
+  if ((classNode.access & Opcodes.ACC_ABSTRACT) != 0) {
+    return;
+  }
+  String curr=classNode.name;
+  int lastIndex=curr.lastIndexOf('$');
+  if (lastIndex != -1 && lastIndex < curr.length() - 1) {
+    if (Character.isDigit(curr.charAt(lastIndex + 1))) {
+      return;
+    }
+  }
+  while (curr != null) {
+    for (    String s : sClasses) {
+      if (curr.equals(s)) {
+        Collection<String> registered=mManifestRegistrations != null ? mManifestRegistrations.get(curr) : null;
+        if (registered == null || !registered.contains(classNode.name)) {
+          report(context,classNode,curr);
+        }
+      }
+    }
+    curr=context.getDriver().getSuperClass(curr);
+  }
+}

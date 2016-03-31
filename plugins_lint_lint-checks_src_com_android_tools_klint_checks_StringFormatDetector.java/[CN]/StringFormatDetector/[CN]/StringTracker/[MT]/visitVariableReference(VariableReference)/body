@@ -1,0 +1,20 @@
+{
+  if (node.astIdentifier().astValue().equals(R_CLASS) && node.getParent() instanceof Select && node.getParent().getParent() instanceof Select) {
+    lombok.ast.Node current=node.getParent().getParent();
+    String reference=((Select)current).astIdentifier().astValue();
+    while (current != mTop && !(current instanceof VariableDefinitionEntry)) {
+      if (current == mTargetNode) {
+        mName=reference;
+        mDone=true;
+        return false;
+      }
+      current=current.getParent();
+    }
+    if (current instanceof VariableDefinitionEntry) {
+      VariableDefinitionEntry entry=(VariableDefinitionEntry)current;
+      String variable=entry.astName().astValue();
+      mMap.put(variable,reference);
+    }
+  }
+  return false;
+}

@@ -1,0 +1,38 @@
+{
+  if (!ANDROID_URI.equals(attribute.getNamespaceURI())) {
+    return;
+  }
+  Element documentElement=attribute.getOwnerDocument().getDocumentElement();
+  if (documentElement == attribute.getOwnerElement()) {
+    String background=attribute.getValue();
+    if (mValidDrawables != null && mValidDrawables.contains(background)) {
+      return;
+    }
+    if (background.equals(TRANSPARENT_COLOR) || background.equals(NULL_RESOURCE)) {
+      return;
+    }
+    if (background.startsWith("@android:drawable/")) {
+      return;
+    }
+    String name=context.file.getName();
+    if (name.contains("list_") || name.contains("_item")) {
+      return;
+    }
+    if (!context.getProject().getReportIssues()) {
+      return;
+    }
+    Location location=context.getLocation(attribute);
+    location.setClientData(attribute);
+    if (mRootAttributes == null) {
+      mRootAttributes=new ArrayList<Pair<Location,String>>();
+    }
+    mRootAttributes.add(Pair.of(location,attribute.getValue()));
+    String activity=documentElement.getAttributeNS(TOOLS_URI,ATTR_CONTEXT);
+    if (activity != null && !activity.isEmpty()) {
+      if (activity.startsWith(".")) {
+        activity=context.getProject().getPackage() + activity;
+      }
+      registerLayoutActivity(LintUtils.getLayoutName(context.file),activity);
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  if (psiClass instanceof PsiAnonymousClass) {
+    PsiClass parent=PsiTreeUtil.getParentOfType(psiClass,PsiClass.class);
+    if (parent != null) {
+      String internalName=getInternalName(parent);
+      if (internalName == null) {
+        return null;
+      }
+      return internalName + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)psiClass);
+    }
+  }
+  String sig=ClassUtil.getJVMClassName(psiClass);
+  if (sig == null) {
+    String qualifiedName=psiClass.getQualifiedName();
+    if (qualifiedName != null) {
+      return ClassContext.getInternalName(qualifiedName);
+    }
+    return null;
+  }
+ else   if (sig.indexOf('.') != -1) {
+    sig=ClassContext.getInternalName(sig);
+  }
+  return sig;
+}

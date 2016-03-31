@@ -1,0 +1,35 @@
+{
+  if (!contents.startsWith(pattern,offset)) {
+    return false;
+  }
+  if (hints != null) {
+    char prevChar=offset > 0 ? contents.charAt(offset - 1) : 0;
+    int lastIndex=offset + pattern.length() - 1;
+    char nextChar=lastIndex < contents.length() - 1 ? contents.charAt(lastIndex + 1) : 0;
+    if (hints.isWholeWord() && (Character.isLetter(prevChar) || Character.isLetter(nextChar))) {
+      return false;
+    }
+    if (hints.isJavaSymbol()) {
+      if (Character.isJavaIdentifierPart(prevChar) || Character.isJavaIdentifierPart(nextChar)) {
+        return false;
+      }
+      if (prevChar == '"') {
+        return false;
+      }
+    }
+    if (hints.isConstructor() && SUPER_KEYWORD.equals(pattern)) {
+      int index=lastIndex + 1;
+      while (index < contents.length() - 1) {
+        char c=contents.charAt(index);
+        if (c == '(') {
+          break;
+        }
+ else         if (!Character.isWhitespace(c)) {
+          return false;
+        }
+        index++;
+      }
+    }
+  }
+  return true;
+}

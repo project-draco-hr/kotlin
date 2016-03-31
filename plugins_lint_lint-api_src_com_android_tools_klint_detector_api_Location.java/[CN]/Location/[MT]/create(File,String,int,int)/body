@@ -1,0 +1,37 @@
+{
+  if (startOffset < 0 || endOffset < startOffset) {
+    throw new IllegalArgumentException("Invalid offsets");
+  }
+  if (contents == null) {
+    return new Location(file,new DefaultPosition(-1,-1,startOffset),new DefaultPosition(-1,-1,endOffset));
+  }
+  int size=contents.length();
+  endOffset=Math.min(endOffset,size);
+  startOffset=Math.min(startOffset,endOffset);
+  Position start=null;
+  int line=0;
+  int lineOffset=0;
+  char prev=0;
+  for (int offset=0; offset <= size; offset++) {
+    if (offset == startOffset) {
+      start=new DefaultPosition(line,offset - lineOffset,offset);
+    }
+    if (offset == endOffset) {
+      Position end=new DefaultPosition(line,offset - lineOffset,offset);
+      return new Location(file,start,end);
+    }
+    char c=contents.charAt(offset);
+    if (c == '\n') {
+      lineOffset=offset + 1;
+      if (prev != '\r') {
+        line++;
+      }
+    }
+ else     if (c == '\r') {
+      line++;
+      lineOffset=offset + 1;
+    }
+    prev=c;
+  }
+  return create(file);
+}

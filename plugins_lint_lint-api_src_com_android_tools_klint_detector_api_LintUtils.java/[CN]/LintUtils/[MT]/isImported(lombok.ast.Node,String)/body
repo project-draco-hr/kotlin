@@ -1,0 +1,24 @@
+{
+  if (compilationUnit == null) {
+    return false;
+  }
+  int dotIndex=fullyQualifiedName.lastIndexOf('.');
+  int dotLength=fullyQualifiedName.length() - dotIndex;
+  boolean imported=false;
+  for (  lombok.ast.Node rootNode : compilationUnit.getChildren()) {
+    if (rootNode instanceof ImportDeclaration) {
+      ImportDeclaration importDeclaration=(ImportDeclaration)rootNode;
+      String fqn=importDeclaration.asFullyQualifiedName();
+      if (fqn.equals(fullyQualifiedName)) {
+        return true;
+      }
+ else       if (fullyQualifiedName.regionMatches(dotIndex,fqn,fqn.length() - dotLength,dotLength)) {
+        return false;
+      }
+ else       if (importDeclaration.astStarImport() && fqn.regionMatches(0,fqn,0,dotIndex + 1)) {
+        imported=true;
+      }
+    }
+  }
+  return imported;
+}

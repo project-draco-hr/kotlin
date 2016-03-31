@@ -1,0 +1,27 @@
+{
+  if (mJavaClassFolders == null) {
+    if (isAospFrameworksProject(mDir)) {
+      File top=mDir.getParentFile().getParentFile().getParentFile();
+      if (top != null) {
+        File out=new File(top,"out");
+        if (out.exists()) {
+          String relative="target/common/obj/JAVA_LIBRARIES/framework_intermediates/classes.jar";
+          File jar=new File(out,relative.replace('/',File.separatorChar));
+          if (jar.exists()) {
+            mJavaClassFolders=Collections.singletonList(jar);
+            return mJavaClassFolders;
+          }
+        }
+      }
+    }
+    if (isAospBuildEnvironment()) {
+      String top=getAospTop();
+      if (mDir.getAbsolutePath().startsWith(top)) {
+        mJavaClassFolders=getAospJavaClassPath();
+        return mJavaClassFolders;
+      }
+    }
+    mJavaClassFolders=mClient.getJavaClassFolders(this);
+  }
+  return mJavaClassFolders;
+}

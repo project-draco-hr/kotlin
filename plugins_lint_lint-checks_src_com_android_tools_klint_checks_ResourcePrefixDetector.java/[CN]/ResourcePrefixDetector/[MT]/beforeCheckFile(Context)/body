@@ -1,0 +1,19 @@
+{
+  if (mPrefix != null && context instanceof XmlContext) {
+    XmlContext xmlContext=(XmlContext)context;
+    ResourceFolderType folderType=xmlContext.getResourceFolderType();
+    if (folderType != null && folderType != ResourceFolderType.VALUES) {
+      String name=LintUtils.getBaseName(context.file.getName());
+      if (!name.startsWith(mPrefix)) {
+        if (xmlContext.document != null) {
+          Element root=xmlContext.document.getDocumentElement();
+          if (root != null) {
+            xmlContext.report(ISSUE,root,xmlContext.getLocation(root),getErrorMessage(name));
+            return;
+          }
+        }
+        context.report(ISSUE,Location.create(context.file),getErrorMessage(name));
+      }
+    }
+  }
+}

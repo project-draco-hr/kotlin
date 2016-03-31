@@ -1,0 +1,31 @@
+{
+  boolean found=false;
+  File makefile=new File(mDir,"Android.mk");
+  if (makefile.exists()) {
+    try {
+      List<String> lines=Files.readLines(makefile,Charsets.UTF_8);
+      Pattern p=Pattern.compile("LOCAL_SDK_VERSION\\s*:=\\s*(.*)");
+      for (      String line : lines) {
+        line=line.trim();
+        Matcher matcher=p.matcher(line);
+        if (matcher.matches()) {
+          found=true;
+          String version=matcher.group(1);
+          if (version.equals("current")) {
+            mManifestMinSdk=findCurrentAospVersion();
+          }
+ else {
+            mManifestMinSdk=SdkVersionInfo.getVersion(version,mClient.getTargets());
+          }
+          break;
+        }
+      }
+    }
+ catch (    IOException ioe) {
+      mClient.log(ioe,null);
+    }
+  }
+  if (!found) {
+    mManifestMinSdk=findCurrentAospVersion();
+  }
+}

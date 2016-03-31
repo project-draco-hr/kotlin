@@ -1,0 +1,21 @@
+{
+  ResolvedNode resolved=mContext.resolve(node);
+  if (!(resolved instanceof ResolvedClass)) {
+    return true;
+  }
+  ResolvedClass resolvedClass=(ResolvedClass)resolved;
+  ResolvedClass cls=resolvedClass;
+  while (cls != null) {
+    String fqcn=cls.getSignature();
+    if (fqcn != null) {
+      List<VisitingDetector> list=mSuperClassDetectors.get(fqcn);
+      if (list != null) {
+        for (        VisitingDetector v : list) {
+          v.getJavaScanner().checkClass(mContext,node,node,resolvedClass);
+        }
+      }
+    }
+    cls=cls.getSuperClass();
+  }
+  return false;
+}

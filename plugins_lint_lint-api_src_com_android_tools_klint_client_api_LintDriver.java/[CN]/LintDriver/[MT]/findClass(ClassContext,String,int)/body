@@ -1,0 +1,20 @@
+{
+  String relative=type.replace('/',File.separatorChar) + DOT_CLASS;
+  File classFile=findClassFile(context.getProject(),relative);
+  if (classFile != null) {
+    if (classFile.getPath().endsWith(DOT_JAR)) {
+      return null;
+    }
+    try {
+      byte[] bytes=mClient.readBytes(classFile);
+      ClassReader reader=new ClassReader(bytes);
+      ClassNode classNode=new ClassNode();
+      reader.accept(classNode,flags);
+      return classNode;
+    }
+ catch (    Throwable t) {
+      mClient.log(null,"Error processing %1$s: broken class file?",classFile.getPath());
+    }
+  }
+  return null;
+}

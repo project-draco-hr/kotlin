@@ -1,0 +1,24 @@
+{
+  if (node == null) {
+    return;
+  }
+  int flags=node.astModifiers().getEffectiveModifierFlags();
+  if ((flags & Modifier.ABSTRACT) != 0) {
+    return;
+  }
+  if (node.getParent() instanceof NormalTypeBody && ((flags & Modifier.STATIC) == 0)) {
+    return;
+  }
+  boolean found=false;
+  for (  ResolvedMethod constructor : resolvedClass.getConstructors()) {
+    if (isXmlConstructor(constructor)) {
+      found=true;
+      break;
+    }
+  }
+  if (!found) {
+    String message=String.format("Custom view `%1$s` is missing constructor used by tools: " + "`(Context)` or `(Context,AttributeSet)` " + "or `(Context,AttributeSet,int)`",node.astName().astValue());
+    Location location=context.getLocation(node.astName());
+    context.report(ISSUE,node,location,message);
+  }
+}

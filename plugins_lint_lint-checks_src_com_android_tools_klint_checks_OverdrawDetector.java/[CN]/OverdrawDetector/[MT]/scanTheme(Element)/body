@@ -1,0 +1,47 @@
+{
+  String styleName=element.getAttribute(ATTR_NAME);
+  String parent=element.getAttribute(ATTR_PARENT);
+  if (parent == null) {
+    parent="";
+  }
+  if (parent.isEmpty()) {
+    int index=styleName.lastIndexOf('.');
+    if (index != -1) {
+      parent=styleName.substring(0,index);
+    }
+  }
+  parent=parent.replace('.','_');
+  String resource=STYLE_RESOURCE_PREFIX + getResourceFieldName(styleName);
+  NodeList items=element.getChildNodes();
+  for (int i=0, n=items.getLength(); i < n; i++) {
+    if (items.item(i).getNodeType() == Node.ELEMENT_NODE) {
+      Element item=(Element)items.item(i);
+      String name=item.getAttribute(ATTR_NAME);
+      if (name.equals("android:windowBackground")) {
+        NodeList textNodes=item.getChildNodes();
+        for (int j=0, m=textNodes.getLength(); j < m; j++) {
+          Node textNode=textNodes.item(j);
+          if (textNode.getNodeType() == Node.TEXT_NODE) {
+            String text=textNode.getNodeValue();
+            String trim=text.trim();
+            if (!trim.isEmpty()) {
+              if (trim.equals(NULL_RESOURCE) || trim.equals(TRANSPARENT_COLOR) || mValidDrawables != null && mValidDrawables.contains(trim)) {
+                if (mBlankThemes == null) {
+                  mBlankThemes=new ArrayList<String>();
+                }
+                mBlankThemes.add(resource);
+              }
+            }
+          }
+        }
+        return;
+      }
+    }
+  }
+  if (isBlankTheme(parent)) {
+    if (mBlankThemes == null) {
+      mBlankThemes=new ArrayList<String>();
+    }
+    mBlankThemes.add(resource);
+  }
+}

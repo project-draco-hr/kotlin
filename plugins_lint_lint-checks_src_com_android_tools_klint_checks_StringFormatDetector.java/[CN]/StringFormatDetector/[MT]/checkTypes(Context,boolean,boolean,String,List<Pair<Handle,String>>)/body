@@ -1,0 +1,88 @@
+{
+  Map<Integer,String> types=new HashMap<Integer,String>();
+  Map<Integer,Handle> typeDefinition=new HashMap<Integer,Handle>();
+  for (  Pair<Handle,String> pair : list) {
+    Handle handle=pair.getFirst();
+    String formatString=pair.getSecond();
+    Matcher matcher=FORMAT.matcher(formatString);
+    int index=0;
+    int prevIndex=0;
+    int nextNumber=1;
+    while (true) {
+      if (matcher.find(index)) {
+        int matchStart=matcher.start();
+        for (; prevIndex < matchStart; prevIndex++) {
+          char c=formatString.charAt(prevIndex);
+          if (c == '\\') {
+            prevIndex++;
+          }
+        }
+        if (prevIndex > matchStart) {
+          index=prevIndex;
+          continue;
+        }
+        index=matcher.end();
+        String str=formatString.substring(matchStart,matcher.end());
+        if (str.equals("%%") || str.equals("%n")) {
+          continue;
+        }
+        if (checkValid) {
+          if (str.length() > 2 && str.charAt(str.length() - 2) == ' ') {
+            char last=str.charAt(str.length() - 1);
+            if (last != 'd' && last != 'o' && last != 'x' && last != 'X') {
+              Object clientData=handle.getClientData();
+              if (clientData instanceof Node) {
+                if (context.getDriver().isSuppressed(null,INVALID,(Node)clientData)) {
+                  return;
+                }
+              }
+              Location location=handle.resolve();
+              String message=String.format("Incorrect formatting string `%1$s`; missing conversion " + "character in '`%2$s`' ?",name,str);
+              context.report(INVALID,location,message);
+              continue;
+            }
+          }
+        }
+        if (!checkTypes) {
+          continue;
+        }
+        int number;
+        String numberString=matcher.group(1);
+        if (numberString != null) {
+          numberString=numberString.substring(0,numberString.length() - 1);
+          number=Integer.parseInt(numberString);
+          nextNumber=number + 1;
+        }
+ else {
+          number=nextNumber++;
+        }
+        String format=matcher.group(6);
+        String currentFormat=types.get(number);
+        if (currentFormat == null) {
+          types.put(number,format);
+          typeDefinition.put(number,handle);
+        }
+ else         if (!currentFormat.equals(format) && isIncompatible(currentFormat.charAt(0),format.charAt(0))) {
+          Object clientData=handle.getClientData();
+          if (clientData instanceof Node) {
+            if (context.getDriver().isSuppressed(null,ARG_TYPES,(Node)clientData)) {
+              return;
+            }
+          }
+          Location location=handle.resolve();
+          location=refineLocation(context,location,formatString,matcher.start(),matcher.end());
+          Location otherLocation=typeDefinition.get(number).resolve();
+          otherLocation.setMessage("Conflicting argument type here");
+          location.setSecondary(otherLocation);
+          File f=otherLocation.getFile();
+          String message=String.format("Inconsistent formatting types for argument #%1$d in " + "format string `%2$s` ('%3$s'): Found both '`%4$s`' and '`%5$s`' " + "(in %6$s)",number,name,str,currentFormat,format,f.getParentFile().getName() + File.separator + f.getName());
+          context.report(ARG_TYPES,location,message);
+          break;
+        }
+      }
+ else {
+        break;
+      }
+    }
+  }
+}

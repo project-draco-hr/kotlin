@@ -1,0 +1,21 @@
+{
+  int api=ApiDetector.getRequiredVersion(issue,message,RAW);
+  if (api != -1) {
+    List<AndroidLintQuickFix> list=Lists.newArrayList();
+    PsiFile file=startElement.getContainingFile();
+    if (file instanceof XmlFile) {
+      ResourceFolderType folderType=ResourceHelper.getFolderType(file);
+      if (folderType != null) {
+        FolderConfiguration config=ResourceHelper.getFolderConfiguration(file);
+        if (config != null) {
+          config.setVersionQualifier(new VersionQualifier(api));
+          String folder=config.getFolderName(folderType);
+          list.add(OverrideResourceAction.createFix(folder));
+        }
+      }
+    }
+    list.add(new AddTargetApiQuickFix(api,startElement));
+    return list.toArray(new AndroidLintQuickFix[list.size()]);
+  }
+  return AndroidLintQuickFix.EMPTY_ARRAY;
+}

@@ -1,0 +1,69 @@
+{
+  if (folder.getName().equals(DRAWABLE_FOLDER) && context.isEnabled(ICON_LOCATION) && context.getProject().getMinSdk() >= 4) {
+    for (    File file : files) {
+      String name=file.getName();
+      if (name.endsWith(DOT_XML)) {
+      }
+ else       if (endsWith(name,DOT_PNG) || endsWith(name,DOT_JPG) || endsWith(name,DOT_JPEG)|| endsWith(name,DOT_GIF)) {
+        context.report(ICON_LOCATION,Location.create(file),String.format("Found bitmap drawable `res/drawable/%1$s` in " + "densityless folder",file.getName()));
+      }
+    }
+  }
+  if (context.isEnabled(GIF_USAGE)) {
+    for (    File file : files) {
+      String name=file.getName();
+      if (endsWith(name,DOT_GIF)) {
+        context.report(GIF_USAGE,Location.create(file),"Using the `.gif` format for bitmaps is discouraged");
+      }
+    }
+  }
+  if (context.isEnabled(ICON_EXTENSION)) {
+    for (    File file : files) {
+      String path=file.getPath();
+      if (isDrawableFile(path) && !endsWith(path,DOT_XML)) {
+        checkExtension(context,file);
+      }
+    }
+  }
+  if (context.isEnabled(ICON_COLORS)) {
+    for (    File file : files) {
+      String name=file.getName();
+      if (isDrawableFile(name) && !endsWith(name,DOT_XML) && !endsWith(name,DOT_9PNG)) {
+        String baseName=getBaseName(name);
+        boolean isActionBarIcon=isActionBarIcon(context,baseName,file);
+        if (isActionBarIcon || isNotificationIcon(baseName)) {
+          Dimension size=checkColor(context,file,isActionBarIcon);
+          if (size != null && pixelSizes != null) {
+            pixelSizes.put(file,size);
+          }
+        }
+      }
+    }
+  }
+  if (context.isEnabled(ICON_LAUNCHER_SHAPE)) {
+    for (    File file : files) {
+      String name=file.getName();
+      if (isLauncherIcon(getBaseName(name)) && !endsWith(name,DOT_XML) && !endsWith(name,DOT_9PNG)) {
+        checkLauncherShape(context,file);
+      }
+    }
+  }
+  if (context.isEnabled(ICON_EXPECTED_SIZE)) {
+    checkExpectedSizes(context,folder,files);
+  }
+  if (pixelSizes != null || fileSizes != null) {
+    for (    File file : files) {
+      String fileName=file.getName();
+      if (endsWith(fileName,DOT_PNG) || endsWith(fileName,DOT_JPG) || endsWith(fileName,DOT_JPEG)) {
+        if (pixelSizes != null && !endsWith(fileName,DOT_9PNG) && !pixelSizes.containsKey(file)) {
+          Dimension size=getSize(file);
+          pixelSizes.put(file,size);
+        }
+        if (fileSizes != null) {
+          fileSizes.put(file,file.length());
+        }
+      }
+    }
+  }
+  mImageCache=null;
+}

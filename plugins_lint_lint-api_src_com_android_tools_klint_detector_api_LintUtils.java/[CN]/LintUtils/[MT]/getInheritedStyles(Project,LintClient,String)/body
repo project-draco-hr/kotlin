@@ -1,0 +1,54 @@
+{
+  if (!client.supportsProjectResources()) {
+    return null;
+  }
+  AbstractResourceRepository resources=client.getProjectResources(project,true);
+  if (resources == null) {
+    return null;
+  }
+  ResourceUrl style=ResourceUrl.parse(styleUrl);
+  if (style == null || style.framework) {
+    return null;
+  }
+  List<StyleResourceValue> result=null;
+  Queue<ResourceValue> queue=new ArrayDeque<ResourceValue>();
+  queue.add(new ResourceValue(style.type,style.name,false));
+  Set<String> seen=Sets.newHashSet();
+  int count=0;
+  while (count < 30 && !queue.isEmpty()) {
+    ResourceValue front=queue.remove();
+    String name=front.getName();
+    seen.add(name);
+    List<ResourceItem> items=resources.getResourceItem(front.getResourceType(),name);
+    if (items != null) {
+      for (      ResourceItem item : items) {
+        ResourceValue rv=item.getResourceValue(false);
+        if (rv instanceof StyleResourceValue) {
+          StyleResourceValue srv=(StyleResourceValue)rv;
+          if (result == null) {
+            result=Lists.newArrayList();
+          }
+          result.add(srv);
+          String parent=srv.getParentStyle();
+          if (parent != null && !parent.startsWith(ANDROID_PREFIX)) {
+            ResourceUrl p=ResourceUrl.parse(parent);
+            if (p != null && !p.framework && !seen.contains(p.name)) {
+              seen.add(p.name);
+              queue.add(new ResourceValue(ResourceType.STYLE,p.name,false));
+            }
+          }
+          int index=name.lastIndexOf('.');
+          if (index > 0) {
+            String parentName=name.substring(0,index);
+            if (!seen.contains(parentName)) {
+              seen.add(parentName);
+              queue.add(new ResourceValue(ResourceType.STYLE,parentName,false));
+            }
+          }
+        }
+      }
+    }
+    count++;
+  }
+  return result;
+}

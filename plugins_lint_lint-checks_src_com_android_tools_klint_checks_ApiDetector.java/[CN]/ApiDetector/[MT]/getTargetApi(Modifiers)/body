@@ -1,0 +1,43 @@
+{
+  if (modifiers == null) {
+    return -1;
+  }
+  StrictListAccessor<Annotation,Modifiers> annotations=modifiers.astAnnotations();
+  if (annotations == null) {
+    return -1;
+  }
+  for (  Annotation annotation : annotations) {
+    TypeReference t=annotation.astAnnotationTypeReference();
+    String typeName=t.getTypeName();
+    if (typeName.endsWith(TARGET_API)) {
+      StrictListAccessor<AnnotationElement,Annotation> values=annotation.astElements();
+      if (values != null) {
+        for (        AnnotationElement element : values) {
+          AnnotationValue valueNode=element.astValue();
+          if (valueNode == null) {
+            continue;
+          }
+          if (valueNode instanceof IntegralLiteral) {
+            IntegralLiteral literal=(IntegralLiteral)valueNode;
+            return literal.astIntValue();
+          }
+ else           if (valueNode instanceof StringLiteral) {
+            String value=((StringLiteral)valueNode).astValue();
+            return SdkVersionInfo.getApiByBuildCode(value,true);
+          }
+ else           if (valueNode instanceof Select) {
+            Select select=(Select)valueNode;
+            String codename=select.astIdentifier().astValue();
+            return SdkVersionInfo.getApiByBuildCode(codename,true);
+          }
+ else           if (valueNode instanceof VariableReference) {
+            VariableReference reference=(VariableReference)valueNode;
+            String codename=reference.astIdentifier().astValue();
+            return SdkVersionInfo.getApiByBuildCode(codename,true);
+          }
+        }
+      }
+    }
+  }
+  return -1;
+}

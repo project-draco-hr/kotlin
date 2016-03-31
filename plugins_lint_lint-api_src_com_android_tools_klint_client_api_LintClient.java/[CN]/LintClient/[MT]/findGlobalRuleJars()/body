@@ -1,0 +1,39 @@
+{
+  List<File> files=null;
+  try {
+    String androidHome=AndroidLocation.getFolder();
+    File lint=new File(androidHome + File.separator + "lint");
+    if (lint.exists()) {
+      File[] list=lint.listFiles();
+      if (list != null) {
+        for (        File jarFile : list) {
+          if (endsWith(jarFile.getName(),DOT_JAR)) {
+            if (files == null) {
+              files=new ArrayList<File>();
+            }
+            files.add(jarFile);
+          }
+        }
+      }
+    }
+  }
+ catch (  AndroidLocation.AndroidLocationException e) {
+  }
+  String lintClassPath=System.getenv("ANDROID_LINT_JARS");
+  if (lintClassPath != null && !lintClassPath.isEmpty()) {
+    String[] paths=lintClassPath.split(File.pathSeparator);
+    for (    String path : paths) {
+      File jarFile=new File(path);
+      if (jarFile.exists()) {
+        if (files == null) {
+          files=new ArrayList<File>();
+        }
+ else         if (files.contains(jarFile)) {
+          continue;
+        }
+        files.add(jarFile);
+      }
+    }
+  }
+  return files != null ? files : Collections.<File>emptyList();
+}

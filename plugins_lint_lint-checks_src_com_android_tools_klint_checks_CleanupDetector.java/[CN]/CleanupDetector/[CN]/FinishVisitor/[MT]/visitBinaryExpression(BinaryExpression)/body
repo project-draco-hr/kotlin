@@ -1,0 +1,19 @@
+{
+  if (node.astOperator() == BinaryOperator.ASSIGN) {
+    Expression rhs=node.astRight();
+    if (rhs instanceof VariableReference) {
+      ResolvedNode resolved=mContext.resolve(rhs);
+      if (resolved != null && mVariables.contains(resolved)) {
+        ResolvedNode resolvedLhs=mContext.resolve(node.astLeft());
+        if (resolvedLhs instanceof ResolvedVariable) {
+          ResolvedVariable variable=(ResolvedVariable)resolvedLhs;
+          mVariables.add(variable);
+        }
+ else         if (resolvedLhs instanceof ResolvedField) {
+          mEscapes=true;
+        }
+      }
+    }
+  }
+  return super.visitBinaryExpression(node);
+}

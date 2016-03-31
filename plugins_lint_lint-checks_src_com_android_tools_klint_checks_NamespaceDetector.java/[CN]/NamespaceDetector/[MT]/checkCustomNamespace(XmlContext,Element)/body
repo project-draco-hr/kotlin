@@ -1,0 +1,17 @@
+{
+  NamedNodeMap attributes=element.getAttributes();
+  for (int i=0, n=attributes.getLength(); i < n; i++) {
+    Attr attribute=(Attr)attributes.item(i);
+    if (attribute.getName().startsWith(XMLNS_PREFIX)) {
+      String uri=attribute.getValue();
+      if (uri != null && !uri.isEmpty() && uri.startsWith(URI_PREFIX) && !uri.equals(ANDROID_URI)) {
+        if (context.getProject().isGradleProject()) {
+          context.report(RES_AUTO,attribute,context.getValueLocation(attribute),"In Gradle projects, always use `" + AUTO_URI + "` for custom "+ "attributes");
+        }
+ else {
+          context.report(CUSTOM_VIEW,attribute,context.getValueLocation(attribute),"When using a custom namespace attribute in a library project, " + "use the namespace `\"" + AUTO_URI + "\"` instead.");
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  if (context == null) {
+    return NONE;
+  }
+  JavaParser javaParser=context.getClient().getJavaParser(null);
+  if (javaParser == null) {
+    return NONE;
+  }
+  try {
+    JavaContext javaContext=new JavaContext(context.getDriver(),context.getProject(),context.getMainProject(),context.file,javaParser){
+      @Nullable @Override public String getContents(){
+        return "" + "class Test { void test() {\n" + "boolean result=" + value + ";\n}\n}";
+      }
+    }
+;
+    Node node=javaParser.parseJava(javaContext);
+    if (node != null) {
+      final AtomicReference<Expression> reference=new AtomicReference<Expression>();
+      node.accept(new ForwardingAstVisitor(){
+        @Override public boolean visitVariableDefinitionEntry(        VariableDefinitionEntry node){
+          reference.set(node.astInitializer());
+          return true;
+        }
+      }
+);
+      Expression expression=reference.get();
+      if (expression != null) {
+        return parse(annotation,expression);
+      }
+    }
+    return NONE;
+  }
+  finally {
+    javaParser.dispose();
+  }
+}

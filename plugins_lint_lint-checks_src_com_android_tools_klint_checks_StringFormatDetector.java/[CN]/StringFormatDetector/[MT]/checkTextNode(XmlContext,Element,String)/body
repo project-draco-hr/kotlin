@@ -1,0 +1,72 @@
+{
+  String name=null;
+  boolean found=false;
+  boolean foundPlural=false;
+  for (int j=0, m=text.length(); j < m; j++) {
+    char c=text.charAt(j);
+    if (c == '\\') {
+      j++;
+    }
+    if (c == '%') {
+      if (name == null) {
+        name=element.getAttribute(ATTR_NAME);
+      }
+      String formatted=element.getAttribute("formatted");
+      if (!formatted.isEmpty() && !Boolean.parseBoolean(formatted)) {
+        if (!mNotFormatStrings.containsKey(name)) {
+          Handle handle=context.createLocationHandle(element);
+          handle.setClientData(element);
+          mNotFormatStrings.put(name,handle);
+        }
+        return;
+      }
+      Matcher matcher=FORMAT.matcher(text);
+      if (!matcher.find(j)) {
+        if (!mNotFormatStrings.containsKey(name)) {
+          Handle handle=context.createLocationHandle(element);
+          handle.setClientData(element);
+          mNotFormatStrings.put(name,handle);
+        }
+        return;
+      }
+      String conversion=matcher.group(6);
+      int conversionClass=getConversionClass(conversion.charAt(0));
+      if (conversionClass == CONVERSION_CLASS_UNKNOWN || matcher.group(5) != null) {
+        if (mIgnoreStrings == null) {
+          mIgnoreStrings=new HashSet<String>();
+        }
+        mIgnoreStrings.add(name);
+        return;
+      }
+      if (conversionClass == CONVERSION_CLASS_INTEGER && !foundPlural) {
+        for (int k=matcher.end(); k < m; k++) {
+          char nc=text.charAt(k);
+          if (!Character.isWhitespace(nc)) {
+            if (Character.isLetter(nc)) {
+              foundPlural=checkPotentialPlural(context,element,text,k);
+            }
+            break;
+          }
+        }
+      }
+      found=true;
+      j++;
+    }
+  }
+  if (found && name != null) {
+    if (!context.getProject().getReportIssues()) {
+      return;
+    }
+    if (mFormatStrings == null) {
+      mFormatStrings=new HashMap<String,List<Pair<Handle,String>>>();
+    }
+    List<Pair<Handle,String>> list=mFormatStrings.get(name);
+    if (list == null) {
+      list=new ArrayList<Pair<Handle,String>>();
+      mFormatStrings.put(name,list);
+    }
+    Handle handle=context.createLocationHandle(element);
+    handle.setClientData(element);
+    list.add(Pair.of(handle,text));
+  }
+}

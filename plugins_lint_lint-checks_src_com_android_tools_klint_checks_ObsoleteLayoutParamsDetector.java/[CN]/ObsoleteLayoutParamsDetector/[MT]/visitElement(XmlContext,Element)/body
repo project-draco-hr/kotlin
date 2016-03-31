@@ -1,0 +1,24 @@
+{
+  String layout=element.getAttribute(ATTR_LAYOUT);
+  if (layout.startsWith(LAYOUT_RESOURCE_PREFIX)) {
+    layout=layout.substring(LAYOUT_RESOURCE_PREFIX.length());
+    Node parent=element.getParentNode();
+    if (parent.getNodeType() == Node.ELEMENT_NODE) {
+      String tag=parent.getNodeName();
+      if (tag.indexOf('.') == -1 && !tag.equals(VIEW_MERGE)) {
+        if (!context.getProject().getReportIssues()) {
+          return;
+        }
+        if (mIncludes == null) {
+          mIncludes=new HashMap<String,List<Pair<File,String>>>();
+        }
+        List<Pair<File,String>> includes=mIncludes.get(layout);
+        if (includes == null) {
+          includes=new ArrayList<Pair<File,String>>();
+          mIncludes.put(layout,includes);
+        }
+        includes.add(Pair.of(context.file,tag));
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  if (node.astOperand() != null) {
+    String methodName=node.astName().astValue();
+    if (methodName.equals(INFLATE) && node.astArguments().size() >= 1) {
+      boolean insideIf=false;
+      Node p=node.getParent();
+      while (p != null) {
+        if (p instanceof If || p instanceof InlineIfExpression || p instanceof Switch) {
+          insideIf=true;
+          mHaveConditional=true;
+          break;
+        }
+ else         if (p == node) {
+          break;
+        }
+        p=p.getParent();
+      }
+      if (!insideIf) {
+        if (mNodes == null) {
+          mNodes=Lists.newArrayList();
+        }
+        mNodes.add(node);
+      }
+    }
+  }
+  return super.visitMethodInvocation(node);
+}

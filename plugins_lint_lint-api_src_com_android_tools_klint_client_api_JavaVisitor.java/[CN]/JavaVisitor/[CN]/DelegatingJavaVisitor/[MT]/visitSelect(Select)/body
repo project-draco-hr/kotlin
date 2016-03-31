@@ -1,0 +1,41 @@
+{
+  if (mVisitResources) {
+    if (node.astOperand() instanceof Select) {
+      Select select=(Select)node.astOperand();
+      if (select.astOperand() instanceof VariableReference) {
+        VariableReference reference=(VariableReference)select.astOperand();
+        if (reference.astIdentifier().astValue().equals(R_CLASS)) {
+          String type=select.astIdentifier().astValue();
+          String name=node.astIdentifier().astValue();
+          boolean isFramework=false;
+          for (          VisitingDetector v : mResourceFieldDetectors) {
+            JavaScanner detector=v.getJavaScanner();
+            detector.visitResourceReference(mContext,v.getVisitor(),node,type,name,isFramework);
+          }
+          return super.visitSelect(node);
+        }
+      }
+    }
+    if (node.astIdentifier().astValue().equals(R_CLASS)) {
+      Node parent=node.getParent();
+      if (parent instanceof Select) {
+        Node grandParent=parent.getParent();
+        if (grandParent instanceof Select) {
+          Select select=(Select)grandParent;
+          String name=select.astIdentifier().astValue();
+          Expression typeOperand=select.astOperand();
+          if (typeOperand instanceof Select) {
+            Select typeSelect=(Select)typeOperand;
+            String type=typeSelect.astIdentifier().astValue();
+            boolean isFramework=node.astOperand().toString().equals(ANDROID_PKG);
+            for (            VisitingDetector v : mResourceFieldDetectors) {
+              JavaScanner detector=v.getJavaScanner();
+              detector.visitResourceReference(mContext,v.getVisitor(),node,type,name,isFramework);
+            }
+          }
+        }
+      }
+    }
+  }
+  return super.visitSelect(node);
+}

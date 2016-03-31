@@ -1,0 +1,23 @@
+{
+  List<ResourceType> actual=getResourceTypes(context,argument);
+  if (actual == null && (!isNumber(argument) || isZero(argument) || isMinusOne(argument))) {
+    return;
+  }
+ else   if (actual != null && (expectedType == null || actual.contains(expectedType) || expectedType == DRAWABLE && (actual.contains(COLOR) || actual.contains(MIPMAP)))) {
+    return;
+  }
+  String message;
+  if (actual != null && actual.size() == 1 && actual.get(0) == COLOR_INT_MARKER_TYPE) {
+    message="Expected a color resource id (`R.color.`) but received an RGB integer";
+  }
+ else   if (expectedType == COLOR_INT_MARKER_TYPE) {
+    message=String.format("Should pass resolved color instead of resource id here: " + "`getResources().getColor(%1$s)`",argument.toString());
+  }
+ else   if (expectedType != null) {
+    message=String.format("Expected resource of type %1$s",expectedType.getName());
+  }
+ else {
+    message="Expected resource identifier (`R`.type.`name`)";
+  }
+  context.report(RESOURCE_TYPE,argument,context.getLocation(argument),message);
+}

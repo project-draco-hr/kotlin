@@ -1,0 +1,31 @@
+{
+  ResolvedNode resolved=context.resolve(node);
+  if (!(resolved instanceof ResolvedMethod)) {
+    return;
+  }
+  ResolvedMethod method=(ResolvedMethod)resolved;
+  if (!method.getContainingClass().matches(LOG_CLS)) {
+    return;
+  }
+  String name=node.astName().astValue();
+  boolean withinConditional=IS_LOGGABLE.equals(name) || checkWithinConditional(context,node.getParent(),node);
+  if (("i".equals(name) || "d".equals(name) || "v".equals(name)|| PRINTLN.equals(name)) && !withinConditional && performsWork(context,node)&& context.isEnabled(CONDITIONAL)) {
+    String message=String.format("The log call Log.%1$s(...) should be " + "conditional: surround with `if (Log.isLoggable(...))` or " + "`if (BuildConfig.DEBUG) { ... }`",node.astName().toString());
+    context.report(CONDITIONAL,node,context.getLocation(node),message);
+  }
+  if (context.isEnabled(LONG_TAG)) {
+    int tagArgumentIndex=PRINTLN.equals(name) ? 1 : 0;
+    if (method.getArgumentCount() > tagArgumentIndex && method.getArgumentType(tagArgumentIndex).matchesSignature(TYPE_STRING) && node.astArguments().size() == method.getArgumentCount()) {
+      Iterator<Expression> iterator=node.astArguments().iterator();
+      if (tagArgumentIndex == 1) {
+        iterator.next();
+      }
+      Node argument=iterator.next();
+      String tag=ConstantEvaluator.evaluateString(context,argument,true);
+      if (tag != null && tag.length() > 23) {
+        String message=String.format("The logging tag can be at most 23 characters, was %1$d (%2$s)",tag.length(),tag);
+        context.report(LONG_TAG,node,context.getLocation(node),message);
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  String description=node.astIdentifier().astValue();
+  boolean isIfRoom=description.equals("SHOW_AS_ACTION_IF_ROOM");
+  boolean isAlways=description.equals("SHOW_AS_ACTION_ALWAYS");
+  if ((isIfRoom || isAlways) && node.astOperand().toString().equals("MenuItem")) {
+    if (isAlways) {
+      if (mContext.getDriver().isSuppressed(mContext,ISSUE,node)) {
+        return super.visitSelect(node);
+      }
+      if (mAlwaysFields == null) {
+        mAlwaysFields=new ArrayList<Location>();
+      }
+      mAlwaysFields.add(mContext.getLocation(node));
+    }
+ else {
+      mHasIfRoomRefs=true;
+    }
+  }
+  return super.visitSelect(node);
+}

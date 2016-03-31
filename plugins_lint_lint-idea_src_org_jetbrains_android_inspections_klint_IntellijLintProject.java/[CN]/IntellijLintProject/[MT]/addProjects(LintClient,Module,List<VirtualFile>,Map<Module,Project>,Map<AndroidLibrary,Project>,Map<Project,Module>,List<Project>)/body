@@ -1,0 +1,35 @@
+{
+  if (moduleMap.containsKey(module)) {
+    return;
+  }
+  LintModuleProject project=createModuleProject(client,module);
+  if (project == null) {
+    List<AndroidFacet> dependentFacets=AndroidUtils.getAllAndroidDependencies(module,false);
+    for (    AndroidFacet dependentFacet : dependentFacets) {
+      addProjects(client,dependentFacet.getModule(),files,moduleMap,libraryMap,projectMap,projects);
+    }
+    return;
+  }
+  projects.add(project);
+  moduleMap.put(module,project);
+  projectMap.put(project,module);
+  if (processFileFilter(module,files,project)) {
+    return;
+  }
+  List<Project> dependencies=Lists.newArrayList();
+  List<AndroidFacet> dependentFacets=AndroidUtils.getAllAndroidDependencies(module,true);
+  for (  AndroidFacet dependentFacet : dependentFacets) {
+    Project p=moduleMap.get(dependentFacet.getModule());
+    if (p != null) {
+      dependencies.add(p);
+    }
+ else {
+      addProjects(client,dependentFacet.getModule(),files,moduleMap,libraryMap,projectMap,dependencies);
+    }
+  }
+  AndroidFacet facet=AndroidFacet.getInstance(module);
+  if (facet != null && facet.isGradleProject()) {
+    addGradleLibraryProjects(client,files,libraryMap,projects,facet,project,projectMap,dependencies);
+  }
+  project.setDirectLibraries(dependencies);
+}

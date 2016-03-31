@@ -1,0 +1,86 @@
+{
+  Element element=attribute.getOwnerElement();
+  if (element.hasAttribute(PRODUCT)) {
+    return;
+  }
+  String tag=element.getTagName();
+  String typeString=tag;
+  if (tag.equals(TAG_ITEM)) {
+    typeString=element.getAttribute(ATTR_TYPE);
+    if (typeString == null || typeString.isEmpty()) {
+      if (element.getParentNode().getNodeName().equals(ResourceType.STYLE.getName()) && isFirstElementChild(element)) {
+        checkUniqueNames(context,(Element)element.getParentNode());
+      }
+      return;
+    }
+  }
+  ResourceType type=ResourceType.getEnum(typeString);
+  if (type == null) {
+    return;
+  }
+  if (type == ResourceType.ATTR && element.getParentNode().getNodeName().equals(ResourceType.DECLARE_STYLEABLE.getName())) {
+    if (isFirstElementChild(element)) {
+      checkUniqueNames(context,(Element)element.getParentNode());
+    }
+    return;
+  }
+  NodeList children=element.getChildNodes();
+  int childCount=children.getLength();
+  for (int i=0; i < childCount; i++) {
+    Node child=children.item(i);
+    if (child.getNodeType() == Node.TEXT_NODE) {
+      String text=child.getNodeValue();
+      for (int j=0, length=text.length(); j < length; j++) {
+        char c=text.charAt(j);
+        if (c == '@') {
+          if (!text.regionMatches(false,j + 1,typeString,0,typeString.length()) && context.isEnabled(TYPE_MISMATCH)) {
+            ResourceUrl url=ResourceUrl.parse(text.trim());
+            if (url != null && url.type != type && !(type == ResourceType.DRAWABLE && (url.type == ResourceType.COLOR || url.type == ResourceType.MIPMAP))) {
+              String message="Unexpected resource reference type; " + "expected value of type `@" + type + "/`";
+              context.report(TYPE_MISMATCH,element,context.getLocation(child),message);
+            }
+          }
+          break;
+        }
+ else         if (!Character.isWhitespace(c)) {
+          break;
+        }
+      }
+      break;
+    }
+  }
+  Set<String> names=mTypeMap.get(type);
+  if (names == null) {
+    names=Sets.newHashSetWithExpectedSize(40);
+    mTypeMap.put(type,names);
+  }
+  String name=attribute.getValue();
+  String originalName=name;
+  name=getResourceFieldName(name);
+  if (names.contains(name)) {
+    String message=String.format("`%1$s` has already been defined in this folder",name);
+    if (!name.equals(originalName)) {
+      message+=" (`" + name + "` is equivalent to `"+ originalName+ "`)";
+    }
+    Location location=context.getLocation(attribute);
+    List<Pair<String,Handle>> list=mLocations.get(type);
+    for (    Pair<String,Handle> pair : list) {
+      if (name.equals(pair.getFirst())) {
+        Location secondary=pair.getSecond().resolve();
+        secondary.setMessage("Previously defined here");
+        location.setSecondary(secondary);
+      }
+    }
+    context.report(ISSUE,attribute,location,message);
+  }
+ else {
+    names.add(name);
+    List<Pair<String,Handle>> list=mLocations.get(type);
+    if (list == null) {
+      list=Lists.newArrayList();
+      mLocations.put(type,list);
+    }
+    Location.Handle handle=context.createLocationHandle(attribute);
+    list.add(Pair.of(name,handle));
+  }
+}

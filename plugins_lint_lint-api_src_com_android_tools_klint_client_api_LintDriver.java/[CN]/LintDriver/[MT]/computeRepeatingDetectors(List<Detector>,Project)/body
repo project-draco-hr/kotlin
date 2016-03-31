@@ -1,0 +1,55 @@
+{
+  mCurrentFolderType=null;
+  mCurrentVisitor=null;
+  mCurrentXmlDetectors=null;
+  mCurrentBinaryDetectors=null;
+  List<Issue> issues=mRegistry.getIssues();
+  Multimap<Class<? extends Detector>,Issue> issueMap=ArrayListMultimap.create(issues.size(),3);
+  for (  Issue issue : issues) {
+    issueMap.put(issue.getImplementation().getDetectorClass(),issue);
+  }
+  Map<Class<? extends Detector>,EnumSet<Scope>> detectorToScope=new HashMap<Class<? extends Detector>,EnumSet<Scope>>();
+  Map<Scope,List<Detector>> scopeToDetectors=new EnumMap<Scope,List<Detector>>(Scope.class);
+  List<Detector> detectorList=new ArrayList<Detector>();
+  Configuration configuration=project.getConfiguration();
+  for (  Detector detector : detectors) {
+    Class<? extends Detector> detectorClass=detector.getClass();
+    Collection<Issue> detectorIssues=issueMap.get(detectorClass);
+    if (detectorIssues != null) {
+      boolean add=false;
+      for (      Issue issue : detectorIssues) {
+        if (!configuration.isEnabled(issue)) {
+          continue;
+        }
+        add=true;
+        EnumSet<Scope> s=detectorToScope.get(detectorClass);
+        EnumSet<Scope> issueScope=issue.getImplementation().getScope();
+        if (s == null) {
+          detectorToScope.put(detectorClass,issueScope);
+        }
+ else         if (!s.containsAll(issueScope)) {
+          EnumSet<Scope> union=EnumSet.copyOf(s);
+          union.addAll(issueScope);
+          detectorToScope.put(detectorClass,union);
+        }
+      }
+      if (add) {
+        detectorList.add(detector);
+        EnumSet<Scope> union=detectorToScope.get(detector.getClass());
+        for (        Scope s : union) {
+          List<Detector> list=scopeToDetectors.get(s);
+          if (list == null) {
+            list=new ArrayList<Detector>();
+            scopeToDetectors.put(s,list);
+          }
+          list.add(detector);
+        }
+      }
+    }
+  }
+  mApplicableDetectors=detectorList;
+  mScopeDetectors=scopeToDetectors;
+  mRepeatingDetectors=null;
+  mRepeatScope=null;
+  validateScopeList();
+}

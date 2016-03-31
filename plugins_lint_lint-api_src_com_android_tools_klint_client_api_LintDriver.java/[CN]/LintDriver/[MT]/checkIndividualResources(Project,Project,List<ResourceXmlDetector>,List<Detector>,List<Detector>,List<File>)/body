@@ -1,0 +1,43 @@
+{
+  for (  File file : files) {
+    if (file.isDirectory()) {
+      ResourceFolderType type=ResourceFolderType.getFolderType(file.getName());
+      if (type != null && new File(file.getParentFile(),RES_FOLDER).exists()) {
+        checkResourceFolder(project,main,file,type,xmlDetectors,dirChecks,binaryChecks);
+      }
+ else       if (file.getName().equals(RES_FOLDER)) {
+        checkResFolder(project,main,file,xmlDetectors,dirChecks,binaryChecks);
+      }
+ else {
+        mClient.log(null,"Unexpected folder %1$s; should be project, " + "\"res\" folder or resource folder",file.getPath());
+      }
+    }
+ else     if (file.isFile() && LintUtils.isXmlFile(file)) {
+      String folderName=file.getParentFile().getName();
+      ResourceFolderType type=ResourceFolderType.getFolderType(folderName);
+      if (type != null) {
+        ResourceVisitor visitor=getVisitor(type,xmlDetectors,binaryChecks);
+        if (visitor != null) {
+          XmlContext context=new XmlContext(this,project,main,file,type,visitor.getParser());
+          fireEvent(EventType.SCANNING_FILE,context);
+          visitor.visitFile(context,file);
+        }
+      }
+    }
+ else     if (binaryChecks != null && file.isFile() && LintUtils.isBitmapFile(file)) {
+      String folderName=file.getParentFile().getName();
+      ResourceFolderType type=ResourceFolderType.getFolderType(folderName);
+      if (type != null) {
+        ResourceVisitor visitor=getVisitor(type,xmlDetectors,binaryChecks);
+        if (visitor != null) {
+          ResourceContext context=new ResourceContext(this,project,main,file,type);
+          fireEvent(EventType.SCANNING_FILE,context);
+          visitor.visitBinaryResource(context);
+          if (mCanceled) {
+            return;
+          }
+        }
+      }
+    }
+  }
+}

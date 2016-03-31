@@ -1,0 +1,48 @@
+{
+  ResolvedVariable boundVariable=getVariable(context,node);
+  if (boundVariable == null) {
+    return;
+  }
+  Node method=JavaContext.findSurroundingMethod(node);
+  if (method == null) {
+    return;
+  }
+  FinishVisitor visitor=new FinishVisitor(context,boundVariable){
+    @Override protected boolean isCleanupCall(    @NonNull MethodInvocation call){
+      String methodName=call.astName().astValue();
+      if (!recycleName.equals(methodName)) {
+        return false;
+      }
+      ResolvedNode resolved=mContext.resolve(call);
+      if (resolved instanceof ResolvedMethod) {
+        ResolvedClass containingClass=((ResolvedMethod)resolved).getContainingClass();
+        if (containingClass.isSubclassOf(recycleType,false)) {
+          Expression operand=call.astOperand();
+          if (operand != null) {
+            resolved=mContext.resolve(operand);
+            if (resolved != null && mVariables.contains(resolved)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+  }
+;
+  method.accept(visitor);
+  if (visitor.isCleanedUp() || visitor.variableEscapes()) {
+    return;
+  }
+  String className=recycleType.substring(recycleType.lastIndexOf('.') + 1);
+  String message;
+  if (RECYCLE.equals(recycleName)) {
+    message=String.format("This `%1$s` should be recycled after use with `#recycle()`",className);
+  }
+ else {
+    message=String.format("This `%1$s` should be freed up after use with `#%2$s()`",className,recycleName);
+  }
+  Node locationNode=node instanceof MethodInvocation ? ((MethodInvocation)node).astName() : node;
+  Location location=context.getLocation(locationNode);
+  context.report(RECYCLE_RESOURCE,node,location,message);
+}

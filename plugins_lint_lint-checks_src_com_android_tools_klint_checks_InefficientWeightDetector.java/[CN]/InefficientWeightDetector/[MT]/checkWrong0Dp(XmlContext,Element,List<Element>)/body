@@ -1,0 +1,49 @@
+{
+  boolean isVertical=false;
+  String orientation=element.getAttributeNS(ANDROID_URI,ATTR_ORIENTATION);
+  if (VALUE_VERTICAL.equals(orientation)) {
+    isVertical=true;
+  }
+  for (  Element child : children) {
+    String tagName=child.getTagName();
+    if (tagName.equals(VIEW)) {
+      return;
+    }
+    if (tagName.indexOf('.') != -1 || tagName.equals(VIEW_TAG)) {
+      return;
+    }
+    boolean hasWeight=child.hasAttributeNS(ANDROID_URI,ATTR_LAYOUT_WEIGHT);
+    Attr widthNode=child.getAttributeNodeNS(ANDROID_URI,ATTR_LAYOUT_WIDTH);
+    Attr heightNode=child.getAttributeNodeNS(ANDROID_URI,ATTR_LAYOUT_HEIGHT);
+    boolean noWidth=false;
+    boolean noHeight=false;
+    if (widthNode != null && widthNode.getValue().startsWith("0")) {
+      noWidth=true;
+    }
+    if (heightNode != null && heightNode.getValue().startsWith("0")) {
+      noHeight=true;
+    }
+ else     if (!noWidth) {
+      return;
+    }
+    if (noWidth && noHeight) {
+      return;
+    }
+    if (noWidth) {
+      if (!hasWeight) {
+        context.report(WRONG_0DP,widthNode,context.getLocation(widthNode),"Suspicious size: this will make the view invisible, should be " + "used with `layout_weight`");
+      }
+ else       if (isVertical) {
+        context.report(WRONG_0DP,widthNode,context.getLocation(widthNode),"Suspicious size: this will make the view invisible, probably " + "intended for `layout_height`");
+      }
+    }
+ else {
+      if (!hasWeight) {
+        context.report(WRONG_0DP,widthNode,context.getLocation(heightNode),"Suspicious size: this will make the view invisible, should be " + "used with `layout_weight`");
+      }
+ else       if (!isVertical) {
+        context.report(WRONG_0DP,widthNode,context.getLocation(heightNode),"Suspicious size: this will make the view invisible, probably " + "intended for `layout_width`");
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  Node node=findSurroundingMethod(methodCall);
+  if (node != null) {
+    ResolvedNode resolved=context.resolve(node);
+    if (resolved instanceof ResolvedMethod) {
+      ResolvedMethod method=(ResolvedMethod)resolved;
+      ResolvedClass cls=method.getContainingClass();
+      while (method != null) {
+        for (        ResolvedAnnotation annotation : method.getAnnotations()) {
+          String name=annotation.getSignature();
+          if (name.startsWith(SUPPORT_ANNOTATIONS_PREFIX) && name.endsWith(THREAD_SUFFIX)) {
+            return name;
+          }
+        }
+        method=method.getSuperMethod();
+      }
+      while (cls != null) {
+        for (        ResolvedAnnotation annotation : cls.getAnnotations()) {
+          String name=annotation.getSignature();
+          if (name.startsWith(SUPPORT_ANNOTATIONS_PREFIX) && name.endsWith(THREAD_SUFFIX)) {
+            return name;
+          }
+        }
+        cls=cls.getSuperClass();
+      }
+    }
+  }
+  return null;
+}

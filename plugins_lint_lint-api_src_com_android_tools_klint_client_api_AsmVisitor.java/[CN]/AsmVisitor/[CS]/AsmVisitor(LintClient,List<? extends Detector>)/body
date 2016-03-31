@@ -1,0 +1,53 @@
+{
+  mAllDetectors=classDetectors;
+  for (  Detector detector : classDetectors) {
+    Detector.ClassScanner scanner=(Detector.ClassScanner)detector;
+    boolean checkFullClass=true;
+    Collection<String> names=scanner.getApplicableCallNames();
+    if (names != null) {
+      checkFullClass=false;
+      for (      String element : names) {
+        List<Detector.ClassScanner> list=mMethodNameToChecks.get(element);
+        if (list == null) {
+          list=new ArrayList<Detector.ClassScanner>();
+          mMethodNameToChecks.put(element,list);
+        }
+        list.add(scanner);
+      }
+    }
+    Collection<String> owners=scanner.getApplicableCallOwners();
+    if (owners != null) {
+      checkFullClass=false;
+      for (      String element : owners) {
+        List<Detector.ClassScanner> list=mMethodOwnerToChecks.get(element);
+        if (list == null) {
+          list=new ArrayList<Detector.ClassScanner>();
+          mMethodOwnerToChecks.put(element,list);
+        }
+        list.add(scanner);
+      }
+    }
+    int[] types=scanner.getApplicableAsmNodeTypes();
+    if (types != null) {
+      checkFullClass=false;
+      for (      int type : types) {
+        if (type < 0 || type >= TYPE_COUNT) {
+          client.log(null,"Out of range node type %1$d from detector %2$s",type,scanner);
+          continue;
+        }
+        if (mNodeTypeDetectors == null) {
+          mNodeTypeDetectors=new List[TYPE_COUNT];
+        }
+        List<ClassScanner> checks=mNodeTypeDetectors[type];
+        if (checks == null) {
+          checks=new ArrayList<ClassScanner>();
+          mNodeTypeDetectors[type]=checks;
+        }
+        checks.add(scanner);
+      }
+    }
+    if (checkFullClass) {
+      mFullClassChecks.add(detector);
+    }
+  }
+}

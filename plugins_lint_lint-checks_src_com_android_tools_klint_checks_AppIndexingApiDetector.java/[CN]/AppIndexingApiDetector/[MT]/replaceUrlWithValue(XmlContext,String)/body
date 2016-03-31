@@ -1,0 +1,24 @@
+{
+  Project project=context.getProject();
+  LintClient client=context.getClient();
+  if (!client.supportsProjectResources()) {
+    return str;
+  }
+  ResourceUrl style=ResourceUrl.parse(str);
+  if (style == null || style.type != ResourceType.STRING || style.framework) {
+    return str;
+  }
+  AbstractResourceRepository resources=client.getProjectResources(project,true);
+  if (resources == null) {
+    return str;
+  }
+  List<ResourceItem> items=resources.getResourceItem(ResourceType.STRING,style.name);
+  if (items == null || items.isEmpty()) {
+    return str;
+  }
+  ResourceValue resourceValue=items.get(0).getResourceValue(false);
+  if (resourceValue == null) {
+    return str;
+  }
+  return resourceValue.getValue() == null ? str : resourceValue.getValue();
+}

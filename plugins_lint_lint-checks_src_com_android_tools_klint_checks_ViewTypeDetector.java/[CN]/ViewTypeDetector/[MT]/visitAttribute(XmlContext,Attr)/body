@@ -1,0 +1,35 @@
+{
+  String view=attribute.getOwnerElement().getTagName();
+  String value=attribute.getValue();
+  String id=null;
+  if (value.startsWith(ID_PREFIX)) {
+    id=value.substring(ID_PREFIX.length());
+  }
+ else   if (value.startsWith(NEW_ID_PREFIX)) {
+    id=value.substring(NEW_ID_PREFIX.length());
+  }
+  if (id != null) {
+    if (view.equals(VIEW_TAG)) {
+      view=attribute.getOwnerElement().getAttribute(ATTR_CLASS);
+    }
+    Object existing=mIdToViewTag.get(id);
+    if (existing == null) {
+      mIdToViewTag.put(id,view);
+    }
+ else     if (existing instanceof String) {
+      String existingString=(String)existing;
+      if (!existingString.equals(view)) {
+        List<String> list=new ArrayList<String>(2);
+        list.add((String)existing);
+        list.add(view);
+        mIdToViewTag.put(id,list);
+      }
+    }
+ else     if (existing instanceof List<?>) {
+      @SuppressWarnings("unchecked") List<String> list=(List<String>)existing;
+      if (!list.contains(view)) {
+        list.add(view);
+      }
+    }
+  }
+}

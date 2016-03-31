@@ -1,0 +1,33 @@
+{
+  if (mContainsCleanup) {
+    return true;
+  }
+  super.visitMethodInvocation(call);
+  if (!mEscapes) {
+    for (    Expression expression : call.astArguments()) {
+      if (expression instanceof VariableReference) {
+        ResolvedNode resolved=mContext.resolve(expression);
+        if (resolved != null && mVariables.contains(resolved)) {
+          mEscapes=true;
+          if (OBTAIN.equals(call.astName().astValue())) {
+            ResolvedNode r=mContext.resolve(call);
+            if (r instanceof ResolvedMethod) {
+              ResolvedMethod method=(ResolvedMethod)r;
+              ResolvedClass cls=method.getContainingClass();
+              if (cls.matches(MOTION_EVENT_CLS)) {
+                mEscapes=false;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  if (isCleanupCall(call)) {
+    mContainsCleanup=true;
+    return true;
+  }
+ else {
+    return false;
+  }
+}

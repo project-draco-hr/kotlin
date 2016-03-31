@@ -1,0 +1,35 @@
+{
+  int min=Integer.MAX_VALUE;
+  Integer i=mMethods.get(methodSignature);
+  if (i != null) {
+    min=i;
+    if (methodSignature.startsWith(CONSTRUCTOR_NAME)) {
+      return i;
+    }
+  }
+  for (  Pair<String,Integer> superClassPair : mSuperClasses) {
+    ApiClass superClass=info.getClass(superClassPair.getFirst());
+    if (superClass != null) {
+      i=superClass.getMethod(methodSignature,info);
+      if (i != null) {
+        int tmp=superClassPair.getSecond() > i ? superClassPair.getSecond() : i;
+        if (tmp < min) {
+          min=tmp;
+        }
+      }
+    }
+  }
+  for (  Pair<String,Integer> interfacePair : mInterfaces) {
+    ApiClass superClass=info.getClass(interfacePair.getFirst());
+    if (superClass != null) {
+      i=superClass.getMethod(methodSignature,info);
+      if (i != null) {
+        int tmp=interfacePair.getSecond() > i ? interfacePair.getSecond() : i;
+        if (tmp < min) {
+          min=tmp;
+        }
+      }
+    }
+  }
+  return min;
+}

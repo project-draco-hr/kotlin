@@ -1,0 +1,69 @@
+{
+  super.visitTryStatement(statement);
+  PsiResourceList resourceList=statement.getResourceList();
+  if (resourceList != null) {
+    int api=19;
+    int minSdk=getMinSdk(myContext);
+    if (isSuppressed(api,statement,minSdk)) {
+      return;
+    }
+    Location location=IntellijLintUtils.getLocation(myContext.file,resourceList);
+    String message=String.format("Try-with-resources requires API level %1$d (current min is %2$d)",api,minSdk);
+    myContext.report(UNSUPPORTED,location,message);
+  }
+  for (  PsiParameter parameter : statement.getCatchBlockParameters()) {
+    PsiTypeElement typeElement=parameter.getTypeElement();
+    if (typeElement != null) {
+      PsiType type=typeElement.getType();
+      PsiClass resolved=null;
+      PsiElement reference=parameter;
+      if (type instanceof PsiDisjunctionType) {
+        type=((PsiDisjunctionType)type).getLeastUpperBound();
+        if (type instanceof PsiClassType) {
+          resolved=((PsiClassType)type).resolve();
+        }
+      }
+ else       if (type instanceof PsiClassReferenceType) {
+        PsiClassReferenceType referenceType=(PsiClassReferenceType)type;
+        resolved=referenceType.resolve();
+        reference=referenceType.getReference().getElement();
+      }
+ else       if (type instanceof PsiClassType) {
+        resolved=((PsiClassType)type).resolve();
+      }
+      if (resolved != null) {
+        String signature=IntellijLintUtils.getInternalName(resolved);
+        if (signature == null) {
+          continue;
+        }
+        int api=mApiDatabase.getClassVersion(signature);
+        if (api == -1) {
+          continue;
+        }
+        int minSdk=getMinSdk(myContext);
+        if (api <= minSdk) {
+          continue;
+        }
+        if (mySeenTargetApi) {
+          int target=getTargetApi(statement,myFile);
+          if (target != -1) {
+            if (api <= target) {
+              continue;
+            }
+          }
+        }
+        if (mySeenSuppress && IntellijLintUtils.isSuppressed(statement,myFile,UNSUPPORTED)) {
+          continue;
+        }
+        Location location;
+        location=IntellijLintUtils.getLocation(myContext.file,reference);
+        String fqcn=resolved.getName();
+        String message=String.format("Class requires API level %1$d (current min is %2$d): %3$s",api,minSdk,fqcn);
+        if (api == 19 && fqcn.equals("ReflectiveOperationException")) {
+          message=String.format("Multi-catch with these reflection exceptions requires API level 19 (current min is %2$d) " + "because they get compiled to the common but new super type `ReflectiveOperationException`. " + "As a workaround either create individual catch statements, or catch `Exception`.",api,minSdk);
+        }
+        myContext.report(UNSUPPORTED,location,message);
+      }
+    }
+  }
+}

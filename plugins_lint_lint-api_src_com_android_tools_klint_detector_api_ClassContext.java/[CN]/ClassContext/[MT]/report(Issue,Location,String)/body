@@ -1,0 +1,28 @@
+{
+  if (mDriver.isSuppressed(issue,mClassNode)) {
+    return;
+  }
+  ClassNode curr=mClassNode;
+  while (curr != null) {
+    ClassNode prev=curr;
+    curr=mDriver.getOuterClassNode(curr);
+    if (curr != null) {
+      if (prev.outerMethod != null) {
+        @SuppressWarnings("rawtypes") List methods=curr.methods;
+        for (        Object m : methods) {
+          MethodNode method=(MethodNode)m;
+          if (method.name.equals(prev.outerMethod) && method.desc.equals(prev.outerMethodDesc)) {
+            if (method != null && mDriver.isSuppressed(issue,mClassNode,method,null)) {
+              return;
+            }
+            break;
+          }
+        }
+      }
+      if (mDriver.isSuppressed(issue,curr)) {
+        return;
+      }
+    }
+  }
+  super.report(issue,location,message);
+}

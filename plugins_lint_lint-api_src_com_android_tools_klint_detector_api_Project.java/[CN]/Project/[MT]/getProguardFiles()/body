@@ -1,0 +1,32 @@
+{
+  if (mProguardFiles == null) {
+    List<File> files=new ArrayList<File>();
+    if (mProguardPath != null) {
+      Splitter splitter=Splitter.on(CharMatcher.anyOf(":;"));
+      for (      String path : splitter.split(mProguardPath)) {
+        if (path.contains("${")) {
+          continue;
+        }
+        File file=new File(path);
+        if (!file.isAbsolute()) {
+          file=new File(getDir(),path);
+        }
+        if (file.exists()) {
+          files.add(file);
+        }
+      }
+    }
+    if (files.isEmpty()) {
+      File file=new File(getDir(),OLD_PROGUARD_FILE);
+      if (file.exists()) {
+        files.add(file);
+      }
+      file=new File(getDir(),FN_PROJECT_PROGUARD_FILE);
+      if (file.exists()) {
+        files.add(file);
+      }
+    }
+    mProguardFiles=files;
+  }
+  return mProguardFiles;
+}

@@ -1,0 +1,58 @@
+{
+  Object nativeNode=node.getNativeNode();
+  if (nativeNode != null && nativeNode.getClass().getName().equals("org.eclipse.jdt.internal.compiler.ast.TryStatement")) {
+    boolean isTryWithResources=false;
+    try {
+      Field field=nativeNode.getClass().getDeclaredField("resources");
+      Object value=field.get(nativeNode);
+      if (value instanceof Object[]) {
+        Object[] resources=(Object[])value;
+        isTryWithResources=resources.length > 0;
+      }
+    }
+ catch (    NoSuchFieldException e) {
+    }
+catch (    IllegalAccessException e) {
+    }
+    if (isTryWithResources) {
+      int minSdk=getMinSdk(mContext);
+      int api=19;
+      if (api > minSdk && api > getLocalMinSdk(node)) {
+        Location location=mContext.getLocation(node);
+        String message=String.format("Try-with-resources requires " + "API level %1$d (current min is %2$d)",api,minSdk);
+        LintDriver driver=mContext.getDriver();
+        if (!driver.isSuppressed(mContext,UNSUPPORTED,node)) {
+          mContext.report(UNSUPPORTED,location,message);
+        }
+      }
+    }
+ else {
+      for (      Catch c : node.astCatches()) {
+        VariableDefinition variableDefinition=c.astExceptionDeclaration();
+        TypeReference typeReference=variableDefinition.astTypeReference();
+        String fqcn=null;
+        JavaParser.ResolvedNode resolved=mContext.resolve(typeReference);
+        if (resolved != null) {
+          fqcn=resolved.getSignature();
+        }
+ else         if (typeReference.getTypeName().equals("ReflectiveOperationException")) {
+          fqcn="java.lang.ReflectiveOperationException";
+        }
+        if (fqcn != null) {
+          String owner=getInternalName(fqcn);
+          int api=mApiDatabase.getClassVersion(owner);
+          int minSdk=getMinSdk(mContext);
+          if (api > minSdk && api > getLocalMinSdk(typeReference)) {
+            Location location=mContext.getLocation(typeReference);
+            String message=String.format("Class requires API level %1$d (current min is %2$d): `%3$s`",api,minSdk,fqcn);
+            LintDriver driver=mContext.getDriver();
+            if (!driver.isSuppressed(mContext,UNSUPPORTED,typeReference)) {
+              mContext.report(UNSUPPORTED,location,message);
+            }
+          }
+        }
+      }
+    }
+  }
+  return super.visitTry(node);
+}

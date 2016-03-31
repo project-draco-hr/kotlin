@@ -1,0 +1,61 @@
+{
+  if ("com.android.support".equals(dependency.getGroupId())) {
+    checkSupportLibraries(context,dependency,cookie);
+    if (mMinSdkVersion >= 14 && "appcompat-v7".equals(dependency.getArtifactId()) && mCompileSdkVersion >= 1 && mCompileSdkVersion < 21) {
+      report(context,cookie,DEPENDENCY,"Using the appcompat library when minSdkVersion >= 14 and " + "compileSdkVersion < 21 is not necessary");
+    }
+    return;
+  }
+ else   if ("com.google.android.gms".equals(dependency.getGroupId()) && dependency.getArtifactId() != null) {
+    if ("5.2.08".equals(dependency.getFullRevision()) && context.isEnabled(COMPATIBILITY)) {
+      String version="6.1.11";
+      File sdkHome=context.getClient().getSdkHome();
+      File repository=SdkMavenRepository.GOOGLE.getRepositoryLocation(sdkHome,true);
+      if (repository != null) {
+        GradleCoordinate max=SdkMavenRepository.getHighestInstalledVersion(dependency.getGroupId(),dependency.getArtifactId(),repository,null,false);
+        if (max != null) {
+          if (COMPARE_PLUS_HIGHER.compare(dependency,max) < 0) {
+            version=max.getFullRevision();
+          }
+        }
+      }
+      String message=String.format("Version `5.2.08` should not be used; the app " + "can not be published with this version. Use version `%1$s` " + "instead.",version);
+      report(context,cookie,COMPATIBILITY,message);
+    }
+    checkPlayServices(context,dependency,cookie);
+    return;
+  }
+  PreciseRevision version=null;
+  Issue issue=DEPENDENCY;
+  if ("com.android.tools.build".equals(dependency.getGroupId()) && "gradle".equals(dependency.getArtifactId())) {
+    try {
+      PreciseRevision v=PreciseRevision.parseRevision(GRADLE_PLUGIN_RECOMMENDED_VERSION);
+      if (!v.isPreview()) {
+        version=getNewerRevision(dependency,v);
+      }
+    }
+ catch (    NumberFormatException e) {
+      context.log(e,null);
+    }
+  }
+ else   if ("com.google.guava".equals(dependency.getGroupId()) && "guava".equals(dependency.getArtifactId())) {
+    version=getNewerRevision(dependency,new PreciseRevision(18,0));
+  }
+ else   if ("com.google.code.gson".equals(dependency.getGroupId()) && "gson".equals(dependency.getArtifactId())) {
+    version=getNewerRevision(dependency,new PreciseRevision(2,3));
+  }
+ else   if ("org.apache.httpcomponents".equals(dependency.getGroupId()) && "httpclient".equals(dependency.getArtifactId())) {
+    version=getNewerRevision(dependency,new PreciseRevision(4,3,5));
+  }
+  if (context.getScope().size() > 1 && context.isEnabled(REMOTE_VERSION)) {
+    PreciseRevision latest=getLatestVersion(context,dependency,dependency.isPreview());
+    if (latest != null && isOlderThan(dependency,latest.getMajor(),latest.getMinor(),latest.getMicro())) {
+      version=latest;
+      issue=REMOTE_VERSION;
+    }
+  }
+  if (version != null) {
+    String message=getNewerVersionAvailableMessage(dependency,version);
+    report(context,cookie,issue,message);
+  }
+}

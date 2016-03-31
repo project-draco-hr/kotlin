@@ -1,0 +1,43 @@
+{
+  TypeReference reference=node.astTypeReference();
+  StrictListAccessor<TypeReferencePart,TypeReference> parts=reference.astParts();
+  String typeName=parts.last().astIdentifier().astValue();
+  if (NOTIFICATION_CLASS.equals(typeName)) {
+    StrictListAccessor<Expression,ConstructorInvocation> args=node.astArguments();
+    if (args.size() == 3) {
+      if (args.first() instanceof Select && handleSelect((Select)args.first())) {
+        return super.visitConstructorInvocation(node);
+      }
+      Node method=StringFormatDetector.getParentMethod(node);
+      if (method != null) {
+        String name=StringFormatDetector.getResourceForFirstArg(method,node);
+        if (name != null) {
+          if (mNotificationIcons == null) {
+            mNotificationIcons=Sets.newHashSet();
+          }
+          mNotificationIcons.add(name);
+        }
+      }
+    }
+  }
+ else   if (BUILDER_CLASS.equals(typeName)) {
+    boolean isBuilder=false;
+    if (parts.size() == 1) {
+      isBuilder=true;
+    }
+ else     if (parts.size() == 2) {
+      String clz=parts.first().astIdentifier().astValue();
+      if (NOTIFICATION_CLASS.equals(clz) || NOTIFICATION_COMPAT_CLASS.equals(clz)) {
+        isBuilder=true;
+      }
+    }
+    if (isBuilder) {
+      Node method=StringFormatDetector.getParentMethod(node);
+      if (method != null) {
+        SetIconFinder finder=new SetIconFinder();
+        method.accept(finder);
+      }
+    }
+  }
+  return super.visitConstructorInvocation(node);
+}
