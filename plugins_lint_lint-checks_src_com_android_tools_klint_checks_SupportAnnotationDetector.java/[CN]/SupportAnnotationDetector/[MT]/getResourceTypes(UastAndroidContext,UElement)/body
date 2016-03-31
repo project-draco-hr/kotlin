@@ -5,7 +5,7 @@
       UQualifiedExpression select=(UQualifiedExpression)node.getReceiver();
       if (select.getReceiver() instanceof UQualifiedExpression) {
         UQualifiedExpression innerSelect=(UQualifiedExpression)select.getReceiver();
-        if (innerSelect.getSelector().renderString().equals(R_CLASS)) {
+        if (UastUtils.matchesQualified(innerSelect.getSelector(),R_CLASS)) {
           String typeName=select.getSelector().renderString();
           ResourceType type=ResourceType.getEnum(typeName);
           return type != null ? Collections.singletonList(type) : null;
@@ -20,7 +20,7 @@
         }
       }
     }
-    if (node.getSelector().renderString().equals(R_CLASS)) {
+    if (UastUtils.matchesQualified(node.getSelector(),R_CLASS)) {
       UElement parent=node.getParent();
       if (parent instanceof UQualifiedExpression) {
         UElement grandParent=parent.getParent();
@@ -39,7 +39,7 @@
   }
  else   if (argument instanceof UCallExpression) {
     UDeclaration resolved=((UCallExpression)argument).resolve(context);
-    if (resolved instanceof UAnnotated) {
+    if (resolved != null) {
       List<UAnnotation> annotations=((UAnnotated)resolved).getAnnotations();
       for (      UAnnotation annotation : annotations) {
         String signature=annotation.getFqName();

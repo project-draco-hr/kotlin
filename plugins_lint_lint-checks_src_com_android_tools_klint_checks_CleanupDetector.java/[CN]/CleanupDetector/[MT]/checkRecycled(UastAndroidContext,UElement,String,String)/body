@@ -9,7 +9,7 @@
   }
   FinishVisitor visitor=new FinishVisitor(context,boundVariable){
     @Override protected boolean isCleanupCall(    @NonNull UCallExpression call){
-      if (!call.functionNameMatches(recycleName)) {
+      if (!call.matchesFunctionName(recycleName)) {
         return false;
       }
       UDeclaration resolved=call.resolve(mContext);
@@ -43,6 +43,6 @@
     message=String.format("This `%1$s` should be freed up after use with `#%2$s()`",className,recycleName);
   }
   UElement locationNode=node instanceof UCallExpression ? ((UCallExpression)node).getFunctionNameElement() : node;
-  Location location=UastAndroidUtils.getLocation(locationNode);
+  Location location=context.getLocation(locationNode);
   context.report(RECYCLE_RESOURCE,node,location,message);
 }

@@ -1,9 +1,13 @@
 {
-  List<Pair<String,Object>> valueArguments=annotation.getValues();
-  for (  Pair<String,Object> o : valueArguments) {
-    if (o.getSecond().equals(value)) {
-      return;
+  for (  UNamedExpression namedExpression : annotation.getValueArguments()) {
+    UExpression expression=namedExpression.getExpression();
+    if (expression instanceof UCallExpression && ((UCallExpression)expression).getKind() == UastCallKind.ARRAY_INITIALIZER) {
+      for (      UExpression arg : ((UCallExpression)expression).getValueArguments()) {
+        if (value.equals(arg.evaluate())) {
+          return;
+        }
+      }
     }
   }
-  reportTypeDef(context,argument,errorNode,flag,valueArguments);
+  reportTypeDef(context,argument,errorNode,flag,annotation.getValues());
 }

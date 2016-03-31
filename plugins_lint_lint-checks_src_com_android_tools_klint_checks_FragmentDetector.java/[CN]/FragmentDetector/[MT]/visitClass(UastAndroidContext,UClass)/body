@@ -4,36 +4,36 @@
   }
   if (!cls.getVisibility().isPublic()) {
     String message=String.format("This fragment class should be public (%1$s)",cls.getFqName());
-    context.report(ISSUE,cls,UastAndroidUtils.getLocation(cls.getNameElement()),message);
+    context.report(ISSUE,cls,context.getLocation(cls.getNameElement()),message);
     return;
   }
   if (UastUtils.getContainingClass(cls) != null && !cls.hasModifier(UastModifier.STATIC)) {
     String message=String.format("This fragment inner class should be static (%1$s)",cls.getName());
-    context.report(ISSUE,cls,UastAndroidUtils.getLocation(cls.getNameElement()),message);
+    context.report(ISSUE,cls,context.getLocation(cls.getNameElement()),message);
     return;
   }
   boolean hasDefaultConstructor=false;
   boolean hasConstructor=false;
   for (  UFunction constructor : cls.getConstructors()) {
     hasConstructor=true;
-    if (constructor.getValueParameterCount() == 0) {
+    if (constructor.getValueParameterCount() == 0 || isAllParametersWithDefaultValue(constructor)) {
       if (constructor.getVisibility().isPublic()) {
         hasDefaultConstructor=true;
       }
  else {
-        Location location=UastAndroidUtils.getLocation(constructor.getNameElement());
+        Location location=context.getLocation(constructor.getNameElement());
         context.report(ISSUE,constructor,location,"The default constructor must be public");
         hasDefaultConstructor=true;
       }
     }
  else {
-      Location location=UastAndroidUtils.getLocation(constructor.getNameElement());
+      Location location=context.getLocation(constructor.getNameElement());
       String message="Avoid non-default constructors in fragments: " + "use a default constructor plus " + "`Fragment#setArguments(Bundle)` instead";
       context.report(ISSUE,constructor,location,message);
     }
   }
   if (!hasDefaultConstructor && hasConstructor) {
     String message=String.format("This fragment should provide a default constructor (a public " + "constructor with no arguments) (`%1$s`)",cls.getName());
-    context.report(ISSUE,cls,UastAndroidUtils.getLocation(cls.getNameElement()),message);
+    context.report(ISSUE,cls,context.getLocation(cls.getNameElement()),message);
   }
 }

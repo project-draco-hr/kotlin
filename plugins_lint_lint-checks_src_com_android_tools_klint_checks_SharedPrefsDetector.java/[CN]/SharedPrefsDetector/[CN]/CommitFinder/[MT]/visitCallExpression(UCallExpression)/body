@@ -19,7 +19,7 @@
  else           if (qualifiedElement instanceof UIfExpression) {
             returnValueIgnored=((UIfExpression)qualifiedElement).getCondition() != node;
           }
- else           if (qualifiedElement instanceof USpecialExpressionList && ((USpecialExpressionList)qualifiedElement).getKind() == UastSpecialExpressionKind.RETURN) {
+ else           if (qualifiedElement instanceof UReturnExpression) {
             returnValueIgnored=false;
           }
  else           if (qualifiedElement instanceof UVariable) {
@@ -34,18 +34,24 @@
  else           if (qualifiedElement instanceof UDoWhileExpression) {
             returnValueIgnored=((UDoWhileExpression)qualifiedElement).getCondition() != node;
           }
- else           if (qualifiedElement instanceof UExpressionSwitchClauseExpression) {
-            returnValueIgnored=((UExpressionSwitchClauseExpression)qualifiedElement).getCaseValue() != node;
+ else           if (qualifiedElement instanceof USwitchClauseExpression) {
+            List<UExpression> caseValues=((USwitchClauseExpression)qualifiedElement).getCaseValues();
+            for (            UExpression caseValue : caseValues) {
+              if (caseValue == node) {
+                returnValueIgnored=false;
+                break;
+              }
+            }
           }
- else           if (qualifiedElement instanceof USpecialExpressionList && ((USpecialExpressionList)qualifiedElement).getKind() == JavaSpecialExpressionKinds.ASSERT) {
-            returnValueIgnored=!((USpecialExpressionList)qualifiedElement).getExpressions().contains(node);
+ else           if (qualifiedElement instanceof JavaUAssertExpression) {
+            returnValueIgnored=!((JavaUAssertExpression)qualifiedElement).getCondition().equals(node);
           }
  else {
             returnValueIgnored=true;
           }
           if (returnValueIgnored && isCommit) {
             String message="Consider using `apply()` instead; `commit` writes " + "its data to persistent storage immediately, whereas " + "`apply` will handle it in the background";
-            mContext.report(ISSUE,node,UastAndroidUtils.getLocation(node),message);
+            mContext.report(ISSUE,node,mContext.getLocation(node),message);
           }
         }
       }
