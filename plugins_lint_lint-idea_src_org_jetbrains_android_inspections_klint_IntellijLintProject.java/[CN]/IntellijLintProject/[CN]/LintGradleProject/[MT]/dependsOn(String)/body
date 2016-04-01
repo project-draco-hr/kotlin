@@ -1,8 +1,9 @@
 {
   if (SUPPORT_LIB_ARTIFACT.equals(artifact)) {
     if (mSupportLib == null) {
-      if (myFacet.isGradleProject() && myFacet.getIdeaAndroidProject() != null) {
-        mSupportLib=GradleUtil.dependsOn(myFacet.getIdeaAndroidProject(),artifact);
+      AndroidModelFacade facade=getModelFacade(myFacet);
+      if (isGradleModule(myFacet) && facade.isModelReady()) {
+        mSupportLib=facade.getDependsOn(artifact);
       }
  else {
         mSupportLib=depsDependsOn(this,artifact);
@@ -12,8 +13,9 @@
   }
  else   if (APPCOMPAT_LIB_ARTIFACT.equals(artifact)) {
     if (mAppCompat == null) {
-      if (myFacet.isGradleProject() && myFacet.getIdeaAndroidProject() != null) {
-        mAppCompat=GradleUtil.dependsOn(myFacet.getIdeaAndroidProject(),artifact);
+      AndroidModelFacade facade=getModelFacade(myFacet);
+      if (isGradleModule(myFacet) && facade.isModelReady()) {
+        mAppCompat=facade.getDependsOn(artifact);
       }
  else {
         mAppCompat=depsDependsOn(this,artifact);
@@ -22,7 +24,8 @@
     return mAppCompat;
   }
  else {
-    if (myFacet.isGradleProject() && myFacet.getIdeaAndroidProject() != null && GradleUtil.dependsOn(myFacet.getIdeaAndroidProject(),artifact)) {
+    AndroidModelFacade facade=getModelFacade(myFacet);
+    if (isGradleModule(myFacet) && facade.isModelReady() && facade.getDependsOn(artifact)) {
       return true;
     }
     return super.dependsOn(artifact);
