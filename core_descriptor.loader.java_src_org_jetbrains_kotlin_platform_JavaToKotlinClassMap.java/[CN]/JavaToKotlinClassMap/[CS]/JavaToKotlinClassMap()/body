@@ -1,2 +1,33 @@
 {
+  add(Object.class,FQ_NAMES.any);
+  add(String.class,FQ_NAMES.string);
+  add(CharSequence.class,FQ_NAMES.charSequence);
+  add(Throwable.class,FQ_NAMES.throwable);
+  add(Cloneable.class,FQ_NAMES.cloneable);
+  add(Number.class,FQ_NAMES.number);
+  add(Comparable.class,FQ_NAMES.comparable);
+  add(Enum.class,FQ_NAMES._enum);
+  add(Annotation.class,FQ_NAMES.annotation);
+  add(Iterable.class,FQ_NAMES.iterable,FQ_NAMES.mutableIterable);
+  add(Iterator.class,FQ_NAMES.iterator,FQ_NAMES.mutableIterator);
+  add(Collection.class,FQ_NAMES.collection,FQ_NAMES.mutableCollection);
+  add(List.class,FQ_NAMES.list,FQ_NAMES.mutableList);
+  add(Set.class,FQ_NAMES.set,FQ_NAMES.mutableSet);
+  add(Map.class,FQ_NAMES.map,FQ_NAMES.mutableMap);
+  add(Map.Entry.class,FQ_NAMES.mapEntry,FQ_NAMES.mutableMapEntry);
+  add(ListIterator.class,FQ_NAMES.listIterator,FQ_NAMES.mutableListIterator);
+  for (  JvmPrimitiveType jvmType : JvmPrimitiveType.values()) {
+    add(ClassId.topLevel(jvmType.getWrapperFqName()),KotlinBuiltIns.getPrimitiveFqName(jvmType.getPrimitiveType()));
+  }
+  companionObjectMapping=new CompanionObjectMapping();
+  for (  FqName fqName : companionObjectMapping.allClassesWithIntrinsicCompanions()) {
+    add(ClassId.topLevel(new FqName("kotlin.jvm.internal." + fqName.shortName().asString() + "CompanionObject")),fqName.child(SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT));
+  }
+  for (int i=0; i < 23; i++) {
+    add(ClassId.topLevel(new FqName("kotlin.jvm.functions.Function" + i)),KotlinBuiltIns.getFunctionFqName(i));
+    FunctionClassDescriptor.Kind kFunction=FunctionClassDescriptor.Kind.KFunction;
+    String kFun=kFunction.getPackageFqName() + "." + kFunction.getClassNamePrefix();
+    addKotlinToJava(new FqName(kFun + i),ClassId.topLevel(new FqName(kFun)));
+  }
+  addKotlinToJava(FQ_NAMES.nothing.toSafe(),classId(Void.class));
 }

@@ -3,7 +3,14 @@
     FqName parent=fqName.parent();
     BuiltInsPackageFragment packageFragment=packageNameToPackageFragment.get(parent);
     if (packageFragment != null) {
-      return getBuiltInClassByNameNullable(fqName.shortName(),packageFragment);
+      ClassDescriptor descriptor=getBuiltInClassByNameNullable(fqName.shortName(),packageFragment);
+      if (descriptor != null) {
+        return descriptor;
+      }
+    }
+    ClassDescriptor possiblyOuterClass=getBuiltInClassByFqNameNullable(parent);
+    if (possiblyOuterClass != null) {
+      return (ClassDescriptor)possiblyOuterClass.getUnsubstitutedInnerClassesScope().getContributedClassifier(fqName.shortName(),NoLookupLocation.FROM_BUILTINS);
     }
   }
   return null;
