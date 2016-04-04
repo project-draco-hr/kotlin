@@ -4,12 +4,17 @@
   if (parent instanceof KtSecondaryConstructor) {
     return new JsReturn(new JsNameRef(Namer.ANOTHER_THIS_PARAMETER_NAME)).source(jetReturnExpression);
   }
+  JsReturn jsReturn;
   if (returned == null) {
-    return new JsReturn(null).source(jetReturnExpression);
+    jsReturn=new JsReturn(null);
   }
-  JsExpression jsReturnExpression=translateAsExpression(returned,context);
-  if (JsAstUtils.isEmptyExpression(jsReturnExpression)) {
-    return context.getEmptyExpression();
+ else {
+    JsExpression jsReturnExpression=translateAsExpression(returned,context);
+    if (JsAstUtils.isEmptyExpression(jsReturnExpression)) {
+      return context.getEmptyExpression();
+    }
+    jsReturn=new JsReturn(jsReturnExpression);
   }
-  return new JsReturn(jsReturnExpression).source(jetReturnExpression);
+  MetadataProperties.setReturnTarget(jsReturn,getNonLocalReturnTarget(jetReturnExpression,context));
+  return jsReturn.source(jetReturnExpression);
 }
