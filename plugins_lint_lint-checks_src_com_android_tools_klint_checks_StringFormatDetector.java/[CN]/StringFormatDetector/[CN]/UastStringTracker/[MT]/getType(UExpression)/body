@@ -1,0 +1,64 @@
+{
+  if (expression == null) {
+    return null;
+  }
+  if (expression instanceof USimpleReferenceExpression) {
+    USimpleReferenceExpression reference=(USimpleReferenceExpression)expression;
+    String variable=reference.getIdentifier();
+    Class<?> type=mTypes.get(variable);
+    if (type != null) {
+      return type;
+    }
+  }
+ else   if (expression instanceof UCallExpression) {
+    UCallExpression method=(UCallExpression)expression;
+    String methodName=method.getFunctionName();
+    if (GET_STRING_METHOD.equals(methodName)) {
+      return String.class;
+    }
+  }
+ else   if (expression instanceof ULiteralExpression) {
+    Object value=((ULiteralExpression)expression).getValue();
+    if (value == null) {
+      return Object.class;
+    }
+ else     if (value instanceof String) {
+      return String.class;
+    }
+ else     if (value instanceof Integer) {
+      return Integer.TYPE;
+    }
+ else     if (value instanceof Long) {
+      return Long.TYPE;
+    }
+ else     if (value instanceof Byte) {
+      return Byte.TYPE;
+    }
+ else     if (value instanceof Short) {
+      return Short.TYPE;
+    }
+ else     if (value instanceof Float) {
+      return Float.TYPE;
+    }
+ else     if (value instanceof Double) {
+      return Double.TYPE;
+    }
+ else     if (value instanceof Character) {
+      return Character.TYPE;
+    }
+ else     if (value instanceof Boolean) {
+      return Boolean.TYPE;
+    }
+  }
+  UType type=expression.getExpressionType();
+  if (type != null) {
+    Class<?> typeClass=getTypeClass(type);
+    if (typeClass != null) {
+      return typeClass;
+    }
+ else {
+      return Object.class;
+    }
+  }
+  return null;
+}

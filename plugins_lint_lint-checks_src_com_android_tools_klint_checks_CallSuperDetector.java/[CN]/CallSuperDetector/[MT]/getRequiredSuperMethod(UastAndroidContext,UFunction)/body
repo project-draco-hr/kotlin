@@ -1,0 +1,37 @@
+{
+  String name=method.getName();
+  if (ON_DETACHED_FROM_WINDOW.equals(name)) {
+    if (!UastUtils.getContainingClassOrEmpty(method).isSubclassOf(CLASS_VIEW)) {
+      return null;
+    }
+    List<UFunction> superFunctions=method.getSuperFunctions(context);
+    return superFunctions.isEmpty() ? null : superFunctions.get(0);
+  }
+ else   if (ON_VISIBILITY_CHANGED.equals(name)) {
+    if (!UastUtils.getContainingClassOrEmpty(method).isSubclassOf("android.support.wearable.watchface.WatchFaceService.Engine")) {
+      return null;
+    }
+    List<UFunction> superFunctions=method.getSuperFunctions(context);
+    return superFunctions.isEmpty() ? null : superFunctions.get(0);
+  }
+  List<UFunction> superFunctions=method.getSuperFunctions(context);
+  UFunction directSuper=superFunctions.isEmpty() ? null : superFunctions.get(0);
+  UFunction superMethod=directSuper;
+  while (superMethod != null) {
+    for (    UAnnotation annotation : superMethod.getAnnotations()) {
+      annotation=SupportAnnotationDetector.getRelevantAnnotation(context,annotation);
+      if (annotation != null) {
+        String signature=annotation.getFqName();
+        if (CALL_SUPER_ANNOTATION.equals(signature)) {
+          return directSuper;
+        }
+ else         if (signature != null && signature.endsWith(".OverrideMustInvoke")) {
+          return directSuper;
+        }
+      }
+    }
+    superFunctions=superMethod.getSuperFunctions(context);
+    superMethod=superFunctions.isEmpty() ? null : superFunctions.get(0);
+  }
+  return null;
+}

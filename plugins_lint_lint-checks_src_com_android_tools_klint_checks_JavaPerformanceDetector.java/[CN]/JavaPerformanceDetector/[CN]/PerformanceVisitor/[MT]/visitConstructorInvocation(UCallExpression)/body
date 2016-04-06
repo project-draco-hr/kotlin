@@ -1,0 +1,40 @@
+{
+  USimpleReferenceExpression classReference=node.getClassReference();
+  if (classReference == null) {
+    return;
+  }
+  String typeName=null;
+  if (mCheckMaps) {
+    UClass clazz=classReference.resolveClass(mContext);
+    if (clazz != null) {
+      typeName=clazz.getName();
+      if (clazz.matchesFqName(HASH_MAP)) {
+        checkHashMap(node);
+      }
+ else       if (clazz.matchesFqName(SPARSE_ARRAY)) {
+        checkSparseArray(node);
+      }
+    }
+  }
+  if (mCheckValueOf) {
+    if (typeName == null) {
+      typeName=classReference.getIdentifier();
+    }
+    if ((typeName.equals(INTEGER) || typeName.equals(BOOLEAN) || typeName.equals(FLOAT)|| typeName.equals(CHARACTER)|| typeName.equals(LONG)|| typeName.equals(DOUBLE)|| typeName.equals(BYTE)) && node.getValueArgumentCount() == 1) {
+      String argument=node.getValueArguments().get(0).renderString();
+      mContext.report(USE_VALUE_OF,node,mContext.getLocation(node),getUseValueOfErrorMessage(typeName,argument));
+    }
+  }
+  if (mFlagAllocations && !(UastUtils.isThrow(node.getParent())) && mCheckAllocations) {
+    UElement method=node;
+    while (method != null) {
+      if (method instanceof UFunction) {
+        break;
+      }
+      method=method.getParent();
+    }
+    if (method != null && isBlockedAllocationMethod(((UFunction)method)) && !isLazilyInitialized(node)) {
+      reportAllocation(node);
+    }
+  }
+}

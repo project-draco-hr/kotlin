@@ -1,0 +1,20 @@
+{
+  if (node.selectorMatches(R_CLASS) && node.getParent() instanceof UQualifiedExpression && node.getParent().getParent() instanceof UQualifiedExpression) {
+    UElement current=node.getParent().getParent();
+    String reference=((UQualifiedExpression)current).getSelector().renderString();
+    while (current != null && current != mTop && !(current instanceof UVariable)) {
+      if (current == mTargetNode) {
+        mName=reference;
+        mDone=true;
+        return false;
+      }
+      current=current.getParent();
+    }
+    if (current instanceof UVariable) {
+      UVariable entry=(UVariable)current;
+      String variable=entry.getName();
+      mMap.put(variable,reference);
+    }
+  }
+  return false;
+}

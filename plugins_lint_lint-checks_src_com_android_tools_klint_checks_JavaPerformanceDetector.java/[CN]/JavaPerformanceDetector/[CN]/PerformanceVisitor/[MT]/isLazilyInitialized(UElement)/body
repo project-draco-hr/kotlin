@@ -1,0 +1,28 @@
+{
+  UElement curr=node.getParent();
+  while (curr != null) {
+    if (curr instanceof UFunction) {
+      return false;
+    }
+ else     if (curr instanceof UIfExpression) {
+      UIfExpression ifNode=(UIfExpression)curr;
+      List<String> assignments=new ArrayList<String>();
+      UExpression thenBranch=ifNode.getThenBranch();
+      if (thenBranch != null) {
+        AssignmentTracker visitor=new AssignmentTracker(assignments);
+        visitor.process(thenBranch);
+      }
+      if (!assignments.isEmpty()) {
+        List<String> references=new ArrayList<String>();
+        addReferencedVariables(references,ifNode.getCondition());
+        if (!references.isEmpty()) {
+          SetView<String> intersection=Sets.intersection(new HashSet<String>(assignments),new HashSet<String>(references));
+          return !intersection.isEmpty();
+        }
+      }
+      return false;
+    }
+    curr=curr.getParent();
+  }
+  return false;
+}

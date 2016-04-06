@@ -1,0 +1,22 @@
+{
+  if (node.getOperator() == UastBinaryOperator.ASSIGN) {
+    UExpression rhs=node.getRightOperand();
+    if (rhs instanceof USimpleReferenceExpression) {
+      UDeclaration resolved=((USimpleReferenceExpression)rhs).resolve(mContext);
+      UExpression leftOperand=node.getLeftOperand();
+      if (resolved != null && mVariables.contains(resolved) && leftOperand instanceof UResolvable) {
+        UDeclaration resolvedLhs=((UResolvable)leftOperand).resolve(mContext);
+        if (resolvedLhs instanceof UVariable) {
+          UVariable variable=(UVariable)resolvedLhs;
+          if (variable.getKind() == UastVariableKind.LOCAL_VARIABLE) {
+            mVariables.add(variable);
+          }
+ else           if (variable.getKind() == UastVariableKind.MEMBER) {
+            mEscapes=true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

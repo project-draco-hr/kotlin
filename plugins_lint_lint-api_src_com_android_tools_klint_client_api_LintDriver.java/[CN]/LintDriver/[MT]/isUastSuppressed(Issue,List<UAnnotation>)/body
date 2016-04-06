@@ -1,0 +1,29 @@
+{
+  for (  UAnnotation annotation : annotations) {
+    if (annotation.matchesName(SUPPRESS_LINT) || annotation.matchesName("SuppressWarnings")) {
+      List<UNamedExpression> values=annotation.getValueArguments();
+      for (      UNamedExpression element : values) {
+        UExpression valueNode=element.getExpression();
+        String value=UastLiteralUtils.getValueIfStringLiteral(valueNode);
+        if (value != null) {
+          if (matches(issue,value)) {
+            return true;
+          }
+        }
+ else         if (valueNode instanceof UCallExpression && ((UCallExpression)valueNode).getKind() == JavaUastCallKinds.ARRAY_INITIALIZER) {
+          UCallExpression array=(UCallExpression)valueNode;
+          List<UExpression> expressions=array.getValueArguments();
+          for (          UExpression arrayElement : expressions) {
+            String elementValue=UastLiteralUtils.getValueIfStringLiteral(arrayElement);
+            if (elementValue != null) {
+              if (matches(issue,elementValue)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

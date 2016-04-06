@@ -1,0 +1,76 @@
+{
+  Iterator<UExpression> isLogIterator=call.getValueArguments().iterator();
+  Iterator<UExpression> logIterator=logCall.getValueArguments().iterator();
+  if (!isLogIterator.hasNext() || !logIterator.hasNext()) {
+    return;
+  }
+  UExpression isLoggableTag=isLogIterator.next();
+  UExpression logTag=logIterator.next();
+  String logCallName=logCall.getFunctionName();
+  if (logCallName == null) {
+    return;
+  }
+  boolean isPrintln=PRINTLN.equals(logCallName);
+  if (isPrintln) {
+    if (!logIterator.hasNext()) {
+      return;
+    }
+    logTag=logIterator.next();
+  }
+  JavaContext lintContext=context.getLintContext();
+  if (logTag != null) {
+    if (!isLoggableTag.toString().equals(logTag.toString()) && isLoggableTag instanceof UResolvable && logTag instanceof UResolvable) {
+      UDeclaration resolved1=((UResolvable)isLoggableTag).resolve(context);
+      UDeclaration resolved2=((UResolvable)logTag).resolve(context);
+      if ((resolved1 == null || resolved2 == null || !resolved1.equals(resolved2)) && lintContext.isEnabled(WRONG_TAG)) {
+        Location location=UastAndroidUtils.getLocation(logTag);
+        Location alternate=UastAndroidUtils.getLocation(isLoggableTag);
+        if (location != null && alternate != null) {
+          alternate.setMessage("Conflicting tag");
+          location.setSecondary(alternate);
+          String isLoggableDescription=resolved1 != null ? resolved1.getName() : isLoggableTag.toString();
+          String logCallDescription=resolved2 != null ? resolved2.getName() : logTag.toString();
+          String message=String.format("Mismatched tags: the `%1$s()` and `isLoggable()` calls typically " + "should pass the same tag: `%2$s` versus `%3$s`",logCallName,isLoggableDescription,logCallDescription);
+          context.report(WRONG_TAG,call,location,message);
+        }
+      }
+    }
+  }
+  if (logCallName.length() != 1 || !isLogIterator.hasNext()) {
+    return;
+  }
+  UExpression isLoggableLevel=isLogIterator.next();
+  if (isLoggableLevel == null) {
+    return;
+  }
+  String levelString=isLoggableLevel.toString();
+  if (isLoggableLevel instanceof UQualifiedExpression) {
+    levelString=((UQualifiedExpression)isLoggableLevel).getSelector().renderString();
+  }
+  if (levelString.isEmpty()) {
+    return;
+  }
+  char levelChar=Character.toLowerCase(levelString.charAt(0));
+  if (logCallName.charAt(0) == levelChar || !lintContext.isEnabled(WRONG_TAG)) {
+    return;
+  }
+switch (levelChar) {
+case 'd':
+case 'e':
+case 'i':
+case 'v':
+case 'w':
+    break;
+default :
+  return;
+}
+String expectedCall=String.valueOf(levelChar);
+String message=String.format("Mismatched logging levels: when checking `isLoggable` level `%1$s`, the " + "corresponding log call should be `Log.%2$s`, not `Log.%3$s`",levelString,expectedCall,logCallName);
+Location location=UastAndroidUtils.getLocation(logCall.getFunctionNameElement());
+Location alternate=UastAndroidUtils.getLocation(isLoggableLevel);
+if (location != null && alternate != null) {
+alternate.setMessage("Conflicting tag");
+location.setSecondary(alternate);
+context.report(WRONG_TAG,call,location,message);
+}
+}

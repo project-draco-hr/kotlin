@@ -1,0 +1,47 @@
+{
+  if (project.isGradleProject() && project.isAndroidProject() && !project.isLibrary()) {
+    AndroidProject model=project.getGradleProjectModel();
+    if (model != null) {
+      try {
+        LintOptions lintOptions=model.getLintOptions();
+        final Map<String,Integer> overrides=lintOptions.getSeverityOverrides();
+        if (overrides != null && !overrides.isEmpty()) {
+          return new com.android.tools.klint.client.api.DefaultConfiguration(this,project,null){
+            @NonNull @Override public com.android.tools.klint.detector.api.Severity getSeverity(            @NonNull com.android.tools.klint.detector.api.Issue issue){
+              Integer severity=overrides.get(issue.getId());
+              if (severity != null) {
+switch (severity.intValue()) {
+case LintOptions.SEVERITY_FATAL:
+                  return com.android.tools.klint.detector.api.Severity.FATAL;
+case LintOptions.SEVERITY_ERROR:
+                return com.android.tools.klint.detector.api.Severity.ERROR;
+case LintOptions.SEVERITY_WARNING:
+              return com.android.tools.klint.detector.api.Severity.WARNING;
+case LintOptions.SEVERITY_INFORMATIONAL:
+            return com.android.tools.klint.detector.api.Severity.INFORMATIONAL;
+case LintOptions.SEVERITY_IGNORE:
+default :
+          return com.android.tools.klint.detector.api.Severity.IGNORE;
+      }
+    }
+    if (!getIssues().contains(issue)) {
+      return com.android.tools.klint.detector.api.Severity.IGNORE;
+    }
+    return super.getSeverity(issue);
+  }
+}
+;
+}
+}
+ catch (Exception e) {
+LOG.error(e);
+}
+}
+}
+return new com.android.tools.klint.client.api.DefaultConfiguration(this,project,null){
+@Override public boolean isEnabled(@NonNull com.android.tools.klint.detector.api.Issue issue){
+return getIssues().contains(issue) && super.isEnabled(issue);
+}
+}
+;
+}

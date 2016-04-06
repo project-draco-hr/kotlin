@@ -1,0 +1,16 @@
+{
+  if (context.getLintContext().getMainProject().getMinSdk() >= 17) {
+    return;
+  }
+  UFunction resolvedFunction=node.resolveOrEmpty(context);
+  UClass containingClass=UastUtils.getContainingClassOrEmpty(resolvedFunction);
+  if (!containingClass.isSubclassOf(WEB_VIEW)) {
+    return;
+  }
+  List<UVariable> valueParameters=resolvedFunction.getValueParameters();
+  if (node.getValueArgumentCount() != 2 || !valueParameters.get(0).getType().matchesFqName(TYPE_OBJECT) || !valueParameters.get(1).getType().matchesFqName(TYPE_STRING)) {
+    return;
+  }
+  String message="`WebView.addJavascriptInterface` should not be called with minSdkVersion < 17 for security reasons: " + "JavaScript can use reflection to manipulate application";
+  context.report(ISSUE,node,UastAndroidUtils.getLocation(node),message);
+}

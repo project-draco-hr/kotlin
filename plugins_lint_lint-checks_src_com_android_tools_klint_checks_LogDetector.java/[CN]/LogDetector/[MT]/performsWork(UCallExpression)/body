@@ -1,0 +1,30 @@
+{
+  int messageArgumentIndex=PRINTLN.equals(node.getFunctionName()) ? 2 : 1;
+  if (node.getValueArgumentCount() >= messageArgumentIndex) {
+    Iterator<UExpression> iterator=node.getValueArguments().iterator();
+    UExpression argument=null;
+    for (int i=0; i <= messageArgumentIndex; i++) {
+      argument=iterator.next();
+    }
+    if (argument == null) {
+      return false;
+    }
+    if (UastLiteralUtils.isStringLiteral(argument) || argument instanceof USimpleReferenceExpression) {
+      return false;
+    }
+    if (argument instanceof UBinaryExpression) {
+      String string=argument.evaluateString();
+      if (string != null) {
+        return false;
+      }
+    }
+ else     if (argument instanceof UQualifiedExpression) {
+      String string=argument.evaluateString();
+      if (string != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}

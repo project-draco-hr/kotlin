@@ -1,0 +1,20 @@
+{
+  if (node.isObject() || node.isInterface() || node.isEnum()|| node.hasModifier(UastModifier.ABSTRACT)) {
+    return;
+  }
+  if (UastUtils.getContainingClass(node) != null && node.hasModifier(UastModifier.INNER)) {
+    return;
+  }
+  boolean found=false;
+  for (  UFunction constructor : node.getConstructors()) {
+    if (isXmlConstructor(constructor)) {
+      found=true;
+      break;
+    }
+  }
+  if (!found) {
+    String message=String.format("Custom view `%1$s` is missing constructor used by tools: " + "`(Context)` or `(Context,AttributeSet)` " + "or `(Context,AttributeSet,int)`",node.getFqName());
+    Location location=UastAndroidUtils.getLocation(node.getNameElement());
+    context.report(ISSUE,node,location,message);
+  }
+}

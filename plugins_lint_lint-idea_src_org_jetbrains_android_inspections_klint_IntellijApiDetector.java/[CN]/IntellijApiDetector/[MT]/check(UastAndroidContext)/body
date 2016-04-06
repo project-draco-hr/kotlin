@@ -1,0 +1,20 @@
+{
+  if (mApiDatabase == null) {
+    return;
+  }
+  final com.android.tools.klint.detector.api.JavaContext context=uastContext.getLintContext();
+  ApplicationManager.getApplication().runReadAction(new Runnable(){
+    @Override public void run(){
+      final PsiFile psiFile=IntellijLintUtils.getPsiFile(context);
+      if (!(psiFile instanceof PsiJavaFile)) {
+        return;
+      }
+      PsiJavaFile javaFile=(PsiJavaFile)psiFile;
+      for (      PsiClass clz : javaFile.getClasses()) {
+        PsiElementVisitor visitor=new ApiCheckVisitor(context,clz,psiFile);
+        javaFile.accept(visitor);
+      }
+    }
+  }
+);
+}

@@ -1,0 +1,21 @@
+{
+  if (expression instanceof UBinaryExpression) {
+    UBinaryExpression binary=(UBinaryExpression)expression;
+    addReferencedVariables(variables,binary.getLeftOperand());
+    addReferencedVariables(variables,binary.getRightOperand());
+  }
+ else   if (expression instanceof UUnaryExpression) {
+    UUnaryExpression unary=(UUnaryExpression)expression;
+    addReferencedVariables(variables,unary.getOperand());
+  }
+ else   if (expression instanceof USimpleReferenceExpression) {
+    USimpleReferenceExpression reference=(USimpleReferenceExpression)expression;
+    variables.add(reference.getIdentifier());
+  }
+ else   if (expression instanceof UQualifiedExpression) {
+    UQualifiedExpression select=(UQualifiedExpression)expression;
+    if (select.getReceiver() instanceof UThisExpression && select.getSelector() instanceof USimpleReferenceExpression) {
+      variables.add(((USimpleReferenceExpression)select.getSelector()).getIdentifier());
+    }
+  }
+}

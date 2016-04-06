@@ -1,0 +1,189 @@
+{
+  List<UExpression> args=call.getValueArguments();
+  if (args.isEmpty()) {
+    return;
+  }
+  JavaContext lintContext=context.getLintContext();
+  UastStringTracker tracker=new UastStringTracker(lintContext,method,call,0);
+  tracker.process(method);
+  String name=tracker.getFormatStringName();
+  if (name == null) {
+    return;
+  }
+  if (mIgnoreStrings != null && mIgnoreStrings.contains(name)) {
+    return;
+  }
+  if (mNotFormatStrings.containsKey(name)) {
+    Handle handle=mNotFormatStrings.get(name);
+    Object clientData=handle.getClientData();
+    if (clientData instanceof Node) {
+      if (lintContext.getDriver().isSuppressed(null,INVALID,(Node)clientData)) {
+        return;
+      }
+    }
+    Location location=handle.resolve();
+    String message=String.format("Format string '`%1$s`' is not a valid format string so it should not be " + "passed to `String.format`",name);
+    context.report(INVALID,call,location,message);
+    return;
+  }
+  Iterator<UExpression> argIterator=args.iterator();
+  UExpression first=argIterator.next();
+  UExpression second=argIterator.hasNext() ? argIterator.next() : null;
+  boolean specifiesLocale;
+  UType parameterType=first.getExpressionType();
+  if (parameterType != null) {
+    specifiesLocale=isLocaleReference(parameterType.getName());
+  }
+ else   if (!FORMAT_METHOD.equals(call.getFunctionName())) {
+    specifiesLocale=false;
+  }
+ else {
+    String firstName=first.renderString();
+    specifiesLocale=firstName.startsWith("Locale.") || firstName.contains("locale") || firstName.equals("null")|| (second != null && second.renderString().contains("getString") && !firstName.contains("getString") && !firstName.contains(R_PREFIX) && !(UastLiteralUtils.isStringLiteral(first)));
+  }
+  List<Pair<Handle,String>> list=mFormatStrings != null ? mFormatStrings.get(name) : null;
+  if (list == null) {
+    LintClient client=lintContext.getClient();
+    if (client.supportsProjectResources() && !lintContext.getScope().contains(Scope.RESOURCE_FILE)) {
+      AbstractResourceRepository resources=client.getProjectResources(lintContext.getMainProject(),true);
+      List<ResourceItem> items=resources.getResourceItem(ResourceType.STRING,name);
+      if (items != null) {
+        for (        final ResourceItem item : items) {
+          ResourceValue v=item.getResourceValue(false);
+          if (v != null) {
+            String value=v.getRawXmlValue();
+            if (value != null) {
+              boolean isFormattingString=value.indexOf('%') != -1;
+              for (int j=0, m=value.length(); j < m && isFormattingString; j++) {
+                char c=value.charAt(j);
+                if (c == '\\') {
+                  j++;
+                }
+ else                 if (c == '%') {
+                  Matcher matcher=FORMAT.matcher(value);
+                  if (!matcher.find(j)) {
+                    isFormattingString=false;
+                  }
+ else {
+                    String conversion=matcher.group(6);
+                    int conversionClass=getConversionClass(conversion.charAt(0));
+                    if (conversionClass == CONVERSION_CLASS_UNKNOWN || matcher.group(5) != null) {
+                      return;
+                    }
+                  }
+                  j++;
+                }
+              }
+              if (isFormattingString) {
+                if (list == null) {
+                  list=Lists.newArrayList();
+                  if (mFormatStrings == null) {
+                    mFormatStrings=Maps.newHashMap();
+                  }
+                  mFormatStrings.put(name,list);
+                }
+                Handle handle=client.createResourceItemHandle(item);
+                list.add(Pair.of(handle,value));
+              }
+            }
+          }
+        }
+      }
+    }
+ else {
+      return;
+    }
+  }
+  if (list != null) {
+    Set<String> reported=null;
+    for (    Pair<Handle,String> pair : list) {
+      String s=pair.getSecond();
+      if (reported != null && reported.contains(s)) {
+        continue;
+      }
+      int count=getFormatArgumentCount(s,null);
+      Handle handle=pair.getFirst();
+      if (count != args.size() - 1 - (specifiesLocale ? 1 : 0)) {
+        if (isSharedPreferenceGetString(context,call)) {
+          continue;
+        }
+        Location location=context.getLocation(call);
+        Location secondary=handle.resolve();
+        if (location != null && secondary != null) {
+          secondary.setMessage(String.format("This definition requires %1$d arguments",count));
+          location.setSecondary(secondary);
+          String message=String.format("Wrong argument count, format string `%1$s` requires `%2$d` but format " + "call supplies `%3$d`",name,count,args.size() - 1 - (specifiesLocale ? 1 : 0));
+          context.report(ARG_TYPES,method,location,message);
+          if (reported == null) {
+            reported=Sets.newHashSet();
+          }
+          reported.add(s);
+        }
+      }
+ else {
+        for (int i=1; i <= count; i++) {
+          int argumentIndex=i + (specifiesLocale ? 1 : 0);
+          Class<?> type=tracker.getArgumentType(argumentIndex);
+          if (type != null) {
+            boolean valid=true;
+            String formatType=getFormatArgumentType(s,i);
+            if (formatType == null) {
+              continue;
+            }
+            char last=formatType.charAt(formatType.length() - 1);
+            if (formatType.length() >= 2 && Character.toLowerCase(formatType.charAt(formatType.length() - 2)) == 't') {
+              continue;
+            }
+switch (last) {
+case 'b':
+case 'B':
+              valid=type == Boolean.TYPE;
+            break;
+case 'x':
+case 'X':
+case 'd':
+case 'o':
+case 'e':
+case 'E':
+case 'f':
+case 'g':
+case 'G':
+case 'a':
+case 'A':
+          valid=type == Integer.TYPE || type == Float.TYPE || type == Double.TYPE || type == Long.TYPE || type == Byte.TYPE || type == Short.TYPE;
+        break;
+case 'c':
+case 'C':
+      valid=type == Character.TYPE;
+    break;
+case 'h':
+case 'H':
+case 's':
+case 'S':
+  valid=type != Boolean.TYPE && !Number.class.isAssignableFrom(type);
+break;
+}
+if (!valid) {
+if (isSharedPreferenceGetString(context,call)) {
+continue;
+}
+UExpression argument=tracker.getArgument(argumentIndex);
+Location location=context.getLocation(argument);
+Location secondary=handle.resolve();
+if (location != null && secondary != null) {
+secondary.setMessage("Conflicting argument declaration here");
+location.setSecondary(secondary);
+String message=String.format("Wrong argument type for formatting argument '#%1$d' " + "in `%2$s`: conversion is '`%3$s`', received `%4$s` " + "(argument #%5$d in method call)",i,name,formatType,type.getSimpleName(),argumentIndex + 1);
+context.report(ARG_TYPES,method,location,message);
+if (reported == null) {
+  reported=Sets.newHashSet();
+}
+reported.add(s);
+}
+}
+}
+}
+}
+}
+}
+}

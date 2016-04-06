@@ -1,0 +1,30 @@
+{
+  UFunction method=node.resolve(context);
+  if (method == null) {
+    return;
+  }
+  if (!UastUtils.getContainingClassOrEmpty(method).matchesFqName(LOG_CLS)) {
+    return;
+  }
+  String name=node.getFunctionName();
+  boolean withinConditional=IS_LOGGABLE.equals(name) || checkWithinConditional(context,node.getParent(),node);
+  if (("i".equals(name) || "d".equals(name) || "v".equals(name)|| PRINTLN.equals(name)) && !withinConditional && performsWork(node)&& context.getLintContext().isEnabled(CONDITIONAL)) {
+    String message=String.format("The log call Log.%1$s(...) should be " + "conditional: surround with `if (Log.isLoggable(...))` or " + "`if (BuildConfig.DEBUG) { ... }`",node.getFunctionName());
+    context.report(CONDITIONAL,node,UastAndroidUtils.getLocation(node),message);
+  }
+  if (context.getLintContext().isEnabled(LONG_TAG)) {
+    int tagArgumentIndex=PRINTLN.equals(name) ? 1 : 0;
+    if (method.getValueParameterCount() > tagArgumentIndex && method.getValueParameters().get(tagArgumentIndex).getType().matchesFqName(TYPE_STRING) && node.getValueArgumentCount() == method.getValueParameterCount()) {
+      Iterator<UExpression> iterator=node.getValueArguments().iterator();
+      if (tagArgumentIndex == 1) {
+        iterator.next();
+      }
+      UExpression argument=iterator.next();
+      String tag=argument.evaluateString();
+      if (tag != null && tag.length() > 23) {
+        String message=String.format("The logging tag can be at most 23 characters, was %1$d (%2$s)",tag.length(),tag);
+        context.report(LONG_TAG,node,UastAndroidUtils.getLocation(node),message);
+      }
+    }
+  }
+}

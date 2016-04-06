@@ -1,0 +1,55 @@
+{
+  UElement qualifiedElement=UastUtils.getQualifiedCallElement(node);
+  if (node == mTarget) {
+    mSeenTarget=true;
+  }
+ else   if (mAllowCommitBeforeTarget || mSeenTarget || (qualifiedElement instanceof UQualifiedExpression && ((UQualifiedExpression)qualifiedElement).getReceiver() == mTarget)) {
+    String name=node.getFunctionName();
+    boolean isCommit="commit".equals(name);
+    if (isCommit || "apply".equals(name)) {
+      mFound=true;
+      UFunction method=node.resolve(mContext);
+      if (method != null) {
+        UClass clz=UastUtils.getContainingClassOrEmpty(method);
+        if (clz.isSubclassOf("android.content.SharedPreferences.Editor") && mContext.getLintContext().getProject().getMinSdkVersion().getApiLevel() >= 9) {
+          boolean returnValueIgnored=false;
+          if (qualifiedElement instanceof UFunction || qualifiedElement instanceof UClass || qualifiedElement instanceof UBlockExpression) {
+            returnValueIgnored=true;
+          }
+ else           if (qualifiedElement instanceof UIfExpression) {
+            returnValueIgnored=((UIfExpression)qualifiedElement).getCondition() != node;
+          }
+ else           if (qualifiedElement instanceof USpecialExpressionList && ((USpecialExpressionList)qualifiedElement).getKind() == UastSpecialExpressionKind.RETURN) {
+            returnValueIgnored=false;
+          }
+ else           if (qualifiedElement instanceof UVariable) {
+            returnValueIgnored=false;
+          }
+ else           if (qualifiedElement instanceof UForExpression) {
+            returnValueIgnored=((UForExpression)qualifiedElement).getCondition() != node;
+          }
+ else           if (qualifiedElement instanceof UWhileExpression) {
+            returnValueIgnored=((UWhileExpression)qualifiedElement).getCondition() != node;
+          }
+ else           if (qualifiedElement instanceof UDoWhileExpression) {
+            returnValueIgnored=((UDoWhileExpression)qualifiedElement).getCondition() != node;
+          }
+ else           if (qualifiedElement instanceof UExpressionSwitchClauseExpression) {
+            returnValueIgnored=((UExpressionSwitchClauseExpression)qualifiedElement).getCaseValue() != node;
+          }
+ else           if (qualifiedElement instanceof USpecialExpressionList && ((USpecialExpressionList)qualifiedElement).getKind() == JavaSpecialExpressionKinds.ASSERT) {
+            returnValueIgnored=!((USpecialExpressionList)qualifiedElement).getExpressions().contains(node);
+          }
+ else {
+            returnValueIgnored=true;
+          }
+          if (returnValueIgnored && isCommit) {
+            String message="Consider using `apply()` instead; `commit` writes " + "its data to persistent storage immediately, whereas " + "`apply` will handle it in the background";
+            mContext.report(ISSUE,node,UastAndroidUtils.getLocation(node),message);
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

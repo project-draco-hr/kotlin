@@ -1,0 +1,25 @@
+{
+  UElement selector=node.getSelector();
+  if (!(selector instanceof USimpleReferenceExpression)) {
+    return false;
+  }
+  String description=((USimpleReferenceExpression)selector).getIdentifier();
+  boolean isIfRoom=description.equals("SHOW_AS_ACTION_IF_ROOM");
+  boolean isAlways=description.equals("SHOW_AS_ACTION_ALWAYS");
+  if ((isIfRoom || isAlways) && node.getReceiver().renderString().equals("MenuItem")) {
+    if (isAlways) {
+      JavaContext lintContext=mContext.getLintContext();
+      if (lintContext.getDriver().isSuppressed(lintContext,ISSUE,node)) {
+        return false;
+      }
+      if (mAlwaysFields == null) {
+        mAlwaysFields=new ArrayList<Location>();
+      }
+      mAlwaysFields.add(UastAndroidUtils.getLocation(node));
+    }
+ else {
+      mHasIfRoomRefs=true;
+    }
+  }
+  return false;
+}

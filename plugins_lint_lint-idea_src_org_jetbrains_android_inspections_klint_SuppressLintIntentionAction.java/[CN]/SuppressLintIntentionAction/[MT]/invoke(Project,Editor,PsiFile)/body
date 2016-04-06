@@ -1,0 +1,27 @@
+{
+  if (file instanceof XmlFile) {
+    final XmlTag element=PsiTreeUtil.getParentOfType(myElement,XmlTag.class);
+    if (element == null) {
+      return;
+    }
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+      return;
+    }
+    String lintId=getLintId(myId);
+    addSuppressAttribute(project,(XmlFile)file,element,lintId);
+  }
+ else   if (file instanceof PsiJavaFile) {
+    final PsiModifierListOwner container=PsiTreeUtil.getParentOfType(myElement,PsiModifierListOwner.class);
+    if (container == null) {
+      return;
+    }
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) {
+      return;
+    }
+    final PsiModifierList modifierList=container.getModifierList();
+    if (modifierList != null) {
+      String lintId=getLintId(myId);
+      addSuppressAnnotation(project,container,container,lintId);
+    }
+  }
+}

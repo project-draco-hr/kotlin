@@ -1,0 +1,62 @@
+{
+  List<UExpression> args=node.getValueArguments();
+  String layout=null;
+  int index=0;
+  for (Iterator<UExpression> iterator=args.iterator(); iterator.hasNext(); index++) {
+    UExpression expression=iterator.next();
+    if (expression instanceof UQualifiedExpression) {
+      UQualifiedExpression outer=(UQualifiedExpression)expression;
+      UExpression operand=outer.getReceiver();
+      if (operand instanceof UQualifiedExpression) {
+        UQualifiedExpression inner=(UQualifiedExpression)operand;
+        if (inner.getReceiver() instanceof USimpleReferenceExpression) {
+          USimpleReferenceExpression reference=(USimpleReferenceExpression)inner.getReceiver();
+          if (FN_RESOURCE_BASE.equals(reference.getIdentifier()) && inner.selectorMatches("layout")) {
+            layout=LAYOUT_RESOURCE_PREFIX + outer.getSelector().renderString();
+            break;
+          }
+        }
+ else         if (inner.getReceiver() instanceof UQualifiedExpression) {
+          UQualifiedExpression reference=(UQualifiedExpression)inner.getReceiver();
+          if (reference.selectorMatches(FN_RESOURCE_BASE) && inner.selectorMatches("layout")) {
+            layout=LAYOUT_RESOURCE_PREFIX + outer.getSelector().renderString();
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (layout == null) {
+    UFunction containingFunction=UastUtils.getContainingFunction(node);
+    if (containingFunction != null) {
+      index=0;
+      String name=StringFormatDetector.getResourceArg(containingFunction,node,index);
+      if (name == null) {
+        index=1;
+        name=StringFormatDetector.getResourceArg(containingFunction,node,index);
+      }
+      if (name != null) {
+        layout=LAYOUT_RESOURCE_PREFIX + name;
+      }
+    }
+    if (layout == null) {
+      return;
+    }
+  }
+  int viewRootPos=index + 1;
+  if (viewRootPos < args.size()) {
+    int i=0;
+    Iterator<UExpression> iterator=args.iterator();
+    while (iterator.hasNext() && i < viewRootPos) {
+      iterator.next();
+      i++;
+    }
+    if (iterator.hasNext()) {
+      UExpression viewRoot=iterator.next();
+      if (viewRoot instanceof ULiteralExpression && ((ULiteralExpression)viewRoot).isNull()) {
+        recordIncludeWidth(layout,true);
+        recordIncludeHeight(layout,true);
+      }
+    }
+  }
+}

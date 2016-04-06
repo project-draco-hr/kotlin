@@ -1,29 +1,9 @@
 {
-  JavaParser javaParser=mClient.getJavaParser(project);
-  if (javaParser == null) {
-    mClient.log(null,"No java parser provided to lint: not running Java checks");
-    return;
-  }
-  JavaVisitor visitor=new JavaVisitor(javaParser,checks);
-  List<JavaContext> contexts=Lists.newArrayListWithExpectedSize(files.size());
-  for (  File file : files) {
-    if (file.isFile() && file.getPath().endsWith(DOT_JAVA)) {
-      contexts.add(new JavaContext(this,project,main,file,javaParser));
+  List<UastScanner> uastDetectors=new ArrayList<UastScanner>();
+  for (  Detector check : checks) {
+    if (check instanceof UastScanner) {
+      uastDetectors.add((UastScanner)check);
     }
   }
-  if (contexts.isEmpty()) {
-    return;
-  }
-  visitor.prepare(contexts);
-  if (mCanceled) {
-    return;
-  }
-  for (  JavaContext context : contexts) {
-    fireEvent(EventType.SCANNING_FILE,context);
-    visitor.visitFile(context);
-    if (mCanceled) {
-      return;
-    }
-  }
-  visitor.dispose();
+  checkWithUastDetectors(project,main,uastDetectors,files);
 }

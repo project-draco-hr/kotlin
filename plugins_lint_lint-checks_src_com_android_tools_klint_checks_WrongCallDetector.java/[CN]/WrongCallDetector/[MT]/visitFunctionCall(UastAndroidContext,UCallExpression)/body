@@ -1,0 +1,20 @@
+{
+  if (node.getKind() != UastCallKind.FUNCTION_CALL) {
+    return;
+  }
+  UElement referenceExpression=node.getParent();
+  if (referenceExpression instanceof UQualifiedExpression) {
+    UExpression operand=((UQualifiedExpression)referenceExpression).getReceiver();
+    if (!(operand instanceof USuperExpression)) {
+      report(context,node);
+      return;
+    }
+  }
+  UFunction containingFunction=UastUtils.getContainingFunction(node);
+  if (containingFunction == null) {
+    return;
+  }
+  if (containingFunction.getKind() == UastFunctionKind.CONSTRUCTOR || !containingFunction.matchesName(node.getFunctionName())) {
+    report(context,node);
+  }
+}

@@ -1,0 +1,56 @@
+{
+  String lhs=getLhs(node);
+  if (lhs == null) {
+    return;
+  }
+  UFunction method=UastUtils.getContainingFunction(node);
+  if (method == null) {
+    return;
+  }
+ else   if (method != mLastMethod) {
+    mIds=Maps.newHashMap();
+    mLhs=Maps.newHashMap();
+    mCallOperands=Maps.newHashMap();
+    mLastMethod=method;
+  }
+  UElement parent=node.getParent();
+  String callOperand="";
+  if (parent instanceof UQualifiedExpression) {
+    callOperand=((UQualifiedExpression)parent).getReceiver().renderString();
+  }
+  UExpression first=node.getValueArguments().get(0);
+  if (first instanceof UQualifiedExpression) {
+    UQualifiedExpression select=(UQualifiedExpression)first;
+    String id=select.getSelector().renderString();
+    UExpression operand=select.getReceiver();
+    if (operand instanceof UQualifiedExpression) {
+      UQualifiedExpression type=(UQualifiedExpression)operand;
+      if (type.getSelector().renderString().equals(RESOURCE_CLZ_ID)) {
+        if (mIds.containsKey(id)) {
+          if (lhs.equals(mLhs.get(id))) {
+            return;
+          }
+          if (!callOperand.equals(mCallOperands.get(id))) {
+            return;
+          }
+          UCallExpression earlierCall=mIds.get(id);
+          if (!isReachableFrom(method,earlierCall,node)) {
+            return;
+          }
+          Location location=UastAndroidUtils.getLocation(node);
+          Location secondary=UastAndroidUtils.getLocation(earlierCall);
+          if (location != null && secondary != null) {
+            secondary.setMessage("First usage here");
+            location.setSecondary(secondary);
+            context.report(ISSUE,node,location,String.format("The id `%1$s` has already been looked up in this method; possible " + "cut & paste error?",first.toString()));
+          }
+        }
+ else {
+          mIds.put(id,node);
+          mLhs.put(id,lhs);
+          mCallOperands.put(id,callOperand);
+        }
+      }
+    }
+  }
+}

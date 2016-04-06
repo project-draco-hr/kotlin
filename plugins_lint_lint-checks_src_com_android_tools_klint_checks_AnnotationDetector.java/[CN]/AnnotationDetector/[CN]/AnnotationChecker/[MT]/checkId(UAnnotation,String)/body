@@ -1,0 +1,27 @@
+{
+  IssueRegistry registry=mContext.getLintContext().getDriver().getRegistry();
+  Issue issue=registry.getIssue(id);
+  if (issue != null && !issue.getImplementation().getScope().contains(Scope.SOURCE_FILE) || issue == ApiDetector.UNSUPPORTED) {
+    UElement parent=node.getParent();
+    while (parent != null) {
+      if (parent instanceof UFunction || parent instanceof UBlockExpression) {
+        break;
+      }
+ else       if (issue == ApiDetector.UNSUPPORTED && parent instanceof UDeclarationsExpression) {
+        UDeclarationsExpression declarations=(UDeclarationsExpression)parent;
+        for (        UVariable var : declarations.getVariables()) {
+          if (var.getKind() != UastVariableKind.MEMBER && var.getInitializer() instanceof UQualifiedExpression) {
+            return true;
+          }
+        }
+      }
+      parent=parent.getParent();
+      if (parent == null) {
+        return true;
+      }
+    }
+    mContext.report(ISSUE,node,UastAndroidUtils.getLocation(node),String.format("The `@SuppressLint` annotation cannot be used on a local " + "variable with the lint check '%1$s': move out to the " + "surrounding method",id));
+    return false;
+  }
+  return true;
+}

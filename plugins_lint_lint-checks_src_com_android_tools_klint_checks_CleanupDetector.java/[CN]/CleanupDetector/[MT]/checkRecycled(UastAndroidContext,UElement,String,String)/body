@@ -1,0 +1,49 @@
+{
+  UVariable boundVariable=getVariable(context,node);
+  if (boundVariable == null) {
+    return;
+  }
+  UFunction method=UastUtils.getContainingFunction(node);
+  if (method == null) {
+    return;
+  }
+  FinishVisitor visitor=new FinishVisitor(context,boundVariable){
+    @Override protected boolean isCleanupCall(    @NonNull UCallExpression call){
+      String methodName=call.getFunctionName();
+      if (!recycleName.equals(methodName)) {
+        return false;
+      }
+      UDeclaration resolved=call.resolve(mContext);
+      if (resolved != null) {
+        UClass containingClass=UastUtils.getContainingClassOrEmpty(resolved);
+        if (containingClass.isSubclassOf(recycleType)) {
+          UElement parent=call.getParent();
+          if (parent instanceof UQualifiedExpression) {
+            UExpression operand=((UQualifiedExpression)parent).getReceiver();
+            resolved=UastUtils.resolveIfCan(operand,mContext);
+            if (resolved != null && mVariables.contains(resolved)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+  }
+;
+  visitor.process(method);
+  if (visitor.isCleanedUp() || visitor.variableEscapes()) {
+    return;
+  }
+  String className=recycleType.substring(recycleType.lastIndexOf('.') + 1);
+  String message;
+  if (RECYCLE.equals(recycleName)) {
+    message=String.format("This `%1$s` should be recycled after use with `#recycle()`",className);
+  }
+ else {
+    message=String.format("This `%1$s` should be freed up after use with `#%2$s()`",className,recycleName);
+  }
+  UElement locationNode=node instanceof UCallExpression ? ((UCallExpression)node).getFunctionNameElement() : node;
+  Location location=UastAndroidUtils.getLocation(locationNode);
+  context.report(RECYCLE_RESOURCE,node,location,message);
+}

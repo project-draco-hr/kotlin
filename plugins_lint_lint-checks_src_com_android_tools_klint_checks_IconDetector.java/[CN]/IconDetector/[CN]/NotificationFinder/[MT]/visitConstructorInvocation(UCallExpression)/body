@@ -1,0 +1,36 @@
+{
+  USimpleReferenceExpression reference=node.getClassReference();
+  if (reference == null) {
+    return;
+  }
+  String typeName=reference.getIdentifier();
+  if (NOTIFICATION_CLASS.equals(typeName)) {
+    List<UExpression> args=node.getValueArguments();
+    if (args.size() == 3) {
+      if (args.get(0) instanceof UQualifiedExpression && handleSelect((UQualifiedExpression)args.get(0))) {
+        return;
+      }
+      UFunction method=UastUtils.getContainingFunction(node);
+      if (method != null) {
+        String name=StringFormatDetector.getResourceForFirstArg(method,node);
+        if (name != null) {
+          if (mNotificationIcons == null) {
+            mNotificationIcons=Sets.newHashSet();
+          }
+          mNotificationIcons.add(name);
+        }
+      }
+    }
+  }
+ else   if (BUILDER_CLASS.equals(typeName)) {
+    UClass resolvedClass=reference.resolveClass(mContext);
+    boolean isBuilder=resolvedClass != null && (resolvedClass.matchesFqName(NOTIFICATION_CLASS_FQNAME) || resolvedClass.matchesFqName(NOTIFICATION_COMPAT_CLASS_FQNAME));
+    if (isBuilder) {
+      UFunction method=UastUtils.getContainingFunction(node);
+      if (method != null) {
+        SetIconFinder finder=new SetIconFinder();
+        finder.process(method);
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  Iterator<UExpression> iterator;
+  if (mTargetNode instanceof UCallExpression) {
+    iterator=((UCallExpression)mTargetNode).getValueArguments().iterator();
+  }
+ else {
+    return null;
+  }
+  int i=0;
+  while (i < mArgIndex && iterator.hasNext()) {
+    iterator.next();
+    i++;
+  }
+  if (iterator.hasNext()) {
+    UExpression next=iterator.next();
+    if (next != null && mContext != null && iterator.hasNext()) {
+      UType type=next.getExpressionType();
+      if (isLocaleReference(type)) {
+        next=iterator.next();
+      }
+ else       if (type == null && next.renderString().startsWith("Locale.")) {
+        next=iterator.next();
+      }
+    }
+    return next;
+  }
+  return null;
+}

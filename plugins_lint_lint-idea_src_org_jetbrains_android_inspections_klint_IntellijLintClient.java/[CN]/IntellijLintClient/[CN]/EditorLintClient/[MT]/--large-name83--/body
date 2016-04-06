@@ -1,0 +1,18 @@
+{
+  if (location != null) {
+    final File file=location.getFile();
+    final VirtualFile vFile=LocalFileSystem.getInstance().findFileByIoFile(file);
+    if (myState.getMainFile().equals(vFile)) {
+      final com.android.tools.klint.detector.api.Position start=location.getStart();
+      final com.android.tools.klint.detector.api.Position end=location.getEnd();
+      final TextRange textRange=start != null && end != null && start.getOffset() <= end.getOffset() ? new TextRange(start.getOffset(),end.getOffset()) : TextRange.EMPTY_RANGE;
+      com.android.tools.klint.detector.api.Severity configuredSeverity=severity != issue.getDefaultSeverity() ? severity : null;
+      message=format.convertTo(message,RAW);
+      myState.getProblems().add(new org.jetbrains.android.inspections.klint.ProblemData(issue,message,textRange,configuredSeverity));
+    }
+    com.android.tools.klint.detector.api.Location secondary=location.getSecondary();
+    if (secondary != null && myState.getMainFile().equals(LocalFileSystem.getInstance().findFileByIoFile(secondary.getFile()))) {
+      reportSecondary(context,issue,severity,location,message,format);
+    }
+  }
+}

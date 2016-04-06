@@ -1,0 +1,24 @@
+{
+  String signature=annotation.getFqName();
+  if (signature == null) {
+    return null;
+  }
+  if (signature.startsWith(SUPPORT_ANNOTATIONS_PREFIX)) {
+    if (signature.endsWith(".Nullable") || signature.endsWith(".NonNull")) {
+      return null;
+    }
+    return annotation;
+  }
+  if (signature.startsWith("java.")) {
+    return null;
+  }
+  UClass type=annotation.resolve(context);
+  if (type != null) {
+    for (    UAnnotation inner : type.getAnnotations()) {
+      if (inner.matchesFqName(INT_DEF_ANNOTATION) || inner.matchesFqName(STRING_DEF_ANNOTATION) || inner.matchesFqName(PERMISSION_ANNOTATION)) {
+        return inner;
+      }
+    }
+  }
+  return null;
+}

@@ -1,0 +1,37 @@
+{
+  String signature=annotation.getFqName();
+  if (signature == null) {
+    return;
+  }
+  if (COLOR_INT_ANNOTATION.equals(signature)) {
+    checkColor(context,argument);
+  }
+ else   if (signature.equals(INT_RANGE_ANNOTATION)) {
+    checkIntRange(context,annotation,argument);
+  }
+ else   if (signature.equals(FLOAT_RANGE_ANNOTATION)) {
+    checkFloatRange(context,annotation,argument);
+  }
+ else   if (signature.equals(SIZE_ANNOTATION)) {
+    checkSize(context,annotation,argument);
+  }
+ else {
+    if (signature.equals(INT_DEF_ANNOTATION)) {
+      boolean flag=annotation.getValue(TYPE_DEF_FLAG_ATTRIBUTE) == Boolean.TRUE;
+      checkTypeDefConstant(context,annotation,argument,null,flag);
+    }
+ else     if (signature.equals(STRING_DEF_ANNOTATION)) {
+      checkTypeDefConstant(context,annotation,argument,null,false);
+    }
+ else     if (signature.endsWith(RES_SUFFIX)) {
+      String typeString=signature.substring(SUPPORT_ANNOTATIONS_PREFIX.length(),signature.length() - RES_SUFFIX.length()).toLowerCase(Locale.US);
+      ResourceType type=ResourceType.getEnum(typeString);
+      if (type != null) {
+        checkResourceType(context,argument,type);
+      }
+ else       if (typeString.equals("any")) {
+        checkResourceType(context,argument,null);
+      }
+    }
+  }
+}

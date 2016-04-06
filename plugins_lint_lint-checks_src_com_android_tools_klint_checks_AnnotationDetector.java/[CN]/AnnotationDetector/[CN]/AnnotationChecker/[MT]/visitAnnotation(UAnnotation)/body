@@ -1,0 +1,33 @@
+{
+  String type=node.getName();
+  if (SUPPRESS_LINT.equals(type) || FQCN_SUPPRESS_LINT.equals(type)) {
+    UElement parent=node.getParent();
+    if (parent instanceof UVariable) {
+      for (      UNamedExpression element : node.getValueArguments()) {
+        UExpression valueNode=element.getExpression();
+        if (UastLiteralUtils.isStringLiteral(valueNode)) {
+          ULiteralExpression literal=(ULiteralExpression)valueNode;
+          String id=((String)literal.getValue());
+          if (!checkId(node,id)) {
+            return super.visitAnnotation(node);
+          }
+        }
+ else         if (valueNode instanceof UCallExpression && ((UCallExpression)valueNode).getKind() == JavaUastCallKinds.ARRAY_INITIALIZER) {
+          UCallExpression array=(UCallExpression)valueNode;
+          if (array.getValueArgumentCount() == 0) {
+            continue;
+          }
+          for (          UExpression arrayElement : array.getValueArguments()) {
+            if (UastLiteralUtils.isStringLiteral(arrayElement)) {
+              String id=((String)((ULiteralExpression)arrayElement).getValue());
+              if (!checkId(node,id)) {
+                return super.visitAnnotation(node);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

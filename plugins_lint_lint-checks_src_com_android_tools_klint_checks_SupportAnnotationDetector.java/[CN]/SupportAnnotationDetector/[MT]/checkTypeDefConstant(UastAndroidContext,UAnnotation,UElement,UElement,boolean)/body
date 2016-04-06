@@ -1,0 +1,60 @@
+{
+  if (UastLiteralUtils.isNullLiteral(argument)) {
+    return;
+  }
+  if (UastLiteralUtils.isStringLiteral(argument)) {
+    ULiteralExpression string=(ULiteralExpression)argument;
+    checkTypeDefConstant(context,annotation,argument,errorNode,false,string.getValue());
+  }
+ else   if (UastLiteralUtils.isIntegralLiteral(argument)) {
+    ULiteralExpression literal=(ULiteralExpression)argument;
+    long value=UastLiteralUtils.getLongValue(literal);
+    if (flag && value == 0) {
+      return;
+    }
+    checkTypeDefConstant(context,annotation,argument,errorNode,flag,(int)value);
+  }
+ else   if (isMinusOne(argument)) {
+    if (!flag) {
+      reportTypeDef(context,annotation,argument,errorNode);
+    }
+  }
+ else   if (argument instanceof UIfExpression && ((UIfExpression)argument).isTernary()) {
+    UIfExpression expression=(UIfExpression)argument;
+    if (expression.getThenBranch() != null) {
+      checkTypeDefConstant(context,annotation,expression.getThenBranch(),errorNode,flag);
+    }
+    if (expression.getElseBranch() != null) {
+      checkTypeDefConstant(context,annotation,expression.getElseBranch(),errorNode,flag);
+    }
+  }
+ else   if (argument instanceof UUnaryExpression) {
+    UUnaryExpression expression=(UUnaryExpression)argument;
+    UastOperator operator=expression.getOperator();
+    if (flag) {
+      checkTypeDefConstant(context,annotation,expression.getOperand(),errorNode,true);
+    }
+ else     if (operator == UastPrefixOperator.BITWISE_NOT) {
+      context.report(TYPE_DEF,expression,context.getLocation(expression),"Flag not allowed here");
+    }
+  }
+ else   if (argument instanceof UBinaryExpression) {
+    UBinaryExpression expression=(UBinaryExpression)argument;
+    if (flag) {
+      checkTypeDefConstant(context,annotation,expression.getLeftOperand(),errorNode,true);
+      checkTypeDefConstant(context,annotation,expression.getRightOperand(),errorNode,true);
+    }
+ else {
+      UastOperator operator=expression.getOperator();
+      if (operator == UastBinaryOperator.BITWISE_AND || operator == UastBinaryOperator.BITWISE_OR || operator == UastBinaryOperator.BITWISE_XOR) {
+        context.report(TYPE_DEF,expression,context.getLocation(expression),"Flag not allowed here");
+      }
+    }
+  }
+ else   if (argument instanceof UResolvable) {
+    UDeclaration resolved=((UResolvable)argument).resolve(context);
+    if (resolved instanceof UVariable) {
+      checkTypeDefConstant(context,annotation,argument,errorNode,flag,resolved);
+    }
+  }
+}

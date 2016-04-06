@@ -1,0 +1,19 @@
+{
+  if (mPermissions == null) {
+    Set<String> permissions=Sets.newHashSetWithExpectedSize(30);
+    Set<String> revocable=Sets.newHashSetWithExpectedSize(4);
+    JavaContext lintContext=context.getLintContext();
+    LintClient client=lintContext.getClient();
+    Project mainProject=lintContext.getMainProject();
+    for (    File manifest : mainProject.getManifestFiles()) {
+      addPermissions(client,permissions,revocable,manifest);
+    }
+    for (    Project library : mainProject.getAllLibraries()) {
+      for (      File manifest : library.getManifestFiles()) {
+        addPermissions(client,permissions,revocable,manifest);
+      }
+    }
+    mPermissions=new PermissionHolder.SetPermissionLookup(permissions,revocable);
+  }
+  return mPermissions;
+}

@@ -1,0 +1,31 @@
+{
+  if (mContainsCleanup) {
+    return true;
+  }
+  if (!mEscapes) {
+    for (    UExpression expression : call.getValueArguments()) {
+      if (expression instanceof USimpleReferenceExpression) {
+        UDeclaration resolved=((USimpleReferenceExpression)expression).resolve(mContext);
+        if (resolved != null && mVariables.contains(resolved)) {
+          mEscapes=true;
+          if (OBTAIN.equals(call.getFunctionName())) {
+            UFunction method=call.resolve(mContext);
+            if (method != null) {
+              UClass cls=UastUtils.getContainingClassOrEmpty(method);
+              if (cls.matchesFqName(MOTION_EVENT_CLS)) {
+                mEscapes=false;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  if (isCleanupCall(call)) {
+    mContainsCleanup=true;
+    return true;
+  }
+ else {
+    return false;
+  }
+}

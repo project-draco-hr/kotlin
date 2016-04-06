@@ -1,0 +1,20 @@
+{
+  UastBinaryOperator operator=node.getOperator();
+  if (operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.OR_ASSIGN) {
+    UExpression left=node.getLeftOperand();
+    String variable=null;
+    if (left instanceof UQualifiedExpression && ((UQualifiedExpression)left).getReceiver() instanceof UThisExpression) {
+      UExpression selector=((UQualifiedExpression)left).getSelector();
+      if (selector instanceof USimpleReferenceExpression) {
+        variable=((USimpleReferenceExpression)selector).getIdentifier();
+      }
+    }
+ else     if (left instanceof USimpleReferenceExpression) {
+      variable=((USimpleReferenceExpression)left).getIdentifier();
+    }
+    if (variable != null) {
+      mVariables.add(variable);
+    }
+  }
+  return super.visitBinaryExpression(node);
+}

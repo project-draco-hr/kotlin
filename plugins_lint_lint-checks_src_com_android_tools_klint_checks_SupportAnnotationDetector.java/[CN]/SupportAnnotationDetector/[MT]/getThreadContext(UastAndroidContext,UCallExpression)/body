@@ -1,0 +1,31 @@
+{
+  UFunction method=UastUtils.getContainingFunction(methodCall);
+  if (method != null) {
+    UClass cls=UastUtils.getContainingClass(method);
+    while (method != null) {
+      for (      UAnnotation annotation : method.getAnnotations()) {
+        String name=annotation.getFqName();
+        if (name != null && name.startsWith(SUPPORT_ANNOTATIONS_PREFIX) && name.endsWith(THREAD_SUFFIX)) {
+          return name;
+        }
+      }
+      List<UFunction> superFunctions=method.getSuperFunctions(context);
+      if (superFunctions.isEmpty()) {
+        method=null;
+      }
+ else {
+        method=superFunctions.get(0);
+      }
+    }
+    while (cls != null) {
+      for (      UAnnotation annotation : cls.getAnnotations()) {
+        String name=annotation.getFqName();
+        if (name != null && name.startsWith(SUPPORT_ANNOTATIONS_PREFIX) && name.endsWith(THREAD_SUFFIX)) {
+          return name;
+        }
+      }
+      cls=cls.getSuperClass(context);
+    }
+  }
+  return null;
+}

@@ -1,0 +1,34 @@
+{
+  UFunction method=call.resolve(mContext);
+  if (method != null) {
+    List<UAnnotation> annotations=method.getAnnotations();
+    for (    UAnnotation annotation : annotations) {
+      annotation=getRelevantAnnotation(annotation,mContext);
+      if (annotation != null) {
+        checkMethodAnnotation(mContext,method,call,annotation);
+      }
+    }
+    UClass containingClass=UastUtils.getContainingClass(method);
+    if (containingClass != null) {
+      annotations=containingClass.getAnnotations();
+      for (      UAnnotation annotation : annotations) {
+        annotation=getRelevantAnnotation(annotation,mContext);
+        if (annotation != null) {
+          checkMethodAnnotation(mContext,method,call,annotation);
+        }
+      }
+    }
+    Iterator<UExpression> arguments=call.getValueArguments().iterator();
+    for (int i=0, n=method.getValueParameterCount(); i < n && arguments.hasNext(); i++) {
+      UExpression argument=arguments.next();
+      annotations=method.getValueParameters().get(i).getAnnotations();
+      for (      UAnnotation annotation : annotations) {
+        annotation=getRelevantAnnotation(annotation,mContext);
+        if (annotation != null) {
+          checkParameterAnnotation(mContext,argument,annotation);
+        }
+      }
+    }
+  }
+  return false;
+}

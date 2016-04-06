@@ -1,0 +1,63 @@
+{
+  PermissionRequirement requirement=PermissionRequirement.create(context,annotation);
+  if (requirement.isConditional()) {
+    return;
+  }
+  PermissionHolder permissions=getPermissions(context.getLintContext());
+  if (!requirement.isSatisfied(permissions)) {
+    permissions=addLocalPermissions(context,permissions,node);
+    if (!requirement.isSatisfied(permissions)) {
+      UClass containingClass=UastUtils.getContainingClass(method);
+      if (containingClass != null) {
+        String name=containingClass.getName() + "." + method.getName();
+        String message=getMissingPermissionMessage(requirement,name,permissions);
+        context.report(MISSING_PERMISSION,node,context.getLocation(node),message);
+      }
+    }
+  }
+ else   if (requirement.isRevocable(permissions) && context.getLintContext().getMainProject().getTargetSdkVersion().getFeatureLevel() >= 23) {
+    boolean handlesMissingPermission=false;
+    UElement parent=node;
+    while (true) {
+      UTryExpression tryCatch=UastUtils.getParentOfType(parent,UTryExpression.class);
+      if (tryCatch == null) {
+        break;
+      }
+ else {
+        for (        UCatchClause aCatch : tryCatch.getCatchClauses()) {
+          for (          UType catchType : aCatch.getTypes()) {
+            if (isSecurityException(catchType)) {
+              handlesMissingPermission=true;
+              break;
+            }
+          }
+        }
+        parent=tryCatch;
+      }
+    }
+    if (!handlesMissingPermission) {
+      UFunction declaration=UastUtils.getParentOfType(parent,UFunction.class);
+      if (declaration instanceof JavaUFunction) {
+        List<UType> thrownExceptions=((JavaUFunction)declaration).getThrownExceptions();
+        for (        UType typeReference : thrownExceptions) {
+          if (isSecurityException(typeReference)) {
+            handlesMissingPermission=true;
+            break;
+          }
+        }
+      }
+    }
+    if (!handlesMissingPermission) {
+      UFunction methodNode=UastUtils.getContainingFunction(node);
+      if (methodNode != null) {
+        CheckPermissionVisitor visitor=new CheckPermissionVisitor(node);
+        visitor.process(methodNode);
+        handlesMissingPermission=visitor.checksPermission();
+      }
+    }
+    if (!handlesMissingPermission) {
+      String message=getUnhandledPermissionMessage();
+      context.report(MISSING_PERMISSION,node,context.getLocation(node),message);
+    }
+  }
+}

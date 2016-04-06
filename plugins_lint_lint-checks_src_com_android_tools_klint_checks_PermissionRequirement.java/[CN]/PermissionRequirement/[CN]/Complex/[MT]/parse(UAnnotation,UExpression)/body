@@ -1,0 +1,15 @@
+{
+  if (expression instanceof UQualifiedExpression) {
+    return new Single(annotation,expression.renderString());
+  }
+ else   if (expression instanceof UBinaryExpression) {
+    UBinaryExpression binaryExpression=(UBinaryExpression)expression;
+    UastBinaryOperator operator=binaryExpression.getOperator();
+    if (operator == UastBinaryOperator.LOGICAL_AND || operator == UastBinaryOperator.LOGICAL_OR || operator == UastBinaryOperator.BITWISE_XOR) {
+      PermissionRequirement left=parse(annotation,binaryExpression.getLeftOperand());
+      PermissionRequirement right=parse(annotation,binaryExpression.getRightOperand());
+      return new Complex(annotation,operator,left,right);
+    }
+  }
+  return NONE;
+}

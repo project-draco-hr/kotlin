@@ -1,0 +1,33 @@
+{
+  if (UastLiteralUtils.isIntegralLiteral(expression)) {
+    return (int)UastLiteralUtils.getLongValue((ULiteralExpression)expression);
+  }
+  if (expression instanceof UResolvable) {
+    UDeclaration resolvedNode=((UResolvable)expression).resolve(context);
+    if (resolvedNode instanceof UVariable) {
+      UExpression initializer=((UVariable)resolvedNode).getInitializer();
+      if (initializer != null) {
+        Object value=initializer.evaluate();
+        if (value instanceof Integer) {
+          return (Integer)value;
+        }
+      }
+    }
+  }
+  if (expression instanceof UBinaryExpression) {
+    UBinaryExpression binaryExpression=(UBinaryExpression)expression;
+    UastBinaryOperator operator=binaryExpression.getOperator();
+    int leftValue=calculateValue(context,binaryExpression.getLeftOperand());
+    int rightValue=calculateValue(context,binaryExpression.getRightOperand());
+    if (operator == UastBinaryOperator.BITWISE_OR) {
+      return leftValue | rightValue;
+    }
+    if (operator == UastBinaryOperator.BITWISE_AND) {
+      return leftValue & rightValue;
+    }
+    if (operator == UastBinaryOperator.BITWISE_XOR) {
+      return leftValue ^ rightValue;
+    }
+  }
+  return 0;
+}

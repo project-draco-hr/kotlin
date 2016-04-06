@@ -1,0 +1,27 @@
+{
+  com.intellij.openapi.project.Project intellijProject=mClient.getProject();
+  if (intellijProject == null) {
+    return;
+  }
+  UastChecker checker=UastChecker.INSTANCE;
+  List<UastConverter> converters=project.getClient().getConverters();
+  for (  File file : files) {
+    if (!file.isFile()) {
+      continue;
+    }
+    String path=file.getPath();
+    if (!path.endsWith(DOT_JAVA) && !UastConverterUtils.isFileSupported(converters,path)) {
+      continue;
+    }
+    JavaContext context=new JavaContext(this,project,main,file);
+    for (    UastScanner detector : detectors) {
+      UastVisitor customHandler=detector.createUastVisitor(context);
+      if (customHandler != null) {
+        checker.checkWithCustomHandler(intellijProject,file,converters,customHandler);
+      }
+ else {
+        checker.check(intellijProject,file,detector,converters,context);
+      }
+    }
+  }
+}

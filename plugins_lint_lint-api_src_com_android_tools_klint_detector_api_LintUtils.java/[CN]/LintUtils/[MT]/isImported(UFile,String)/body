@@ -1,0 +1,24 @@
+{
+  if (compilationUnit == null) {
+    return false;
+  }
+  int dotIndex=fullyQualifiedName.lastIndexOf('.');
+  int dotLength=fullyQualifiedName.length() - dotIndex;
+  boolean imported=false;
+  for (  UImportStatement importStatement : compilationUnit.getImportStatements()) {
+    String fqn=importStatement.getNameToImport();
+    if (fqn == null) {
+      continue;
+    }
+    if (fqn.equals(fullyQualifiedName)) {
+      return true;
+    }
+ else     if (fullyQualifiedName.regionMatches(dotIndex,fqn,fqn.length() - dotLength,dotLength)) {
+      return false;
+    }
+ else     if (importStatement.isStarImport() && fqn.regionMatches(0,fqn,0,dotIndex + 1)) {
+      imported=true;
+    }
+  }
+  return imported;
+}

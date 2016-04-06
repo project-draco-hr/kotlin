@@ -1,0 +1,22 @@
+{
+  if (node.isInterface() || node.hasModifier(UastModifier.ABSTRACT)) {
+    return true;
+  }
+  for (  UType reference : node.getSuperTypes()) {
+    String name=reference.getName();
+    if (name.equals("Parcelable")) {
+      UVariable field=UastUtils.findProperty(node,"CREATOR");
+      if (field == null) {
+        UClass parcelable=reference.resolve(mContext);
+        if (parcelable != null) {
+          if (!parcelable.isSubclassOf("android.os.Parcelable")) {
+            return true;
+          }
+        }
+        Location location=UastAndroidUtils.getLocation(node.getNameElement());
+        mContext.report(ISSUE,node,location,"This class implements `Parcelable` but does not " + "provide a `CREATOR` field");
+      }
+    }
+  }
+  return true;
+}

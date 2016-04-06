@@ -1,0 +1,57 @@
+{
+  if (isBeginTransaction(context,node)) {
+    UVariable boundVariable=getVariable(context,node);
+    if (boundVariable == null && isCommittedInChainedCalls(context,node)) {
+      return true;
+    }
+    if (boundVariable != null) {
+      UFunction method=UastUtils.getContainingFunction(node);
+      if (method == null) {
+        return true;
+      }
+      FinishVisitor commitVisitor=new FinishVisitor(context,boundVariable){
+        @Override protected boolean isCleanupCall(        @NonNull UCallExpression call){
+          if (isTransactionCommitMethodCall(mContext,call)) {
+            UExpression operand=UastUtils.getReceiver(call);
+            if (operand instanceof UResolvable) {
+              UDeclaration resolved=((UResolvable)operand).resolve(mContext);
+              if (resolved != null && mVariables.contains(resolved)) {
+                return true;
+              }
+ else               if (resolved instanceof UFunction && operand instanceof UCallExpression && isCommittedInChainedCalls(mContext,(UCallExpression)operand)) {
+                while (operand instanceof UCallExpression) {
+                  operand=UastUtils.getReceiver((UCallExpression)operand);
+                }
+                if (operand instanceof USimpleReferenceExpression) {
+                  resolved=((USimpleReferenceExpression)operand).resolve(mContext);
+                  if (resolved != null && mVariables.contains(resolved)) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+ else           if (isShowFragmentMethodCall(mContext,call)) {
+            List<UExpression> arguments=call.getValueArguments();
+            if (arguments.size() == 2) {
+              UExpression first=arguments.get(0);
+              UDeclaration resolved=UastUtils.resolveIfCan(first,mContext);
+              if (resolved != null && mVariables.contains(resolved)) {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
+      }
+;
+      commitVisitor.handle(method);
+      if (commitVisitor.isCleanedUp() || commitVisitor.variableEscapes()) {
+        return true;
+      }
+    }
+    String message="This transaction should be completed with a `commit()` call";
+    context.report(COMMIT_FRAGMENT,node,UastAndroidUtils.getLocation(node.getFunctionReference()),message);
+  }
+  return false;
+}

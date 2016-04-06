@@ -1,0 +1,31 @@
+{
+  return new UastVisitor(){
+    @Override public boolean visitSpecialExpressionList(    @NotNull USpecialExpressionList node){
+      if (node.getKind() != JavaSpecialExpressionKinds.ASSERT) {
+        return true;
+      }
+      if (!context.getLintContext().getMainProject().isAndroidProject()) {
+        return true;
+      }
+      UExpression assertion=node.firstOrNull();
+      if (assertion instanceof ULiteralExpression) {
+        ULiteralExpression literal=(ULiteralExpression)assertion;
+        if (literal.isBoolean()) {
+          Boolean b=((Boolean)literal.getValue());
+          if (b != null && b) {
+            return false;
+          }
+        }
+      }
+ else {
+        if (isNullCheck(assertion)) {
+          return false;
+        }
+      }
+      String message="Assertions are unreliable. Use `BuildConfig.DEBUG` conditional checks instead.";
+      context.report(ISSUE,node,UastAndroidUtils.getLocation(node),message);
+      return false;
+    }
+  }
+;
+}

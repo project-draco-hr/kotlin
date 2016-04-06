@@ -1,0 +1,30 @@
+{
+  if (annotations == null) {
+    return -1;
+  }
+  for (  UAnnotation annotation : annotations) {
+    if (annotation.matchesName(TARGET_API)) {
+      for (      UNamedExpression element : annotation.getValueArguments()) {
+        UExpression valueNode=element.getExpression();
+        if (UastLiteralUtils.isIntegralLiteral(valueNode)) {
+          return (int)UastLiteralUtils.getLongValue((ULiteralExpression)valueNode);
+        }
+ else         if (UastLiteralUtils.isStringLiteral(valueNode)) {
+          String value=(String)((ULiteralExpression)valueNode).getValue();
+          return SdkVersionInfo.getApiByBuildCode(value,true);
+        }
+ else         if (valueNode instanceof UQualifiedExpression) {
+          UQualifiedExpression select=(UQualifiedExpression)valueNode;
+          String codename=select.getSelector().renderString();
+          return SdkVersionInfo.getApiByBuildCode(codename,true);
+        }
+ else         if (valueNode instanceof USimpleReferenceExpression) {
+          USimpleReferenceExpression reference=(USimpleReferenceExpression)valueNode;
+          String codename=reference.getIdentifier();
+          return SdkVersionInfo.getApiByBuildCode(codename,true);
+        }
+      }
+    }
+  }
+  return -1;
+}

@@ -1,0 +1,27 @@
+{
+  UExpression operand=UastUtils.getReceiver(node);
+  if (mFlagAllocations && operand != null) {
+    String methodName=node.getFunctionName();
+    if ("createBitmap".equals(methodName) || "createScaledBitmap".equals(methodName)) {
+      String operandText=operand.renderString();
+      if (operandText.equals("Bitmap") || operandText.equals("android.graphics.Bitmap")) {
+        if (!isLazilyInitialized(node)) {
+          reportAllocation(node);
+        }
+      }
+    }
+ else     if (methodName != null && methodName.startsWith("decode")) {
+      String operandText=operand.renderString();
+      if (operandText.equals("BitmapFactory") || operandText.equals("android.graphics.BitmapFactory")) {
+        if (!isLazilyInitialized(node)) {
+          reportAllocation(node);
+        }
+      }
+    }
+ else     if ("getClipBounds".equals(methodName)) {
+      if (node.getValueArgumentCount() == 0) {
+        mContext.report(PAINT_ALLOC,node,mContext.getLocation(node),"Avoid object allocations during draw operations: Use " + "`Canvas.getClipBounds(Rect)` instead of `Canvas.getClipBounds()` " + "which allocates a temporary `Rect`");
+      }
+    }
+  }
+}

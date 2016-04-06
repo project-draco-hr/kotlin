@@ -1,0 +1,28 @@
+{
+  UClass containingClass=UastUtils.getContainingClass(node);
+  if (containingClass == null || !containingClass.isSubclassOf(CIPHER)) {
+    return;
+  }
+  List<UExpression> argumentList=node.getValueArguments();
+  if (argumentList.size() == 1) {
+    UExpression expression=argumentList.get(0);
+    if (expression instanceof ULiteralExpression) {
+      ULiteralExpression argument=(ULiteralExpression)expression;
+      String parameter=argument.getText();
+      checkParameter(context,node,argument,parameter,false);
+    }
+ else     if (expression instanceof UResolvable) {
+      UDeclaration declaration=((UResolvable)expression).resolve(context);
+      if (declaration instanceof UVariable) {
+        UVariable field=(UVariable)declaration;
+        UExpression initializer=field.getInitializer();
+        if (initializer != null) {
+          Object value=initializer.evaluate();
+          if (value instanceof String) {
+            checkParameter(context,node,expression,(String)value,true);
+          }
+        }
+      }
+    }
+  }
+}

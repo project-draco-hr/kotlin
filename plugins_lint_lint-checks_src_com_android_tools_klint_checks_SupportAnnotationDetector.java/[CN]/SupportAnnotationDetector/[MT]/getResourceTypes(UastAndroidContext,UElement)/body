@@ -1,0 +1,70 @@
+{
+  if (argument instanceof UQualifiedExpression) {
+    UQualifiedExpression node=(UQualifiedExpression)argument;
+    if (node.getReceiver() instanceof UQualifiedExpression) {
+      UQualifiedExpression select=(UQualifiedExpression)node.getReceiver();
+      if (select.getReceiver() instanceof UQualifiedExpression) {
+        UQualifiedExpression innerSelect=(UQualifiedExpression)select.getReceiver();
+        if (innerSelect.getSelector().renderString().equals(R_CLASS)) {
+          String typeName=select.getSelector().renderString();
+          ResourceType type=ResourceType.getEnum(typeName);
+          return type != null ? Collections.singletonList(type) : null;
+        }
+      }
+      if (select.getReceiver() instanceof USimpleReferenceExpression) {
+        USimpleReferenceExpression reference=(USimpleReferenceExpression)select.getReceiver();
+        if (reference.getIdentifier().equals(R_CLASS)) {
+          String typeName=select.getSelector().renderString();
+          ResourceType type=ResourceType.getEnum(typeName);
+          return type != null ? Collections.singletonList(type) : null;
+        }
+      }
+    }
+    if (node.getSelector().renderString().equals(R_CLASS)) {
+      UElement parent=node.getParent();
+      if (parent instanceof UQualifiedExpression) {
+        UElement grandParent=parent.getParent();
+        if (grandParent instanceof UQualifiedExpression) {
+          UQualifiedExpression select=(UQualifiedExpression)grandParent;
+          UExpression typeOperand=select.getReceiver();
+          if (typeOperand instanceof UQualifiedExpression) {
+            UQualifiedExpression typeSelect=(UQualifiedExpression)typeOperand;
+            String typeName=typeSelect.getSelector().renderString();
+            ResourceType type=ResourceType.getEnum(typeName);
+            return type != null ? Collections.singletonList(type) : null;
+          }
+        }
+      }
+    }
+  }
+ else   if (argument instanceof UCallExpression) {
+    UDeclaration resolved=((UCallExpression)argument).resolve(context);
+    if (resolved instanceof UAnnotated) {
+      List<UAnnotation> annotations=((UAnnotated)resolved).getAnnotations();
+      for (      UAnnotation annotation : annotations) {
+        String signature=annotation.getFqName();
+        if (COLOR_INT_ANNOTATION.equals(signature)) {
+          return Collections.singletonList(COLOR_INT_MARKER_TYPE);
+        }
+        if (signature != null && signature.endsWith(RES_SUFFIX) && signature.startsWith(SUPPORT_ANNOTATIONS_PREFIX)) {
+          String typeString=signature.substring(SUPPORT_ANNOTATIONS_PREFIX.length(),signature.length() - RES_SUFFIX.length()).toLowerCase(Locale.US);
+          ResourceType type=ResourceType.getEnum(typeString);
+          if (type != null) {
+            return Collections.singletonList(type);
+          }
+ else           if (typeString.equals("any")) {
+            ResourceType[] types=ResourceType.values();
+            List<ResourceType> result=Lists.newArrayListWithExpectedSize(types.length);
+            for (            ResourceType t : types) {
+              if (t != COLOR_INT_MARKER_TYPE) {
+                result.add(t);
+              }
+            }
+            return result;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
