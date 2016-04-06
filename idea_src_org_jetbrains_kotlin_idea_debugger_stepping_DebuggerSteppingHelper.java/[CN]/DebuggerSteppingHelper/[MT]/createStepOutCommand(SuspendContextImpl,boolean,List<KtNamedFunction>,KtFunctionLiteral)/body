@@ -2,28 +2,20 @@
   final DebugProcessImpl debugProcess=suspendContext.getDebugProcess();
   return debugProcess.new ResumeCommand(suspendContext){
     @Override public void contextAction(){
-      final StackFrameProxyImpl frameProxy=suspendContext.getFrameProxy();
-      if (frameProxy != null) {
-        DebugProcessImpl.ResumeCommand runToCursorCommand=ApplicationManager.getApplication().runReadAction(new Computable<DebugProcessImpl.ResumeCommand>(){
-          @Override public DebugProcessImpl.ResumeCommand compute(){
-            try {
-              XSourcePositionImpl position=KotlinSteppingCommandProviderKt.getStepOutPosition(frameProxy.location(),suspendContext,inlineFunctions,inlineArgument);
-              if (position != null) {
-                return debugProcess.createRunToCursorCommand(suspendContext,position,ignoreBreakpoints);
-              }
-            }
- catch (            EvaluateException ignored) {
-            }
-            return null;
+      try {
+        StackFrameProxyImpl frameProxy=suspendContext.getFrameProxy();
+        if (frameProxy != null) {
+          Action action=KotlinSteppingCommandProviderKt.getStepOutPosition(frameProxy.location(),suspendContext,inlineFunctions,inlineArgument);
+          DebugProcessImpl.ResumeCommand command=action.createCommand(debugProcess,suspendContext,ignoreBreakpoints);
+          if (command != null) {
+            command.contextAction();
+            return;
           }
         }
-);
-        if (runToCursorCommand != null) {
-          runToCursorCommand.contextAction();
-          return;
-        }
+        debugProcess.createStepOverCommand(suspendContext,ignoreBreakpoints).contextAction();
       }
-      debugProcess.createStepOverCommand(suspendContext,ignoreBreakpoints).contextAction();
+ catch (      EvaluateException ignored) {
+      }
     }
   }
 ;
