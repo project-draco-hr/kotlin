@@ -3,19 +3,8 @@
   KtPropertyAccessor getter=property.getGetter();
   if (getter != null) {
     Annotations getterAnnotations=new CompositeAnnotations(CollectionsKt.listOf(annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER),annotationResolver.resolveAnnotationsWithoutArguments(scopeWithTypeParameters,getter.getModifierList(),trace)));
-    KotlinType outType=propertyDescriptor.getType();
-    KotlinType returnType=outType;
-    KtTypeReference returnTypeReference=getter.getReturnTypeReference();
-    if (returnTypeReference != null) {
-      returnType=typeResolver.resolveType(scopeWithTypeParameters,returnTypeReference,trace,true);
-      if (!TypeUtils.equalTypes(returnType,outType)) {
-        trace.report(WRONG_GETTER_RETURN_TYPE.on(returnTypeReference,propertyDescriptor.getReturnType(),outType));
-      }
-    }
     getterDescriptor=new PropertyGetterDescriptorImpl(propertyDescriptor,getterAnnotations,resolveModalityFromModifiers(getter,propertyDescriptor.getModality()),resolveVisibilityFromModifiers(getter,propertyDescriptor.getVisibility()),false,getter.hasModifier(EXTERNAL_KEYWORD),CallableMemberDescriptor.Kind.DECLARATION,null,KotlinSourceElementKt.toSourceElement(getter));
-    if (returnType.isError() && !getter.hasBlockBody() && getter.hasBody()) {
-      returnType=inferReturnTypeFromExpressionBody(storageManager,expressionTypingServices,trace,scopeWithTypeParameters,DataFlowInfoFactory.EMPTY,getter,getterDescriptor);
-    }
+    KotlinType returnType=determineGetterReturnType(scopeWithTypeParameters,trace,getterDescriptor,getter,propertyDescriptor.getType());
     getterDescriptor.initialize(returnType);
     trace.record(BindingContext.PROPERTY_ACCESSOR,getter,getterDescriptor);
   }

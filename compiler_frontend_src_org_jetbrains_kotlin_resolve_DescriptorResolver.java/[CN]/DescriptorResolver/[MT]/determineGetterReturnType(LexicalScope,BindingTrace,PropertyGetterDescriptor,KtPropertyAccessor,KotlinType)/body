@@ -1,0 +1,15 @@
+{
+  KtTypeReference returnTypeReference=getter.getReturnTypeReference();
+  if (returnTypeReference != null) {
+    KotlinType explicitReturnType=typeResolver.resolveType(scope,returnTypeReference,trace,true);
+    if (!TypeUtils.equalTypes(explicitReturnType,propertyType)) {
+      trace.report(WRONG_GETTER_RETURN_TYPE.on(returnTypeReference,propertyType,explicitReturnType));
+    }
+    return explicitReturnType;
+  }
+  KtProperty property=getter.getProperty();
+  if (!property.hasDelegateExpressionOrInitializer() && property.getTypeReference() == null && getter.hasBody() && !getter.hasBlockBody()) {
+    return inferReturnTypeFromExpressionBody(storageManager,expressionTypingServices,trace,scope,DataFlowInfoFactory.EMPTY,getter,getterDescriptor);
+  }
+  return propertyType;
+}
