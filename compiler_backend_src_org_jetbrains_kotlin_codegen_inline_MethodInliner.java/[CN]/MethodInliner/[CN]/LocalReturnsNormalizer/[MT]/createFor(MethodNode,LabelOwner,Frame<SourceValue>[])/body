@@ -1,0 +1,18 @@
+{
+  LocalReturnsNormalizer result=new LocalReturnsNormalizer();
+  AbstractInsnNode[] instructions=methodNode.instructions.toArray();
+  for (int i=0; i < instructions.length; ++i) {
+    Frame<SourceValue> frame=frames[i];
+    if (frame == null)     continue;
+    AbstractInsnNode insnNode=instructions[i];
+    if (!InlineCodegenUtil.isReturnOpcode(insnNode.getOpcode()))     continue;
+    AbstractInsnNode insertBeforeInsn=insnNode;
+    String labelName=getMarkedReturnLabelOrNull(insnNode);
+    if (labelName != null) {
+      if (!owner.isMyLabel(labelName))       continue;
+      insertBeforeInsn=insnNode.getPrevious();
+    }
+    result.addLocalReturnToTransform(insnNode,insertBeforeInsn,frame);
+  }
+  return result;
+}

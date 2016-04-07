@@ -1,0 +1,22 @@
+{
+  boolean isReturnWithValue=returnInsn.getOpcode() != Opcodes.RETURN;
+  int expectedStackSize=isReturnWithValue ? 1 : 0;
+  int actualStackSize=frame.getStackSize();
+  if (expectedStackSize == actualStackSize)   return;
+  int stackSize=actualStackSize;
+  if (isReturnWithValue) {
+    int storeOpcode=Opcodes.ISTORE + returnInsn.getOpcode() - Opcodes.IRETURN;
+    insnList.insertBefore(insertBeforeInsn,new VarInsnNode(storeOpcode,returnVariableIndex));
+    stackSize--;
+  }
+  while (stackSize > 0) {
+    int stackElementSize=frame.getStack(stackSize - 1).getSize();
+    int popOpcode=stackElementSize == 1 ? Opcodes.POP : Opcodes.POP2;
+    insnList.insertBefore(insertBeforeInsn,new InsnNode(popOpcode));
+    stackSize--;
+  }
+  if (isReturnWithValue) {
+    int loadOpcode=Opcodes.ILOAD + returnInsn.getOpcode() - Opcodes.IRETURN;
+    insnList.insertBefore(insertBeforeInsn,new VarInsnNode(loadOpcode,returnVariableIndex));
+  }
+}

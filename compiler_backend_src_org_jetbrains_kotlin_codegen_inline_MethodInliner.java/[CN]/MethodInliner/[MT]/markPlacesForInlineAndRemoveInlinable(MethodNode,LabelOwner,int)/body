@@ -1,32 +1,7 @@
 {
   node=prepareNode(node,finallyDeepShift);
-  try {
-    new MandatoryMethodTransformer().transform("fake",node);
-  }
- catch (  Throwable e) {
-    throw wrapException(e,node,"couldn't inline method call");
-  }
-  Analyzer<SourceValue> analyzer=new Analyzer<SourceValue>(new SourceInterpreter()){
-    @NotNull @Override protected Frame<SourceValue> newFrame(    int nLocals,    int nStack){
-      return new Frame<SourceValue>(nLocals,nStack){
-        @Override public void execute(        @NotNull AbstractInsnNode insn,        Interpreter<SourceValue> interpreter) throws AnalyzerException {
-          if (insn.getOpcode() == Opcodes.RETURN) {
-            return;
-          }
-          super.execute(insn,interpreter);
-        }
-      }
-;
-    }
-  }
-;
-  Frame<SourceValue>[] sources;
-  try {
-    sources=analyzer.analyze("fake",node);
-  }
- catch (  AnalyzerException e) {
-    throw wrapException(e,node,"couldn't inline method call");
-  }
+  Frame<SourceValue>[] sources=analyzeMethodNodeBeforeInline(node);
+  LocalReturnsNormalizer localReturnsNormalizer=LocalReturnsNormalizer.createFor(node,labelOwner,sources);
   Set<AbstractInsnNode> toDelete=SmartSet.create();
   InsnList instructions=node.instructions;
   AbstractInsnNode cur=instructions.getFirst();
@@ -101,5 +76,6 @@
       iterator.remove();
     }
   }
+  localReturnsNormalizer.transform(node);
   return node;
 }

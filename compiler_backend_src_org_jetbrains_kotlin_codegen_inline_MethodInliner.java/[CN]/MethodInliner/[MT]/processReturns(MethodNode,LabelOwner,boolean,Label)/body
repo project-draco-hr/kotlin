@@ -7,18 +7,12 @@
   AbstractInsnNode insnNode=instructions.getFirst();
   while (insnNode != null) {
     if (InlineCodegenUtil.isReturnOpcode(insnNode.getOpcode())) {
-      AbstractInsnNode previous=insnNode.getPrevious();
-      MethodInsnNode flagNode;
       boolean isLocalReturn=true;
-      String labelName=null;
-      if (previous != null && previous instanceof MethodInsnNode && InlineCodegenUtil.NON_LOCAL_RETURN.equals(((MethodInsnNode)previous).owner)) {
-        flagNode=(MethodInsnNode)previous;
-        labelName=flagNode.name;
-      }
+      String labelName=InlineCodegenUtil.getMarkedReturnLabelOrNull(insnNode);
       if (labelName != null) {
         isLocalReturn=labelOwner.isMyLabel(labelName);
         if (isLocalReturn) {
-          instructions.remove(previous);
+          instructions.remove(insnNode.getPrevious());
         }
       }
       if (isLocalReturn && endLabel != null) {
