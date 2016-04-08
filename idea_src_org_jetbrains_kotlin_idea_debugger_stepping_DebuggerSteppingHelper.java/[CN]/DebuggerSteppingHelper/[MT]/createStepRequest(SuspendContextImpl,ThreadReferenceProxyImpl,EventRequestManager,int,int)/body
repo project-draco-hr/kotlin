@@ -1,0 +1,23 @@
+{
+  if (stepThread == null) {
+    return;
+  }
+  try {
+    ThreadReference stepThreadReference=stepThread.getThreadReference();
+    requestManager.deleteEventRequests(requestManager.stepRequests());
+    StepRequest stepRequest=requestManager.createStepRequest(stepThreadReference,size,depth);
+    List<ClassFilter> activeFilters=getActiveFilters();
+    if (!activeFilters.isEmpty()) {
+      String currentClassName=getCurrentClassName(stepThread);
+      if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName,activeFilters)) {
+        for (        ClassFilter filter : activeFilters) {
+          stepRequest.addClassExclusionFilter(filter.getPattern());
+        }
+      }
+    }
+    stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_ALL);
+    stepRequest.enable();
+  }
+ catch (  ObjectCollectedException ignored) {
+  }
+}
