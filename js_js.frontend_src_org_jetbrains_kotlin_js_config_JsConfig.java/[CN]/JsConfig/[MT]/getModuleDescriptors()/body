@@ -1,12 +1,16 @@
 {
   init();
   if (moduleDescriptors != null)   return moduleDescriptors;
-  moduleDescriptors=new SmartList<ModuleDescriptorImpl>();
+  moduleDescriptors=new SmartList<JsModuleDescriptor<ModuleDescriptorImpl>>();
+  List<ModuleDescriptorImpl> kotlinModuleDescriptors=new ArrayList<ModuleDescriptorImpl>();
   for (  KotlinJavascriptMetadata metadataEntry : metadata) {
-    moduleDescriptors.add(createModuleDescriptor(metadataEntry));
+    JsModuleDescriptor<ModuleDescriptorImpl> descriptor=createModuleDescriptor(metadataEntry);
+    moduleDescriptors.add(descriptor);
+    kotlinModuleDescriptors.add(descriptor.getData());
   }
-  for (  ModuleDescriptorImpl module : moduleDescriptors) {
-    setDependencies(module,moduleDescriptors);
+  for (  JsModuleDescriptor<ModuleDescriptorImpl> module : moduleDescriptors) {
+    setDependencies(module.getData(),kotlinModuleDescriptors);
   }
+  moduleDescriptors=Collections.unmodifiableList(moduleDescriptors);
   return moduleDescriptors;
 }
