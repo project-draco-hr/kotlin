@@ -7,6 +7,12 @@
     KotlinType errorType=ErrorUtils.createErrorType("Empty callable reference");
     return components.dataFlowAnalyzer.createCheckedTypeInfo(errorType,c,expression);
   }
-  KotlinType result=getCallableReferenceType(expression,receiverType,c);
+  TemporaryBindingTrace trace=TemporaryBindingTrace.create(c.trace,"Callable reference type");
+  KotlinType result=getCallableReferenceType(expression,receiverType,c.replaceBindingTrace(trace));
+  boolean hasErrors=hasErrors(trace);
+  trace.commit();
+  if (!hasErrors && result != null) {
+    checkNoExpressionOnLHS(expression,c);
+  }
   return components.dataFlowAnalyzer.createCheckedTypeInfo(result,c,expression);
 }
