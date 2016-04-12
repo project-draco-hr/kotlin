@@ -1,5 +1,20 @@
 {
   List<String> versions=Lists.newArrayList();
+  String bundledRuntimeVersion=KotlinRuntimeLibraryUtilKt.bundledRuntimeVersion(KotlinPluginUtil.getPluginVersion());
+  if (ConfigureKotlinInProjectUtilsKt.isEap(bundledRuntimeVersion)) {
+    HttpURLConnection eapConnection=HttpConfigurable.getInstance().openHttpConnection(EAP_VERSIONS_URL + bundledRuntimeVersion);
+    try {
+      int timeout=(int)TimeUnit.SECONDS.toMillis(30);
+      eapConnection.setConnectTimeout(timeout);
+      eapConnection.setReadTimeout(timeout);
+      if (eapConnection.getResponseCode() == 200) {
+        versions.add(bundledRuntimeVersion);
+      }
+    }
+  finally {
+      eapConnection.disconnect();
+    }
+  }
   HttpURLConnection urlConnection=HttpConfigurable.getInstance().openHttpConnection(VERSIONS_LIST_URL);
   try {
     int timeout=(int)TimeUnit.SECONDS.toMillis(30);
