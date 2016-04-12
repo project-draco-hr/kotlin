@@ -5,7 +5,7 @@
   }
   JvmMethodGenericSignature jvmSignature=typeMapper.mapSignatureWithGeneric(functionDescriptor,contextKind);
   Method asmMethod=jvmSignature.getAsmMethod();
-  int flags=getMethodAsmFlags(functionDescriptor,contextKind);
+  int flags=getMethodAsmFlags(functionDescriptor,contextKind,state);
   if (origin.getOriginKind() == JvmDeclarationOriginKind.SAM_DELEGATION) {
     flags|=ACC_SYNTHETIC;
   }
@@ -25,7 +25,7 @@
     ImplementationBodyCodegen parentBodyCodegen=(ImplementationBodyCodegen)memberCodegen.getParentCodegen();
     parentBodyCodegen.addAdditionalTask(new JvmStaticGenerator(functionDescriptor,origin,state,parentBodyCodegen));
   }
-  if (state.getClassBuilderMode() != ClassBuilderMode.FULL || isAbstractMethod(functionDescriptor,contextKind)) {
+  if (state.getClassBuilderMode() != ClassBuilderMode.FULL || isAbstractMethod(functionDescriptor,contextKind,state)) {
     generateLocalVariableTable(mv,jvmSignature,functionDescriptor,getThisTypeForFunction(functionDescriptor,methodContext,typeMapper),new Label(),new Label(),contextKind);
     mv.visitEnd();
     return;
