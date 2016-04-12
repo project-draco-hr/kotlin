@@ -1,0 +1,18 @@
+{
+  JsScope scope=program.getScope();
+  JsName rootName=scope.declareName("root");
+  JsName factoryName=scope.declareName("factory");
+  JsName defineName=scope.declareName("define");
+  JsName exportsName=scope.declareName("exports");
+  JsExpression amdTest=JsAstUtils.and(JsAstUtils.typeOfIs(defineName.makeRef(),program.getStringLiteral("function")),new JsNameRef("amd",defineName.makeRef()));
+  JsExpression commonJsTest=JsAstUtils.typeOfIs(exportsName.makeRef(),program.getStringLiteral("object"));
+  JsBlock amdBody=new JsBlock(wrapAmd(moduleId,factoryName.makeRef(),importedModules,program));
+  JsBlock commonJsBody=new JsBlock(wrapCommonJs(factoryName.makeRef(),importedModules,program));
+  JsInvocation plainInvocation=makePlainInvocation(factoryName.makeRef(),importedModules);
+  JsExpression plainExpr=moduleId != null ? JsAstUtils.assignment(new JsNameRef(moduleId,rootName.makeRef()),plainInvocation) : plainInvocation;
+  JsStatement selector=JsAstUtils.newJsIf(amdTest,amdBody,JsAstUtils.newJsIf(commonJsTest,commonJsBody,plainExpr.makeStmt()));
+  JsFunction adapter=new JsFunction(program.getScope(),new JsBlock(selector),"UMD adapter");
+  adapter.getParameters().add(new JsParameter(rootName));
+  adapter.getParameters().add(new JsParameter(factoryName));
+  return Collections.singletonList(new JsInvocation(adapter,JsLiteral.THIS,function).makeStmt());
+}
