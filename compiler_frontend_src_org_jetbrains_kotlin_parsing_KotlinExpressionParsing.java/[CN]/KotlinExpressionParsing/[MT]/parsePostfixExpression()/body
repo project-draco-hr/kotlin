@@ -1,13 +1,6 @@
 {
   PsiBuilder.Marker expression=mark();
-  boolean firstExpressionParsed;
-  boolean doubleColonExpression=parseDoubleColonExpression();
-  if (!doubleColonExpression) {
-    firstExpressionParsed=parseAtomicExpression();
-  }
- else {
-    firstExpressionParsed=true;
-  }
+  boolean firstExpressionParsed=at(COLONCOLON) ? parseDoubleColonSuffix(mark()) : parseAtomicExpression();
   while (true) {
     if (interruptedWithNewLine()) {
       break;
@@ -16,7 +9,7 @@
       parseArrayAccess();
       expression.done(ARRAY_ACCESS_EXPRESSION);
     }
- else     if (!doubleColonExpression && parseCallSuffix()) {
+ else     if (parseCallSuffix()) {
       expression.done(CALL_EXPRESSION);
     }
  else     if (at(DOT) || at(SAFE_ACCESS)) {
@@ -40,7 +33,10 @@
       expression.done(POSTFIX_EXPRESSION);
     }
  else {
-      break;
+      skipQuestionMarksBeforeDoubleColon();
+      if (!parseDoubleColonSuffix(expression)) {
+        break;
+      }
     }
     expression=expression.precede();
   }
