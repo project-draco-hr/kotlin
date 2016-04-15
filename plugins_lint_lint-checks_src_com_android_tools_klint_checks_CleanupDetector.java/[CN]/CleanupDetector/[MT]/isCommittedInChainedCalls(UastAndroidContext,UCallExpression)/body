@@ -1,11 +1,13 @@
 {
-  UElement parent=node.getParent();
-  while (parent instanceof UCallExpression) {
-    UCallExpression methodInvocation=(UCallExpression)parent;
-    if (isTransactionCommitMethodCall(context,methodInvocation) || isShowFragmentMethodCall(context,methodInvocation)) {
-      return true;
+  List<UExpression> chains=UastUtils.getQualifiedChains(node);
+  if (chains.size() > 0) {
+    UExpression lastExpression=chains.get(chains.size() - 1);
+    if (lastExpression instanceof UCallExpression) {
+      UCallExpression methodInvocation=(UCallExpression)lastExpression;
+      if (isTransactionCommitMethodCall(context,methodInvocation) || isShowFragmentMethodCall(context,methodInvocation)) {
+        return true;
+      }
     }
-    parent=parent.getParent();
   }
   return false;
 }
