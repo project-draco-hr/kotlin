@@ -6,9 +6,29 @@
   add(myEditor.getComponent());
   JPanel optionPanel=new JPanel(new FlowLayout());
   add(optionPanel,BorderLayout.NORTH);
-  enableInline=new JCheckBox("Enable inline",true);
-  enableOptimization=new JCheckBox("Enable optimization",true);
-  enableAssertions=new JCheckBox("Enable assertions",true);
+  decompile=new JButton("Decompile");
+  if (KotlinDecompilerService.Companion.getInstance() != null) {
+    optionPanel.add(decompile);
+    decompile.addActionListener(new ActionListener(){
+      @Override public void actionPerformed(      ActionEvent e){
+        Location location=Location.fromEditor(FileEditorManager.getInstance(myProject).getSelectedTextEditor(),myProject);
+        KtFile file=location.getKFile();
+        if (file != null) {
+          try {
+            KotlinDecompilerAdapterKt.showDecompiledCode(file);
+          }
+ catch (          IdeaLogger.InternalException ex) {
+            LOG.info(ex);
+            Messages.showErrorDialog(myProject,"Failed to decompile " + file.getName() + ": "+ ex,"Kotlin Bytecode Decompiler");
+          }
+        }
+      }
+    }
+);
+  }
+  enableInline=new JCheckBox("Inline",true);
+  enableOptimization=new JCheckBox("Optimization",true);
+  enableAssertions=new JCheckBox("Assertions",true);
   optionPanel.add(enableInline);
   optionPanel.add(enableOptimization);
   optionPanel.add(enableAssertions);

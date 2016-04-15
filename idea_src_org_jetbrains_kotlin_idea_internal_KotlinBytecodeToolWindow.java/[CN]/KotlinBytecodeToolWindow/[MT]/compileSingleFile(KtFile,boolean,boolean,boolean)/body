@@ -1,0 +1,25 @@
+{
+  ResolutionFacade resolutionFacade=ResolutionUtils.getResolutionFacade(ktFile);
+  BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(ktFile)).getBindingContext();
+  kotlin.Pair<BindingContext,List<KtFile>> result=DebuggerUtils.INSTANCE.analyzeInlinedFunctions(resolutionFacade,bindingContextForFile,ktFile,!enableInline);
+  BindingContext bindingContext=result.getFirst();
+  List<KtFile> toProcess=result.getSecond();
+  GenerationState.GenerateClassFilter generateClassFilter=new GenerationState.GenerateClassFilter(){
+    @Override public boolean shouldGeneratePackagePart(    @NotNull KtFile file){
+      return file == ktFile;
+    }
+    @Override public boolean shouldAnnotateClass(    @NotNull KtClassOrObject processingClassOrObject){
+      return true;
+    }
+    @Override public boolean shouldGenerateClass(    @NotNull KtClassOrObject processingClassOrObject){
+      return processingClassOrObject.getContainingKtFile() == ktFile;
+    }
+    @Override public boolean shouldGenerateScript(    @NotNull KtScript script){
+      return script.getContainingKtFile() == ktFile;
+    }
+  }
+;
+  GenerationState state=new GenerationState(ktFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,false);
+  KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
+  return state;
+}
