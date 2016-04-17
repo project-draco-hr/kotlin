@@ -1,0 +1,23 @@
+{
+  try {
+    if (!buildDirectory.exists()) {
+      buildDirectory.mkdirs();
+    }
+    File scriptFile=File.createTempFile("kotlin-maven-plugin-inline-script-",".tmp.kts",buildDirectory);
+    FileOutputStream stream=new FileOutputStream(scriptFile);
+    stream.write(script.getBytes("UTF-8"));
+    stream.close();
+    try {
+      executeScriptFile(scriptFile);
+    }
+  finally {
+      boolean deleted=scriptFile.delete();
+      if (!deleted) {
+        getLog().warn("Error deleting " + scriptFile.getAbsolutePath());
+      }
+    }
+  }
+ catch (  IOException e) {
+    throw new MojoExecutionException("Error executing inline script",e);
+  }
+}
