@@ -1,18 +1,3 @@
 {
-  KtTypeReference typeReference=expression.getTypeReference();
-  KotlinType receiverType=typeReference == null ? null : components.typeResolver.resolveType(c.scope,typeReference,c.trace,false);
-  KtSimpleNameExpression callableReference=expression.getCallableReference();
-  if (callableReference.getReferencedName().isEmpty()) {
-    c.trace.report(UNRESOLVED_REFERENCE.on(callableReference,callableReference));
-    KotlinType errorType=ErrorUtils.createErrorType("Empty callable reference");
-    return components.dataFlowAnalyzer.createCheckedTypeInfo(errorType,c,expression);
-  }
-  TemporaryBindingTrace trace=TemporaryBindingTrace.create(c.trace,"Callable reference type");
-  KotlinType result=getCallableReferenceType(expression,receiverType,c.replaceBindingTrace(trace));
-  boolean hasErrors=hasErrors(trace);
-  trace.commit();
-  if (!hasErrors && result != null) {
-    checkNoExpressionOnLHS(expression,c);
-  }
-  return components.dataFlowAnalyzer.createCheckedTypeInfo(result,c,expression);
+  return components.doubleColonExpressionResolver.visitCallableReferenceExpression(expression,c);
 }
