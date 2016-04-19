@@ -6,7 +6,17 @@
     String name=reference.getName();
     if (name.equals("Parcelable")) {
       UVariable field=UastUtils.findStaticMemberOfType(node,"CREATOR",UVariable.class);
-      if (field == null) {
+      boolean hasField=field != null && field.hasModifier(UastModifier.FIELD);
+      boolean hasNamedCompanionObject=false;
+      if (!hasField) {
+        for (        UClass companion : node.getCompanions()) {
+          if (companion.getName().equals("CREATOR")) {
+            hasNamedCompanionObject=true;
+            break;
+          }
+        }
+      }
+      if (!hasField && !hasNamedCompanionObject) {
         UClass parcelable=reference.resolve(mContext);
         if (parcelable != null) {
           if (!parcelable.isSubclassOf("android.os.Parcelable")) {
