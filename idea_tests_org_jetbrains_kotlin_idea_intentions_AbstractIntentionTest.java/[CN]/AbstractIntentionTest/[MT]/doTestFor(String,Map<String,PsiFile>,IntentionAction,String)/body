@@ -1,7 +1,20 @@
 {
   String isApplicableString=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// IS_APPLICABLE: ");
   boolean isApplicableExpected=isApplicableString == null || isApplicableString.equals("true");
-  Assert.assertTrue("isAvailable() for " + intentionAction.getClass() + " should return "+ isApplicableExpected,isApplicableExpected == intentionAction.isAvailable(getProject(),getEditor(),getFile()));
+  boolean isApplicableOnPooled=ApplicationManager.getApplication().executeOnPooledThread(new java.util.concurrent.Callable<Boolean>(){
+    @Override public Boolean call() throws Exception {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+        @Override public Boolean compute(){
+          return intentionAction.isAvailable(getProject(),getEditor(),getFile());
+        }
+      }
+);
+    }
+  }
+).get();
+  boolean isApplicableOnEdt=intentionAction.isAvailable(getProject(),getEditor(),getFile());
+  Assert.assertEquals("There should not be any difference what thread isApplicable is called from",isApplicableOnPooled,isApplicableOnEdt);
+  Assert.assertTrue("isAvailable() for " + intentionAction.getClass() + " should return "+ isApplicableExpected,isApplicableExpected == isApplicableOnEdt);
   String intentionTextString=InTextDirectivesUtils.findStringWithPrefixes(fileText,"// INTENTION_TEXT: ");
   if (intentionTextString != null) {
     assertEquals("Intention text mismatch.",intentionTextString,intentionAction.getText());
