@@ -1,37 +1,16 @@
 {
   TestSuite suite=new TestSuite("MySuite");
   String resultOutput=runTests();
-  if (resultOutput == null)   return suite;
-  resultOutput=resultOutput.replaceAll("\\[checkenv\\] Installed at","[checkenv] Installed_at");
-  Map<String,String> resultMap=parseOutputForFailedTests(resultOutput);
-  final Statistics statistics;
-  if (resultMap.isEmpty()) {
-    statistics=parseOutputForTestsNumberIfTestsPassed(resultOutput);
-  }
- else {
-    statistics=parseOutputForTestsNumberIfThereIsFailedTests(resultOutput);
-    for (    final Map.Entry<String,String> entry : resultMap.entrySet()) {
-      suite.addTest(new TestCase("run"){
-        @Override public String getName(){
-          return entry.getKey();
-        }
-        @Override protected void runTest() throws Throwable {
-          Assert.fail(entry.getValue() + "See more information in log above.");
-        }
-      }
-);
+  String reportFolder=pathManager.getTmpFolder() + "/build/outputs/androidTest-results/connected";
+  try {
+    List<TestCase> testCases=parseSingleReportInFolder(reportFolder);
+    for (    TestCase aCase : testCases) {
+      suite.addTest(aCase);
     }
+    Assert.assertNotEquals("There is no test results in report",0,testCases.size());
   }
-  Assert.assertNotNull("Cannot parse number of failed tests from final line",statistics);
-  Assert.assertEquals("Number of stackTraces != failed tests on the final line",resultMap.size(),statistics.failed + statistics.errors);
-  suite.addTest(new TestCase("run"){
-    @Override public String getName(){
-      return "testAll: Total: " + statistics.total + ", Failures: "+ statistics.failed+ ", Errors: "+ statistics.errors;
-    }
-    @Override protected void runTest() throws Throwable {
-      Assert.assertTrue(true);
-    }
+ catch (  Exception e) {
+    throw new RuntimeException("Can't parse test results in " + reportFolder + "\n"+ resultOutput);
   }
-);
   return suite;
 }
