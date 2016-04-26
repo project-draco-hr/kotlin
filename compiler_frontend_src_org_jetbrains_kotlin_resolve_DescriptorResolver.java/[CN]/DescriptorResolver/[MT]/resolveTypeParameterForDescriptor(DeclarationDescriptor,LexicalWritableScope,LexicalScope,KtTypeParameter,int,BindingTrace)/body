@@ -1,0 +1,18 @@
+{
+  if (typeParameter.getVariance() != Variance.INVARIANT) {
+    trace.report(VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED.on(typeParameter));
+  }
+  Annotations annotations=annotationResolver.resolveAnnotationsWithArguments(scopeForAnnotationsResolve,typeParameter.getModifierList(),trace);
+  TypeParameterDescriptorImpl typeParameterDescriptor=TypeParameterDescriptorImpl.createForFurtherModification(containingDescriptor,annotations,typeParameter.hasModifier(KtTokens.REIFIED_KEYWORD),typeParameter.getVariance(),KtPsiUtil.safeName(typeParameter.getName()),index,KotlinSourceElementKt.toSourceElement(typeParameter),new Function1<KotlinType,Void>(){
+    @Override public Void invoke(    KotlinType type){
+      if (!(containingDescriptor instanceof TypeAliasDescriptor)) {
+        trace.report(Errors.CYCLIC_GENERIC_UPPER_BOUND.on(typeParameter));
+      }
+      return null;
+    }
+  }
+,supertypeLoopsResolver);
+  trace.record(BindingContext.TYPE_PARAMETER,typeParameter,typeParameterDescriptor);
+  extensibleScope.addClassifierDescriptor(typeParameterDescriptor);
+  return typeParameterDescriptor;
+}

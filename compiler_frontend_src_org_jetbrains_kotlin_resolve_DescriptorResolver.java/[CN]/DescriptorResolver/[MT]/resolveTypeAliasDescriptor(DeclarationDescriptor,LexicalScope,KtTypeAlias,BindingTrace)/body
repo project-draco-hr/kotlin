@@ -1,0 +1,34 @@
+{
+  KtModifierList modifierList=typeAlias.getModifierList();
+  Visibility visibility=resolveVisibilityFromModifiers(typeAlias,getDefaultVisibility(typeAlias,containingDeclaration));
+  Annotations allAnnotations=annotationResolver.resolveAnnotationsWithArguments(scope,modifierList,trace);
+  Name name=KtPsiUtil.safeName(typeAlias.getName());
+  SourceElement sourceElement=KotlinSourceElementKt.toSourceElement(typeAlias);
+  TypeAliasDescriptorImpl typeAliasDescriptor=TypeAliasDescriptorImpl.create(containingDeclaration,allAnnotations,name,sourceElement,visibility);
+  List<TypeParameterDescriptorImpl> typeParameterDescriptors;
+  final LexicalScope scopeWithTypeParameters;
+{
+    List<KtTypeParameter> typeParameters=typeAlias.getTypeParameters();
+    if (typeParameters.isEmpty()) {
+      scopeWithTypeParameters=scope;
+      typeParameterDescriptors=Collections.emptyList();
+    }
+ else {
+      LexicalWritableScope writableScope=new LexicalWritableScope(scope,containingDeclaration,false,null,new TraceBasedLocalRedeclarationChecker(trace),LexicalScopeKind.TYPE_ALIAS_HEADER);
+      typeParameterDescriptors=resolveTypeParametersForDescriptor(typeAliasDescriptor,writableScope,scope,typeParameters,trace);
+      writableScope.freeze();
+      checkNoGenericBoundsOnTypeAliasParameters(typeAlias,trace);
+      resolveGenericBounds(typeAlias,typeAliasDescriptor,writableScope,typeParameterDescriptors,trace);
+      scopeWithTypeParameters=writableScope;
+    }
+  }
+  final KtTypeReference typeReference=typeAlias.getTypeReference();
+  typeAliasDescriptor.initialize(typeParameterDescriptors,storageManager.createLazyValue(new Function0<KotlinType>(){
+    @Override public KotlinType invoke(){
+      return typeResolver.resolveAbbreviatedType(scopeWithTypeParameters,typeReference,trace,true);
+    }
+  }
+));
+  trace.record(TYPE_ALIAS,typeAlias,typeAliasDescriptor);
+  return typeAliasDescriptor;
+}
