@@ -16,7 +16,7 @@
  else {
       String text=FileUtil.loadFile(file,true);
       if (text.contains("FILE:"))       continue;
-      if (InTextDirectivesUtils.isDirectiveDefined(text,"WITH_REFLECT") || text.contains("JvmFileName"))       continue;
+      if (InTextDirectivesUtils.isDirectiveDefined(text,"WITH_REFLECT"))       continue;
       if (hasBoxMethod(text)) {
         String generatedTestName=generateTestName(file.getName());
         String packageName=file.getPath().replaceAll("\\\\|-|\\.|/","_");
@@ -24,8 +24,8 @@
         FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(text,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_RUNTIME") ? holderFull : holderMock;
         CodegenTestFiles codegenFile=CodegenTestFiles.create(file.getName(),text,filesHolder.environment.getProject());
         filesHolder.files.add(codegenFile.getPsiFile());
-        FqName className=PackagePartClassUtils.getPackagePartFqName(new FqName(packageName),file.getName());
-        generateTestMethod(printer,generatedTestName,className.toString(),StringUtil.escapeStringCharacters(file.getPath()));
+        String className=getGeneratedClassName(file,text,packageName);
+        generateTestMethod(printer,generatedTestName,className,StringUtil.escapeStringCharacters(file.getPath()));
       }
     }
   }
