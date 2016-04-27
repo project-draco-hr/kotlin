@@ -16,16 +16,17 @@
  else {
       String text=FileUtil.loadFile(file,true);
       if (text.contains("FILE:"))       continue;
-      if (InTextDirectivesUtils.isDirectiveDefined(text,"WITH_REFLECT"))       continue;
       if (hasBoxMethod(text)) {
         String generatedTestName=generateTestName(file.getName());
         String packageName=file.getPath().replaceAll("\\\\|-|\\.|/","_");
-        text=changePackage(packageName,text);
-        FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(text,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_RUNTIME") ? holderFull : holderMock;
+        Ref<FqName> oldPackage=new Ref();
+        text=changePackage(packageName,text,oldPackage);
+        FqName className=getGeneratedClassName(file,text,packageName);
+        text=patchClassForName(className,oldPackage.get(),text);
+        FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(text,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_RUNTIME") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_REFLECT") ? holderFull : holderMock;
         CodegenTestFiles codegenFile=CodegenTestFiles.create(file.getName(),text,filesHolder.environment.getProject());
         filesHolder.files.add(codegenFile.getPsiFile());
-        String className=getGeneratedClassName(file,text,packageName);
-        generateTestMethod(printer,generatedTestName,className,StringUtil.escapeStringCharacters(file.getPath()));
+        generateTestMethod(printer,generatedTestName,className.asString(),StringUtil.escapeStringCharacters(file.getPath()));
       }
     }
   }
