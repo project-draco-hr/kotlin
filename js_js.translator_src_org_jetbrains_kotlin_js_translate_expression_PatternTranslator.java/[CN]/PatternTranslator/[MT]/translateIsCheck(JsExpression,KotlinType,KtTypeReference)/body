@@ -1,0 +1,11 @@
+{
+  if (JsAstUtils.isEmptyExpression(subject))   return subject;
+  KotlinType targetType=getTypeByReference(bindingContext(),targetTypeReference);
+  if (sourceType != null && !DynamicTypesKt.isDynamic(sourceType) && TypeUtilsKt.isSubtypeOf(sourceType,targetType))   return null;
+  JsExpression checkFunReference=doGetIsTypeCheckCallable(targetType);
+  boolean isReifiedType=isReifiedTypeParameter(targetType);
+  if (!isReifiedType && isNullableType(targetType) || isReifiedType && findChildByType(targetTypeReference,KtNodeTypes.NULLABLE_TYPE) != null) {
+    checkFunReference=namer().orNull(checkFunReference);
+  }
+  return new JsInvocation(checkFunReference,subject);
+}
