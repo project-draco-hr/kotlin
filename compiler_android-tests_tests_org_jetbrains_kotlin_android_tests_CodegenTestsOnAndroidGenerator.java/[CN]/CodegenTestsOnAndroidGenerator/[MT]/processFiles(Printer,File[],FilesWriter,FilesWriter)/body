@@ -14,19 +14,13 @@
  else     if (!FileUtilRt.getExtension(file.getName()).equals(KotlinFileType.INSTANCE.getDefaultExtension())) {
     }
  else {
-      String text=FileUtil.loadFile(file,true);
-      if (text.contains("FILE:"))       continue;
-      if (hasBoxMethod(text)) {
+      String fullFileText=FileUtil.loadFile(file,true);
+      if (hasBoxMethod(fullFileText)) {
+        FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(fullFileText,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(fullFileText,"WITH_RUNTIME") || InTextDirectivesUtils.isDirectiveDefined(fullFileText,"WITH_REFLECT") ? holderFull : holderMock;
+        FqName classWithBoxMethod=AndroidTestGeneratorKt.genFiles(file,fullFileText,filesHolder);
+        if (classWithBoxMethod == null)         continue;
         String generatedTestName=generateTestName(file.getName());
-        String packageName=file.getPath().replaceAll("\\\\|-|\\.|/","_");
-        Ref<FqName> oldPackage=new Ref();
-        text=changePackage(packageName,text,oldPackage);
-        FqName className=getGeneratedClassName(file,text,packageName);
-        text=patchClassForName(className,oldPackage.get(),text);
-        FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(text,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_RUNTIME") || InTextDirectivesUtils.isDirectiveDefined(text,"WITH_REFLECT") ? holderFull : holderMock;
-        CodegenTestFiles codegenFile=CodegenTestFiles.create(file.getName(),text,filesHolder.environment.getProject());
-        filesHolder.files.add(codegenFile.getPsiFile());
-        generateTestMethod(printer,generatedTestName,className.asString(),StringUtil.escapeStringCharacters(file.getPath()));
+        generateTestMethod(printer,generatedTestName,classWithBoxMethod.asString(),StringUtil.escapeStringCharacters(file.getPath()));
       }
     }
   }
