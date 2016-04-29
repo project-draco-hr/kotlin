@@ -1,13 +1,16 @@
 {
   ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCallWithAssert(expression.getCallableReference(),bindingContext);
+  KotlinType receiverExpressionType=expressionJetType(expression.getReceiverExpression());
+  Type receiverAsmType=receiverExpressionType != null ? asmType(receiverExpressionType) : null;
+  StackValue receiverValue=receiverExpressionType != null ? gen(expression.getReceiverExpression()) : null;
   FunctionDescriptor functionDescriptor=bindingContext.get(FUNCTION,expression);
   if (functionDescriptor != null) {
-    FunctionReferenceGenerationStrategy strategy=new FunctionReferenceGenerationStrategy(state,functionDescriptor,resolvedCall);
-    return genClosure(expression,functionDescriptor,strategy,null,(FunctionDescriptor)resolvedCall.getResultingDescriptor());
+    FunctionReferenceGenerationStrategy strategy=new FunctionReferenceGenerationStrategy(state,functionDescriptor,resolvedCall,receiverAsmType,null);
+    return genClosure(expression,functionDescriptor,strategy,null,(FunctionDescriptor)resolvedCall.getResultingDescriptor(),receiverValue);
   }
   VariableDescriptor variableDescriptor=bindingContext.get(VARIABLE,expression);
   if (variableDescriptor != null) {
-    return generatePropertyReference(expression,variableDescriptor,(VariableDescriptor)resolvedCall.getResultingDescriptor(),resolvedCall.getDispatchReceiver());
+    return generatePropertyReference(expression,variableDescriptor,(VariableDescriptor)resolvedCall.getResultingDescriptor(),resolvedCall.getDispatchReceiver(),receiverAsmType,receiverValue);
   }
   throw new UnsupportedOperationException("Unsupported callable reference expression: " + expression.getText());
 }

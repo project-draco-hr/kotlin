@@ -4,22 +4,27 @@
   CallableDescriptor target=referencedFunction.getResultingDescriptor();
   CallableDescriptor callableDescriptor;
   Collection<KotlinType> supertypes;
+  KtExpression receiverExpression=expression.getReceiverExpression();
+  KotlinType receiverType=receiverExpression != null ? bindingContext.getType(receiverExpression) : null;
   if (target instanceof FunctionDescriptor) {
     callableDescriptor=bindingContext.get(FUNCTION,expression);
     if (callableDescriptor == null)     return;
-    supertypes=runtimeTypes.getSupertypesForFunctionReference((FunctionDescriptor)target);
+    supertypes=runtimeTypes.getSupertypesForFunctionReference((FunctionDescriptor)target,receiverType != null);
   }
  else   if (target instanceof PropertyDescriptor) {
     callableDescriptor=bindingContext.get(VARIABLE,expression);
     if (callableDescriptor == null)     return;
-    supertypes=Collections.singleton(runtimeTypes.getSupertypeForPropertyReference((PropertyDescriptor)target));
+    supertypes=Collections.singleton(runtimeTypes.getSupertypeForPropertyReference((PropertyDescriptor)target,receiverType != null));
   }
  else {
     return;
   }
   String name=inventAnonymousClassName();
   ClassDescriptor classDescriptor=recordClassForCallable(expression,callableDescriptor,supertypes,name);
-  recordClosure(classDescriptor,name);
+  MutableClosure closure=recordClosure(classDescriptor,name);
+  if (receiverType != null) {
+    closure.setCaptureReceiverType(receiverType);
+  }
   classStack.push(classDescriptor);
   nameStack.push(name);
   super.visitCallableReferenceExpression(expression);
