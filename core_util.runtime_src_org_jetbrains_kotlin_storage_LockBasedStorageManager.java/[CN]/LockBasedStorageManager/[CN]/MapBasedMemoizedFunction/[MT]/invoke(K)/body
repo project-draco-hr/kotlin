@@ -1,7 +1,7 @@
 {
   Object value=cache.get(input);
   if (value != null && value != NotValue.COMPUTING)   return WrappedValues.unescapeExceptionOrNull(value);
-  lock.lock();
+  storageManager.lock.lock();
   try {
     value=cache.get(input);
     if (value == NotValue.COMPUTING) {
@@ -20,15 +20,15 @@
       return typedValue;
     }
  catch (    Throwable throwable) {
-      if (throwable == error)       throw exceptionHandlingStrategy.handleException(throwable);
+      if (throwable == error)       throw storageManager.exceptionHandlingStrategy.handleException(throwable);
       Object oldValue=cache.put(input,WrappedValues.escapeThrowable(throwable));
       if (oldValue != NotValue.COMPUTING) {
         throw raceCondition(input,oldValue);
       }
-      throw exceptionHandlingStrategy.handleException(throwable);
+      throw storageManager.exceptionHandlingStrategy.handleException(throwable);
     }
   }
   finally {
-    lock.unlock();
+    storageManager.lock.unlock();
   }
 }
