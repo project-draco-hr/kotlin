@@ -1,6 +1,7 @@
 {
   holderFull.writeFilesOnDiskIfNeeded();
   holderMock.writeFilesOnDiskIfNeeded();
+  holderInheritMFP.writeFilesOnDiskIfNeeded();
   for (  File file : files) {
     if (SpecialFiles.getExcludedFiles().contains(file.getName())) {
       continue;
@@ -8,7 +9,7 @@
     if (file.isDirectory()) {
       File[] listFiles=file.listFiles();
       if (listFiles != null) {
-        processFiles(printer,listFiles,holderFull,holderMock);
+        processFiles(printer,listFiles,holderFull,holderMock,holderInheritMFP);
       }
     }
  else     if (!FileUtilRt.getExtension(file.getName()).equals(KotlinFileType.INSTANCE.getDefaultExtension())) {
@@ -17,6 +18,7 @@
       String fullFileText=FileUtil.loadFile(file,true);
       if (hasBoxMethod(fullFileText)) {
         FilesWriter filesHolder=InTextDirectivesUtils.isDirectiveDefined(fullFileText,"FULL_JDK") || InTextDirectivesUtils.isDirectiveDefined(fullFileText,"WITH_RUNTIME") || InTextDirectivesUtils.isDirectiveDefined(fullFileText,"WITH_REFLECT") ? holderFull : holderMock;
+        filesHolder=fullFileText.contains("+JVM.INHERIT_MULTIFILE_PARTS") ? holderInheritMFP : filesHolder;
         FqName classWithBoxMethod=AndroidTestGeneratorKt.genFiles(file,fullFileText,filesHolder);
         if (classWithBoxMethod == null)         continue;
         String generatedTestName=generateTestName(file.getName());

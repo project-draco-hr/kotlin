@@ -1,10 +1,13 @@
 {
   if (filesToCompile.isEmpty())   return;
-  System.out.println("Generating " + filesToCompile.size() + " files"+ (isFullJdkAndRuntime ? " (full jdk and runtime)" : "")+ "...");
+  System.out.println("Generating " + filesToCompile.size() + " files"+ (inheritMultifileParts ? " (JVM.INHERIT_MULTIFILE_PARTS)" : isFullJdkAndRuntime ? " (full jdk and runtime)" : "")+ "...");
   OutputFileCollection outputFiles;
   try {
     CompilerConfiguration configuration=environment.getConfiguration().copy();
     configuration.put(JVMConfigurationKeys.MODULE_NAME,"android-module-" + MODULE_INDEX++);
+    if (inheritMultifileParts) {
+      configuration.put(JVMConfigurationKeys.INHERIT_MULTIFILE_PARTS,true);
+    }
     configuration.setReadOnly(true);
     outputFiles=GenerationUtils.compileManyFilesGetGenerationStateForTest(filesToCompile.iterator().next().getProject(),filesToCompile,new JvmPackagePartProvider(environment),configuration).getFactory();
   }
