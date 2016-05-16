@@ -4,13 +4,9 @@
   KtExpression subject=expression.getSubjectExpression();
   if (subject != null) {
     JsExpression subjectExpression=Translation.translateAsExpression(subject,context);
-    if (!JsAstUtils.isEmptyExpression(subjectExpression)) {
-      TemporaryVariable subjectVar=context.declareTemporary(null);
-      JsExpressionStatement subjectAssignment=new JsExpressionStatement(JsAstUtils.assignment(subjectVar.reference(),subjectExpression));
-      MetadataProperties.setSynthetic(subjectAssignment,true);
-      context.addStatementToCurrentBlock(subjectAssignment);
-      subjectExpression=subjectVar.reference();
-    }
+    TemporaryVariable subjectVar=context.declareTemporary(null);
+    context.addStatementToCurrentBlock(asSyntheticStatement(JsAstUtils.assignment(subjectVar.reference(),subjectExpression)));
+    subjectExpression=subjectVar.reference();
     expressionToMatch=subjectExpression;
   }
  else {

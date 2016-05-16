@@ -1,23 +1,13 @@
 {
   JsExpression leftExpression=Translation.translateAsExpression(leftKtExpression,context());
-  if (JsAstUtils.isEmptyExpression(leftExpression)) {
-    return leftExpression;
-  }
   JsBlock rightBlock=new JsBlock();
   JsExpression rightExpression=Translation.translateAsExpression(rightKtExpression,context(),rightBlock);
   if (rightBlock.isEmpty()) {
     return intrinsic.apply(expression,leftExpression,rightExpression,context());
   }
-  if (JsAstUtils.isEmptyExpression(rightExpression)) {
-    if (TranslationUtils.isCacheNeeded(leftExpression)) {
-      context().addStatementToCurrentBlock(leftExpression.makeStmt());
-    }
-    context().addStatementsToCurrentBlockFrom(rightBlock);
-    return context().getEmptyExpression();
-  }
   if (TranslationUtils.isCacheNeeded(leftExpression)) {
     TemporaryVariable temporaryVariable=context().declareTemporary(null);
-    context().addStatementToCurrentBlock(JsAstUtils.assignment(temporaryVariable.reference(),leftExpression).makeStmt());
+    context().addStatementToCurrentBlock(asSyntheticStatement(JsAstUtils.assignment(temporaryVariable.reference(),leftExpression)));
     leftExpression=temporaryVariable.reference();
   }
   context().addStatementsToCurrentBlockFrom(rightBlock);
