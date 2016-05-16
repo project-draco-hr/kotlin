@@ -1,10 +1,12 @@
 {
   final ReadKotlinClassHeaderAnnotationVisitor readHeaderVisitor=new ReadKotlinClassHeaderAnnotationVisitor();
   final Ref<String> classNameRef=Ref.create();
+  final Ref<Integer> classVersion=Ref.create();
   final InnerClassesInfo innerClasses=new InnerClassesInfo();
   new ClassReader(fileContents).accept(new ClassVisitor(ASM5){
     @Override public void visit(    int version,    int access,    @NotNull String name,    String signature,    String superName,    String[] interfaces){
       classNameRef.set(name);
+      classVersion.set(version);
     }
     @Override public void visitInnerClass(    @NotNull String name,    String outerName,    String innerName,    int access){
       innerClasses.add(name,outerName,innerName);
@@ -22,5 +24,5 @@
   KotlinClassHeader header=readHeaderVisitor.createHeader();
   if (header == null)   return null;
   ClassId id=resolveNameByInternalName(className,innerClasses);
-  return factory.invoke(id,header,innerClasses);
+  return factory.invoke(id,classVersion.get(),header,innerClasses);
 }
