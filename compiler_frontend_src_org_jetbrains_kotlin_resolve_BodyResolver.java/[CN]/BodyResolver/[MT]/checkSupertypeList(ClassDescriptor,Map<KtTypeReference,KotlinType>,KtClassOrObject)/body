@@ -1,5 +1,5 @@
 {
-  Set<TypeConstructor> allowedFinalSupertypes=getAllowedFinalSupertypes(supertypeOwner,jetClass);
+  Set<TypeConstructor> allowedFinalSupertypes=getAllowedFinalSupertypes(supertypeOwner,supertypes,ktClassOrObject);
   Set<TypeConstructor> typeConstructors=Sets.newHashSet();
   boolean classAppeared=false;
   for (  Map.Entry<KtTypeReference,KotlinType> entry : supertypes.entrySet()) {
@@ -30,12 +30,12 @@
           trace.report(INTERFACE_WITH_SUPERCLASS.on(typeReference));
           addSupertype=false;
         }
- else         if (jetClass.hasModifier(KtTokens.DATA_KEYWORD)) {
+ else         if (ktClassOrObject.hasModifier(KtTokens.DATA_KEYWORD)) {
           trace.report(DATA_CLASS_CANNOT_HAVE_CLASS_SUPERTYPES.on(typeReference));
           addSupertype=false;
         }
  else         if (DescriptorUtils.isSubclass(classDescriptor,builtIns.getThrowable()) && !supertypeOwner.getDeclaredTypeParameters().isEmpty()) {
-          trace.report(GENERIC_THROWABLE_SUBCLASS.on(jetClass.getTypeParameterList()));
+          trace.report(GENERIC_THROWABLE_SUBCLASS.on(ktClassOrObject.getTypeParameterList()));
           addSupertype=false;
         }
         if (classAppeared) {
@@ -60,7 +60,7 @@
       }
     }
  else     if (!allowedFinalSupertypes.contains(constructor)) {
-      if (classDescriptor.getModality() == Modality.SEALED) {
+      if (DescriptorUtils.isSealedClass(classDescriptor)) {
         DeclarationDescriptor containingDescriptor=supertypeOwner.getContainingDeclaration();
         while (containingDescriptor != null && containingDescriptor != classDescriptor) {
           containingDescriptor=containingDescriptor.getContainingDeclaration();

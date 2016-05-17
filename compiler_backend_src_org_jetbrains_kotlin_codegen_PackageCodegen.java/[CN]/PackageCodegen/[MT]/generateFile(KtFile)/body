@@ -6,6 +6,7 @@
   Type fileClassType=AsmUtil.asmTypeByFqNameWithoutInnerClasses(fileClassInfo.getFileClassFqName());
   PackageContext packagePartContext=state.getRootContext().intoPackagePart(packageFragment,fileClassType,file);
   boolean generatePackagePart=false;
+  List<KtClassOrObject> classOrObjects=new ArrayList<KtClassOrObject>();
   for (  KtDeclaration declaration : file.getDeclarations()) {
     if (declaration instanceof KtProperty || declaration instanceof KtNamedFunction) {
       generatePackagePart=true;
@@ -13,7 +14,7 @@
  else     if (declaration instanceof KtClassOrObject) {
       KtClassOrObject classOrObject=(KtClassOrObject)declaration;
       if (state.getGenerateDeclaredClassFilter().shouldGenerateClass(classOrObject)) {
-        generateClassOrObject(classOrObject,packagePartContext);
+        classOrObjects.add(classOrObject);
       }
     }
  else     if (declaration instanceof KtScript) {
@@ -23,6 +24,7 @@
       }
     }
   }
+  generateClassesAndObjectsInFile(classOrObjects,packagePartContext);
   if (!generatePackagePart || !state.getGenerateDeclaredClassFilter().shouldGeneratePackagePart(file))   return;
   String name=fileClassType.getInternalName();
   packagePartRegistry.addPart(name.substring(name.lastIndexOf('/') + 1));
