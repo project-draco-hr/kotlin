@@ -5,7 +5,8 @@
   JsName varName=functionObj.getScope().declareName("result");
   statements.add(new JsVars(new JsVars.JsVar(varName,JsNumberLiteral.ZERO)));
   for (  PropertyDescriptor prop : classProperties) {
-    JsExpression component=new JsInvocation(context.namer().kotlin("hashCode"),propertyAccessor(JsLiteral.THIS,prop.getName().toString()));
+    JsName name=context.getNameForDescriptor(prop);
+    JsExpression component=new JsInvocation(context.namer().kotlin("hashCode"),new JsNameRef(name,JsLiteral.THIS));
     JsExpression newHashValue=JsAstUtils.sum(JsAstUtils.mul(new JsNameRef(varName),jsProgram.getNumberLiteral(31)),component);
     JsExpression assignment=JsAstUtils.assignment(new JsNameRef(varName),new JsBinaryOperation(JsBinaryOperator.BIT_OR,newHashValue,jsProgram.getNumberLiteral(0)));
     statements.add(assignment.makeStmt());
