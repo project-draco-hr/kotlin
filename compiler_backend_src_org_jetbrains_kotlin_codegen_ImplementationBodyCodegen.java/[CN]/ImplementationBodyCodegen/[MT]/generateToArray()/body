@@ -1,28 +1,31 @@
 {
+  if (descriptor.getKind() == ClassKind.INTERFACE)   return;
   KotlinBuiltIns builtIns=DescriptorUtilsKt.getBuiltIns(descriptor);
   if (!isSubclass(descriptor,builtIns.getCollection()))   return;
-  int access=descriptor.getKind() == ClassKind.INTERFACE ? ACC_PUBLIC | ACC_ABSTRACT : ACC_PUBLIC;
-  if (CodegenUtil.getDeclaredFunctionByRawSignature(descriptor,Name.identifier("toArray"),builtIns.getArray()) == null) {
-    MethodVisitor mv=v.newMethod(NO_ORIGIN,access,"toArray","()[Ljava/lang/Object;",null,null);
-    if (descriptor.getKind() != ClassKind.INTERFACE) {
-      InstructionAdapter iv=new InstructionAdapter(mv);
-      mv.visitCode();
-      iv.load(0,classAsmType);
-      iv.invokestatic("kotlin/jvm/internal/CollectionToArray","toArray","(Ljava/util/Collection;)[Ljava/lang/Object;",false);
-      iv.areturn(Type.getType("[Ljava/lang/Object;"));
-      FunctionCodegen.endVisit(mv,"toArray",myClass);
-    }
+  Collection<SimpleFunctionDescriptor> functions=descriptor.getDefaultType().getMemberScope().getContributedFunctions(Name.identifier("toArray"),NoLookupLocation.FROM_BACKEND);
+  boolean hasGenericToArray=false;
+  boolean hasNonGenericToArray=false;
+  for (  FunctionDescriptor function : functions) {
+    hasGenericToArray|=isGenericToArray(function);
+    hasNonGenericToArray|=isNonGenericToArray(function);
   }
-  if (!isGenericToArrayPresent()) {
-    MethodVisitor mv=v.newMethod(NO_ORIGIN,access,"toArray","([Ljava/lang/Object;)[Ljava/lang/Object;",null,null);
-    if (descriptor.getKind() != ClassKind.INTERFACE) {
-      InstructionAdapter iv=new InstructionAdapter(mv);
-      mv.visitCode();
-      iv.load(0,classAsmType);
-      iv.load(1,Type.getType("[Ljava/lang/Object;"));
-      iv.invokestatic("kotlin/jvm/internal/CollectionToArray","toArray","(Ljava/util/Collection;[Ljava/lang/Object;)[Ljava/lang/Object;",false);
-      iv.areturn(Type.getType("[Ljava/lang/Object;"));
-      FunctionCodegen.endVisit(mv,"toArray",myClass);
-    }
+  if (!hasNonGenericToArray) {
+    MethodVisitor mv=v.newMethod(NO_ORIGIN,ACC_PUBLIC,"toArray","()[Ljava/lang/Object;",null,null);
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    mv.visitCode();
+    iv.load(0,classAsmType);
+    iv.invokestatic("kotlin/jvm/internal/CollectionToArray","toArray","(Ljava/util/Collection;)[Ljava/lang/Object;",false);
+    iv.areturn(Type.getType("[Ljava/lang/Object;"));
+    FunctionCodegen.endVisit(mv,"toArray",myClass);
+  }
+  if (!hasGenericToArray) {
+    MethodVisitor mv=v.newMethod(NO_ORIGIN,ACC_PUBLIC,"toArray","([Ljava/lang/Object;)[Ljava/lang/Object;",null,null);
+    InstructionAdapter iv=new InstructionAdapter(mv);
+    mv.visitCode();
+    iv.load(0,classAsmType);
+    iv.load(1,Type.getType("[Ljava/lang/Object;"));
+    iv.invokestatic("kotlin/jvm/internal/CollectionToArray","toArray","(Ljava/util/Collection;[Ljava/lang/Object;)[Ljava/lang/Object;",false);
+    iv.areturn(Type.getType("[Ljava/lang/Object;"));
+    FunctionCodegen.endVisit(mv,"toArray",myClass);
   }
 }
