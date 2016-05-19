@@ -1,3 +1,9 @@
 {
-  return isFullJdkAndRuntime ? KotlinTestUtils.createEnvironmentWithJdkAndNullabilityAnnotationsFromIdea(myTestRootDisposable,ConfigurationKind.ALL,TestJdkKind.FULL_JDK) : KotlinTestUtils.createEnvironmentWithMockJdkAndIdeaAnnotations(myTestRootDisposable,ConfigurationKind.JDK_ONLY);
+  ConfigurationKind configurationKind=isFullJdkAndRuntime ? ConfigurationKind.ALL : ConfigurationKind.JDK_ONLY;
+  CompilerConfiguration configuration=KotlinTestUtils.compilerConfigurationForTests(configurationKind,TestJdkKind.FULL_JDK,KotlinTestUtils.getAnnotationsJar());
+  configuration.put(JVMConfigurationKeys.MODULE_NAME,"android-module-" + MODULE_INDEX++);
+  if (inheritMultifileParts) {
+    configuration.put(JVMConfigurationKeys.INHERIT_MULTIFILE_PARTS,true);
+  }
+  return KotlinCoreEnvironment.createForTests(myTestRootDisposable,configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
 }
