@@ -2,17 +2,14 @@
   File ktFile=new File(path);
   assertTrue("Cannot find a file " + ktFile.getAbsolutePath(),ktFile.exists());
   String fileText=FileUtil.loadFile(ktFile,true);
-  KtFile psiFile=KotlinTestUtils.createFile(ktFile.getName(),fileText,jetCoreEnvironment.getProject());
-  OutputFileCollection outputFiles=GenerationUtils.compileFileGetClassFileFactoryForTest(psiFile,jetCoreEnvironment);
+  KtFile psiFile=KotlinTestUtils.createFile(ktFile.getName(),fileText,environment.getProject());
+  OutputFileCollection outputFiles=GenerationUtils.compileFile(psiFile,environment);
   List<TestedObject> testedObjects=parseExpectedTestedObject(fileText);
   for (  TestedObject testedObject : testedObjects) {
     String className=null;
     for (    OutputFile outputFile : outputFiles.asList()) {
       String filePath=outputFile.getRelativePath();
-      if (testedObject.isFullContainingClassName && filePath.equals(testedObject.containingClass + ".class")) {
-        className=filePath;
-      }
- else       if (!testedObject.isFullContainingClassName && filePath.startsWith(testedObject.containingClass)) {
+      if (testedObject.isFullContainingClassName && filePath.equals(testedObject.containingClass + ".class") || !testedObject.isFullContainingClassName && filePath.startsWith(testedObject.containingClass)) {
         className=filePath;
       }
     }

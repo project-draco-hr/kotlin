@@ -1,0 +1,27 @@
+{
+  BindingContext bindingContext=JvmResolveUtil.analyze((KtFile)psiFile,environment).getBindingContext();
+  String expectedText=CheckerTestUtil.addDiagnosticMarkersToText(psiFile,CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,psiFile,false,null)).toString();
+  List<DiagnosedRange> diagnosedRanges=Lists.newArrayList();
+  CheckerTestUtil.parseDiagnosedRanges(expectedText,diagnosedRanges);
+  for (  DiagnosedRange diagnosedRange : diagnosedRanges) {
+    diagnosedRange.setFile(psiFile);
+  }
+  List<Diagnostic> diagnostics=CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(bindingContext,psiFile,false,null);
+  Collections.sort(diagnostics,CheckerTestUtil.DIAGNOSTIC_COMPARATOR);
+  makeTestData(diagnostics,diagnosedRanges);
+  List<String> expectedMessages=Lists.newArrayList(expected);
+  final List<String> actualMessages=Lists.newArrayList();
+  CheckerTestUtil.diagnosticsDiff(ContainerUtil.<Diagnostic,CheckerTestUtil.TextDiagnostic>newHashMap(),diagnosedRanges,diagnostics,new CheckerTestUtil.DiagnosticDiffCallbacks(){
+    @Override public void missingDiagnostic(    CheckerTestUtil.TextDiagnostic diagnostic,    int expectedStart,    int expectedEnd){
+      actualMessages.add(missing(diagnostic.getName(),expectedStart,expectedEnd));
+    }
+    @Override public void wrongParametersDiagnostic(    CheckerTestUtil.TextDiagnostic expectedDiagnostic,    CheckerTestUtil.TextDiagnostic actualDiagnostic,    int start,    int end){
+      actualMessages.add(wrongParameters(expectedDiagnostic.asString(),actualDiagnostic.asString(),start,end));
+    }
+    @Override public void unexpectedDiagnostic(    CheckerTestUtil.TextDiagnostic diagnostic,    int actualStart,    int actualEnd){
+      actualMessages.add(unexpected(diagnostic.getName(),actualStart,actualEnd));
+    }
+  }
+);
+  assertEquals(listToString(expectedMessages),listToString(actualMessages));
+}
