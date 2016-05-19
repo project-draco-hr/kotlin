@@ -11,8 +11,7 @@
   }
   CompilerConfiguration configuration=KotlinTestUtils.compilerConfigurationForTests(configurationKind,testJdkKind,javaBinaryRoots,javaSourceRoots);
   KotlinCoreEnvironment environment=KotlinCoreEnvironment.createForTests(disposable,configuration,EnvironmentConfigFiles.JVM_CONFIG_FILES);
-  BindingTrace trace=new CliLightClassGenerationSupport.NoScopeRecordCliBindingTrace();
-  ModuleDescriptor module=LazyResolveTestUtil.resolve(environment.getProject(),trace,Collections.<KtFile>emptyList(),environment);
-  PackageViewDescriptor packageView=module.getPackage(TEST_PACKAGE_FQNAME);
-  return Pair.create(packageView,trace.getBindingContext());
+  AnalysisResult analysisResult=JvmResolveUtil.analyze(environment);
+  PackageViewDescriptor packageView=analysisResult.getModuleDescriptor().getPackage(TEST_PACKAGE_FQNAME);
+  return Pair.create(packageView,analysisResult.getBindingContext());
 }
