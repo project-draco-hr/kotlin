@@ -1,7 +1,7 @@
 {
   ResolutionFacade resolutionFacade=ResolutionUtils.getResolutionFacade(ktFile);
   BindingContext bindingContextForFile=resolutionFacade.analyzeFullyAndGetResult(Collections.singletonList(ktFile)).getBindingContext();
-  kotlin.Pair<BindingContext,List<KtFile>> result=DebuggerUtils.INSTANCE.analyzeInlinedFunctions(resolutionFacade,bindingContextForFile,ktFile,!enableInline);
+  kotlin.Pair<BindingContext,List<KtFile>> result=DebuggerUtils.INSTANCE.analyzeInlinedFunctions(resolutionFacade,bindingContextForFile,ktFile,configuration.get(JVMConfigurationKeys.DISABLE_INLINE,false));
   BindingContext bindingContext=result.getFirst();
   List<KtFile> toProcess=result.getSecond();
   GenerationState.GenerateClassFilter generateClassFilter=new GenerationState.GenerateClassFilter(){
@@ -19,7 +19,7 @@
     }
   }
 ;
-  GenerationState state=new GenerationState(ktFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,!enableAssertions,!enableAssertions,generateClassFilter,!enableInline,!enableOptimization,false);
+  GenerationState state=new GenerationState(ktFile.getProject(),ClassBuilderFactories.TEST,resolutionFacade.getModuleDescriptor(),bindingContext,toProcess,configuration,generateClassFilter);
   KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
   return state;
 }
