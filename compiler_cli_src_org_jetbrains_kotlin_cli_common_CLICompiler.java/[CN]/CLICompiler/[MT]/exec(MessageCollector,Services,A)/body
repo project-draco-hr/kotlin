@@ -5,6 +5,10 @@
   }
   reportUnknownExtraFlags(messageCollector,arguments);
   GroupingMessageCollector groupingCollector=new GroupingMessageCollector(messageCollector);
+  CompilerConfiguration configuration=new CompilerConfiguration();
+  configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY,groupingCollector);
+  setupCommonArgumentsAndServices(configuration,arguments,services);
+  setupPlatformSpecificArgumentsAndServices(configuration,arguments,services);
   try {
     ExitCode exitCode=OK;
     int repeatCount=1;
@@ -23,7 +27,7 @@
       }
       Disposable rootDisposable=Disposer.newDisposable();
       try {
-        ExitCode code=doExecute(arguments,services,groupingCollector,rootDisposable);
+        ExitCode code=doExecute(arguments,configuration,rootDisposable);
         exitCode=groupingCollector.hasErrors() ? COMPILATION_ERROR : code;
       }
  catch (      CompilationCanceledException e) {
