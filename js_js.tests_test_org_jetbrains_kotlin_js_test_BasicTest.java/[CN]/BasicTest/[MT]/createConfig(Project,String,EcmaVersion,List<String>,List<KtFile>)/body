@@ -1,15 +1,15 @@
 {
   CompilerConfiguration configuration=getEnvironment().getConfiguration().copy();
-  for (  KtFile file : files) {
-    String text=file.getText();
-    if (isDirectiveDefined(text,NO_INLINE_DIRECTIVE)) {
-      configuration.put(CommonConfigurationKeys.DISABLE_INLINE,true);
-      break;
-    }
-  }
+  configuration.put(CommonConfigurationKeys.DISABLE_INLINE,hasNoInline(files));
   List<String> librariesWithStdlib=new ArrayList<String>(LibrarySourcesConfig.JS_STDLIB);
   if (libraries != null) {
     librariesWithStdlib.addAll(libraries);
   }
-  return new LibrarySourcesConfig.Builder(project,configuration,moduleId,librariesWithStdlib).ecmaVersion(ecmaVersion).sourceMap(shouldGenerateSourceMap()).isUnitTestConfig(shouldBeTranslateAsUnitTestClass()).metaInfo(shouldGenerateMetaInfo()).build();
+  configuration.put(JSConfigurationKeys.LIBRARY_FILES,librariesWithStdlib);
+  configuration.put(JSConfigurationKeys.MODULE_ID,moduleId);
+  configuration.put(JSConfigurationKeys.TARGET,ecmaVersion);
+  configuration.put(JSConfigurationKeys.SOURCE_MAP,shouldGenerateSourceMap());
+  configuration.put(JSConfigurationKeys.META_INFO,shouldGenerateMetaInfo());
+  configuration.put(JSConfigurationKeys.UNIT_TEST_CONFIG,shouldBeTranslateAsUnitTestClass());
+  return new LibrarySourcesConfig(project,configuration);
 }
