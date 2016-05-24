@@ -1,0 +1,22 @@
+{
+  String directives=directiveMap.get(LANGUAGE_DIRECTIVE);
+  if (directives == null)   return null;
+  Matcher matcher=LANGUAGE_PATTERN.matcher(directives);
+  if (!matcher.find()) {
+    Assert.fail("Wrong syntax in the '// !LANGUAGE: ...' directive:\n" + "found: '" + directives + "'\n"+ "Must be '([+-]languageFeatureName)+'\n"+ "where '+' means 'enable' and '-' means 'disable'\n"+ "and language feature names are names of parameters of the class LanguageFeatureSettings");
+  }
+  Map<KParameter,Boolean> values=new HashMap<KParameter,Boolean>();
+  do {
+    boolean enable=matcher.group(1).equals("+");
+    String name=matcher.group(2);
+    KParameter parameter=LANGUAGE_FEATURE_SETTINGS_PARAMETERS.get(name);
+    if (parameter == null) {
+      Assert.fail("Language feature not found, please check spelling: " + name + "\n"+ "Known features:\n    "+ StringsKt.join(LANGUAGE_FEATURE_SETTINGS_PARAMETERS.keySet(),"\n    "));
+    }
+    if (values.put(parameter,enable) != null) {
+      Assert.fail("Duplicate entry for the language feature: " + name);
+    }
+  }
+ while (matcher.find());
+  return LANGUAGE_FEATURE_SETTINGS_CONSTRUCTOR.callBy(values);
+}
