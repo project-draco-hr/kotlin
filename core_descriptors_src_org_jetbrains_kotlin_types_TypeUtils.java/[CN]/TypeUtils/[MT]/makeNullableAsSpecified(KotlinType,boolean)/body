@@ -3,11 +3,9 @@
   if (flexibility != null) {
     return flexibility.makeNullableAsSpecified(nullable);
   }
-  if (type instanceof AbstractTypeWithKnownNullability) {
-    return makeNullableAsSpecified(((AbstractTypeWithKnownNullability)type).delegate,nullable);
+ else {
+    SimpleType simpleType=KotlinTypeKt.asSimpleType(type);
+    if (!(simpleType instanceof LazyType) && simpleType.isMarkedNullable() == nullable)     return simpleType;
+    return KotlinTypeKt.lazyReplaceNullability(simpleType,nullable);
   }
-  if (!(type instanceof LazyType) && type.isMarkedNullable() == nullable) {
-    return type;
-  }
-  return nullable ? new NullableType(type) : new NotNullType(type);
 }
