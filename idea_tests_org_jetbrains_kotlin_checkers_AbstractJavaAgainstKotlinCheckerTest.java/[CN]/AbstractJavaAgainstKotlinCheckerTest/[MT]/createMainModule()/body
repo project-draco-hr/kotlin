@@ -1,8 +1,21 @@
 {
   Module module=super.createMainModule();
   String configFileText=getConfigFileText();
-  if (configFileText != null && InTextDirectivesUtils.isDirectiveDefined(configFileText,"// WITH_RUNTIME")) {
+  if (configFileText == null) {
+    return module;
+  }
+  if (InTextDirectivesUtils.isDirectiveDefined(configFileText,"// WITH_RUNTIME")) {
     ConfigLibraryUtil.configureKotlinRuntime(module);
+  }
+  List<String> languageLevelLines=InTextDirectivesUtils.findLinesWithPrefixesRemoved(configFileText,"// LANGUAGE_LEVEL");
+  if (languageLevelLines.size() > 1) {
+    throw new AssertionError("Language level specified multiple times: " + languageLevelLines);
+  }
+  if (languageLevelLines.size() == 1) {
+    LanguageLevel level=LanguageLevel.parse(languageLevelLines.iterator().next());
+    if (level != null) {
+      IdeaTestUtil.setModuleLanguageLevel(module,level);
+    }
   }
   return module;
 }
