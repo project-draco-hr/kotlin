@@ -1,0 +1,37 @@
+{
+  return DFS.dfs(Collections.singletonList(type),new DFS.Neighbors<SimpleType>(){
+    @NotNull @Override public Iterable<? extends SimpleType> getNeighbors(    SimpleType current){
+      TypeSubstitutor substitutor=TypeSubstitutor.create(current);
+      Collection<KotlinType> supertypes=current.getConstructor().getSupertypes();
+      List<SimpleType> result=new ArrayList<SimpleType>(supertypes.size());
+      for (      KotlinType supertype : supertypes) {
+        if (visited.contains(supertype.getConstructor())) {
+          continue;
+        }
+        result.add(KotlinTypeKt.asSimpleType(substitutor.safeSubstitute(supertype,Variance.INVARIANT)));
+      }
+      return result;
+    }
+  }
+,new DFS.Visited<SimpleType>(){
+    @Override public boolean checkAndMarkVisited(    SimpleType current){
+      return visited.add(current.getConstructor());
+    }
+  }
+,new DFS.NodeHandlerWithListResult<SimpleType,TypeConstructor>(){
+    @Override public boolean beforeChildren(    SimpleType current){
+      TypeConstructor constructor=current.getConstructor();
+      Set<SimpleType> instances=constructorToAllInstances.get(constructor);
+      if (instances == null) {
+        instances=new HashSet<SimpleType>();
+        constructorToAllInstances.put(constructor,instances);
+      }
+      instances.add(current);
+      return true;
+    }
+    @Override public void afterChildren(    SimpleType current){
+      result.addFirst(current.getConstructor());
+    }
+  }
+);
+}
