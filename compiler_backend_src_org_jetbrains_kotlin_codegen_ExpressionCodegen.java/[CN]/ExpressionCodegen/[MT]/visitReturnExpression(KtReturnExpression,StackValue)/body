@@ -11,8 +11,13 @@
         return Unit.INSTANCE;
       }
       Type returnType=isNonLocalReturn ? nonLocalReturn.returnType : ExpressionCodegen.this.returnType;
-      if (returnedExpression != null) {
-        gen(returnedExpression,returnType);
+      StackValue valueToReturn=returnedExpression != null ? gen(returnedExpression) : null;
+      StackValue handleResultValue=genControllerHandleResultCallIfNeeded(expression,valueToReturn);
+      if (handleResultValue != null) {
+        handleResultValue.put(Type.VOID_TYPE,v);
+      }
+ else       if (returnedExpression != null && valueToReturn != null) {
+        putStackValue(returnedExpression,returnType,valueToReturn);
       }
       Label afterReturnLabel=new Label();
       generateFinallyBlocksIfNeeded(returnType,afterReturnLabel);

@@ -1,0 +1,16 @@
+{
+  FunctionDescriptor erasedInterfaceFunction;
+  if (samType == null) {
+    erasedInterfaceFunction=getErasedInvokeFunction(funDescriptor);
+  }
+ else {
+    erasedInterfaceFunction=samType.getAbstractMethod().getOriginal();
+  }
+  generateBridge(typeMapper.mapAsmMethod(erasedInterfaceFunction),typeMapper.mapAsmMethod(funDescriptor));
+  if (samType != null) {
+    SimpleFunctionDescriptorImpl descriptorForBridges=SimpleFunctionDescriptorImpl.create(funDescriptor.getContainingDeclaration(),funDescriptor.getAnnotations(),erasedInterfaceFunction.getName(),CallableMemberDescriptor.Kind.DECLARATION,funDescriptor.getSource());
+    descriptorForBridges.initialize(null,erasedInterfaceFunction.getDispatchReceiverParameter(),erasedInterfaceFunction.getTypeParameters(),erasedInterfaceFunction.getValueParameters(),erasedInterfaceFunction.getReturnType(),Modality.OPEN,erasedInterfaceFunction.getVisibility());
+    DescriptorUtilsKt.setSingleOverridden(descriptorForBridges,erasedInterfaceFunction);
+    functionCodegen.generateBridges(descriptorForBridges);
+  }
+}
