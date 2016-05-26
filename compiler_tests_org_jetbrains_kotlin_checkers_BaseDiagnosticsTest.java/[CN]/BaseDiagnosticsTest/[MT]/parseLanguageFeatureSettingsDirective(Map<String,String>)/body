@@ -3,20 +3,29 @@
   if (directives == null)   return null;
   Matcher matcher=LANGUAGE_PATTERN.matcher(directives);
   if (!matcher.find()) {
-    Assert.fail("Wrong syntax in the '// !LANGUAGE: ...' directive:\n" + "found: '" + directives + "'\n"+ "Must be '([+-]languageFeatureName)+'\n"+ "where '+' means 'enable' and '-' means 'disable'\n"+ "and language feature names are names of parameters of the class LanguageFeatureSettings");
+    Assert.fail("Wrong syntax in the '// !LANGUAGE: ...' directive:\n" + "found: '" + directives + "'\n"+ "Must be '([+-]LanguageFeatureName)+'\n"+ "where '+' means 'enable' and '-' means 'disable'\n"+ "and language feature names are names of enum entries in LanguageFeature enum class");
   }
-  Map<KParameter,Boolean> values=new HashMap<KParameter,Boolean>();
+  final Map<LanguageFeature,Boolean> values=new HashMap<LanguageFeature,Boolean>();
   do {
     boolean enable=matcher.group(1).equals("+");
     String name=matcher.group(2);
-    KParameter parameter=LANGUAGE_FEATURE_SETTINGS_PARAMETERS.get(name);
-    if (parameter == null) {
-      Assert.fail("Language feature not found, please check spelling: " + name + "\n"+ "Known features:\n    "+ StringsKt.join(LANGUAGE_FEATURE_SETTINGS_PARAMETERS.keySet(),"\n    "));
+    LanguageFeature feature=LanguageFeature.fromString(StringUtil.capitalize(name));
+    if (feature == null) {
+      Assert.fail("Language feature not found, please check spelling: " + name + "\n"+ "Known features:\n    "+ StringsKt.join(Arrays.asList(LanguageFeature.values()),"\n    "));
     }
-    if (values.put(parameter,enable) != null) {
+    if (values.put(feature,enable) != null) {
       Assert.fail("Duplicate entry for the language feature: " + name);
     }
   }
  while (matcher.find());
-  return LANGUAGE_FEATURE_SETTINGS_CONSTRUCTOR.callBy(values);
+  return new LanguageFeatureSettings(){
+    @Override public boolean supportsFeature(    @NotNull LanguageFeature feature){
+      Boolean enabled=values.get(feature);
+      if (enabled != null) {
+        return enabled;
+      }
+      return LanguageVersion.LATEST.supportsFeature(feature);
+    }
+  }
+;
 }
