@@ -45,6 +45,22 @@
   substitutedDescriptor.setHasSynthesizedParameterNames(hasSynthesizedParameterNames);
   substitutedDescriptor.setHiddenToOvercomeSignatureClash(configuration.isHiddenToOvercomeSignatureClash);
   substitutedDescriptor.setHiddenForResolutionEverywhereBesideSupercalls(configuration.isHiddenForResolutionEverywhereBesideSupercalls);
+  if (!configuration.userDataMap.isEmpty() || userDataMap != null) {
+    Map<UserDataKey<?>,Object> newMap=configuration.userDataMap;
+    if (userDataMap != null) {
+      for (      Map.Entry<UserDataKey<?>,Object> entry : userDataMap.entrySet()) {
+        if (!newMap.containsKey(entry.getKey())) {
+          newMap.put(entry.getKey(),entry.getValue());
+        }
+      }
+    }
+    if (newMap.size() == 1) {
+      substitutedDescriptor.userDataMap=Collections.<UserDataKey<?>,Object>singletonMap(newMap.keySet().iterator().next(),newMap.values().iterator().next());
+    }
+ else {
+      substitutedDescriptor.userDataMap=newMap;
+    }
+  }
   if (configuration.signatureChange || getInitialSignatureDescriptor() != null) {
     FunctionDescriptor initialSignature=(getInitialSignatureDescriptor() != null ? getInitialSignatureDescriptor() : this);
     FunctionDescriptor initialSignatureSubstituted=initialSignature.substitute(substitutor);
