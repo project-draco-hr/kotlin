@@ -1,23 +1,2 @@
 {
-  PsiElement element=DescriptorToSourceUtils.descriptorToDeclaration(functionDescriptor);
-  if (!(element instanceof KtNamedFunction)) {
-    throw new IllegalStateException("Couldn't find declaration for function " + descriptorName(functionDescriptor));
-  }
-  KtNamedFunction inliningFunction=(KtNamedFunction)element;
-  MethodNode node=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(functionDescriptor,context.getContextKind()) | (callDefault ? Opcodes.ACC_STATIC : 0),asmMethod.getName(),asmMethod.getDescriptor(),null,null);
-  MethodVisitor maxCalcAdapter=InlineCodegenUtil.wrapWithMaxLocalCalc(node);
-  MethodContext methodContext=context.getParentContext().intoFunction(functionDescriptor);
-  SMAP smap;
-  if (callDefault) {
-    Type implementationOwner=state.getTypeMapper().mapImplementationOwner(functionDescriptor);
-    FakeMemberCodegen parentCodegen=new FakeMemberCodegen(codegen.getParentCodegen(),inliningFunction,(FieldOwnerContext)methodContext.getParentContext(),implementationOwner.getInternalName());
-    FunctionCodegen.generateDefaultImplBody(methodContext,functionDescriptor,maxCalcAdapter,DefaultParameterValueLoader.DEFAULT,inliningFunction,parentCodegen,asmMethod);
-    smap=createSMAPWithDefaultMapping(inliningFunction,parentCodegen.getOrCreateSourceMapper().getResultMappings());
-  }
- else {
-    smap=generateMethodBody(maxCalcAdapter,functionDescriptor,methodContext,inliningFunction,jvmSignature,false,codegen,state);
-  }
-  maxCalcAdapter.visitMaxs(-1,-1);
-  maxCalcAdapter.visitEnd();
-  return new SMAPAndMethodNode(node,smap);
 }

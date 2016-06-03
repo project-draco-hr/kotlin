@@ -1,22 +1,22 @@
 {
-  AbstractInsnNode transformed=null;
   boolean checkParent=!isRoot() && currentInstruction < capturedFieldAccess.size() - 1;
   if (checkParent) {
-    transformed=parent.foldFieldAccessChainIfNeeded(capturedFieldAccess,currentInstruction + 1,node);
-  }
-  if (transformed == null) {
-    FieldInsnNode insnNode=(FieldInsnNode)capturedFieldAccess.get(currentInstruction);
-    if (canProcess(insnNode.owner,insnNode.name,true)) {
-      insnNode.name="$$$" + insnNode.name;
-      insnNode.setOpcode(Opcodes.GETSTATIC);
-      AbstractInsnNode next=capturedFieldAccess.get(0);
-      while (next != insnNode) {
-        AbstractInsnNode toDelete=next;
-        next=next.getNext();
-        node.instructions.remove(toDelete);
-      }
-      transformed=capturedFieldAccess.get(capturedFieldAccess.size() - 1);
+    AbstractInsnNode transformed=parent.foldFieldAccessChainIfNeeded(capturedFieldAccess,currentInstruction + 1,node);
+    if (transformed != null) {
+      return transformed;
     }
   }
-  return transformed;
+  FieldInsnNode insnNode=(FieldInsnNode)capturedFieldAccess.get(currentInstruction);
+  if (canProcess(insnNode.owner,insnNode.name,true)) {
+    insnNode.name="$$$" + insnNode.name;
+    insnNode.setOpcode(Opcodes.GETSTATIC);
+    AbstractInsnNode next=capturedFieldAccess.get(0);
+    while (next != insnNode) {
+      AbstractInsnNode toDelete=next;
+      next=next.getNext();
+      node.instructions.remove(toDelete);
+    }
+    return capturedFieldAccess.get(capturedFieldAccess.size() - 1);
+  }
+  return null;
 }

@@ -3,8 +3,7 @@
   Label end=new Label();
   transformedNode=doInline(transformedNode);
   removeClosureAssertions(transformedNode);
-  InsnList instructions=transformedNode.instructions;
-  instructions.resetLabels();
+  transformedNode.instructions.resetLabels();
   MethodNode resultNode=new MethodNode(InlineCodegenUtil.API,transformedNode.access,transformedNode.name,transformedNode.desc,transformedNode.signature,ArrayUtil.toStringArray(transformedNode.exceptions));
   RemapVisitor visitor=new RemapVisitor(resultNode,remapper,nodeRemapper);
   try {
@@ -15,7 +14,8 @@
   }
   resultNode.visitLabel(end);
   if (inliningContext.isRoot()) {
-    InternalFinallyBlockInliner.processInlineFunFinallyBlocks(resultNode,lambdasFinallyBlocks,((StackValue.Local)remapper.remap(parameters.getArgsSizeOnStack() + 1).value).index);
+    StackValue remapValue=remapper.remap(parameters.getArgsSizeOnStack() + 1).value;
+    InternalFinallyBlockInliner.processInlineFunFinallyBlocks(resultNode,lambdasFinallyBlocks,((StackValue.Local)remapValue).index);
   }
   processReturns(resultNode,labelOwner,remapReturn,end);
   resultNode.accept(new MethodBodyVisitor(adapter));

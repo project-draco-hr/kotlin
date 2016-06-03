@@ -1,13 +1,17 @@
 {
-  KotlinTypeMapper typeMapper=state.getTypeMapper();
-  final Method asmMethod=callDefault ? typeMapper.mapDefaultMethod(functionDescriptor,context.getContextKind()) : jvmSignature.getAsmMethod();
+  final GenerationState state=codegen.getState();
+  final Method asmMethod=callDefault ? state.getTypeMapper().mapDefaultMethod(functionDescriptor,context.getContextKind()) : jvmSignature.getAsmMethod();
   MethodId methodId=new MethodId(DescriptorUtils.getFqNameSafe(functionDescriptor.getContainingDeclaration()),asmMethod);
   if (!isBuiltInArrayIntrinsic(functionDescriptor) && !(functionDescriptor instanceof DeserializedSimpleFunctionDescriptor)) {
     return doCreateMethodNodeFromSource(functionDescriptor,jvmSignature,codegen,context,callDefault,state,asmMethod);
   }
   SMAPAndMethodNode resultInCache=InlineCacheKt.getOrPut(state.getInlineCache().getMethodNodeById(),methodId,new Function0<SMAPAndMethodNode>(){
     @Override public SMAPAndMethodNode invoke(){
-      return doCreateMethodNodeFromCompiled(functionDescriptor,state,asmMethod);
+      SMAPAndMethodNode result=doCreateMethodNodeFromCompiled(functionDescriptor,state,asmMethod);
+      if (result == null) {
+        throw new IllegalStateException("Couldn't obtain compiled function body for " + functionDescriptor);
+      }
+      return result;
     }
   }
 );

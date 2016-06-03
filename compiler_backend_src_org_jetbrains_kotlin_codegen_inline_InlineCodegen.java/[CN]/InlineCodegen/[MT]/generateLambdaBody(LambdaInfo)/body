@@ -1,13 +1,12 @@
 {
   KtExpression declaration=info.getFunctionWithBodyOrCallableReference();
   FunctionDescriptor descriptor=info.getFunctionDescriptor();
-  MethodContext parentContext=codegen.getContext();
-  MethodContext context=parentContext.intoClosure(descriptor,codegen,typeMapper).intoInlinedLambda(descriptor,info.isCrossInline);
+  MethodContext context=codegen.getContext().intoClosure(descriptor,codegen,typeMapper).intoInlinedLambda(descriptor,info.isCrossInline);
   JvmMethodSignature jvmMethodSignature=typeMapper.mapSignatureSkipGeneric(descriptor);
   Method asmMethod=jvmMethodSignature.getAsmMethod();
   MethodNode methodNode=new MethodNode(InlineCodegenUtil.API,getMethodAsmFlags(descriptor,context.getContextKind()),asmMethod.getName(),asmMethod.getDescriptor(),null,null);
   MethodVisitor adapter=InlineCodegenUtil.wrapWithMaxLocalCalc(methodNode);
-  SMAP smap=generateMethodBody(adapter,descriptor,context,declaration,jvmMethodSignature,true,codegen,state);
+  SMAP smap=generateMethodBody(adapter,descriptor,context,declaration,jvmMethodSignature,true,codegen);
   adapter.visitMaxs(-1,-1);
   return new SMAPAndMethodNode(methodNode,smap);
 }

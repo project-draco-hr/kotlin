@@ -1,20 +1,21 @@
 {
-  SMAPAndMethodNode nodeAndSmap=null;
   if (!state.getInlineCycleReporter().enterIntoInlining(resolvedCall)) {
     generateStub(resolvedCall,codegen);
     return;
   }
+  SMAPAndMethodNode nodeAndSmap=null;
   try {
-    nodeAndSmap=createMethodNode(callDefault);
+    nodeAndSmap=createMethodNode(functionDescriptor,jvmSignature,codegen,context,callDefault);
     endCall(inlineCall(nodeAndSmap));
   }
  catch (  CompilationException e) {
     throw e;
   }
+catch (  InlineException e) {
+    throw throwCompilationException(nodeAndSmap,e,false);
+  }
 catch (  Exception e) {
-    boolean generateNodeText=!(e instanceof InlineException);
-    PsiElement element=DescriptorToSourceUtils.descriptorToDeclaration(this.codegen.getContext().getContextDescriptor());
-    throw new CompilationException("Couldn't inline method call '" + functionDescriptor.getName() + "' into \n"+ (element != null ? element.getText() : "null psi element " + this.codegen.getContext().getContextDescriptor())+ (generateNodeText ? ("\ncause: " + InlineCodegenUtil.getNodeText(nodeAndSmap != null ? nodeAndSmap.getNode() : null)) : ""),e,callElement);
+    throw throwCompilationException(nodeAndSmap,e,true);
   }
  finally {
     state.getInlineCycleReporter().exitFromInliningOf(resolvedCall);
