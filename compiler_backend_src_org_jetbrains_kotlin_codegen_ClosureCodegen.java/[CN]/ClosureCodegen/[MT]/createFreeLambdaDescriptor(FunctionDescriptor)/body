@@ -1,0 +1,16 @@
+{
+  FunctionDescriptor.CopyBuilder<? extends FunctionDescriptor> builder=descriptor.newCopyBuilder();
+  List<TypeParameterDescriptor> typeParameters=new ArrayList<TypeParameterDescriptor>(0);
+  builder.setTypeParameters(typeParameters);
+  DeclarationDescriptor container=descriptor.getContainingDeclaration();
+  while (container != null) {
+    if (container instanceof ClassDescriptor) {
+      typeParameters.addAll(((ClassDescriptor)container).getDeclaredTypeParameters());
+    }
+ else     if (container instanceof CallableDescriptor && !(container instanceof ConstructorDescriptor)) {
+      typeParameters.addAll(((CallableDescriptor)container).getTypeParameters());
+    }
+    container=container.getContainingDeclaration();
+  }
+  return typeParameters.isEmpty() ? descriptor : builder.build();
+}

@@ -1,17 +1,9 @@
 {
   Annotations resultAnnotations=configuration.additionalAnnotations != null ? AnnotationsKt.composeAnnotations(getAnnotations(),configuration.additionalAnnotations) : getAnnotations();
   FunctionDescriptorImpl substitutedDescriptor=createSubstitutedCopy(configuration.newOwner,configuration.original,configuration.kind,configuration.name,resultAnnotations,getSourceToUseForCopy(configuration.preserveSourceElement,configuration.original,configuration.sourceElement));
-  List<TypeParameterDescriptor> substitutedTypeParameters;
-  final TypeSubstitutor substitutor;
-  if (configuration.newTypeParameters == null) {
-    List<TypeParameterDescriptor> originalTypeParameters=getTypeParameters();
-    substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(originalTypeParameters.size());
-    substitutor=DescriptorSubstitutor.substituteTypeParameters(originalTypeParameters,configuration.substitution,substitutedDescriptor,substitutedTypeParameters);
-  }
- else {
-    substitutedTypeParameters=configuration.newTypeParameters;
-    substitutor=configuration.substitution.buildSubstitutor();
-  }
+  List<TypeParameterDescriptor> unsubstitutedTypeParameters=configuration.newTypeParameters == null ? getTypeParameters() : configuration.newTypeParameters;
+  List<TypeParameterDescriptor> substitutedTypeParameters=new ArrayList<TypeParameterDescriptor>(unsubstitutedTypeParameters.size());
+  final TypeSubstitutor substitutor=DescriptorSubstitutor.substituteTypeParameters(unsubstitutedTypeParameters,configuration.substitution,substitutedDescriptor,substitutedTypeParameters);
   KotlinType substitutedReceiverParameterType=null;
   if (configuration.newExtensionReceiverParameterType != null) {
     substitutedReceiverParameterType=substitutor.substitute(configuration.newExtensionReceiverParameterType,Variance.IN_VARIANCE);
