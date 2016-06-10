@@ -1,20 +1,17 @@
 {
-  File ktFile=new File(path);
-  assertTrue("Cannot find a file " + ktFile.getAbsolutePath(),ktFile.exists());
-  String fileText=FileUtil.loadFile(ktFile,true);
-  KtFile psiFile=KotlinTestUtils.createFile(ktFile.getName(),fileText,environment.getProject());
-  OutputFileCollection outputFiles=GenerationUtils.compileFile(psiFile,environment);
+  compile(files,null,ConfigurationKind.JDK_ONLY,TestJdkKind.MOCK_JDK,Collections.<String>emptyList());
+  String fileText=FileUtil.loadFile(wholeFile,true);
   List<TestedObject> testedObjects=parseExpectedTestedObject(fileText);
   for (  TestedObject testedObject : testedObjects) {
     String className=null;
-    for (    OutputFile outputFile : outputFiles.asList()) {
+    for (    OutputFile outputFile : classFileFactory.asList()) {
       String filePath=outputFile.getRelativePath();
       if (testedObject.isFullContainingClassName && filePath.equals(testedObject.containingClass + ".class") || !testedObject.isFullContainingClassName && filePath.startsWith(testedObject.containingClass)) {
         className=filePath;
       }
     }
     assertNotNull("Couldn't find a class file with name " + testedObject.containingClass,className);
-    OutputFile outputFile=outputFiles.get(className);
+    OutputFile outputFile=classFileFactory.get(className);
     assertNotNull(outputFile);
     ClassReader cr=new ClassReader(outputFile.asByteArray());
     TestClassVisitor classVisitor=getClassVisitor(testedObject.kind,testedObject.name,false);
