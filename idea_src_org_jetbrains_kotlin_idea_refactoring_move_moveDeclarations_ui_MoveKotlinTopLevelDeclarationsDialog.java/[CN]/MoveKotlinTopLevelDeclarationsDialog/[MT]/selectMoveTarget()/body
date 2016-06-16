@@ -35,14 +35,14 @@
     }
     return new KotlinMoveTargetForDeferredFile(new FqName(getTargetPackage()),moveDestination.getTargetIfExists(sourceFiles.get(0)),new Function1<KtFile,KtFile>(){
       @Override public KtFile invoke(      @NotNull KtFile originalFile){
-        return JetRefactoringUtilKt.getOrCreateKotlinFile(targetFileName != null ? targetFileName : originalFile.getName(),moveDestination.getTargetDirectory(originalFile));
+        return KotlinRefactoringUtilKt.getOrCreateKotlinFile(targetFileName != null ? targetFileName : originalFile.getName(),moveDestination.getTargetDirectory(originalFile));
       }
     }
 );
   }
   final File targetFile=new File(getTargetFilePath());
   if (!checkTargetFileName(targetFile.getName()))   return null;
-  KtFile jetFile=(KtFile)JetRefactoringUtilKt.toPsiFile(targetFile,myProject);
+  KtFile jetFile=(KtFile)KotlinRefactoringUtilKt.toPsiFile(targetFile,myProject);
   if (jetFile != null) {
     if (sourceFiles.size() == 1 && sourceFiles.contains(jetFile)) {
       setErrorText("Can't move to the original file");
@@ -51,7 +51,7 @@
     return new KotlinMoveTargetForExistingElement(jetFile);
   }
   File targetDir=targetFile.getParentFile();
-  final PsiDirectory psiDirectory=targetDir != null ? JetRefactoringUtilKt.toPsiDirectory(targetDir,myProject) : null;
+  final PsiDirectory psiDirectory=targetDir != null ? KotlinRefactoringUtilKt.toPsiDirectory(targetDir,myProject) : null;
   if (psiDirectory == null) {
     setErrorText("No directory found for file: " + targetFile.getPath());
     return null;
@@ -74,7 +74,7 @@
   final String finalTargetPackageFqName=targetPackageFqName.asString();
   return new KotlinMoveTargetForDeferredFile(targetPackageFqName,psiDirectory,new Function1<KtFile,KtFile>(){
     @Override public KtFile invoke(    @NotNull KtFile originalFile){
-      return JetRefactoringUtilKt.getOrCreateKotlinFile(targetFile.getName(),psiDirectory,finalTargetPackageFqName);
+      return KotlinRefactoringUtilKt.getOrCreateKotlinFile(targetFile.getName(),psiDirectory,finalTargetPackageFqName);
     }
   }
 );
