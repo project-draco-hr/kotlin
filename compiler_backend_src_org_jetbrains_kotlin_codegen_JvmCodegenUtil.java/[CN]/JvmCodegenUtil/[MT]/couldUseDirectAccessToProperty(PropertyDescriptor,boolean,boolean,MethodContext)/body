@@ -4,11 +4,20 @@
   if (context.isInlineMethodContext()) {
     return false;
   }
-  if (!isDebuggerContext(context)) {
-    if (!isCallInsideSameClassAsDeclared(property,context))     return false;
-  }
+  if (!isCallInsideSameClassAsDeclared(property,context)) {
+    if (!isDebuggerContext(context)) {
+      return false;
+    }
  else {
-    if (!property.getOverriddenDescriptors().isEmpty())     return false;
+      for (      PropertyAccessorDescriptor accessorDescriptor : property.getAccessors()) {
+        if (!accessorDescriptor.isDefault()) {
+          if (forGetter == accessorDescriptor instanceof PropertyGetterDescriptor) {
+            return false;
+          }
+        }
+      }
+      if (!property.getOverriddenDescriptors().isEmpty())       return false;
+    }
   }
   if (isDelegated || property.getExtensionReceiverParameter() != null)   return false;
   if (DescriptorUtils.isCompanionObject(property.getContainingDeclaration()))   return false;
