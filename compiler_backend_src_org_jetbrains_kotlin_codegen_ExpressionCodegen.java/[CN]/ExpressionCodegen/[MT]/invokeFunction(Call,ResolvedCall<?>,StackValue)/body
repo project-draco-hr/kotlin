@@ -16,5 +16,9 @@
     }
   }
   Callable callable=resolveToCallable(fd,superCallTarget != null,resolvedCall);
-  return callable.invokeMethodWithArguments(resolvedCall,receiver,this);
+  StackValue result=callable.invokeMethodWithArguments(resolvedCall,receiver,this);
+  if (CoroutineCodegenUtilKt.isSuspensionPoint(resolvedCall)) {
+    return new OperationStackValue(getSuspensionReturnTypeByResolvedCall(resolvedCall),((OperationStackValue)result).getLambda());
+  }
+  return result;
 }
