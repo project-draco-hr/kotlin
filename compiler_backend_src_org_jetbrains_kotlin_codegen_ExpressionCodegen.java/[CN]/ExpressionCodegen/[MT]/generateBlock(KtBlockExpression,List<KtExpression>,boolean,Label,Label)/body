@@ -1,7 +1,7 @@
 {
   final Label blockEnd=labelBlockEnd != null ? labelBlockEnd : new Label();
   final List<Function<StackValue,Void>> leaveTasks=Lists.newArrayList();
-  StackValue answer=StackValue.none();
+  @Nullable StackValue answer=null;
   for (Iterator<KtExpression> iterator=statements.iterator(); iterator.hasNext(); ) {
     KtExpression possiblyLabeledStatement=iterator.next();
     KtElement statement=KtPsiUtil.safeDeparenthesize(possiblyLabeledStatement);
@@ -19,7 +19,7 @@
     StackValue result=isExpression ? gen(possiblyLabeledStatement) : genStatement(possiblyLabeledStatement);
     if (!iterator.hasNext()) {
       answer=result;
-      StackValue handleResultValue=!(possiblyLabeledStatement instanceof KtReturnExpression) ? genControllerHandleResultCallIfNeeded(possiblyLabeledStatement,possiblyLabeledStatement) : null;
+      StackValue handleResultValue=genControllerHandleResultForLastStatementInCoroutine(block,possiblyLabeledStatement);
       if (handleResultValue != null) {
         answer=handleResultValue;
       }
@@ -28,6 +28,12 @@
       result.put(Type.VOID_TYPE,v);
     }
     addLeaveTaskToRemoveDescriptorFromFrameMap(statement,blockEnd,leaveTasks);
+  }
+  if (answer == null) {
+    answer=genControllerHandleResultForLastStatementInCoroutine(block,null);
+    if (answer == null) {
+      answer=StackValue.none();
+    }
   }
   return new StackValueWithLeaveTask(answer,new Function1<StackValue,Unit>(){
     @Override public Unit invoke(    StackValue value){
