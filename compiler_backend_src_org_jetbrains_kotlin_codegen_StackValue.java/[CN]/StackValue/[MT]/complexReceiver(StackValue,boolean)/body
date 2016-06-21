@@ -1,4 +1,13 @@
 {
+  if (stackValue instanceof Property) {
+    ResolvedCall resolvedCall=((Property)stackValue).resolvedCall;
+    if (resolvedCall != null && resolvedCall.getResultingDescriptor() instanceof PropertyDescriptor && InlineUtil.hasInlineAccessors((PropertyDescriptor)resolvedCall.getResultingDescriptor())) {
+      throwUnsupportedComplexOperation(resolvedCall.getResultingDescriptor());
+    }
+  }
+ else   if (stackValue instanceof Delegate) {
+    throwUnsupportedComplexOperation(((Delegate)stackValue).variableDescriptor);
+  }
   if (stackValue instanceof StackValueWithSimpleReceiver) {
     return new DelegatedForComplexReceiver(stackValue.type,(StackValueWithSimpleReceiver)stackValue,new ComplexReceiver((StackValueWithSimpleReceiver)stackValue,isReadOperations));
   }
