@@ -1,20 +1,3 @@
 {
-  Map<TypeParameterDescriptor,KotlinType> typeArguments=resolvedCall.getTypeArguments();
-  TypeParameterMappings mappings=new TypeParameterMappings();
-  for (  Map.Entry<TypeParameterDescriptor,KotlinType> entry : typeArguments.entrySet()) {
-    TypeParameterDescriptor key=entry.getKey();
-    KotlinType type=entry.getValue();
-    boolean isReified=key.isReified() || InlineUtil.isArrayConstructorWithLambda(resolvedCall.getResultingDescriptor());
-    Pair<TypeParameterDescriptor,ReificationArgument> typeParameterAndReificationArgument=extractReificationArgument(type);
-    if (typeParameterAndReificationArgument == null) {
-      KotlinType approximatedType=CapturedTypeApproximationKt.approximateCapturedTypes(entry.getValue()).getUpper();
-      JvmSignatureWriter signatureWriter=new BothSignatureWriter(BothSignatureWriter.Mode.TYPE);
-      Type asmType=typeMapper.mapTypeParameter(approximatedType,signatureWriter);
-      mappings.addParameterMappingToType(key.getName().getIdentifier(),approximatedType,asmType,signatureWriter.toString(),isReified);
-    }
- else {
-      mappings.addParameterMappingForFurtherReification(key.getName().getIdentifier(),type,typeParameterAndReificationArgument.getSecond(),isReified);
-    }
-  }
-  return getOrCreateCallGenerator(resolvedCall.getResultingDescriptor(),resolvedCall.getCall().getCallElement(),mappings,false);
+  return getOrCreateCallGenerator(resolvedCall,resolvedCall.getResultingDescriptor());
 }
