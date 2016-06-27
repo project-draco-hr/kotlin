@@ -1,0 +1,19 @@
+{
+  Map<TypeParameterDescriptor,KotlinType> typeArguments=resolvedCall.getTypeArguments();
+  for (  Map.Entry<TypeParameterDescriptor,KotlinType> entry : typeArguments.entrySet()) {
+    TypeParameterDescriptor parameter=entry.getKey();
+    KotlinType argument=entry.getValue();
+    ClassifierDescriptor argumentDeclarationDescriptor=argument.getConstructor().getDeclarationDescriptor();
+    if (!parameter.isReified() && !isTypeParameterOfKotlinArray(parameter)) {
+      continue;
+    }
+    KtTypeProjection typeProjection=CollectionsKt.getOrNull(resolvedCall.getCall().getTypeArguments(),parameter.getIndex());
+    PsiElement reportErrorOn=typeProjection != null ? typeProjection : reportOn;
+    if (argumentDeclarationDescriptor instanceof TypeParameterDescriptor && !((TypeParameterDescriptor)argumentDeclarationDescriptor).isReified()) {
+      context.getTrace().report(Errors.TYPE_PARAMETER_AS_REIFIED.on(reportErrorOn,parameter));
+    }
+ else     if (TypeUtilsKt.cannotBeReified(argument)) {
+      context.getTrace().report(Errors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION.on(reportErrorOn,argument));
+    }
+  }
+}

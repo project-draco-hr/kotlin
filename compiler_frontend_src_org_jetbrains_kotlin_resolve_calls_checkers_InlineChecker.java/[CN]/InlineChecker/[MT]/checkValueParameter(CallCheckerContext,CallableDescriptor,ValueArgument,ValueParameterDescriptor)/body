@@ -1,0 +1,20 @@
+{
+  KtExpression argumentExpression=targetArgument.getArgumentExpression();
+  if (argumentExpression == null) {
+    return;
+  }
+  CallableDescriptor argumentCallee=getCalleeDescriptor(context,argumentExpression,false);
+  if (argumentCallee != null && inlinableParameters.contains(argumentCallee)) {
+    if (InlineUtil.isInline(targetDescriptor) && isInlinableParameter(targetParameterDescriptor)) {
+      if (allowsNonLocalReturns(argumentCallee) && !allowsNonLocalReturns(targetParameterDescriptor)) {
+        context.getTrace().report(NON_LOCAL_RETURN_NOT_ALLOWED.on(argumentExpression,argumentExpression));
+      }
+ else {
+        checkNonLocalReturn(context,argumentCallee,argumentExpression);
+      }
+    }
+ else {
+      context.getTrace().report(USAGE_IS_NOT_INLINABLE.on(argumentExpression,argumentExpression,descriptor));
+    }
+  }
+}

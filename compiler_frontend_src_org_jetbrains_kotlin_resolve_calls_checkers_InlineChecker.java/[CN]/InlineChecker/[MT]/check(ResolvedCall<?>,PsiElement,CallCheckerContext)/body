@@ -1,0 +1,25 @@
+{
+  KtExpression expression=resolvedCall.getCall().getCalleeExpression();
+  if (expression == null) {
+    return;
+  }
+  CallableDescriptor targetDescriptor=resolvedCall.getResultingDescriptor();
+  checkCallWithReceiver(context,targetDescriptor,resolvedCall.getDispatchReceiver(),expression);
+  checkCallWithReceiver(context,targetDescriptor,resolvedCall.getExtensionReceiver(),expression);
+  if (inlinableParameters.contains(targetDescriptor)) {
+    if (!isInsideCall(expression)) {
+      context.getTrace().report(USAGE_IS_NOT_INLINABLE.on(expression,expression,descriptor));
+    }
+  }
+  for (  Map.Entry<ValueParameterDescriptor,ResolvedValueArgument> entry : resolvedCall.getValueArguments().entrySet()) {
+    ResolvedValueArgument value=entry.getValue();
+    ValueParameterDescriptor valueDescriptor=entry.getKey();
+    if (!(value instanceof DefaultValueArgument)) {
+      for (      ValueArgument argument : value.getArguments()) {
+        checkValueParameter(context,targetDescriptor,argument,valueDescriptor);
+      }
+    }
+  }
+  checkVisibilityAndAccess(targetDescriptor,expression,context);
+  checkRecursion(context,targetDescriptor,expression);
+}
