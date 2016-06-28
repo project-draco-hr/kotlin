@@ -13,7 +13,12 @@
     ParameterInfo info=infos[i];
     if (!info.isSkippedOrRemapped()) {
       Type type=info.type;
-      StackValue.local(index[i],type).store(StackValue.onStack(type),codegen.v);
+      StackValue.Local local=StackValue.local(index[i],type);
+      local.store(StackValue.onStack(type),codegen.v);
+      if (info instanceof CapturedParamInfo) {
+        info.setRemapValue(local);
+        ((CapturedParamInfo)info).setSynthetic(true);
+      }
     }
   }
 }
