@@ -3,16 +3,21 @@
     mv.visitMaxs(-1,-1);
   }
   super.visitEnd();
-  if (shouldBeTransformed(methodNode)) {
-    performTransformations(methodNode);
-  }
-  methodNode.accept(new EndIgnoringMethodVisitorDecorator(Opcodes.ASM5,delegate));
-  if (methodNode.instructions.size() == 0) {
-    List<LocalVariableNode> localVariables=methodNode.localVariables;
-    int n=localVariables == null ? 0 : localVariables.size();
-    for (int i=0; i < n; ++i) {
-      localVariables.get(i).accept(delegate);
+  try {
+    if (shouldBeTransformed(methodNode)) {
+      performTransformations(methodNode);
     }
+    methodNode.accept(new EndIgnoringMethodVisitorDecorator(Opcodes.ASM5,delegate));
+    if (methodNode.instructions.size() == 0) {
+      List<LocalVariableNode> localVariables=methodNode.localVariables;
+      int n=localVariables == null ? 0 : localVariables.size();
+      for (int i=0; i < n; ++i) {
+        localVariables.get(i).accept(delegate);
+      }
+    }
+    delegate.visitEnd();
   }
-  delegate.visitEnd();
+ catch (  Throwable t) {
+    throw new CompilationException("Couldn't transform method node: " + InlineCodegenUtil.getNodeText(methodNode),t,null);
+  }
 }
