@@ -6,6 +6,14 @@
     @Override public void visit(    int version,    int access,    @NotNull String name,    String signature,    String superName,    String[] interfaces){
       InlineCodegenUtil.assertVersionNotGreaterThanGeneratedOne(version,name,inliningContext.state);
       classBuilder.defineClass(null,version,access,name,signature,superName,interfaces);
+      if (interfaces != null) {
+        for (        String anInterface : interfaces) {
+          if ("kotlin/coroutines/Continuation".equals(anInterface)) {
+            inliningContext.setContinuation(true);
+            break;
+          }
+        }
+      }
     }
     @Override public void visitInnerClass(    @NotNull String name,    String outerName,    String innerName,    int access){
       innerClassNodes.add(new InnerClassNode(name,outerName,innerName,access));
@@ -61,6 +69,7 @@
   ParametersBuilder constructorParamBuilder=ParametersBuilder.newBuilder();
   List<CapturedParamInfo> additionalFakeParams=extractParametersMappingAndPatchConstructor(constructor,allCapturedParamBuilder,constructorParamBuilder,transformationInfo,parentRemapper);
   List<MethodVisitor> deferringMethods=new ArrayList<MethodVisitor>();
+  generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,parentRemapper,additionalFakeParams);
   for (  MethodNode next : methodsToTransform) {
     MethodVisitor deferringVisitor=newMethod(classBuilder,next);
     InlineResult funResult=inlineMethodAndUpdateGlobalResult(parentRemapper,deferringVisitor,next,allCapturedParamBuilder,false);
@@ -77,7 +86,6 @@
   for (  MethodVisitor method : deferringMethods) {
     method.visitEnd();
   }
-  generateConstructorAndFields(classBuilder,allCapturedParamBuilder,constructorParamBuilder,parentRemapper,additionalFakeParams);
   SourceMapper.Companion.flushToClassBuilder(sourceMapper,classBuilder);
   ClassVisitor visitor=classBuilder.getVisitor();
   for (  InnerClassNode node : innerClassNodes) {
