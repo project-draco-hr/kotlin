@@ -8,12 +8,14 @@
   KtExpression body=expression.getBody();
   KtExpression condition=expression.getCondition();
   StackValue conditionValue;
+  StackValueWithLeaveTask leaveTask=null;
   if (body instanceof KtBlockExpression) {
     List<KtExpression> doWhileStatements=((KtBlockExpression)body).getStatements();
     List<KtExpression> statements=new ArrayList<KtExpression>(doWhileStatements.size() + 1);
     statements.addAll(doWhileStatements);
     statements.add(condition);
-    conditionValue=generateBlock((KtBlockExpression)body,statements,false,continueLabel,null);
+    leaveTask=generateBlock((KtBlockExpression)body,statements,false,continueLabel,null);
+    conditionValue=leaveTask.getStackValue();
   }
  else {
     if (body != null) {
@@ -23,6 +25,9 @@
     conditionValue=gen(condition);
   }
   BranchedValue.Companion.loopJump(conditionValue,beginLoopLabel,false,v);
+  if (leaveTask != null) {
+    leaveTask.getLeaveTasks().invoke(conditionValue);
+  }
   v.mark(breakLabel);
   blockStackElements.pop();
 }
