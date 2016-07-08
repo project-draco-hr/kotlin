@@ -1,0 +1,36 @@
+{
+  super.setUp();
+  ensureTempDirCreated();
+  myTestDir=new File(ourTempDir,getTestName(false));
+  FileUtil.ensureExists(myTestDir);
+  setUpFixtures();
+  myProject=myTestFixture.getProject();
+  edt(new Runnable(){
+    @Override public void run(){
+      ApplicationManager.getApplication().runWriteAction(new Runnable(){
+        @Override public void run(){
+          try {
+            setUpInWriteAction();
+          }
+ catch (          Throwable e) {
+            try {
+              tearDown();
+            }
+ catch (            Exception e1) {
+              e1.printStackTrace();
+            }
+            throw new RuntimeException(e);
+          }
+        }
+      }
+);
+    }
+  }
+);
+  List<String> allowedRoots=new ArrayList<String>();
+  collectAllowedRoots(allowedRoots);
+  if (!allowedRoots.isEmpty()) {
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(),ArrayUtil.toStringArray(allowedRoots));
+  }
+  CompilerTestUtil.enableExternalCompiler();
+}

@@ -1,0 +1,55 @@
+{
+  assumeThat(gradleVersion,versionMatcherRule.getMatcher());
+  ensureTempDirCreated();
+  String methodName=name.getMethodName();
+  Matcher m=TEST_METHOD_NAME_PATTERN.matcher(methodName);
+  if (m.matches()) {
+    methodName=m.group(1);
+  }
+  testDir=new File(ourTempDir,methodName);
+  FileUtil.ensureExists(testDir);
+  InputStream buildScriptStream=getClass().getResourceAsStream("/" + methodName + "/"+ GradleConstants.DEFAULT_SCRIPT_NAME);
+  try {
+    FileUtil.writeToFile(new File(testDir,GradleConstants.DEFAULT_SCRIPT_NAME),FileUtil.loadTextAndClose(buildScriptStream));
+  }
+  finally {
+    StreamUtil.closeStream(buildScriptStream);
+  }
+  InputStream settingsStream=getClass().getResourceAsStream("/" + methodName + "/"+ GradleConstants.SETTINGS_FILE_NAME);
+  try {
+    if (settingsStream != null) {
+      FileUtil.writeToFile(new File(testDir,GradleConstants.SETTINGS_FILE_NAME),FileUtil.loadTextAndClose(settingsStream));
+    }
+  }
+  finally {
+    StreamUtil.closeStream(settingsStream);
+  }
+  GradleConnector connector=GradleConnector.newConnector();
+  URI distributionUri=new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+  connector.useDistribution(distributionUri);
+  connector.forProjectDirectory(testDir);
+  int daemonMaxIdleTime=10;
+  try {
+    daemonMaxIdleTime=Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime","10"));
+  }
+ catch (  NumberFormatException ignore) {
+  }
+  ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime,TimeUnit.SECONDS);
+  ProjectConnection connection=connector.connect();
+  try {
+    ProjectImportAction projectImportAction=new ProjectImportAction(false);
+    projectImportAction.addExtraProjectModelClasses(getModels());
+    BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor=connection.action(projectImportAction);
+    File initScript=GradleExecutionHelper.generateInitScript(false,getToolingExtensionClasses());
+    assertNotNull(initScript);
+    String jdkHome=IdeaTestUtil.requireRealJdkHome();
+    buildActionExecutor.setJavaHome(new File(jdkHome));
+    buildActionExecutor.setJvmArguments("-Xmx128m","-XX:MaxPermSize=64m");
+    buildActionExecutor.withArguments("--info","--recompile-scripts",GradleConstants.INIT_SCRIPT_CMD_OPTION,initScript.getAbsolutePath());
+    allModels=buildActionExecutor.run();
+    assertNotNull(allModels);
+  }
+  finally {
+    connection.close();
+  }
+}
