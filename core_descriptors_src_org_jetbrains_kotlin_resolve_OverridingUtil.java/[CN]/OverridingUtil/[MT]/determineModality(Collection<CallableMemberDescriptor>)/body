@@ -1,0 +1,25 @@
+{
+  boolean hasOpen=false;
+  boolean hasAbstract=false;
+  for (  CallableMemberDescriptor descriptor : descriptors) {
+switch (descriptor.getModality()) {
+case FINAL:
+      return Modality.FINAL;
+case SEALED:
+    throw new IllegalStateException("Member cannot have SEALED modality: " + descriptor);
+case OPEN:
+  hasOpen=true;
+break;
+case ABSTRACT:
+hasAbstract=true;
+break;
+}
+}
+if (hasOpen && !hasAbstract) return Modality.OPEN;
+if (!hasOpen && hasAbstract) return Modality.ABSTRACT;
+Set<CallableMemberDescriptor> allOverriddenDeclarations=new HashSet<CallableMemberDescriptor>();
+for (CallableMemberDescriptor descriptor : descriptors) {
+allOverriddenDeclarations.addAll(getOverriddenDeclarations(descriptor));
+}
+return getMinimalModality(filterOutOverridden(allOverriddenDeclarations));
+}
