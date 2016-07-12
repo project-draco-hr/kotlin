@@ -1,0 +1,75 @@
+{
+  myTableModel=createTableModel();
+  myTable=new JBTable(myTableModel);
+  DefaultCellEditor defaultEditor=(DefaultCellEditor)myTable.getDefaultEditor(Object.class);
+  defaultEditor.setClickCountToStart(1);
+  myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+  myTable.setCellSelectionEnabled(true);
+  TableColumn checkBoxColumn=myTable.getColumnModel().getColumn(TableModelBase.CHECKMARK_COLUMN);
+  TableUtil.setupCheckboxColumn(checkBoxColumn);
+  checkBoxColumn.setHeaderValue("");
+  checkBoxColumn.setCellRenderer(new BooleanTableCellRenderer(){
+    @NotNull @Override public Component getTableCellRendererComponent(    JTable table,    Object value,    boolean isSelected,    boolean hasFocus,    int row,    int column){
+      Component rendererComponent=super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
+      rendererComponent.setEnabled(AbstractParameterTablePanel.this.isEnabled());
+      return rendererComponent;
+    }
+  }
+);
+  myTable.getColumnModel().getColumn(TableModelBase.PARAMETER_NAME_COLUMN).setHeaderValue("Name");
+  createAdditionalColumns();
+  myTable.setPreferredScrollableViewportSize(new Dimension(250,myTable.getRowHeight() * 5));
+  myTable.setShowGrid(false);
+  myTable.setIntercellSpacing(new Dimension(0,0));
+  @NonNls InputMap inputMap=myTable.getInputMap();
+  @NonNls ActionMap actionMap=myTable.getActionMap();
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE,0),"enable_disable");
+  actionMap.put("enable_disable",new AbstractAction(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      if (myTable.isEditing())       return;
+      int[] rows=myTable.getSelectedRows();
+      if (rows.length > 0) {
+        boolean valueToBeSet=false;
+        for (        int row : rows) {
+          if (!parameterInfos.get(row).isEnabled()) {
+            valueToBeSet=true;
+            break;
+          }
+        }
+        for (        int row : rows) {
+          parameterInfos.get(row).setEnabled(valueToBeSet);
+        }
+        myTableModel.fireTableRowsUpdated(rows[0],rows[rows.length - 1]);
+        TableUtil.selectRows(myTable,rows);
+      }
+    }
+  }
+);
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,0),"invoke_impl");
+  actionMap.put("invoke_impl",new AbstractAction(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      TableCellEditor editor=myTable.getCellEditor();
+      if (editor != null) {
+        editor.stopCellEditing();
+      }
+ else {
+        onEnterAction();
+      }
+    }
+  }
+);
+  actionMap.put("doCancel",new AbstractAction(){
+    @Override public void actionPerformed(    @NotNull ActionEvent e){
+      TableCellEditor editor=myTable.getCellEditor();
+      if (editor != null) {
+        editor.stopCellEditing();
+      }
+ else {
+        onCancelAction();
+      }
+    }
+  }
+);
+  JPanel listPanel=ToolbarDecorator.createDecorator(myTable).disableAddAction().disableRemoveAction().createPanel();
+  add(listPanel,BorderLayout.CENTER);
+}
