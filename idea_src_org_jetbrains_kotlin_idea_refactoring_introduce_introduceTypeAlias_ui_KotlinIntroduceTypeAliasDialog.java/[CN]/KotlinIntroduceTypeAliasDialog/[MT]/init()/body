@@ -1,0 +1,56 @@
+{
+  super.init();
+  visibilityBox.setModel(new DefaultComboBoxModel(getApplicableVisibilities().toArray()));
+  visibilityBox.setRenderer(new DefaultListCellRenderer(){
+    @Override public Component getListCellRendererComponent(    JList list,    Object value,    int index,    boolean isSelected,    boolean cellHasFocus){
+      String tokenValue=((KtModifierKeywordToken)value).getValue();
+      return super.getListCellRendererComponent(list,tokenValue,index,isSelected,cellHasFocus);
+    }
+  }
+);
+  aliasNameField=new NameSuggestionsField(ArrayUtil.EMPTY_STRING_ARRAY,project,KotlinFileType.INSTANCE);
+  aliasNameField.addDataChangedListener(new NameSuggestionsField.DataChanged(){
+    @Override public void dataChanged(){
+      update();
+    }
+  }
+);
+  aliasNamePanel.add(aliasNameField,BorderLayout.CENTER);
+  aliasNameLabel.setLabelFor(aliasNameField);
+  boolean enableVisibility=isVisibilitySectionAvailable();
+  visibilityBox.setEnabled(enableVisibility);
+  if (enableVisibility) {
+    KtModifierKeywordToken defaultVisibility=originalDescriptor.getVisibility();
+    if (defaultVisibility == null) {
+      defaultVisibility=KtTokens.PUBLIC_KEYWORD;
+    }
+    visibilityBox.setSelectedItem(defaultVisibility);
+  }
+  visibilityBox.addItemListener(new ItemListener(){
+    @Override public void itemStateChanged(    @NotNull ItemEvent e){
+      update();
+    }
+  }
+);
+  if (!originalDescriptor.getTypeParameters().isEmpty()) {
+    parameterTablePanel=new IntroduceTypeAliasParameterTablePanel(){
+      @Override protected void updateSignature(){
+        KotlinIntroduceTypeAliasDialog.this.update();
+      }
+      @Override protected void onEnterAction(){
+        doOKAction();
+      }
+      @Override protected void onCancelAction(){
+        doCancelAction();
+      }
+    }
+;
+    parameterTablePanel.init(originalDescriptor.getTypeParameters());
+    inputParametersPanel.setText("Type &Parameters");
+    inputParametersPanel.setLabelFor(parameterTablePanel.getTable());
+    inputParametersPanel.add(parameterTablePanel);
+  }
+ else {
+    inputParametersPanel.setVisible(false);
+  }
+}
