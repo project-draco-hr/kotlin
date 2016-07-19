@@ -5,10 +5,17 @@
     String text=file.getText();
     while (selectionStart < selectionEnd && Character.isSpaceChar(text.charAt(selectionStart)))     ++selectionStart;
     while (selectionStart < selectionEnd && Character.isSpaceChar(text.charAt(selectionEnd - 1)))     --selectionEnd;
-    callback.run(findElement(file,selectionStart,selectionEnd,failOnEmptySuggestion,elementKind));
+    for (    CodeInsightUtils.ElementKind elementKind : elementKinds) {
+      PsiElement element=findElement(file,selectionStart,selectionEnd,failOnEmptySuggestion,elementKind);
+      if (element != null) {
+        callback.run(element);
+        return;
+      }
+    }
+    callback.run(null);
   }
  else {
     int offset=editor.getCaretModel().getOffset();
-    smartSelectElement(editor,file,offset,failOnEmptySuggestion,elementKind,callback);
+    smartSelectElement(editor,file,offset,failOnEmptySuggestion,elementKinds,callback);
   }
 }

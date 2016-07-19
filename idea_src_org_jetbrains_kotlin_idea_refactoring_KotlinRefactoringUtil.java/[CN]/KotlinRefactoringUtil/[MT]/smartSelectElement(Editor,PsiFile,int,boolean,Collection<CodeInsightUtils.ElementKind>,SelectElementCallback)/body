@@ -1,5 +1,10 @@
 {
-  List<KtElement> elements=getSmartSelectSuggestions(file,offset,elementKind);
+  List<KtElement> elements=CollectionsKt.flatMap(elementKinds,new Function1<CodeInsightUtils.ElementKind,Iterable<? extends KtElement>>(){
+    @Override public Iterable<? extends KtElement> invoke(    CodeInsightUtils.ElementKind kind){
+      return getSmartSelectSuggestions(file,offset,kind);
+    }
+  }
+);
   if (elements.size() == 0) {
     if (failOnEmptySuggestion)     throw new IntroduceRefactoringException(KotlinRefactoringBundle.message("cannot.refactor.not.expression"));
     callback.run(null);
