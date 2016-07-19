@@ -7,11 +7,17 @@ case EXPRESSION:
 case TYPE_ELEMENT:
 elementClass=KtTypeElement.class;
 break;
+case TYPE_CONSTRUCTOR:
+elementClass=KtSimpleNameExpression.class;
+break;
 default :
 throw new IllegalArgumentException(elementKind.name());
 }
 PsiElement element=findElementOfClassAtRange(file,startOffset,endOffset,elementClass);
 if (elementKind == ElementKind.TYPE_ELEMENT) return element;
+if (elementKind == ElementKind.TYPE_CONSTRUCTOR) {
+return element != null && KtPsiUtilKt.isTypeConstructorReference(element) ? element : null;
+}
 if (element instanceof KtScriptInitializer) {
 element=((KtScriptInitializer)element).getBody();
 }
