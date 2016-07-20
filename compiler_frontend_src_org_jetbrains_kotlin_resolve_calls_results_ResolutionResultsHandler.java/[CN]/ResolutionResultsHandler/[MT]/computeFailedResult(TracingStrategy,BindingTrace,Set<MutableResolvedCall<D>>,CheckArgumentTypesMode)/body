@@ -1,2 +1,21 @@
 {
+  if (failedCandidates.size() == 1) {
+    return recordFailedInfo(tracing,trace,failedCandidates);
+  }
+  for (  EnumSet<ResolutionStatus> severityLevel : SEVERITY_LEVELS) {
+    Set<MutableResolvedCall<D>> thisLevel=Sets.newLinkedHashSet();
+    for (    MutableResolvedCall<D> candidate : failedCandidates) {
+      if (severityLevel.contains(candidate.getStatus())) {
+        thisLevel.add(candidate);
+      }
+    }
+    if (!thisLevel.isEmpty()) {
+      if (severityLevel.contains(ARGUMENTS_MAPPING_ERROR)) {
+        return recordFailedInfo(tracing,trace,thisLevel);
+      }
+      OverloadResolutionResultsImpl<D> results=chooseAndReportMaximallySpecific(thisLevel,false,false,checkArgumentsMode);
+      return recordFailedInfo(tracing,trace,results.getResultingCalls());
+    }
+  }
+  throw new AssertionError("Should not be reachable, cause every status must belong to some level: " + failedCandidates);
 }
