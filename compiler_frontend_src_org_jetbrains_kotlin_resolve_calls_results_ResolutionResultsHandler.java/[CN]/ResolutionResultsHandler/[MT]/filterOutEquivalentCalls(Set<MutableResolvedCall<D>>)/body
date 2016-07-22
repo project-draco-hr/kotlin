@@ -1,0 +1,17 @@
+{
+  if (candidates.size() <= 1)   return candidates;
+  List<MutableResolvedCall<D>> fromSourcesGoesFirst=CollectionsKt.sortedBy(candidates,MAP_RESOLVED_CALL_TO_SOURCE_PRESENCE);
+  Set<MutableResolvedCall<D>> result=new LinkedHashSet<MutableResolvedCall<D>>();
+  outerLoop:   for (  MutableResolvedCall<D> meD : fromSourcesGoesFirst) {
+    for (    MutableResolvedCall<D> otherD : result) {
+      D me=meD.getResultingDescriptor();
+      D other=otherD.getResultingDescriptor();
+      boolean ignoreReturnType=(DescriptorToSourceUtils.descriptorToDeclaration(me) == null) != (DescriptorToSourceUtils.descriptorToDeclaration(other) == null);
+      if (DescriptorEquivalenceForOverrides.INSTANCE.areCallableDescriptorsEquivalent(me,other,ignoreReturnType)) {
+        continue outerLoop;
+      }
+    }
+    result.add(meD);
+  }
+  return result;
+}
