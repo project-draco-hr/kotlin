@@ -1,10 +1,15 @@
 {
-  ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCallWithAssert(expression,bindingContext);
-  FunctionDescriptor descriptor=accessibleFunctionDescriptor(resolvedCall);
-  Callable callable=resolveToCallable(descriptor,false,resolvedCall);
-  KtExpression lhs=expression.getLeft();
-  Type lhsType=expressionType(lhs);
-  boolean keepReturnValue=Boolean.TRUE.equals(bindingContext.get(VARIABLE_REASSIGNMENT,expression)) || !KotlinBuiltIns.isUnit(descriptor.getReturnType());
-  callAugAssignMethod(expression,resolvedCall,callable,lhsType,keepReturnValue);
-  return StackValue.none();
+  return StackValue.operation(Type.VOID_TYPE,new Function1<InstructionAdapter,Unit>(){
+    @Override public Unit invoke(    InstructionAdapter adapter){
+      ResolvedCall<?> resolvedCall=CallUtilKt.getResolvedCallWithAssert(expression,bindingContext);
+      FunctionDescriptor descriptor=accessibleFunctionDescriptor(resolvedCall);
+      Callable callable=resolveToCallable(descriptor,false,resolvedCall);
+      KtExpression lhs=expression.getLeft();
+      Type lhsType=expressionType(lhs);
+      boolean keepReturnValue=Boolean.TRUE.equals(bindingContext.get(VARIABLE_REASSIGNMENT,expression)) || !KotlinBuiltIns.isUnit(descriptor.getReturnType());
+      putCallAugAssignMethod(expression,resolvedCall,callable,lhsType,keepReturnValue);
+      return Unit.INSTANCE;
+    }
+  }
+);
 }
