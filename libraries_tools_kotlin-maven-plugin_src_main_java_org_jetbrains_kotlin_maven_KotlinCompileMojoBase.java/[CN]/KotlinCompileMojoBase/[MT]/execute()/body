@@ -8,13 +8,9 @@
   CLICompiler<A> compiler=createCompiler();
   configureCompilerArguments(arguments,compiler);
   printCompilerArgumentsIfDebugEnabled(arguments,compiler);
-  MessageCollector messageCollector=new MavenPluginLogMessageCollector(getLog());
+  MavenPluginLogMessageCollector messageCollector=new MavenPluginLogMessageCollector(getLog());
   ExitCode exitCode=compiler.exec(messageCollector,Services.EMPTY,arguments);
-switch (exitCode) {
-case COMPILATION_ERROR:
-    throw new MojoExecutionException("Compilation error. See log for more details");
-case INTERNAL_ERROR:
-  throw new MojoExecutionException("Internal compiler error. See log for more details");
-default :
-}
+  if (exitCode != ExitCode.OK) {
+    messageCollector.throwKotlinCompilerException();
+  }
 }
