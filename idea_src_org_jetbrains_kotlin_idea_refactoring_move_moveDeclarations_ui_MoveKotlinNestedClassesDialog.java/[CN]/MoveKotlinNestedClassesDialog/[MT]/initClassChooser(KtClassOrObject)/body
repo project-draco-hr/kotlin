@@ -4,8 +4,8 @@
     @Override public void actionPerformed(    ActionEvent e){
       TreeClassChooser chooser=new TreeJavaClassChooserDialog(RefactoringBundle.message("choose.destination.class"),myProject,GlobalSearchScope.projectScope(myProject),new ClassFilter(){
         @Override public boolean isAccepted(        PsiClass aClass){
-          if (!(aClass instanceof KtLightClassForExplicitDeclaration))           return false;
-          KtClassOrObject classOrObject=((KtLightClassForExplicitDeclaration)aClass).getKotlinOrigin();
+          if (!(aClass instanceof KtLightClassForSourceDeclaration))           return false;
+          KtClassOrObject classOrObject=((KtLightClassForSourceDeclaration)aClass).getKotlinOrigin();
           if (classOrObject instanceof KtObjectDeclaration) {
             return !((KtObjectDeclaration)classOrObject).isObjectLiteral();
           }
@@ -29,8 +29,8 @@
       chooser.selectDirectory((targetClass != null ? targetClass : originalClass).getContainingFile().getContainingDirectory());
       chooser.showDialog();
       PsiClass aClass=chooser.getSelected();
-      if (aClass instanceof KtLightClassForExplicitDeclaration) {
-        targetClass=((KtLightClassForExplicitDeclaration)aClass).getKotlinOrigin();
+      if (aClass instanceof KtLightClassForSourceDeclaration) {
+        targetClass=((KtLightClassForSourceDeclaration)aClass).getKotlinOrigin();
         targetClassChooser.setText(aClass.getQualifiedName());
       }
     }
@@ -39,7 +39,7 @@
   targetClassChooser.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter(){
     @Override public void documentChanged(    DocumentEvent e){
       PsiClass aClass=JavaPsiFacade.getInstance(myProject).findClass(targetClassChooser.getText(),GlobalSearchScope.projectScope(myProject));
-      targetClass=aClass instanceof KtLightClassForExplicitDeclaration ? ((KtLightClassForExplicitDeclaration)aClass).getKotlinOrigin() : null;
+      targetClass=aClass instanceof KtLightClassForSourceDeclaration ? ((KtLightClassForSourceDeclaration)aClass).getKotlinOrigin() : null;
       validateButtons();
     }
   }
