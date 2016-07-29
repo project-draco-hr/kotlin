@@ -1,13 +1,14 @@
 {
   super.setUpModule();
   IdeaTestUtil.setModuleLanguageLevel(myModule,LanguageLevel.JDK_1_6);
+  String outputDirPath=getAppOutputPath();
+  File outDir=new File(outputDirPath);
   if (!IS_TINY_APP_COMPILED) {
     String modulePath=getTestAppPath();
     CUSTOM_LIBRARY_JAR=MockLibraryUtil.compileLibraryToJar(CUSTOM_LIBRARY_SOURCES.getPath(),"debuggerCustomLibrary",false,false);
-    String outputDir=getAppOutputPath();
     String sourcesDir=modulePath + File.separator + "src";
-    MockLibraryUtil.compileKotlin(sourcesDir,new File(outputDir),CUSTOM_LIBRARY_JAR.getPath());
-    List<String> options=Arrays.asList("-d",outputDir,"-classpath",ForTestCompileRuntime.runtimeJarForTests().getPath());
+    MockLibraryUtil.compileKotlin(sourcesDir,outDir,CUSTOM_LIBRARY_JAR.getPath());
+    List<String> options=Arrays.asList("-d",outputDirPath,"-classpath",ForTestCompileRuntime.runtimeJarForTests().getPath());
     try {
       KotlinTestUtils.compileJavaFiles(findJavaFiles(new File(sourcesDir)),options);
     }
@@ -16,6 +17,7 @@
     }
     IS_TINY_APP_COMPILED=true;
   }
+  CompilerUtil.refreshOutputDirectories(Lists.newArrayList(outDir),false);
   ApplicationManager.getApplication().runWriteAction(new Runnable(){
     @Override public void run(){
       ModifiableRootModel model=ModuleRootManager.getInstance(myModule).getModifiableModel();
