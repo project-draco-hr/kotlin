@@ -1,0 +1,15 @@
+{
+  File testDir=new File(testDirPath);
+  File javaFile=new File(testDirPath,testDir.getName() + ".java");
+  String text=FileUtil.loadFile(javaFile,true);
+  Matcher matcher=SUBJECT_FQ_NAME_PATTERN.matcher(text);
+  TestCase.assertTrue("No FqName specified. First line of the form '// f.q.Name' expected",matcher.find());
+  String fqName=matcher.group(1);
+  getEnvironment().updateClasspath(Collections.singletonList(testDir));
+  super.doTest(new File(testDir.getParentFile(),"common.kt").getCanonicalPath());
+  KotlinTestUtils.resolveAllKotlinFiles(getEnvironment());
+  Project project=getEnvironment().getProject();
+  PsiClass javaClass=JavaPsiFacade.getInstance(project).findClass(fqName,GlobalSearchScope.allScope(project));
+  TestCase.assertNotNull("Class $fqName was not found.",javaClass != null);
+  doTest(javaFile,javaClass);
+}
