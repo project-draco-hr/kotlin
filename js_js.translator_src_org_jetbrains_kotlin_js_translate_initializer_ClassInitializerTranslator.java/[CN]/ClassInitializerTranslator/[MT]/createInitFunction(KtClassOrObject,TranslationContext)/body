@@ -1,10 +1,16 @@
 {
   ClassDescriptor classDescriptor=getClassDescriptor(context.bindingContext(),declaration);
   ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
+  Name name=classDescriptor.getName();
+  JsFunction ctorFunction;
   if (primaryConstructor != null) {
-    return context.getFunctionObject(primaryConstructor);
+    ctorFunction=context.getFunctionObject(primaryConstructor);
   }
  else {
-    return new JsFunction(context.scope(),new JsBlock(),"fake constructor for " + classDescriptor.getName().asString());
+    ctorFunction=new JsFunction(context.scope(),new JsBlock(),"fake constructor for " + name.asString());
   }
+  if (!name.isSpecial()) {
+    ctorFunction.setName(ctorFunction.getScope().declareName(name.asString()));
+  }
+  return ctorFunction;
 }
