@@ -1,0 +1,16 @@
+{
+  if (instruction instanceof VariableDeclarationInstruction) {
+    KtDeclaration declaration=((VariableDeclarationInstruction)instruction).getVariableDeclarationElement();
+    return variableDescriptorForDeclaration(bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR,declaration));
+  }
+ else   if (instruction instanceof AccessValueInstruction) {
+    AccessTarget target=((AccessValueInstruction)instruction).getTarget();
+    if (target instanceof AccessTarget.Declaration) {
+      return ((AccessTarget.Declaration)target).getDescriptor();
+    }
+ else     if (target instanceof AccessTarget.Call) {
+      return variableDescriptorForDeclaration(((AccessTarget.Call)target).getResolvedCall().getResultingDescriptor());
+    }
+  }
+  return null;
+}
