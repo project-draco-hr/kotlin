@@ -8,8 +8,10 @@
   List<KtFile> sourceFiles=getSourceFiles(getSelectedElementsToMove());
   PsiDirectory sourceDirectory=getSourceDirectory(sourceFiles);
   if (isMoveToPackage()) {
-    final MoveDestination moveDestination=selectPackageBasedMoveDestination(true);
-    if (moveDestination == null)     return null;
+    Pair<VirtualFile,? extends MoveDestination> targetDirWithMoveDestination=selectPackageBasedTargetDirAndDestination(true);
+    if (targetDirWithMoveDestination == null)     return null;
+    VirtualFile targetDir=targetDirWithMoveDestination.getFirst();
+    final MoveDestination moveDestination=targetDirWithMoveDestination.getSecond();
     final String targetFileName=sourceFiles.size() > 1 ? null : tfFileNameInPackage.getText();
     if (targetFileName != null && !checkTargetFileName(targetFileName))     return null;
     PsiDirectory targetDirectory=moveDestination.getTargetIfExists(sourceDirectory);
@@ -33,7 +35,7 @@
       int ret=Messages.showYesNoDialog(myProject,question,RefactoringBundle.message("move.title"),Messages.getQuestionIcon());
       if (ret != Messages.YES)       return null;
     }
-    return new KotlinMoveTargetForDeferredFile(new FqName(getTargetPackage()),moveDestination.getTargetIfExists(sourceFiles.get(0)),new Function1<KtFile,KtFile>(){
+    return new KotlinMoveTargetForDeferredFile(new FqName(getTargetPackage()),moveDestination.getTargetIfExists(sourceFiles.get(0)),targetDir,new Function1<KtFile,KtFile>(){
       @Override public KtFile invoke(      @NotNull KtFile originalFile){
         return KotlinRefactoringUtilKt.getOrCreateKotlinFile(targetFileName != null ? targetFileName : originalFile.getName(),moveDestination.getTargetDirectory(originalFile));
       }
@@ -72,7 +74,7 @@
     targetPackageFqName=new FqName(psiPackage.getQualifiedName());
   }
   final String finalTargetPackageFqName=targetPackageFqName.asString();
-  return new KotlinMoveTargetForDeferredFile(targetPackageFqName,psiDirectory,new Function1<KtFile,KtFile>(){
+  return new KotlinMoveTargetForDeferredFile(targetPackageFqName,psiDirectory,null,new Function1<KtFile,KtFile>(){
     @Override public KtFile invoke(    @NotNull KtFile originalFile){
       return KotlinRefactoringUtilKt.getOrCreateKotlinFile(targetFile.getName(),psiDirectory,finalTargetPackageFqName);
     }
