@@ -1,32 +1,32 @@
 {
-  if (PsiUtilBase.getLanguageAtOffset(file,offset).isKindOf(KotlinLanguage.INSTANCE)) {
-    PsiElement element=file.findElementAt(offset);
-    if (element == null) {
-      element=file.findElementAt(offset - 1);
-    }
-    if (element instanceof PsiWhiteSpace) {
-      return false;
-    }
- else     if (PsiTreeUtil.getParentOfType(element,PsiComment.class,false) != null) {
-      return isCommentInContext();
-    }
- else     if (PsiTreeUtil.getParentOfType(element,KtPackageDirective.class) != null || PsiTreeUtil.getParentOfType(element,KtImportDirective.class) != null) {
-      return false;
-    }
- else     if (element instanceof LeafPsiElement) {
-      IElementType elementType=((LeafPsiElement)element).getElementType();
-      if (elementType == KtTokens.IDENTIFIER) {
-        PsiElement parent=element.getParent();
-        if (parent instanceof KtReferenceExpression) {
-          PsiElement parentOfParent=parent.getParent();
-          KtQualifiedExpression qualifiedExpression=PsiTreeUtil.getParentOfType(element,KtQualifiedExpression.class);
-          if (qualifiedExpression != null && qualifiedExpression.getSelectorExpression() == parentOfParent) {
-            return false;
-          }
+  if (!PsiUtilCore.getLanguageAtOffset(file,offset).isKindOf(KotlinLanguage.INSTANCE)) {
+    return false;
+  }
+  PsiElement element=file.findElementAt(offset);
+  if (element == null) {
+    element=file.findElementAt(offset - 1);
+  }
+  if (element instanceof PsiWhiteSpace) {
+    return false;
+  }
+ else   if (PsiTreeUtil.getParentOfType(element,PsiComment.class,false) != null) {
+    return isCommentInContext();
+  }
+ else   if (PsiTreeUtil.getParentOfType(element,KtPackageDirective.class) != null || PsiTreeUtil.getParentOfType(element,KtImportDirective.class) != null) {
+    return false;
+  }
+ else   if (element instanceof LeafPsiElement) {
+    IElementType elementType=((LeafPsiElement)element).getElementType();
+    if (elementType == KtTokens.IDENTIFIER) {
+      PsiElement parent=element.getParent();
+      if (parent instanceof KtReferenceExpression) {
+        PsiElement parentOfParent=parent.getParent();
+        KtQualifiedExpression qualifiedExpression=PsiTreeUtil.getParentOfType(element,KtQualifiedExpression.class);
+        if (qualifiedExpression != null && qualifiedExpression.getSelectorExpression() == parentOfParent) {
+          return false;
         }
       }
     }
-    return element != null && isInContext(element);
   }
-  return false;
+  return element != null && isInContext(element);
 }
