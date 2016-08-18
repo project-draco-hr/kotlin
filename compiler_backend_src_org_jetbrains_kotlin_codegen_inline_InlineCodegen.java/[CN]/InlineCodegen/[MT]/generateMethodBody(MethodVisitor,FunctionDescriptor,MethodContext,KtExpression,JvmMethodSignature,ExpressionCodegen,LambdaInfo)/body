@@ -1,12 +1,20 @@
 {
+  boolean isLambda=lambdaInfo != null;
   GenerationState state=codegen.getState();
   FakeMemberCodegen parentCodegen=new FakeMemberCodegen(codegen.getParentCodegen(),expression,(FieldOwnerContext)context.getParentContext(),isLambda ? codegen.getParentCodegen().getClassName() : state.getTypeMapper().mapImplementationOwner(descriptor).getInternalName());
   FunctionGenerationStrategy strategy;
   if (expression instanceof KtCallableReferenceExpression) {
     KtCallableReferenceExpression callableReferenceExpression=(KtCallableReferenceExpression)expression;
     KtExpression receiverExpression=callableReferenceExpression.getReceiverExpression();
-    Type receiverValue=receiverExpression != null && codegen.getBindingContext().getType(receiverExpression) != null ? codegen.getState().getTypeMapper().mapType(codegen.getBindingContext().getType(receiverExpression)) : null;
-    strategy=new FunctionReferenceGenerationStrategy(state,descriptor,CallUtilKt.getResolvedCallWithAssert(callableReferenceExpression.getCallableReference(),codegen.getBindingContext()),receiverValue,null);
+    Type receiverType=receiverExpression != null && codegen.getBindingContext().getType(receiverExpression) != null ? codegen.getState().getTypeMapper().mapType(codegen.getBindingContext().getType(receiverExpression)) : null;
+    if (isLambda && lambdaInfo.isPropertyReference()) {
+      Type asmType=state.getTypeMapper().mapClass(lambdaInfo.getClassDescriptor());
+      PropertyReferenceInfo info=lambdaInfo.getPropertyReferenceInfo();
+      strategy=new PropertyReferenceCodegen.PropertyReferenceGenerationStrategy(true,info.getGetFunction(),info.getTarget(),asmType,receiverType,lambdaInfo.expression,state);
+    }
+ else {
+      strategy=new FunctionReferenceGenerationStrategy(state,descriptor,CallUtilKt.getResolvedCallWithAssert(callableReferenceExpression.getCallableReference(),codegen.getBindingContext()),receiverType,null);
+    }
   }
  else {
     strategy=new FunctionGenerationStrategy.FunctionDefault(state,(KtDeclarationWithBody)expression);
