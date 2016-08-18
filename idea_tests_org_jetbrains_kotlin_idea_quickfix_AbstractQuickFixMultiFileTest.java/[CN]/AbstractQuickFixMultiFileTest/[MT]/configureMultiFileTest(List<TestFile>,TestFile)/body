@@ -1,0 +1,21 @@
+{
+  try {
+    File sourceRootDir=createTempDirectory();
+    Map<TestFile,VirtualFile> virtualFiles=new HashMap<TestFile,VirtualFile>();
+    for (    TestFile file : subFiles) {
+      virtualFiles.put(file,createVirtualFileFromTestFile(sourceRootDir,file));
+    }
+    virtualFiles.put(beforeFile,createVirtualFileFromTestFile(sourceRootDir,beforeFile));
+    VirtualFile sourceRootVFile=LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceRootDir);
+    PsiTestUtil.addSourceRoot(myModule,sourceRootVFile);
+    for (    TestFile file : subFiles) {
+      configureByExistingFile(virtualFiles.get(file));
+      assertEquals(guessFileType(file),myFile.getVirtualFile().getFileType());
+    }
+    configureByExistingFile(virtualFiles.get(beforeFile));
+    assertEquals(guessFileType(beforeFile),myFile.getVirtualFile().getFileType());
+  }
+ catch (  IOException e) {
+    throw new RuntimeException(e);
+  }
+}
