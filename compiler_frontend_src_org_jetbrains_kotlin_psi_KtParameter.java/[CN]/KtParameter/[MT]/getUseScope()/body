@@ -1,5 +1,11 @@
 {
-  KtDeclarationWithBody owner=getOwnerFunction();
-  if (owner instanceof KtPrimaryConstructor && hasValOrVar())   return super.getUseScope();
-  return owner != null ? owner.getUseScope() : super.getUseScope();
+  KtExpression owner=getOwnerFunction();
+  if (owner instanceof KtPrimaryConstructor) {
+    if (hasValOrVar())     return super.getUseScope();
+    owner=((KtPrimaryConstructor)owner).getContainingClassOrObject();
+  }
+  if (owner == null) {
+    owner=PsiTreeUtil.getParentOfType(this,KtExpression.class);
+  }
+  return owner != null ? new LocalSearchScope(owner) : GlobalSearchScope.EMPTY_SCOPE;
 }
