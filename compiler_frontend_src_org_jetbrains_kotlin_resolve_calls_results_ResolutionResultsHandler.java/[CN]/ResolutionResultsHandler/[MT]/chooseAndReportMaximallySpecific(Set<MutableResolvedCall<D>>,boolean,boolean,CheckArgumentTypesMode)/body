@@ -1,24 +1,10 @@
 {
-  if (candidates.size() == 1) {
-    return OverloadResolutionResultsImpl.success(candidates.iterator().next());
+  OverloadingConflictResolver<MutableResolvedCall<D>> myResolver=(OverloadingConflictResolver)overloadingConflictResolver;
+  Set<MutableResolvedCall<D>> specificCalls=myResolver.chooseMaximallySpecificCandidates(candidates,checkArgumentsMode,discriminateGenerics,isDebuggerContext);
+  if (specificCalls.size() == 1) {
+    return OverloadResolutionResultsImpl.success(specificCalls.iterator().next());
   }
-  if (candidates.iterator().next() instanceof VariableAsFunctionResolvedCall) {
-    candidates=overloadingConflictResolver.findMaximallySpecificVariableAsFunctionCalls(candidates);
+ else {
+    return OverloadResolutionResultsImpl.ambiguity(specificCalls);
   }
-  Set<MutableResolvedCall<D>> noEquivalentCalls=filterOutEquivalentCalls(candidates);
-  Set<MutableResolvedCall<D>> noOverrides=OverridingUtil.filterOverrides(noEquivalentCalls,MAP_RESOLVED_CALL_TO_RESULTING_DESCRIPTOR);
-  if (noOverrides.size() == 1) {
-    return OverloadResolutionResultsImpl.success(noOverrides.iterator().next());
-  }
-  MutableResolvedCall<D> maximallySpecific=overloadingConflictResolver.findMaximallySpecific(noOverrides,checkArgumentsMode,false,isDebuggerContext);
-  if (maximallySpecific != null) {
-    return OverloadResolutionResultsImpl.success(maximallySpecific);
-  }
-  if (discriminateGenerics) {
-    MutableResolvedCall<D> maximallySpecificGenericsDiscriminated=overloadingConflictResolver.findMaximallySpecific(noOverrides,checkArgumentsMode,true,isDebuggerContext);
-    if (maximallySpecificGenericsDiscriminated != null) {
-      return OverloadResolutionResultsImpl.success(maximallySpecificGenericsDiscriminated);
-    }
-  }
-  return OverloadResolutionResultsImpl.ambiguity(noOverrides);
 }
