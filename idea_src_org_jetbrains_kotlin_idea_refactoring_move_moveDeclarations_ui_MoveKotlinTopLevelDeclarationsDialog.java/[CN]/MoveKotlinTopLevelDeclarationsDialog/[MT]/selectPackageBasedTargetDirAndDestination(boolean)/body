@@ -6,14 +6,15 @@
     int ret=Messages.showYesNoDialog(myProject,RefactoringBundle.message("package.does.not.exist",packageName),RefactoringBundle.message("move.title"),Messages.getQuestionIcon());
     if (ret != Messages.YES)     return null;
   }
-  DirectoryChooser.ItemWrapper selectedItem=(DirectoryChooser.ItemWrapper)destinationFolderCB.getComboBox().getSelectedItem();
-  PsiDirectory selectedPsiDirectory=selectedItem.getDirectory();
-  if (selectedPsiDirectory == null)   return Pair.create(null,new MultipleRootsMoveDestination(targetPackage));
-  VirtualFile targetDirectory=selectedPsiDirectory.getVirtualFile();
-  List<VirtualFile> sourceRoots=JavaProjectRootsUtil.getSuitableDestinationSourceRoots(getProject());
-  if (initialTargetDirectory != null && Comparing.equal(targetDirectory,initialTargetDirectory.getVirtualFile()) && sourceRoots.size() > 1) {
-    targetDirectory=MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage,sourceRoots,initialTargetDirectory);
+  PsiDirectory selectedPsiDirectory;
+  if (initialTargetDirectory == null) {
+    DirectoryChooser.ItemWrapper selectedItem=(DirectoryChooser.ItemWrapper)destinationFolderCB.getComboBox().getSelectedItem();
+    selectedPsiDirectory=selectedItem.getDirectory();
+    if (selectedPsiDirectory == null)     return Pair.create(null,new MultipleRootsMoveDestination(targetPackage));
   }
-  if (targetDirectory == null)   return null;
+ else {
+    selectedPsiDirectory=initialTargetDirectory;
+  }
+  VirtualFile targetDirectory=selectedPsiDirectory.getVirtualFile();
   return Pair.create(targetDirectory,new AutocreatingSingleSourceRootMoveDestination(targetPackage,targetDirectory));
 }
