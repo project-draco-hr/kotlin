@@ -1,0 +1,12 @@
+{
+  AnalysisResult analysisResult=JvmResolveUtil.analyzeAndCheckForErrors(files.getPsiFiles(),environment);
+  analysisResult.throwIfError();
+  AnalyzingUtils.throwExceptionOnErrors(analysisResult.getBindingContext());
+  CompilerConfiguration configuration=environment.getConfiguration();
+  GenerationState state=new GenerationState(environment.getProject(),classBuilderFactory,analysisResult.getModuleDescriptor(),analysisResult.getBindingContext(),files.getPsiFiles(),configuration);
+  if (analysisResult.getShouldGenerateCode()) {
+    KotlinCodegenFacade.compileCorrectFiles(state,CompilationErrorHandler.THROW_EXCEPTION);
+  }
+  AnalyzingUtils.throwExceptionOnErrors(state.getCollectedExtraJvmDiagnostics());
+  return state.getFactory();
+}
