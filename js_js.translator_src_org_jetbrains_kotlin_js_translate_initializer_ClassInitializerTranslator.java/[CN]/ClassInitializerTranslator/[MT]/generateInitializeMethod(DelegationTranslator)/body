@@ -4,19 +4,10 @@
   ConstructorDescriptor primaryConstructor=classDescriptor.getUnsubstitutedPrimaryConstructor();
   if (primaryConstructor != null) {
     initFunction.getBody().getStatements().addAll(setDefaultValueForArguments(primaryConstructor,context()));
-    initFunction.getParameters().addAll(translatePrimaryConstructorParameters());
     mayBeAddCallToSuperMethod(initFunction,classDescriptor);
+    initFunction.getParameters().addAll(translatePrimaryConstructorParameters());
   }
-  delegationTranslator.addInitCode(initializerStatements);
-  new InitializerVisitor(initializerStatements).traverseContainer(classDeclaration,context());
-  List<JsStatement> statements=initFunction.getBody().getStatements();
-  for (  JsStatement statement : initializerStatements) {
-    if (statement instanceof JsBlock) {
-      statements.addAll(((JsBlock)statement).getStatements());
-    }
- else {
-      statements.add(statement);
-    }
-  }
+  delegationTranslator.addInitCode(initFunction.getBody().getStatements());
+  new InitializerVisitor().traverseContainer(classDeclaration,context().innerBlock(initFunction.getBody()));
   return initFunction;
 }
