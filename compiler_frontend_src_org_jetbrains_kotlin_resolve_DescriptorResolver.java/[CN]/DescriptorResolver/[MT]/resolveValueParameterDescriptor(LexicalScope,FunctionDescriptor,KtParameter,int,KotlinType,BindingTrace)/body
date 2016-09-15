@@ -17,7 +17,15 @@
       valueParameterAnnotations=allAnnotations;
     }
   }
-  ValueParameterDescriptorImpl valueParameterDescriptor=new ValueParameterDescriptorImpl(owner,null,index,valueParameterAnnotations,KtPsiUtil.safeName(valueParameter.getName()),variableType,valueParameter.hasDefaultValue(),valueParameter.hasModifier(CROSSINLINE_KEYWORD),valueParameter.hasModifier(NOINLINE_KEYWORD),valueParameter.hasModifier(COROUTINE_KEYWORD),varargElementType,KotlinSourceElementKt.toSourceElement(valueParameter));
+  KtDestructuringDeclaration destructuringDeclaration=valueParameter.getDestructuringDeclaration();
+  List<VariableDescriptor> destructuringVariables;
+  if (destructuringDeclaration != null) {
+    destructuringVariables=destructuringDeclarationResolver.resolveLocalVariablesFromDestructuringDeclaration(scope,destructuringDeclaration,new TransientReceiver(type),null,ExpressionTypingContext.newContext(trace,scope,DataFlowInfoFactory.EMPTY,TypeUtils.NO_EXPECTED_TYPE));
+  }
+ else {
+    destructuringVariables=null;
+  }
+  ValueParameterDescriptorImpl valueParameterDescriptor=ValueParameterDescriptorImpl.createWithDestructuringDeclarations(owner,null,index,valueParameterAnnotations,destructuringVariables == null ? KtPsiUtil.safeName(valueParameter.getName()) : Name.special("<name for destructuring parameter " + index + ">"),variableType,valueParameter.hasDefaultValue(),valueParameter.hasModifier(CROSSINLINE_KEYWORD),valueParameter.hasModifier(NOINLINE_KEYWORD),valueParameter.hasModifier(COROUTINE_KEYWORD),varargElementType,KotlinSourceElementKt.toSourceElement(valueParameter),destructuringVariables);
   trace.record(BindingContext.VALUE_PARAMETER,valueParameter,valueParameterDescriptor);
   return valueParameterDescriptor;
 }

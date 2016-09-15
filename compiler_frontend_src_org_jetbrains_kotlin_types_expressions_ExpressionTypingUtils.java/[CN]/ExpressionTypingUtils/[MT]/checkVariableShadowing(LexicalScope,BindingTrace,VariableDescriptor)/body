@@ -3,6 +3,10 @@
   if (oldDescriptor != null && isLocal(variableDescriptor.getContainingDeclaration(),oldDescriptor)) {
     PsiElement declaration=DescriptorToSourceUtils.descriptorToDeclaration(variableDescriptor);
     if (declaration != null) {
+      if (declaration instanceof KtDestructuringDeclarationEntry && declaration.getParent().getParent() instanceof KtParameter) {
+        PsiElement oldElement=DescriptorToSourceUtils.descriptorToDeclaration(oldDescriptor);
+        if (oldElement != null && oldElement.getParent().equals(declaration.getParent().getParent().getParent()))         return;
+      }
       trace.report(Errors.NAME_SHADOWING.on(declaration,variableDescriptor.getName().asString()));
     }
   }
