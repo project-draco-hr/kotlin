@@ -16,7 +16,8 @@
     String parameterName;
     if (kind == JvmMethodParameterKind.VALUE) {
       ValueParameterDescriptor parameter=valueParameterIterator.next();
-      parameterName=parameter.getName().asString();
+      List<VariableDescriptor> destructuringVariables=ValueParameterDescriptorImpl.getDestructuringVariablesOrNull(parameter);
+      parameterName=destructuringVariables == null ? parameter.getName().asString() : "$" + joinParameterNames(destructuringVariables);
     }
  else {
       String lowercaseKind=kind.name().toLowerCase();
@@ -25,5 +26,14 @@
     Type type=param.getAsmType();
     mv.visitLocalVariable(parameterName,type.getDescriptor(),null,methodBegin,methodEnd,shift);
     shift+=type.getSize();
+  }
+  for (  ValueParameterDescriptor parameter : valueParameters) {
+    List<VariableDescriptor> destructuringVariables=ValueParameterDescriptorImpl.getDestructuringVariablesOrNull(parameter);
+    if (destructuringVariables == null)     continue;
+    for (    VariableDescriptor entry : destructuringVariables) {
+      Type type=typeMapper.mapType(parameter.getType());
+      mv.visitLocalVariable(entry.getName().asString(),type.getDescriptor(),null,methodBegin,methodEnd,shift);
+      shift+=type.getSize();
+    }
   }
 }
