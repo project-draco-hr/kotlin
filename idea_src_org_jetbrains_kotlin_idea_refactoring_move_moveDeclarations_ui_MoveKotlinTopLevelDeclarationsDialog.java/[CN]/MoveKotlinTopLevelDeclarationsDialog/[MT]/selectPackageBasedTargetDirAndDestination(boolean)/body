@@ -6,14 +6,15 @@
     int ret=Messages.showYesNoDialog(myProject,RefactoringBundle.message("package.does.not.exist",packageName),RefactoringBundle.message("move.title"),Messages.getQuestionIcon());
     if (ret != Messages.YES)     return null;
   }
-  PsiDirectory selectedPsiDirectory;
-  if (initialTargetDirectory == null) {
-    DirectoryChooser.ItemWrapper selectedItem=(DirectoryChooser.ItemWrapper)destinationFolderCB.getComboBox().getSelectedItem();
-    selectedPsiDirectory=selectedItem != null ? selectedItem.getDirectory() : null;
-    if (selectedPsiDirectory == null)     return Pair.create(null,new MultipleRootsMoveDestination(targetPackage));
-  }
+  DirectoryChooser.ItemWrapper selectedItem=(DirectoryChooser.ItemWrapper)destinationFolderCB.getComboBox().getSelectedItem();
+  PsiDirectory selectedPsiDirectory=selectedItem != null ? selectedItem.getDirectory() : null;
+  if (selectedPsiDirectory == null) {
+    if (initialTargetDirectory != null) {
+      selectedPsiDirectory=initialTargetDirectory;
+    }
  else {
-    selectedPsiDirectory=initialTargetDirectory;
+      return Pair.create(null,new MultipleRootsMoveDestination(targetPackage));
+    }
   }
   VirtualFile targetDirectory=selectedPsiDirectory.getVirtualFile();
   return Pair.create(targetDirectory,new AutocreatingSingleSourceRootMoveDestination(targetPackage,targetDirectory));
